@@ -1,0 +1,152 @@
+# Handoff — TheStrengthEngine
+
+> **AUTHORITATIVE CHECKPOINT — 19 August 2026. The repository is assembled and
+> green. NO UI FEATURES EXIST YET: Phase B (coach authoring) and Phase C (mobile
+> logger) are both unstarted. Where this block disagrees with anything below it,
+> this one wins.**
+
+## What this is
+
+The strength half of THE Hybrid System, split out of
+`reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026 per
+`docs/superpowers/plans/2026-08-19-strength-repo-split.md` in that repository.
+Same Supabase project, separate repo, own web and mobile apps.
+
+`pnpm run verify` is green: **4 workspace projects typecheck, 123 tests pass**
+(111 engine · 10 edge function · 2 web), migrations apply, web builds.
+
+## What came across, and from where
+
+Copied byte-identical from hybrid `34dfab4` (verified with `diff -r`):
+
+- `packages/strength-engine` — the whole package, 33 source files. Metric
+  registry, exercise/equipment, prescription resolution, load rounding, e1RM,
+  working-max events, PR detection, exposure classification, calibration,
+  progression, query text.
+- `supabase/migrations` — the five strength migrations, unchanged. They are
+  already applied-or-pending against the shared project and **renaming an
+  applied migration breaks the shared ledger**.
+- `supabase/functions/embed-coaching-note` — whole, with its workspace config.
+
+Git history stayed in the hybrid repo, the same way every deletion there kept
+its history rather than carrying it.
+
+### Four deviations from "copied verbatim"
+
+Each is a real dependency the split plan's file list missed. Each was found by
+running the tree, not reading it.
+
+1. **`scripts/gen-metric-registry.mjs` came too.** `metric.test.ts` shells out to
+   it at repo root to prove `metric.ts` has not drifted from the migration seed.
+   Without it that test fails `MODULE_NOT_FOUND`, which reads like a broken test
+   rather than a missing file.
+2. **The `@hybrid/shared-core` dependency was dropped.** `strength-engine`
+   declared it in `package.json` and imported **nothing** from it — zero
+   references in any source file. A `workspace:*` dependency on a package that
+   does not exist here fails install. The package was already standalone.
+3. **`supabase/functions/tsconfig.json` gained `lib: ["ES2022", "DOM"]`.**
+   `tsconfig.base` is ES2022 only, so `fetch` and `Response` were unresolved —
+   7 errors.
+4. **`packages/strength-engine` gained `@types/node`**, for `import.meta.url`.
+
+## What was built new here
+
+- **`apps/web`** — Vite + React + react-router + supabase-js. One route
+  (`/bench`), the brass palette copied from the hybrid repo's
+  `packages/design` `strengthBrand`, and a Supabase client that returns `null`
+  rather than throwing when the env is unset, so a fresh clone shows a named
+  "not configured" state instead of a white screen. The screen renders the
+  engine's `METRICS` registry — deliberately, as the cheapest proof the
+  workspace link is real. If the package link breaks the screen goes blank
+  instead of lying.
+- **`apps/mobile`** — minimal Expo SDK 54 scaffold (RN 0.81 / React 19, matching
+  the hybrid repo so a shared React major holds if these ever meet again). One
+  placeholder screen, same METRICS-reading trick. **No test script**, on
+  purpose — see below.
+- **`checks/migrations-apply.mjs` + `checks/sql/strength-prelude.sql`** — a
+  strength-scoped port. The hybrid original is ~2100 lines because it also
+  proves the ecosystem RPCs, the MacroTrack catalogue and roster erasure; none
+  of that is this repo's. The prelude stubs what this repo does **not** own
+  (`auth.uid()`, the three Supabase roles and grants, and
+  `public.coaches_athlete_anywhere(uuid)` from hybrid's
+  `20260813_arc_roster_invites_and_names.sql`), each stub naming its real owner.
+- **`CLAUDE.md`** — the carried-over rules plus the shared-Supabase contract.
+- **`.github/workflows/ci.yml`** — installs pgvector, runs the same set as
+  `pnpm run verify`, and fails if `KNOWN ENVIRONMENT GAP` appears in the
+  migrations output (in CI the extension IS installed, so the marker means the
+  install broke).
+
+### Three defects found while assembling, worth not re-introducing
+
+1. **`ON_ERROR_STOP=1` is load-bearing in the migrations check.** It was dropped
+   during the port. Without it `psql` exits 0 even when every statement in a
+   file errored, so the check printed `PASS — applies
+   20260819_phase_f_knowledge_base.sql` for a migration that created nothing.
+   Caught only because pgvector was genuinely absent and the run still went
+   green — the precise "a check that cannot fail" shape CLAUDE.md warns about.
+   **The hybrid repo has always had it; this was a porting error, not a bug
+   there.**
+2. **Multi-line SQL cannot cross `su -c`.** A newline inside a statement arrives
+   at the server as a literal `\n` and dies with a syntax error pointing at a
+   backslash nobody wrote. Every statement is collapsed with `oneLine()` before
+   it goes near psql. Do not re-wrap for readability.
+3. **A metric's key and its canonical unit can be the same string** (`rpe`), so
+   a testing-library text query matches two cells and fails for a reason that
+   has nothing to do with the screen. `apps/web`'s test queries by
+   `data-metric-key` instead.
+
+## Deliberate omissions — read before "fixing" these
+
+- **`apps/mobile` has no `test` script.** There is no suite yet. The
+  alternative was `jest --passWithNoTests`, which CLAUDE.md bans: it makes "a
+  test that stops being collected does not fail, it silently disappears"
+  permanently true of that package. An absent script is visibly absent; a
+  passing empty suite is not. **Phase C's first test adds jest-expo AND the
+  script in the same commit.**
+- **`@hybrid/strength-engine` was not renamed.** Renaming it would have touched
+  every import in a tree that had just been proven green. A rename is a change
+  to make deliberately, not as a side effect of moving house.
+- **`apps/web`'s vite config is minimal.** The hybrid original carries a PWA
+  manifest, a three-way product switch and a pile of CSP-driven build settings.
+  None of it is earned by a bench with one screen. Add a setting when something
+  needs it, with the reason.
+
+## Open runtime notes
+
+- **`embed-coaching-note` deploy step.** Deploy with `--no-verify-jwt` **and**
+  set the `EMBED_WEBHOOK_SECRET` function secret. A deploy that forgets the
+  secret rejects every call — by design (`_auth.ts` returns 500 rather than
+  failing open), but it looks like an outage if you do not know.
+- **pgvector is a known environment gap locally**, never in CI. Do not "fix" it
+  by removing the extension.
+- **`coaches_athlete_anywhere`'s signature is a cross-repo contract.** If the
+  hybrid repo changes its argument or return type, this repo's RLS breaks in
+  production and the only warning is `checks/migrations-apply.mjs` going red.
+  There is no automated guard — the shared database will not tell you.
+
+## What is next
+
+**Phase B — coach authoring UI** (Slices 12–14 of the rebuild spec, which lives
+in the hybrid repo at `docs/superpowers/specs/2026-08-17-strength-rebuild-
+design.md`). No implementation plan written yet. Design input informed by a
+TrainHeroic teardown exists as `strength-phase-b-coach-authoring-DRAFT.md`,
+produced outside this repo; it maps the teardown's findings onto Slices 12–14
+and flags two schema decisions that want answering **before** writing-plans
+locks the `Exercise` entity:
+
+1. **Suggested swaps** — add `suggestedSwapIds: string[]` (max 3)? There is no
+   field for it today.
+2. **Points of performance** — its own field, or reuse `Exercise.cues`?
+
+Both are cheap now and a migration later.
+
+**Phase C — mobile logger** (Slices 18–25). Not scoped. Nothing in the
+TrainHeroic research covers the athlete app — every athlete-side claim in that
+material rests on official support documentation, never on an observed screen.
+
+## Task 2 of the split — NOT done
+
+Excising strength from THE-HYBRID-ENGINE1 has not started, and per the split
+plan's own rule it must not start until this tree is pushed: the copy source
+outlives the deletion. The full excision list is in that repository at
+`docs/superpowers/plans/2026-08-19-strength-repo-split.md`.

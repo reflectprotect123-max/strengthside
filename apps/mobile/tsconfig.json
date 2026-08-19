@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["react"],
+    "allowJs": true
+  },
+  "//include": "test/ would go in here deliberately when it exists: a test that does not compile is a test that silently stops running, and tsc is the only thing that would say so before someone notices the count dropped.",
+  "include": ["src/**/*.ts", "src/**/*.tsx", "index.js"]
+}

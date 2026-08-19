@@ -1,0 +1,21 @@
+{
+  "name": "the-strength-engine",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "build": "pnpm --filter @hybrid/strength-web build",
+    "check:migrations": "node checks/migrations-apply.mjs",
+    "//verify": "Everything CI runs. The two lists SHOULD agree \u2014 a check that runs in CI and not here sits red on main while every local run says green, which the hybrid repo paid for on 16 August 2026. If they ever have to differ, write the reason next to the difference.",
+    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
