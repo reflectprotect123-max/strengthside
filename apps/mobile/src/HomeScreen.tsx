@@ -31,17 +31,10 @@ interface TrendCard {
 
 const SESSIONS: Session[] = [
   {
-    date: 'Monday, August 10, 2026',
+    date: 'Thursday, August 20, 2026',
     athlete: 'dan veldman',
     workout: 'Week 1 Day 1',
     sleep: { recovery: 71, strain: 62, sleep: 88 },
-  },
-  {
-    date: 'Wednesday, July 29, 2026',
-    athlete: 'dan veldman',
-    workout: 'Full Body Strength',
-    isNew: true,
-    sleep: { recovery: 64, strain: 78, sleep: 72 },
   },
 ];
 

@@ -6,11 +6,10 @@ describe('HomeScreen', () => {
     const screen = render(<HomeScreen />);
 
     screen.getByText('ALL ATHLETES');
-    screen.getByText('Monday, August 10, 2026');
+    screen.getByText('Thursday, August 20, 2026');
     screen.getByText('Week 1 Day 1');
-    screen.getByText('Wednesday, July 29, 2026');
-    screen.getByText('Full Body Strength');
-    expect(screen.getAllByText('SLEEP')).toHaveLength(2);
+    expect(screen.queryByText('Wednesday, July 29, 2026')).toBeNull();
+    expect(screen.getAllByText('SLEEP')).toHaveLength(1);
     expect(screen.queryByText('Session Comment')).toBeNull();
     expect(screen.queryByText('See More')).toBeNull();
     expect(screen.queryByText('Blocks')).toBeNull();
