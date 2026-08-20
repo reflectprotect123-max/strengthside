@@ -127,15 +127,19 @@ Removal: `rm -rf .claude/skills/{frontend-design,install-skill,ui-ux-pro-max}`.
 
 ## INSTALLED — needs a real toolchain, cannot be vendored
 
-### graphify v0.9.42 — NOT installed here
+### graphify v0.9.42
 
 | | |
 |---|---|
 | **What / why** | Turns a codebase, docs or papers into a persistent knowledge graph with god nodes and community detection, then answers architecture questions against it. |
-| **Source** | https://github.com/Graphify-Labs/graphify — PyPI package name is `graphifyy` |
-| **Status here** | **Attempted and refused.** `uv tool install graphifyy==0.9.42` was blocked by this session's permission classifier as an unreviewed global package install. Not retried past that point — a human call, not a technical failure. `scripts/ensure-skills.sh` still carries the install recipe (`uv tool install graphifyy==0.9.42` then `graphify install`, user scope, never `--project`) so a session with the right permissions can complete it; until then this row stays honest about "documented, not present" rather than claiming otherwise. |
-| **Verify path** | `command -v graphify` — absent as of this writing. |
+| **Source** | https://github.com/Graphify-Labs/graphify — PyPI package name is `graphifyy` (three y's; the CLI is `graphify`, the package is not) |
+| **Version** | v0.9.42 |
+| **Install method** | `uv tool install graphifyy==0.9.42` then `graphify install` — **user scope, no `--project`**. First attempt was blocked by this session's permission classifier as an unreviewed global package install; installed on explicit user instruction to proceed. |
+| **Verify path** | `command -v graphify` (the BINARY is the real verify path — its `SKILL.md` is nothing but instructions for driving the CLI). Secondary: `~/.claude/skills/graphify/SKILL.md`. |
 | **Why it cannot be vendored** | The skill is a thin wrapper over a Python package that ships two binaries, `graphify` and `graphify-mcp`. Copying `SKILL.md` into the repo would vendor the instructions and none of the program. |
+| **Writes outside its own directory** | `~/.claude/CLAUDE.md` — 3 lines, skill registration only. `~/.local/bin/{graphify,graphify-mcp}` via uv. Its analysis output goes to `graphify-out/` in whatever project it is pointed at. |
+| **Caveats** | **`graphify install --project` must NOT be run.** It registers PreToolUse hooks in `.claude/settings.json` AND appends a section to THIS REPO's `CLAUDE.md` — two repo edits nobody asked for, on the file that is this project's operating contract. User scope only. `scripts/ensure-skills.sh` enforces this by never passing the flag. |
+| **Removal** | `rm -rf ~/.claude/skills/graphify ~/.claude/CLAUDE.md && uv tool uninstall graphifyy` |
 
 ### claude-obsidian v2.1.0 — 15 skills
 
@@ -180,7 +184,7 @@ file lists knows why.
 | VENDORED skills | **27** directories: 14 superpowers + 7 caveman + 2 supabase + 1 session-start-hook + 3 pre-existing | Yes — committed at `vendor/skills/` |
 | VENDORED agents / commands | 3 agents, 5 commands (`.md` + `.toml` each) | Yes — committed at `vendor/agents/`, `vendor/commands/` |
 | VENDORED hook source | 4 files at `vendor/hooks/` — the `caveman-stats` tracker and its deps | Source yes — committed. The user-scope install of it does not; the script re-does it. |
-| INSTALLED | **1 of 2 live** — claude-obsidian yes, graphify no (blocked, see above) | No — `scripts/ensure-skills.sh` attempts to restore both |
+| INSTALLED | **2** — graphify, claude-obsidian | No — `scripts/ensure-skills.sh` restores both |
 | Hooks registered in `~/.claude/settings.json` | **1** — `UserPromptSubmit` → `caveman-mode-tracker.js`. User scope only. | No — the script re-registers it |
 | Deliberately excluded | 1 — omniroute | n/a |
 | Platform-managed | 6 — `~/.claude/skills/synced/` | Handled by the platform, not by us |
