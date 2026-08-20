@@ -119,17 +119,67 @@ rule, the cross-repo read constraint, verified citations (Foster 2001, Day
 2004, Impellizzeri 2019, Buchheit 2014), and an explicit list of which
 prototype numbers are fictions. **Design doc only — nothing computes this.**
 
-### Plan agreed for the next session
+### Plan agreed for the next session — BOTH DONE, see 21 August below
 
-1. **Pull the strength material out of `THE-HYBRID-ENGINE1` into this repo**
-   — i.e. finally execute Task 2 of the split (list in that repo at
-   `docs/superpowers/plans/2026-08-19-strength-repo-split.md`) plus whatever
-   coach-UI scaffolding the prototype's real implementation needs. Needs the
-   hybrid repo attached with push access.
-2. **Start building the actual phone-side app** — Phase C, the athlete
-   logger. Remember the standing trap notes: `apps/mobile` has no test
-   script on purpose, and Phase C's first test adds jest-expo AND the script
-   in the same commit.
+1. ~~Pull the strength material out of `THE-HYBRID-ENGINE1`~~ — done and
+   merged to that repo's `main` (`bd34ec3`), see the Task 2 section below.
+2. ~~Start the phone app~~ — plan written
+   (`docs/superpowers/plans/2026-08-21-strength-phase-c-mobile-logger.md`);
+   the BUILD path changed, see the 21 August section below.
+
+## 21 August 2026 — split completed and merged; Phase C plan written; UI first-draft goes external
+
+Morning session, continuing the 20 August plan. Three things happened, then
+an owner decision changed how Phase C's UI gets built.
+
+**1. Task 2 executed AND merged.** The excision branch was reviewed and
+fast-forwarded into the hybrid repo's `main` (`34dfab4..bd34ec3`). The split
+is finished on both sides: strength exists only in this repository, the
+hybrid apps can never render it again (`Block` lost its strength member;
+`sanitizeDB` there now filters strength-shaped blocks like legacy data), and
+both repos' CLAUDE.md files carry the shared-Supabase contract. Before
+deletion, a completeness audit pulled every only-in-hybrid strength asset
+here (`c39cd79`) — see the Task 2 section below for the list.
+
+**2. Phase C is planned, not started.**
+`docs/superpowers/plans/2026-08-21-strength-phase-c-mobile-logger.md` is a
+full nine-task, TDD, fixture-first plan. Its architecture decisions hold
+REGARDLESS of who writes the UI (see 3): pure reducer owning all session
+state, every action durably persisted before render (the kill test is Task
+5), a `SessionRepository` seam with fixture data until Phase B publishes
+real sessions, `labelFor` in the engine, jest-expo + test script added in
+one commit (the standing trap note). Supabase sync/auth and the non-rest
+timers are explicitly deferred WITH reasons, in the plan.
+
+**3. Owner decision — the UI first-draft is being built EXTERNALLY.** The
+owner is having Grok generate the mobile UI from 1:1 screenshots (the ARC
+prototype's screens), and the collaboration continues from whatever that
+produces. For whoever picks this up:
+
+- **Treat the external drop the way this project treated the Stitch
+  round-trip on 20 August**: audit it against what exists before merging
+  anything. Stitch produced genuinely good ideas AND silently gutted
+  working screens; assume the same mix. Diff, list what it adds and what it
+  breaks, merge deliberately.
+- **The plan's contracts are the review checklist.** Screenshot-driven
+  codegen produces LOOK, not architecture: expect hardcoded fixture text
+  where the engine should be called, component state where the durable
+  reducer should be, and no offline story. Whatever the UI looks like, it
+  lands on the plan's skeleton: reducer + persistence (Tasks 4–5), the
+  repository seam (Task 3), engine calls for every number (`resolveTarget`,
+  `roundLoadToEquipment`, `labelFor`, `detectPr` — never re-derived in a
+  component), and the jest harness FIRST (Task 1) so the drop can be put
+  under test as it is integrated.
+- **The trap note still binds**: `apps/mobile` has no test script on
+  purpose; the first test adds jest-expo AND the script in the same commit.
+  An external drop does not get to skip that — it is the commit that makes
+  the drop reviewable.
+- The ARC prototype (the screenshot source) is the published Artifact from
+  the 20 August design sessions; its latest state includes the 3-dial
+  readiness screen, calendar-first builders, and Recovery-Sync zones. It is
+  a COACH-site design — the phone logger has no 1:1 screen in it beyond the
+  session/prescription patterns, so expect Grok's output to be an
+  interpretation, not a copy.
 
 ## What this is
 
