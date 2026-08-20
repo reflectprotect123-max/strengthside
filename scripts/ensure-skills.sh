@@ -54,6 +54,13 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENDOR="$ROOT/vendor"
+# VENDORED skills are PROJECT scope — they belong to this repo's working tree,
+# the same as `git checkout -- .claude/skills/...` restores them in the
+# hybrid repo. USER_SKILLS (below) is a DIFFERENT, wider scope reserved for
+# the two INSTALLED toolchains (graphify, claude-obsidian), which really are
+# machine-wide rather than repo-local. Conflating the two once already wrote
+# all 27 vendored skills into user scope by mistake — keep them separate.
+CLAUDE_SKILLS="$ROOT/.claude/skills"
 USER_SKILLS="${HOME}/.claude/skills"
 FAILURES=0
 
@@ -114,7 +121,7 @@ echo "Vendored skills (committed in this repo — restored from vendor/skills/)"
 skills_restored=0 skills_ok=0 skills_failed=0
 for name in "${VENDORED_SKILLS[@]}"; do
   src="$VENDOR/skills/$name"
-  dest="$USER_SKILLS/$name"
+  dest="$CLAUDE_SKILLS/$name"
   if [ ! -d "$src" ]; then
     fail "$name" "vendor/skills/$name is missing — nothing to restore"
     skills_failed=$((skills_failed + 1))
@@ -124,8 +131,8 @@ for name in "${VENDORED_SKILLS[@]}"; do
     skills_ok=$((skills_ok + 1))
     continue
   fi
-  mkdir -p "$USER_SKILLS"
-  if cp -r "$src" "$USER_SKILLS/"; then
+  mkdir -p "$CLAUDE_SKILLS"
+  if cp -r "$src" "$CLAUDE_SKILLS/"; then
     skills_restored=$((skills_restored + 1))
   else
     fail "$name" "cp -r vendor/skills/$name failed"
