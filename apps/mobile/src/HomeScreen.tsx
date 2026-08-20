@@ -39,7 +39,9 @@ const SESSIONS: Session[] = [
 ];
 
 export function HomeScreen() {
-  const [overviewSession, setOverviewSession] = useState<Session | null>(null);
+  const [overview, setOverview] = useState<{ session: Session; kind: 'sleep' | 'conditioning' } | null>(
+    null,
+  );
 
   return (
     <View style={styles.app}>
@@ -69,17 +71,20 @@ export function HomeScreen() {
           <SessionCard
             key={session.date}
             session={session}
-            onOpenSleep={() => setOverviewSession(session)}
+            onOpenSleep={() => setOverview({ session, kind: 'sleep' })}
+            onOpenConditioning={() => setOverview({ session, kind: 'conditioning' })}
           />
         ))}
       </ScrollView>
 
       <BottomNavigation />
 
-      <ReadinessOverview
-        session={overviewSession}
-        onClose={() => setOverviewSession(null)}
-      />
+      {overview?.kind === 'sleep' ? (
+        <ReadinessOverview session={overview.session} onClose={() => setOverview(null)} />
+      ) : null}
+      {overview?.kind === 'conditioning' ? (
+        <ConditioningOverview session={overview.session} onClose={() => setOverview(null)} />
+      ) : null}
     </View>
   );
 }
@@ -87,10 +92,14 @@ export function HomeScreen() {
 function SessionCard({
   session,
   onOpenSleep,
+  onOpenConditioning,
 }: {
   session: Session;
   onOpenSleep: () => void;
+  onOpenConditioning: () => void;
 }) {
+  const zones = zonesForReadiness(session.sleep.recovery);
+
   return (
     <View style={styles.sessionCard}>
       <Text style={styles.sessionDate}>{session.date}</Text>
@@ -110,20 +119,94 @@ function SessionCard({
       </View>
 
       <Pressable
-        style={styles.sleepRow}
+        style={styles.moduleRow}
         onPress={onOpenSleep}
         accessibilityRole="button"
         accessibilityLabel={`Sleep overview for ${session.date}`}
       >
-        <Text style={styles.sleepLabel}>SLEEP</Text>
+        <Text style={styles.moduleLabel}>SLEEP</Text>
         <WhoopRings metrics={session.sleep} size={92} />
-        <View style={styles.sleepLegend}>
+        <View style={styles.moduleLegend}>
           <LegendDot color="#3dff9e" label="Recovery" value={`${session.sleep.recovery}%`} />
           <LegendDot color="#33c4ff" label="Strain" value={`${session.sleep.strain}%`} />
           <LegendDot color="#e0bc87" label="Sleep" value={`${session.sleep.sleep}%`} />
         </View>
         <Ionicons name="chevron-forward" size={18} color="#847d73" />
       </Pressable>
+
+      <Pressable
+        style={[styles.moduleRow, styles.moduleRowSpaced]}
+        onPress={onOpenConditioning}
+        accessibilityRole="button"
+        accessibilityLabel={`Conditioning zones for ${session.date}`}
+      >
+        <Text style={styles.moduleLabel}>CONDITIONING</Text>
+        <View style={styles.conditioningBody}>
+          <Text style={styles.conditioningHint}>Zones move with today’s readiness</Text>
+          <MorpheusZoneBar zones={zones} />
+          <View style={styles.zoneLegend}>
+            {zones.map(zone => (
+              <View key={zone.key} style={styles.zoneLegendItem}>
+                <View style={[styles.legendDot, { backgroundColor: zone.color }]} />
+                <Text style={styles.zoneLegendName}>{zone.short}</Text>
+                <Text style={styles.zoneLegendRange}>
+                  {zone.lo}–{zone.hi}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color="#847d73" />
+      </Pressable>
+    </View>
+  );
+}
+
+/** Morpheus-style HR ceilings: higher recovery lifts the day’s zone ceilings. */
+export function zonesForReadiness(recovery: number, maxHr = 190) {
+  const shift = Math.round(((recovery - 50) / 50) * 8);
+  const recoverHi = clamp(Math.round(maxHr * 0.6) + shift, 95, maxHr - 45);
+  const aerobicHi = clamp(Math.round(maxHr * 0.72) + shift, recoverHi + 8, maxHr - 28);
+  const anaerobicHi = clamp(Math.round(maxHr * 0.84) + shift, aerobicHi + 8, maxHr - 12);
+  const peakHi = maxHr;
+
+  return [
+    { key: 'recovery', short: 'Rec', name: 'Recovery', color: '#33c4ff', lo: Math.round(maxHr * 0.5), hi: recoverHi },
+    { key: 'aerobic', short: 'Aer', name: 'Aerobic', color: '#3dff9e', lo: recoverHi + 1, hi: aerobicHi },
+    { key: 'anaerobic', short: 'An', name: 'Anaerobic', color: '#ffc24d', lo: aerobicHi + 1, hi: anaerobicHi },
+    { key: 'peak', short: 'Peak', name: 'Peak', color: '#ff5b57', lo: anaerobicHi + 1, hi: peakHi },
+  ] as const;
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
+type Zone = ReturnType<typeof zonesForReadiness>[number];
+
+function MorpheusZoneBar({ zones }: { zones: readonly Zone[] }) {
+  const total = zones[zones.length - 1].hi - zones[0].lo;
+  return (
+    <View style={styles.zoneBar}>
+      {zones.map((zone, index) => {
+        const width = ((zone.hi - zone.lo + 1) / total) * 100;
+        return (
+          <View
+            key={zone.key}
+            style={[
+              styles.zoneSegment,
+              {
+                backgroundColor: zone.color,
+                width: `${width}%`,
+                borderTopLeftRadius: index === 0 ? 999 : 0,
+                borderBottomLeftRadius: index === 0 ? 999 : 0,
+                borderTopRightRadius: index === zones.length - 1 ? 999 : 0,
+                borderBottomRightRadius: index === zones.length - 1 ? 999 : 0,
+              },
+            ]}
+          />
+        );
+      })}
     </View>
   );
 }
@@ -323,6 +406,64 @@ function ReadinessOverview({
   );
 }
 
+function ConditioningOverview({
+  session,
+  onClose,
+}: {
+  session: Session;
+  onClose: () => void;
+}) {
+  const recovery = session.sleep.recovery;
+  const zones = zonesForReadiness(recovery);
+  const bandLabel = recovery >= 67 ? 'High' : recovery >= 34 ? 'Moderate' : 'Low';
+  const guidance =
+    recovery >= 67
+      ? 'High readiness — anaerobic and peak work are on the table today.'
+      : recovery >= 34
+        ? 'Moderate readiness — bias aerobic volume; keep peak short.'
+        : 'Low readiness — stay in recovery / easy aerobic zones.';
+
+  return (
+    <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+      <View style={styles.overview}>
+        <StatusBar style="light" backgroundColor="#070706" translucent={false} />
+        <Pressable style={styles.backLink} onPress={onClose} accessibilityRole="button">
+          <Text style={styles.backLinkText}>← Back</Text>
+        </Pressable>
+
+        <ScrollView contentContainerStyle={styles.overviewContent} showsVerticalScrollIndicator={false}>
+          <Text style={styles.overviewDate}>{session.date}</Text>
+          <Text style={styles.overviewAthlete}>{session.athlete}</Text>
+
+          <View style={styles.conditioningHero}>
+            <Text style={styles.conditioningHeroEyebrow}>Morpheus · today</Text>
+            <Text style={styles.conditioningHeroTitle}>Conditioning zones</Text>
+            <Text style={styles.conditioningHeroCopy}>
+              Ceilings shift with readiness ({recovery}% · {bandLabel}).
+            </Text>
+            <MorpheusZoneBar zones={zones} />
+            <Text style={styles.conditioningGuidance}>{guidance}</Text>
+          </View>
+
+          <View style={styles.zoneDetailList}>
+            {zones.map(zone => (
+              <View key={zone.key} style={styles.zoneDetailCard}>
+                <View style={styles.zoneDetailHeader}>
+                  <View style={[styles.legendDot, { backgroundColor: zone.color }]} />
+                  <Text style={styles.zoneDetailName}>{zone.name}</Text>
+                </View>
+                <Text style={styles.zoneDetailRange}>
+                  {zone.lo}–{zone.hi} bpm
+                </Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
 function BottomNavigation() {
   return (
     <View style={styles.bottomNavigation}>
@@ -449,7 +590,7 @@ const styles = StyleSheet.create({
     lineHeight: 25,
     fontWeight: '400',
   },
-  sleepRow: {
+  moduleRow: {
     marginTop: 4,
     paddingVertical: 14,
     paddingHorizontal: 14,
@@ -461,15 +602,116 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  sleepLabel: {
+  moduleRowSpaced: {
+    marginTop: 12,
+  },
+  moduleLabel: {
     color: '#c09358',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.6,
+    width: 92,
   },
-  sleepLegend: {
+  moduleLegend: {
     flex: 1,
     gap: 6,
+  },
+  conditioningBody: {
+    flex: 1,
+    gap: 10,
+  },
+  conditioningHint: {
+    color: '#847d73',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  zoneBar: {
+    height: 14,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    borderRadius: 999,
+  },
+  zoneSegment: {
+    height: '100%',
+  },
+  zoneLegend: {
+    gap: 5,
+  },
+  zoneLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  zoneLegendName: {
+    color: '#aaa49a',
+    fontSize: 12,
+    fontWeight: '600',
+    minWidth: 36,
+  },
+  zoneLegendRange: {
+    color: '#f5f1e9',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  conditioningHero: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 18,
+    backgroundColor: '#0a0a09',
+    padding: 20,
+    gap: 12,
+    marginBottom: 16,
+  },
+  conditioningHeroEyebrow: {
+    color: '#c09358',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  conditioningHeroTitle: {
+    color: '#f5f1e9',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  conditioningHeroCopy: {
+    color: '#aaa49a',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  conditioningGuidance: {
+    color: '#e0bc87',
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  zoneDetailList: {
+    gap: 10,
+  },
+  zoneDetailCard: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#141311',
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  zoneDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  zoneDetailName: {
+    color: '#f5f1e9',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  zoneDetailRange: {
+    color: '#33c4ff',
+    fontSize: 16,
+    fontWeight: '800',
   },
   legendItem: {
     flexDirection: 'row',

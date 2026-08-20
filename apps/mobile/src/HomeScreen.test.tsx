@@ -1,29 +1,46 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { HomeScreen } from './HomeScreen';
+import { HomeScreen, zonesForReadiness } from './HomeScreen';
 
 describe('HomeScreen', () => {
-  it('renders sessions with sleep rings instead of the old metric row', () => {
+  it('renders sleep and conditioning modules for today', () => {
     const screen = render(<HomeScreen />);
 
     screen.getByText('ALL ATHLETES');
     screen.getByText('Thursday, August 20, 2026');
     screen.getByText('Week 1 Day 1');
-    expect(screen.queryByText('Wednesday, July 29, 2026')).toBeNull();
-    expect(screen.getAllByText('SLEEP')).toHaveLength(1);
-    expect(screen.queryByText('Session Comment')).toBeNull();
-    expect(screen.queryByText('See More')).toBeNull();
-    expect(screen.queryByText('Blocks')).toBeNull();
+    screen.getByText('SLEEP');
+    screen.getByText('CONDITIONING');
+    screen.getByText('Zones move with today’s readiness');
   });
 
   it('opens the readiness overview from a sleep row', () => {
     const screen = render(<HomeScreen />);
 
-    fireEvent.press(screen.getAllByLabelText(/Sleep overview for/)[0]);
+    fireEvent.press(screen.getByLabelText(/Sleep overview for/));
 
     screen.getByText('← Back');
     screen.getByText('Readiness');
     screen.getByText('High');
     screen.getByText('HRV');
-    screen.getByText('Sleep performance');
+  });
+
+  it('opens conditioning zones from the conditioning row', () => {
+    const screen = render(<HomeScreen />);
+
+    fireEvent.press(screen.getByLabelText(/Conditioning zones for/));
+
+    screen.getByText('Conditioning zones');
+    screen.getByText(/Ceilings shift with readiness/);
+    screen.getByText(/High readiness/);
+  });
+});
+
+describe('zonesForReadiness', () => {
+  it('raises zone ceilings when recovery is higher', () => {
+    const low = zonesForReadiness(30);
+    const high = zonesForReadiness(90);
+
+    expect(high[0].hi).toBeGreaterThan(low[0].hi);
+    expect(high[2].hi).toBeGreaterThan(low[2].hi);
   });
 });
