@@ -1,9 +1,77 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 19 August 2026. The repository is assembled and
-> green. NO UI FEATURES EXIST YET: Phase B (coach authoring) and Phase C (mobile
-> logger) are both unstarted. Where this block disagrees with anything below it,
-> this one wins.**
+> **AUTHORITATIVE CHECKPOINT — 20 August 2026. Superpowers v6.3.0 and the full
+> hybrid-repo skill/plugin toolchain are now vendored and installed here, per
+> `skills.md`. NO UI FEATURES EXIST YET: Phase B (coach authoring) and Phase C
+> (mobile logger) are both unstarted — vendoring the toolchain is not
+> progress on either. Where this block disagrees with anything below it, this
+> one wins.**
+
+## 20 August 2026 — toolchain vendored, one bug found and fixed
+
+Starting point was the `20-august-handoff-pack.zip` produced in a prior Cowork
+session (cloud sandbox, no push credentials — see that pack's own
+`START-HERE.md` for what it covers: the Phase B plan, the design-conflict
+blocker, the TrainHeroic research, and `arc-prototype.html`). Of that pack's
+three "do these first" items, only the first was done this session; the other
+two are cross-repo and still open — see below.
+
+- **Vendored superpowers v6.3.0** (14 skills) from the pack's
+  `superpowers-bundle/` to `vendor/skills/`, added `scripts/ensure-skills.sh`
+  and `skills.md`, and added `.claude/skills/` to `.gitignore`. This satisfies
+  the Phase B plan's `superpowers:subagent-driven-development` requirement,
+  which had no vendored skill to resolve against before this.
+- **Went further and matched the hybrid repo's full toolchain**, on explicit
+  instruction: vendored caveman (7 skills + 3 cavecrew agents + 5 commands),
+  supabase-agent-skills (2 skills), session-start-hook, and the three
+  pre-existing skills (frontend-design, install-skill, ui-ux-pro-max) — 27
+  vendored skill directories total, all committed under `vendor/skills/`
+  (plus `vendor/agents/`, `vendor/commands/`, `vendor/hooks/`). Installed the
+  two toolchains that cannot be vendored: **graphify v0.9.42** (`uv tool
+  install graphifyy==0.9.42` then `graphify install`, user scope — the first
+  attempt was blocked by this session's permission classifier as an
+  unreviewed global install; completed on explicit instruction to proceed)
+  and **claude-obsidian v2.1.0** (15 skills, cloned and pinned at `1c1bc49`).
+  `skills.md` is the canonical record for all of it, split into VENDORED /
+  INSTALLED / deliberately-excluded (omniroute) / platform-managed buckets,
+  matching the hybrid repo's own inventory structure.
+- **Found and fixed a real bug in `ensure-skills.sh` before trusting it.**
+  The VENDORED bucket's restore loop reused the `USER_SKILLS` variable
+  (`~/.claude/skills`, correctly reserved for the two INSTALLED toolchains)
+  instead of the repo's own `.claude/skills`. The first run silently wrote
+  all 27 vendored skills into user scope, duplicating what an earlier manual
+  restore had already placed correctly at project scope — exactly the kind
+  of check-that-doesn't-fail-right this repo's CLAUDE.md warns about, just
+  in a setup script rather than a CI gate. Split the destinations
+  (`CLAUDE_SKILLS` for vendored, `USER_SKILLS` for graphify/claude-obsidian),
+  removed the 27 mis-placed user-scope copies by hand, and verified two
+  consecutive runs report identical `27 healthy, 0 restored, 0 failed`
+  output. **Do not trust a restore script's first green run** — this is why.
+- **Reviewed `arc-prototype.html` from the pack** (published as an Artifact,
+  not committed to this repo — it is a design reference per the pack's own
+  `START-HERE.md`, not a starting codebase). Found and fixed one bug in the
+  copy under review: below 900px width its nav rail collapsed from a left
+  sidebar into a horizontal top bar, which is wrong inside a narrow preview
+  panel. Fixed in the reviewed copy; **not yet ported back into this repo**,
+  because the prototype itself isn't tracked here.
+
+### Still open from the handoff pack
+
+The pack's other two "do first" items are untouched, and both need
+`THE-HYBRID-ENGINE1` attached with push access (this session only has read
+access to it, added ad hoc to pull `skills.md` for comparison):
+
+1. **Task 2 — excise strength from `THE-HYBRID-ENGINE1`.** Full list at
+   `docs/superpowers/plans/2026-08-19-strength-repo-split.md` in that repo.
+   Unblocked (this tree is live and pushed) but not started.
+2. **Correct the stale checkpoint in the hybrid repo's own `handoff.md`.** It
+   still reports two security holes as open that were fixed here on
+   19 August (`c5701d3`, `0dde66f`) — see the pack's `START-HERE.md` for the
+   exact wording to correct.
+
+Also still open: the design-conflict blocker (`phase-b-design-conflicts.md`
+in the pack) and the two schema decisions flagged below (suggested swaps,
+points of performance) — neither was touched this session.
 
 ## What this is
 
