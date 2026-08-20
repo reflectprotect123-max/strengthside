@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useState, type ComponentProps } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Line, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Line, Stop } from 'react-native-svg';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -147,38 +147,36 @@ function WhoopRings({ metrics, size }: { metrics: SleepMetrics; size: number }) 
 
   return (
     <Svg width={size} height={size}>
-      {rings.map(ring => (
-        <Circle
-          key={ring.color}
-          cx={center}
-          cy={center}
-          r={ring.radius}
-          fill="none"
-          stroke="#ffffff14"
-          strokeWidth={stroke}
-          rotation={-90}
-          origin={`${center}, ${center}`}
-        />
-      ))}
-      {rings.map(ring => {
-        const circumference = 2 * Math.PI * ring.radius;
-        return (
+      <G transform={`rotate(-90 ${center} ${center})`}>
+        {rings.map(ring => (
           <Circle
-            key={`${ring.color}-progress`}
+            key={ring.color}
             cx={center}
             cy={center}
             r={ring.radius}
             fill="none"
-            stroke={ring.color}
+            stroke="#ffffff14"
             strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={circumference * (1 - ring.progress)}
-            rotation={-90}
-            origin={`${center}, ${center}`}
           />
-        );
-      })}
+        ))}
+        {rings.map(ring => {
+          const circumference = 2 * Math.PI * ring.radius;
+          return (
+            <Circle
+              key={`${ring.color}-progress`}
+              cx={center}
+              cy={center}
+              r={ring.radius}
+              fill="none"
+              stroke={ring.color}
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={`${circumference} ${circumference}`}
+              strokeDashoffset={circumference * (1 - ring.progress)}
+            />
+          );
+        })}
+      </G>
     </Svg>
   );
 }
@@ -261,40 +259,31 @@ function ReadinessOverview({
                   strokeWidth="2.5"
                   opacity={0.8}
                 />
-                <Circle
-                  cx="96"
-                  cy="96"
-                  r="72"
-                  fill="none"
-                  stroke="#ffffff0f"
-                  strokeWidth="11"
-                  rotation={-90}
-                  origin="96, 96"
-                />
-                <Circle
-                  cx="96"
-                  cy="96"
-                  r="72"
-                  fill="none"
-                  stroke="#3dff9e"
-                  strokeWidth="11"
-                  strokeLinecap="round"
-                  strokeDasharray="452.4 452.4"
-                  strokeDashoffset={ringOffset}
-                  rotation={-90}
-                  origin="96, 96"
-                />
-                <Line
-                  x1="96"
-                  y1="96"
-                  x2="96"
-                  y2="34"
-                  stroke="#e0bc87"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  rotation={needleDeg}
-                  origin="96, 96"
-                />
+                <G transform="rotate(-90 96 96)">
+                  <Circle cx="96" cy="96" r="72" fill="none" stroke="#ffffff0f" strokeWidth="11" />
+                  <Circle
+                    cx="96"
+                    cy="96"
+                    r="72"
+                    fill="none"
+                    stroke="#3dff9e"
+                    strokeWidth="11"
+                    strokeLinecap="round"
+                    strokeDasharray="452.4 452.4"
+                    strokeDashoffset={ringOffset}
+                  />
+                </G>
+                <G transform={`rotate(${needleDeg} 96 96)`}>
+                  <Line
+                    x1="96"
+                    y1="96"
+                    x2="96"
+                    y2="34"
+                    stroke="#e0bc87"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </G>
                 <Circle cx="96" cy="96" r="4.5" fill="#e0bc87" />
               </Svg>
               <View style={styles.gaugeCenter}>
