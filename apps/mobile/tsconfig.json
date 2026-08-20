@@ -7,7 +7,7 @@
     "noEmit": true,
     "declaration": false,
     "declarationMap": false,
-    "types": ["react"],
+    "types": ["react", "jest"],
     "allowJs": true
   },
   "//include": "test/ would go in here deliberately when it exists: a test that does not compile is a test that silently stops running, and tsc is the only thing that would say so before someone notices the count dropped.",

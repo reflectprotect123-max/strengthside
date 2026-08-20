@@ -5,7 +5,7 @@
   "main": "index.js",
   "//": "Expo SDK 54 — RN 0.81 on React 19, matching THE-HYBRID-ENGINE1's apps/mobile so a shared React major holds if these ever meet again.",
   "scripts": {
-    "//test": "NO test script, deliberately. There is no suite here yet — Phase C's first test adds jest-expo AND this script in the same commit. The alternative was `jest --passWithNoTests`, which CLAUDE.md bans: it makes 'a test that stops being collected does not fail, it silently disappears' permanently true of this package. An absent script is visibly absent; a passing empty suite is not.",
+    "test": "jest --runInBand",
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "prebuild": "expo prebuild --platform android --clean",
@@ -20,7 +20,11 @@
     "react-native": "0.81.4"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
+    "jest-expo": "^54.0.18",
+    "react-test-renderer": "19.1.0",
     "typescript": "^5.9.3"
   }
 }
