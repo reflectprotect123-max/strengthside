@@ -73,6 +73,64 @@ Also still open: the design-conflict blocker (`phase-b-design-conflicts.md`
 in the pack) and the two schema decisions flagged below (suggested swaps,
 points of performance) — neither was touched this session.
 
+## 20 August 2026, later session — prototype matured, load model documented
+
+The ARC coach-site prototype advanced a long way this session. It still lives
+**outside this repo** as a design reference (published as a Claude Artifact;
+the working file is an upload, not a tracked source file), so none of this is
+Phase B implementation — it is the design those phases will implement.
+
+What the prototype now demonstrates, in the order it was built:
+
+- **Readiness screen** rebuilt WHOOP-style: three ring dials (Sleep /
+  Recovery / Strain), metric rows with 7-day averages, insight card, weekly
+  band-colored bars, sparklines.
+- **Calendar-first session authoring** for Strength AND Conditioning: each
+  pillar's "Build session" tab lands on a full-month calendar of its own
+  sessions; hovering an empty day offers "+ Build session" / "+ Add from
+  library"; the builder opens as an animated modal over the calendar,
+  day-aware, closable by ×/backdrop/Escape. One shared `sessionCalendar(kind)`
+  renders both so they cannot drift.
+- **Conditioning builder mirrored to the strength anatomy**: per-round
+  prescription table over the same 12-metric registry, separate column state
+  per pillar, steady collapsing to one row. The minutes/distance inputs were
+  replaced by duration/distance columns.
+- **A premium visual pass** (lighting model with brass edge-lit glass
+  surfaces, Archivo display face, glow on rings and CTAs), then a round-trip
+  through Google Stitch: its good ideas were merged back deliberately (modal
+  entrance animation, focus states everywhere, micro-interactions, scored
+  pills) and its regressions rejected — Stitch had silently gutted the
+  readiness screen, builder sidebars, Library, and deep-linking. The Stitch
+  fork is preserved as its own separate Artifact for comparison.
+- **Morpheus-style HR zones**: numeric zone boundaries on the engine's
+  easy/medium/hard efforts (presented as blue/green/red with bpm ranges), a
+  Recovery-Sync toggle that genuinely shifts every boundary from the day's
+  recovery score, and the same zone system unified into the conditioning
+  overview's time-in-zone card. **The shift formula is invented fixture
+  logic** — flagged as such in the doc below.
+- **Training load shown as a split** — `13.2 · cardio 9.1 / strength 4.1` —
+  because one opaque number is the WHOOP failure mode for lifting.
+
+**Committed to this repo** (`3d7c233`): `docs/data/training-load-model.md` —
+the design doc behind that load figure. Two channels (TRIMP-style
+zone-weighted duration for conditioning; session-RPE or relative tonnage for
+strength), per-athlete normalization, the pain-blocked-counts-toward-load
+rule, the cross-repo read constraint, verified citations (Foster 2001, Day
+2004, Impellizzeri 2019, Buchheit 2014), and an explicit list of which
+prototype numbers are fictions. **Design doc only — nothing computes this.**
+
+### Plan agreed for the next session
+
+1. **Pull the strength material out of `THE-HYBRID-ENGINE1` into this repo**
+   — i.e. finally execute Task 2 of the split (list in that repo at
+   `docs/superpowers/plans/2026-08-19-strength-repo-split.md`) plus whatever
+   coach-UI scaffolding the prototype's real implementation needs. Needs the
+   hybrid repo attached with push access.
+2. **Start building the actual phone-side app** — Phase C, the athlete
+   logger. Remember the standing trap notes: `apps/mobile` has no test
+   script on purpose, and Phase C's first test adds jest-expo AND the script
+   in the same commit.
+
 ## What this is
 
 The strength half of THE Hybrid System, split out of
@@ -193,6 +251,10 @@ running the tree, not reading it.
   There is no automated guard — the shared database will not tell you.
 
 ## What is next
+
+> Superseded in part by the "Plan agreed for the next session" above: Task 2
+> excision + Phase C phone app are the immediate next moves. Phase B remains
+> the larger arc and everything below still applies to it.
 
 **Phase B — coach authoring UI** (Slices 12–14 of the rebuild spec, which lives
 in the hybrid repo at `docs/superpowers/specs/2026-08-17-strength-rebuild-
