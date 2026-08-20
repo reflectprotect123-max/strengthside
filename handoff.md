@@ -274,9 +274,26 @@ Both are cheap now and a migration later.
 TrainHeroic research covers the athlete app — every athlete-side claim in that
 material rests on official support documentation, never on an observed screen.
 
-## Task 2 of the split — NOT done
+## Task 2 of the split — EXECUTED 21 August 2026, awaiting merge
 
-Excising strength from THE-HYBRID-ENGINE1 has not started, and per the split
-plan's own rule it must not start until this tree is pushed: the copy source
-outlives the deletion. The full excision list is in that repository at
-`docs/superpowers/plans/2026-08-19-strength-repo-split.md`.
+The excision is done on the hybrid repo's `claude/strength-excision` branch
+(commit `bd34ec3`, 94 files, −5,677 lines), full verify + 18/18 browser
+shots green there. It is a BRANCH, deliberately — the owner merges it to
+`main`, the plan's "on main" step, when ready.
+
+Before deleting anything, a completeness audit confirmed this repo carries
+everything: the engine/migrations/function are byte-identical (two documented
+config divergences only), and the material that existed ONLY in the hybrid
+repo was pulled here first (`c39cd79`): the strength specs and plans, the
+strength-adaptive-engine-v2 research with the 120-exercise library, the
+TrainHeroic build package (`docs/design/trainheroic-build-package/`), and the
+old logger's parity harness as reference (`docs/reference/parity-harness/`).
+
+Two notes from the excision worth keeping:
+- The hybrid repo's `checks/web-touch.mjs` fails at the split commit
+  `34dfab4` too — it walks an exercise-library picker `BlockEditor.tsx` no
+  longer renders. Pre-existing there, not caused by the excision, reported
+  in the excision commit message.
+- The hybrid handoff's stale security-holes claim (the pack's open item 2)
+  was corrected in the same commit — both items were fixed 19 August
+  (`c5701d3` / `0dde66f`) and the fixes live in this repo now.
