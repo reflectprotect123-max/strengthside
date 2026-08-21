@@ -1,9 +1,5 @@
-PLAY with the app (interactive):
+PLAY:
 
-Open:
+https://raw.githack.com/reflectprotect123-max/strengthside/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
 
-https://htmlpreview.github.io/?https://github.com/reflectprotect123-max/strengthside/blob/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
-
-After we push: tap **Update** (top right) or Settings → **Update now**.
-Then tap CONDITIONING for Morpheus zones.
-See apps/mobile/PLAY.md
+Click Open the page if asked. Then tap CONDITIONING.

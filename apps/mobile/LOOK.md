@@ -1,10 +1,8 @@
 # Just look / play
 
-## Interactive (play with it) — use this
+https://raw.githack.com/reflectprotect123-max/strengthside/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
 
-https://htmlpreview.github.io/?https://github.com/reflectprotect123-max/strengthside/blob/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
-
-After updates: tap **Update** in the top right, then CONDITIONING. Details: [PLAY.md](./PLAY.md)
+Click **Open the page** if asked. Tap CONDITIONING. [PLAY.md](./PLAY.md)
 
 ---
 
