@@ -3,9 +3,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, G, LinearGradient, Line, Stop } from 'react-native-svg';
-import { loadCondBankSynced, saveCondBankSynced } from './condBankSync';
-import type { CondWeek, ZoneBank } from './condBankStorage';
-import { getSupabase, isSupabaseConfigured } from './supabase';
+import {
+  loadCondBank,
+  saveCondBank,
+  type CondWeek,
+  type ZoneBank,
+} from './condBankStorage';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -89,28 +92,17 @@ export function HomeScreen() {
   const [session, setSession] = useState(INITIAL_SESSION);
   const [overview, setOverview] = useState<'sleep' | 'live' | null>(null);
   const [bankReady, setBankReady] = useState(false);
-  const [cloudNote, setCloudNote] = useState('Cloud: checking…');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { conditioning, remote } = await loadCondBankSynced(
+      const conditioning = await loadCondBank(
         INITIAL_SESSION.athlete,
         INITIAL_SESSION.weekId,
       );
       if (cancelled) return;
       if (conditioning) {
         setSession(prev => ({ ...prev, conditioning }));
-      }
-      if (!isSupabaseConfigured()) {
-        setCloudNote('Cloud: off (local only)');
-      } else {
-        const sb = getSupabase();
-        const { data } = sb ? await sb.auth.getSession() : { data: { session: null } };
-        if (!data.session) setCloudNote('Cloud: sign in to sync');
-        else if (remote.status === 'loaded') setCloudNote('Cloud: synced');
-        else if (remote.status === 'error') setCloudNote('Cloud: sync error');
-        else setCloudNote('Cloud: ready');
       }
       setBankReady(true);
     })();
@@ -122,15 +114,7 @@ export function HomeScreen() {
   const bankMinutes = (added: { low: number; mod: number; high: number }) => {
     setSession(prev => {
       const nextWeek = applyBank(prev.conditioning, added);
-      void (async () => {
-        const remote = await saveCondBankSynced(prev.athlete, prev.weekId, nextWeek);
-        if (!isSupabaseConfigured()) setCloudNote('Cloud: off (local only)');
-        else if (remote.status === 'saved') setCloudNote('Cloud: synced');
-        else if (remote.status === 'skipped' && remote.reason === 'not-signed-in') {
-          setCloudNote('Cloud: sign in to sync');
-        } else if (remote.status === 'error') setCloudNote('Cloud: sync error');
-        else setCloudNote('Cloud: local saved');
-      })();
+      void saveCondBank(prev.athlete, prev.weekId, nextWeek);
       return { ...prev, conditioning: nextWeek };
     });
     setOverview(null);
@@ -146,9 +130,6 @@ export function HomeScreen() {
           <Text style={styles.latestText}>W1 · D1</Text>
         </View>
       </View>
-      <Text style={styles.cloudNote} accessibilityLabel="Cloud sync status">
-        {cloudNote}
-      </Text>
 
       <ScrollView
         style={styles.sessions}
@@ -792,13 +773,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   latestText: { color: '#c09358', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 },
-  cloudNote: {
-    color: '#847d73',
-    fontSize: 10,
-    fontWeight: '600',
-    paddingHorizontal: 16,
-    paddingBottom: 6,
-  },
   sessions: { flex: 1 },
   sessionsContent: { paddingBottom: 8 },
   sessionCard: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 8, gap: 8 },

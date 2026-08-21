@@ -60,14 +60,10 @@ each package's `package.json`; don't duplicate them here.
 
 ### Conditioning week bank (athlete mobile)
 
-- Local source of truth: `apps/mobile/src/condBankStorage.ts` (AsyncStorage).
-- Optional cloud sync: `condBankSync.ts` → `condBankRemote.ts` merges into
-  **hybrid-owned** `app_state.state.strengthside.condWeek` and publishes
-  `athlete_feed.payload.condWeekBank` for linked coaches. No strength-side
-  migration — shared-Supabase contract.
-- Needs `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, and a
-  signed-in Supabase user. Without those, Home stays local-only and shows
-  "Cloud: off" / "sign in to sync".
+- Local only for now: `apps/mobile/src/condBankStorage.ts` (AsyncStorage).
+- Do **not** write week banks into hybrid `app_state` / `athlete_feed` — that was
+  a DIY third pipe. Proper cloud path (later): hybrid `athlete_domain_snapshots`
+  for `conditioning`, with week rails *derived* from session `zsec`, same as ARC.
 
 ### Edge function
 
