@@ -63,11 +63,11 @@ truth — this HTML is the shareable freeze of where the UI was on 21 Aug.
 
 ### Hybrid PWA shell (Home drop-in)
 
-**`apps/mobile/prototype/pwa/`** — same Home UI wrapped in the Hybrid pack’s
-shape (manifest, `sw.js`, `netlify.toml`, icons). Serve with
-`python3 -m http.server 4173` from that folder, or deploy the folder to
-Netlify. Uploaded Hybrid docs had no full Logger `index.html`; when that ZIP
-arrives, replace the PWA’s Home route with this and keep Logger/Builder.
+**`apps/mobile/prototype/pwa/`** — early packaging experiment (Home-only).
+
+**`apps/mobile/prototype/hybrid-app/`** — **the real drop-in**: uploaded Hybrid
+Logger/Builder `index.html` with Sleep / Conditioning / Nutrition injected at
+the top of Home. Serve with `python3 -m http.server 4173` from that folder.
 
 ### Next session — start here
 
