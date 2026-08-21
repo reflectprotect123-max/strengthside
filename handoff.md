@@ -61,6 +61,14 @@ mock of Sleep / Conditioning / Nutrition + readiness overlays; PNG captures
 under `apps/mobile/prototype/shots/`. RN `HomeScreen.tsx` remains source of
 truth — this HTML is the shareable freeze of where the UI was on 21 Aug.
 
+### Hybrid PWA shell (Home drop-in)
+
+**`apps/mobile/prototype/pwa/`** — same Home UI wrapped in the Hybrid pack’s
+shape (manifest, `sw.js`, `netlify.toml`, icons). Serve with
+`python3 -m http.server 4173` from that folder, or deploy the folder to
+Netlify. Uploaded Hybrid docs had no full Logger `index.html`; when that ZIP
+arrives, replace the PWA’s Home route with this and keep Logger/Builder.
+
 ### Next session — start here
 
 1. Read this checkpoint + `skills.md` Cursor section.
