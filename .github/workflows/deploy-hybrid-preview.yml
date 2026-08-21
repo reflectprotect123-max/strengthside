@@ -1,0 +1,50 @@
+# Deploys the interactive Hybrid HTML app to GitHub Pages.
+# Prerequisite (one-time, repo owner): Settings → Pages → Source: GitHub Actions
+# Until then, use the htmlpreview link in apps/mobile/PLAY.md — do not fail every push.
+name: Deploy Hybrid preview
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/preview-site/**'
+      - 'apps/mobile/THE-Hybrid-App.html'
+      - '.github/workflows/deploy-hybrid-preview.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-hybrid-preview
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          if [ -f apps/mobile/preview-site/index.html ]; then
+            cp -a apps/mobile/preview-site/. _site/
+          else
+            cp apps/mobile/THE-Hybrid-App.html _site/index.html
+          fi
+          test -f _site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

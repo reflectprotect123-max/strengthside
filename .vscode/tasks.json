@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Hybrid App: serve preview",
+      "type": "shell",
+      "command": "python3 -m http.server 4173 --bind 127.0.0.1",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/mobile"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Hybrid App: open in Simple Browser",
+      "dependsOn": ["Hybrid App: serve preview"],
+      "dependsOrder": "sequence",
+      "command": "${input:openHybridSimpleBrowser}",
+      "type": "shell",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "never",
+        "echo": false,
+        "close": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "openHybridSimpleBrowser",
+      "type": "command",
+      "command": "simpleBrowser.show",
+      "args": ["http://127.0.0.1:4173/THE-Hybrid-App.html"]
+    }
+  ]
+}

@@ -66,6 +66,20 @@ keeps that from becoming a disaster:
   been proven green — a rename is a change to make deliberately, not as a side effect
   of moving house.
 
+## Athlete app — one surface
+
+**The product athletes use is the Hybrid HTML app we are building now.** Nothing
+else is the app.
+
+- Edit **`apps/mobile/prototype/hybrid-app/index.html`**, then
+  `bash apps/mobile/sync-hybrid-html.sh`. Play
+  `apps/mobile/THE-Hybrid-App.html` (or the githack / Update button).
+- Expo Home, `prototype/home.html`, and `prototype/pwa/` were **deleted**.
+  Do not recreate them. Do not run Expo to see the app.
+- `apps/web` is an engine bench, not the athlete product.
+- `@hybrid/strength-engine` stays the pure decision layer. The HTML app is the
+  only place athlete screens get built until a later, explicit rewrite.
+
 ## Pain and illness are safety flags, not readiness penalties
 
 Carried from the hybrid repo, and it binds here because this repo now holds the
