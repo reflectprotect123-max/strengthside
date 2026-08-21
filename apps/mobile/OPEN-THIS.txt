@@ -1,8 +1,6 @@
-THE Hybrid App — open without a server
+If you see "nothing" in Cursor/GitHub: that is normal — they do not run HTML.
 
-1. Pull branch: cursor/mobile-home-screen-2ff0
-2. Double-click:  apps/mobile/THE-Hybrid-App.html
-   (opens in Chrome / Safari — no localhost, no python)
+1) git checkout cursor/mobile-home-screen-2ff0 && git pull
+2) Right-click apps/mobile/THE-Hybrid-App.html → Open With → Chrome
 
-That file is updated whenever we change the UI.
-(Cursor / GitHub will still show it as code — open it in a browser.)
+Picture of what it looks like: apps/mobile/PREVIEW.md (on GitHub)
