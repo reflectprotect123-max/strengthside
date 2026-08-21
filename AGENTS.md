@@ -58,6 +58,17 @@ each package's `package.json`; don't duplicate them here.
   readiness gauge / readiness overview).
 - When in doubt: preserve ARC intact; extend athlete surfaces to match it.
 
+### Conditioning week bank (athlete mobile)
+
+- Local source of truth: `apps/mobile/src/condBankStorage.ts` (AsyncStorage).
+- Optional cloud sync: `condBankSync.ts` → `condBankRemote.ts` merges into
+  **hybrid-owned** `app_state.state.strengthside.condWeek` and publishes
+  `athlete_feed.payload.condWeekBank` for linked coaches. No strength-side
+  migration — shared-Supabase contract.
+- Needs `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, and a
+  signed-in Supabase user. Without those, Home stays local-only and shows
+  "Cloud: off" / "sign in to sync".
+
 ### Edge function
 
 `supabase/functions/embed-coaching-note` is Deno at runtime but is typechecked
