@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Athlete Home · Hybrid</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --header: #101010;
+      --card: #191919;
+      --line: #2a2a2a;
+      --brass: #c09358;
+      --brass-hot: #e0bc87;
+      --muted: #847d73;
+      --muted2: #aaa49a;
+      --text: #f5f1e9;
+      --rec: #33c4ff;
+      --mod: #3dff9e;
+      --ovl: #ff5b57;
+      --track: #2a2e36;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #1a1c22;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      height: min(844px, 92vh);
+      background: var(--bg);
+      border-radius: 28px;
+      border: 1px solid #333;
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .view { display: none; flex: 1; flex-direction: column; min-height: 0; }
+    .view.on { display: flex; }
+
+    /* —— HOME —— */
+    .topbar {
+      height: 44px;
+      padding: 0 14px;
+      background: var(--header);
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .topbar h1 {
+      font-size: 15px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .latest {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      padding: 3px 7px;
+      border-radius: 4px;
+      background: #222;
+      color: var(--brass);
+    }
+
+    /* No scroll — everything must fit the phone frame */
+    .scroll {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .athlete {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .bolt {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      background: #222;
+      display: grid; place-items: center;
+      color: var(--brass-hot);
+      font-size: 12px;
+    }
+    .athlete .name {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: lowercase;
+      line-height: 1.15;
+    }
+    .athlete .meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 0;
+      line-height: 1.2;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      flex-shrink: 0;
+    }
+    .card-kicker {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--brass);
+      margin-bottom: 8px;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .card-head .card-kicker { margin-bottom: 0; }
+    .card-head .ready {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--mod);
+      font-variant-numeric: tabular-nums;
+    }
+    .card-head .ready span {
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-right: 6px;
+    }
+
+    /* Sleep — Whoop rings */
+    .sleep-row {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .legend { display: flex; flex-direction: column; gap: 5px; }
+    .leg {
+      display: grid;
+      grid-template-columns: 7px 1fr auto;
+      gap: 7px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .leg .lab { color: var(--muted2); font-weight: 600; }
+    .leg .val { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* Conditioning — L→R rails (tap target) */
+    .cond { cursor: pointer; }
+    .cond:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+    .cond:active { filter: brightness(1.08); }
+    .week-bank {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .week-bank .l {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .week-bank .r {
+      font-size: 13px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--brass-hot);
+    }
+    .rails { display: flex; flex-direction: column; gap: 7px; }
+    .rail { display: flex; flex-direction: column; gap: 3px; }
+    .rail-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+    .rail-meta .zn {
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted2);
+    }
+    .rail-meta .mn {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    .track {
+      height: 5px;
+      border-radius: 3px;
+      background: var(--track);
+      overflow: hidden;
+    }
+    .fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      transition: width 0.45s ease;
+    }
+    .fill.rec { background: var(--rec); box-shadow: 0 0 8px rgba(51,196,255,.4); }
+    .fill.mod { background: var(--mod); box-shadow: 0 0 8px rgba(61,255,158,.35); }
+    .fill.ovl { background: var(--ovl); box-shadow: 0 0 8px rgba(255,91,87,.35); }
+    .hint {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    /* Nutrition */
+    .kcal-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .kcal {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .kcal span {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+    .macro-rings {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .macro-ring {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 44px;
+    }
+    .macro-ring svg { display: block; }
+    .macro-ring .mk {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted2);
+    }
+    .macro-ring .mv {
+      font-size: 9px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .dock {
+      height: 48px;
+      flex-shrink: 0;
+      border-top: 1px solid #222;
+      background: #0c0c0c;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555;
+    }
+    .dock .on { color: var(--brass-hot); }
+
+    /* —— LIVE (APK ring) —— */
+    .live-top {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .back {
+      border: 0;
+      background: #1c1c1c;
+      color: var(--brass);
+      font: 700 12px/1 inherit;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .live-top h2 { font-size: 18px; font-weight: 800; }
+    .live-body {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .hud {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+    }
+    .ring {
+      width: 128px; height: 128px;
+      position: relative;
+      flex: 0 0 128px;
+    }
+    .ring svg { width: 128px; height: 128px; display: block; }
+    .ring-hole {
+      position: absolute; inset: 14px;
+      border-radius: 50%;
+      background: var(--card);
+      display: grid;
+      place-content: center;
+      text-align: center;
+    }
+    .bpm {
+      font-size: 40px;
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .bpm-l {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .side .zone {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .side .clock {
+      margin-top: 4px;
+      font-size: 34px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .side .of { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .side .phase { margin-top: 10px; font-size: 14px; color: var(--brass); font-weight: 600; }
+
+    .scrub {
+      display: grid;
+      grid-template-columns: 52px 1fr 52px;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+    }
+    .scrub button {
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #121212;
+      color: var(--brass-hot);
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .scrub .lab {
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .zone-table .head {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 4px;
+      padding: 0 2px;
+    }
+    .zr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .zr:first-of-type { border-top: none; }
+    .zr .r {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted2);
+      font-weight: 600;
+    }
+    .zr .v { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+    .finish {
+      margin-top: auto;
+      height: 52px;
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      background: linear-gradient(180deg, #c2974e, #a9803f);
+      color: #1b1509;
+      font: 800 16px/1 inherit;
+      letter-spacing: 0.04em;
+    }
+    .finish:active { filter: brightness(0.94); }
+
+    /* —— ARC coach readiness (brass gauge) —— */
+    .sleep-card { cursor: pointer; }
+    .sleep-card:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+    .sleep-card:active { filter: brightness(1.06); }
+
+    .ready-top {
+      padding: 14px 16px 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .ready-body {
+      flex: 1;
+      overflow: auto;
+      padding: 0 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: none;
+    }
+    .ready-body::-webkit-scrollbar { display: none; }
+    .ready-meta .date {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .ready-meta .who {
+      font-size: 20px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+    .gauge-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      background: radial-gradient(120% 140% at 50% -10%, #1c1b18, #0a0a09);
+      padding: 22px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .gauge-wrap {
+      position: relative;
+      width: 192px;
+      height: 192px;
+    }
+    .gauge-wrap svg { display: block; overflow: visible; }
+    .gauge-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .gauge-value {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.035em;
+    }
+    .gauge-value span {
+      font-size: 15px;
+      font-weight: 750;
+      margin-left: 1px;
+    }
+    .gauge-caption {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-top: 6px;
+      font-weight: 700;
+    }
+    .band-block { width: 100%; max-width: 320px; }
+    .band-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .band-labels .status {
+      letter-spacing: 0;
+      text-transform: none;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .band-track {
+      position: relative;
+      height: 6px;
+      border-radius: 999px;
+      overflow: visible;
+      background: linear-gradient(90deg, #cf7f7c, #d1a464, #9fc59b);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.35);
+    }
+    .band-thumb {
+      position: absolute;
+      top: 50%;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #f5f1e9;
+      border: 3px solid #0a0a09;
+      transform: translate(-50%, -50%);
+    }
+    .trend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .trend {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(180deg, #141311, #0a0a09);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .trend-h {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted2);
+    }
+    .trend-h .ico { color: var(--muted); }
+    .trend-val {
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .trend-val span {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    .trend-delta {
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fill { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <section id="home" class="view on">
+      <header class="topbar">
+        <h1>All athletes</h1>
+        <span class="latest">W1 · D1</span>
+      </header>
+
+      <div class="scroll">
+        <div class="athlete">
+          <div class="bolt" aria-hidden="true">⚡</div>
+          <div>
+            <div class="name">dan veldman</div>
+            <div class="meta">Thu 20 Aug · Week 1 Day 1</div>
+          </div>
+        </div>
+
+        <section class="card sleep-card" id="open-sleep" tabindex="0" role="button" aria-label="Open ARC readiness overview">
+          <div class="card-head">
+            <div class="card-kicker">Sleep</div>
+            <div class="ready"><span>Ready</span><span id="ready-val">High · 71</span></div>
+          </div>
+          <div class="sleep-row">
+            <svg width="76" height="76" viewBox="0 0 92 92" aria-hidden="true">
+              <g transform="rotate(-90 46 46)">
+                <circle cx="46" cy="46" r="40" fill="none" stroke="#2a2a2a" stroke-width="6" />
+                <circle cx="46" cy="46" r="40" fill="none" stroke="#3dff9e" stroke-width="6" stroke-linecap="butt"
+                  stroke-dasharray="251.3" stroke-dashoffset="72.9" />
+                <circle cx="46" cy="46" r="30" fill="none" stroke="#2a2a2a" stroke-width="6" />
+                <circle cx="46" cy="46" r="30" fill="none" stroke="#33c4ff" stroke-width="6" stroke-linecap="butt"
+                  stroke-dasharray="188.5" stroke-dashoffset="71.6" />
+                <circle cx="46" cy="46" r="20" fill="none" stroke="#2a2a2a" stroke-width="6" />
+                <circle cx="46" cy="46" r="20" fill="none" stroke="#c09358" stroke-width="6" stroke-linecap="butt"
+                  stroke-dasharray="125.7" stroke-dashoffset="15.1" />
+              </g>
+            </svg>
+            <div class="legend">
+              <div class="leg"><span class="dot" style="background:#3dff9e;color:#3dff9e"></span><span class="lab">Recovery</span><span class="val">71%</span></div>
+              <div class="leg"><span class="dot" style="background:#33c4ff;color:#33c4ff"></span><span class="lab">Strain</span><span class="val">62%</span></div>
+              <div class="leg"><span class="dot" style="background:#c09358;color:#c09358"></span><span class="lab">Sleep</span><span class="val">88%</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card cond" id="open-cond" tabindex="0" role="button" aria-label="Open conditioning live demo">
+          <div class="card-kicker">Conditioning</div>
+          <div class="week-bank">
+            <span class="l">Week banked</span>
+            <span class="r" id="week-total">84 / 180 min</span>
+          </div>
+          <div class="rails" id="banks"></div>
+          <div class="hint">Tap to train</div>
+        </section>
+
+        <section class="card" aria-label="Nutrition">
+          <div class="card-kicker">Nutrition</div>
+          <div class="kcal-row">
+            <div class="kcal">2,529<span>kcal left</span></div>
+            <div class="macro-rings" aria-label="Macros">
+              <!-- circumference 2πr = 2*3.1416*14 ≈ 88; 0% eaten = full dashoffset -->
+              <div class="macro-ring">
+                <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+                  <circle cx="20" cy="20" r="14" fill="none" stroke="#2a2a2a" stroke-width="4" />
+                  <circle cx="20" cy="20" r="14" fill="none" stroke="#c09358" stroke-width="4"
+                    stroke-linecap="butt" transform="rotate(-90 20 20)"
+                    stroke-dasharray="88" stroke-dashoffset="88" />
+                </svg>
+                <span class="mk">P</span>
+                <span class="mv">0/165</span>
+              </div>
+              <div class="macro-ring">
+                <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+                  <circle cx="20" cy="20" r="14" fill="none" stroke="#2a2a2a" stroke-width="4" />
+                  <circle cx="20" cy="20" r="14" fill="none" stroke="#33c4ff" stroke-width="4"
+                    stroke-linecap="butt" transform="rotate(-90 20 20)"
+                    stroke-dasharray="88" stroke-dashoffset="88" />
+                </svg>
+                <span class="mk">C</span>
+                <span class="mv">0/225</span>
+              </div>
+              <div class="macro-ring">
+                <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+                  <circle cx="20" cy="20" r="14" fill="none" stroke="#2a2a2a" stroke-width="4" />
+                  <circle cx="20" cy="20" r="14" fill="none" stroke="#9fc59b" stroke-width="4"
+                    stroke-linecap="butt" transform="rotate(-90 20 20)"
+                    stroke-dasharray="88" stroke-dashoffset="88" />
+                </svg>
+                <span class="mk">F</span>
+                <span class="mv">0/70</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <nav class="dock" aria-label="Primary">
+        <span class="on">Home</span>
+        <span>Train</span>
+        <span>Log</span>
+        <span>Me</span>
+      </nav>
+    </section>
+
+    <section id="ready" class="view" aria-label="ARC readiness">
+      <div class="ready-top">
+        <button type="button" class="back" id="btn-ready-back">← Back</button>
+      </div>
+      <div class="ready-body">
+        <div class="ready-meta">
+          <div class="date">Thursday, August 20, 2026</div>
+          <div class="who">Dan Veldman</div>
+        </div>
+
+        <div class="gauge-card">
+          <div class="gauge-wrap">
+            <svg width="192" height="192" viewBox="0 0 192 192" aria-hidden="true">
+              <defs>
+                <linearGradient id="brassBezel" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#c8a06d" />
+                  <stop offset="45%" stop-color="#8a6a3f" />
+                  <stop offset="55%" stop-color="#8a6a3f" />
+                  <stop offset="100%" stop-color="#e0bc87" />
+                </linearGradient>
+              </defs>
+              <circle cx="96" cy="96" r="90" fill="none" stroke="url(#brassBezel)" stroke-width="2.5" opacity="0.8" />
+              <g transform="rotate(-90 96 96)">
+                <circle cx="96" cy="96" r="72" fill="none" stroke="#ffffff0f" stroke-width="11" />
+                <circle id="arc-fill" cx="96" cy="96" r="72" fill="none" stroke="#3dff9e" stroke-width="11"
+                  stroke-linecap="round" stroke-dasharray="452.4 452.4" stroke-dashoffset="131.2" />
+              </g>
+              <g id="arc-needle" transform="rotate(255.6 96 96)">
+                <line x1="96" y1="96" x2="96" y2="34" stroke="#e0bc87" stroke-width="2" stroke-linecap="round" />
+              </g>
+              <circle cx="96" cy="96" r="4.5" fill="#e0bc87" />
+            </svg>
+            <div class="gauge-center">
+              <div class="gauge-value">71<span>%</span></div>
+              <div class="gauge-caption">Recovery</div>
+            </div>
+          </div>
+          <div class="band-block">
+            <div class="band-labels">
+              <span>Readiness</span>
+              <span class="status" id="band-status" style="color:#9fc59b">High</span>
+            </div>
+            <div class="band-track">
+              <div class="band-thumb" id="band-thumb" style="left:71%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="trend-grid">
+          <div class="trend">
+            <div class="trend-h"><span class="ico">∿</span> HRV</div>
+            <div class="trend-val">62<span>ms</span></div>
+            <div class="trend-delta" style="color:#9fc59b">+4 ms vs previous</div>
+          </div>
+          <div class="trend">
+            <div class="trend-h"><span class="ico">♥</span> Resting HR</div>
+            <div class="trend-val">48<span>bpm</span></div>
+            <div class="trend-delta" style="color:#9fc59b">−1 bpm vs previous</div>
+          </div>
+          <div class="trend">
+            <div class="trend-h"><span class="ico">☾</span> Sleep</div>
+            <div class="trend-val">88<span>%</span></div>
+            <div class="trend-delta" style="color:#9fc59b">+6% vs previous</div>
+          </div>
+          <div class="trend">
+            <div class="trend-h"><span class="ico">⚡</span> Strain</div>
+            <div class="trend-val">62</div>
+            <div class="trend-delta" style="color:#aaa49a">+1.4 vs previous</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="live" class="view" aria-label="Live">
+      <div class="live-top">
+        <button type="button" class="back" id="btn-back">Exit</button>
+        <h2>Live ring</h2>
+      </div>
+      <div class="live-body">
+        <div class="card hud">
+          <div class="ring" id="ring">
+            <svg viewBox="0 0 140 140" aria-hidden="true">
+              <circle cx="70" cy="70" r="56" fill="none" stroke="#2a2e36" stroke-width="12" />
+              <circle id="ring-arc" cx="70" cy="70" r="56" fill="none" stroke="#3dff9e" stroke-width="12"
+                stroke-dasharray="351.86" stroke-dashoffset="351.86" transform="rotate(-90 70 70)" />
+            </svg>
+            <div class="ring-hole">
+              <div class="bpm" id="bpm">—</div>
+              <div class="bpm-l">BPM</div>
+            </div>
+          </div>
+          <div class="side">
+            <div class="zone" id="zone-name">Below</div>
+            <div class="clock" id="clock">0:00</div>
+            <div class="of">of <span id="total">20:00</span></div>
+            <div class="phase" id="phase">Warm-up</div>
+          </div>
+        </div>
+
+        <div class="card scrub">
+          <button type="button" id="bpm-down">−</button>
+          <div class="lab">Demo bpm</div>
+          <button type="button" id="bpm-up">+</button>
+        </div>
+
+        <div class="card">
+          <div class="zone-table">
+            <div class="head">Hold bands</div>
+            <div id="zone-rows"></div>
+          </div>
+        </div>
+
+        <button type="button" class="finish" id="btn-finish">Finish · bank</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const RECOVERY = 71;
+    const MAX_HR = 190;
+    const TOTAL_SEC = 20 * 60;
+    const C = 2 * Math.PI * 56;
+
+    function conZones(recovery, maxHr) {
+      const m = maxHr;
+      const shift = Math.round(((recovery - 50) / 50) * 8);
+      let loHi = Math.round(m * 0.7) + Math.round(shift * 0.4);
+      let modHi = Math.round(m * 0.85) + Math.round(shift * 0.6);
+      loHi = Math.max(Math.round(m * 0.55), Math.min(loHi, Math.round(m * 0.78)));
+      modHi = Math.max(loHi + 8, Math.min(modHi, m - 5));
+      return {
+        max: m,
+        list: [
+          { key: 'low', name: 'Recovery', cls: 'rec', color: '#33c4ff', lo: Math.round(m * 0.5), hi: loHi },
+          { key: 'mod', name: 'Moderate', cls: 'mod', color: '#3dff9e', lo: loHi + 1, hi: modHi },
+          { key: 'high', name: 'Overload', cls: 'ovl', color: '#ff5b57', lo: modHi + 1, hi: m },
+        ],
+      };
+    }
+    function conZoneOf(bpm, zones) {
+      if (bpm == null) return null;
+      return zones.list.find((z) => bpm >= z.lo && bpm <= z.hi) || null;
+    }
+    function fmtClock(sec) {
+      sec = Math.max(0, Math.floor(sec));
+      return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    }
+
+    const zones = conZones(RECOVERY, MAX_HR);
+    const weekTargets = { low: 90, mod: 60, high: 30 };
+    const weekBanked = { low: 42, mod: 28, high: 14 };
+    let bpm = 95, elapsed = 0, timer = null, walk = null;
+    const sessionZoneSec = { low: 0, mod: 0, high: 0 };
+    const $ = (id) => document.getElementById(id);
+
+    function paintBanks() {
+      const root = $('banks');
+      root.innerHTML = '';
+      let banked = 0, target = 0;
+      zones.list.forEach((z) => {
+        const got = weekBanked[z.key] || 0;
+        const need = weekTargets[z.key] || 1;
+        banked += got; target += need;
+        const pct = Math.min(100, Math.round((got / need) * 100));
+        const el = document.createElement('div');
+        el.className = 'rail';
+        el.innerHTML =
+          '<div class="rail-meta"><span class="zn">' + z.name + '</span><span class="mn">' + got + '/' + need + 'm</span></div>' +
+          '<div class="track"><div class="fill ' + z.cls + '" style="width:' + pct + '%"></div></div>';
+        root.appendChild(el);
+      });
+      $('week-total').textContent = banked + ' / ' + target + ' min';
+      const ready = RECOVERY >= 67 ? 'High · ' + RECOVERY : RECOVERY >= 34 ? 'Mod · ' + RECOVERY : 'Low · ' + RECOVERY;
+      $('ready-val').textContent = ready;
+      $('ready-val').style.color = RECOVERY >= 67 ? '#3dff9e' : RECOVERY >= 34 ? '#c09358' : '#ff5b57';
+    }
+
+    function paintZoneRows() {
+      const root = $('zone-rows');
+      root.innerHTML = '';
+      zones.list.forEach((z) => {
+        const row = document.createElement('div');
+        row.className = 'zr';
+        row.innerHTML = '<div class="r"><span class="dot" style="background:' + z.color + ';color:' + z.color + '"></span>' + z.name + '</div><div class="v">' + z.lo + '–' + z.hi + '</div>';
+        root.appendChild(row);
+      });
+    }
+
+    function paintLive() {
+      const z = conZoneOf(bpm, zones);
+      const color = z ? z.color : '#555';
+      const frac = Math.min(1, bpm / zones.max);
+      $('ring-arc').setAttribute('stroke', color);
+      $('ring-arc').setAttribute('stroke-dashoffset', String(C * (1 - frac)));
+      $('ring').style.filter = z ? 'drop-shadow(0 0 12px ' + color + '88)' : 'none';
+      $('bpm').textContent = String(bpm);
+      $('bpm').style.color = color;
+      $('zone-name').textContent = z ? z.name : 'Below';
+      $('zone-name').style.color = color;
+      $('clock').textContent = fmtClock(elapsed);
+      $('total').textContent = fmtClock(TOTAL_SEC);
+      let phase;
+      if (elapsed < 120) phase = 'Warm-up · ' + fmtClock(120 - elapsed);
+      else if (elapsed < TOTAL_SEC - 120) {
+        const into = elapsed - 120;
+        phase = 'Work ' + (Math.floor(into / 60) + 1) + ' · ' + fmtClock(60 - (into % 60));
+      } else phase = 'Cool-down · ' + fmtClock(TOTAL_SEC - elapsed);
+      if (elapsed >= TOTAL_SEC) phase = 'Complete';
+      $('phase').textContent = phase;
+    }
+
+    function startDemo() {
+      bpm = 95; elapsed = 0;
+      sessionZoneSec.low = sessionZoneSec.mod = sessionZoneSec.high = 0;
+      paintLive();
+      clearInterval(timer); clearInterval(walk);
+      timer = setInterval(() => {
+        elapsed = Math.min(TOTAL_SEC, elapsed + 1);
+        const z = conZoneOf(bpm, zones);
+        if (z) sessionZoneSec[z.key] += 1;
+        paintLive();
+      }, 1000);
+      walk = setInterval(() => {
+        bpm = Math.max(70, Math.min(zones.max, Math.round(95 + (elapsed / TOTAL_SEC) * 80 + Math.sin(elapsed / 8) * 6)));
+        paintLive();
+      }, 500);
+    }
+    function stopDemo() { clearInterval(timer); clearInterval(walk); timer = walk = null; }
+    function bankSessionMinutes() {
+      ['low', 'mod', 'high'].forEach((k) => {
+        const add = Math.ceil(sessionZoneSec[k] / 60);
+        if (add > 0) weekBanked[k] = Math.min(weekTargets[k], (weekBanked[k] || 0) + add);
+      });
+      paintBanks();
+    }
+    function show(which) {
+      $('home').classList.toggle('on', which === 'home');
+      $('live').classList.toggle('on', which === 'live');
+      $('ready').classList.toggle('on', which === 'ready');
+    }
+
+    function openLive() { show('live'); startDemo(); }
+    function openReady() { show('ready'); }
+    function finish() { bankSessionMinutes(); stopDemo(); show('home'); }
+
+    $('open-sleep').addEventListener('click', openReady);
+    $('open-sleep').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openReady(); }
+    });
+    $('btn-ready-back').addEventListener('click', () => show('home'));
+    $('open-cond').addEventListener('click', openLive);
+    $('open-cond').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLive(); }
+    });
+    $('btn-back').addEventListener('click', () => { stopDemo(); show('home'); });
+    $('btn-finish').addEventListener('click', finish);
+    $('bpm-up').addEventListener('click', () => { bpm = Math.min(zones.max, bpm + 5); paintLive(); });
+    $('bpm-down').addEventListener('click', () => { bpm = Math.max(60, bpm - 5); paintLive(); });
+
+    paintBanks();
+    paintZoneRows();
+    paintLive();
+  </script>
+</body>
+</html>
