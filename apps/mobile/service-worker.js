@@ -1,12 +1,16 @@
-const CACHE = 'the-hybrid-athlete-home-cond-v13';
+const CACHE = 'the-hybrid-athlete-home-cond-v15';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) =>
       Promise.all(
-        ['./', './index.html', './THE-Hybrid-App.html', './manifest.json'].map((url) =>
-          cache.add(url).catch(() => undefined),
-        ),
+        [
+          './',
+          './index.html',
+          './THE-Hybrid-App.html',
+          './whoop.js',
+          './manifest.json',
+        ].map((url) => cache.add(url).catch(() => undefined)),
       ),
     ),
   );
@@ -28,6 +32,12 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Never cache Netlify function proxies — WHOOP status/sync must be live.
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/.netlify/functions/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE);
