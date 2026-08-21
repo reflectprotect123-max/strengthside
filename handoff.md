@@ -68,7 +68,8 @@ truth — this HTML is the shareable freeze of where the UI was on 21 Aug.
 **`apps/mobile/prototype/hybrid-app/`** — **the real drop-in**: uploaded Hybrid
 Logger/Builder `index.html` with Sleep / Conditioning / Nutrition injected at
 the top of Home. Tap **Sleep** → top tabs **Check-in | Overview** (check-in
-lives here, not in bottom nav). Serve with `python3 -m http.server 4173`
+lives here, not in bottom nav). Full-app chrome polish + design tokens in
+`design-system/the-hybrid-system/`. Serve with `python3 -m http.server 4173`
 from that folder.
 
 ### Next session — start here
