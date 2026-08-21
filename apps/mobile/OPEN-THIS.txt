@@ -1,6 +1,7 @@
-If you see "nothing" in Cursor/GitHub: that is normal — they do not run HTML.
+EASIEST: see apps/mobile/SEE-IN-CURSOR.md
 
-1) git checkout cursor/mobile-home-screen-2ff0 && git pull
-2) Right-click apps/mobile/THE-Hybrid-App.html → Open With → Chrome
+In Cursor: Run Task "Hybrid App: serve preview"
+Then Cmd/Ctrl+Shift+P → "Simple Browser: Show"
+→ http://127.0.0.1:4173/THE-Hybrid-App.html
 
-Picture of what it looks like: apps/mobile/PREVIEW.md (on GitHub)
+Refresh that tab after each update. No git pull needed in the cloud IDE.
