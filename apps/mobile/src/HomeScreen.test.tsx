@@ -1,9 +1,16 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { HomeScreen, zonesForReadiness } from './HomeScreen';
+import { clearCondBank, loadCondBank, saveCondBank } from './condBankStorage';
 
 describe('HomeScreen', () => {
-  it('renders sleep, conditioning rails, and nutrition macros for today', () => {
+  beforeEach(async () => {
+    await clearCondBank();
+  });
+
+  it('renders sleep, conditioning rails, and nutrition macros for today', async () => {
     const screen = render(<HomeScreen />);
+
+    await waitFor(() => screen.getByTestId('home-bank-ready'));
 
     screen.getByText('ALL ATHLETES');
     screen.getByText(/Week 1 Day 1/);
@@ -26,8 +33,9 @@ describe('HomeScreen', () => {
     screen.getByText('0/70');
   });
 
-  it('opens the ARC readiness overview from sleep', () => {
+  it('opens the ARC readiness overview from sleep', async () => {
     const screen = render(<HomeScreen />);
+    await waitFor(() => screen.getByTestId('home-bank-ready'));
 
     fireEvent.press(screen.getByLabelText(/Sleep overview for/));
 
@@ -37,16 +45,39 @@ describe('HomeScreen', () => {
     screen.getByText('HRV');
   });
 
-  it('opens the live ring from conditioning and can bank', () => {
+  it('opens the live ring from conditioning and can bank', async () => {
     const screen = render(<HomeScreen />);
+    await waitFor(() => screen.getByTestId('home-bank-ready'));
 
     fireEvent.press(screen.getByLabelText(/Conditioning live ring for/));
 
     screen.getByText('Live ring');
     screen.getByText('Hold bands');
     screen.getByText('Demo bpm');
-    fireEvent.press(screen.getByLabelText('Finish and bank minutes'));
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Finish and bank minutes'));
+    });
     screen.getByText('Week banked');
+
+    await waitFor(async () => {
+      const stored = await loadCondBank('dan veldman', 'W1');
+      expect(stored).not.toBeNull();
+    });
+  });
+
+  it('restores banked minutes from local storage on launch', async () => {
+    await saveCondBank('dan veldman', 'W1', {
+      low: { banked: 50, target: 90 },
+      mod: { banked: 30, target: 60 },
+      high: { banked: 16, target: 30 },
+    });
+
+    const screen = render(<HomeScreen />);
+    await waitFor(() => screen.getByTestId('home-bank-ready'));
+    screen.getByText('96 / 180 min');
+    screen.getByText('50/90m');
+    screen.getByText('30/60m');
+    screen.getByText('16/30m');
   });
 });
 

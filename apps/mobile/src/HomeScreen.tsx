@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, G, LinearGradient, Line, Stop } from 'react-native-svg';
+import { loadCondBank, saveCondBank, type CondWeek, type ZoneBank } from './condBankStorage';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -19,21 +20,11 @@ interface NutritionMetrics {
   fat: { eaten: number; target: number };
 }
 
-interface ZoneBank {
-  banked: number;
-  target: number;
-}
-
-interface CondWeek {
-  low: ZoneBank;
-  mod: ZoneBank;
-  high: ZoneBank;
-}
-
 interface Session {
   date: string;
   athlete: string;
   workout: string;
+  weekId: string;
   isNew?: boolean;
   sleep: SleepMetrics;
   nutrition: NutritionMetrics;
@@ -53,6 +44,7 @@ const INITIAL_SESSION: Session = {
   date: 'Thursday, August 20, 2026',
   athlete: 'dan veldman',
   workout: 'Week 1 Day 1',
+  weekId: 'W1',
   sleep: { recovery: 71, strain: 62, sleep: 88 },
   nutrition: {
     kcalLeft: 2529,
@@ -76,12 +68,52 @@ const MACRO_COLORS = {
 const LIVE_TOTAL_SEC = 20 * 60;
 const LIVE_RING_C = 2 * Math.PI * 56;
 
+function applyBank(
+  prev: CondWeek,
+  added: { low: number; mod: number; high: number },
+): CondWeek {
+  const bump = (z: ZoneBank, add: number): ZoneBank => ({
+    ...z,
+    banked: Math.min(z.target, z.banked + Math.max(0, add)),
+  });
+  return {
+    low: bump(prev.low, added.low),
+    mod: bump(prev.mod, added.mod),
+    high: bump(prev.high, added.high),
+  };
+}
+
 export function HomeScreen() {
   const [session, setSession] = useState(INITIAL_SESSION);
   const [overview, setOverview] = useState<'sleep' | 'live' | null>(null);
+  const [bankReady, setBankReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const stored = await loadCondBank(INITIAL_SESSION.athlete, INITIAL_SESSION.weekId);
+      if (cancelled) return;
+      if (stored) {
+        setSession(prev => ({ ...prev, conditioning: stored }));
+      }
+      setBankReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const bankMinutes = (added: { low: number; mod: number; high: number }) => {
+    setSession(prev => {
+      const nextWeek = applyBank(prev.conditioning, added);
+      void saveCondBank(prev.athlete, prev.weekId, nextWeek);
+      return { ...prev, conditioning: nextWeek };
+    });
+    setOverview(null);
+  };
 
   return (
-    <View style={styles.app}>
+    <View style={styles.app} testID={bankReady ? 'home-bank-ready' : 'home-bank-loading'}>
       <StatusBar style="light" backgroundColor="#101010" translucent={false} />
 
       <View style={styles.header}>
@@ -112,35 +144,7 @@ export function HomeScreen() {
         <LiveRingScreen
           session={session}
           onClose={() => setOverview(null)}
-          onBank={added => {
-            setSession(prev => ({
-              ...prev,
-              conditioning: {
-                low: {
-                  ...prev.conditioning.low,
-                  banked: Math.min(
-                    prev.conditioning.low.target,
-                    prev.conditioning.low.banked + (added.low || 0),
-                  ),
-                },
-                mod: {
-                  ...prev.conditioning.mod,
-                  banked: Math.min(
-                    prev.conditioning.mod.target,
-                    prev.conditioning.mod.banked + (added.mod || 0),
-                  ),
-                },
-                high: {
-                  ...prev.conditioning.high,
-                  banked: Math.min(
-                    prev.conditioning.high.target,
-                    prev.conditioning.high.banked + (added.high || 0),
-                  ),
-                },
-              },
-            }));
-            setOverview(null);
-          }}
+          onBank={bankMinutes}
         />
       ) : null}
     </View>
