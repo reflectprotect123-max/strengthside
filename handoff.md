@@ -13,12 +13,13 @@
 **Source file:** `apps/mobile/prototype/hybrid-app/index.html`  
 **Play file:** `apps/mobile/THE-Hybrid-App.html` (run `bash apps/mobile/sync-hybrid-html.sh` after edits)  
 **Play URL:** see `apps/mobile/PLAY.md`  
-**Build id:** `the-hybrid-athlete-home-cond-v11` (tap **Update** in the header)
+**Build id:** `the-hybrid-athlete-home-cond-v12` (tap **Update** in the header)
 
 What this app is today: Sleep (check-in | readiness gauge), Conditioning
-(Morpheus half-gauge + Start → Web Bluetooth HR + 120s “Are you finished?”
-on leave), Nutrition fixture card, plus the existing localStorage logger /
-programs / calendar / settings.
+(Morpheus half-gauge, **Connect strap** for live BPM, **Start/Pause** for
+the clock only, 120s “Are you finished?” on leave), Nutrition fixture card,
+plus the existing localStorage logger / programs / calendar / settings.
+Resume on an active cond session opens the gauge, not session preview.
 
 **Do not** open Expo, `home.html`, or the old PWA shell. Those are gone.
 
@@ -26,9 +27,9 @@ programs / calendar / settings.
 
 1. Read this block + `CLAUDE.md` “Athlete app — one surface”.
 2. Open `apps/mobile/PLAY.md` (or THE-Hybrid-App.html locally).
-3. Keep building **this** HTML app. Known Cond follow-ups: Resume must
-   return to the gauge (not APK preview); split Connect strap vs Start;
-   live bpm vs average on the gauge.
+3. Keep building **this** HTML app. Cond logger Resume / Connect vs Start /
+   live vs average are in. Next is whatever the athlete asks for on this
+   HTML surface.
 
 ---
 
