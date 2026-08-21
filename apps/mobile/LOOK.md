@@ -1,12 +1,14 @@
-# Just look here
+# Just look / play
 
-1. Click this file in the left sidebar: `apps/mobile/LOOK.md`
-2. Click the **preview icon** at the top right (open preview / split markdown)
+## Interactive (play with it) — use this
 
-You should see the app picture below. That is enough.
+Open in Chrome:  
+https://htmlpreview.github.io/?https://github.com/reflectprotect123-max/strengthside/blob/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
+
+Refresh after updates. Details: [PLAY.md](./PLAY.md)
 
 ---
 
-![THE Hybrid App Home](preview.png)
+## Picture only
 
-Tap Sleep in the real app later for Check-in. For now, this picture is the live Home.
+![THE Hybrid App Home](preview.png)

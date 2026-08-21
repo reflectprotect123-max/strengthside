@@ -1,6 +1,7 @@
-Too hard? Do only this:
+PLAY with the app (interactive):
 
-Open apps/mobile/LOOK.md in Cursor
-→ click the markdown Preview button (top right)
+Open this in Chrome and bookmark it:
 
-You will see a picture of the app. No server. No git. No ports.
+https://htmlpreview.github.io/?https://github.com/reflectprotect123-max/strengthside/blob/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
+
+Refresh after each update. See apps/mobile/PLAY.md
