@@ -235,3 +235,12 @@ working this repo. They live at visible repo paths and are committed on
 |---|---|---|
 | Cursor skills under `.cursor/skills/` | 10 directories (ui-ux-pro-max suite + frontend-design + caveman + mem-search) | Yes if committed |
 | Claude Mem hooks + context rule | project + user hooks | Project yes; user hooks + built tree + API key **no** |
+
+## Rules of thumb
+
+- Prefer the **smallest** skill that covers the job.
+- Prefer **repo-local** skills (`.cursor/skills/` or materialised `.claude/skills/`) over global ones when both exist.
+- Prefer **explicit** skill invocation over hoping the model “just knows.”
+- Prefer **skills that produce artifacts** (code, docs, checklists) over skills that only produce opinions.
+- Claude Code path: run `bash scripts/ensure-skills.sh` on a fresh container.
+- Cursor path: skills under `.cursor/` travel with git; Claude Mem worker + Gemini key must be rebuilt/restored after recycle.
