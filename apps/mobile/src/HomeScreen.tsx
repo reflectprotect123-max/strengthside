@@ -12,12 +12,20 @@ interface SleepMetrics {
   sleep: number;
 }
 
+interface NutritionMetrics {
+  kcalLeft: number;
+  protein: { eaten: number; target: number };
+  carbs: { eaten: number; target: number };
+  fat: { eaten: number; target: number };
+}
+
 interface Session {
   date: string;
   athlete: string;
   workout: string;
   isNew?: boolean;
   sleep: SleepMetrics;
+  nutrition: NutritionMetrics;
 }
 
 interface TrendCard {
@@ -35,8 +43,20 @@ const SESSIONS: Session[] = [
     athlete: 'dan veldman',
     workout: 'Week 1 Day 1',
     sleep: { recovery: 71, strain: 62, sleep: 88 },
+    nutrition: {
+      kcalLeft: 2529,
+      protein: { eaten: 0, target: 164 },
+      carbs: { eaten: 0, target: 225 },
+      fat: { eaten: 0, target: 70 },
+    },
   },
 ];
+
+const MACRO_COLORS = {
+  protein: '#e879a9',
+  carbs: '#e8a35c',
+  fat: '#9fc59b',
+} as const;
 
 export function HomeScreen() {
   const [overview, setOverview] = useState<{ session: Session; kind: 'sleep' | 'conditioning' } | null>(
@@ -158,6 +178,39 @@ function SessionCard({
         </View>
         <Ionicons name="chevron-forward" size={18} color="#847d73" />
       </Pressable>
+
+      <View style={[styles.moduleRow, styles.moduleRowSpaced, styles.nutritionModule]}>
+        <Text style={styles.moduleLabel}>NUTRITION</Text>
+        <NutritionRings nutrition={session.nutrition} size={92} />
+        <View style={styles.nutritionBody}>
+          <View style={styles.nutritionTodayRow}>
+            <Text style={styles.nutritionToday}>TODAY</Text>
+            <View style={styles.nutritionTodayDot} />
+          </View>
+          <Text style={styles.nutritionKcal}>
+            {session.nutrition.kcalLeft.toLocaleString()}
+            <Text style={styles.nutritionKcalUnit}> kcal left</Text>
+          </Text>
+          <MacroBar
+            letter="P"
+            color={MACRO_COLORS.protein}
+            eaten={session.nutrition.protein.eaten}
+            target={session.nutrition.protein.target}
+          />
+          <MacroBar
+            letter="C"
+            color={MACRO_COLORS.carbs}
+            eaten={session.nutrition.carbs.eaten}
+            target={session.nutrition.carbs.target}
+          />
+          <MacroBar
+            letter="F"
+            color={MACRO_COLORS.fat}
+            eaten={session.nutrition.fat.eaten}
+            target={session.nutrition.fat.target}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -212,21 +265,61 @@ function MorpheusZoneBar({ zones }: { zones: readonly Zone[] }) {
 }
 
 function WhoopRings({ metrics, size }: { metrics: SleepMetrics; size: number }) {
+  return (
+    <ProgressRings
+      size={size}
+      rings={[
+        { progress: metrics.recovery / 100, color: '#3dff9e' },
+        { progress: metrics.strain / 100, color: '#33c4ff' },
+        { progress: metrics.sleep / 100, color: '#e0bc87' },
+      ]}
+    />
+  );
+}
+
+function NutritionRings({ nutrition, size }: { nutrition: NutritionMetrics; size: number }) {
+  return (
+    <ProgressRings
+      size={size}
+      rings={[
+        {
+          progress: nutrition.protein.target ? nutrition.protein.eaten / nutrition.protein.target : 0,
+          color: MACRO_COLORS.protein,
+        },
+        {
+          progress: nutrition.carbs.target ? nutrition.carbs.eaten / nutrition.carbs.target : 0,
+          color: MACRO_COLORS.carbs,
+        },
+        {
+          progress: nutrition.fat.target ? nutrition.fat.eaten / nutrition.fat.target : 0,
+          color: MACRO_COLORS.fat,
+        },
+      ]}
+    />
+  );
+}
+
+function ProgressRings({
+  size,
+  rings,
+}: {
+  size: number;
+  rings: Array<{ progress: number; color: string }>;
+}) {
   const stroke = Math.max(7, size * 0.08);
   const gap = stroke + 3;
   const center = size / 2;
-  const rings = [
-    { progress: metrics.recovery / 100, color: '#3dff9e', radius: center - stroke / 2 - 2 },
-    { progress: metrics.strain / 100, color: '#33c4ff', radius: center - stroke / 2 - 2 - gap },
-    { progress: metrics.sleep / 100, color: '#e0bc87', radius: center - stroke / 2 - 2 - gap * 2 },
-  ];
+  const drawn = rings.map((ring, index) => ({
+    ...ring,
+    radius: center - stroke / 2 - 2 - gap * index,
+  }));
 
   return (
     <Svg width={size} height={size}>
       <G transform={`rotate(-90 ${center} ${center})`}>
-        {rings.map(ring => (
+        {drawn.map(ring => (
           <Circle
-            key={ring.color}
+            key={`${ring.color}-track`}
             cx={center}
             cy={center}
             r={ring.radius}
@@ -235,8 +328,9 @@ function WhoopRings({ metrics, size }: { metrics: SleepMetrics; size: number }) 
             strokeWidth={stroke}
           />
         ))}
-        {rings.map(ring => {
+        {drawn.map(ring => {
           const circumference = 2 * Math.PI * ring.radius;
+          const progress = Math.min(1, Math.max(0, ring.progress));
           return (
             <Circle
               key={`${ring.color}-progress`}
@@ -248,12 +342,37 @@ function WhoopRings({ metrics, size }: { metrics: SleepMetrics; size: number }) 
               strokeWidth={stroke}
               strokeLinecap="round"
               strokeDasharray={`${circumference} ${circumference}`}
-              strokeDashoffset={circumference * (1 - ring.progress)}
+              strokeDashoffset={circumference * (1 - progress)}
             />
           );
         })}
       </G>
     </Svg>
+  );
+}
+
+function MacroBar({
+  letter,
+  color,
+  eaten,
+  target,
+}: {
+  letter: string;
+  color: string;
+  eaten: number;
+  target: number;
+}) {
+  const ratio = target > 0 ? Math.min(1, eaten / target) : 0;
+  return (
+    <View style={styles.macroRow}>
+      <Text style={[styles.macroLetter, { color }]}>{letter}</Text>
+      <View style={styles.macroTrack}>
+        <View style={[styles.macroFill, { width: `${ratio * 100}%`, backgroundColor: color }]} />
+      </View>
+      <Text style={styles.macroValue}>
+        {eaten} / {target}g
+      </Text>
+    </View>
   );
 }
 
@@ -652,6 +771,70 @@ const styles = StyleSheet.create({
     color: '#f5f1e9',
     fontSize: 13,
     fontWeight: '800',
+  },
+  nutritionModule: {
+    alignItems: 'flex-start',
+  },
+  nutritionBody: {
+    flex: 1,
+    gap: 7,
+    paddingTop: 2,
+  },
+  nutritionTodayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  nutritionToday: {
+    color: '#847d73',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+  },
+  nutritionTodayDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#e8a35c',
+  },
+  nutritionKcal: {
+    color: '#f5f1e9',
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  nutritionKcalUnit: {
+    color: '#aaa49a',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  macroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  macroLetter: {
+    width: 12,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  macroTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: '#ffffff14',
+    overflow: 'hidden',
+  },
+  macroFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  macroValue: {
+    color: '#aaa49a',
+    fontSize: 11,
+    fontWeight: '600',
+    minWidth: 62,
+    textAlign: 'right',
   },
   conditioningHero: {
     borderWidth: 1,

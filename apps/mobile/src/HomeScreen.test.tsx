@@ -10,7 +10,13 @@ describe('HomeScreen', () => {
     screen.getByText('Week 1 Day 1');
     screen.getByText('SLEEP');
     screen.getByText('CONDITIONING');
+    screen.getByText('NUTRITION');
     screen.getByText('Zones move with today’s readiness');
+    screen.getByText(/2,529/);
+    screen.getByText(/kcal left/);
+    screen.getByText(/0 \/ 164g/);
+    screen.getByText(/0 \/ 225g/);
+    screen.getByText(/0 \/ 70g/);
   });
 
   it('opens the readiness overview from a sleep row', () => {
