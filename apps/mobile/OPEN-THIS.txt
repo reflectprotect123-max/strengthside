@@ -1,7 +1,6 @@
-EASIEST: see apps/mobile/SEE-IN-CURSOR.md
+Too hard? Do only this:
 
-In Cursor: Run Task "Hybrid App: serve preview"
-Then Cmd/Ctrl+Shift+P → "Simple Browser: Show"
-→ http://127.0.0.1:4173/THE-Hybrid-App.html
+Open apps/mobile/LOOK.md in Cursor
+→ click the markdown Preview button (top right)
 
-Refresh that tab after each update. No git pull needed in the cloud IDE.
+You will see a picture of the app. No server. No git. No ports.
