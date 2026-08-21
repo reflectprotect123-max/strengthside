@@ -11,11 +11,12 @@ Tap Sleep → Check-in / Overview. Use Programs, Calendar, Settings. Play.
 
 When we push updates, **refresh** that tab (hard refresh if needed: Ctrl/Cmd+Shift+R).
 
-## Permanent GitHub Pages URL (after first enable)
+## Permanent GitHub Pages URL
 
-Repo **Settings → Pages → Source: GitHub Actions**, then after the deploy workflow runs:
+Needs Pages enabled (Settings → Pages → Source: **GitHub Actions**).
+Until that is on, use the **htmlpreview** link above — fully interactive today.
 
-`https://reflectprotect123-max.github.io/strengthside/`
+When Pages works: `https://reflectprotect123-max.github.io/strengthside/`
 
 ## What we update each time
 
