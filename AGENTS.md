@@ -44,6 +44,20 @@ each package's `package.json`; don't duplicate them here.
   Metro HMR reconnect briefly flashes a black screen with the white Expo logo;
   that is the dev splash re-mounting, not a crash.
 
+### Product priority — ARC coach is the spine
+
+- **`ARC.dc.html`** (and companion `Coach App.dc.html`) is the **coach-side ARC
+  workspace** — Command Center, Readiness brass gauge, Conditioning, Library,
+  Session Builder, Analytics. Treat it as the visual + product source of truth.
+  Do **not** restyle, simplify, or "improve" it casually; a lot of iteration is
+  already sunk there. Athlete/mobile work should **align to ARC**, not the other
+  way around.
+- Athlete **mobile** (`apps/mobile`, including `prototype/live-conditioning.html`)
+  is a **slow / parallel build**. Home + live Conditioning demos are exploratory;
+  they must not overwrite or redefine coach ARC patterns (especially the brass
+  readiness gauge / readiness overview).
+- When in doubt: preserve ARC intact; extend athlete surfaces to match it.
+
 ### Edge function
 
 `supabase/functions/embed-coaching-note` is Deno at runtime but is typechecked
