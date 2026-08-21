@@ -1,40 +1,58 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 21 August 2026 (evening).** The athlete
-> product is **only** the Hybrid HTML app under
-> `apps/mobile/prototype/hybrid-app/` (synced to `THE-Hybrid-App.html`).
-> Expo Home, `home.html`, and `prototype/pwa/` are **not** the app. Do not
-> iterate them. Phase B (coach authoring) and a durable Phase C logger
-> (reducer + `assigned_session`) are still unstarted. Where this block
-> disagrees with anything below it, this one wins.
+> **AUTHORITATIVE CHECKPOINT — 21 August 2026 (night).**
+> **The go-to athlete app is this Hybrid HTML file.** We are slowly
+> building it in place. Where this block disagrees with anything below
+> it, this one wins.
 
-## Athlete app — Hybrid HTML only
+## The athlete app (go-to)
 
-**Source file:** `apps/mobile/prototype/hybrid-app/index.html`  
-**Play file:** `apps/mobile/THE-Hybrid-App.html` (run `bash apps/mobile/sync-hybrid-html.sh` after edits)  
-**Play URL:** see `apps/mobile/PLAY.md`  
-**Build id:** `the-hybrid-athlete-home-cond-v12` (tap **Update** in the header)
+This HTML app **is** the product athletes use. Not a prototype, not a
+throwaway, not a second UI. Expo Home, `prototype/home.html`, and
+`prototype/pwa/` were deleted on purpose. Do not recreate them. Do not
+open Expo to “see the app.” `apps/web` is an engine bench only.
 
-What this app is today: Sleep (check-in | readiness gauge), Conditioning
-(Morpheus half-gauge, **Connect strap** for live BPM, **Start/Pause** for
-the clock only, 120s “Are you finished?” on leave), Nutrition fixture card,
-plus the existing localStorage logger / programs / calendar / settings.
-Resume on an active cond session opens the gauge, not session preview.
+We build it slowly: one screen at a time, in this file, then play it.
 
-**Do not** open Expo, `home.html`, or the old PWA shell. Those are gone.
+| Role | Path |
+| --- | --- |
+| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` |
+| Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
+| **Play this** | `apps/mobile/THE-Hybrid-App.html` |
+| Play URL | `apps/mobile/PLAY.md` (githack on this branch) |
+| Cache / Update | `the-hybrid-athlete-home-cond-v12` — tap **Update** in the header |
+
+Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
+`@hybrid/strength-engine` stays pure (no I/O). The HTML app is the only
+place athlete screens get built until a later, explicit rewrite.
+
+Phase B (coach authoring) and a durable Phase C logger (reducer +
+`assigned_session`) are still unstarted. If logging lands, it lands **in
+this HTML app**.
+
+### What is in it today
+
+- **Home:** Sleep / Conditioning / Nutrition modules.
+- **Sleep:** Check-in \| Overview (readiness gauge).
+- **Conditioning:** Morpheus half-gauge. **Connect strap** = live BPM
+  (Web Bluetooth, Chrome Android/desktop, not iOS Safari). **Start/Pause**
+  = clock only. Avg HR is a separate field; it does not drive the needle.
+  Resume an active cond session returns to this gauge, not session preview.
+  Leave starts a 120s “Are you finished?” watch.
+- **Nutrition:** fixture card.
+- Plus the existing localStorage programs / calendar / settings / lift
+  logger that already lived in this HTML drop-in.
 
 ### Next session — start here
 
 1. Read this block + `CLAUDE.md` “Athlete app — one surface”.
-2. Open `apps/mobile/PLAY.md` (or THE-Hybrid-App.html locally).
-3. Keep building **this** HTML app. Cond logger Resume / Connect vs Start /
-   live vs average are in. Next is whatever the athlete asks for on this
-   HTML surface.
+2. Open `apps/mobile/PLAY.md` and keep building **this** HTML file.
+3. Do not iterate Expo or any deleted shell.
 
 ---
 
-> Older checkpoints kept below for history. Superseded on **which UI is
-> the app**: it is the Hybrid HTML drop-in, not Expo.
+> Older checkpoints below are history. The Expo Home / `home.html` /
+> PWA work was a false start. The Hybrid HTML drop-in is the app.
 
 ## 21 August 2026 — mobile Home first draft + Cursor tooling
 
