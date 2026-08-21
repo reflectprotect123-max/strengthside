@@ -1,11 +1,75 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 20 August 2026. Superpowers v6.3.0 and the full
-> hybrid-repo skill/plugin toolchain are now vendored and installed here, per
-> `skills.md`. NO UI FEATURES EXIST YET: Phase B (coach authoring) and Phase C
-> (mobile logger) are both unstarted — vendoring the toolchain is not
-> progress on either. Where this block disagrees with anything below it, this
+> **AUTHORITATIVE CHECKPOINT — 21 August 2026 (cloud agent session on
+> `cursor/mobile-home-screen-2ff0`). Athlete mobile Home has a first real UI
+> draft in `apps/mobile`: Sleep rings, Morpheus Conditioning zones, Nutrition
+> card. Cursor skills and Claude Mem hooks are installed under `.cursor/`.
+> Phase B (coach authoring) and full Phase C logger (offline set logging) are
+> still unstarted. Where this block disagrees with anything below it, this
 > one wins.**
+
+## 21 August 2026 — mobile Home first draft + Cursor tooling
+
+Branch: `cursor/mobile-home-screen-2ff0` (PR against `main`). Working style:
+screenshot → 1:1 mobile screen → iterate page by page. Preview via Expo web
+at `:8081`.
+
+### What shipped in the app
+
+- **`apps/mobile/src/HomeScreen.tsx`** replaces the METRICS placeholder.
+  Shell kept from the TrainHeroic-style screenshot (header ALL ATHLETES,
+  LATEST, bottom nav). Card interior cleared.
+- **SLEEP** module: three WHOOP-style rings (Recovery / Strain / Sleep).
+  Tap opens ARC-style readiness overview (brass gauge, readiness band,
+  HRV / RHR / Sleep / Strain trend cards).
+- **CONDITIONING** module under Sleep: Morpheus-style four-zone bar
+  (Rec / Aer / An / Peak). BPM ceilings from `zonesForReadiness(recovery)` —
+  higher recovery lifts ceilings. Tap opens zone detail overview.
+- **NUTRITION** module under Conditioning: FBB-style card — macro rings
+  (P/C/F), TODAY label, kcal left, horizontal P/C/F bars. Sample:
+  2,529 kcal left, 0/164g · 0/225g · 0/70g.
+- Single session card dated **Thursday, August 20, 2026** (Wednesday card
+  removed). Fixture data only — no Supabase wiring yet.
+- Tests: `apps/mobile/src/HomeScreen.test.tsx` (jest-expo). Web preview deps
+  added (`react-dom`, `react-native-web`, `react-native-svg`,
+  `@expo/vector-icons`).
+
+### What was installed for the agent
+
+See **`skills.md`** (Cursor / Claude Mem sections added this session). Short
+list:
+
+- `.cursor/skills/` — ui-ux-pro-max (+ bundled design skills),
+  frontend-design, caveman, mem-search
+- Claude Mem — built at `/home/ubuntu/claude-mem`, hooks in
+  `.cursor/hooks.json` + user `~/.cursor/hooks.json`, worker can run with
+  Gemini. API key lives only in `~/.claude-mem/settings.json` (never commit).
+
+### Still not done
+
+- Phase B coach authoring UI
+- Phase C full logger (session state machine, set logging, offline sync)
+- Real athlete data / Supabase client on mobile
+- Suggested-swaps / points-of-performance schema decisions
+- Preview PNGs under `/workspace/expo-*.png` are local artifacts, not
+  committed
+
+### Next session — start here
+
+1. Read this checkpoint + `skills.md` Cursor section.
+2. `pnpm install` then `pnpm --filter @hybrid/strength-mobile start` (or
+   Expo web) to resume visual iteration.
+3. Continue page-by-page from the next athlete screenshot, or wire Home
+   fixtures to `assigned_session` / performed data when ready.
+4. If Claude Mem worker dead after recycle: rebuild/start from
+   `/home/ubuntu/claude-mem` (or re-clone), restore Gemini key into
+   `~/.claude-mem/settings.json`, `bun plugin/scripts/worker-service.cjs start`.
+
+---
+
+> Older checkpoint (20 August) kept below for history. Superseded on UI
+> status: mobile Home UI **does** exist now as a draft on the feature
+> branch; Phase B and full Phase C logger remain unstarted.
 
 ## 20 August 2026 — toolchain vendored, one bug found and fixed
 
