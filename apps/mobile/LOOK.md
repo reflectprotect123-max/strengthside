@@ -2,10 +2,11 @@
 
 ## Interactive (play with it) — use this
 
-Open in Chrome:  
-https://htmlpreview.github.io/?https://github.com/reflectprotect123-max/strengthside/blob/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
+**Do not reuse the old htmlpreview bookmark** (it caches). Open:
 
-Refresh after updates. Details: [PLAY.md](./PLAY.md)
+https://raw.githack.com/reflectprotect123-max/strengthside/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
+
+Tap CONDITIONING for the Morpheus demo. Details: [PLAY.md](./PLAY.md)
 
 ---
 

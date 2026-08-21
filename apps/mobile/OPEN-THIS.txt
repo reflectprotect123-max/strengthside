@@ -1,7 +1,10 @@
 PLAY with the app (interactive):
 
-Open this in Chrome and bookmark it:
+Do NOT reuse the old htmlpreview bookmark — it stays cached.
 
-https://htmlpreview.github.io/?https://github.com/reflectprotect123-max/strengthside/blob/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
+Open this in Chrome (click “Open the page” if asked):
 
-Refresh after each update. See apps/mobile/PLAY.md
+https://raw.githack.com/reflectprotect123-max/strengthside/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
+
+Tap CONDITIONING → Morpheus zones (full screen, ← Back).
+See apps/mobile/PLAY.md
