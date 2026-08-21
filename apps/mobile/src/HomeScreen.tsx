@@ -217,6 +217,8 @@ function SessionCard({
 
 /** Morpheus-style HR ceilings: higher recovery lifts the day’s zone ceilings. */
 export function zonesForReadiness(recovery: number, maxHr = 190) {
+  if (maxHr < 160 || maxHr > 220) maxHr = 190;
+  if (!(recovery >= 20 && recovery <= 100)) recovery = 71;
   const shift = Math.round(((recovery - 50) / 50) * 8);
   const recoverHi = clamp(Math.round(maxHr * 0.6) + shift, 95, maxHr - 45);
   const aerobicHi = clamp(Math.round(maxHr * 0.72) + shift, recoverHi + 8, maxHr - 28);
@@ -238,11 +240,12 @@ function clamp(n: number, min: number, max: number) {
 type Zone = ReturnType<typeof zonesForReadiness>[number];
 
 function MorpheusZoneBar({ zones }: { zones: readonly Zone[] }) {
-  const total = zones[zones.length - 1].hi - zones[0].lo;
+  const spans = zones.map((zone) => Math.max(1, zone.hi - zone.lo + 1));
+  const total = spans.reduce((sum, span) => sum + span, 0);
   return (
     <View style={styles.zoneBar}>
       {zones.map((zone, index) => {
-        const width = ((zone.hi - zone.lo + 1) / total) * 100;
+        const width = (spans[index] / total) * 100;
         return (
           <View
             key={zone.key}

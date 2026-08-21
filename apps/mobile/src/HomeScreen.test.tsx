@@ -49,4 +49,8 @@ describe('zonesForReadiness', () => {
     expect(high[0].hi).toBeGreaterThan(low[0].hi);
     expect(high[2].hi).toBeGreaterThan(low[2].hi);
   });
+
+  it('falls back when recovery or max HR is nonsense', () => {
+    expect(zonesForReadiness(0, 12)).toEqual(zonesForReadiness(71, 190));
+  });
 });

@@ -24,8 +24,10 @@ at `:8081`.
   HRV / RHR / Sleep / Strain trend cards).
 - **CONDITIONING** module under Sleep: Morpheus-style four-zone bar
   (Rec / Aer / An / Peak). BPM ceilings from `zonesForReadiness(recovery)` —
-  higher recovery lifts ceilings. Tap opens the full-screen Morpheus demo
-  (← Back, date, athlete, zone bar, bpm details) — same layout as Expo.
+  higher recovery lifts ceilings. Tap opens the simple Cond logger: half-gauge
+  plus Start, which connects a Bluetooth HR strap (`heart_rate` GATT) and
+  drives live bpm. Complete stores avg/max from the stream. Web Bluetooth only
+  (Chrome Android/desktop; not iOS Safari). Avg HR can still be typed.
 - **NUTRITION** module under Conditioning: FBB-style card — macro rings
   (P/C/F), TODAY label, kcal left, horizontal P/C/F bars. Sample:
   2,529 kcal left, 0/164g · 0/225g · 0/70g.
