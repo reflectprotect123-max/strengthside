@@ -54,11 +54,19 @@ list:
 - Preview PNGs under `/workspace/expo-*.png` are local artifacts, not
   committed
 
+### Static HTML snapshot (no Expo)
+
+Open **`apps/mobile/prototype/home.html`** in a browser. Interactive phone
+mock of Sleep / Conditioning / Nutrition + readiness overlays; PNG captures
+under `apps/mobile/prototype/shots/`. RN `HomeScreen.tsx` remains source of
+truth — this HTML is the shareable freeze of where the UI was on 21 Aug.
+
 ### Next session — start here
 
 1. Read this checkpoint + `skills.md` Cursor section.
-2. `pnpm install` then `pnpm --filter @hybrid/strength-mobile start` (or
-   Expo web) to resume visual iteration.
+2. Open `apps/mobile/prototype/home.html` for a no-install look, or
+   `pnpm install` then `pnpm --filter @hybrid/strength-mobile start` (Expo)
+   to keep iterating the real screen.
 3. Continue page-by-page from the next athlete screenshot, or wire Home
    fixtures to `assigned_session` / performed data when ready.
 4. If Claude Mem worker dead after recycle: rebuild/start from

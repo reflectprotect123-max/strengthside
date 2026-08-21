@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Athlete Home — static snapshot · 21 Aug 2026</title>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --header: #101010;
+      --card: #191919;
+      --brass: #c09358;
+      --brass-soft: #e0bc87;
+      --muted: #847d73;
+      --muted2: #aaa49a;
+      --text: #f5f1e9;
+      --blue: #5d8df4;
+      --green: #3dff9e;
+      --cyan: #33c4ff;
+      --pink: #e879a9;
+      --orange: #e8a35c;
+      --fat: #9fc59b;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #1a1c22;
+      color: var(--text);
+      font-family: "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+    }
+
+    body {
+      display: grid;
+      grid-template-columns: minmax(280px, 420px) 1fr;
+      gap: 28px;
+      padding: 28px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      body { grid-template-columns: 1fr; justify-items: center; }
+      .panel { width: min(100%, 420px); }
+    }
+
+    .phone {
+      width: min(100%, 390px);
+      height: min(844px, 92vh);
+      background: var(--bg);
+      border-radius: 28px;
+      border: 1px solid #333;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .header {
+      height: 72px;
+      padding: 0 16px;
+      background: var(--header);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 22px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 0.4px;
+      color: #f2f2f2;
+    }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .latest {
+      min-width: 52px;
+      height: 24px;
+      border-radius: 4px;
+      background: #eee;
+      color: #353535;
+      font-size: 9px;
+      font-weight: 800;
+      border: 0;
+      letter-spacing: 0.3px;
+    }
+    .icon-btn {
+      background: none;
+      border: 0;
+      color: #d8d8d8;
+      font-size: 22px;
+      padding: 4px;
+      cursor: pointer;
+    }
+
+    .scroll {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--card);
+    }
+    .session {
+      padding: 18px 18px 20px;
+    }
+    .date {
+      font-size: 20px;
+      font-weight: 800;
+      color: #e2e2e2;
+      margin: 0 0 14px;
+    }
+    .athlete {
+      display: flex;
+      gap: 11px;
+      margin-bottom: 14px;
+    }
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #363632;
+      border: 1px solid #484843;
+      display: grid;
+      place-items: center;
+      color: #77736c;
+      font-size: 18px;
+      position: relative;
+    }
+    .avatar::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      border: 1px solid #55554f;
+    }
+    .athlete-name {
+      color: var(--blue);
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .workout {
+      color: #ddd;
+      font-size: 18px;
+      margin: 2px 0 0;
+      font-weight: 400;
+    }
+
+    .module {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(224,188,135,0.22);
+      background: rgba(192,147,88,0.09);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      color: inherit;
+      font: inherit;
+      margin: 0 0 12px;
+    }
+    .module:last-of-type { margin-bottom: 0; }
+    .module.static { cursor: default; align-items: flex-start; }
+    .module-label {
+      color: var(--brass);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+      width: 78px;
+      flex-shrink: 0;
+      writing-mode: horizontal-tb;
+      word-break: break-word;
+      line-height: 1.25;
+    }
+    .legend { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    .legend-row, .zone-row, .macro-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .l-label { color: var(--muted2); font-size: 12px; font-weight: 600; min-width: 64px; }
+    .l-value { color: var(--text); font-size: 13px; font-weight: 800; }
+    .chevron { color: var(--muted); font-size: 16px; }
+
+    .rings { flex-shrink: 0; }
+    .cond-body { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .cond-hint { color: var(--muted); font-size: 11px; font-weight: 600; margin: 0; }
+    .zone-bar {
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+      display: flex;
+    }
+    .zone-seg { height: 100%; }
+    .zone-name { color: var(--muted2); font-size: 12px; font-weight: 600; min-width: 32px; }
+    .zone-range { color: var(--text); font-size: 13px; font-weight: 800; }
+
+    .nut-body { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+    .today-row { display: flex; align-items: center; gap: 6px; }
+    .today { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; }
+    .today-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); }
+    .kcal { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; margin: 0; }
+    .kcal span { color: var(--muted2); font-size: 13px; font-weight: 600; }
+    .macro-letter { width: 12px; font-size: 12px; font-weight: 800; }
+    .macro-track {
+      flex: 1;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+    .macro-fill { height: 100%; border-radius: 999px; width: 0; }
+    .macro-val { color: var(--muted2); font-size: 11px; font-weight: 600; min-width: 58px; text-align: right; }
+
+    .bottom-nav {
+      height: 72px;
+      background: var(--header);
+      border-top: 1px solid #292929;
+      display: flex;
+      justify-content: space-around;
+      padding-top: 8px;
+      flex-shrink: 0;
+    }
+    .nav-item {
+      width: 20%;
+      text-align: center;
+      color: #c8c8c8;
+      font-size: 11px;
+    }
+    .nav-item.active { color: #f0f0f0; font-weight: 700; }
+    .nav-item .ico { font-size: 20px; display: block; margin-bottom: 2px; }
+
+    /* Overlays */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: #070706;
+      z-index: 5;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .overlay.open { display: flex; }
+    .back {
+      align-self: flex-start;
+      background: none;
+      border: 0;
+      color: var(--muted2);
+      font-size: 12px;
+      padding: 16px 18px 8px;
+      cursor: pointer;
+    }
+    .overlay-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 18px 32px;
+    }
+    .ov-date { font-size: 17px; font-weight: 800; margin: 0 0 4px; }
+    .ov-athlete {
+      color: var(--brass);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: lowercase;
+      margin: 0 0 14px;
+    }
+    .gauge-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      background: #0a0a09;
+      padding: 28px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+    .gauge-wrap { position: relative; width: 176px; height: 176px; }
+    .gauge-center {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      pointer-events: none;
+    }
+    .gauge-val { font-size: 38px; font-weight: 900; letter-spacing: -1.2px; line-height: 1; }
+    .gauge-val small { font-size: 14px; font-weight: 700; }
+    .gauge-cap {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+    .band { width: 100%; max-width: 320px; }
+    .band-labels { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .band-title { color: var(--muted); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; }
+    .band-status { font-size: 12px; font-weight: 700; color: #9fc59b; }
+    .band-track {
+      height: 6px;
+      border-radius: 999px;
+      display: flex;
+      position: relative;
+    }
+    .band-track span { flex: 1; }
+    .band-track span:nth-child(1) { background: #cf7f7c; border-radius: 999px 0 0 999px; }
+    .band-track span:nth-child(2) { background: #d1a464; }
+    .band-track span:nth-child(3) { background: #9fc59b; border-radius: 0 999px 999px 0; }
+    .band-thumb {
+      position: absolute;
+      top: 50%;
+      width: 15px;
+      height: 15px;
+      margin: -7.5px 0 0 -7.5px;
+      border-radius: 50%;
+      background: var(--text);
+      border: 3px solid #0a0a09;
+      left: 71%;
+    }
+    .trends {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .trend {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #141311;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .trend-h { display: flex; align-items: center; gap: 6px; color: var(--muted2); font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; font-weight: 600; }
+    .trend-v { font-size: 22px; font-weight: 800; margin: 6px 0 2px; }
+    .trend-v small { color: var(--muted); font-size: 11px; font-weight: 400; margin-left: 4px; }
+    .trend-d { font-size: 11px; font-weight: 700; }
+
+    .hero {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      background: #0a0a09;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .hero-eye { color: var(--brass); font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; margin: 0 0 6px; }
+    .hero h2 { margin: 0 0 8px; font-size: 20px; }
+    .hero p { color: var(--muted2); font-size: 13px; line-height: 1.4; margin: 0 0 12px; }
+    .guidance { color: var(--brass-soft); font-size: 13px; font-weight: 700; margin: 12px 0 0; }
+    .zone-detail {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #141311;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .zone-detail-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .zone-detail-bpm { color: var(--cyan); font-weight: 800; font-size: 15px; }
+
+    /* Side panel */
+    .panel h1 {
+      font-size: 22px;
+      margin: 0 0 6px;
+      font-weight: 800;
+    }
+    .panel .meta {
+      color: #9aa0ad;
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 0 0 18px;
+      max-width: 52ch;
+    }
+    .panel .meta code {
+      background: #2a2e38;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .shots {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+    .shot {
+      background: #12141a;
+      border: 1px solid #2c313c;
+      border-radius: 12px;
+      overflow: hidden;
+      text-decoration: none;
+      color: #c8cdd8;
+    }
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #000;
+    }
+    .shot figcaption {
+      padding: 8px 10px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .hint {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #22262f;
+      color: #b7becc;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone" aria-label="Athlete Home phone mock">
+    <header class="header">
+      <button class="icon-btn" type="button" aria-label="Filter">☰</button>
+      <div class="header-title">ALL ATHLETES</div>
+      <div class="header-actions">
+        <button class="icon-btn" type="button" aria-label="Calendar">▦</button>
+        <button class="latest" type="button">LATEST</button>
+      </div>
+    </header>
+
+    <div class="scroll">
+      <section class="session">
+        <h2 class="date">Thursday, August 20, 2026</h2>
+        <div class="athlete">
+          <div class="avatar">⚡</div>
+          <div>
+            <p class="athlete-name">dan veldman</p>
+            <p class="workout">Week 1 Day 1</p>
+          </div>
+        </div>
+
+        <button class="module" type="button" id="open-sleep" aria-label="Open sleep overview">
+          <span class="module-label">SLEEP</span>
+          <svg class="rings" width="88" height="88" viewBox="0 0 92 92" aria-hidden="true">
+            <g transform="rotate(-90 46 46)">
+              <circle cx="46" cy="46" r="40" fill="none" stroke="#ffffff14" stroke-width="7.5" />
+              <circle cx="46" cy="46" r="40" fill="none" stroke="#3dff9e" stroke-width="7.5" stroke-linecap="round"
+                stroke-dasharray="251.3" stroke-dashoffset="72.9" />
+              <circle cx="46" cy="46" r="29.5" fill="none" stroke="#ffffff14" stroke-width="7.5" />
+              <circle cx="46" cy="46" r="29.5" fill="none" stroke="#33c4ff" stroke-width="7.5" stroke-linecap="round"
+                stroke-dasharray="185.4" stroke-dashoffset="70.4" />
+              <circle cx="46" cy="46" r="19" fill="none" stroke="#ffffff14" stroke-width="7.5" />
+              <circle cx="46" cy="46" r="19" fill="none" stroke="#e0bc87" stroke-width="7.5" stroke-linecap="round"
+                stroke-dasharray="119.4" stroke-dashoffset="14.3" />
+            </g>
+          </svg>
+          <div class="legend">
+            <div class="legend-row"><span class="dot" style="background:#3dff9e"></span><span class="l-label">Recovery</span><span class="l-value">71%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#33c4ff"></span><span class="l-label">Strain</span><span class="l-value">62%</span></div>
+            <div class="legend-row"><span class="dot" style="background:#e0bc87"></span><span class="l-label">Sleep</span><span class="l-value">88%</span></div>
+          </div>
+          <span class="chevron">›</span>
+        </button>
+
+        <button class="module" type="button" id="open-conditioning" aria-label="Open conditioning zones">
+          <span class="module-label">CONDITIONING</span>
+          <div class="cond-body">
+            <p class="cond-hint">Zones move with today’s readiness</p>
+            <div class="zone-bar" id="zone-bar"></div>
+            <div class="legend" id="zone-legend"></div>
+          </div>
+          <span class="chevron">›</span>
+        </button>
+
+        <div class="module static" aria-label="Nutrition">
+          <span class="module-label">NUTRITION</span>
+          <svg class="rings" width="88" height="88" viewBox="0 0 92 92" aria-hidden="true">
+            <g transform="rotate(-90 46 46)">
+              <circle cx="46" cy="46" r="40" fill="none" stroke="#ffffff14" stroke-width="7.5" />
+              <circle cx="46" cy="46" r="29.5" fill="none" stroke="#ffffff14" stroke-width="7.5" />
+              <circle cx="46" cy="46" r="19" fill="none" stroke="#ffffff14" stroke-width="7.5" />
+            </g>
+          </svg>
+          <div class="nut-body">
+            <div class="today-row"><span class="today">TODAY</span><span class="today-dot"></span></div>
+            <p class="kcal">2,529 <span>kcal left</span></p>
+            <div class="macro-row">
+              <span class="macro-letter" style="color:var(--pink)">P</span>
+              <div class="macro-track"><div class="macro-fill" style="background:var(--pink)"></div></div>
+              <span class="macro-val">0 / 164g</span>
+            </div>
+            <div class="macro-row">
+              <span class="macro-letter" style="color:var(--orange)">C</span>
+              <div class="macro-track"><div class="macro-fill" style="background:var(--orange)"></div></div>
+              <span class="macro-val">0 / 225g</span>
+            </div>
+            <div class="macro-row">
+              <span class="macro-letter" style="color:var(--fat)">F</span>
+              <div class="macro-track"><div class="macro-fill" style="background:var(--fat)"></div></div>
+              <span class="macro-val">0 / 70g</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Bottom navigation">
+      <div class="nav-item active"><span class="ico">⌂</span>Home</div>
+      <div class="nav-item"><span class="ico">▦</span>Training</div>
+      <div class="nav-item"><span class="ico">💬</span>Chat</div>
+      <div class="nav-item"><span class="ico">☰</span>Library</div>
+      <div class="nav-item"><span class="ico">☺</span>Me</div>
+    </nav>
+
+    <div class="overlay" id="sleep-overlay" role="dialog" aria-label="Readiness overview">
+      <button class="back" type="button" data-close>← Back</button>
+      <div class="overlay-scroll">
+        <p class="ov-date">Thursday, August 20, 2026</p>
+        <p class="ov-athlete">dan veldman</p>
+        <div class="gauge-card">
+          <div class="gauge-wrap">
+            <svg width="176" height="176" viewBox="0 0 192 192" aria-hidden="true">
+              <defs>
+                <linearGradient id="brassBezel" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#c8a06d" />
+                  <stop offset="45%" stop-color="#8a6a3f" />
+                  <stop offset="55%" stop-color="#8a6a3f" />
+                  <stop offset="100%" stop-color="#e0bc87" />
+                </linearGradient>
+              </defs>
+              <circle cx="96" cy="96" r="90" fill="none" stroke="url(#brassBezel)" stroke-width="2.5" opacity="0.8" />
+              <g transform="rotate(-90 96 96)">
+                <circle cx="96" cy="96" r="72" fill="none" stroke="#ffffff0f" stroke-width="11" />
+                <circle cx="96" cy="96" r="72" fill="none" stroke="#3dff9e" stroke-width="11" stroke-linecap="round"
+                  stroke-dasharray="452.4" stroke-dashoffset="131.2" />
+              </g>
+              <g transform="rotate(255.6 96 96)">
+                <line x1="96" y1="96" x2="96" y2="34" stroke="#e0bc87" stroke-width="2" stroke-linecap="round" />
+              </g>
+              <circle cx="96" cy="96" r="4.5" fill="#e0bc87" />
+            </svg>
+            <div class="gauge-center">
+              <div class="gauge-val">71<small>%</small></div>
+              <div class="gauge-cap">Recovery</div>
+            </div>
+          </div>
+          <div class="band">
+            <div class="band-labels">
+              <span class="band-title">Readiness</span>
+              <span class="band-status">High</span>
+            </div>
+            <div class="band-track">
+              <span></span><span></span><span></span>
+              <div class="band-thumb"></div>
+            </div>
+          </div>
+        </div>
+        <div class="trends">
+          <div class="trend">
+            <div class="trend-h">∿ HRV</div>
+            <div class="trend-v">62<small>ms</small></div>
+            <div class="trend-d" style="color:#9fc59b">+4 ms vs previous reading</div>
+          </div>
+          <div class="trend">
+            <div class="trend-h">♥ Resting HR</div>
+            <div class="trend-v">48<small>bpm</small></div>
+            <div class="trend-d" style="color:#9fc59b">−1 bpm vs previous reading</div>
+          </div>
+          <div class="trend">
+            <div class="trend-h">☾ Sleep performance</div>
+            <div class="trend-v">88<small>%</small></div>
+            <div class="trend-d" style="color:#9fc59b">+6% vs previous reading</div>
+          </div>
+          <div class="trend">
+            <div class="trend-h">⚡ Strain</div>
+            <div class="trend-v">62</div>
+            <div class="trend-d" style="color:#aaa49a">+1.4 vs previous reading</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="cond-overlay" role="dialog" aria-label="Conditioning zones">
+      <button class="back" type="button" data-close>← Back</button>
+      <div class="overlay-scroll">
+        <p class="ov-date">Thursday, August 20, 2026</p>
+        <p class="ov-athlete">dan veldman</p>
+        <div class="hero">
+          <p class="hero-eye">Morpheus · today</p>
+          <h2>Conditioning zones</h2>
+          <p>Ceilings shift with readiness (71% · High).</p>
+          <div class="zone-bar" id="zone-bar-hero"></div>
+          <p class="guidance">High readiness — anaerobic and peak work are on the table today.</p>
+        </div>
+        <div id="zone-details"></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <h1>Athlete Home snapshot</h1>
+    <p class="meta">
+      Static HTML of the Expo Home draft (Sleep / Conditioning / Nutrition).
+      Matches fixtures in <code>apps/mobile/src/HomeScreen.tsx</code>.
+      Tap Sleep or Conditioning in the phone. PNG captures on the right for 1:1 reference.
+    </p>
+    <div class="shots">
+      <a class="shot" href="shots/home-full.png" target="_blank" rel="noopener">
+        <figure>
+          <img src="shots/home-full.png" alt="Full Home with Nutrition" width="473" height="1024" />
+          <figcaption>Home · full (Nutrition)</figcaption>
+        </figure>
+      </a>
+      <a class="shot" href="shots/home-sleep.png" target="_blank" rel="noopener">
+        <figure>
+          <img src="shots/home-sleep.png" alt="Home Sleep card" width="473" height="1024" />
+          <figcaption>Home · Sleep card</figcaption>
+        </figure>
+      </a>
+      <a class="shot" href="shots/readiness.png" target="_blank" rel="noopener">
+        <figure>
+          <img src="shots/readiness.png" alt="Readiness overview" width="473" height="1024" />
+          <figcaption>Readiness overview</figcaption>
+        </figure>
+      </a>
+      <a class="shot" href="shots/conditioning.png" target="_blank" rel="noopener">
+        <figure>
+          <img src="shots/conditioning.png" alt="Conditioning capture" width="473" height="1024" />
+          <figcaption>Conditioning capture</figcaption>
+        </figure>
+      </a>
+    </div>
+    <p class="hint">
+      Open locally: <code>apps/mobile/prototype/home.html</code>
+      (double-click or serve the folder). No Expo needed. Source of truth for product UI remains the RN screen.
+    </p>
+  </aside>
+
+  <script>
+    function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+    function zonesForReadiness(recovery, maxHr) {
+      maxHr = maxHr || 190;
+      var shift = Math.round(((recovery - 50) / 50) * 8);
+      var recoverHi = clamp(Math.round(maxHr * 0.6) + shift, 95, maxHr - 45);
+      var aerobicHi = clamp(Math.round(maxHr * 0.72) + shift, recoverHi + 8, maxHr - 28);
+      var anaerobicHi = clamp(Math.round(maxHr * 0.84) + shift, aerobicHi + 8, maxHr - 12);
+      return [
+        { key: 'recovery', short: 'Rec', name: 'Recovery', color: '#33c4ff', lo: Math.round(maxHr * 0.5), hi: recoverHi },
+        { key: 'aerobic', short: 'Aer', name: 'Aerobic', color: '#3dff9e', lo: recoverHi + 1, hi: aerobicHi },
+        { key: 'anaerobic', short: 'An', name: 'Anaerobic', color: '#ffc24d', lo: aerobicHi + 1, hi: anaerobicHi },
+        { key: 'peak', short: 'Peak', name: 'Peak', color: '#ff5b57', lo: anaerobicHi + 1, hi: maxHr }
+      ];
+    }
+
+    function renderZones(zones, barEl, legendEl, detailsEl) {
+      var total = zones[zones.length - 1].hi - zones[0].lo;
+      barEl.innerHTML = zones.map(function (z, i) {
+        var width = ((z.hi - z.lo + 1) / total) * 100;
+        var radius =
+          i === 0 ? 'border-radius:999px 0 0 999px' :
+          i === zones.length - 1 ? 'border-radius:0 999px 999px 0' : '';
+        return '<div class="zone-seg" style="width:' + width + '%;background:' + z.color + ';' + radius + '"></div>';
+      }).join('');
+
+      if (legendEl) {
+        legendEl.innerHTML = zones.map(function (z) {
+          return '<div class="zone-row"><span class="dot" style="background:' + z.color +
+            '"></span><span class="zone-name">' + z.short +
+            '</span><span class="zone-range">' + z.lo + '–' + z.hi + '</span></div>';
+        }).join('');
+      }
+
+      if (detailsEl) {
+        detailsEl.innerHTML = zones.map(function (z) {
+          return '<div class="zone-detail"><div class="zone-detail-name"><span class="dot" style="background:' +
+            z.color + '"></span>' + z.name + '</div><div class="zone-detail-bpm">' +
+            z.lo + '–' + z.hi + ' bpm</div></div>';
+        }).join('');
+      }
+    }
+
+    var zones = zonesForReadiness(71);
+    renderZones(zones, document.getElementById('zone-bar'), document.getElementById('zone-legend'));
+    renderZones(zones, document.getElementById('zone-bar-hero'), null, document.getElementById('zone-details'));
+
+    var sleepOverlay = document.getElementById('sleep-overlay');
+    var condOverlay = document.getElementById('cond-overlay');
+
+    document.getElementById('open-sleep').addEventListener('click', function () {
+      sleepOverlay.classList.add('open');
+    });
+    document.getElementById('open-conditioning').addEventListener('click', function () {
+      condOverlay.classList.add('open');
+    });
+    document.querySelectorAll('[data-close]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        sleepOverlay.classList.remove('open');
+        condOverlay.classList.remove('open');
+      });
+    });
+  </script>
+</body>
+</html>
