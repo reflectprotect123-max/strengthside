@@ -188,7 +188,59 @@ file lists knows why.
 | Hooks registered in `~/.claude/settings.json` | **1** — `UserPromptSubmit` → `caveman-mode-tracker.js`. User scope only. | No — the script re-registers it |
 | Deliberately excluded | 1 — omniroute | n/a |
 | Platform-managed | 6 — `~/.claude/skills/synced/` | Handled by the platform, not by us |
+| Cursor (see below) | `.cursor/skills/` + Claude Mem hooks | Skills yes if committed; Mem worker/key **no** |
 
 The `VENDORED_SKILLS` array in `scripts/ensure-skills.sh` has 27 entries;
 agents and commands are restored as whole directories rather than file by
 file.
+
+---
+
+## CURSOR — committed under `.cursor/` (21 August 2026)
+
+Separate from the Claude Code `vendor/` → `.claude/` path above. These are
+**Cursor agent skills and hooks**, installed for cloud/desktop Cursor sessions
+working this repo. They live at visible repo paths and are committed on
+`cursor/mobile-home-screen-2ff0`.
+
+### Cursor skills (`.cursor/skills/`)
+
+| Skill | Source | Notes |
+|---|---|---|
+| `ui-ux-pro-max` | `npx ui-ux-pro-max-cli init --ai cursor` | Design intelligence + searchable data. Installer also dropped sibling skills: `banner-design`, `brand`, `design`, `design-system`, `slides`, `ui-styling`. |
+| `frontend-design` | `npx skills add anthropics/skills --skill frontend-design` | Distinctive UI direction. Also mirrored under `.agents/skills/frontend-design`. |
+| `caveman` | `npx skills add juliusbrussee/caveman@caveman` | Terse communication mode. Invoke `/caveman`; off with `stop caveman` / `normal mode`. |
+| `mem-search` | `npx skills add thedotmack/claude-mem@mem-search` | Search Claude Mem DB across sessions. |
+
+`skills-lock.json` at repo root records the skills CLI pins for
+`frontend-design`, `caveman`, `mem-search`.
+
+### Claude Mem (persistent memory) — INSTALLED, not fully vendored
+
+| | |
+|---|---|
+| **What / why** | Cross-session memory for Cursor: hooks capture shell/MCP/file edits; worker summarizes; context injects via `.cursor/rules/claude-mem-context.mdc`. |
+| **Source** | https://github.com/thedotmack/claude-mem |
+| **Built tree** | `/home/ubuntu/claude-mem` (clone + `bun install` + `bun run build`) — **outside the repo**, dies with the machine unless rebuilt. |
+| **Committed in repo** | `.cursor/hooks.json` (project hooks pointing at that worker path), `.cursor/rules/claude-mem-context.mdc`, `.cursor/skills/mem-search/`. |
+| **User-scope** | `~/.cursor/hooks.json`, settings at `~/.claude-mem/settings.json`. |
+| **Provider** | Gemini (`CLAUDE_MEM_PROVIDER=gemini`). API key in `~/.claude-mem/settings.json` only — **never commit the key**. |
+| **Worker** | `bun /home/ubuntu/claude-mem/plugin/scripts/worker-service.cjs start` — port 37700. Status: `… worker-service.cjs status`. Viewer often on 37777 when healthy. |
+| **Caveats** | Vector search may report `uvx unavailable` until doctor/deps fixed. After container recycle: re-clone/build claude-mem, restore Gemini key, re-run worker; hooks JSON may need path rewrite if Bun/worker paths change. |
+| **Removal** | Delete `.cursor/hooks.json`, `.cursor/rules/claude-mem-context.mdc`, stop worker, remove `~/.claude-mem` and `/home/ubuntu/claude-mem`. |
+
+### Inventory addendum (Cursor)
+
+| Bucket | Count | Survives recycle? |
+|---|---|---|
+| Cursor skills under `.cursor/skills/` | 10 directories (ui-ux-pro-max suite + frontend-design + caveman + mem-search) | Yes if committed |
+| Claude Mem hooks + context rule | project + user hooks | Project yes; user hooks + built tree + API key **no** |
+
+## Rules of thumb
+
+- Prefer the **smallest** skill that covers the job.
+- Prefer **repo-local** skills (`.cursor/skills/` or materialised `.claude/skills/`) over global ones when both exist.
+- Prefer **explicit** skill invocation over hoping the model “just knows.”
+- Prefer **skills that produce artifacts** (code, docs, checklists) over skills that only produce opinions.
+- Claude Code path: run `bash scripts/ensure-skills.sh` on a fresh container.
+- Cursor path: skills under `.cursor/` travel with git; Claude Mem worker + Gemini key must be rebuilt/restored after recycle.
