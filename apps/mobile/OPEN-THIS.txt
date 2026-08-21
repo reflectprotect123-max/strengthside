@@ -1,0 +1,8 @@
+THE Hybrid App — open without a server
+
+1. Pull branch: cursor/mobile-home-screen-2ff0
+2. Double-click:  apps/mobile/THE-Hybrid-App.html
+   (opens in Chrome / Safari — no localhost, no python)
+
+That file is updated whenever we change the UI.
+(Cursor / GitHub will still show it as code — open it in a browser.)

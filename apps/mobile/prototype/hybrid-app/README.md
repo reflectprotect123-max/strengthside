@@ -1,3 +1,8 @@
+## Open without a server
+
+Double-click **`apps/mobile/THE-Hybrid-App.html`** in Finder/Explorer.
+Same app as this folder’s `index.html` — kept in sync on each UI update.
+
 # Hybrid native PWA + athlete Home drop-in
 
 Base: uploaded Hybrid Logger/Builder `index.html` (~305KB).  
