@@ -1,16 +1,16 @@
 # Deploys the interactive Hybrid HTML app to GitHub Pages.
-# After first enable: Repo Settings → Pages → Source: GitHub Actions
+# Prerequisite (one-time, repo owner): Settings → Pages → Source: GitHub Actions
+# Until then, use the htmlpreview link in apps/mobile/PLAY.md — do not fail every push.
 name: Deploy Hybrid preview
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main, cursor/mobile-home-screen-2ff0]
+    branches: [main]
     paths:
       - 'apps/mobile/preview-site/**'
       - 'apps/mobile/THE-Hybrid-App.html'
-      - 'apps/mobile/prototype/hybrid-app/index.html'
       - '.github/workflows/deploy-hybrid-preview.yml'
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -38,13 +38,9 @@ jobs:
           else
             cp apps/mobile/THE-Hybrid-App.html _site/index.html
           fi
-          # Ensure no broken SW on Pages if file missing
           test -f _site/index.html
 
       - uses: actions/configure-pages@v5
-        with:
-          # First-time repos often have Pages off; try to turn on Actions-based Pages.
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
