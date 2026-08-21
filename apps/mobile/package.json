@@ -1,34 +1,5 @@
 {
   "name": "@hybrid/strength-mobile",
-  "version": "0.1.0",
   "private": true,
-  "main": "index.js",
-  "//": "Expo SDK 54 — RN 0.81 on React 19, matching THE-HYBRID-ENGINE1's apps/mobile so a shared React major holds if these ever meet again.",
-  "scripts": {
-    "test": "jest --runInBand",
-    "start": "expo start --dev-client",
-    "android": "expo run:android",
-    "prebuild": "expo prebuild --platform android --clean",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "@expo/metro-runtime": "~6.1.2",
-    "@expo/vector-icons": "^15.1.1",
-    "@hybrid/strength-engine": "workspace:*",
-    "expo": "~54.0.36",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-native": "0.81.4",
-    "react-native-svg": "15.12.1",
-    "react-native-web": "^0.21.2"
-  },
-  "devDependencies": {
-    "@testing-library/react-native": "^13.3.3",
-    "@types/jest": "^29.5.14",
-    "@types/react": "~19.1.0",
-    "jest-expo": "^54.0.18",
-    "react-test-renderer": "19.1.0",
-    "typescript": "^5.9.3"
-  }
+  "description": "Athlete product is the Hybrid HTML PWA (prototype/hybrid-app). Expo Home was removed."
 }

@@ -67,5 +67,5 @@ CSS vars in app: `--bg --panel --gold --gold2 --text --muted --dim --focus`.
 
 ## Stack
 
-Static single-file PWA (`apps/mobile/prototype/hybrid-app/index.html`) + Netlify.
-Expo Home remains source of truth for RN: `apps/mobile/src/HomeScreen.tsx`.
+Static single-file PWA (`apps/mobile/prototype/hybrid-app/index.html`). That file
+is the athlete app. Expo Home is gone.

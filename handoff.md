@@ -1,12 +1,39 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 21 August 2026 (cloud agent session on
-> `cursor/mobile-home-screen-2ff0`). Athlete mobile Home has a first real UI
-> draft in `apps/mobile`: Sleep rings, Morpheus Conditioning zones, Nutrition
-> card. Cursor skills and Claude Mem hooks are installed under `.cursor/`.
-> Phase B (coach authoring) and full Phase C logger (offline set logging) are
-> still unstarted. Where this block disagrees with anything below it, this
-> one wins.**
+> **AUTHORITATIVE CHECKPOINT — 21 August 2026 (evening).** The athlete
+> product is **only** the Hybrid HTML app under
+> `apps/mobile/prototype/hybrid-app/` (synced to `THE-Hybrid-App.html`).
+> Expo Home, `home.html`, and `prototype/pwa/` are **not** the app. Do not
+> iterate them. Phase B (coach authoring) and a durable Phase C logger
+> (reducer + `assigned_session`) are still unstarted. Where this block
+> disagrees with anything below it, this one wins.
+
+## Athlete app — Hybrid HTML only
+
+**Source file:** `apps/mobile/prototype/hybrid-app/index.html`  
+**Play file:** `apps/mobile/THE-Hybrid-App.html` (run `bash apps/mobile/sync-hybrid-html.sh` after edits)  
+**Play URL:** see `apps/mobile/PLAY.md`  
+**Build id:** `the-hybrid-athlete-home-cond-v11` (tap **Update** in the header)
+
+What this app is today: Sleep (check-in | readiness gauge), Conditioning
+(Morpheus half-gauge + Start → Web Bluetooth HR + 120s “Are you finished?”
+on leave), Nutrition fixture card, plus the existing localStorage logger /
+programs / calendar / settings.
+
+**Do not** open Expo, `home.html`, or the old PWA shell. Those are gone.
+
+### Next session — start here
+
+1. Read this block + `CLAUDE.md` “Athlete app — one surface”.
+2. Open `apps/mobile/PLAY.md` (or THE-Hybrid-App.html locally).
+3. Keep building **this** HTML app. Known Cond follow-ups: Resume must
+   return to the gauge (not APK preview); split Connect strap vs Start;
+   live bpm vs average on the gauge.
+
+---
+
+> Older checkpoints kept below for history. Superseded on **which UI is
+> the app**: it is the Hybrid HTML drop-in, not Expo.
 
 ## 21 August 2026 — mobile Home first draft + Cursor tooling
 
@@ -92,6 +119,7 @@ from that folder.
 > Older checkpoint (20 August) kept below for history. Superseded on UI
 > status: mobile Home UI **does** exist now as a draft on the feature
 > branch; Phase B and full Phase C logger remain unstarted.
+
 
 ## 20 August 2026 — toolchain vendored, one bug found and fixed
 
