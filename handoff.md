@@ -27,7 +27,7 @@ bench only.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cache / Update | `the-hybrid-athlete-home-cond-v25` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-no-er-v1-2026-08-22` |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-no-er-v2-2026-08-22` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
