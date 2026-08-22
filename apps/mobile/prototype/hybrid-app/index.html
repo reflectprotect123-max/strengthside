@@ -433,12 +433,125 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .quickgrid,.quickgrid{display:grid; grid-template-columns:1fr; gap:8px; margin-top:14px}
 @media(min-width:420px){.quickgrid{grid-template-columns:1fr 1fr}}
 
-/* Conditioning runtime */
+/* Conditioning runtime — Morpheus slate */
 .mph-back{
   min-height:40px; margin-bottom:10px; padding:8px 0;
   border:0; background:transparent; color:var(--copper2);
   font-weight:600; font-size:14px;
 }
+.mph-hero{
+  padding:16px 14px 14px;
+  border:1px solid rgba(212,165,116,.28);
+  border-radius:18px;
+  background:
+    radial-gradient(ellipse at 18% 0%, rgba(61,255,158,.08), transparent 42%),
+    radial-gradient(ellipse at 88% 8%, rgba(51,196,255,.07), transparent 40%),
+    linear-gradient(180deg, #14110d, #0c0c0c);
+}
+.mph-eye{
+  margin:0 0 6px;
+  color:var(--copper2);
+  font-size:10px; font-weight:800;
+  letter-spacing:.18em; text-transform:uppercase;
+}
+.mph-hero h2{
+  margin:0;
+  font-family:var(--font-display);
+  font-size:clamp(28px,7vw,34px);
+  letter-spacing:.02em; line-height:1;
+}
+.mph-copy{
+  margin:8px 0 0;
+  color:var(--muted);
+  font-size:13px; line-height:1.45;
+}
+.mph-gauge-wrap{margin-top:8px}
+.mph-hr-readout{
+  display:flex; align-items:baseline; justify-content:center;
+  gap:10px; margin-top:-6px;
+}
+.mph-hr-readout b{
+  font-family:var(--font-display);
+  font-size:42px; font-weight:700; letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+}
+.mph-hr-readout b small{
+  margin-left:4px; color:var(--dim);
+  font-size:14px; font-weight:600; letter-spacing:.08em;
+}
+.mph-hr-readout span{font-size:13px; font-weight:700}
+.mph-hr-status,.mph-guide{
+  margin:8px 0 0;
+  color:var(--dim);
+  font-size:12px; line-height:1.4;
+}
+.mph-zone{
+  margin-top:8px; padding:11px 12px;
+  border:1px solid var(--line); border-radius:14px;
+  background:rgba(8,10,12,.55);
+  transition:border-color .15s ease, background .15s ease;
+}
+.mph-zone.on{
+  border-color:rgba(212,165,116,.55);
+  background:rgba(212,165,116,.1);
+}
+.mph-bpm{
+  display:block; margin-top:4px;
+  color:var(--dim); font-size:12px; font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.mph-build{
+  margin-top:14px; padding:15px 14px;
+  border:1px solid var(--line); border-radius:18px;
+  background:linear-gradient(180deg, var(--panel), #101010);
+}
+.mph-build .title{
+  font-family:var(--font-display);
+  font-size:22px; letter-spacing:.02em;
+}
+.mph-lab{
+  display:block; margin:14px 0 8px;
+  color:var(--dim);
+  font-size:10px; font-weight:800;
+  letter-spacing:.14em; text-transform:uppercase;
+}
+.mph-chips{display:flex; flex-wrap:wrap; gap:8px}
+.mph-chip{
+  min-height:40px; padding:8px 12px;
+  border:1px solid var(--line2); border-radius:999px;
+  background:#0d0d0d; color:var(--muted);
+  font-size:13px; font-weight:650;
+}
+.mph-chip.on{
+  border-color:rgba(212,165,116,.65);
+  background:rgba(212,165,116,.14);
+  color:var(--copper2);
+}
+.mph-mins{
+  display:flex; align-items:center; justify-content:center;
+  gap:16px; margin-top:4px;
+}
+.mph-mins b{
+  min-width:64px; text-align:center;
+  font-family:var(--font-display);
+  font-size:36px; font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.mph-step{
+  width:44px; height:44px; padding:0;
+  border:1px solid var(--line2); border-radius:50%;
+  background:#0d0d0d; color:var(--text);
+  font-size:22px; line-height:1;
+}
+.mph-derived{
+  margin:14px 0 0; padding:10px 12px;
+  border:1px solid rgba(212,165,116,.28);
+  border-radius:12px;
+  background:rgba(212,165,116,.08);
+  color:#e8d4b7;
+  font-size:12px; line-height:1.45;
+}
+.mph-derived b{color:var(--copper2)}
 .bigtime,.mph-gauge b{
   font-family:var(--font-display);
   font-variant-numeric:tabular-nums;
@@ -539,7 +652,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-home-cond-v25';const PLAY_URL='https://raw.githack.com/reflectprotect123-max/strengthside/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html';
+const LOCAL_BUILD='the-hybrid-athlete-home-cond-v26';const PLAY_URL='https://raw.githack.com/reflectprotect123-max/strengthside/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html';
 function ensureLocalReady(state){state=state||{};state.meta=state.meta||{};state.meta.localRevision=num(state.meta.localRevision);state.meta.ownerId=state.meta.ownerId||localRecordId('user');state.meta.deviceId=state.meta.deviceId||localRecordId('device');state.meta.installId=state.meta.installId||localRecordId('install');state.meta.createdAt=state.meta.createdAt||isoNow();state.meta.updatedAt=isoNow();delete state['cl'+'oud'];delete state['sy'+'ncQueue'];return state}
 function ensureEntityMeta(record,entity,state=S){if(!record||typeof record!=='object')return record;state=state||S;state.meta=state.meta||{};record._meta=record._meta||{};record._meta.entity=entity;record._meta.localId=record._meta.localId||record.id||localRecordId(entity);record._meta.ownerId=record._meta.ownerId||state.meta.ownerId;record._meta.deviceId=record._meta.deviceId||state.meta.deviceId;record._meta.createdAt=record._meta.createdAt||isoNow();record._meta.updatedAt=record._meta.updatedAt||record._meta.createdAt;record._meta.version=num(record._meta.version)||1;return record}
 function touchRecord(record,entity){if(!record)return record;ensureEntityMeta(record,entity,S);record._meta.updatedAt=isoNow();record._meta.version=num(record._meta.version)+1;return record}
@@ -859,6 +972,97 @@ function resumeAthleteSession(id){let x=ses(id);if(!x)return;S.active=id;save();
 function makeAdHocConditioningSession(date){return{id:id(),templateId:'adhoc-conditioning',name:'Conditioning',date,status:'scheduled',coachInstructions:'',blocks:[{id:id(),type:'conditioning',heading:'Conditioning',conditioningType:'easy',modality:'Run / Row / Bike / Walk',targetDurationMin:30,targetHrZone:'',targetPace:'',targetWatts:'',targetDistance:'',rounds:1,workSec:0,restSec:0,timeCapMin:30,notes:''}],timer:{elapsed:0,on:false,last:null},taskIndex:0,tasks:[],notes:'',summary:null}}
 function nextConditioningSession(){let now=today(),active=activeSession();if(active&&sessionLooksLikeConditioning(active))return active;let listed=(S.sessions||[]).filter(x=>sessionLooksLikeConditioning(x)&&(x.status==='scheduled'||x.status==='active'));let todayHit=listed.find(x=>x.date===now);if(todayHit)return todayHit;let upcoming=listed.filter(x=>x.status==='scheduled'&&x.date>=now).sort((a,b)=>a.date.localeCompare(b.date))[0];if(upcoming)return upcoming;let sess=makeAdHocConditioningSession(now);S.sessions=S.sessions||[];S.sessions.push(sess);return sess}
 let simpleCondLog=false;
+let condBuilder={fmt:'steady',effort:'easy',modality:'Run',minutes:30};
+const COND_FORMATS=[
+  {key:'steady',name:'Steady-state',type:'easy'},
+  {key:'intervals',name:'Intervals',type:'intervals',rounds:8,workSec:30,restSec:90},
+  {key:'tempo',name:'Tempo',type:'intervals',rounds:10,workSec:15,restSec:60},
+  {key:'free',name:'Free run',type:'easy'},
+  {key:'custom',name:'Custom',type:'custom'}
+];
+const COND_EFFORTS=[
+  {key:'easy',name:'Easy',zoneKey:'recovery',rpe:'3–4',cue:'full sentences'},
+  {key:'medium',name:'Medium',zoneKey:'aerobic',rpe:'5–7',cue:'short sentences'},
+  {key:'hard',name:'Hard',zoneKey:'anaerobic',rpe:'8–9.5',cue:'a few words at a time'}
+];
+const COND_MODALITIES=['Run','Walk','Bike','Rower','Ski erg','Circuit','Other'];
+function condEffortMeta(key){return COND_EFFORTS.find(e=>e.key===key)||COND_EFFORTS[0]}
+function condFormatMeta(key){return COND_FORMATS.find(f=>f.key===key)||COND_FORMATS[0]}
+function patchCondBuilder(patch){condBuilder=Object.assign({},condBuilder,patch||{});renderCondBuilder()}
+function nudgeCondMinutes(delta){patchCondBuilder({minutes:Math.max(0,Math.min(120,(num(condBuilder.minutes)||0)+delta))})}
+function morpheusZoneSlateHtml(opts){
+  opts=opts||{};
+  let m=athHomeMetrics(),zones=athZonesForReadiness(m.recovery);
+  let band=m.recovery>=67?'High':(m.recovery>=34?'Moderate':'Low');
+  let bandColor=m.recovery>=67?'#9fc59b':(m.recovery>=34?'#d1a464':'#cf7f7c');
+  let effort=condEffortMeta(condBuilder.effort);
+  let focusKey=opts.focusZone||effort.zoneKey;
+  let eye=opts.eye||'Morpheus · today';
+  let title=opts.title||'Heart rate';
+  let copy=opts.copy||`Zones shift with readiness (${m.recovery}% · <b style="color:${bandColor}">${band}</b>). Effort picks the band — not a manual zone.`;
+  let gauge=opts.gauge===false?'':morpheusHrGaugeHtml(opts.hr);
+  let zoneRows=zones.map(z=>`<div class="mph-zone${z.key===focusKey?' on':''}" data-zone="${z.key}"><div class=ath-row><span class=ath-dot style="background:${z.color}"></span><b>${esc(z.name)}</b><span class=mph-ztime>${z.lo}–${z.hi}</span></div><b class=mph-bpm>bpm band for today</b></div>`).join('');
+  return`<div class=mph-hero><p class=mph-eye>${esc(eye)}</p><h2>${esc(title)}</h2><p class=mph-copy>${copy}</p>${gauge}</div>${zoneRows}`;
+}
+function renderCondBuilder(){
+  simpleCondLog=false;clearCondLeaveWatch();nav(false);clock(false);
+  let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
+  let zones=athZonesForReadiness(athHomeMetrics().recovery);
+  let z=zones.find(x=>x.key===effort.zoneKey)||zones[0];
+  let fmtChips=COND_FORMATS.map(f=>`<button type=button class="mph-chip${condBuilder.fmt===f.key?' on':''}" onclick="patchCondBuilder({fmt:'${f.key}'})">${condBuilder.fmt===f.key?'✓ ':''}${esc(f.name)}</button>`).join('');
+  let effortChips=COND_EFFORTS.map(e=>`<button type=button class="mph-chip${condBuilder.effort===e.key?' on':''}" onclick="patchCondBuilder({effort:'${e.key}'})">${condBuilder.effort===e.key?'✓ ':''}${esc(e.name)}</button>`).join('');
+  let modChips=COND_MODALITIES.map(m=>`<button type=button class="mph-chip${condBuilder.modality===m?' on':''}" onclick="patchCondBuilder({modality:'${m}'})">${condBuilder.modality===m?'✓ ':''}${esc(m)}</button>`).join('');
+  $('appScreen').innerHTML=`<button type=button class=mph-back onclick="go('home')">← Back</button>${morpheusZoneSlateHtml({eye:'Morpheus · build',title:'Conditioning',gauge:false,focusZone:effort.zoneKey,copy:`Pick format, modality and effort. Today’s <b style="color:${z.color}">${esc(z.name)}</b> band is ${z.lo}–${z.hi} bpm for ${esc(effort.name)}.`})}<div class=mph-build><div class=eyebrow>Builder</div><div class=title>What kind of conditioning?</div><span class=mph-lab>Format</span><div class=mph-chips>${fmtChips}</div><span class=mph-lab>Modality</span><div class=mph-chips>${modChips}</div><span class=mph-lab>Effort</span><div class=mph-chips>${effortChips}</div><span class=mph-lab>Minutes</span><div class=mph-mins><button type=button class=mph-step aria-label="fewer minutes" onclick="nudgeCondMinutes(-5)">−</button><b>${condBuilder.minutes||'—'}</b><button type=button class=mph-step aria-label="more minutes" onclick="nudgeCondMinutes(5)">+</button></div><p class=mph-derived><b>${esc(effort.name)}</b> · RPE ${esc(effort.rpe)} · ${esc(effort.cue)} · HR zone <b style="color:${z.color}">${esc(z.name)} ${z.lo}–${z.hi}</b><br>${esc(fmt.name)} · ${esc(condBuilder.modality)} · ${condBuilder.minutes||'—'} min</p><button class="btn primary block" style="margin-top:14px" onclick="startCondFromBuilder()">Start session</button></div>`;
+}
+function applyCondBuilderToSession(sess){
+  if(!sess)return;
+  let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
+  let zones=athZonesForReadiness(athHomeMetrics().recovery);
+  let z=zones.find(x=>x.key===effort.zoneKey)||zones[0];
+  let mins=Math.max(0,num(condBuilder.minutes)||30);
+  let patch={
+    heading:fmt.name,
+    conditioningType:fmt.type,
+    modality:condBuilder.modality,
+    targetDurationMin:mins,
+    timeCapMin:mins,
+    targetHrZone:`${z.lo}–${z.hi}`,
+    effort:effort.key,
+    condFmt:fmt.key,
+    rounds:fmt.rounds||1,
+    workSec:fmt.workSec||0,
+    restSec:fmt.restSec||0,
+    notes:''
+  };
+  (sess.blocks||[]).forEach(b=>{if(b&&b.type==='conditioning')Object.assign(b,patch)});
+  if(sess.status==='scheduled'||!(sess.tasks||[]).length){
+    /* flatten happens in beginSimpleCondSession */
+  }else{
+    (sess.tasks||[]).forEach(t=>{if(t&&t.kind==='conditioning'&&!t.complete)Object.assign(t,patch)});
+  }
+}
+function startCondFromBuilder(){
+  let sess=nextConditioningSession();
+  applyCondBuilderToSession(sess);
+  if(!beginSimpleCondSession())return;
+  applyCondBuilderToSession(ses(S.active));
+  let x=ses(S.active);
+  if(x&&(!(x.tasks||[]).some(t=>t.kind==='conditioning')||(x.tasks||[]).every(t=>t.kind!=='conditioning'||!t.condFmt))){
+    x.tasks=flatten(x);x.taskIndex=0;applyCondBuilderToSession(x);
+  }
+  save();
+  renderSimpleCondLog();
+}
+function openAthleteConditioningOverview(){
+  closeSheet();
+  let active=activeSession();
+  if(active&&sessionLooksLikeConditioning(active)&&sessionConditioningStarted(active)){
+    if(!beginSimpleCondSession())return;
+    renderSimpleCondLog();
+    return;
+  }
+  renderCondBuilder();
+}
 function beginSimpleCondSession(){let sess=nextConditioningSession();if(!sess){alert('No conditioning workout is available to log.');return false}let active=activeSession();if(active&&active.id!==sess.id){sheet(`<h2>Session already in progress</h2><p class=lead>${esc(active.name)} is still active.</p><div class=stack><button class="btn primary block" onclick="closeSheet();openActiveWorkout()">Resume current</button><button class="btn block" onclick=closeSheet()>Cancel</button></div>`);return false}if(sess.status==='scheduled'){sess.status='active';sess.tasks=flatten(sess);sess.taskIndex=0;sess.startedAt=Date.now()}S.active=sess.id;let x=ses(S.active);if(x&&x.tasks){let idx=x.tasks.findIndex(t=>t.kind==='conditioning'&&!t.complete);if(idx<0)idx=x.tasks.findIndex(t=>t.kind==='conditioning');if(idx>=0)x.taskIndex=idx}save();return true}
 function mphHrAngle(hr,lo,hi){let t=athClamp((num(hr)-lo)/Math.max(1,hi-lo),0,1);return 180-t*180}
 function mphPolar(cx,cy,r,deg){let a=deg*Math.PI/180;return[cx+r*Math.cos(a),cy-r*Math.sin(a)]}
@@ -908,7 +1112,6 @@ function scheduleCondFinishPrompt(){if(condFinishTimer){clearTimeout(condFinishT
 function maybePromptCondFinished(){if(simpleCondLog)return;let x=ses(S.active);if(!x||x.status!=='active'||!x.condLeftAt||x.condFinishAsked)return;if(Date.now()-x.condLeftAt<COND_FINISH_MS){scheduleCondFinishPrompt();return}if($('modalRoot')&&$('modalRoot').innerHTML){scheduleCondFinishPrompt();return}x.condFinishAsked=true;save();sheet(`<h2>Are you finished?</h2><p class=lead>${esc(x.name)} is still open from Conditioning.</p><div class=stack><button class="btn primary block" onclick="closeSheet();confirmCondFinished()">Yes, finish</button><button class="btn block" onclick="closeSheet();dismissCondFinishPrompt()">Not yet</button></div>`)}
 function dismissCondFinishPrompt(){let x=ses(S.active);if(x){x.condLeftAt=null;x.condFinishAsked=true;save()}}
 function confirmCondFinished(){let x=ses(S.active);if(!x)return go('home');let t=(x.tasks||[]).find(task=>task.kind==='conditioning'&&!task.complete)||(x.tasks||[]).find(task=>task.kind==='conditioning');if(t){let error=finalizeSimpleCondResult(t);if(error)return alert(error);t.complete=true}(x.tasks||[]).forEach(task=>{if(!task.complete){task.complete=true;if(task.kind!=='conditioning')task.skipped=true}});clearCondLeaveWatch();simpleCondLog=false;stopBleHr();resetBleHrSessionStats();save();finishSession()}
-function openAthleteConditioningOverview(){closeSheet();if(!beginSimpleCondSession())return;renderSimpleCondLog()}
 function home(){let now=today(),active=activeSession(),todaySessions=S.sessions.filter(x=>x.date===now&&x.status==='scheduled'&&x.id!==active?.id),done=S.sessions.filter(x=>x.status==='completed').sort((a,b)=>(b.completedAt||0)-(a.completedAt||0)),future=S.sessions.filter(x=>x.status==='scheduled'&&x.date>now).sort((a,b)=>a.date.localeCompare(b.date));let b=`<div class=stack>`;b+=athModulesHtml();if(active)b+=`<div class="card safety"><div class=eyebrow>Active</div><div class=row><div><div class=title>${esc(active.name)}</div><div class=meta>${dateLabel(active.date)}</div></div><span class=pill>resume</span></div><button class="btn primary block" style="margin-top:13px" onclick="openActiveWorkout()">Resume session</button></div>`;if(todaySessions.length){todaySessions.forEach(x=>b+=`<div class=card><div class=eyebrow>Today</div><div class=row><div><div class=title>${esc(x.name)}</div><div class=meta>Scheduled</div></div><span class=pill>${x.status}</span></div><button class="btn primary block" style="margin-top:13px" onclick="previewSession('${x.id}')">Start session</button></div>`)}else if(!active){b+=`<div class=card><div class=eyebrow>Start</div><div class=title>${future[0]?'Nothing due today':'No session scheduled'}</div><div class=meta>${future[0]?`Next: ${esc(future[0].name)} · ${dateLabel(future[0].date)}`:'Start Conditioning from Home when you are ready.'}</div><div class=quickgrid><button class="btn primary" onclick="go('programs')">Programs</button><button class=btn onclick="go('calendar')">Calendar</button><button class=btn onclick="go('settings')">Settings</button></div></div>`}b+=`</div>`;shell('Home','Train today',b);scheduleCondFinishPrompt();if(window.Whoop)Whoop.autoSyncIfPossible()}
 function loadStarter(){alert('Strength starter templates are retired. Start conditioning from Home.')}
 function weekKeys(k){let d=new Date(k+'T00:00:00'),m=(d.getDay()+6)%7;d.setDate(d.getDate()-m);return Array.from({length:7},(_,i)=>{let x=new Date(d);x.setDate(x.getDate()+i);return x.toISOString().slice(0,10)})}function shiftWeek(days){let d=new Date(S.selected+'T00:00:00');d.setDate(d.getDate()+days);S.selected=d.toISOString().slice(0,10);save();calendar()}function jumpToday(){S.selected=today();save();calendar()}function calendar(){let ks=weekKeys(S.selected),b=`<div class=calcontrols><button class="btn small" onclick="shiftWeek(-7)">← Previous</button><button class="btn small" onclick=jumpToday()>Today</button><button class="btn small" onclick="shiftWeek(7)">Next →</button></div><div class=week>${ks.map(k=>{let d=new Date(k+'T00:00:00'),has=S.sessions.some(x=>x.date===k);return`<button class="day ${k===S.selected?'active':''} ${has?'has':''}" onclick="S.selected='${k}';save();calendar()">${d.toLocaleDateString(undefined,{weekday:'short'}).slice(0,2)}<b>${d.getDate()}</b></button>`}).join('')}</div><div class=stack><div class=row><div><div class=eyebrow>Selected day</div><h2>${dateLabel(S.selected)}</h2></div><button class="btn primary small" onclick=scheduleSheet()>Schedule</button></div>${selectedDayStressCard(S.selected)}`;let rows=S.sessions.filter(x=>x.date===S.selected);if(!rows.length)b+=`<div class=empty><b>No sessions</b>Schedule a workout template here.</div>`;rows.forEach(x=>b+=sessionCalendarCard(x));b+=`</div>`;shell('Calendar','Plan and review',b)}
