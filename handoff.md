@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 22 August 2026 (early morning).**
+> **AUTHORITATIVE CHECKPOINT — 22 August 2026 (evening).**
 > Athlete-app arc on `cursor/whoop-wire-4920` (PR #6 vs `main`).
 > **The go-to athlete app is this Hybrid HTML file.** We are slowly
 > building it in place. Where this block disagrees with anything below
@@ -26,8 +26,8 @@ bench only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-home-cond-v24` — tap **Update** / **Update now** |
-| Migration stamp | `EVERYDAY_READINESS_NETLIFY_VERSION=builder-clean-er-athlete-trim-v2-2026-08-22` |
+| Cache / Update | `the-hybrid-athlete-home-cond-v25` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-no-er-v1-2026-08-22` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
@@ -58,10 +58,10 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
   sync into Home / Sleep metrics when signed in.
 - **Conditioning:** Morpheus half-gauge + readiness-aware zones. Tap
   CONDITIONING starts / resumes the simple cond logger.
-- **Programs:** Everyday Readiness only — **2× conditioning** chassis
-  (`er-cond-a-easy`, `er-cond-b-engine`). Strength templates are purged
-  on load and cannot be re-seeded from blueprints. No athlete “Change
-  program” / Coach Tools door on Programs.
+- **Programs:** empty athlete state — **Everyday Readiness is retired**
+  (purged on load; blueprints no longer seed it). Train from Home →
+  Conditioning (ad-hoc session). Coach Tools can still build custom
+  templates when unlocked.
 - **Calendar:** week strip + schedule / preview / resume. No Day stress
   card, no tonnage kg on completed cond sessions.
 - **Settings:** Update, WHOOP, HR profile, Export backup, quiet Coach
@@ -89,10 +89,12 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
 
 ### Product decisions locked this arc (do not silently reverse)
 
-- **Strength templates are retired** for the athlete Everyday Readiness
-  path. `purgeStrengthTemplates()` runs on every load; blueprints filter
-  out strength/evaluation; New strength / Full Body starter / Add
-  strength block paths are blocked.
+- **Everyday Readiness is retired** for the athlete shell.
+  `purgeEverydayReadiness()` + `purgeStrengthTemplates()` run on load;
+  program blueprints seed nothing; Home Conditioning starts an ad-hoc
+  session. Do not re-seed ER without an explicit ask.
+- **Strength templates are retired.** New strength / Full Body starter /
+  Add strength block paths stay blocked.
 - **“What to do during this block” / Guide / block-help** UI is gone
   (`showBlockHelp` hard-off).
 - **Athlete shell stays conditioning-first.** Do not reintroduce Home
@@ -102,14 +104,13 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
   Import/Danger on Settings, Nutrition stub, Day stress, or Stress
   Engine finish chrome without an explicit athlete ask.
 
-## 2. Features / fixes completed (this arc → v24)
+## 2. Features / fixes completed (this arc → v25)
 
 Earlier foundation (still true): Hybrid HTML is the only athlete app;
 Expo / `home.html` / PWA false starts deleted; Sleep + Cond logger +
 BLE + Update flow.
 
-Shipped on `cursor/whoop-wire-4920` through **v24** (UI polish
-commit `2f8dda1`; this handoff may sit on a later docs commit):
+Shipped on `cursor/whoop-wire-4920` through **v25**:
 
 - **WHOOP wire** into the HTML app via hybrid proxies; Home metrics
   update after sync (`window.today` / `window.S` exposure fixed).
@@ -127,6 +128,8 @@ commit `2f8dda1`; this handoff may sit on a later docs commit):
   Protect storage, program More/kind chrome, softer green check-in copy.
 - **Track Dawn UI polish** (v24): unified tokens, fonts, atmosphere,
   Home effort panes, nav craft, quieter Programs/Calendar/Settings.
+- **Everyday Readiness removed** (v25): no default program; Programs
+  empty state; Home Conditioning uses ad-hoc session.
 
 How to play: Netlify URL above, or synced `THE-Hybrid-App.html` after
 `bash apps/mobile/sync-hybrid-html.sh`. Tap **Update** after a push /
@@ -150,12 +153,11 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
 
 **Open product / behaviour gaps:**
 
-- Programs UI can still feel redundant (default hero + selected card
-  both saying Everyday Readiness) — visual polish only; structure not
-  collapsed yet.
+- Programs tab is an empty “No program loaded” state after ER removal —
+  may want to hide the tab later if it stays unused.
 - Mixed lift+cond historical sessions: Resume still prefers cond path;
-  strength templates are gone from ER, but old local data may exist
-  until purge/migration.
+  completed ER history may remain locally; incomplete ER/SZN schedule
+  rows are purged.
 - Leave still **pauses** BLE (`leaveSimpleCond` → `pauseBleHr`).
 - Durable assigned-session logging (Phase C) and Phase B coach
   authoring remain unstarted. Local complete → `localStorage` only.
@@ -167,17 +169,17 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
 ## 4. Precise next steps for the next session
 
 1. Read this block + `CLAUDE.md` / shared-Supabase contract.
-2. Confirm build id **`the-hybrid-athlete-home-cond-v24`** on Netlify
+2. Confirm build id **`the-hybrid-athlete-home-cond-v25`** on Netlify
    (hard refresh / Update now).
 3. Keep building **this** HTML file only:
    `apps/mobile/prototype/hybrid-app/index.html` →
    `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify staging dir
    if shipping. Bump `LOCAL_BUILD` and service-worker `CACHE` together.
-4. Do **not** revive strength templates, Guide/block-help, Nutrition
-   stub, Expo, or `home.html` / PWA shells.
+4. Do **not** revive Everyday Readiness, strength templates,
+   Guide/block-help, Nutrition stub, Expo, or `home.html` / PWA shells.
 5. Wait for the athlete’s next ask. Sensible follow-ups if unspecified:
-   collapse Programs double-card, deepen WHOOP field coverage, iPhone
-   HR fallback copy, or real Nutrition — only if requested.
+   simplify or hide the empty Programs tab, deepen WHOOP field coverage,
+   iPhone HR fallback copy, or real Nutrition — only if requested.
 6. Do not start Phase B/C unless asked — and if logging lands, it lands
    in this HTML app.
 
@@ -185,7 +187,8 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
 
 > Older checkpoints below are history. The Expo Home / `home.html` /
 > PWA work was a false start. The Hybrid HTML drop-in is the app.
-> The 21 Aug night block below is superseded by this 22 Aug checkpoint.
+> Blocks dated before this evening checkpoint (including the early-morning
+> 22 Aug ER chassis note) are superseded.
 
 ## 21 August 2026 — mobile Home first draft + Cursor tooling
 
