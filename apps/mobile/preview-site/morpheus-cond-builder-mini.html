@@ -1,196 +1,165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#090909" />
-<title>Morpheus · Conditioning builder</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Morpheus conditioning builder · mini</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#090909; --panel:#121212; --line:#2a2927; --line2:#3a3732;
-  --text:#f1ede5; --muted:#aaa399; --dim:#8a847a;
-  --copper:#d4a574; --copper2:#e8c49a; --copper-dim:rgba(212,165,116,.14);
-  --font-display:"Barlow Condensed",ui-sans-serif,system-ui,sans-serif;
-  --font-body:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --bg:#0a0a0a;--surf:#121212;--ink:#f5f0e8;--muted:rgba(245,240,232,.55);
+  --line:rgba(245,240,232,.12);--brass:#c9a227;--copper:#b87333;
+  --z-rec:#4fc3f7;--z-aer:#66bb6a;--z-ana:#ef5350;--z-neu:#ab47bc;--z-pow:#ffca28;
+  --touch:44px;--ease:cubic-bezier(.22,1,.36,1);
 }
-*{box-sizing:border-box}
-html,body{margin:0; min-height:100%; background:var(--bg); color:var(--text); font-family:var(--font-body)}
-body{
-  min-height:100vh;
-  background:
-    radial-gradient(ellipse at 20% -10%, rgba(61,255,158,.07), transparent 45%),
-    radial-gradient(ellipse at 90% 0%, rgba(51,196,255,.06), transparent 40%),
-    var(--bg);
-}
-.phone{
-  max-width:390px; margin:0 auto; padding:18px 16px 40px;
-}
-.eye{
-  margin:0 0 6px; color:var(--copper2);
-  font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
-}
-h1{
-  margin:0; font-family:var(--font-display); font-weight:700;
-  font-size:34px; letter-spacing:.02em; line-height:1;
-}
-.copy{margin:8px 0 0; color:var(--muted); font-size:13px; line-height:1.45}
-.hero{
-  padding:16px 14px; border:1px solid rgba(212,165,116,.28); border-radius:18px;
-  background:
-    radial-gradient(ellipse at 18% 0%, rgba(61,255,158,.08), transparent 42%),
-    linear-gradient(180deg,#14110d,#0c0c0c);
-}
-.zones{display:grid; gap:8px; margin-top:10px}
-.zone{
-  padding:11px 12px; border:1px solid var(--line); border-radius:14px;
-  background:rgba(8,10,12,.55);
-}
-.zone.on{border-color:rgba(212,165,116,.55); background:rgba(212,165,116,.1)}
-.zone-row{display:flex; align-items:center; gap:8px}
-.zone-row b{flex:1; font-size:14px}
-.zone-row span{color:var(--text); font-size:13px; font-weight:700; font-variant-numeric:tabular-nums}
-.dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto}
-.bpm{display:block; margin-top:4px; color:var(--dim); font-size:12px}
-.build{
-  margin-top:14px; padding:15px 14px; border:1px solid var(--line); border-radius:18px;
-  background:linear-gradient(180deg,var(--panel),#101010);
-}
-.lab{
-  display:block; margin:14px 0 8px; color:var(--dim);
-  font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
-}
-.lab:first-of-type{margin-top:10px}
-.title{font-family:var(--font-display); font-size:22px; letter-spacing:.02em}
-.chips{display:flex; flex-wrap:wrap; gap:8px}
-.chip{
-  min-height:40px; padding:8px 12px; border:1px solid var(--line2); border-radius:999px;
-  background:#0d0d0d; color:var(--muted); font:inherit; font-size:13px; font-weight:600; cursor:pointer;
-}
-.chip.on{border-color:rgba(212,165,116,.65); background:var(--copper-dim); color:var(--copper2)}
-.mins{display:flex; align-items:center; justify-content:center; gap:16px; margin-top:4px}
-.mins b{
-  min-width:64px; text-align:center; font-family:var(--font-display);
-  font-size:36px; font-weight:700; font-variant-numeric:tabular-nums;
-}
-.step{
-  width:44px; height:44px; border:1px solid var(--line2); border-radius:50%;
-  background:#0d0d0d; color:var(--text); font-size:22px; cursor:pointer;
-}
-.derived{
-  margin:14px 0 0; padding:10px 12px; border:1px solid rgba(212,165,116,.28);
-  border-radius:12px; background:rgba(212,165,116,.08); color:#e8d4b7;
-  font-size:12px; line-height:1.45;
-}
-.derived b{color:var(--copper2)}
-.start{
-  display:block; width:100%; margin-top:14px; min-height:48px;
-  border:1px solid var(--copper); border-radius:12px;
-  background:var(--copper); color:#14110d;
-  font:inherit; font-weight:700; cursor:pointer;
-}
-.start:active{opacity:.9}
-.toast{
-  display:none; margin-top:12px; padding:10px 12px; border-radius:12px;
-  border:1px solid rgba(156,180,139,.4); background:rgba(156,180,139,.12);
-  color:#c5d6bb; font-size:13px;
-}
-.toast.show{display:block}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100dvh;background:radial-gradient(120% 80% at 50% -10%,#1a1410 0%,var(--bg) 55%);
+  color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;display:flex;justify-content:center;padding:24px 12px 40px}
+.phone{width:min(390px,100%);background:var(--surf);border:1px solid var(--line);border-radius:28px;
+  overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.55);display:flex;flex-direction:column;max-height:860px}
+.top{padding:18px 18px 10px;border-bottom:1px solid var(--line)}
+.brand{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--brass)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:28px;letter-spacing:.04em;
+  text-transform:uppercase;margin-top:6px;line-height:1}
+.sub{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.45}
+.scroll{flex:1;overflow:auto;padding:14px 16px 100px;-webkit-overflow-scrolling:touch}
+.mph-zone-compact{display:flex;gap:5px;margin:0 0 14px;padding:8px;background:rgba(0,0,0,.35);
+  border:1px solid var(--line);border-radius:12px}
+.mph-zc{flex:1;min-height:36px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,.04);
+  color:var(--muted);font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;cursor:pointer;transition:transform .15s var(--ease),box-shadow .2s,border-color .2s,color .2s}
+.mph-zc:active{transform:scale(.96)}
+.mph-zc.on{color:#fff;border-color:currentColor;box-shadow:inset 0 0 0 1px currentColor,0 0 14px color-mix(in srgb,currentColor 35%,transparent)}
+.mph-zc.z-recovery{color:var(--z-rec)}.mph-zc.z-aerobic{color:var(--z-aer)}.mph-zc.z-anaerobic{color:var(--z-ana)}
+.mph-zc.z-neural{color:var(--z-neu)}.mph-zc.z-power{color:var(--z-pow)}
+.mph-zc.z-recovery.on{background:color-mix(in srgb,var(--z-rec) 22%,transparent)}
+.mph-zc.z-aerobic.on{background:color-mix(in srgb,var(--z-aer) 22%,transparent)}
+.mph-zc.z-anaerobic.on{background:color-mix(in srgb,var(--z-ana) 22%,transparent)}
+.mph-zc.z-neural.on{background:color-mix(in srgb,var(--z-neu) 22%,transparent)}
+.mph-zc.z-power.on{background:color-mix(in srgb,var(--z-pow) 22%,transparent)}
+.mph-sec{margin:0 0 18px}
+.mph-lab{display:block;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(245,240,232,.72);margin:0 0 8px}
+.mph-chips{display:flex;flex-wrap:wrap;gap:8px}
+.mph-chip{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);
+  min-height:var(--touch);padding:10px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;
+  transition:border-color .15s,background .15s,color .15s,transform .12s var(--ease)}
+.mph-chip:active{transform:scale(.97)}
+.mph-chip:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.mph-chip.on{border-color:var(--brass);background:rgba(201,162,39,.18);color:#ffe9a8}
+.mph-row{display:flex;gap:10px;align-items:flex-end}
+.mph-field{flex:1}
+.mph-field input{width:100%;min-height:var(--touch);padding:10px 12px;border-radius:12px;
+  border:1px solid var(--line);background:rgba(0,0,0,.35);color:var(--ink);font-size:16px;font-weight:600}
+.mph-field input:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+.mph-adv{margin-top:4px;padding-top:14px;border-top:1px solid var(--line);
+  animation:mphIn .28s var(--ease) both}
+@keyframes mphIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.mph-chip:active,.mph-zc:active{transform:none}.mph-adv{animation:none}}
+.sticky{position:sticky;bottom:0;margin:0 -16px -14px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0));
+  background:linear-gradient(180deg,transparent,rgba(18,18,18,.92) 28%,rgba(18,18,18,.98));
+  border-top:1px solid var(--line);backdrop-filter:blur(8px)}
+.btn{appearance:none;width:100%;min-height:52px;border:0;border-radius:14px;cursor:pointer;
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:18px;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(135deg,var(--brass),var(--copper));color:#1a1208;
+  box-shadow:0 8px 24px rgba(201,162,39,.28);transition:transform .15s var(--ease),filter .15s}
+.btn:active{transform:scale(.98);filter:brightness(.95)}
+.btn:focus-visible{outline:2px solid #ffe9a8;outline-offset:3px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(120%);
+  background:#1c1812;border:1px solid var(--brass);color:var(--ink);padding:12px 16px;border-radius:12px;
+  font-size:13px;max-width:min(340px,92vw);transition:transform .35s var(--ease);z-index:20;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
-<div class="phone" id="app"></div>
-<script>
-const FORMATS=[
-  {key:'steady',name:'Steady-state'},
-  {key:'intervals',name:'Intervals'},
-  {key:'tempo',name:'Tempo'},
-  {key:'free',name:'Free run'},
-  {key:'custom',name:'Custom'},
-];
-const EFFORTS=[
-  {key:'easy',name:'Easy',zone:'recovery',rpe:'3–4',cue:'full sentences'},
-  {key:'medium',name:'Medium',zone:'aerobic',rpe:'5–7',cue:'short sentences'},
-  {key:'hard',name:'Hard',zone:'anaerobic',rpe:'8–9.5',cue:'a few words at a time'},
-];
-const MODS=['Run','Walk','Bike','Rower','Ski erg','Circuit','Other'];
-const ZONES=[
-  {key:'recovery',name:'Recovery',color:'#33c4ff',lo:95,hi:117},
-  {key:'aerobic',name:'Aerobic',color:'#3dff9e',lo:118,hi:140},
-  {key:'anaerobic',name:'Anaerobic',color:'#ffc24d',lo:141,hi:163},
-  {key:'peak',name:'Peak',color:'#ff5b57',lo:164,hi:190},
-];
-
-let state={fmt:'steady',effort:'easy',modality:'Run',minutes:30};
-
-function effort(){return EFFORTS.find(e=>e.key===state.effort)||EFFORTS[0]}
-function fmt(){return FORMATS.find(f=>f.key===state.fmt)||FORMATS[0]}
-function zone(){return ZONES.find(z=>z.key===effort().zone)||ZONES[0]}
-
-function chip(list,key,onClick){
-  return list.map(item=>{
-    const k=item.key||item, name=item.name||item, on=(state[key]===k)?' on':'';
-    const mark=on?'✓ ':'';
-    return `<button type="button" class="chip${on}" onclick="${onClick}('${k}')">${mark}${name}</button>`;
-  }).join('');
-}
-
-function render(toast){
-  const e=effort(), z=zone(), f=fmt();
-  document.getElementById('app').innerHTML=`
-    <section class="hero">
-      <p class="eye">Morpheus · build</p>
-      <h1>Conditioning</h1>
-      <p class="copy">Pick format, modality and effort. Today’s <b style="color:${z.color}">${z.name}</b> band is ${z.lo}–${z.hi} bpm for ${e.name}.</p>
-    </section>
-    <div class="zones">
-      ${ZONES.map(row=>`
-        <div class="zone${row.key===z.key?' on':''}">
-          <div class="zone-row">
-            <span class="dot" style="background:${row.color}"></span>
-            <b>${row.name}</b>
-            <span>${row.lo}–${row.hi}</span>
-          </div>
-          <span class="bpm">bpm band for today</span>
-        </div>`).join('')}
+<div class="phone" role="main">
+  <div class="top">
+    <div class="brand">THE Hybrid System · Morpheus</div>
+    <h1>Conditioning</h1>
+    <p class="sub">Build today’s session · zones follow readiness</p>
+  </div>
+  <div class="scroll">
+    <div class="mph-zone-compact" role="group" aria-label="Target zone">
+      <button type="button" class="mph-zc z-recovery" data-z="recovery">Rec</button>
+      <button type="button" class="mph-zc z-aerobic on" data-z="aerobic">Aer</button>
+      <button type="button" class="mph-zc z-anaerobic" data-z="anaerobic">Ana</button>
+      <button type="button" class="mph-zc z-neural" data-z="neural">Neu</button>
+      <button type="button" class="mph-zc z-power" data-z="power">Pow</button>
     </div>
-    <section class="build">
-      <p class="eye">Builder</p>
-      <div class="title">What kind of conditioning?</div>
-      <span class="lab">Format</span>
-      <div class="chips">${chip(FORMATS,'fmt','setFmt')}</div>
-      <span class="lab">Modality</span>
-      <div class="chips">${chip(MODS.map(m=>({key:m,name:m})),'modality','setMod')}</div>
-      <span class="lab">Effort</span>
-      <div class="chips">${chip(EFFORTS,'effort','setEffort')}</div>
-      <span class="lab">Minutes</span>
-      <div class="mins">
-        <button type="button" class="step" aria-label="fewer minutes" onclick="nudge(-5)">−</button>
-        <b>${state.minutes||'—'}</b>
-        <button type="button" class="step" aria-label="more minutes" onclick="nudge(5)">+</button>
+    <div class="mph-sec">
+      <span class="mph-lab">Format</span>
+      <div class="mph-chips" id="formats"></div>
+    </div>
+    <div class="mph-sec">
+      <span class="mph-lab">Modality</span>
+      <div class="mph-chips" id="mods"></div>
+    </div>
+    <div class="mph-sec">
+      <span class="mph-lab">Effort</span>
+      <div class="mph-chips" id="efforts"></div>
+    </div>
+    <div class="mph-sec">
+      <span class="mph-lab">Minutes</span>
+      <div class="mph-row"><div class="mph-field"><input id="mins" type="number" min="5" max="180" step="5" value="20"/></div></div>
+    </div>
+    <div class="mph-adv" id="adv" hidden>
+      <div class="mph-sec">
+        <span class="mph-lab">Rounds · work · rest</span>
+        <div class="mph-row">
+          <div class="mph-field"><span class="mph-lab">Rounds</span><input id="rounds" type="number" min="1" max="40" value="6"/></div>
+          <div class="mph-field"><span class="mph-lab">Work s</span><input id="work" type="number" min="10" max="600" step="5" value="40"/></div>
+          <div class="mph-field"><span class="mph-lab">Rest s</span><input id="rest" type="number" min="0" max="600" step="5" value="20"/></div>
+        </div>
       </div>
-      <p class="derived">
-        <b>${e.name}</b> · RPE ${e.rpe} · ${e.cue} · HR zone
-        <b style="color:${z.color}">${z.name} ${z.lo}–${z.hi}</b><br>
-        ${f.name} · ${state.modality} · ${state.minutes||'—'} min
-      </p>
-      <button type="button" class="start" onclick="start()">Start session</button>
-      <div class="toast${toast?' show':''}" id="toast">${toast||''}</div>
-    </section>`;
+    </div>
+    <div class="sticky">
+      <button type="button" class="btn" id="start">Start session</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const state={format:'steady',modality:'bike',effort:'medium',zone:'aerobic'};
+const FORMATS=[{k:'steady',l:'Steady'},{k:'intervals',l:'Intervals'},{k:'tempo',l:'Tempo'},{k:'free',l:'Free'},{k:'custom',l:'Custom'}];
+const MODS=[{k:'bike',l:'Bike'},{k:'row',l:'Row'},{k:'run',l:'Run'},{k:'ski',l:'Ski'},{k:'swim',l:'Swim'},{k:'other',l:'Other'}];
+const EFFORTS=[{k:'easy',l:'Easy',z:'recovery'},{k:'medium',l:'Medium',z:'aerobic'},{k:'hard',l:'Hard',z:'anaerobic'}];
+function chip(el,items,key,onPick){
+  el.innerHTML=items.map(i=>{
+    const on=state[key]===i.k;
+    return `<button type="button" class="mph-chip${on?' on':''}" aria-pressed="${on?'true':'false'}" data-v="${i.k}">${i.l}</button>`;
+  }).join('');
+  el.querySelectorAll('.mph-chip').forEach(b=>b.addEventListener('click',()=>{state[key]=b.dataset.v;onPick&&onPick(b.dataset.v);paint();}));
 }
-
-function setFmt(k){state.fmt=k;render()}
-function setMod(k){state.modality=k;render()}
-function setEffort(k){state.effort=k;render()}
-function nudge(d){state.minutes=Math.max(0,Math.min(120,(state.minutes||0)+d));render()}
-function start(){
-  const e=effort(), z=zone(), f=fmt();
-  render(`${f.name} · ${state.modality} · ${e.name} · ${state.minutes} min → ${z.name} ${z.lo}–${z.hi}`);
+function paintZones(){
+  document.querySelectorAll('.mph-zc').forEach(b=>{
+    const on=b.dataset.z===state.zone;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+  });
 }
-
-render();
+function paint(){
+  chip(document.getElementById('formats'),FORMATS,'format',()=>{
+    const show=['intervals','tempo','custom'].includes(state.format);
+    document.getElementById('adv').hidden=!show;
+  });
+  chip(document.getElementById('mods'),MODS,'modality');
+  chip(document.getElementById('efforts'),EFFORTS,'effort',v=>{
+    const e=EFFORTS.find(x=>x.k===v); if(e) state.zone=e.z;
+  });
+  document.getElementById('adv').hidden=!['intervals','tempo','custom'].includes(state.format);
+  paintZones();
+}
+document.querySelectorAll('.mph-zc').forEach(b=>b.addEventListener('click',()=>{state.zone=b.dataset.z;paintZones();}));
+document.getElementById('start').addEventListener('click',()=>{
+  const mins=+document.getElementById('mins').value||20;
+  const show=!document.getElementById('adv').hidden;
+  const extra=show?` · ${document.getElementById('rounds').value}×${document.getElementById('work').value}/${document.getElementById('rest').value}s`:'';
+  const t=document.getElementById('toast');
+  t.textContent=`${state.format} · ${state.modality} · ${state.effort} · ${mins} min · ${state.zone}${extra}`;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600);
+});
+paint();
 </script>
 </body>
 </html>

@@ -26,7 +26,7 @@ bench only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-home-cond-v27` — tap **Update** / **Update now** |
+| Cache / Update | `the-hybrid-athlete-home-cond-v28` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-no-er-v2-2026-08-22` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -128,6 +128,7 @@ Shipped on `cursor/whoop-wire-4920` through **v25**:
   Protect storage, program More/kind chrome, softer green check-in copy.
 - **Track Dawn UI polish** (v24): unified tokens, fonts, atmosphere,
   Home effort panes, nav craft, quieter Programs/Calendar/Settings.
+- **Morpheus builder UX polish** (v28 · P0–P4): chips ≥44px + `aria-pressed` + brass focus-visible; sticky Start; compact zone bar on build (full zones + gauge on log); rounds/work/rest for Intervals/Tempo/Custom; CONDITIONING copy “Build today’s session · zones follow readiness”; advanced-field motion with reduced-motion respect. Mini synced.
 - **Morpheus conditioning builder** (v27): Home → CONDITIONING module and **Start Conditioning** open Format / Modality / Effort / Minutes on the Morpheus zone slate; Start session opens the HR log. Standalone mini at `apps/mobile/prototype/hybrid-app/morpheus-cond-builder-mini.html`.
 - **Morpheus conditioning builder** (v26): Home → Conditioning opens a Format / Modality / Effort / Minutes builder on the Morpheus zone slate; Start session opens the HR log.
 - **Everyday Readiness removed** (v25): no default program; Programs
@@ -171,8 +172,10 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
 ## 4. Precise next steps for the next session
 
 1. Read this block + `CLAUDE.md` / shared-Supabase contract.
-2. Confirm build id **`the-hybrid-athlete-home-cond-v27`** on Netlify
+2. Confirm build id **`the-hybrid-athlete-home-cond-v28`** on Netlify
    (hard refresh / Update now).
+   Next product talk: **heart rate recovery** (post-effort HR drop /
+   recovery scoring) — not built in the athlete HTML yet.
 3. Keep building **this** HTML file only:
    `apps/mobile/prototype/hybrid-app/index.html` →
    `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify staging dir
