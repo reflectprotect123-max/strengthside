@@ -52,25 +52,44 @@
     }
     return body;
   }
+  // `today` and `S` are let/const in the HTML script, so they are NOT on window.
+  // Resolve them explicitly — otherwise applyNormalized silently no-ops and Home
+  // keeps the fixture recovery/HRV/RHR values after a "WHOOP synced" toast.
+  function todayIso() {
+    if (typeof global.today === 'function') return global.today();
+    const d = new Date();
+    const tz = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tz).toISOString().slice(0, 10);
+  }
+  function appState() {
+    if (global.S && typeof global.S === 'object') return global.S;
+    return null;
+  }
+  function finiteNum(v) {
+    // Number(null) === 0 — treat null/'' as missing so we don't write zeros.
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
   function st() {
-    if (!global.S) global.S = {};
-    global.S.settings = global.S.settings || {};
-    global.S.settings.whoop = global.S.settings.whoop || { connected: false, lastSyncAt: null, sampleDate: null, email: null };
-    return global.S.settings.whoop;
+    const S = appState() || (global.S = global.S || {});
+    S.settings = S.settings || {};
+    S.settings.whoop = S.settings.whoop || { connected: false, lastSyncAt: null, sampleDate: null, email: null };
+    return S.settings.whoop;
   }
   function applyNormalized(n, meta) {
     meta = meta || {};
     if (!n || typeof n !== 'object') return false;
-    if (typeof global.dailyCheckin !== 'function' || typeof global.today !== 'function') return false;
-    const c = global.dailyCheckin(global.today(), true);
+    if (typeof global.dailyCheckin !== 'function') return false;
+    const c = global.dailyCheckin(todayIso(), true);
     let changed = false;
-    const recovery = Number(n.recoveryScore), hrv = Number(n.hrvMs), rhr = Number(n.restingHr);
-    const sleepPerf = Number(n.sleepPerformance), strain = Number(n.strain);
-    if (Number.isFinite(recovery)) { c.whoopRecovery = Math.round(recovery); changed = true; }
-    if (Number.isFinite(hrv)) { c.hrv = Math.round(hrv); changed = true; }
-    if (Number.isFinite(rhr)) { c.restingHr = Math.round(rhr); changed = true; }
-    if (Number.isFinite(sleepPerf) && sleepPerf > 0) { c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
-    if (Number.isFinite(strain)) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
+    const recovery = finiteNum(n.recoveryScore), hrv = finiteNum(n.hrvMs), rhr = finiteNum(n.restingHr);
+    const sleepPerf = finiteNum(n.sleepPerformance), strain = finiteNum(n.strain);
+    if (recovery != null && recovery > 0) { c.whoopRecovery = Math.round(recovery); changed = true; }
+    if (hrv != null && hrv > 0) { c.hrv = Math.round(hrv); changed = true; }
+    if (rhr != null && rhr > 0) { c.restingHr = Math.round(rhr); changed = true; }
+    if (sleepPerf != null && sleepPerf > 0) { c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
+    if (strain != null && strain > 0) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
     if (changed) {
       c.updatedAt = Date.now();
       c.whoopSyncedAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
@@ -142,7 +161,8 @@
       global.openAthleteSleepOverview(undefined, { skipWhoopSync: true });
       return;
     }
-    if (global.S && global.S.tab === 'settings' && typeof global.settings === 'function') {
+    const tab = (appState() && appState().tab) || null;
+    if (tab === 'settings' && typeof global.settings === 'function') {
       global.settings();
       return;
     }
@@ -154,9 +174,16 @@
     ui.busy = true; ui.message = 'Syncing WHOOP…'; renderPanels();
     try {
       const body = await api(FN.sync, opts.backfill ? { query: { backfill: '1' } } : undefined);
-      if (body && body.normalized) applyNormalized(body.normalized, { syncedAt: body.syncedAt, sampleDate: body.normalized.date });
-      else await refreshStatus();
-      ui.message = 'WHOOP synced';
+      let applied = false;
+      if (body && body.normalized) {
+        applied = !!applyNormalized(body.normalized, { syncedAt: body.syncedAt, sampleDate: body.normalized.date });
+      } else {
+        await refreshStatus();
+        applied = !!(st().lastNormalized && finiteNum(st().lastNormalized.recoveryScore));
+      }
+      ui.message = applied
+        ? 'WHOOP synced — Home recovery / HRV / RHR updated'
+        : 'WHOOP reached but no recovery sample yet';
       try { await refreshStatus(); } catch (_) {}
       ui.busy = false;
       refreshVisibleUi();
