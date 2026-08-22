@@ -1,11 +1,285 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 20 August 2026. Superpowers v6.3.0 and the full
-> hybrid-repo skill/plugin toolchain are now vendored and installed here, per
-> `skills.md`. NO UI FEATURES EXIST YET: Phase B (coach authoring) and Phase C
-> (mobile logger) are both unstarted — vendoring the toolchain is not
-> progress on either. Where this block disagrees with anything below it, this
-> one wins.**
+> **AUTHORITATIVE CHECKPOINT — 22 August 2026 (evening).**
+> Athlete-app arc on `cursor/whoop-wire-4920` (PR #6 vs `main`).
+> **The go-to athlete app is this Hybrid HTML file.** We are slowly
+> building it in place. Where this block disagrees with anything below
+> it, this one wins.
+
+## 1. Current project state
+
+Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
+System; same Supabase as the hybrid repo). Branch:
+`cursor/whoop-wire-4920`. PR:
+https://github.com/reflectprotect123-max/strengthside/pull/6
+
+**Live athlete deploy (Netlify):**
+https://papaya-cheesecake-059e06.netlify.app/
+
+**The product athletes use is the Hybrid HTML app.** Not Expo, not
+`home.html`, not `prototype/pwa/`. Those were deleted on purpose. Do not
+recreate them. Do not run Expo to see the app. `apps/web` is an engine
+bench only.
+
+| Role | Path |
+| --- | --- |
+| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
+| Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
+| Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
+| Cache / Update | `the-hybrid-athlete-home-cond-v28` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-no-er-v2-2026-08-22` |
+
+Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
+`@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
+inject data. The HTML app is the only place athlete screens get built
+until a later, explicit rewrite.
+
+This repo still owns exactly twelve Postgres tables (`metric` through
+`coaching_note`) plus `embed-coaching-note`. Neither repo writes a
+migration against the other’s tables.
+
+Phase B (coach authoring) and a durable Phase C logger (reducer +
+`assigned_session`) are **unstarted**. If logging lands, it lands **in
+this HTML app**.
+
+Pain / illness flags are still raised. **Nothing consumes them.** That
+is inherited from the hybrid repo deleting `@hybrid/auto-coach`. A stop
+would be a new decision, not a restoration. Do not use HRV as a pain /
+injury / illness gate.
+
+### What the HTML app is today (athlete shell)
+
+Bottom nav: **Home · Programs · Calendar · Settings**.
+
+- **Home:** Sleep + Conditioning modules only (Nutrition stub removed).
+  Track Dawn UI (graphite + copper + zone teal; Space Grotesk + Barlow
+  Condensed).
+- **Sleep:** Check-in \| Overview sheet from the Sleep module. WHOOP can
+  sync into Home / Sleep metrics when signed in.
+- **Conditioning:** Morpheus half-gauge + readiness-aware zones. Tap
+  CONDITIONING starts / resumes the simple cond logger.
+- **Programs:** empty athlete state — **Everyday Readiness is retired**
+  (purged on load; blueprints no longer seed it). Train from Home →
+  Conditioning (ad-hoc session). Coach Tools can still build custom
+  templates when unlocked.
+- **Calendar:** week strip + schedule / preview / resume. No Day stress
+  card, no tonnage kg on completed cond sessions.
+- **Settings:** Update, WHOOP, HR profile, Export backup, quiet Coach
+  access unlock. No Session alerts, Import, Danger wipe, or Protect
+  storage on the athlete surface.
+- **Coach Tools:** still exist behind passcode (Builder / exercises /
+  mobility). Default passcode remains in code but is **not** printed on
+  the lock screen. Unlock entry is Settings → Coach access only.
+
+### How Conditioning works (current contract)
+
+- **Connect strap** = Web Bluetooth `heart_rate` GATT. Live BPM drives
+  the needle and the big number. Chrome on Android or desktop. **Not
+  iOS Safari.** Screen wake-lock while live HR is connected.
+- **Start / Pause** = session clock. First live HR can also auto-start
+  duration so strap-only use still logs minutes.
+- **Avg HR** = session field (BLE stream + typeable). Does **not** move
+  the needle.
+- **Complete** on a conditioning-primary session → conditioning summary
+  (minutes / avg / max HR / load) → Done → Home. Not the old strength
+  tonnage summary.
+- **← Back** leaves to Home, pauses BLE, and starts a 120s
+  “Are you finished?” watch. Yes finishes; Not yet stops nagging until
+  the next exit.
+
+### Product decisions locked this arc (do not silently reverse)
+
+- **Everyday Readiness is retired** for the athlete shell.
+  `purgeEverydayReadiness()` + `purgeStrengthTemplates()` run on load;
+  program blueprints seed nothing; Home Conditioning starts an ad-hoc
+  session. Do not re-seed ER without an explicit ask.
+- **Strength templates are retired.** New strength / Full Body starter /
+  Add strength block paths stay blocked.
+- **“What to do during this block” / Guide / block-help** UI is gone
+  (`showBlockHelp` hard-off).
+- **Athlete shell stays conditioning-first.** Do not reintroduce Home
+  weekly strength targets, Training snapshot Strength scores, lift-week
+  schedule copy, Programs Coach Tools disclosure, default PIN text,
+  calendar tonnage, RIR “junk volume” check-in copy, Session alerts,
+  Import/Danger on Settings, Nutrition stub, Day stress, or Stress
+  Engine finish chrome without an explicit athlete ask.
+
+## 2. Features / fixes completed (this arc → v25)
+
+Earlier foundation (still true): Hybrid HTML is the only athlete app;
+Expo / `home.html` / PWA false starts deleted; Sleep + Cond logger +
+BLE + Update flow.
+
+Shipped on `cursor/whoop-wire-4920` through **v25**:
+
+- **WHOOP wire** into the HTML app via hybrid proxies; Home metrics
+  update after sync (`window.today` / `window.S` exposure fixed).
+- **Cond finish fix:** strap-only duration fallback; refuse complete at
+  0 minutes; conditioning-primary finish screen.
+- **Settings cleanup:** Coach Tools removed from Settings; athlete
+  focus = Update / WHOOP / HR / backup.
+- **Strength templates retired** + blueprint strip + permanent purge
+  (v21).
+- **Athlete delete list** (v22): weekly strength targets, Training
+  snapshot, lift schedule copy, Programs coach chrome, Change program,
+  PIN text, calendar tonnage, RIR advice, Session alerts, Import/Danger,
+  fixtures, evaluation seed, “stealing from strength” copy.
+- **Residual clear** (v23): Nutrition stub, Day stress, Stress Engine,
+  Protect storage, program More/kind chrome, softer green check-in copy.
+- **Track Dawn UI polish** (v24): unified tokens, fonts, atmosphere,
+  Home effort panes, nav craft, quieter Programs/Calendar/Settings.
+- **Morpheus builder UX polish** (v28 · P0–P4): chips ≥44px + `aria-pressed` + brass focus-visible; sticky Start; compact zone bar on build (full zones + gauge on log); rounds/work/rest for Intervals/Tempo/Custom; CONDITIONING copy “Build today’s session · zones follow readiness”; advanced-field motion with reduced-motion respect. Mini synced.
+- **Morpheus conditioning builder** (v27): Home → CONDITIONING module and **Start Conditioning** open Format / Modality / Effort / Minutes on the Morpheus zone slate; Start session opens the HR log. Standalone mini at `apps/mobile/prototype/hybrid-app/morpheus-cond-builder-mini.html`.
+- **Morpheus conditioning builder** (v26): Home → Conditioning opens a Format / Modality / Effort / Minutes builder on the Morpheus zone slate; Start session opens the HR log.
+- **Everyday Readiness removed** (v25): no default program; Programs
+  empty state; Home Conditioning uses ad-hoc session.
+
+How to play: Netlify URL above, or synced `THE-Hybrid-App.html` after
+`bash apps/mobile/sync-hybrid-html.sh`. Tap **Update** after a push /
+deploy.
+
+Do **not** commit untracked `expo-*.png` leftovers if they reappear.
+
+## 3. Active roadblocks / unresolved bugs
+
+**Known limits (not defects to “fix” by deleting them):**
+
+- iOS Safari cannot use Web Bluetooth. Cond live HR is Chrome Android /
+  desktop. Typed Avg HR is the iPhone fallback.
+- Sleep rings / some metrics still mix check-in + WHOOP + fixture until
+  WHOOP coverage is complete for every field.
+- `checks/migrations-apply.mjs` fails at `create extension vector` on
+  clusters without pgvector at the OS level. Hosted Supabase has it.
+  Do not “fix” that by removing the extension.
+- Pain / illness flags are raised and unused. Do not silently restore
+  a hold.
+
+**Open product / behaviour gaps:**
+
+- Programs tab is an empty “No program loaded” state after ER removal —
+  may want to hide the tab later if it stays unused.
+- Mixed lift+cond historical sessions: Resume still prefers cond path;
+  completed ER history may remain locally; incomplete ER/SZN schedule
+  rows are purged.
+- Leave still **pauses** BLE (`leaveSimpleCond` → `pauseBleHr`).
+- Durable assigned-session logging (Phase C) and Phase B coach
+  authoring remain unstarted. Local complete → `localStorage` only.
+- No automated test suite for the HTML cond logger / purge / WHOOP
+  apply path. Verification is play + headless screenshots.
+- Header **Update** / play URL may still reference a branch preview in
+  places; Netlify is the athlete source of truth for this arc.
+
+## 4. Precise next steps for the next session
+
+1. Read this block + `CLAUDE.md` / shared-Supabase contract.
+2. Confirm build id **`the-hybrid-athlete-home-cond-v28`** on Netlify
+   (hard refresh / Update now).
+   Next product talk: **heart rate recovery** (post-effort HR drop /
+   recovery scoring) — not built in the athlete HTML yet.
+3. Keep building **this** HTML file only:
+   `apps/mobile/prototype/hybrid-app/index.html` →
+   `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify staging dir
+   if shipping. Bump `LOCAL_BUILD` and service-worker `CACHE` together.
+4. Do **not** revive Everyday Readiness, strength templates,
+   Guide/block-help, Nutrition stub, Expo, or `home.html` / PWA shells.
+5. Wait for the athlete’s next ask. Sensible follow-ups if unspecified:
+   simplify or hide the empty Programs tab, deepen WHOOP field coverage,
+   iPhone HR fallback copy, or real Nutrition — only if requested.
+6. Do not start Phase B/C unless asked — and if logging lands, it lands
+   in this HTML app.
+
+---
+
+> Older checkpoints below are history. The Expo Home / `home.html` /
+> PWA work was a false start. The Hybrid HTML drop-in is the app.
+> Blocks dated before this evening checkpoint (including the early-morning
+> 22 Aug ER chassis note) are superseded.
+
+## 21 August 2026 — mobile Home first draft + Cursor tooling
+
+Branch: `cursor/mobile-home-screen-2ff0` (PR against `main`). Working style:
+screenshot → 1:1 mobile screen → iterate page by page. Preview via Expo web
+at `:8081`.
+
+### What shipped in the app
+
+- **`apps/mobile/src/HomeScreen.tsx`** replaces the METRICS placeholder.
+  Shell kept from the TrainHeroic-style screenshot (header ALL ATHLETES,
+  LATEST, bottom nav). Card interior cleared.
+- **SLEEP** module: three WHOOP-style rings (Recovery / Strain / Sleep).
+  Tap opens ARC-style readiness overview (brass gauge, readiness band,
+  HRV / RHR / Sleep / Strain trend cards).
+- **CONDITIONING** module under Sleep: Morpheus-style four-zone bar
+  (Rec / Aer / An / Peak). BPM ceilings from `zonesForReadiness(recovery)` —
+  higher recovery lifts ceilings. Tap opens the simple Cond logger: half-gauge
+  plus Start, which connects a Bluetooth HR strap (`heart_rate` GATT) and
+  drives live bpm. Complete stores avg/max from the stream. Web Bluetooth only
+  (Chrome Android/desktop; not iOS Safari). Avg HR can still be typed.
+- **NUTRITION** module under Conditioning: FBB-style card — macro rings
+  (P/C/F), TODAY label, kcal left, horizontal P/C/F bars. Sample:
+  2,529 kcal left, 0/164g · 0/225g · 0/70g.
+- Single session card dated **Thursday, August 20, 2026** (Wednesday card
+  removed). Fixture data only — no Supabase wiring yet.
+- Tests: `apps/mobile/src/HomeScreen.test.tsx` (jest-expo). Web preview deps
+  added (`react-dom`, `react-native-web`, `react-native-svg`,
+  `@expo/vector-icons`).
+
+### What was installed for the agent
+
+See **`skills.md`** (Cursor / Claude Mem sections added this session). Short
+list:
+
+- `.cursor/skills/` — ui-ux-pro-max (+ bundled design skills),
+  frontend-design, caveman, mem-search
+- Claude Mem — built at `/home/ubuntu/claude-mem`, hooks in
+  `.cursor/hooks.json` + user `~/.cursor/hooks.json`, worker can run with
+  Gemini. API key lives only in `~/.claude-mem/settings.json` (never commit).
+
+### Still not done
+
+- Phase B coach authoring UI
+- Phase C full logger (session state machine, set logging, offline sync)
+- Real athlete data / Supabase client on mobile
+- Suggested-swaps / points-of-performance schema decisions
+- Preview PNGs under `/workspace/expo-*.png` are local artifacts, not
+  committed
+
+### Static HTML snapshot (no Expo)
+
+Open **`apps/mobile/prototype/home.html`** in a browser. Interactive phone
+mock of Sleep / Conditioning / Nutrition + readiness overlays; PNG captures
+under `apps/mobile/prototype/shots/`. RN `HomeScreen.tsx` remains source of
+truth — this HTML is the shareable freeze of where the UI was on 21 Aug.
+
+### Hybrid PWA shell (Home drop-in)
+
+**`apps/mobile/prototype/pwa/`** — early packaging experiment (Home-only).
+
+**`apps/mobile/prototype/hybrid-app/`** — **the real drop-in**: uploaded Hybrid
+Logger/Builder `index.html` with Sleep / Conditioning / Nutrition injected at
+the top of Home. Tap **Sleep** → top tabs **Check-in | Overview** (check-in
+lives here, not in bottom nav). Full-app chrome polish + design tokens in
+`design-system/the-hybrid-system/`. Serve with `python3 -m http.server 4173`
+from that folder.
+
+### Next session — start here
+
+1. Read this checkpoint + `skills.md` Cursor section.
+2. Open `apps/mobile/prototype/home.html` for a no-install look, or
+   `pnpm install` then `pnpm --filter @hybrid/strength-mobile start` (Expo)
+   to keep iterating the real screen.
+3. Continue page-by-page from the next athlete screenshot, or wire Home
+   fixtures to `assigned_session` / performed data when ready.
+4. If Claude Mem worker dead after recycle: rebuild/start from
+   `/home/ubuntu/claude-mem` (or re-clone), restore Gemini key into
+   `~/.claude-mem/settings.json`, `bun plugin/scripts/worker-service.cjs start`.
+
+---
+
+> Older checkpoint (20 August) kept below for history. Superseded on UI
+> status: mobile Home UI **does** exist now as a draft on the feature
+> branch; Phase B and full Phase C logger remain unstarted.
+
 
 ## 20 August 2026 — toolchain vendored, one bug found and fixed
 
