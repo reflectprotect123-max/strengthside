@@ -26,8 +26,8 @@ bench only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v33` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v4-2026-08-23` |
+| Cache / Update | `the-hybrid-athlete-engine-v34` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v5-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
@@ -58,7 +58,7 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   sync into Home / Sleep metrics when signed in.
 - **Conditioning:** The Engine half-gauge + readiness-aware zones. Tap
   CONDITIONING starts / resumes the simple cond logger.
-- **Library:** Hybrid Strength workouts — build, Full Body A/B/C, edit/schedule
+- **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
   Coach Tools PIN is not required for Library build/edit.
 - **Calendar:** week strip + schedule / preview / resume. No Day stress
@@ -90,7 +90,7 @@ Bottom nav: **Home · Library · Calendar · Settings**.
 
 Athletes can build strength again. **v31:** Hybrid Strength build/edit lives in **Library**
 (nav tab; was Programs) — no Coach Tools unlock. Home **Build Hybrid Strength**, Library
-**Build strength** / Full Body A/B/C, athlete builder chrome + sticky Add lift / Review & save.
+**Build strength** / Full Body A, athlete builder chrome + sticky Add lift / Review & save.
 Everyday Readiness + SZN seed lifts stay retired. Coach PIN remains only for rare Settings →
 Coach access (exercises / mobility / maintenance).
 
@@ -112,7 +112,7 @@ Zero AI-slop gate in `docs/superpowers/plans/2026-08-23-athlete-ui-ux-full-polis
   `purgeEverydayReadiness()` + `purgeStrengthTemplates()` run on load;
   program blueprints seed nothing; Home Conditioning starts an ad-hoc
   session. Do not re-seed ER without an explicit ask.
-- **Everyday Readiness / SZN seed lifts stay retired.** Full Body starters and athlete Hybrid Strength templates are restored (v30).
+- **Everyday Readiness / SZN seed lifts stay retired.** Full Body A starter and athlete Hybrid Strength templates are restored (v30).
 - **“What to do during this block” / Guide / block-help** UI is gone
   (`showBlockHelp` hard-off).
 - **Athlete shell stays conditioning-first.** Do not reintroduce Home
