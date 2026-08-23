@@ -124,7 +124,7 @@ Same shell. Grow depth, not surfaces.
 ### Near-term (product UX)
 
 1. **Polish lock-in** — Track Dawn twin instruments; zero AI slop (plan already open; v33+ landed slices)
-2. **Real strength logging** — sets, rest, finish; local-first; no fake tonnage theater
+2. **Real strength logging** — sets, rest, finish; local-first; no fake tonnage theater — **v35 started** (auto-rest after Log; finish shows tonnage not invented scores)
 3. **Wire `strength-engine`** — WM%, e1RM, PR detection on logged work (call pure functions from the app; still zero I/O in the package)
 4. **Engine honesty** — zone minutes / weekly card; no opaque 0–100 clone
 5. **Calendar ↔ Library loop** — schedule/train only; quiet chrome
