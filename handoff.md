@@ -11,8 +11,8 @@
 
 Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
 System; same Supabase as the hybrid repo). Engine Stage 1 branch:
-`cursor/engine-stage1-4920`. PR:
-https://github.com/reflectprotect123-max/strengthside/pull/12
+`cursor/engine-stage2-4920`. PR:
+https://github.com/reflectprotect123-max/strengthside/pull/12 (Stage 1) · Stage 2 branch `cursor/engine-stage2-4920`
 
 **Live athlete deploy (Netlify):**
 https://papaya-cheesecake-059e06.netlify.app/
@@ -27,7 +27,7 @@ and `apps/web` were deleted — athlete UX lives here only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`, `engine-*.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v40` — tap **Update** / **Update now** |
+| Cache / Update | `the-hybrid-athlete-engine-v41` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -56,7 +56,7 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   (graphite + copper + zone teal; Space Grotesk + Barlow Condensed).
 - **Sleep:** Check-in \| Overview sheet from the Sleep module. WHOOP can
   sync into Home / Sleep metrics when signed in.
-- **Conditioning (Stage 1 · v40):** Zones / prescription ease / finish
+- **Conditioning (Stage 2 · v41):** Zones / prescription ease / finish
   HR-TRIMP come from `@hybrid/engine` via `engine-bundle.js` +
   `engine-adapter.js` (screens unchanged). Real WHOOP recovery rezones
   bands; display-only default 71 does not. Hybrid Strength frozen.
@@ -77,12 +77,13 @@ Bottom nav: **Home · Library · Calendar · Settings**.
 - **Settings:** Update, WHOOP, HR profile, Export backup.
 - **Coach Tools:** removed (v37). No lock, no Settings Coach access.
 
-Cache / Update stamp: `the-hybrid-athlete-engine-v40` /
+Cache / Update stamp: `the-hybrid-athlete-engine-v41` /
 `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23`.
 
-**Engine Stage 1 done** (package in tree, Home zones, whoop rezone, builder
-rx, finish load, parity check). **Next:** Stage 2 logger (interval clocks,
-zone provenance, weekly zone minutes) — then light C2/Echo, then APK shell.
+**Engine Stage 1 done.** **Engine Stage 2 solid (v41):** interval/tempo
+work-rest clocks on The Engine live log, zone provenance, weekly zone
+minutes on Home, finish zone split. **Next:** Stage 3 connectors (C2 + Echo
+light), then APK shell when a training week feels honest.
 
 ### How Conditioning works (current contract)
 
