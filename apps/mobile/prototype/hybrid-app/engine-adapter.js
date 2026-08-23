@@ -1,5 +1,5 @@
 /**
- * Thin HTML ↔ @hybrid/engine adapter (Slice 1.8 skeleton).
+ * Thin HTML ↔ @hybrid/engine adapter (Slices 1.8–1.10).
  * Depends on window.HybridEngine from engine-bundle.js (load that first).
  */
 (function (global) {
@@ -21,13 +21,20 @@
    * Map engine conZones (3 bands: low/mod/high) → HTML gauge shape (4 bands).
    * Overload (high) is split into anaerobic + peak for the existing UI.
    *
-   * `recovery` is accepted for later slices; ignored for band edges here
-   * (engine shift needs whoop context — do not reintroduce HTML Recovery-Sync).
+   * Pass `whoop: { recoveryScore, restingHr?, ... }` for REZONE_PROVISIONAL.
+   * Do not invent recovery — omit whoop when the athlete has no real score
+   * (HTML `athSaneRecovery` default 71 is display-only, not for zone edges).
    */
   function zonesForProfile(input) {
     var opts = input || {};
     if (!hasEngine()) {
       throw new Error('HybridEngine not loaded');
+    }
+
+    var whoop = opts.whoop || null;
+    if (!whoop && opts.recovery != null && opts.recoveryKnown) {
+      whoop = { recoveryScore: opts.recovery };
+      if (opts.restingHr != null) whoop.restingHr = opts.restingHr;
     }
 
     var z = global.HybridEngine.Hr.conZones({
@@ -36,6 +43,7 @@
         restingHr: opts.restingHr,
         age: opts.age,
       },
+      whoop: whoop,
     });
 
     var low = z.list[0];
