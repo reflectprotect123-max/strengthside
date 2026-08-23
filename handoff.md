@@ -10,9 +10,9 @@
 ## 1. Current project state
 
 Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
-System; same Supabase as the hybrid repo). Branch:
-`cursor/whoop-wire-4920`. PR:
-https://github.com/reflectprotect123-max/strengthside/pull/6
+System; same Supabase as the hybrid repo). Engine Stage 1 branch:
+`cursor/engine-stage1-4920`. PR:
+https://github.com/reflectprotect123-max/strengthside/pull/12
 
 **Live athlete deploy (Netlify):**
 https://papaya-cheesecake-059e06.netlify.app/
@@ -24,10 +24,10 @@ and `apps/web` were deleted — athlete UX lives here only.
 
 | Role | Path |
 | --- | --- |
-| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
+| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`, `engine-*.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v39` — tap **Update** / **Update now** |
+| Cache / Update | `the-hybrid-athlete-engine-v40` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -56,8 +56,12 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   (graphite + copper + zone teal; Space Grotesk + Barlow Condensed).
 - **Sleep:** Check-in \| Overview sheet from the Sleep module. WHOOP can
   sync into Home / Sleep metrics when signed in.
-- **Conditioning:** The Engine half-gauge + readiness-aware zones. Tap
-  CONDITIONING starts / resumes the simple cond logger.
+- **Conditioning (Stage 1 · v40):** Zones / prescription ease / finish
+  HR-TRIMP come from `@hybrid/engine` via `engine-bundle.js` +
+  `engine-adapter.js` (screens unchanged). Real WHOOP recovery rezones
+  bands; display-only default 71 does not. Hybrid Strength frozen.
+  Tap CONDITIONING → builder → Start opens the simple cond logger.
+  Spec: `docs/superpowers/specs/2026-08-23-engine-import-design.md`.
 - **Nutrition (v38):** Daily log / quick-add / targets / weight / custom
   foods. Packages `@hybrid/nutrition-core` + `@hybrid/nutrition-engine`
   (bundled to `nutrition-bundle.js`). Data in `hybrid-nutrition-v1`
@@ -73,8 +77,12 @@ Bottom nav: **Home · Library · Calendar · Settings**.
 - **Settings:** Update, WHOOP, HR profile, Export backup.
 - **Coach Tools:** removed (v37). No lock, no Settings Coach access.
 
-Cache / Update stamp: `the-hybrid-athlete-engine-v38` /
-`ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v9-2026-08-23`.
+Cache / Update stamp: `the-hybrid-athlete-engine-v40` /
+`ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23`.
+
+**Engine Stage 1 done** (package in tree, Home zones, whoop rezone, builder
+rx, finish load, parity check). **Next:** Stage 2 logger (interval clocks,
+zone provenance, weekly zone minutes) — then light C2/Echo, then APK shell.
 
 ### How Conditioning works (current contract)
 
