@@ -12,7 +12,7 @@
 Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
 System; same Supabase as the hybrid repo). Engine Stage 1 branch:
 `cursor/engine-stage3-4920`. PR:
-https://github.com/reflectprotect123-max/strengthside/pull/13 · Stage 3 `cursor/engine-stage3-4920`
+https://github.com/reflectprotect123-max/strengthside/pull/14 (Stage 3; stacks on #13)
 
 **Live athlete deploy (Netlify):**
 https://papaya-cheesecake-059e06.netlify.app/
