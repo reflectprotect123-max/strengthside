@@ -1,10 +1,11 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 22 August 2026 (evening).**
-> Athlete-app arc on `cursor/whoop-wire-4920` (PR #6 vs `main`).
-> **The go-to athlete app is this Hybrid HTML file.** We are slowly
-> building it in place. Where this block disagrees with anything below
-> it, this one wins.
+> **AUTHORITATIVE CHECKPOINT — 23 August 2026.**
+> **Mono-app bet locked:** this Hybrid HTML athlete app is the whole
+> product. Do not build Coach / ARC / Expo as parallel products.
+> Charter (keep/kill + build order):
+> `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
+> Where this block disagrees with anything below it, this one wins.
 
 ## 1. Current project state
 
@@ -38,9 +39,9 @@ This repo still owns exactly twelve Postgres tables (`metric` through
 `coaching_note`) plus `embed-coaching-note`. Neither repo writes a
 migration against the other’s tables.
 
-Phase B (coach authoring) and a durable Phase C logger (reducer +
-`assigned_session`) are **unstarted**. If logging lands, it lands **in
-this HTML app**.
+Phase B (coach authoring) is **cancelled as a product track** in this
+repo (see mono-app charter). Logging / progress still lands **in this
+HTML app** — not a separate Phase C mobile stack.
 
 Pain / illness flags are still raised. **Nothing consumes them.** That
 is inherited from the hybrid repo deleting `@hybrid/auto-coach`. A stop
