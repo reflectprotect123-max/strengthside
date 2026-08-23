@@ -186,12 +186,53 @@
     };
   }
 
+  /**
+   * Banister-style HR-TRIMP (same family as the prior HTML hrTrimp).
+   * Max/rest come from HybridEngine.Hr — @hybrid/engine has no separate
+   * load export yet (see docs/data/training-load-model.md).
+   */
+  function hrTrimp(minutes, avgHr, profile, whoop) {
+    if (!hasEngine()) throw new Error('HybridEngine not loaded');
+    var min = Number(minutes) || 0;
+    var avg = Number(avgHr) || 0;
+    var max = global.HybridEngine.Hr.conMaxHr(profile || {});
+    var rest = global.HybridEngine.Hr.restingHr(profile || {}, whoop || null) || 60;
+    if (!min || !avg || avg <= rest) return 0;
+    var hrr = Math.max(0, Math.min(1, (avg - rest) / Math.max(1, max - rest)));
+    var sex = profile && profile.sex;
+    var coef = sex === 'female' ? 1.67 : 1.92;
+    return min * hrr * (0.64 * Math.exp(coef * hrr));
+  }
+
+  /** Simple cond finish path: score when avg HR is present. */
+  function condLoad(input) {
+    var opts = input || {};
+    var min = Number(opts.minutes) || 0;
+    var avg = Number(opts.avgHr) || 0;
+    if (avg > 0 && min > 0) {
+      return {
+        load: hrTrimp(min, avg, opts.profile, opts.whoop),
+        method: 'HR-based load',
+        confidence: 'high',
+        scored: true,
+      };
+    }
+    return {
+      load: 0,
+      method: 'Conditioning completed — no load score unless average heart rate is logged.',
+      confidence: 'unknown',
+      scored: false,
+    };
+  }
+
   var api = {
     hasEngine: hasEngine,
     zonesForProfile: zonesForProfile,
     effortMeta: effortMeta,
     formatMeta: formatMeta,
     sessionPatchFromBuilder: sessionPatchFromBuilder,
+    hrTrimp: hrTrimp,
+    condLoad: condLoad,
   };
 
   global.EngineAdapter = api;
