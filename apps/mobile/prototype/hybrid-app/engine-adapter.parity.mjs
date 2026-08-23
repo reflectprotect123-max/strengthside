@@ -91,6 +91,18 @@ assert(hard.zoneKey === 'anaerobic' && hard.engineZone === 'high', 'hard → ana
 const fmt = Adapter.formatMeta('intervals');
 assert(fmt.key === 'intervals' && fmt.rounds === 8, 'intervals base rounds');
 
+
+// --- weekly zone aggregate ---
+{
+  const sessions = [
+    { status: 'completed', date: '2026-08-23', tasks: [{ kind: 'conditioning', result: { zoneSeconds: { recovery: 60, aerobic: 120, anaerobic: 0, peak: 0 } } }] },
+    { status: 'completed', date: '2026-08-20', tasks: [{ kind: 'conditioning', result: { zoneSeconds: { recovery: 0, aerobic: 300, anaerobic: 30, peak: 0 } } }] },
+    { status: 'completed', date: '2026-08-10', tasks: [{ kind: 'conditioning', result: { zoneSeconds: { aerobic: 999 } } }] },
+  ];
+  const w = Adapter.weeklyZoneSeconds(sessions, '2026-08-23', 7);
+  assert(w.recovery === 60 && w.aerobic === 420 && w.anaerobic === 30 && w.peak === 0, 'weeklyZoneSeconds window sum');
+}
+
 if (failures.length) {
   console.error('FAIL engine-adapter parity');
   failures.forEach((f) => console.error(' -', f));
