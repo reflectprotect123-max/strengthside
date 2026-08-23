@@ -24,6 +24,9 @@ function loadBrowser(file) {
     parseInt,
     isNaN,
     undefined,
+    Uint8Array,
+    DataView,
+    ArrayBuffer,
   };
   sandbox.globalThis = sandbox;
   sandbox.window = sandbox;
@@ -34,6 +37,7 @@ function loadBrowser(file) {
 
 const app = loadBrowser(path.join(__dirname, 'engine-bundle.js'));
 vm.runInContext(fs.readFileSync(path.join(__dirname, 'engine-adapter.js'), 'utf8'), app);
+vm.runInContext(fs.readFileSync(path.join(__dirname, 'echo-ftms.js'), 'utf8'), app);
 
 const Hr = app.HybridEngine.Hr;
 const Adapter = app.EngineAdapter;
@@ -101,6 +105,30 @@ assert(fmt.key === 'intervals' && fmt.rounds === 8, 'intervals base rounds');
   ];
   const w = Adapter.weeklyZoneSeconds(sessions, '2026-08-23', 7);
   assert(w.recovery === 60 && w.aerobic === 420 && w.anaerobic === 30 && w.peak === 0, 'weeklyZoneSeconds window sum');
+}
+
+
+// --- Echo FTMS golden + Concept2 import guard ---
+{
+  const full = Uint8Array.from([0x54, 0x0b, 0xc4, 0x09, 0xa0, 0x00, 0xd2, 0x04, 0x00, 0x2c, 0x01, 0x19, 0x00, 0xf4, 0x01, 0x0a, 0x96, 0x58, 0x02]);
+  const d = app.EchoFtms.parseIndoorBikeData(full);
+  assert(d.power_w === 300 && d.cadence_rpm === 80 && d.calories_total === 25, 'Echo FTMS golden parse');
+  const tagged = Adapter.tagEchoDeviceMetrics(d);
+  assert(tagged.deviceCalories === 25 && tagged.device.id === 'echo_ftms', 'Echo calories device-tagged');
+
+  const state = { sessions: [], settings: {} };
+  const counts = Adapter.applyConcept2Results(state, [
+    {
+      provider: 'concept2',
+      externalId: 'parity-rower-1',
+      modality: 'rower',
+      startedAt: '2026-08-20T10:00:00.000Z',
+      durationRaw: 12000,
+      distanceRaw: 5000,
+    },
+  ]);
+  assert(counts.standalone === 1, 'concept2 standalone import');
+  assert(state.sessions[0].tasks.every((t) => t.kind === 'conditioning'), 'concept2 never creates strength');
 }
 
 if (failures.length) {
