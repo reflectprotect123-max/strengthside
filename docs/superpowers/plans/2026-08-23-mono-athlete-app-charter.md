@@ -89,7 +89,8 @@ a second athlete stack.
 | ARC → React coach port | Out of scope here |
 | Expo / `strength-mobile` revival | Banned |
 | Second PWA / parallel athlete shell | Banned |
-| Everyday Readiness / SZN / Nutrition stub returns | Banned unless explicit ask |
+| Everyday Readiness / SZN returns | Banned unless explicit ask |
+| Nutrition | **Imported (v38):** `@hybrid/nutrition-core` + `@hybrid/nutrition-engine` + Home NUTRITION module. LocalStorage only — no MacroTrack migrations in this repo. Expo barcode/OCR/recipes/coach screens stay hybrid-side until asked. |
 | Dual-repo theater for athlete UX | Athlete lives **here** |
 
 Historical Phase B/C plans under `docs/` may stay with a **Superseded** banner — do not execute them as written.
@@ -115,7 +116,7 @@ Same shell. Grow depth, not surfaces.
 - Multi-athlete Command Center / ARC Analytics
 - Coach Session Builder as a shipped product
 - Rebuilding THE-HYBRID-ENGINE1 coach routes from `ARC.dc.html`
-- Stress Engine / Nutrition as product modules
+- Stress Engine as a product module
 
 ---
 

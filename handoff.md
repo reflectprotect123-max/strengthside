@@ -27,8 +27,8 @@ and `apps/web` were deleted — athlete UX lives here only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v37` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v8-2026-08-23` |
+| Cache / Update | `the-hybrid-athlete-engine-v38` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v9-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
@@ -52,13 +52,16 @@ injury / illness gate.
 
 Bottom nav: **Home · Library · Calendar · Settings**.
 
-- **Home:** Sleep + Conditioning modules only (Nutrition stub removed).
-  Track Dawn UI (graphite + copper + zone teal; Space Grotesk + Barlow
-  Condensed).
+- **Home:** Sleep + Conditioning + **Nutrition** (v38). Track Dawn UI
+  (graphite + copper + zone teal; Space Grotesk + Barlow Condensed).
 - **Sleep:** Check-in \| Overview sheet from the Sleep module. WHOOP can
   sync into Home / Sleep metrics when signed in.
 - **Conditioning:** The Engine half-gauge + readiness-aware zones. Tap
   CONDITIONING starts / resumes the simple cond logger.
+- **Nutrition (v38):** Daily log / quick-add / targets / weight / custom
+  foods. Packages `@hybrid/nutrition-core` + `@hybrid/nutrition-engine`
+  (bundled to `nutrition-bundle.js`). Data in `hybrid-nutrition-v1`
+  localStorage — **no** MacroTrack table migrations in this repo.
 - **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
   - **Strength log (v35):** Logging a set auto-starts the prescribed rest
@@ -69,6 +72,9 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   card, no tonnage kg on completed cond sessions.
 - **Settings:** Update, WHOOP, HR profile, Export backup.
 - **Coach Tools:** removed (v37). No lock, no Settings Coach access.
+
+Cache / Update stamp: `the-hybrid-athlete-engine-v38` /
+`ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v9-2026-08-23`.
 
 ### How Conditioning works (current contract)
 
@@ -199,10 +205,12 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
    `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify staging dir
    if shipping. Bump `LOCAL_BUILD` and service-worker `CACHE` together.
 4. Do **not** revive Everyday Readiness, Guide/block-help, Nutrition stub,
-   Expo, or `home.html` / PWA shells. Hybrid Strength athlete building is intentional (v30).
+   Expo, or `home.html` / PWA shells. Real Nutrition (v38) is the HTML
+   daily-log port — not Expo barcode/OCR/recipes. Hybrid Strength athlete
+   building is intentional (v30).
 5. Wait for the athlete’s next ask. Sensible follow-ups if unspecified:
-   simplify or hide the empty Programs tab, deepen WHOOP field coverage,
-   iPhone HR fallback copy, or real Nutrition — only if requested.
+   simplify Library chrome, deepen WHOOP field coverage, wire
+   `@hybrid/strength-engine`, or nutrition catalogue sync — only if requested.
 6. Do not start Phase B/C unless asked — and if logging lands, it lands
    in this HTML app.
 

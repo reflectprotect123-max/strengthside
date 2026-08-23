@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-engine-v37';
+const CACHE = 'the-hybrid-athlete-engine-v38';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -9,6 +9,8 @@ self.addEventListener('install', (event) => {
           './index.html',
           './THE-Hybrid-App.html',
           './whoop.js',
+          './nutrition-bundle.js',
+          './nutrition-ui.js',
           './manifest.json',
         ].map((url) => cache.add(url).catch(() => undefined)),
       ),
