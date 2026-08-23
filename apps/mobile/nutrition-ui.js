@@ -134,8 +134,10 @@
       carbsG: 250,
       fatG: 70,
     };
-    const byMeal = C.groupByMeal(entries);
-    const mealBlocks = MEALS.map((meal) => {
+    const grouped = C.groupByMeal(entries, MEALS);
+    const byMeal = Object.fromEntries(grouped.map((g) => [g.meal, g.entries]));
+    const mealOrder = [...MEALS, ...grouped.map((g) => g.meal).filter((m) => !MEALS.includes(m))];
+    const mealBlocks = mealOrder.map((meal) => {
       const list = byMeal[meal] || [];
       const rows = list.length
         ? list
