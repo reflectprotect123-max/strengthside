@@ -91,8 +91,7 @@ Bottom nav: **Home · Library · Calendar · Settings**.
 Athletes can build strength again. **v31:** Hybrid Strength build/edit lives in **Library**
 (nav tab; was Programs) — no Coach Tools unlock. Home **Build Hybrid Strength**, Library
 **Build strength** / Full Body A, athlete builder chrome + sticky Add lift / Review & save.
-Everyday Readiness + SZN seed lifts stay retired. Coach PIN remains only for rare Settings →
-Coach access (exercises / mobility / maintenance).
+Everyday Readiness + SZN seed lifts stay retired.
 
 ### Twin instruments (v33)
 
