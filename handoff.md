@@ -26,7 +26,7 @@ bench only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-home-cond-v28` — tap **Update** / **Update now** |
+| Cache / Update | `the-hybrid-athlete-engine-v29` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-no-er-v2-2026-08-22` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -56,7 +56,7 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
   Condensed).
 - **Sleep:** Check-in \| Overview sheet from the Sleep module. WHOOP can
   sync into Home / Sleep metrics when signed in.
-- **Conditioning:** Morpheus half-gauge + readiness-aware zones. Tap
+- **Conditioning:** The Engine half-gauge + readiness-aware zones. Tap
   CONDITIONING starts / resumes the simple cond logger.
 - **Programs:** empty athlete state — **Everyday Readiness is retired**
   (purged on load; blueprints no longer seed it). Train from Home →
@@ -86,6 +86,12 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
 - **← Back** leaves to Home, pauses BLE, and starts a 120s
   “Are you finished?” watch. Yes finishes; Not yet stops nagging until
   the next exit.
+
+### Product naming (locked)
+
+- **The Engine** — conditioning / HR / zones / weekly dose. Never call this pillar “Morpheus” in product copy.
+- **Hybrid Strength** — lifts / prescription / working max / PRs / progression (`@hybrid/strength-engine`).
+- Together: **THE Hybrid System**. CSS `mph-*` prefixes are legacy Engine-slate class names; do not reintroduce Morpheus branding when editing them.
 
 ### Product decisions locked this arc (do not silently reverse)
 
@@ -128,9 +134,10 @@ Shipped on `cursor/whoop-wire-4920` through **v25**:
   Protect storage, program More/kind chrome, softer green check-in copy.
 - **Track Dawn UI polish** (v24): unified tokens, fonts, atmosphere,
   Home effort panes, nav craft, quieter Programs/Calendar/Settings.
-- **Morpheus builder UX polish** (v28 · P0–P4): chips ≥44px + `aria-pressed` + brass focus-visible; sticky Start; compact zone bar on build (full zones + gauge on log); rounds/work/rest for Intervals/Tempo/Custom; CONDITIONING copy “Build today’s session · zones follow readiness”; advanced-field motion with reduced-motion respect. Mini synced.
-- **Morpheus conditioning builder** (v27): Home → CONDITIONING module and **Start Conditioning** open Format / Modality / Effort / Minutes on the Morpheus zone slate; Start session opens the HR log. Standalone mini at `apps/mobile/prototype/hybrid-app/morpheus-cond-builder-mini.html`.
-- **Morpheus conditioning builder** (v26): Home → Conditioning opens a Format / Modality / Effort / Minutes builder on the Morpheus zone slate; Start session opens the HR log.
+- **The Engine naming lock** (v29): product copy says The Engine (conditioning) and Hybrid Strength (lifts); Morpheus branding removed from athlete UI.
+- **The Engine builder UX polish** (v28 · P0–P4): chips ≥44px + `aria-pressed` + brass focus-visible; sticky Start; compact zone bar on build (full zones + gauge on log); rounds/work/rest for Intervals/Tempo/Custom; CONDITIONING copy “Build today’s session · zones follow readiness”; advanced-field motion with reduced-motion respect. Mini synced.
+- **The Engine conditioning builder** (v27): Home → CONDITIONING module and **Start Conditioning** open Format / Modality / Effort / Minutes on The Engine zone slate; Start session opens the HR log. Standalone mini at `apps/mobile/prototype/hybrid-app/engine-cond-builder-mini.html`.
+- **The Engine conditioning builder** (v26): Home → Conditioning opens a Format / Modality / Effort / Minutes builder on The Engine zone slate; Start session opens the HR log.
 - **Everyday Readiness removed** (v25): no default program; Programs
   empty state; Home Conditioning uses ad-hoc session.
 
@@ -172,7 +179,7 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
 ## 4. Precise next steps for the next session
 
 1. Read this block + `CLAUDE.md` / shared-Supabase contract.
-2. Confirm build id **`the-hybrid-athlete-home-cond-v28`** on Netlify
+2. Confirm build id **`the-hybrid-athlete-engine-v29`** on Netlify
    (hard refresh / Update now).
    Next product talk: **heart rate recovery** (post-effort HR drop /
    recovery scoring) — not built in the athlete HTML yet.
@@ -209,7 +216,7 @@ at `:8081`.
 - **SLEEP** module: three WHOOP-style rings (Recovery / Strain / Sleep).
   Tap opens ARC-style readiness overview (brass gauge, readiness band,
   HRV / RHR / Sleep / Strain trend cards).
-- **CONDITIONING** module under Sleep: Morpheus-style four-zone bar
+- **CONDITIONING** module under Sleep: Engine four-zone bar
   (Rec / Aer / An / Peak). BPM ceilings from `zonesForReadiness(recovery)` —
   higher recovery lifts ceilings. Tap opens the simple Cond logger: half-gauge
   plus Start, which connects a Bluetooth HR strap (`heart_rate` GATT) and
@@ -376,7 +383,7 @@ What the prototype now demonstrates, in the order it was built:
   pills) and its regressions rejected — Stitch had silently gutted the
   readiness screen, builder sidebars, Library, and deep-linking. The Stitch
   fork is preserved as its own separate Artifact for comparison.
-- **Morpheus-style HR zones**: numeric zone boundaries on the engine's
+- **Engine HR zones**: numeric zone boundaries on the engine's
   easy/medium/hard efforts (presented as blue/green/red with bpm ranges), a
   Recovery-Sync toggle that genuinely shifts every boundary from the day's
   recovery score, and the same zone system unified into the conditioning
