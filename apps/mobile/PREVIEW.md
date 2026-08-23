@@ -1,18 +1,15 @@
-# App preview (what you should see)
+# App preview
 
-![Live Home](prototype/shots/hybrid-app-live.png)
+**Live:** https://papaya-cheesecake-059e06.netlify.app/
 
-## Open the real app on your computer
+## Open locally
 
-1. In terminal (repo root):
-```bash
-git checkout cursor/mobile-home-screen-2ff0
-git pull
-```
-2. In Finder / File Explorer go to:
-`apps/mobile/THE-Hybrid-App.html`
-3. Right-click → **Open With → Chrome** (or Safari)
+1. Sync (repo root):
+   ```bash
+   bash apps/mobile/sync-hybrid-html.sh
+   ```
+2. Open `apps/mobile/THE-Hybrid-App.html` in Chrome or Safari (file:// or a local static server).
 
-Do **not** open it as a tab inside Cursor or GitHub — that only shows code / “nothing”.
+Do **not** open the HTML as a tab inside the IDE preview — use a real browser.
 
-If the file is missing, you are not on the feature branch or pull failed.
+See [PLAY.md](./PLAY.md) for details.

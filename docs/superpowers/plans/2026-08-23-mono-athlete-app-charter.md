@@ -158,9 +158,9 @@ Same shell. Grow depth, not surfaces.
 
 | PR | Action | Risk |
 | --- | --- | --- |
-| **C1** | Replace root `README.md` with athlete mono-app pointer; top-of-`handoff.md` “one product” banner linking this charter | None |
-| **C2** | Delete `ARC.dc.html`, `Coach App.dc.html`; delete unused `support.js` / `shots/` after confirm | Low |
-| **C3** | `apps/web` keep-or-kill; adjust `package.json` `build` + CI to match; `pnpm run verify` still green | Medium |
+| **C1** | Replace root `README.md` with athlete mono-app pointer; top-of-`handoff.md` “one product” banner linking this charter | **Done** |
+| **C2** | Delete `ARC.dc.html`, `Coach App.dc.html`; delete unused `support.js` / `shots/` after confirm | **Done** |
+| **C3** | `apps/web` deleted; `pnpm run build` → `@hybrid/strength-engine` | **Done** |
 | **C4** | Banner Phase B/C plans “Superseded — athlete HTML is the product”; scrub Expo revival copy | None |
 | **C5** | Optional: move deep `handoff.md` history → `docs/history/` so the top stays operational | None |
 
@@ -185,7 +185,7 @@ Same shell. Grow depth, not surfaces.
 | 23 Aug 2026 | **Mono-app bet locked:** athlete Hybrid HTML only; stop Coach/ARC/Expo product tracks |
 | 23 Aug 2026 | Five jobs in one nav: Train · Log · Progress · Recover · Account |
 | 23 Aug 2026 | Twin instruments: The Engine + Hybrid Strength; Track Dawn |
-| 23 Aug 2026 | Full Body A only starter; B/C archived |
+| 23 Aug 2026 | **Cleanup C1–C3:** deleted ARC/Coach HTML, support.js, shots, apps/web; athlete README |
 | Prior | Everyday Readiness / SZN retired; Expo shells deleted |
 
 ---
@@ -194,8 +194,8 @@ Same shell. Grow depth, not surfaces.
 
 | Ask | Default |
 | --- | --- |
-| Approve **C1–C2** (README + delete ARC/Coach HTML)? | Ready to run on say-so |
-| Approve **C3** (`apps/web` delete vs keep harness)? | Needs one-line owner pick |
+| Approve **C1–C2** (README + delete ARC/Coach HTML)? | **Done** (`cursor/mono-app-cleanup-4920`) |
+| Approve **C3** (`apps/web` delete vs keep harness)? | **Done** — deleted; build → strength-engine |
 | Start **Log** (real set logging) after polish remainder? | Next product build after cleanup |
 
-**Do not start deleting until C1–C2 approved.** This document is the scope; cleanup is a separate execute pass.
+**Do not start deleting until C1–C2 approved.** C1–C3 executed on `cursor/mono-app-cleanup-4920`.

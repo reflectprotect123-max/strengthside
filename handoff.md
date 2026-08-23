@@ -19,8 +19,8 @@ https://papaya-cheesecake-059e06.netlify.app/
 
 **The product athletes use is the Hybrid HTML app.** Not Expo, not
 `home.html`, not `prototype/pwa/`. Those were deleted on purpose. Do not
-recreate them. Do not run Expo to see the app. `apps/web` is an engine
-bench only.
+recreate them. Do not run Expo to see the app. Coach / ARC HTML prototypes
+and `apps/web` were deleted — athlete UX lives here only.
 
 | Role | Path |
 | --- | --- |

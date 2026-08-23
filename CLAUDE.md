@@ -76,7 +76,7 @@ else is the app.
   `apps/mobile/THE-Hybrid-App.html` (or the githack / Update button).
 - Expo Home, `prototype/home.html`, and `prototype/pwa/` were **deleted**.
   Do not recreate them. Do not run Expo to see the app.
-- `apps/web` is an engine bench, not the athlete product.
+- Athlete product is the Hybrid HTML app only. Coach / ARC prototypes and `apps/web` were removed.
 - `@hybrid/strength-engine` stays the pure decision layer. The HTML app is the
   only place athlete screens get built until a later, explicit rewrite.
 

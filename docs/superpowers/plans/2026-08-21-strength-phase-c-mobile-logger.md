@@ -1,10 +1,8 @@
 # Strength Phase C — Mobile Logger Implementation Plan
 
-> **21 August 2026 — superseded UI host.** The athlete product is the Hybrid
-> HTML app (`apps/mobile/prototype/hybrid-app/index.html`). Expo Home was
-> deleted. Do not recreate `HomeScreen.tsx` or an Expo start script to
-> implement this plan. If Phase C logging lands, it lands in that HTML app
-> (or a later explicit rewrite), not a second native Home.
+> **21 August 2026 — SUPERSEDED (mono-app, 23 Aug 2026).** Do not execute this
+> plan as written. Athlete logging lands in the Hybrid HTML app only. Expo /
+> RN Home is gone. See `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
