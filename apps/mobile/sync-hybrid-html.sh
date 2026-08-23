@@ -27,4 +27,17 @@ if [[ -f "$SRC_DIR/engine-adapter.js" ]]; then
   cp "$SRC_DIR/engine-adapter.js" "$ROOT/engine-adapter.js"
   cp "$SRC_DIR/engine-adapter.js" "$ROOT/preview-site/engine-adapter.js"
 fi
-echo "Synced THE-Hybrid-App.html + preview-site + service-worker.js + nutrition + engine-bundle + engine-adapter"
+# Concept2 + Echo FTMS
+for f in concept2.js echo-ftms.js; do
+  if [[ -f "$SRC_DIR/$f" ]]; then
+    cp "$SRC_DIR/$f" "$ROOT/$f"
+    cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
+  fi
+done
+# Concept2 Netlify proxies (preview-site deploy)
+if [[ -d "$SRC_DIR/netlify/functions" ]]; then
+  mkdir -p "$ROOT/preview-site/netlify/functions"
+  cp -f "$SRC_DIR"/netlify/functions/concept2-*.mjs "$ROOT/preview-site/netlify/functions/" 2>/dev/null || true
+  cp -f "$SRC_DIR"/netlify/functions/concept2-*.mjs "$ROOT/prototype/hybrid-app/netlify/functions/" 2>/dev/null || true
+fi
+echo "Synced THE-Hybrid-App.html + preview-site + service-worker.js + nutrition + engine + concept2 + echo"

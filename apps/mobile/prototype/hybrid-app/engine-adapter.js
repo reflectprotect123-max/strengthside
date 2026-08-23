@@ -277,6 +277,227 @@
     return out;
   }
 
+  /** Map HTML modality labels → engine Concept2 modalities. */
+  function htmlModalityToEngine(mod) {
+    var m = String(mod || '').toLowerCase();
+    if (m.indexOf('row') >= 0) return 'row';
+    if (m.indexOf('ski') >= 0) return 'ski';
+    if (m.indexOf('bike') >= 0 || m.indexOf('echo') >= 0 || m.indexOf('air') >= 0) return 'bike';
+    return null;
+  }
+
+  function taskToEngineCondResult(result) {
+    if (!result || typeof result !== 'object') return null;
+    var out = {};
+    if (result.externalId) out.externalId = result.externalId;
+    if (result.duration != null) out.dur = Number(result.duration) || 0;
+    if (result.deviceDistanceM != null) out.deviceDistanceM = result.deviceDistanceM;
+    if (result.device) out.device = result.device;
+    if (result.splits) out.splits = result.splits;
+    if (result.startedAt) out.startedAt = result.startedAt;
+    if (result.avgWatts != null) out.avgWatts = result.avgWatts;
+    return Object.keys(out).length ? out : null;
+  }
+
+  /**
+   * Build a minimal EngineDB view from HTML local state for Concept2 planning.
+   * Strength tasks are omitted from blocks — imports never touch them.
+   */
+  function htmlStateToEngineDb(state) {
+    var sessions = (state && state.sessions) || [];
+    var settings = (state && state.settings) || {};
+    return {
+      sessions: sessions.map(function (s) {
+        var startedAt =
+          s.startedAt ||
+          s.completedAt ||
+          (s.date ? Date.parse(String(s.date) + 'T12:00:00') : null);
+        var blocks = [];
+        (s.tasks || []).forEach(function (t) {
+          if (!t || t.kind !== 'conditioning') return;
+          blocks.push({
+            id: t.id,
+            kind: 'conditioning',
+            modality: htmlModalityToEngine(t.modality),
+            condFmt: t.condFmt || 'free',
+            condResult: taskToEngineCondResult(t.result),
+          });
+        });
+        (s.blocks || []).forEach(function (b) {
+          if (!b || (b.type !== 'conditioning' && b.kind !== 'conditioning')) return;
+          if (blocks.some(function (x) {
+            return x.id === b.id;
+          }))
+            return;
+          blocks.push({
+            id: b.id,
+            kind: 'conditioning',
+            modality: htmlModalityToEngine(b.modality),
+            condFmt: b.condFmt || 'free',
+            condResult: b.condResult || null,
+          });
+        });
+        return {
+          id: s.id,
+          startedAt: Number.isFinite(startedAt) ? startedAt : null,
+          updatedAt: s.updatedAt || s.completedAt || null,
+          blocks: blocks,
+        };
+      }),
+      settings: settings,
+    };
+  }
+
+  function newId() {
+    return 'c2s-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+
+  function modalityLabelFromEngine(mod) {
+    if (mod === 'row') return 'Rower';
+    if (mod === 'ski') return 'Ski erg';
+    if (mod === 'bike') return 'Bike';
+    return 'Other';
+  }
+
+  /**
+   * Plan + apply Concept2 sync results into HTML localStorage state.
+   * Never mutates strength tasks. Standalone rows become completed cond sessions.
+   */
+  function applyConcept2Results(state, results) {
+    if (!hasEngine() || !global.HybridEngine.Concept2) {
+      throw new Error('HybridEngine.Concept2 not loaded');
+    }
+    var C2 = global.HybridEngine.Concept2;
+    state.settings = state.settings || {};
+    var db = htmlStateToEngineDb(state);
+    var plan = C2.planConcept2Import(results || [], db);
+    var counts = { attached: 0, enriched: 0, standalone: 0, skipped: plan.skipped || 0 };
+
+    (plan.merges || []).forEach(function (m) {
+      var sess = (state.sessions || []).find(function (s) {
+        return s.id === m.sessionId;
+      });
+      if (!sess) return;
+      // Refuse to touch sessions that are strength-primary without a cond task id match
+      var task = (sess.tasks || []).find(function (t) {
+        return t && t.id === m.blockId && t.kind === 'conditioning';
+      });
+      if (!task) return;
+      task.result = task.result || {};
+      if (m.mode === 'attach') {
+        if (task.result.externalId) return;
+        Object.assign(task.result, {
+          externalId: m.patch.externalId,
+          duration: m.patch.dur != null ? Math.round(m.patch.dur) : task.result.duration,
+          deviceDistanceM: m.patch.deviceDistanceM,
+          device: m.patch.device,
+          splits: m.patch.splits,
+          startedAt: m.patch.startedAt,
+          source: 'concept2',
+        });
+        task.complete = true;
+        counts.attached += 1;
+      } else {
+        if (task.result.externalId) return;
+        if (m.patch.externalId) task.result.externalId = m.patch.externalId;
+        if (task.result.deviceDistanceM == null && m.patch.deviceDistanceM != null)
+          task.result.deviceDistanceM = m.patch.deviceDistanceM;
+        if (!task.result.device && m.patch.device) task.result.device = m.patch.device;
+        if (!task.result.splits && m.patch.splits) task.result.splits = m.patch.splits;
+        task.result.source = task.result.source || 'concept2-enrich';
+        counts.enriched += 1;
+      }
+    });
+
+    (plan.standalone || []).forEach(function (rec) {
+      var dateStr = '';
+      if (rec.startedAt) {
+        var d = new Date(rec.startedAt);
+        if (!isNaN(d.getTime())) {
+          dateStr = d.toISOString().slice(0, 10);
+        }
+      }
+      if (!dateStr) dateStr = new Date().toISOString().slice(0, 10);
+      var modLabel = modalityLabelFromEngine(rec.modality);
+      var sess = {
+        id: newId(),
+        templateId: 'concept2-import',
+        name: 'Concept2 · ' + modLabel,
+        date: dateStr,
+        status: 'completed',
+        completedAt: rec.startedAt || Date.now(),
+        startedAt: rec.startedAt || null,
+        coachInstructions: '',
+        blocks: [],
+        tasks: [
+          {
+            id: newId(),
+            kind: 'conditioning',
+            heading: 'Concept2 import',
+            modality: modLabel,
+            condFmt: 'free',
+            conditioningType: 'easy',
+            complete: true,
+            result: {
+              duration: rec.dur != null ? Math.round(rec.dur) : 0,
+              externalId: rec.externalId,
+              deviceDistanceM: rec.deviceDistanceM,
+              device: rec.device,
+              splits: rec.splits,
+              startedAt: rec.startedAt,
+              source: 'concept2',
+              zsrc: 'none',
+            },
+          },
+        ],
+        timer: { elapsed: rec.dur || 0, on: false, last: null },
+        notes: '',
+        summary: {
+          duration: rec.dur || 0,
+          sets: 0,
+          tonnage: 0,
+          strengthLoad: 0,
+          conditioningLoad: 0,
+          totalLoad: 0,
+          conditioning: [],
+        },
+        source: 'concept2',
+      };
+      state.sessions = state.sessions || [];
+      state.sessions.push(sess);
+      counts.standalone += 1;
+    });
+
+    // Keep engine-shaped history for future progression readers
+    if (plan.standalone && plan.standalone.length && C2.applyConcept2Import) {
+      var draft = {
+        sessions: [],
+        settings: state.settings,
+      };
+      C2.applyConcept2Import(draft, { merges: [], standalone: plan.standalone, skipped: 0 });
+      state.settings = draft.settings;
+    }
+
+    counts.summary = C2.concept2ImportSummary(counts);
+    return counts;
+  }
+
+  /** Echo calories must stay device-scoped — never feed nutrition totals. */
+  function tagEchoDeviceMetrics(metrics) {
+    var m = metrics || {};
+    return {
+      device: { manufacturer: 'Rogue', model: 'Echo Bike V3', consoleMetric: 'watts', id: 'echo_ftms' },
+      power_w: m.power_w,
+      average_power_w: m.average_power_w,
+      cadence_rpm: m.cadence_rpm,
+      average_cadence_rpm: m.average_cadence_rpm,
+      // Device-tagged only — callers must not write these into Nutrition.
+      deviceCalories: m.calories_total,
+      deviceDistanceM: m.distance_m,
+      elapsed_s: m.elapsed_s,
+    };
+  }
+
   var api = {
     hasEngine: hasEngine,
     zonesForProfile: zonesForProfile,
@@ -286,6 +507,9 @@
     hrTrimp: hrTrimp,
     condLoad: condLoad,
     weeklyZoneSeconds: weeklyZoneSeconds,
+    htmlModalityToEngine: htmlModalityToEngine,
+    applyConcept2Results: applyConcept2Results,
+    tagEchoDeviceMetrics: tagEchoDeviceMetrics,
   };
 
   global.EngineAdapter = api;
