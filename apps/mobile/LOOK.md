@@ -1,11 +1,7 @@
 # Just look / play
 
-https://raw.githack.com/reflectprotect123-max/strengthside/cursor/mobile-home-screen-2ff0/apps/mobile/THE-Hybrid-App.html
+**Live:** https://papaya-cheesecake-059e06.netlify.app/
 
-Click **Open the page** if asked. Tap CONDITIONING. [PLAY.md](./PLAY.md)
+Or open `THE-Hybrid-App.html` locally after `bash apps/mobile/sync-hybrid-html.sh`.
 
----
-
-## Picture only
-
-![THE Hybrid App Home](preview.png)
+See [PLAY.md](./PLAY.md).

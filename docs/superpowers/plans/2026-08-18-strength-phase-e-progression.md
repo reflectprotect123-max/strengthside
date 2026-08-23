@@ -1,5 +1,8 @@
 # Strength Rebuild — Phase E (Deterministic Progression) Implementation Plan
 
+> **Status: COMPLETED.** Progression modules shipped in `@hybrid/strength-engine`.
+> Do not re-run. Wire into Hybrid HTML logging when that lands.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Port the deleted deterministic progression engine
@@ -28,9 +31,9 @@ Phase A file — no new package, no new dependency.
 - `anchorKgFor` must return `null` (a real, held state) when nothing on
   record is on-target — never fall back to a missed weight. This is the
   single invariant a deload's correctness depends on.
-- The 2.5%/5% deltas come from `docs/research/strength-adaptive-engine-v2/README_FIRST.md`'s
-  "locked implementation decisions" and are used verbatim, not re-derived.
-- Full source: `docs/superpowers/specs/2026-08-17-adaptive-engine-v2-design.md`,
+- The 2.5%/5% deltas are the locked progression defaults (equipment-aware
+  rounding; pain separate from fatigue) and are used verbatim, not re-derived.
+- Full source: `docs/superpowers/specs/2026-08-17-strength-rebuild-design.md`,
   Phase E (Slices 31-33).
 - Real shipped Phase A signatures this plan builds on (verified against the
   current repo, not assumed from the spec — the spec predates a few

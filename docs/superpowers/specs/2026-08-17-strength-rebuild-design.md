@@ -1,5 +1,10 @@
 # Strength rebuild — full design
 
+> **Mono-app (23 Aug 2026):** Engine math in this spec still informs
+> `@hybrid/strength-engine`. **Do not** execute Phase B coach UI or Expo/RN
+> Phase C from this doc. Athlete product is `apps/mobile/prototype/hybrid-app/`.
+> See `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`.
+
 17 August 2026. Strength (engine math, coach authoring, mobile logger) was
 deleted whole the same day ("fire-sale rebuild," `main` history `540f7f4`
 through `f74ef0f`). This is the rebuild, informed by a TrainHeroic

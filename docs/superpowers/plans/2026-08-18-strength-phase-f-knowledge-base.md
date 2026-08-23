@@ -1,5 +1,7 @@
 # Strength Rebuild — Phase F (Knowledge Base + Retrieval) Implementation Plan
 
+> **Status: COMPLETED.** Migrations + embed function shipped. Do not re-run as a product track.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the coaching-notes knowledge base and its retrieval

@@ -1,5 +1,8 @@
 # Strength Rebuild — Phase A (Foundation) Implementation Plan
 
+> **Status: COMPLETED.** Package + foundation shipped. Do not re-run.
+> Athlete UI is the Hybrid HTML app — not Expo/coach benches.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Stand up `@hybrid/strength-engine` — the metric-registry schema and

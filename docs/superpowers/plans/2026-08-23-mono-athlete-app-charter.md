@@ -161,7 +161,7 @@ Same shell. Grow depth, not surfaces.
 | **C1** | Replace root `README.md` with athlete mono-app pointer; top-of-`handoff.md` “one product” banner linking this charter | **Done** |
 | **C2** | Delete `ARC.dc.html`, `Coach App.dc.html`; delete unused `support.js` / `shots/` after confirm | **Done** |
 | **C3** | `apps/web` deleted; `pnpm run build` → `@hybrid/strength-engine` | **Done** |
-| **C4** | Banner Phase B/C plans “Superseded — athlete HTML is the product”; scrub Expo revival copy | None |
+| **C4** | Delete TrainHeroic package, wrong design-system MASTER, Expo parity harness, Phase C / apps.web plans & specs; banner completed A/E/F | **Done** |
 | **C5** | Optional: move deep `handoff.md` history → `docs/history/` so the top stays operational | None |
 
 **Never in these PRs:** delete `packages/strength-engine`, owned migrations, or CI verify of engine tests.
@@ -185,7 +185,7 @@ Same shell. Grow depth, not surfaces.
 | 23 Aug 2026 | **Mono-app bet locked:** athlete Hybrid HTML only; stop Coach/ARC/Expo product tracks |
 | 23 Aug 2026 | Five jobs in one nav: Train · Log · Progress · Recover · Account |
 | 23 Aug 2026 | Twin instruments: The Engine + Hybrid Strength; Track Dawn |
-| 23 Aug 2026 | **Cleanup C1–C3:** deleted ARC/Coach HTML, support.js, shots, apps/web; athlete README |
+| 23 Aug 2026 | **Cleanup C4:** deleted TrainHeroic, design-system MASTER, research dump, Expo parity, Phase C / apps.web plans |
 | Prior | Everyday Readiness / SZN retired; Expo shells deleted |
 
 ---
