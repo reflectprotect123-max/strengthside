@@ -172,6 +172,7 @@
         </div>
         ${meters}
         <div class=btns>
+          <button class="btn small primary" onclick="NutritionUI.scanLabel()">Scan label</button>
           <button class="btn small" onclick="NutritionUI.targets()">Targets</button>
           <button class="btn small" onclick="NutritionUI.weight()">Weight</button>
           <button class="btn small" onclick="NutritionUI.foods()">My foods</button>
@@ -203,7 +204,85 @@
         <div class=field><label>Carbs g</label><input id=nutC type=number min=0 step=0.1 value="0"></div>
         <div class=field><label>Fat g</label><input id=nutF type=number min=0 step=0.1 value="0"></div>
       </div>
-      <button class="btn primary block" style="margin-top:12px" onclick="NutritionUI.saveQuickAdd()">Log food</button>`);
+      <button class="btn primary block" style="margin-top:12px" onclick="NutritionUI.saveQuickAdd()">Log food</button>
+      <button class="btn block" style="margin-top:8px" onclick="NutritionUI.scanLabel('${meal || 'snack'}')">Scan label instead</button>`);
+  }
+
+  function valOrEmpty(n) {
+    return n == null || Number.isNaN(n) ? '' : String(n);
+  }
+
+  function showLabelConfirm(parsed, meal, note) {
+    const basis =
+      parsed.basis === 'per_serving'
+        ? 'Per serving'
+        : parsed.basis === 'per_100'
+          ? 'Per 100 g/ml — check serving before you log'
+          : 'Basis unclear — confirm macros';
+    const rounded = parsed.roundedDown
+      ? '<p class=meta style="margin-top:8px">At least one macro was “less than 1 g” and was read as 0.</p>'
+      : '';
+    sheet(`<h2>Confirm label</h2>
+      <p class=lead>${esc(note || 'Check macros, then log. Nothing is saved until you confirm.')}</p>
+      <p class=meta>${esc(basis)}</p>
+      ${rounded}
+      <div class=field><label>Name</label><input id=nutName placeholder="Food from label" value=""></div>
+      <div class=field><label>Meal</label><select id=nutMeal>${MEALS.map((m) => `<option value="${m}" ${m === (meal || 'snack') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class=two>
+        <div class=field><label>Calories</label><input id=nutKcal type=number min=0 step=0.1 value="${esc(valOrEmpty(parsed.calories))}"></div>
+        <div class=field><label>Protein g</label><input id=nutP type=number min=0 step=0.1 value="${esc(valOrEmpty(parsed.proteinG))}"></div>
+      </div>
+      <div class=two>
+        <div class=field><label>Carbs g</label><input id=nutC type=number min=0 step=0.1 value="${esc(valOrEmpty(parsed.carbsG))}"></div>
+        <div class=field><label>Fat g</label><input id=nutF type=number min=0 step=0.1 value="${esc(valOrEmpty(parsed.fatG))}"></div>
+      </div>
+      <button class="btn primary block" style="margin-top:12px" onclick="NutritionUI.saveQuickAdd()">Log food</button>
+      <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+  }
+
+  function showPasteLabel(meal) {
+    sheet(`<h2>Paste label text</h2>
+      <p class=lead>Paste the nutrition panel if the camera could not read it.</p>
+      <div class=field><label>Label text</label><textarea id=nutLabelPaste class="openbox tall" placeholder="Energy 520kJ&#10;Protein 3.2g&#10;…"></textarea></div>
+      <button class="btn primary block" style="margin-top:12px" onclick="NutritionUI.parsePaste('${meal || 'snack'}')">Parse</button>
+      <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+  }
+
+  function parsePaste(meal) {
+    try {
+      if (!window.LabelScan) throw new Error('Label scan unavailable.');
+      const { parsed } = LabelScan.parsePastedText($('nutLabelPaste')?.value || '');
+      showLabelConfirm(parsed, meal || 'snack');
+    } catch (e) {
+      alert((e && e.message) || "Couldn't read label — enter manually.");
+      quickAdd(meal || 'snack');
+    }
+  }
+
+  async function scanLabel(meal) {
+    meal = meal || 'snack';
+    sheet(`<h2>Scan label</h2><p class=lead>Reading nutrition panel…</p><p class=meta id=nutScanStatus>Opening camera</p>`);
+    const status = () => $('nutScanStatus');
+    try {
+      if (!window.LabelScan) throw new Error('Label scan unavailable.');
+      if (status()) status().textContent = 'Capturing…';
+      const { parsed } = await LabelScan.scanFromCamera();
+      showLabelConfirm(parsed, meal);
+    } catch (e) {
+      if (e && e.code === 'empty_label') {
+        sheet(`<h2>Couldn't read label</h2>
+          <p class=lead>Enter manually, or paste the panel text.</p>
+          <button class="btn primary block" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>
+          <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
+          <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+        return;
+      }
+      sheet(`<h2>Scan label</h2>
+        <p class=lead>${esc((e && e.message) || 'Camera failed')}</p>
+        <button class="btn primary block" onclick="NutritionUI.scanLabel('${meal}')">Try again</button>
+        <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
+        <button class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
+    }
   }
 
   function saveQuickAdd() {
@@ -476,6 +555,9 @@
 
   window.NutritionUI = {
     open: openNutrition,
+    scanLabel,
+    showPasteLabel,
+    parsePaste,
     shift,
     quickAdd,
     saveQuickAdd,

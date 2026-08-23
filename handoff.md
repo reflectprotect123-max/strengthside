@@ -10,9 +10,8 @@
 ## 1. Current project state
 
 Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
-System; same Supabase as the hybrid repo). Engine Stage 1 branch:
-`cursor/engine-stage3-4920`. PR:
-https://github.com/reflectprotect123-max/strengthside/pull/14 (Stage 3; stacks on #13)
+System; same Supabase as the hybrid repo). Engine Stage 3 tip + lite
+native shell branch: `cursor/lite-native-shell-4920`.
 
 **Live athlete deploy (Netlify):**
 https://papaya-cheesecake-059e06.netlify.app/
@@ -24,10 +23,11 @@ and `apps/web` were deleted — athlete UX lives here only.
 
 | Role | Path |
 | --- | --- |
-| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`, `engine-*.js, concept2.js, echo-ftms.js`) |
+| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`, `engine-*.js`, `concept2.js`, `echo-ftms.js`, `native-bridge.js`, `label-scan.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v42` — tap **Update** / **Update now** |
+| Cap dogfood | `apps/mobile/capacitor/` — `pnpm run sync` then `scripts/build-dogfood-apk.sh` |
+| Cache / Update | `the-hybrid-athlete-engine-v43` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -52,38 +52,30 @@ injury / illness gate.
 
 Bottom nav: **Home · Library · Calendar · Settings**.
 
-- **Home:** Sleep + Conditioning + **Nutrition** (v38). Track Dawn UI
+- **Home:** Sleep + Conditioning + **Nutrition**. Track Dawn UI
   (graphite + copper + zone teal; Space Grotesk + Barlow Condensed).
+  Medium brand punch in sticky top (v43).
 - **Sleep:** Check-in \| Overview sheet from the Sleep module. WHOOP can
   sync into Home / Sleep metrics when signed in.
-- **Conditioning (Stage 3 · v42):** Zones / prescription ease / finish
-  HR-TRIMP come from `@hybrid/engine` via `engine-bundle.js` +
-  `engine-adapter.js` (screens unchanged). Real WHOOP recovery rezones
-  bands; display-only default 71 does not. Hybrid Strength frozen.
-  Tap CONDITIONING → builder → Start opens the simple cond logger.
-  Spec: `docs/superpowers/specs/2026-08-23-engine-import-design.md`.
-- **Nutrition (v38):** Daily log / quick-add / targets / weight / custom
-  foods. Packages `@hybrid/nutrition-core` + `@hybrid/nutrition-engine`
-  (bundled to `nutrition-bundle.js`). Data in `hybrid-nutrition-v1`
-  localStorage — **no** MacroTrack table migrations in this repo.
+- **Conditioning (Stage 3 · v42 + wake v43):** Zones / prescription ease /
+  finish HR-TRIMP from `@hybrid/engine` via `engine-bundle.js` +
+  `engine-adapter.js`. Wake lock held for live Engine / Strength sessions
+  (Cap KeepAwake + Screen Wake Lock). Hybrid Strength **math** frozen.
+- **Nutrition (v43):** Daily log / quick-add / **Scan label** (camera →
+  on-device OCR → confirm) / targets / weight / custom foods.
+  Spec: `docs/superpowers/specs/2026-08-23-lite-native-shell-design.md`.
 - **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
-  - **Strength log (v35):** Logging a set auto-starts the prescribed rest
-  when more sets remain. Finish shows duration / sets / tonnage (kg) —
-  no invented “Strength score.” Complete exercise advances to the next
-  task.
-- **Calendar:** week strip + schedule / preview / resume. No Day stress
-  card, no tonnage kg on completed cond sessions.
-- **Settings:** Update, WHOOP, HR profile, Export backup.
-- **Coach Tools:** removed (v37). No lock, no Settings Coach access.
+- **Calendar:** week strip + schedule / preview / resume.
+- **Settings:** Update, WHOOP, Concept2, HR profile, Export backup.
+- **Coach Tools:** removed (v37).
 
-Cache / Update stamp: `the-hybrid-athlete-engine-v42` /
+Cache / Update stamp: `the-hybrid-athlete-engine-v43` /
 `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23`.
 
-**Engine Stage 1–2 done.** **Stage 3 connectors (v42):** Concept2 Logbook
-proxy + Settings card + local import (cond-only); Echo FTMS parser + Connect
-Echo on Bike live log (Chrome). **Next:** APK shell when a training week
-feels honest (Stage 4 plan separate).
+**Engine Stage 1–3 done.** **Lite native shell (v43):** Capacitor Android
+dogfood wrap + training wake lock + nutrition label scan + medium Track
+Dawn polish. Not Play Store / not iOS this pass.
 
 ### How Conditioning works (current contract)
 
