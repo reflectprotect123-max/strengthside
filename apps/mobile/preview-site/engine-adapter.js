@@ -225,6 +225,58 @@
     };
   }
 
+  /**
+   * Sum HTML zone seconds (recovery/aerobic/anaerobic/peak) for completed
+   * conditioning tasks in the last `days` local calendar days ending on `endDate`
+   * (YYYY-MM-DD). Pure — sessions injected by caller.
+   */
+  function weeklyZoneSeconds(sessions, endDate, days) {
+    var out = {
+      recovery: 0,
+      aerobic: 0,
+      anaerobic: 0,
+      peak: 0,
+    };
+    var nDays = Math.max(1, Number(days) || 7);
+    var end = String(endDate || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(end)) return out;
+
+    var endMs = Date.parse(end + 'T12:00:00');
+    if (!Number.isFinite(endMs)) return out;
+    var startMs = endMs - (nDays - 1) * 86400000;
+
+    function inWindow(dateStr) {
+      if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr))) return false;
+      var ms = Date.parse(String(dateStr) + 'T12:00:00');
+      return Number.isFinite(ms) && ms >= startMs && ms <= endMs;
+    }
+
+    function addZones(zs) {
+      if (!zs) return;
+      out.recovery += Number(zs.recovery) || 0;
+      out.aerobic += Number(zs.aerobic) || 0;
+      out.anaerobic += Number(zs.anaerobic) || 0;
+      out.peak += Number(zs.peak) || 0;
+    }
+
+    (sessions || []).forEach(function (sess) {
+      if (!sess || sess.status !== 'completed') return;
+      if (!inWindow(sess.date)) return;
+      (sess.tasks || []).forEach(function (t) {
+        if (!t || t.kind !== 'conditioning') return;
+        addZones(t.result && t.result.zoneSeconds);
+      });
+      // Fallback: summary conditioning cards if tasks empty
+      if (!(sess.tasks || []).length && sess.summary && sess.summary.conditioning) {
+        (sess.summary.conditioning || []).forEach(function (c) {
+          addZones(c && c.result && c.result.zoneSeconds);
+        });
+      }
+    });
+
+    return out;
+  }
+
   var api = {
     hasEngine: hasEngine,
     zonesForProfile: zonesForProfile,
@@ -233,6 +285,7 @@
     sessionPatchFromBuilder: sessionPatchFromBuilder,
     hrTrimp: hrTrimp,
     condLoad: condLoad,
+    weeklyZoneSeconds: weeklyZoneSeconds,
   };
 
   global.EngineAdapter = api;
