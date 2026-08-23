@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-engine-v32';
+const CACHE = 'the-hybrid-athlete-engine-v33';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

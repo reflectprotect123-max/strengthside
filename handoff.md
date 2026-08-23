@@ -26,8 +26,8 @@ bench only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v32` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v3-2026-08-23` |
+| Cache / Update | `the-hybrid-athlete-engine-v33` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v4-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
@@ -93,6 +93,12 @@ Athletes can build strength again. **v31:** Hybrid Strength build/edit lives in 
 **Build strength** / Full Body A/B/C, athlete builder chrome + sticky Add lift / Review & save.
 Everyday Readiness + SZN seed lifts stay retired. Coach PIN remains only for rare Settings →
 Coach access (exercises / mobility / maintenance).
+
+### Twin instruments (v33)
+
+One machine, two dials: **The Engine** (teal / conditioning) and **Hybrid Strength**
+(copper / lifts). Shared `.ath-sticky` chrome, Track Dawn tokens only, Inter removed.
+Zero AI-slop gate in `docs/superpowers/plans/2026-08-23-athlete-ui-ux-full-polish.md`.
 
 ### Product naming (locked)
 
