@@ -18,9 +18,13 @@ for f in nutrition-bundle.js nutrition-ui.js; do
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
 done
-# Conditioning engine bundle (window.HybridEngine) — load-only until adapter
+# Conditioning engine bundle (window.HybridEngine) + adapter
 if [[ -f "$SRC_DIR/engine-bundle.js" ]]; then
   cp "$SRC_DIR/engine-bundle.js" "$ROOT/engine-bundle.js"
   cp "$SRC_DIR/engine-bundle.js" "$ROOT/preview-site/engine-bundle.js"
 fi
-echo "Synced THE-Hybrid-App.html + preview-site + service-worker.js + nutrition + engine-bundle"
+if [[ -f "$SRC_DIR/engine-adapter.js" ]]; then
+  cp "$SRC_DIR/engine-adapter.js" "$ROOT/engine-adapter.js"
+  cp "$SRC_DIR/engine-adapter.js" "$ROOT/preview-site/engine-adapter.js"
+fi
+echo "Synced THE-Hybrid-App.html + preview-site + service-worker.js + nutrition + engine-bundle + engine-adapter"

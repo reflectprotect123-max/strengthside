@@ -12,6 +12,7 @@ self.addEventListener('install', (event) => {
           './nutrition-bundle.js',
           './nutrition-ui.js',
           './engine-bundle.js',
+          './engine-adapter.js',
           './manifest.json',
         ].map((url) => cache.add(url).catch(() => undefined)),
       ),
