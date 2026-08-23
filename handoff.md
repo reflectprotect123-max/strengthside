@@ -26,8 +26,8 @@ bench only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v29` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-no-er-v2-2026-08-22` |
+| Cache / Update | `the-hybrid-athlete-engine-v30` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v1-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
@@ -87,6 +87,12 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
   “Are you finished?” watch. Yes finishes; Not yet stops nagging until
   the next exit.
 
+### Hybrid Strength workouts restored (v30)
+
+Athletes can build strength again: Home **Build Hybrid Strength**, Programs templates,
+Full Body A/B/C starters, and builder strength/superset blocks. Everyday Readiness + SZN
+seed lifts stay retired. Coach Tools unlock is auto-granted from those athlete entry points.
+
 ### Product naming (locked)
 
 - **The Engine** — conditioning / HR / zones / weekly dose. Never call this pillar “Morpheus” in product copy.
@@ -99,8 +105,7 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
   `purgeEverydayReadiness()` + `purgeStrengthTemplates()` run on load;
   program blueprints seed nothing; Home Conditioning starts an ad-hoc
   session. Do not re-seed ER without an explicit ask.
-- **Strength templates are retired.** New strength / Full Body starter /
-  Add strength block paths stay blocked.
+- **Everyday Readiness / SZN seed lifts stay retired.** Full Body starters and athlete Hybrid Strength templates are restored (v30).
 - **“What to do during this block” / Guide / block-help** UI is gone
   (`showBlockHelp` hard-off).
 - **Athlete shell stays conditioning-first.** Do not reintroduce Home
@@ -179,7 +184,7 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
 ## 4. Precise next steps for the next session
 
 1. Read this block + `CLAUDE.md` / shared-Supabase contract.
-2. Confirm build id **`the-hybrid-athlete-engine-v29`** on Netlify
+2. Confirm build id **`the-hybrid-athlete-engine-v30`** on Netlify
    (hard refresh / Update now).
    Next product talk: **heart rate recovery** (post-effort HR drop /
    recovery scoring) — not built in the athlete HTML yet.
@@ -187,8 +192,8 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
    `apps/mobile/prototype/hybrid-app/index.html` →
    `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify staging dir
    if shipping. Bump `LOCAL_BUILD` and service-worker `CACHE` together.
-4. Do **not** revive Everyday Readiness, strength templates,
-   Guide/block-help, Nutrition stub, Expo, or `home.html` / PWA shells.
+4. Do **not** revive Everyday Readiness, Guide/block-help, Nutrition stub,
+   Expo, or `home.html` / PWA shells. Hybrid Strength athlete building is intentional (v30).
 5. Wait for the athlete’s next ask. Sensible follow-ups if unspecified:
    simplify or hide the empty Programs tab, deepen WHOOP field coverage,
    iPhone HR fallback copy, or real Nutrition — only if requested.
