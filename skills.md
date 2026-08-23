@@ -51,7 +51,7 @@ a statement about what it needs, not about how important it is.
 
 ## VENDORED — committed to this repo at `vendor/…`
 
-27 skill directories under `vendor/skills/`, plus 3 subagents under
+28 skill directories under `vendor/skills/`, plus 3 subagents under
 `vendor/agents/` and 5 commands (`.md` + `.toml` each) under
 `vendor/commands/`, plus 4 hook source files under `vendor/hooks/`.
 `.gitignore` excludes `.claude/skills/`, `.claude/agents/`,
@@ -122,6 +122,19 @@ hybrid repo's own pre-existing bucket. `ui-ux-pro-max` carries a searchable
 local database (styles, palettes, font pairings) and is the largest thing in
 `vendor/skills/` (~1.9 MB).
 Removal: `rm -rf .claude/skills/{frontend-design,install-skill,ui-ux-pro-max}`.
+
+### taste-skill — `design-taste-frontend` (v2 experimental)
+
+| | |
+|---|---|
+| **What / why** | Anti-slop frontend skill for landing pages, portfolios, and redesigns. Brief inference, design-system map, motion skeletons, hard ban list. Complements `frontend-design` / `ui-ux-pro-max` when generating marketing UI; does **not** own athlete-shell chrome (follow `design-system/the-hybrid-system/MASTER.md` there). |
+| **Source** | https://github.com/Leonxlnx/taste-skill |
+| **Version** | v2 experimental, upstream HEAD `72e299530e2eb31ed8da06181bc19f6c18a00821` (install name `design-taste-frontend`) |
+| **Install method** | VENDORED at `vendor/skills/design-taste-frontend/`, also present at `.agents/skills/design-taste-frontend/` and `.cursor/skills/design-taste-frontend/` for Cursor / skills.sh agents. Materialised into `.claude/skills/` by `bash scripts/ensure-skills.sh`. Fresh machine: `npx skills add https://github.com/Leonxlnx/taste-skill --skill "design-taste-frontend"`. |
+| **Verify path** | `vendor/skills/design-taste-frontend/SKILL.md` |
+| **Writes outside its own directory** | Nothing. Pure markdown instructions. |
+| **Caveats** | v2 is still iterating toward a stable cut; re-run the npx install to refresh, then re-copy into `vendor/`. Scope is landing/portfolio/redesign — not dashboards or multi-step product UI. |
+| **Removal** | `rm -rf vendor/skills/design-taste-frontend .agents/skills/design-taste-frontend .cursor/skills/design-taste-frontend .claude/skills/design-taste-frontend` and drop the row from `skills-lock.json` / `VENDORED_SKILLS`. |
 
 ---
 

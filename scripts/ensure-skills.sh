@@ -115,6 +115,8 @@ VENDORED_SKILLS=(
   frontend-design
   install-skill
   ui-ux-pro-max
+  # taste-skill v2 (experimental) — install name design-taste-frontend
+  design-taste-frontend
 )
 
 echo "Vendored skills (committed in this repo — restored from vendor/skills/)"
