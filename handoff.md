@@ -26,8 +26,8 @@ bench only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v30` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v1-2026-08-23` |
+| Cache / Update | `the-hybrid-athlete-engine-v31` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v2-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
@@ -49,7 +49,7 @@ injury / illness gate.
 
 ### What the HTML app is today (athlete shell)
 
-Bottom nav: **Home · Programs · Calendar · Settings**.
+Bottom nav: **Home · Library · Calendar · Settings**.
 
 - **Home:** Sleep + Conditioning modules only (Nutrition stub removed).
   Track Dawn UI (graphite + copper + zone teal; Space Grotesk + Barlow
@@ -58,10 +58,9 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
   sync into Home / Sleep metrics when signed in.
 - **Conditioning:** The Engine half-gauge + readiness-aware zones. Tap
   CONDITIONING starts / resumes the simple cond logger.
-- **Programs:** empty athlete state — **Everyday Readiness is retired**
-  (purged on load; blueprints no longer seed it). Train from Home →
-  Conditioning (ad-hoc session). Coach Tools can still build custom
-  templates when unlocked.
+- **Library:** Hybrid Strength workouts — build, Full Body A/B/C, edit/schedule
+  templates (nav id still `programs`). Everyday Readiness stays retired.
+  Coach Tools PIN is not required for Library build/edit.
 - **Calendar:** week strip + schedule / preview / resume. No Day stress
   card, no tonnage kg on completed cond sessions.
 - **Settings:** Update, WHOOP, HR profile, Export backup, quiet Coach
@@ -87,11 +86,13 @@ Bottom nav: **Home · Programs · Calendar · Settings**.
   “Are you finished?” watch. Yes finishes; Not yet stops nagging until
   the next exit.
 
-### Hybrid Strength workouts restored (v30)
+### Hybrid Strength workouts restored (v30) → Library fold (v31)
 
-Athletes can build strength again: Home **Build Hybrid Strength**, Programs templates,
-Full Body A/B/C starters, and builder strength/superset blocks. Everyday Readiness + SZN
-seed lifts stay retired. Coach Tools unlock is auto-granted from those athlete entry points.
+Athletes can build strength again. **v31:** Hybrid Strength build/edit lives in **Library**
+(nav tab; was Programs) — no Coach Tools unlock. Home **Build Hybrid Strength**, Library
+**Build strength** / Full Body A/B/C, athlete builder chrome + sticky Add lift / Review & save.
+Everyday Readiness + SZN seed lifts stay retired. Coach PIN remains only for rare Settings →
+Coach access (exercises / mobility / maintenance).
 
 ### Product naming (locked)
 
