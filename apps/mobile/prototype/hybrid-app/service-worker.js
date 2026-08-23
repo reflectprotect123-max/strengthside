@@ -11,6 +11,7 @@ self.addEventListener('install', (event) => {
           './whoop.js',
           './nutrition-bundle.js',
           './nutrition-ui.js',
+          './engine-bundle.js',
           './manifest.json',
         ].map((url) => cache.add(url).catch(() => undefined)),
       ),
