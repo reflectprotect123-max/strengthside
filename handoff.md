@@ -27,8 +27,8 @@ and `apps/web` were deleted — athlete UX lives here only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v36` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v7-2026-08-23` |
+| Cache / Update | `the-hybrid-athlete-engine-v37` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v8-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
@@ -61,19 +61,14 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   CONDITIONING starts / resumes the simple cond logger.
 - **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
-  Coach Tools PIN is not required for Library build/edit.
-- **Strength log (v35):** Logging a set auto-starts the prescribed rest
+  - **Strength log (v35):** Logging a set auto-starts the prescribed rest
   when more sets remain. Finish shows duration / sets / tonnage (kg) —
   no invented “Strength score.” Complete exercise advances to the next
   task.
 - **Calendar:** week strip + schedule / preview / resume. No Day stress
   card, no tonnage kg on completed cond sessions.
-- **Settings:** Update, WHOOP, HR profile, Export backup, quiet Coach
-  access unlock. No Session alerts, Import, Danger wipe, or Protect
-  storage on the athlete surface.
-- **Coach Tools:** still exist behind passcode (Builder / exercises /
-  mobility). Default passcode remains in code but is **not** printed on
-  the lock screen. Unlock entry is Settings → Coach access only.
+- **Settings:** Update, WHOOP, HR profile, Export backup.
+- **Coach Tools:** removed (v37). No lock, no Settings Coach access.
 
 ### How Conditioning works (current contract)
 
