@@ -27,8 +27,8 @@ and `apps/web` were deleted — athlete UX lives here only.
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cache / Update | `the-hybrid-athlete-engine-v35` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v6-2026-08-23` |
+| Cache / Update | `the-hybrid-athlete-engine-v36` — tap **Update** / **Update now** |
+| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v7-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
 `@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
