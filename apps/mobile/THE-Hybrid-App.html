@@ -1075,7 +1075,7 @@ const COND_EFFORTS=[
   {key:'hard',name:'Hard',zoneKey:'anaerobic',rpe:'8–9.5',cue:'a few words at a time'}
 ];
 const COND_MODALITIES=['Run','Walk','Bike','Rower','Ski erg','Circuit','Other'];
-function condEffortMeta(key){return COND_EFFORTS.find(e=>e.key===key)||COND_EFFORTS[0]}
+function condEffortMeta(key){if(window.EngineAdapter&&EngineAdapter.effortMeta){try{return EngineAdapter.effortMeta(key)}catch(e){}}return COND_EFFORTS.find(e=>e.key===key)||COND_EFFORTS[0]}
 function condFormatMeta(key){return COND_FORMATS.find(f=>f.key===key)||COND_FORMATS[0]}
 function fmtNeedsIntervalFields(fmt){fmt=fmt||condFormatMeta(condBuilder.fmt);return fmt.key==='intervals'||fmt.key==='tempo'||fmt.key==='custom'}
 function patchCondBuilder(patch){
@@ -1136,26 +1136,18 @@ function renderCondBuilder(){
 function setCondFmt(k){patchCondBuilder({fmt:k})}
 function setCondMod(k){patchCondBuilder({modality:k})}
 function setCondEffort(k){patchCondBuilder({effort:k})}
-function applyCondBuilderToSession(sess){
+function athWhoopSampleForEngine(){let c=dailyCheckin(today(),false)||{};let raw=num(c.whoopRecovery);if(!(raw>0)&&!(num(c.restingHr)>0))return null;let w={};if(raw>0)w.recoveryScore=raw;if(num(c.restingHr)>0)w.restingHr=num(c.restingHr);return w}function applyCondBuilderToSession(sess){
   if(!sess)return;
-  let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
   let zones=athZonesForReadiness(athHomeMetrics().recovery);
-  let z=zones.find(x=>x.key===effort.zoneKey)||zones[0];
-  let mins=Math.max(0,num(condBuilder.minutes)||30);
-  let patch={
-    heading:fmt.name,
-    conditioningType:fmt.type,
-    modality:condBuilder.modality,
-    targetDurationMin:mins,
-    timeCapMin:mins,
-    targetHrZone:`${z.lo}–${z.hi}`,
-    effort:effort.key,
-    condFmt:fmt.key,
-    rounds:Math.max(1,num(condBuilder.rounds)||fmt.rounds||1),
-    workSec:Math.max(0,num(condBuilder.workSec)||fmt.workSec||0),
-    restSec:Math.max(0,condBuilder.restSec!=null?num(condBuilder.restSec):(fmt.restSec||0)),
-    notes:''
-  };
+  let patch;
+  if(window.EngineAdapter&&EngineAdapter.sessionPatchFromBuilder){
+    patch=EngineAdapter.sessionPatchFromBuilder({fmt:condBuilder.fmt,effort:condBuilder.effort,modality:condBuilder.modality,minutes:condBuilder.minutes,rounds:condBuilder.rounds,workSec:condBuilder.workSec,restSec:condBuilder.restSec,whoop:athWhoopSampleForEngine(),zones:zones});
+  }else{
+    let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
+    let z=zones.find(x=>x.key===effort.zoneKey)||zones[0];
+    let mins=Math.max(0,num(condBuilder.minutes)||30);
+    patch={heading:fmt.name,conditioningType:fmt.type,modality:condBuilder.modality,targetDurationMin:mins,timeCapMin:mins,targetHrZone:`${z.lo}–${z.hi}`,effort:effort.key,condFmt:fmt.key,rounds:Math.max(1,num(condBuilder.rounds)||fmt.rounds||1),workSec:Math.max(0,num(condBuilder.workSec)||fmt.workSec||0),restSec:Math.max(0,condBuilder.restSec!=null?num(condBuilder.restSec):(fmt.restSec||0)),notes:''};
+  }
   (sess.blocks||[]).forEach(b=>{if(b&&b.type==='conditioning')Object.assign(b,patch)});
   if(!(sess.status==='scheduled'||!(sess.tasks||[]).length)){
     (sess.tasks||[]).forEach(t=>{if(t&&t.kind==='conditioning'&&!t.complete)Object.assign(t,patch)});
