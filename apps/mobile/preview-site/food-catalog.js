@@ -57,8 +57,31 @@
       .split(',')[0]
       .trim() || null;
     const serving = String(p.serving_size || '').trim() || null;
+    const id = 'off-' + code;
+    const servings = [];
+    // Attach an explicit serving→g/ml row when OFF states a mass/volume that
+    // matches the per-100g (or ml) basis. Never invent density.
+    const parsed =
+      window.HybridNutrition &&
+      HybridNutrition.Core &&
+      HybridNutrition.Core.parseServingSizeText
+        ? HybridNutrition.Core.parseServingSizeText(serving)
+        : parseServingSizeLocal(serving);
+    if (parsed && parsed.unit === 'g') {
+      servings.push({
+        id: id + '-serving',
+        foodId: id,
+        label: serving || 'serving',
+        quantity: 1,
+        unit: 'serving',
+        grams: parsed.amount,
+        millilitres: null,
+        isDefault: true,
+        sortOrder: 0,
+      });
+    }
     return {
-      id: 'off-' + code,
+      id,
       name,
       brand,
       barcode: code,
@@ -74,9 +97,35 @@
       source: 'openfoodfacts',
       externalId: code,
       nutrients: {},
-      servings: [],
+      servings,
       cachedAt: new Date().toISOString(),
     };
+  }
+
+  /** Local fallback when nutrition-core is not loaded yet. */
+  function parseServingSizeLocal(text) {
+    if (!text) return null;
+    const raw = String(text).trim();
+    const paren = /\(([^)]*)\)/.exec(raw);
+    const outside = raw.replace(/\([^)]*\)/g, ' ');
+    const re = /(\d+(?:[.,]\d+)?|\d*[.,]\d+)\s*(kg|mg|ml|g|l)\b/i;
+    const m = (paren ? re.exec(paren[1]) : null) || re.exec(outside);
+    if (!m) return null;
+    let amount = Number(String(m[1]).replace(',', '.'));
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    let unit = m[2].toLowerCase();
+    if (unit === 'kg') {
+      amount *= 1000;
+      unit = 'g';
+    } else if (unit === 'mg') {
+      amount /= 1000;
+      unit = 'g';
+    } else if (unit === 'l') {
+      amount *= 1000;
+      unit = 'ml';
+    }
+    if (unit !== 'g' && unit !== 'ml') return null;
+    return { amount, unit };
   }
 
   async function offFetch(url) {
