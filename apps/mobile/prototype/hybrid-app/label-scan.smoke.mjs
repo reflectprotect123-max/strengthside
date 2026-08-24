@@ -37,6 +37,11 @@ if (Math.abs(oneLine.parsed.proteinG - 3.2) > 0.01) throw new Error('one-line pr
 if (Math.abs(oneLine.parsed.fatG - 2.1) > 0.01) throw new Error('one-line fat');
 if (Math.abs(oneLine.parsed.carbsG - 15.6) > 0.01) throw new Error('one-line carbs');
 
+const carbsAlias = sandbox.LabelScan.parsePastedText(
+  'Energy 520kJ Protein 3.2g Fat, total 2.1g Carbs 15.6g',
+);
+if (Math.abs(carbsAlias.parsed.carbsG - 15.6) > 0.01) throw new Error('carbs alias');
+
 let emptyOk = false;
 try {
   sandbox.LabelScan.parsePastedText('Ingredients: flour');

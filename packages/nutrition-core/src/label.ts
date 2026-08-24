@@ -217,7 +217,10 @@ function readRows(rows: readonly Row[], texts: readonly string[]): ParsedNutriti
 
 const norm = (s: string): string => s.trim().toLowerCase();
 
-const isEnergyLabel = (t: string): boolean => norm(t).startsWith('energy');
+const isEnergyLabel = (t: string): boolean => {
+  const n = norm(t);
+  return n.startsWith('energy') || n.startsWith('calories') || n.startsWith('calorie');
+};
 const isProteinLabel = (t: string): boolean => norm(t).startsWith('protein');
 
 /**
@@ -234,10 +237,11 @@ function isFatTotalLabel(t: string): boolean {
   return n.startsWith('fat') && !n.includes('saturat');
 }
 
-/** The same guard, against the sugars sub-row. */
+/** The same guard, against the sugars sub-row. Accepts Carbohydrate / Carbs. */
 function isCarbTotalLabel(t: string): boolean {
   const n = norm(t);
-  return n.startsWith('carbohydrate') && !n.includes('sugar');
+  if (n.includes('sugar')) return false;
+  return n.startsWith('carbohydrate') || n === 'carbs' || n.startsWith('carbs ') || n.startsWith('total carbohydrate') || n.startsWith('total carbs');
 }
 
 /* ---------- numbers ---------- */

@@ -42,6 +42,7 @@
     if (!path) return '';
     const p = String(path);
     if (p.startsWith('file:') || p.startsWith('content:')) return p;
+    if (p.startsWith('http:') || p.startsWith('https:') || p.startsWith('capacitor:')) return '';
     return 'file://' + p;
   }
 
@@ -59,12 +60,9 @@
         correctOrientation: true,
         saveToGallery: false,
       });
-      if (photo && (photo.path || photo.webPath)) {
-        return {
-          path: fileUrl(photo.path || photo.webPath),
-          format: photo.format || 'jpeg',
-        };
-      }
+      const raw = (photo && (photo.path || photo.uri)) || '';
+      const path = fileUrl(raw);
+      if (path) return { path, format: (photo && photo.format) || 'jpeg' };
     }
     return pickImageFile();
   }

@@ -49,7 +49,7 @@
   function normalizeLabelPaste(text) {
     return String(text || '')
       .replace(/\r\n/g, '\n')
-      .replace(/\s+(?=(?:Energy|Protein|Fat|Carbohydrate|Carbs|Sugars|Sodium|Serving)\b)/gi, '\n')
+      .replace(/\s+(?=(?:Energy|Calories|Calorie|Protein|Fat|Carbohydrate|Carbs|Sugars|Sodium|Serving)\b)/gi, '\n')
       .trim();
   }
 

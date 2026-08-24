@@ -17,14 +17,14 @@ var HybridNutrition = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // apps/mobile/prototype/hybrid-app/nutrition-entry.ts
+  // nutrition-entry.ts
   var nutrition_entry_exports = {};
   __export(nutrition_entry_exports, {
     Core: () => src_exports,
     Engine: () => src_exports2
   });
 
-  // packages/nutrition-core/src/index.ts
+  // ../../../../packages/nutrition-core/src/index.ts
   var src_exports = {};
   __export(src_exports, {
     CHECK_IN_STATUSES: () => CHECK_IN_STATUSES,
@@ -75,7 +75,7 @@ var HybridNutrition = (() => {
     upsertCachedFood: () => upsertCachedFood
   });
 
-  // packages/nutrition-core/src/types.ts
+  // ../../../../packages/nutrition-core/src/types.ts
   var ENTRY_KINDS = ["food", "custom_food", "recipe", "quick_add"];
   var MEALS = ["breakfast", "lunch", "dinner", "snack", "other"];
   var DAY_STATUS_VALUES = ["complete", "partial", "fasted", "unlogged"];
@@ -84,7 +84,7 @@ var HybridNutrition = (() => {
   var PROGRAM_STATUSES = ["draft", "active", "paused", "completed"];
   var CHECK_IN_STATUSES = ["pending", "held", "accepted", "declined"];
 
-  // packages/nutrition-core/src/db.ts
+  // ../../../../packages/nutrition-core/src/db.ts
   var NUTRITION_SCHEMA_VERSION = 1;
   function emptyNutritionDB() {
     return {
@@ -553,7 +553,7 @@ var HybridNutrition = (() => {
     };
   }
 
-  // packages/nutrition-core/src/day.ts
+  // ../../../../packages/nutrition-core/src/day.ts
   var ZERO_TOTALS = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
   var isLive = (e) => e.deletedAt == null;
   function entriesForDay(db, date) {
@@ -587,7 +587,7 @@ var HybridNutrition = (() => {
     return [...known, ...rest].map((meal) => ({ meal, entries: seen.get(meal) }));
   }
 
-  // packages/nutrition-core/src/recipe.ts
+  // ../../../../packages/nutrition-core/src/recipe.ts
   var ZERO_MACROS = { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
   var IncompatibleUnitError = class extends Error {
     constructor(message) {
@@ -707,7 +707,7 @@ var HybridNutrition = (() => {
     );
   }
 
-  // packages/nutrition-core/src/log.ts
+  // ../../../../packages/nutrition-core/src/log.ts
   var base = (ctx) => ({
     id: ctx.id,
     userId: ctx.userId ?? "",
@@ -862,7 +862,7 @@ var HybridNutrition = (() => {
     };
   }
 
-  // packages/nutrition-core/src/label.ts
+  // ../../../../packages/nutrition-core/src/label.ts
   var EMPTY = {
     calories: null,
     proteinG: null,
@@ -934,7 +934,10 @@ var HybridNutrition = (() => {
     };
   }
   var norm = (s) => s.trim().toLowerCase();
-  var isEnergyLabel = (t) => norm(t).startsWith("energy");
+  var isEnergyLabel = (t) => {
+    const n = norm(t);
+    return n.startsWith("energy") || n.startsWith("calories") || n.startsWith("calorie");
+  };
   var isProteinLabel = (t) => norm(t).startsWith("protein");
   function isFatTotalLabel(t) {
     const n = norm(t);
@@ -942,7 +945,8 @@ var HybridNutrition = (() => {
   }
   function isCarbTotalLabel(t) {
     const n = norm(t);
-    return n.startsWith("carbohydrate") && !n.includes("sugar");
+    if (n.includes("sugar")) return false;
+    return n.startsWith("carbohydrate") || n === "carbs" || n.startsWith("carbs ") || n.startsWith("total carbohydrate") || n.startsWith("total carbs");
   }
   var DECIMAL = String.raw`\d+(?:[.,]\d+)?`;
   var NUMBER = new RegExp(`(${DECIMAL})(?![\\d])`);
@@ -1028,7 +1032,7 @@ var HybridNutrition = (() => {
     };
   }
 
-  // packages/nutrition-core/src/search.ts
+  // ../../../../packages/nutrition-core/src/search.ts
   var favoriteKey = (kind, id) => `${kind}:${id}`;
   var resultKey = (r) => favoriteKey(r.kind, r.id);
   var catalogueResult = (food, offline) => ({
@@ -1121,7 +1125,7 @@ var HybridNutrition = (() => {
     return out;
   }
 
-  // packages/nutrition-engine/src/index.ts
+  // ../../../../packages/nutrition-engine/src/index.ts
   var src_exports2 = {};
   __export(src_exports2, {
     DEFAULT_ENGINE_CONFIG: () => DEFAULT_ENGINE_CONFIG,
@@ -1150,7 +1154,7 @@ var HybridNutrition = (() => {
     weightTrend: () => weightTrend
   });
 
-  // packages/nutrition-engine/src/types.ts
+  // ../../../../packages/nutrition-engine/src/types.ts
   var DEFAULT_ENGINE_CONFIG = Object.freeze({
     kcalPerKg: 7700,
     trendAlpha: 0.2,
@@ -1174,7 +1178,7 @@ var HybridNutrition = (() => {
     "unlogged"
   ];
 
-  // packages/nutrition-engine/src/dates.ts
+  // ../../../../packages/nutrition-engine/src/dates.ts
   var ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var MS_PER_DAY = 864e5;
   function toEpochDay(day) {
@@ -1205,7 +1209,7 @@ var HybridNutrition = (() => {
     return toEpochDay(a) >= toEpochDay(b) ? a : b;
   }
 
-  // packages/nutrition-engine/src/numeric.ts
+  // ../../../../packages/nutrition-engine/src/numeric.ts
   function fsum(values) {
     const partials = [];
     let count = 0;
@@ -1313,7 +1317,7 @@ var HybridNutrition = (() => {
     return Math.max(low, Math.min(high, value));
   }
 
-  // packages/nutrition-engine/src/engine.ts
+  // ../../../../packages/nutrition-engine/src/engine.ts
   function sortedRecords(records) {
     return [...records].sort((a, b) => diffDays(a.day, b.day));
   }
@@ -1576,7 +1580,7 @@ var HybridNutrition = (() => {
     };
   }
 
-  // packages/nutrition-engine/src/defects.ts
+  // ../../../../packages/nutrition-engine/src/defects.ts
   var ENGINE_DEFECTS = [
     {
       id: "ewma-gap-carry-flattens-slope",
