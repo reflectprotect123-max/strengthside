@@ -19,3 +19,4 @@ apps/mobile/capacitor/android/app/src/main/assets/public/
 apps/mobile/**/.netlify/
 .cursor/
 tmp/
+supabase/.temp/

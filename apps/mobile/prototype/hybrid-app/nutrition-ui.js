@@ -453,11 +453,50 @@
     const food = catalogFood || custom;
     if (!food || !C) return alert('Food not found.');
     let entry;
-    if (catalogFood) {
-      upsertCatalogFood(db, catalogFood);
-      entry = C.logEntryFromFood({ id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() }, catalogFood, 1, 'serving');
-    } else {
-      entry = C.logEntryFromCustomFood({ id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() }, custom, 1, custom.servingUnit || 'serving');
+    try {
+      if (catalogFood) {
+        // Prefer one pack "serving" when serving-size text states grams/ml that
+        // match the food basis; otherwise log in grams (never guess density).
+        const picked =
+          C.pickDefaultLogQuantity
+            ? C.pickDefaultLogQuantity(catalogFood)
+            : { food: catalogFood, quantity: catalogFood.servingQty || 100, unit: catalogFood.servingUnit || 'g' };
+        upsertCatalogFood(db, picked.food);
+        entry = C.logEntryFromFood(
+          { id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() },
+          picked.food,
+          picked.quantity,
+          picked.unit,
+        );
+      } else {
+        const unit = custom.servingUnit || 'g';
+        const qty = Number(custom.servingQty) > 0 ? Number(custom.servingQty) : 1;
+        entry = C.logEntryFromCustomFood(
+          { id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() },
+          custom,
+          qty,
+          unit,
+        );
+      }
+    } catch (e) {
+      // Last-resort basis-unit log — still no density guess.
+      if (catalogFood) {
+        try {
+          const unit = catalogFood.servingUnit || 'g';
+          const qty = Number(catalogFood.servingQty) > 0 ? Number(catalogFood.servingQty) : 100;
+          upsertCatalogFood(db, catalogFood);
+          entry = C.logEntryFromFood(
+            { id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() },
+            catalogFood,
+            qty,
+            unit,
+          );
+        } catch (e2) {
+          return alert((e2 && e2.message) || (e && e.message) || 'Could not log this food.');
+        }
+      } else {
+        return alert((e && e.message) || 'Could not log this food.');
+      }
     }
     db.logEntries.push(entry);
     markDayComplete(db, date);

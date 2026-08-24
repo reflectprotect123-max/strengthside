@@ -167,6 +167,11 @@
       cachedAt: new Date().toISOString(),
       supabaseFoodId: data.id,
     };
+    // Prefer explicit serving→g from serving_size_text when present.
+    if (global.HybridNutrition && HybridNutrition.Core && HybridNutrition.Core.enrichFoodServings) {
+      const enriched = HybridNutrition.Core.enrichFoodServings(food);
+      Object.assign(food, { servings: enriched.servings });
+    }
     if (global.FoodCatalogAU && FoodCatalogAU.rememberLive) FoodCatalogAU.rememberLive(food);
     return food;
   }
