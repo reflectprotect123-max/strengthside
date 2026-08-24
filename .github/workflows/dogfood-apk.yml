@@ -33,12 +33,23 @@ jobs:
         run: |
           set -euo pipefail
           SDK="$HOME/Android/Sdk"
-          mkdir -p "$SDK/cmdline-tools"
+          mkdir -p "$SDK/cmdline-tools" "$SDK/licenses"
           curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip
           unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-unpack
           rm -rf "$SDK/cmdline-tools/latest"
           mv /tmp/cmdline-tools-unpack/cmdline-tools "$SDK/cmdline-tools/latest"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          # `yes | sdkmanager --licenses` exits 141 under pipefail when sdkmanager closes stdin.
+          printf '%s\n' \
+            24333f8a63b6825ea9c5514f83c2829b004d1fee \
+            84831b9409646a918e305e696a5a315c534a430 \
+            d975f751698a77b662f1254ddbe140390d961f \
+            601085b94cd77f0b157c6306946f4c23 \
+            33b6a2b64607f11b759f320ef9dff4ae \
+            8403addf88ab4874007e1c1b80d62b47 \
+            1fde451af62354da92ce2630df5a2c65 \
+            e9ac551e6ee698725b50a05caa2f6a59 \
+            > "$SDK/licenses/android-sdk-license"
+          cp "$SDK/licenses/android-sdk-license" "$SDK/licenses/android-sdk-preview-license"
           "$SDK/cmdline-tools/latest/bin/sdkmanager" \
             "platform-tools" \
             "platforms;android-36" \
