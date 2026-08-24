@@ -111,6 +111,164 @@
     return typeof today === 'function' ? today() : new Date().toISOString().slice(0, 10);
   }
 
+  function Engine() {
+    return window.HybridNutrition && window.HybridNutrition.Engine;
+  }
+
+  function weekBounds(date) {
+    const dt = new Date(`${date}T12:00:00`);
+    const mondayOffset = (dt.getDay() + 6) % 7;
+    const weekStart = shiftDay(date, -mondayOffset);
+    return { weekStart, weekEnd: shiftDay(weekStart, 6) };
+  }
+
+  function dayFromTimestamp(isoTs) {
+    try {
+      return String(isoTs || '').slice(0, 10);
+    } catch {
+      return '';
+    }
+  }
+
+  function latestWeightKg(db) {
+    const live = (db.weightEntries || [])
+      .filter((w) => !w.deletedAt && w.weightKg > 0)
+      .sort((a, b) => (a.measuredAt < b.measuredAt ? 1 : -1));
+    return live[0] ? live[0].weightKg : null;
+  }
+
+  function previousExpenditureKcal(db) {
+    const latest = [...(db.checkIns || [])].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))[0];
+    if (!latest) return null;
+    return latest.proposedExpenditureKcal ?? latest.observedExpenditureKcal ?? latest.previousExpenditureKcal ?? null;
+  }
+
+  function buildDailyRecords(db, endDate, lookbackDays = 28) {
+    const C = Core();
+    const records = [];
+    const start = shiftDay(endDate, -(lookbackDays - 1));
+    const liveEntries = (db.logEntries || []).filter((e) => !e.deletedAt);
+    const entriesByDay = new Map();
+    for (const e of liveEntries) {
+      if (!entriesByDay.has(e.logDate)) entriesByDay.set(e.logDate, []);
+      entriesByDay.get(e.logDate).push(e);
+    }
+    const statusByDay = new Map((db.dayStatus || []).map((row) => [row.logDate, row.status]));
+    const weightByDay = new Map();
+    for (const w of (db.weightEntries || []).filter((x) => !x.deletedAt)) {
+      const day = dayFromTimestamp(w.measuredAt);
+      if (!day) continue;
+      const prev = weightByDay.get(day);
+      if (!prev || prev.measuredAt < w.measuredAt) weightByDay.set(day, w);
+    }
+
+    let cursor = start;
+    while (cursor <= endDate) {
+      const dayEntries = entriesByDay.get(cursor) || [];
+      const summed = dayEntries.length ? C.macroTotals(dayEntries).calories : null;
+      const declared = statusByDay.get(cursor) || null;
+      const inferredStatus = declared || (dayEntries.length ? 'complete' : 'unlogged');
+      const nutritionStatus =
+        inferredStatus === 'partial'
+          ? 'partial'
+          : inferredStatus === 'fasted'
+            ? 'fasted'
+            : inferredStatus === 'complete'
+              ? 'complete'
+              : 'unlogged';
+      let calories = summed;
+      if (nutritionStatus === 'fasted' && calories == null) calories = 0;
+      if (nutritionStatus === 'unlogged' && !dayEntries.length) calories = null;
+      records.push({
+        day: cursor,
+        calories,
+        weightKg: weightByDay.get(cursor)?.weightKg ?? null,
+        nutritionStatus,
+      });
+      cursor = shiftDay(cursor, 1);
+    }
+    return records;
+  }
+
+  function upsertCheckIn(db, checkIn) {
+    const list = db.checkIns || [];
+    const i = list.findIndex((x) => x.id === checkIn.id || x.weekStart === checkIn.weekStart);
+    if (i >= 0) list[i] = checkIn;
+    else list.push(checkIn);
+    db.checkIns = list;
+  }
+
+  function checkInUiState(db, date, persist = false) {
+    const E = Engine();
+    if (!E) return null;
+    const { weekStart, weekEnd } = weekBounds(date);
+    const current = (db.checkIns || []).find((x) => x.weekStart === weekStart) || null;
+    const manualOverride = current && current.status === 'declined' && /manual override/i.test(current.explanation || '');
+    if (current && (current.status === 'accepted' || current.status === 'declined')) {
+      return { checkIn: current, kind: manualOverride ? 'manual' : current.status };
+    }
+
+    const checkIn = E.weeklyCheckIn(buildDailyRecords(db, date), {
+      previousExpenditureKcal: previousExpenditureKcal(db),
+      bodyWeightKg: latestWeightKg(db) || 80,
+      targetRateKgPerWeek: db.program?.targetRateKgPerWeek || 0,
+      config: E.engineConfig({ minimumNutritionDaysPerWeek: 4 }),
+    });
+    const now = isoNow();
+    const next = {
+      id: current?.id || uid(),
+      userId: '',
+      programId: db.program?.id || null,
+      weekStart,
+      weekEnd,
+      status: checkIn.status === 'ready' ? 'pending' : 'held',
+      previousExpenditureKcal: checkIn.estimate.previousEstimateKcal,
+      observedExpenditureKcal: checkIn.estimate.estimateKcal,
+      proposedExpenditureKcal: checkIn.status === 'ready' ? checkIn.estimate.estimateKcal : null,
+      proposedCalories: checkIn.targets ? checkIn.targets.calories : null,
+      proposedProteinG: checkIn.targets ? checkIn.targets.proteinG : null,
+      proposedCarbsG: checkIn.targets ? checkIn.targets.carbsG : null,
+      proposedFatG: checkIn.targets ? checkIn.targets.fatG : null,
+      modules: checkIn.modules,
+      explanation: checkIn.explanation,
+      createdAt: current?.createdAt || now,
+      resolvedAt: null,
+      updatedAt: now,
+    };
+    if (persist) upsertCheckIn(db, next);
+    return { checkIn: next, kind: checkIn.status === 'ready' ? 'ready' : 'holding' };
+  }
+
+  function checkInBannerHtml(state, surface) {
+    if (!state || !state.checkIn) return '';
+    let title = '';
+    let sub = '';
+    if (state.kind === 'ready') {
+      title = 'New targets ready';
+      sub = 'Based on this week’s food and weight.';
+    } else if (state.kind === 'holding') {
+      title = 'Need more data this week';
+      sub = 'Log 4 food days and 1 weigh-in to get a suggestion.';
+    } else if (state.kind === 'accepted') {
+      title = 'Targets updated';
+      sub = 'These numbers run until next review.';
+    } else if (state.kind === 'manual') {
+      title = 'You’re setting targets by hand';
+      sub = 'Weekly suggestions will not overwrite these.';
+    } else if (state.kind === 'declined') {
+      title = 'Kept your current targets';
+      sub = 'No change this week.';
+    } else {
+      return '';
+    }
+    const cls = `nut-checkin-banner ${state.kind}`;
+    const cta = state.kind === 'ready' ? 'Review' : state.kind === 'holding' ? 'What’s missing' : 'Details';
+    if (surface === 'home') {
+      return `<div class="${cls}"><div><b>${esc(title)}</b><small>${esc(sub)}</small></div><button type="button" class="btn tiny" onclick="event.stopPropagation();NutritionUI.openWeeklyReview()">${esc(cta)}</button></div>`;
+    }
+    return `<button type="button" class="${cls}" onclick="NutritionUI.openWeeklyReview()"><div><b>${esc(title)}</b><small>${esc(sub)}</small></div><span class=nut-checkin-cta>${esc(cta)} ›</span></button>`;
+  }
+
   function openNutrition(date) {
     nutDate = date || todayStr();
     ensureCatalog()
@@ -154,6 +312,7 @@
     const entries = C.entriesForDay(db, date);
     const totals = C.macroTotals(entries);
     ensureTodayTargets(db, date);
+    const checkInState = checkInUiState(db, date, true);
     saveN(db);
     const target = C.targetForDay(db.program, date) || {
       calories: 2500,
@@ -203,6 +362,7 @@
           <div class=title style="flex:1;text-align:center">${esc(dayLabel(date))}</div>
           <button class="btn small" ${date >= todayS ? 'disabled' : ''} onclick="NutritionUI.shift(1)">›</button>
         </div>
+        ${checkInBannerHtml(checkInState, 'day')}
         ${meters}
         <div class=btns>
           <button type="button" class="btn small primary" onclick="NutritionUI.addFood()">Add food</button>
@@ -836,6 +996,109 @@
     renderNutrition();
   }
 
+  function applyCheckInTargets(db, checkIn) {
+    if (!checkIn || checkIn.proposedCalories == null) return;
+    const C = Core();
+    const start = todayStr() > checkIn.weekStart ? todayStr() : checkIn.weekStart;
+    let cursor = start;
+    while (cursor <= checkIn.weekEnd) {
+      let day = db.program.days.find((x) => x.targetDate === cursor);
+      if (!day) {
+        day = {
+          programId: db.program.id,
+          targetDate: cursor,
+          calories: checkIn.proposedCalories,
+          proteinG: checkIn.proposedProteinG || 0,
+          carbsG: checkIn.proposedCarbsG || 0,
+          fatG: checkIn.proposedFatG || 0,
+          source: 'engine',
+          createdAt: isoNow(),
+        };
+        db.program.days.push(day);
+      } else {
+        day.calories = checkIn.proposedCalories;
+        day.proteinG = checkIn.proposedProteinG || 0;
+        day.carbsG = checkIn.proposedCarbsG || 0;
+        day.fatG = checkIn.proposedFatG || 0;
+        day.source = 'engine';
+      }
+      cursor = shiftDay(cursor, 1);
+    }
+    if (C && C.sortProgramDays) C.sortProgramDays(db.program.days);
+    db.program.updatedAt = isoNow();
+  }
+
+  function openWeeklyReview() {
+    const db = loadN();
+    const date = nutDate || todayStr();
+    ensureTodayTargets(db, date);
+    const state = checkInUiState(db, date, true);
+    saveN(db);
+    if (!state || !state.checkIn) return;
+    const checkIn = state.checkIn;
+    const modules = (checkIn.modules || []).map((m) => `<li>${esc(m.action)}</li>`).join('');
+    if (state.kind === 'holding') {
+      sheet(`<div class=nut-sheet><h2>Need more data this week</h2>
+        <p class=lead>${esc(checkIn.explanation || 'Keep logging and check in again soon.')}</p>
+        <ul class=nut-checkin-list>${modules}</ul>
+        <div class=btns>
+          <button class="btn small primary" onclick="closeSheet();NutritionUI.addFood()">Add food</button>
+          <button class="btn small" onclick="closeSheet();NutritionUI.weight()">Weight</button>
+        </div>
+        <button class="btn block" style="margin-top:10px" onclick="closeSheet()">Done</button></div>`);
+      return;
+    }
+    const current = Core().targetForDay(db.program, date) || ensureTodayTargets(db, date);
+    const proposed = {
+      calories: Math.round(checkIn.proposedCalories || 0),
+      proteinG: Math.round(checkIn.proposedProteinG || 0),
+      carbsG: Math.round(checkIn.proposedCarbsG || 0),
+      fatG: Math.round(checkIn.proposedFatG || 0),
+    };
+    sheet(`<div class=nut-sheet><h2>Weekly review</h2>
+      <p class=lead>${esc(checkIn.explanation || 'Review and accept the proposed target update.')}</p>
+      <div class=nut-checkin-grid>
+        <div><span>Expenditure</span><b>${Math.round(checkIn.observedExpenditureKcal || 0)} kcal</b></div>
+        <div><span>Current</span><b>${Math.round(current.calories)} kcal</b></div>
+        <div><span>Proposed</span><b>${proposed.calories} kcal</b></div>
+      </div>
+      <p class="meta nut-preview">P ${proposed.proteinG} · C ${proposed.carbsG} · F ${proposed.fatG}</p>
+      <button class="btn primary block" onclick="NutritionUI.acceptWeeklyReview()">Accept targets</button>
+      <button class="btn block" style="margin-top:8px" onclick="NutritionUI.declineWeeklyReview()">Keep current</button></div>`);
+  }
+
+  function acceptWeeklyReview() {
+    const db = loadN();
+    const date = nutDate || todayStr();
+    ensureTodayTargets(db, date);
+    const state = checkInUiState(db, date, true);
+    if (!state || !state.checkIn || state.checkIn.proposedCalories == null) return closeSheet();
+    const checkIn = state.checkIn;
+    checkIn.status = 'accepted';
+    checkIn.resolvedAt = isoNow();
+    checkIn.updatedAt = isoNow();
+    applyCheckInTargets(db, checkIn);
+    upsertCheckIn(db, checkIn);
+    saveN(db);
+    closeSheet();
+    renderNutrition();
+  }
+
+  function declineWeeklyReview() {
+    const db = loadN();
+    const date = nutDate || todayStr();
+    const state = checkInUiState(db, date, true);
+    if (!state || !state.checkIn) return closeSheet();
+    const checkIn = state.checkIn;
+    checkIn.status = 'declined';
+    checkIn.resolvedAt = isoNow();
+    checkIn.updatedAt = isoNow();
+    upsertCheckIn(db, checkIn);
+    saveN(db);
+    closeSheet();
+    renderNutrition();
+  }
+
   function targets() {
     const db = loadN();
     const date = nutDate || todayStr();
@@ -864,6 +1127,37 @@
     day.fatG = Number($('tF')?.value) || 0;
     day.source = 'manual';
     db.program.updatedAt = isoNow();
+    const { weekStart, weekEnd } = weekBounds(date);
+    const now = isoNow();
+    const existing = (db.checkIns || []).find((x) => x.weekStart === weekStart);
+    if (existing) {
+      existing.status = 'declined';
+      existing.explanation = 'Manual override in daily targets.';
+      existing.updatedAt = now;
+      existing.resolvedAt = now;
+      upsertCheckIn(db, existing);
+    } else {
+      upsertCheckIn(db, {
+        id: uid(),
+        userId: '',
+        programId: db.program?.id || null,
+        weekStart,
+        weekEnd,
+        status: 'declined',
+        previousExpenditureKcal: null,
+        observedExpenditureKcal: null,
+        proposedExpenditureKcal: null,
+        proposedCalories: null,
+        proposedProteinG: null,
+        proposedCarbsG: null,
+        proposedFatG: null,
+        modules: [{ key: 'program_update', action: 'manual override in daily targets' }],
+        explanation: 'Manual override in daily targets.',
+        createdAt: now,
+        resolvedAt: now,
+        updatedAt: now,
+      });
+    }
     saveN(db);
     closeSheet();
     renderNutrition();
@@ -1009,6 +1303,8 @@
     }
     const db = loadN();
     const date = todayStr();
+    ensureTodayTargets(db, date);
+    const checkInState = checkInUiState(db, date, false);
     const totals = C.macroTotals(C.entriesForDay(db, date));
     const target = C.targetForDay(db.program, date);
     const left = target ? Math.max(0, Math.round(target.calories - totals.calories)) : null;
@@ -1028,7 +1324,7 @@
       <div class=ath-row><span class=ath-ll>Protein</span><span class=ath-lv>${esc(pLine)}</span></div>
       <div class=ath-row><span class=ath-ll>Carbs</span><span class=ath-lv>${esc(cLine)}</span></div>
       <div class=ath-row><span class=ath-ll>Fat</span><span class=ath-lv>${esc(fLine)}</span></div>
-    </div></div><span class=ath-chev aria-hidden=true>›</span></button>`;
+    </div>${checkInBannerHtml(checkInState, 'home')}</div><span class=ath-chev aria-hidden=true>›</span></button>`;
   }
 
   function replaceNutrition(db) {
@@ -1062,6 +1358,9 @@
     editEntry,
     saveEdit,
     deleteEntry,
+    openWeeklyReview,
+    acceptWeeklyReview,
+    declineWeeklyReview,
     targets,
     saveTargets,
     weight,

@@ -73,5 +73,8 @@ if (!ui.includes('nut-day-summary')) throw new Error('day summary class missing'
 if (!ui.includes('nut-kcal-hero')) throw new Error('kcal hero class missing');
 if (!ui.includes('nut-home-summary')) throw new Error('home summary class missing');
 if (!ui.includes('nut-sheet')) throw new Error('nut-sheet class missing');
+if (!ui.includes('openWeeklyReview')) throw new Error('weekly review hook missing');
+if (!ui.includes('checkInUiState')) throw new Error('check-in state missing');
+if (!ui.includes('nut-checkin-banner')) throw new Error('check-in banner class missing');
 
 console.log('nutrition-ui.smoke: ok');
