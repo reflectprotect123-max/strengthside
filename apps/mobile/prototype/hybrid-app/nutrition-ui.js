@@ -174,16 +174,22 @@
             )
             .join('')
         : `<div class=meta>Nothing logged.</div>`;
-      return `<div class=card style="margin-top:10px"><div class=row><div><div class=eyebrow>${esc(meal)}</div></div><button class="btn small primary" onclick="NutritionUI.addFood('${meal}')">Add</button></div>${rows}</div>`;
+      return `<div class="card nut-meal"><div class=row><div><div class=eyebrow>${esc(meal)}</div></div><button class="btn small primary" onclick="NutritionUI.addFood('${meal}')">Add</button></div>${rows}</div>`;
     }).join('');
 
     const pct = (n, t) => (t > 0 ? Math.min(100, Math.round((n / t) * 100)) : 0);
+    const kcalLeft = Math.max(0, Math.round(target.calories - totals.calories));
+    const heroMain = `${kcalLeft} left`;
+    const heroSub = `${Math.round(totals.calories)} / ${Math.round(target.calories)} kcal eaten`;
     const meters = `
-      <div class=nut-meters>
-        <div class=nut-meter><div class=row><span>Calories</span><b>${Math.round(totals.calories)} / ${Math.round(target.calories)}</b></div><div class=nut-bar><i style="width:${pct(totals.calories, target.calories)}%"></i></div></div>
-        <div class=nut-meter><div class=row><span>Protein</span><b>${Math.round(totals.proteinG)} / ${Math.round(target.proteinG)} g</b></div><div class=nut-bar><i style="width:${pct(totals.proteinG, target.proteinG)}%"></i></div></div>
-        <div class=nut-meter><div class=row><span>Carbs</span><b>${Math.round(totals.carbsG)} / ${Math.round(target.carbsG)} g</b></div><div class=nut-bar><i style="width:${pct(totals.carbsG, target.carbsG)}%"></i></div></div>
-        <div class=nut-meter><div class=row><span>Fat</span><b>${Math.round(totals.fatG)} / ${Math.round(target.fatG)} g</b></div><div class=nut-bar><i style="width:${pct(totals.fatG, target.fatG)}%"></i></div></div>
+      <div class=nut-day-summary>
+        <div class=nut-kcal-hero>${esc(heroMain)}<small>${esc(heroSub)}</small></div>
+        <div class=nut-meters>
+          <div class=nut-meter><div class=row><span>Calories</span><b>${Math.round(totals.calories)} / ${Math.round(target.calories)}</b></div><div class=nut-bar><i style="width:${pct(totals.calories, target.calories)}%"></i></div></div>
+          <div class=nut-meter><div class=row><span>Protein</span><b>${Math.round(totals.proteinG)} / ${Math.round(target.proteinG)} g</b></div><div class=nut-bar><i style="width:${pct(totals.proteinG, target.proteinG)}%"></i></div></div>
+          <div class=nut-meter><div class=row><span>Carbs</span><b>${Math.round(totals.carbsG)} / ${Math.round(target.carbsG)} g</b></div><div class=nut-bar><i style="width:${pct(totals.carbsG, target.carbsG)}%"></i></div></div>
+          <div class=nut-meter><div class=row><span>Fat</span><b>${Math.round(totals.fatG)} / ${Math.round(target.fatG)} g</b></div><div class=nut-bar><i style="width:${pct(totals.fatG, target.fatG)}%"></i></div></div>
+        </div>
       </div>`;
 
     nav(true);
@@ -220,7 +226,7 @@
   }
 
   function quickAdd(meal) {
-    sheet(`<h2>Add food</h2>
+    sheet(`<div class=nut-sheet><h2>Add food</h2>
       <p class=lead>Quick add — name + macros. Snapshot locked at log time.</p>
       <div class=field><label>Name</label><input id=nutName placeholder="Chicken breast"></div>
       <div class=field><label>Meal</label><select id=nutMeal>${MEALS.map((m) => `<option value="${m}" ${m === meal ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
@@ -233,7 +239,7 @@
         <div class=field><label>Fat g</label><input id=nutF type=number min=0 step=0.1 value="0"></div>
       </div>
       <button class="btn primary block" style="margin-top:12px" onclick="NutritionUI.saveQuickAdd()">Log food</button>
-      <button class="btn block" style="margin-top:8px" onclick="NutritionUI.scanLabel('${meal || 'snack'}')">Scan label instead</button>`);
+      <button class="btn block" style="margin-top:8px" onclick="NutritionUI.scanLabel('${meal || 'snack'}')">Scan label instead</button></div>`);
   }
 
   function valOrEmpty(n) {
@@ -253,7 +259,7 @@
     const rawBlock = rawText
       ? `<details style="margin-top:10px"><summary class=meta>Edit scanned text</summary><textarea id=nutLabelRaw class="openbox tall">${esc(rawText)}</textarea><button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.reparseFromRaw('${meal || 'snack'}')">Re-parse</button></details>`
       : '';
-    sheet(`<h2>Confirm label</h2>
+    sheet(`<div class=nut-sheet><h2>Confirm label</h2>
       <p class=lead>${esc(note || 'Check macros, then log. Nothing is saved until you confirm.')}</p>
       <p class=meta>${esc(basis)}</p>
       ${rounded}
@@ -269,7 +275,7 @@
         <div class=field><label>Fat g</label><input id=nutF type=number min=0 step=0.1 value="${esc(valOrEmpty(parsed.fatG))}"></div>
       </div>
       <button type="button" class="btn primary block" style="margin-top:12px" onclick="NutritionUI.saveQuickAdd()">Log food</button>
-      <button type="button" class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+      <button type="button" class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button></div>`);
   }
 
   function reparseFromRaw(meal) {
@@ -394,7 +400,7 @@
     const macros = previewMacros(defaults.food, defaults.quantity, defaults.unit);
     const brand = defaults.food.brand ? ` · ${defaults.food.brand}` : '';
     const qtyLabel = amountLabelForUnit(defaults.unit);
-    sheet(`<h2>Confirm food</h2>
+    sheet(`<div class=nut-sheet><h2>Confirm food</h2>
       <p class=lead><b>${esc(defaults.food.name)}</b>${esc(brand)}</p>
       <p class=meta>${esc(packServingNote(defaults.food))}</p>
       <div class=field><label>Meal</label><select id=nutMeal>${MEALS.map((m) => `<option value="${m}" ${m === (meal || 'snack') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
@@ -404,7 +410,7 @@
       </div>
       <p class=meta id=nutCatalogPreview style="margin-top:10px">${Math.round(macros.calories)} kcal · P ${macros.proteinG.toFixed(1)} · C ${macros.carbsG.toFixed(1)} · F ${macros.fatG.toFixed(1)}</p>
       <button type="button" class="btn primary block" style="margin-top:12px" onclick="NutritionUI.confirmCatalogLog()">Log food</button>
-      <button type="button" class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+      <button type="button" class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button></div>`);
   }
 
   function onCatalogUnitChange() {
@@ -522,7 +528,7 @@
 
   function showBarcodeSheet(meal) {
     meal = meal || 'snack';
-    sheet(`<h2>Scan barcode</h2>
+    sheet(`<div class=nut-sheet><h2>Scan barcode</h2>
       <p class=lead>Point at the barcode — fastest way to log a pack. Falls back to Open Food Facts, then label scan.</p>
       <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Scan barcode</button>
       <div class=field style="margin-top:14px"><label>Or type barcode digits</label><input id=nutBarcodeDigits type="tel" inputmode="numeric" autocomplete="off" placeholder="e.g. 9300657012345"></div>
@@ -533,7 +539,7 @@
         <button type="button" class="btn small" onclick="NutritionUI.scanLabel('${meal}')">Label</button>
         <button type="button" class="btn small" onclick="NutritionUI.showPasteLabel('${meal}')">Paste</button>
         <button type="button" class="btn small" onclick="NutritionUI.quickAdd('${meal}')">Quick add</button>
-      </div>`);
+      </div></div>`);
     setTimeout(() => {
       const el = $('nutBarcodeDigits');
       if (el) el.focus();
@@ -543,7 +549,7 @@
   function showSearchSheet(meal) {
     meal = meal || 'snack';
     ensureCatalog().then(() => {
-      sheet(`<h2>Search food</h2>
+      sheet(`<div class=nut-sheet><h2>Search food</h2>
         <p class=lead>AU staples offline + live Open Food Facts when online.</p>
         <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Scan barcode</button>
         <div class=field style="margin-top:12px"><label>Search</label><input id=nutFoodQuery placeholder="Oats, Chobani, chicken…" oninput="NutritionUI.onFoodQuery('${meal}')"></div>
@@ -553,7 +559,7 @@
           <button type="button" class="btn small" onclick="NutritionUI.quickAdd('${meal}')">Quick add</button>
         </div>
         <div id=nutFoodResults class=stack style="margin-top:12px;max-height:45vh;overflow:auto"></div>
-        <p class=meta>${esc(catalogCountLabel())}</p>`);
+        <p class=meta>${esc(catalogCountLabel())}</p></div>`);
       onFoodQuery(meal);
     });
   }
@@ -1006,13 +1012,22 @@
     const totals = C.macroTotals(C.entriesForDay(db, date));
     const target = C.targetForDay(db.program, date);
     const left = target ? Math.max(0, Math.round(target.calories - totals.calories)) : null;
-    const hint = target
+    const kcalLine = target
       ? `${Math.round(totals.calories)} / ${Math.round(target.calories)} kcal · ${left} left`
       : `${Math.round(totals.calories)} kcal logged · set targets inside`;
-    return `<button type=button class=ath-module onclick="NutritionUI.open()" aria-label="Nutrition — daily food log"><span class=ath-label>NUTRITION</span><div class=ath-cond><p class=ath-hint>${esc(hint)}</p><div class=ath-legend>
-      <div class=ath-row><span class=ath-ll>Protein</span><span class=ath-lv>${Math.round(totals.proteinG)}g</span></div>
-      <div class=ath-row><span class=ath-ll>Carbs</span><span class=ath-lv>${Math.round(totals.carbsG)}g</span></div>
-      <div class=ath-row><span class=ath-ll>Fat</span><span class=ath-lv>${Math.round(totals.fatG)}g</span></div>
+    const pLine = target
+      ? `${Math.round(totals.proteinG)} / ${Math.round(target.proteinG)}g`
+      : `${Math.round(totals.proteinG)}g`;
+    const cLine = target
+      ? `${Math.round(totals.carbsG)} / ${Math.round(target.carbsG)}g`
+      : `${Math.round(totals.carbsG)}g`;
+    const fLine = target
+      ? `${Math.round(totals.fatG)} / ${Math.round(target.fatG)}g`
+      : `${Math.round(totals.fatG)}g`;
+    return `<button type=button class=ath-module onclick="NutritionUI.open()" aria-label="Nutrition — daily food log"><span class=ath-label>NUTRITION</span><div class=ath-cond><p class="ath-hint nut-home-summary">${esc(kcalLine)}</p><div class="ath-legend nut-home-macros">
+      <div class=ath-row><span class=ath-ll>Protein</span><span class=ath-lv>${esc(pLine)}</span></div>
+      <div class=ath-row><span class=ath-ll>Carbs</span><span class=ath-lv>${esc(cLine)}</span></div>
+      <div class=ath-row><span class=ath-ll>Fat</span><span class=ath-lv>${esc(fLine)}</span></div>
     </div></div><span class=ath-chev aria-hidden=true>›</span></button>`;
   }
 

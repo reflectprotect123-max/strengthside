@@ -68,4 +68,10 @@ const totals = C.macroTotals(entries);
 if (Math.round(totals.calories) !== 124) throw new Error('totals calories');
 if (Math.abs(totals.carbsG - 15.6) > 0.01) throw new Error('totals carbs');
 
+const ui = readFileSync(join(dir, 'nutrition-ui.js'), 'utf8');
+if (!ui.includes('nut-day-summary')) throw new Error('day summary class missing');
+if (!ui.includes('nut-kcal-hero')) throw new Error('kcal hero class missing');
+if (!ui.includes('nut-home-summary')) throw new Error('home summary class missing');
+if (!ui.includes('nut-sheet')) throw new Error('nut-sheet class missing');
+
 console.log('nutrition-ui.smoke: ok');
