@@ -198,6 +198,14 @@ describe('parseLabelText — the manual path', () => {
     expect(r.servingUnit).toBe('g');
   });
 
+  it('accepts Carbs and Calories aliases from short pastes', () => {
+    const r = parseLabelText('Calories 150 Cal\nProtein 5g\nFat 8g\nCarbs 12g');
+    expect(r.calories).toBeCloseTo(150, 3);
+    expect(r.proteinG).toBeCloseTo(5, 3);
+    expect(r.fatG).toBeCloseTo(8, 3);
+    expect(r.carbsG).toBeCloseTo(12, 3);
+  });
+
   it('keeps the per-serving column when a paste preserved both columns', () => {
     const r = parseLabelText(
       ['            Per serving   Per 100g', 'Energy      520kJ        1733kJ', 'Protein     3.2g         10.7g'].join('\n'),

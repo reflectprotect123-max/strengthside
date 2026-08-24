@@ -27,7 +27,7 @@ and `apps/web` were deleted — athlete UX lives here only.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` — `pnpm run sync` then `scripts/build-dogfood-apk.sh` |
-| Cache / Update | `the-hybrid-athlete-engine-v43b` — tap **Update** / **Update now** |
+| Cache / Update | `the-hybrid-athlete-engine-v43c` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -70,7 +70,7 @@ Bottom nav: **Home · Library · Calendar · Settings**.
 - **Settings:** Update, WHOOP, Concept2, HR profile, Export backup.
 - **Coach Tools:** removed (v37).
 
-Cache / Update stamp: `the-hybrid-athlete-engine-v43b` /
+Cache / Update stamp: `the-hybrid-athlete-engine-v43c` /
 `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23`.
 
 **Engine Stage 1–3 done.** **Lite native shell (v43b):** Capacitor Android

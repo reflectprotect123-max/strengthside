@@ -15,3 +15,5 @@ apps/mobile/capacitor/android/.idea/
 apps/mobile/capacitor/android/captures/
 apps/mobile/capacitor/android/*.iml
 apps/mobile/capacitor/android/app/src/main/assets/public/
+
+apps/mobile/**/.netlify/

@@ -261,8 +261,13 @@
 
   async function scanLabel(meal) {
     meal = meal || 'snack';
+    const native = !!(window.NativeBridge && NativeBridge.isNative && NativeBridge.isNative());
+    if (!native) {
+      showPasteLabel(meal);
+      return;
+    }
     sheet(`<h2>Scan label</h2>
-      <p class=lead>On Android, Take photo uses on-device ML Kit. Elsewhere, paste the panel text.</p>
+      <p class=lead>Take a photo — ML Kit reads the panel on-device. Or paste the text.</p>
       <button class="btn primary block" onclick="NutritionUI.scanFromCamera('${meal}')">Take photo</button>
       <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
       <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
