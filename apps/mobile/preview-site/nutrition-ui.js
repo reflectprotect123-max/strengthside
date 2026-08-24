@@ -111,7 +111,24 @@
 
   function openNutrition(date) {
     nutDate = date || todayStr();
-    renderNutrition();
+    ensureCatalog().finally(() => renderNutrition());
+  }
+
+  function ensureCatalog() {
+    if (!window.FoodCatalogAU) return Promise.resolve();
+    return FoodCatalogAU.loadCatalog().catch(() => null);
+  }
+
+  function upsertCatalogFood(db, food) {
+    const C = Core();
+    if (!C || !food) return;
+    C.upsertCachedFood(db, food);
+  }
+
+  function catalogCountLabel() {
+    const meta = window.FoodCatalogAU && FoodCatalogAU.catalogMeta && FoodCatalogAU.catalogMeta();
+    if (!meta) return '';
+    return `${meta.count.toLocaleString()} AU foods offline`;
   }
 
   function renderNutrition() {
@@ -172,11 +189,12 @@
         </div>
         ${meters}
         <div class=btns>
-          <button type="button" class="btn small primary" onclick="NutritionUI.scanLabel()">Scan label</button>
+          <button type="button" class="btn small primary" onclick="NutritionUI.addFood()">Add food</button>
+          <button type="button" class="btn small" onclick="NutritionUI.scanLabel()">Scan label</button>
           <button type="button" class="btn small" onclick="NutritionUI.targets()">Targets</button>
           <button type="button" class="btn small" onclick="NutritionUI.weight()">Weight</button>
-          <button type="button" class="btn small" onclick="NutritionUI.foods()">My foods</button>
         </div>
+        <p class=meta>${esc(catalogCountLabel())}</p>
         ${mealBlocks}
         <button class="btn block" style="margin-top:12px" onclick="go('home')">Done</button>
       </div>`,
@@ -212,7 +230,7 @@
     return n == null || Number.isNaN(n) ? '' : String(n);
   }
 
-  function showLabelConfirm(parsed, meal, note) {
+  function showLabelConfirm(parsed, meal, note, rawText) {
     const basis =
       parsed.basis === 'per_serving'
         ? 'Per serving'
@@ -222,10 +240,14 @@
     const rounded = parsed.roundedDown
       ? '<p class=meta style="margin-top:8px">At least one macro was “less than 1 g” and was read as 0.</p>'
       : '';
+    const rawBlock = rawText
+      ? `<details style="margin-top:10px"><summary class=meta>Edit scanned text</summary><textarea id=nutLabelRaw class="openbox tall">${esc(rawText)}</textarea><button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.reparseFromRaw('${meal || 'snack'}')">Re-parse</button></details>`
+      : '';
     sheet(`<h2>Confirm label</h2>
       <p class=lead>${esc(note || 'Check macros, then log. Nothing is saved until you confirm.')}</p>
       <p class=meta>${esc(basis)}</p>
       ${rounded}
+      ${rawBlock}
       <div class=field><label>Name</label><input id=nutName placeholder="Food from label" value=""></div>
       <div class=field><label>Meal</label><select id=nutMeal>${MEALS.map((m) => `<option value="${m}" ${m === (meal || 'snack') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
       <div class=two>
@@ -236,23 +258,145 @@
         <div class=field><label>Carbs g</label><input id=nutC type=number min=0 step=0.1 value="${esc(valOrEmpty(parsed.carbsG))}"></div>
         <div class=field><label>Fat g</label><input id=nutF type=number min=0 step=0.1 value="${esc(valOrEmpty(parsed.fatG))}"></div>
       </div>
-      <button class="btn primary block" style="margin-top:12px" onclick="NutritionUI.saveQuickAdd()">Log food</button>
-      <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+      <button type="button" class="btn primary block" style="margin-top:12px" onclick="NutritionUI.saveQuickAdd()">Log food</button>
+      <button type="button" class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
   }
 
-  function showPasteLabel(meal) {
+  function reparseFromRaw(meal) {
+    try {
+      const { parsed, rawText } = LabelScan.parsePastedText($('nutLabelRaw')?.value || '');
+      showLabelConfirm(parsed, meal || 'snack', 'Updated from edited text.', rawText);
+    } catch (e) {
+      alert((e && e.message) || "Couldn't read label — fix the text or enter manually.");
+    }
+  }
+
+  function foodResultRows(results, meal) {
+    if (!results.length) return '<div class=meta>No matches. Try scan label or quick add.</div>';
+    return results
+      .map((r) => {
+        const sub = [r.brand, `${Math.round(r.calories)} kcal · P ${Math.round(r.proteinG)} · C ${Math.round(r.carbsG)} · F ${Math.round(r.fatG)}`]
+          .filter(Boolean)
+          .join(' · ');
+        return `<div class="nut-entry"><div><b>${esc(r.name)}</b><div class=meta>${esc(sub)}</div></div><button type="button" class="btn small primary" onclick="NutritionUI.logCatalogFood('${esc(r.id)}','${meal || 'snack'}')">Log</button></div>`;
+      })
+      .join('');
+  }
+
+  function addFood(meal) {
+    meal = meal || 'snack';
+    ensureCatalog().then(() => {
+      sheet(`<h2>Add food</h2>
+        <p class=lead>Search the bundled AU catalogue, scan a barcode, or scan a label.</p>
+        <div class=field><label>Search</label><input id=nutFoodQuery placeholder="Oats, Chobani, chicken…" oninput="NutritionUI.onFoodQuery('${meal}')"></div>
+        <div class=btns>
+          <button type="button" class="btn small" onclick="NutritionUI.scanBarcode('${meal}')">Barcode</button>
+          <button type="button" class="btn small" onclick="NutritionUI.scanLabel('${meal}')">Label</button>
+          <button type="button" class="btn small" onclick="NutritionUI.showPasteLabel('${meal}')">Paste</button>
+          <button type="button" class="btn small" onclick="NutritionUI.quickAdd('${meal}')">Quick add</button>
+        </div>
+        <div id=nutFoodResults class=stack style="margin-top:12px;max-height:45vh;overflow:auto"></div>
+        <p class=meta>${esc(catalogCountLabel())}</p>`);
+      onFoodQuery(meal);
+    });
+  }
+
+  function onFoodQuery(meal) {
+    const q = String($('nutFoodQuery')?.value || '').trim();
+    const box = $('nutFoodResults');
+    if (!box) return;
+    if (!window.FoodCatalogAU) {
+      box.innerHTML = '<div class=meta>Catalog loading…</div>';
+      return;
+    }
+    const local = FoodCatalogAU.searchCatalog(q, 30);
+    const C = Core();
+    const db = loadN();
+    const coreHits = q && C ? C.searchLocal(db, q).slice(0, 10) : [];
+    const merged = [];
+    const seen = new Set();
+    for (const f of local) {
+      merged.push(f);
+      seen.add(f.id);
+    }
+    for (const hit of coreHits) {
+      if (hit.kind === 'custom_food') {
+        const cf = db.customFoods.find((x) => x.id === hit.id);
+        if (cf && !seen.has(cf.id)) merged.push({ ...cf, id: cf.id, name: cf.name, brand: cf.brand, offline: true });
+      }
+    }
+    box.innerHTML = foodResultRows(merged, meal);
+  }
+
+  function logCatalogFood(foodId, meal) {
+    const C = Core();
+    const db = loadN();
+    const date = nutDate || todayStr();
+    const catalogFood = window.FoodCatalogAU && FoodCatalogAU.getFood(foodId);
+    const custom = db.customFoods.find((f) => f.id === foodId);
+    const food = catalogFood || custom;
+    if (!food || !C) return alert('Food not found.');
+    let entry;
+    if (catalogFood) {
+      upsertCatalogFood(db, catalogFood);
+      entry = C.logEntryFromFood({ id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() }, catalogFood, 1, 'serving');
+    } else {
+      entry = C.logEntryFromCustomFood({ id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() }, custom, 1, custom.servingUnit || 'serving');
+    }
+    db.logEntries.push(entry);
+    markDayComplete(db, date);
+    if (!saveN(db)) return alert('Could not save.');
+    closeSheet();
+    renderNutrition();
+  }
+
+  async function scanBarcode(meal) {
+    meal = meal || 'snack';
+    const native = !!(window.NativeBridge && NativeBridge.isNative && NativeBridge.isNative());
+    if (!native) return alert('Barcode scan needs the Android app.');
+    await ensureCatalog();
+    closeSheet();
+    sheet(`<h2>Scan barcode</h2><p class=lead>Point at the barcode…</p><p class=meta id=nutBarcodeStatus>Opening scanner</p>`);
+    try {
+      const code = await NativeBridge.scanBarcodeOnce();
+      if (!code) throw new Error('No barcode detected.');
+      const food = FoodCatalogAU.lookupBarcode(code);
+      if (food) {
+        closeSheet();
+        logCatalogFood(food.id, meal);
+        return;
+      }
+      closeSheet();
+      sheet(`<h2>Barcode not in catalogue</h2>
+        <p class=lead>${esc(code)} — scan the nutrition label instead.</p>
+        <button type="button" class="btn primary block" onclick="NutritionUI.scanLabel('${meal}')">Scan label</button>
+        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
+        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
+    } catch (e) {
+      if (e && e.code === 'barcode_unavailable') {
+        alert('Barcode scanner unavailable on this build.');
+        addFood(meal);
+        return;
+      }
+      sheet(`<h2>Scan barcode</h2><p class=lead>${esc((e && e.message) || 'Scan failed')}</p>
+        <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Try again</button>
+        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.scanLabel('${meal}')">Scan label instead</button>`);
+    }
+  }
+
+  function showPasteLabel(meal, prefill) {
     sheet(`<h2>Paste label text</h2>
       <p class=lead>Paste the nutrition panel if the camera could not read it.</p>
-      <div class=field><label>Label text</label><textarea id=nutLabelPaste class="openbox tall" placeholder="Energy 520kJ&#10;Protein 3.2g&#10;…"></textarea></div>
-      <button class="btn primary block" style="margin-top:12px" onclick="NutritionUI.parsePaste('${meal || 'snack'}')">Parse</button>
-      <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+      <div class=field><label>Label text</label><textarea id=nutLabelPaste class="openbox tall" placeholder="Energy 520kJ&#10;Protein 3.2g&#10;…">${esc(prefill || '')}</textarea></div>
+      <button type="button" class="btn primary block" style="margin-top:12px" onclick="NutritionUI.parsePaste('${meal || 'snack'}')">Parse</button>
+      <button type="button" class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
   }
 
   function parsePaste(meal) {
     try {
       if (!window.LabelScan) throw new Error('Label scan unavailable.');
-      const { parsed } = LabelScan.parsePastedText($('nutLabelPaste')?.value || '');
-      showLabelConfirm(parsed, meal || 'snack');
+      const { parsed, rawText } = LabelScan.parsePastedText($('nutLabelPaste')?.value || '');
+      showLabelConfirm(parsed, meal || 'snack', null, rawText);
     } catch (e) {
       alert((e && e.message) || "Couldn't read label — enter manually.");
       quickAdd(meal || 'snack');
@@ -266,41 +410,27 @@
       showPasteLabel(meal);
       return;
     }
-    sheet(`<h2>Scan label</h2>
-      <p class=lead>Take a photo — ML Kit reads the panel on-device. Or paste the text.</p>
-      <button class="btn primary block" onclick="NutritionUI.scanFromCamera('${meal}')">Take photo</button>
-      <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
-      <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+    closeSheet();
+    try {
+      if (!window.LabelScanLive) throw new Error('Live scan unavailable.');
+      const { parsed, rawText } = await LabelScanLive.openLiveScan();
+      showLabelConfirm(parsed, meal, null, rawText);
+    } catch (e) {
+      if (e && e.code === 'empty_label' && e.rawText) {
+        showPasteLabel(meal, e.rawText);
+        return;
+      }
+      if (e && e.message === 'Scan cancelled') return;
+      sheet(`<h2>Scan label</h2>
+        <p class=lead>${esc((e && e.message) || 'Scan failed')}</p>
+        <button type="button" class="btn primary block" onclick="NutritionUI.scanLabel('${meal}')">Try again</button>
+        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
+        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
+    }
   }
 
   async function scanFromCamera(meal) {
-    meal = meal || 'snack';
-    sheet(`<h2>Scan label</h2><p class=lead>Reading nutrition panel…</p><p class=meta id=nutScanStatus>Opening camera</p>`);
-    const status = () => $('nutScanStatus');
-    try {
-      if (!window.LabelScan) throw new Error('Label scan unavailable.');
-      if (status()) status().textContent = 'Capturing…';
-      const { parsed } = await LabelScan.scanFromCamera();
-      showLabelConfirm(parsed, meal);
-    } catch (e) {
-      if (e && e.code === 'ocr_unavailable') {
-        showPasteLabel(meal);
-        return;
-      }
-      if (e && e.code === 'empty_label') {
-        sheet(`<h2>Couldn't read label</h2>
-          <p class=lead>Enter manually, or paste the panel text.</p>
-          <button class="btn primary block" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>
-          <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
-          <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
-        return;
-      }
-      sheet(`<h2>Scan label</h2>
-        <p class=lead>${esc((e && e.message) || 'Camera failed')}</p>
-        <button class="btn primary block" onclick="NutritionUI.scanFromCamera('${meal}')">Try again</button>
-        <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
-        <button class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
-    }
+    return scanLabel(meal || 'snack');
   }
 
   function saveQuickAdd() {
@@ -576,10 +706,15 @@
 
   window.NutritionUI = {
     open: openNutrition,
+    addFood,
+    onFoodQuery,
+    logCatalogFood,
+    scanBarcode,
     scanLabel,
     scanFromCamera,
     showPasteLabel,
     parsePaste,
+    reparseFromRaw,
     shift,
     quickAdd,
     saveQuickAdd,
