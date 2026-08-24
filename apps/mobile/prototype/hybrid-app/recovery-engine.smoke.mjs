@@ -58,4 +58,30 @@ const heatPosture = RecoveryEngine.recoveryPosture({
 must(heatPosture.gate === 'caution', 'elevated heat ledger downgrades green day');
 must(heatPosture.reasonCodes.includes('heat_ledger_elevated'), 'heat ledger reason');
 
+const heavySessions = [];
+const now = Date.now();
+for (let i = 0; i < 5; i++) {
+  heavySessions.push({
+    status: 'completed',
+    completedAt: now - i * 86400000,
+    summary: { totalLoad: 4, strengthLoad: 2, conditioningLoad: 2 },
+  });
+}
+const deliveryLedger = RecoveryEngine.deliveryLoadLedger(heavySessions, [], {
+  allSessions: heavySessions,
+  endDate: new Date(now).toISOString().slice(0, 10),
+});
+must(deliveryLedger.delivered >= 12, 'delivery ledger sums sessions');
+must(deliveryLedger.elevated, 'heavy week elevated without budget history');
+
+const deliveryPosture = RecoveryEngine.recoveryPosture({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green' },
+  recentSessions: heavySessions,
+  allSessions: heavySessions,
+  endDate: new Date(now).toISOString().slice(0, 10),
+});
+must(deliveryPosture.gate === 'caution', 'elevated delivery downgrades green day');
+must(deliveryPosture.reasonCodes.includes('delivery_load_elevated'), 'delivery reason');
+
 console.log('recovery-engine.smoke: ok', cases.length, 'cases');

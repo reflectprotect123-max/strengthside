@@ -60,4 +60,15 @@ describe('planCoordinator', () => {
     expect(r.items.some(i => i.domain === 'strength' && i.kind === 'push')).toBe(true);
     expect(r.reasonCodes).toContain('strength_progress_applied');
   });
+
+  it('marks low conditioning dose as silent ease', () => {
+    const r = planCoordinator({
+      ...emptyReceipts(),
+      conditioning: { weeklyZoneSeconds: { aerobic: 600 }, sessionsCompleted: 1 },
+      recovery: [{ date: '2026-08-22', band: 'build', gate: 'ok' }],
+    });
+    const ease = r.items.find(i => i.domain === 'conditioning' && i.kind === 'ease');
+    expect(ease).toBeTruthy();
+    expect(ease?.silentApply).toBe(true);
+  });
 });

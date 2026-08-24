@@ -135,7 +135,7 @@ export function planCoordinator(receipts: DomainReceipts, opts?: { weekStart?: s
       domain: 'conditioning',
       kind: 'ease',
       message: `Light aerobic dose (${zoneMin} zone min) — optional easy session if planned.`,
-      silentApply: false,
+      silentApply: true,
     });
     reasonCodes.push('conditioning_low_dose');
   } else {
