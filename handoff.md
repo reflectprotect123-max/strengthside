@@ -27,7 +27,7 @@ and `apps/web` were deleted — athlete UX lives here only.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` — `pnpm run sync` then `scripts/build-dogfood-apk.sh` |
-| Cache / Update | `the-hybrid-athlete-engine-v43` — tap **Update** / **Update now** |
+| Cache / Update | `the-hybrid-athlete-engine-v43b` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -61,8 +61,8 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   finish HR-TRIMP from `@hybrid/engine` via `engine-bundle.js` +
   `engine-adapter.js`. Wake lock held for live Engine / Strength sessions
   (Cap KeepAwake + Screen Wake Lock). Hybrid Strength **math** frozen.
-- **Nutrition (v43):** Daily log / quick-add / **Scan label** (camera →
-  on-device OCR → confirm) / targets / weight / custom foods.
+- **Nutrition (v43b):** Daily log / quick-add / **Scan label** (Android camera →
+  ML Kit OCR → confirm; web paste) / targets / weight / custom foods.
   Spec: `docs/superpowers/specs/2026-08-23-lite-native-shell-design.md`.
 - **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
@@ -70,11 +70,11 @@ Bottom nav: **Home · Library · Calendar · Settings**.
 - **Settings:** Update, WHOOP, Concept2, HR profile, Export backup.
 - **Coach Tools:** removed (v37).
 
-Cache / Update stamp: `the-hybrid-athlete-engine-v43` /
+Cache / Update stamp: `the-hybrid-athlete-engine-v43b` /
 `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23`.
 
-**Engine Stage 1–3 done.** **Lite native shell (v43):** Capacitor Android
-dogfood wrap + training wake lock + nutrition label scan + medium Track
+**Engine Stage 1–3 done.** **Lite native shell (v43b):** Capacitor Android
+dogfood wrap + training wake lock + **ML Kit** label scan + medium Track
 Dawn polish. Not Play Store / not iOS this pass.
 
 ### How Conditioning works (current contract)

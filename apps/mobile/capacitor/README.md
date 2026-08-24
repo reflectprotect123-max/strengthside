@@ -30,10 +30,11 @@ APK lands under `apps/mobile/capacitor/android/app/build/outputs/apk/debug/` (an
 | Plugin | Why |
 | --- | --- |
 | `@capacitor-community/keep-awake` | Screen on during Engine / Strength sessions |
-| `@capacitor/camera` | Nutrition label photo for OCR |
+| `@capacitor/camera` | Nutrition label photo |
+| `@capacitor-mlkit/text-recognition` | On-device OCR (Latin) — no Tesseract, no cloud |
 | `@capacitor/app` | Background → release wake lock |
 
-OCR runs **on-device** in the WebView (Tesseract) after the camera capture; parse uses `HybridNutrition.Core.parseLabelText` / `parseLabelLines`. ML Kit can replace the recognizer later without changing Nutrition UI.
+Parse uses `HybridNutrition.Core.parseLabelText` / `parseLabelLines`. Web dogfood uses **Paste label text** (ML Kit is native-only).
 
 ## Do not
 

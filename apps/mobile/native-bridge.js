@@ -1,6 +1,7 @@
 /**
  * Thin Capacitor bridge for the Hybrid HTML athlete app.
- * Browser: no-ops / Web APIs. Cap Android: KeepAwake + Camera plugins.
+ * Cap Android: KeepAwake + Camera + ML Kit Text Recognition.
+ * Browser: file picker only (no OCR — paste label text).
  */
 (function (global) {
   function isNative() {
@@ -37,20 +38,33 @@
     return null;
   }
 
+  function fileUrl(path) {
+    if (!path) return '';
+    const p = String(path);
+    if (p.startsWith('file:') || p.startsWith('content:')) return p;
+    return 'file://' + p;
+  }
+
   /**
-   * @returns {Promise<{ dataUrl: string, format: string }|null>}
+   * @returns {Promise<{ path?: string, dataUrl?: string, format: string }|null>}
    */
   async function takePhoto() {
     const Cam = plugin('Camera');
     if (Cam && typeof Cam.getPhoto === 'function') {
       const photo = await Cam.getPhoto({
-        quality: 85,
+        quality: 90,
         allowEditing: false,
-        resultType: 'dataUrl',
+        resultType: 'uri',
         source: 'CAMERA',
         correctOrientation: true,
+        saveToGallery: false,
       });
-      if (photo && photo.dataUrl) return { dataUrl: photo.dataUrl, format: photo.format || 'jpeg' };
+      if (photo && (photo.path || photo.webPath)) {
+        return {
+          path: fileUrl(photo.path || photo.webPath),
+          format: photo.format || 'jpeg',
+        };
+      }
     }
     return pickImageFile();
   }
@@ -75,7 +89,6 @@
         resolve(value);
       };
       const onFocus = () => {
-        // File picker dismissed without a file (common on cancel).
         setTimeout(() => {
           if (!settled && (!input.files || !input.files.length)) finish(null);
         }, 400);
@@ -83,6 +96,7 @@
       input.addEventListener('change', () => {
         const file = input.files && input.files[0];
         if (!file) return finish(null);
+        // Web has no ML Kit — dataUrl alone is not enough for OCR here.
         const reader = new FileReader();
         reader.onload = () => finish({ dataUrl: String(reader.result || ''), format: 'jpeg' });
         reader.onerror = () => finish(null);
@@ -92,6 +106,35 @@
       window.addEventListener('focus', onFocus);
       input.click();
     });
+  }
+
+  /**
+   * On-device ML Kit Text Recognition (Latin). Cap Android only.
+   * @param {string} path file:// or content:// image path
+   * @returns {Promise<{ text: string, lines: Array<{text:string,left:number,top:number,right:number,bottom:number}> }>}
+   */
+  async function recognizeText(path) {
+    const TR = plugin('TextRecognition');
+    if (!TR || typeof TR.processImage !== 'function') {
+      const err = new Error('ML Kit text recognition unavailable. Paste the label text instead.');
+      err.code = 'ocr_unavailable';
+      throw err;
+    }
+    const result = await TR.processImage({ path: fileUrl(path), script: 'LATIN' });
+    const lines = [];
+    (result.blocks || []).forEach((block) => {
+      (block.lines || []).forEach((line) => {
+        const b = line.boundingBox || {};
+        lines.push({
+          text: String(line.text || '').trim(),
+          left: Number(b.left) || 0,
+          top: Number(b.top) || 0,
+          right: Number(b.right) || 0,
+          bottom: Number(b.bottom) || 0,
+        });
+      });
+    });
+    return { text: String(result.text || ''), lines: lines.filter((l) => l.text) };
   }
 
   function onAppState(cb) {
@@ -118,6 +161,7 @@
     allowSleep,
     takePhoto,
     pickImageFile,
+    recognizeText,
     onAppState,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

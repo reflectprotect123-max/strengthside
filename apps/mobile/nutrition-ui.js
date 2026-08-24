@@ -262,7 +262,7 @@
   async function scanLabel(meal) {
     meal = meal || 'snack';
     sheet(`<h2>Scan label</h2>
-      <p class=lead>Read a nutrition panel with the camera, or paste the text if OCR is unavailable.</p>
+      <p class=lead>On Android, Take photo uses on-device ML Kit. Elsewhere, paste the panel text.</p>
       <button class="btn primary block" onclick="NutritionUI.scanFromCamera('${meal}')">Take photo</button>
       <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
       <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
@@ -278,6 +278,10 @@
       const { parsed } = await LabelScan.scanFromCamera();
       showLabelConfirm(parsed, meal);
     } catch (e) {
+      if (e && e.code === 'ocr_unavailable') {
+        showPasteLabel(meal);
+        return;
+      }
       if (e && e.code === 'empty_label') {
         sheet(`<h2>Couldn't read label</h2>
           <p class=lead>Enter manually, or paste the panel text.</p>

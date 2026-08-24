@@ -65,8 +65,8 @@ Pure parse already exists: `@hybrid/nutrition-core` `parseLabelLines` / `parseLa
 Flow:
 
 1. Nutrition → **Scan label** (or Custom food → Scan).
-2. Cap: Camera photo → ML Kit on-device text → `OcrLine[]` → `parseLabelLines`.
-3. Web dogfood: camera/file capture → best-effort text (or paste) → `parseLabelText` / lines if available.
+2. Cap Android: Camera photo → **ML Kit Text Recognition** (Latin) → `OcrLine[]` → `parseLabelLines`.
+3. Web: **Paste label text** only (ML Kit is native; no Tesseract).
 4. Confirm sheet pre-fills kcal / P / C / F (+ serving if known). Athlete edits, then logs or saves custom food.
 5. Empty / unreadable → “Couldn’t read label — enter manually.” Never invent macros.
 
