@@ -345,6 +345,15 @@ describe('Australian panel conventions', () => {
     expect(parseLabelText('Serving size: 2 biscuits (1 serve)').servingQty).toBeNull();
   });
 
+  it('folds kg / oz / cl / fl oz into g or ml via the shared unit maths', () => {
+    expect(parseLabelText('Serving size: 0.25 kg')).toMatchObject({ servingQty: 250, servingUnit: 'g' });
+    expect(parseLabelText('Serving size: 1 oz').servingUnit).toBe('g');
+    expect(parseLabelText('Serving size: 1 oz').servingQty).toBeCloseTo(28.35, 1);
+    expect(parseLabelText('Serving size: 2 cl')).toMatchObject({ servingQty: 20, servingUnit: 'ml' });
+    expect(parseLabelText('Serving size: 8 fl oz').servingUnit).toBe('ml');
+    expect(parseLabelText('Serving size: 8 fl oz').servingQty).toBeCloseTo(236.59, 1);
+  });
+
   it('does not mistake "Servings per package" for a serving size', () => {
     expect(parseLabelText('Servings per package: 12').servingQty).toBeNull();
   });

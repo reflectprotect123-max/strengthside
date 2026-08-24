@@ -1178,7 +1178,10 @@ var HybridNutrition = (() => {
     const v = toNumber2(kj[1]);
     return v == null ? null : v / KJ_PER_KCAL;
   }
-  var SERVING_SIZE = new RegExp(`(${DECIMAL2})\\s*(kg|mg|ml|g|l)\\b`, "i");
+  var SERVING_SIZE = new RegExp(
+    `(${DECIMAL2})\\s*(fl\\.?\\s*oz|floz|fluid\\s*ounces?|ounces?|oz|lbs?|pounds?|kg|mg|ml|cl|g|l)\\b`,
+    "i"
+  );
   function parseServingSize(texts) {
     const line = texts.find((t) => norm(t).includes("serving size"));
     if (!line) return null;
@@ -1187,7 +1190,10 @@ var HybridNutrition = (() => {
     const m = (paren ? SERVING_SIZE.exec(stripThousands(paren[1])) : null) ?? SERVING_SIZE.exec(stripThousands(outside));
     if (!m) return null;
     const qty = toNumber2(m[1]);
-    return qty == null ? null : { qty, unit: m[2].toLowerCase() };
+    if (qty == null) return null;
+    const normalised = normaliseAmount(qty, m[2]);
+    if (!normalised) return null;
+    return { qty: normalised.amount, unit: normalised.unit };
   }
   function detectBasis(texts) {
     const joined = texts.map(norm).join(" | ");
