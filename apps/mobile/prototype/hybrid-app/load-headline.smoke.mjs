@@ -19,6 +19,16 @@ const sessionLoad = StrengthAdapter.sessionLoadFromRows(sampleRows);
 if (sessionLoad !== 500) throw new Error(`sessionLoadFromRows expected 500, got ${sessionLoad}`);
 if (sessionLoad === 10) throw new Error('sessionLoadFromRows still using tonnage/50 stub');
 
+const noBundleSandbox = { window: {}, console };
+vm.createContext(noBundleSandbox);
+vm.runInContext(adapter, noBundleSandbox);
+const bodyweightRows = [{ done: true, weight: '', reps: 10, targetKind: 'reps' }];
+const bodyweightLoad = noBundleSandbox.window.StrengthAdapter.sessionLoadFromRows(bodyweightRows);
+if (bodyweightLoad !== 0) {
+  throw new Error(`bodyweight fallback expected 0 (engine tonnageKg), got ${bodyweightLoad}`);
+}
+if (bodyweightLoad === 10 / 50) throw new Error('bodyweight fallback still using workReps/50 stub');
+
 const src = readFileSync(join(dir, 'load-headline.js'), 'utf8');
 
 const sandbox = { window: {}, console };

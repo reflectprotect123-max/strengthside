@@ -82,8 +82,8 @@
       return a + num(x.weight) * num(x.reps);
     }, 0);
     if (tonnage > 0) return tonnage;
-    // Last-resort legacy scale when bundle missing and no load logged (bodyweight reps only)
-    return filtered.reduce(function (a, x) { return a + num(x.reps); }, 0) / 50;
+    // Bodyweight-only (no load logged): engine tonnageKg is 0 when bundle present
+    return 0;
   }
 
   function htmlRowToPerformed(session, task, ex, row) {
