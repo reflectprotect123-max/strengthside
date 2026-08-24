@@ -25,6 +25,9 @@ jobs:
       - run: pnpm run check:label-scan
       - run: pnpm run check:native-bridge
       - run: pnpm run check:nutrition-ui
+      - run: pnpm run check:strength-volume
+      - run: pnpm run check:strength-progression
+      - run: pnpm run check:strength-sync
       - run: pnpm run check:nutrition-sync
       - run: pnpm run check:food-catalog
       - run: pnpm run check:hybrid-proxy
