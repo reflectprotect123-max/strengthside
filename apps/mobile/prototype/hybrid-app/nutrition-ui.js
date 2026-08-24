@@ -128,7 +128,7 @@
   function catalogCountLabel() {
     const meta = window.FoodCatalogAU && FoodCatalogAU.catalogMeta && FoodCatalogAU.catalogMeta();
     if (!meta) return '';
-    return `${meta.count.toLocaleString()} AU foods offline`;
+    return `${meta.count.toLocaleString()} AU staples offline · live Open Food Facts when online`;
   }
 
   function renderNutrition() {
@@ -283,11 +283,14 @@
       .join('');
   }
 
+  let foodQueryTimer = null;
+  let foodQuerySeq = 0;
+
   function addFood(meal) {
     meal = meal || 'snack';
     ensureCatalog().then(() => {
       sheet(`<h2>Add food</h2>
-        <p class=lead>Search the bundled AU catalogue, scan a barcode, or scan a label.</p>
+        <p class=lead>Search AU staples + live Open Food Facts, scan a barcode, or scan a label.</p>
         <div class=field><label>Search</label><input id=nutFoodQuery placeholder="Oats, Chobani, chicken…" oninput="NutritionUI.onFoodQuery('${meal}')"></div>
         <div class=btns>
           <button type="button" class="btn small" onclick="NutritionUI.scanBarcode('${meal}')">Barcode</button>
@@ -309,23 +312,53 @@
       box.innerHTML = '<div class=meta>Catalog loading…</div>';
       return;
     }
-    const local = FoodCatalogAU.searchCatalog(q, 30);
+    const seq = ++foodQuerySeq;
+    const paint = (rows, note) => {
+      if (seq !== foodQuerySeq || !$('nutFoodResults')) return;
+      const noteHtml = note ? `<div class=meta style="margin-bottom:8px">${esc(note)}</div>` : '';
+      $('nutFoodResults').innerHTML = noteHtml + foodResultRows(rows, meal);
+    };
+    // Instant local results, then debounce live OFF merge.
     const C = Core();
     const db = loadN();
+    const local = FoodCatalogAU.searchCatalog(q, 30);
     const coreHits = q && C ? C.searchLocal(db, q).slice(0, 10) : [];
-    const merged = [];
+    const early = [];
     const seen = new Set();
     for (const f of local) {
-      merged.push(f);
+      early.push(f);
       seen.add(f.id);
     }
     for (const hit of coreHits) {
       if (hit.kind === 'custom_food') {
         const cf = db.customFoods.find((x) => x.id === hit.id);
-        if (cf && !seen.has(cf.id)) merged.push({ ...cf, id: cf.id, name: cf.name, brand: cf.brand, offline: true });
+        if (cf && !seen.has(cf.id)) {
+          early.push({ ...cf, id: cf.id, name: cf.name, brand: cf.brand, offline: true });
+          seen.add(cf.id);
+        }
       }
     }
-    box.innerHTML = foodResultRows(merged, meal);
+    paint(early, q.length >= 2 ? 'Searching Open Food Facts…' : '');
+    if (foodQueryTimer) clearTimeout(foodQueryTimer);
+    if (q.length < 2) return;
+    foodQueryTimer = setTimeout(async () => {
+      try {
+        const liveMerged = await FoodCatalogAU.searchMerged(q, 30);
+        const rows = [];
+        const ids = new Set();
+        for (const f of liveMerged) {
+          rows.push(f);
+          ids.add(f.id);
+        }
+        for (const f of early) {
+          if (!ids.has(f.id)) rows.push(f);
+        }
+        const liveCount = liveMerged.filter((f) => String(f.source) === 'openfoodfacts').length;
+        paint(rows, liveCount ? `${liveCount} from Open Food Facts` : 'Offline / Open Food Facts unavailable — local only');
+      } catch (_) {
+        paint(early, 'Open Food Facts unavailable — local only');
+      }
+    }, 280);
   }
 
   function logCatalogFood(foodId, meal) {
@@ -360,15 +393,19 @@
     try {
       const code = await NativeBridge.scanBarcodeOnce();
       if (!code) throw new Error('No barcode detected.');
-      const food = FoodCatalogAU.lookupBarcode(code);
+      const status = $('nutBarcodeStatus');
+      if (status) status.textContent = 'Looking up ' + code + '…';
+      const food =
+        (FoodCatalogAU.lookupBarcode && FoodCatalogAU.lookupBarcode(code)) ||
+        (FoodCatalogAU.lookupBarcodeMerged && (await FoodCatalogAU.lookupBarcodeMerged(code)));
       if (food) {
         closeSheet();
         logCatalogFood(food.id, meal);
         return;
       }
       closeSheet();
-      sheet(`<h2>Barcode not in catalogue</h2>
-        <p class=lead>${esc(code)} — scan the nutrition label instead.</p>
+      sheet(`<h2>Barcode not found</h2>
+        <p class=lead>${esc(code)} — not in local staples or Open Food Facts. Scan the nutrition label instead.</p>
         <button type="button" class="btn primary block" onclick="NutritionUI.scanLabel('${meal}')">Scan label</button>
         <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
         <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
