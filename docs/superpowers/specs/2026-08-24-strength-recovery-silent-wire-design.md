@@ -35,9 +35,13 @@ After a strength session, the athlete logs sets, answers one end-of-session pain
 | Deload | **Silent apply** (same as progress/hold) |
 | Session time (e.g. 60 min) | **Planning input only** — not a timer or hard stop |
 | Volume guides | **Soft** — visible in builder/settings only; never block save |
-| HRV / WHOOP alone | **Advisory** — never block or escalate training alone |
-| Check-in red/yellow | **Silent hold** on progression bumps |
-| Session pain Yes | **Silent hold** on bumps for lifts trained that session |
+| HRV / WHOOP alone | **Cannot unlock bumps** — no check-in today means no silent bumps, even with green WHOOP |
+| Check-in red/yellow | **Silent hold** on progression bumps (worst-of with WHOOP) |
+| No check-in today | **No silent bumps** — WHOOP alone does not unlock |
+| WHOOP vs subjective | **Worst-of** for bumps; subjective can override WHOOP green (e.g. feel awful + green WHOOP → hold) |
+| Training blocked? | **Never** — gates only autopilot load increases |
+| PR / beat targets | **Performance override** — post-session silent update still applies (`performance_overrides_subjective_gate` in audit) |
+| Session pain Yes | **Silent hold** on bumps for lifts trained that session — **overrides PR override** |
 
 ## Architecture
 
@@ -79,12 +83,19 @@ interface RecoverySignal {
 }
 ```
 
-Mapping (initial policy):
+Mapping (locked policy):
 
-- Existing check-in **Minimum** (red) → `hold`
-- **Control** (yellow) → `caution` (hold progression bumps)
-- **Build** (green) or missing check-in → `ok`
-- WHOOP/HRV adjust **copy/confidence only** in future; **never** change gate alone
+- **No check-in today** (`checkinComplete` false) → `hold` (`no_checkin_today`) — WHOOP cannot unlock
+- Subjective **Minimum** (red) → `hold`
+- Subjective **Control** (yellow) → `caution` (hold progression bumps)
+- Subjective **Build** (green) → base `ok`
+- WHOOP recovery: ≥67 → `ok`, 34–66 → `caution`, &lt;34 → `hold`
+- **Worst-of** subjective band and WHOOP band sets final gate for bumps
+- Deload decisions are **not** gated by recovery (poor performance still deloads silently)
+
+**Performance override (post-session):**
+
+If recovery gate would block a `progress` bump but the athlete clearly beat targets or hit a PR on that exercise in this session, apply the silent update anyway and record `performance_overrides_subjective_gate` in audit. Session pain **Yes** for that exercise still forces `hold` — no override.
 
 ### Session-end pain
 
