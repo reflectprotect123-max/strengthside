@@ -20,7 +20,13 @@ var HybridStrength = (() => {
   // strength-entry.ts
   var strength_entry_exports = {};
   __export(strength_entry_exports, {
-    Volume: () => volumeBudget_exports
+    Exposure: () => exposure_exports,
+    Performed: () => performed_exports,
+    Pr: () => pr_exports,
+    Progression: () => progression_exports,
+    Rounding: () => rounding_exports,
+    Volume: () => volumeBudget_exports,
+    WorkingMax: () => workingMax_exports
   });
 
   // ../../../../packages/strength-engine/src/volumeBudget.ts
@@ -96,6 +102,183 @@ var HybridStrength = (() => {
     const exerciseSets = Math.max(0, Math.round(currentExerciseSets));
     const remainingSession = Math.max(0, budget.sessionWorkingSetCap - (sessionSets - exerciseSets));
     return Math.min(budget.perMuscleSessionCap, remainingSession);
+  }
+
+  // ../../../../packages/strength-engine/src/progression.ts
+  var progression_exports = {};
+  __export(progression_exports, {
+    DeterministicDecider: () => DeterministicDecider,
+    anchorKgFor: () => anchorKgFor,
+    decideProgression: () => decideProgression
+  });
+
+  // ../../../../packages/strength-engine/src/calibration.ts
+  var MIN_EXPOSURES = 3;
+  function calibrationStateFor(exposures) {
+    const usable = exposures.filter((e) => e.exposureClass !== "pain_blocked");
+    if (usable.length === 0) return "uncalibrated";
+    return usable.length >= MIN_EXPOSURES ? "calibrated" : "building";
+  }
+
+  // ../../../../packages/strength-engine/src/progression.ts
+  function anchorKgFor(exposures) {
+    const sorted = [...exposures].sort((a, b) => a.performedAt.localeCompare(b.performedAt));
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const e = sorted[i];
+      if (e.exposureClass === "successful" || e.exposureClass === "successful_but_uncertain") return e.loadKg;
+    }
+    return null;
+  }
+  function base(ctx) {
+    return { exerciseId: ctx.exerciseId, source: "deterministic" };
+  }
+  function decideProgression(exposures, ctx) {
+    const sorted = [...exposures].sort((a, b) => a.performedAt.localeCompare(b.performedAt));
+    const calibration = calibrationStateFor(sorted);
+    if (calibration !== "calibrated") {
+      return { ...base(ctx), action: "hold", confidence: 0.3, reasonCodes: ["insufficient_exposure"] };
+    }
+    const usable = sorted.filter((e) => e.exposureClass !== "pain_blocked");
+    const recent = usable.slice(-3);
+    const allSuccessful = recent.every((e) => e.exposureClass === "successful" && e.onTarget);
+    const repeatedDeterioration = recent.filter((e) => e.exposureClass === "missed").length >= 2;
+    const anchor = anchorKgFor(usable);
+    if (allSuccessful) {
+      const deltaPct = 0.025;
+      return {
+        ...base(ctx),
+        action: "progress",
+        deltaPct,
+        confidence: 0.9,
+        reasonCodes: ["three_on_target"],
+        ...anchor != null ? { deltaKg: anchor * deltaPct } : {}
+      };
+    }
+    if (repeatedDeterioration && anchor != null) {
+      const deltaPct = -0.05;
+      return {
+        ...base(ctx),
+        action: "deload",
+        deltaPct,
+        confidence: 0.85,
+        reasonCodes: ["repeated_deterioration"],
+        deltaKg: anchor * deltaPct
+      };
+    }
+    return { ...base(ctx), action: "hold", confidence: 0.7, reasonCodes: ["mixed_signal"] };
+  }
+  var DeterministicDecider = {
+    async decide(exposures, _calibration, ctx) {
+      return decideProgression(exposures, ctx);
+    }
+  };
+
+  // ../../../../packages/strength-engine/src/exposure.ts
+  var exposure_exports = {};
+  __export(exposure_exports, {
+    strengthExposuresFor: () => strengthExposuresFor
+  });
+
+  // ../../../../packages/strength-engine/src/performed.ts
+  var performed_exports = {};
+  __export(performed_exports, {
+    measurementValue: () => measurementValue
+  });
+  function measurementValue(set, key) {
+    return set.measurements.find((m) => m.metricKey === key)?.value ?? null;
+  }
+
+  // ../../../../packages/strength-engine/src/exposure.ts
+  function strengthExposuresFor(exerciseId, performed, resolvedTargets = {}) {
+    const relevant = performed.filter((p) => p.exerciseId === exerciseId);
+    const bySession = /* @__PURE__ */ new Map();
+    for (const set of relevant) {
+      const bucket = bySession.get(set.assignedSessionId);
+      if (bucket) bucket.push(set);
+      else bySession.set(set.assignedSessionId, [set]);
+    }
+    const exposures = [];
+    for (const [assignedSessionId, sets] of bySession) {
+      const representative = [...sets].sort((a, b) => a.performedAt.localeCompare(b.performedAt)).at(-1);
+      const loadKg = measurementValue(representative, "load");
+      if (loadKg == null) continue;
+      const reps = measurementValue(representative, "reps") ?? 0;
+      const rated = measurementValue(representative, "rpe") != null;
+      const painFlagged = measurementValue(representative, "pain") != null;
+      let exposureClass;
+      if (painFlagged) exposureClass = "pain_blocked";
+      else if (representative.status !== "completed") exposureClass = "missed";
+      else exposureClass = rated ? "successful" : "successful_but_uncertain";
+      const target = representative.prescribedSetId != null ? resolvedTargets[representative.prescribedSetId] : void 0;
+      const onTarget = target == null ? true : (target.targetReps == null || reps >= target.targetReps) && (target.targetLoadKg == null || loadKg >= target.targetLoadKg);
+      exposures.push({
+        exerciseId,
+        assignedSessionId,
+        reps,
+        loadKg,
+        rated,
+        painFlagged,
+        onTarget,
+        exposureClass,
+        performedSetId: representative.id,
+        performedAt: representative.performedAt
+      });
+    }
+    return exposures.sort((a, b) => a.performedAt.localeCompare(b.performedAt));
+  }
+
+  // ../../../../packages/strength-engine/src/pr.ts
+  var pr_exports = {};
+  __export(pr_exports, {
+    detectPr: () => detectPr
+  });
+  function detectPr(newSet, priorEvents) {
+    if (newSet.reps <= 0) return false;
+    const priorBest = priorEvents.filter((e) => e.exerciseId === newSet.exerciseId && e.repCount === newSet.reps).reduce((best, e) => best == null || e.valueKg > best ? e.valueKg : best, null);
+    return priorBest == null || newSet.loadKg > priorBest;
+  }
+
+  // ../../../../packages/strength-engine/src/workingMax.ts
+  var workingMax_exports = {};
+  __export(workingMax_exports, {
+    currentWorkingMax: () => currentWorkingMax
+  });
+  function currentWorkingMax(events, asOf) {
+    const asOfEnd = asOf.length === 10 ? `${asOf}T23:59:59.999Z` : asOf;
+    const upTo = events.filter((e) => e.effectiveAt <= asOfEnd).sort((a, b) => b.effectiveAt.localeCompare(a.effectiveAt));
+    if (!upTo.length) return null;
+    const latest = upTo[0];
+    const latestManual = upTo.find((e) => e.source !== "auto_estimate");
+    if (latestManual && latestManual.effectiveAt >= latest.effectiveAt) return latestManual;
+    return latest;
+  }
+
+  // ../../../../packages/strength-engine/src/rounding.ts
+  var rounding_exports = {};
+  __export(rounding_exports, {
+    roundLoadToEquipment: () => roundLoadToEquipment
+  });
+  function roundLoadToEquipment(value, equipment) {
+    if (!Number.isFinite(value)) {
+      throw new Error(`roundLoadToEquipment requires a finite load, got: ${value}`);
+    }
+    if (!equipment) return value;
+    if (equipment.rounding === "none") return value;
+    if (equipment.rackValuesKg?.length) {
+      if (equipment.rounding === "nearest") {
+        return equipment.rackValuesKg.reduce(
+          (closest, v) => Math.abs(v - value) < Math.abs(closest - value) ? v : closest
+        );
+      }
+      const below = equipment.rackValuesKg.filter((v) => v <= value);
+      if (below.length) {
+        return Math.max(...below);
+      }
+      return equipment.rackValuesKg[0];
+    }
+    if (equipment.incrementKg == null || equipment.incrementKg <= 0) return value;
+    const steps = equipment.rounding === "nearest" ? Math.round(value / equipment.incrementKg) : Math.floor(value / equipment.incrementKg);
+    return Number((steps * equipment.incrementKg).toFixed(6));
   }
   return __toCommonJS(strength_entry_exports);
 })();

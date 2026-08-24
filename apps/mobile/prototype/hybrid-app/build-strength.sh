@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild strength-bundle.js from strength-entry.ts (@hybrid/strength-engine volume surface).
+# Rebuild strength-bundle.js from strength-entry.ts (@hybrid/strength-engine surfaces).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
