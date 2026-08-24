@@ -261,6 +261,15 @@
 
   async function scanLabel(meal) {
     meal = meal || 'snack';
+    sheet(`<h2>Scan label</h2>
+      <p class=lead>Read a nutrition panel with the camera, or paste the text if OCR is unavailable.</p>
+      <button class="btn primary block" onclick="NutritionUI.scanFromCamera('${meal}')">Take photo</button>
+      <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
+      <button class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+  }
+
+  async function scanFromCamera(meal) {
+    meal = meal || 'snack';
     sheet(`<h2>Scan label</h2><p class=lead>Reading nutrition panel…</p><p class=meta id=nutScanStatus>Opening camera</p>`);
     const status = () => $('nutScanStatus');
     try {
@@ -279,7 +288,7 @@
       }
       sheet(`<h2>Scan label</h2>
         <p class=lead>${esc((e && e.message) || 'Camera failed')}</p>
-        <button class="btn primary block" onclick="NutritionUI.scanLabel('${meal}')">Try again</button>
+        <button class="btn primary block" onclick="NutritionUI.scanFromCamera('${meal}')">Try again</button>
         <button class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
         <button class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
     }
@@ -556,6 +565,7 @@
   window.NutritionUI = {
     open: openNutrition,
     scanLabel,
+    scanFromCamera,
     showPasteLabel,
     parsePaste,
     shift,

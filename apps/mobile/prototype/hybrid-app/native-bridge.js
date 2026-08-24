@@ -60,17 +60,25 @@
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
-      input.capture = 'environment';
-      input.style.display = 'none';
+      input.setAttribute('capture', 'environment');
+      input.style.position = 'fixed';
+      input.style.left = '-9999px';
       document.body.appendChild(input);
       let settled = false;
       const finish = (value) => {
         if (settled) return;
         settled = true;
+        window.removeEventListener('focus', onFocus);
         try {
           input.remove();
         } catch (_) {}
         resolve(value);
+      };
+      const onFocus = () => {
+        // File picker dismissed without a file (common on cancel).
+        setTimeout(() => {
+          if (!settled && (!input.files || !input.files.length)) finish(null);
+        }, 400);
       };
       input.addEventListener('change', () => {
         const file = input.files && input.files[0];
@@ -81,11 +89,7 @@
         reader.readAsDataURL(file);
       });
       input.addEventListener('cancel', () => finish(null));
-      setTimeout(() => {
-        if (!settled && (!input.files || !input.files.length)) {
-          /* user may still be in picker */
-        }
-      }, 0);
+      window.addEventListener('focus', onFocus);
       input.click();
     });
   }
