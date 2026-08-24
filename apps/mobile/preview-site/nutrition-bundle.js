@@ -59,6 +59,8 @@ var HybridNutrition = (() => {
     loggableUnits: () => loggableUnits,
     macroTotals: () => macroTotals,
     mergeNutrition: () => mergeNutrition,
+    normaliseAmount: () => normaliseAmount,
+    parseHouseholdServing: () => parseHouseholdServing,
     parseLabelLines: () => parseLabelLines,
     parseLabelText: () => parseLabelText,
     parseServingSizeText: () => parseServingSizeText,
@@ -69,6 +71,7 @@ var HybridNutrition = (() => {
     resolveFoodMacros: () => resolveFoodMacros,
     resolveRecipeItem: () => resolveRecipeItem,
     resolveRecipePerServing: () => resolveRecipePerServing,
+    resolveServingAmount: () => resolveServingAmount,
     sanitizeNutritionDB: () => sanitizeNutritionDB,
     scaleByServing: () => scaleByServing,
     scaleTo: () => scaleTo,
@@ -712,18 +715,83 @@ var HybridNutrition = (() => {
 
   // ../../../../packages/nutrition-core/src/serving-parse.ts
   var DECIMAL = String.raw`(?:\d+(?:[.,]\d+)?|\d*[.,]\d+)`;
-  var AMOUNT_UNIT = new RegExp(`(${DECIMAL})\\s*(kg|mg|ml|g|l)\\b`, "i");
+  var UNIT_TOKEN = String.raw`fl\.?\s*oz|floz|fluid\s*ounces?|ounces?|oz|kg|mg|ml|cl|g|l`;
+  var AMOUNT_UNIT = new RegExp(`(${DECIMAL})\\s*(${UNIT_TOKEN})\\b`, "i");
+  var HOUSEHOLD_HEAD = new RegExp(
+    `^\\s*(${DECIMAL})\\s+([a-zA-Z][a-zA-Z./\\-]{0,24})\\b`,
+    "i"
+  );
   function toNumber(raw) {
-    const n = Number(String(raw).replace(",", "."));
+    if (raw == null || raw === "") return null;
+    const n = typeof raw === "number" ? raw : Number(String(raw).replace(",", "."));
     return Number.isFinite(n) && n > 0 ? n : null;
   }
   function normaliseAmount(qty, unit) {
-    const u = unit.toLowerCase();
-    if (u === "g") return { amount: qty, unit: "g" };
-    if (u === "mg") return { amount: qty / 1e3, unit: "g" };
-    if (u === "kg") return { amount: qty * 1e3, unit: "g" };
-    if (u === "ml") return { amount: qty, unit: "ml" };
-    if (u === "l") return { amount: qty * 1e3, unit: "ml" };
+    if (!(qty > 0) || !Number.isFinite(qty)) return null;
+    const u = String(unit || "").trim().toLowerCase().replace(/\./g, "").replace(/\s+/g, " ");
+    if (u === "g" || u === "gram" || u === "grams") return { amount: qty, unit: "g" };
+    if (u === "mg" || u === "milligram" || u === "milligrams") return { amount: qty / 1e3, unit: "g" };
+    if (u === "kg" || u === "kilogram" || u === "kilograms") return { amount: qty * 1e3, unit: "g" };
+    if (u === "oz" || u === "ounce" || u === "ounces") return { amount: qty * 28.349523125, unit: "g" };
+    if (u === "lb" || u === "lbs" || u === "pound" || u === "pounds") return { amount: qty * 453.59237, unit: "g" };
+    if (u === "ml" || u === "millilitre" || u === "millilitres" || u === "milliliter" || u === "milliliters") {
+      return { amount: qty, unit: "ml" };
+    }
+    if (u === "cl" || u === "centilitre" || u === "centilitres") return { amount: qty * 10, unit: "ml" };
+    if (u === "l" || u === "liter" || u === "litre" || u === "liters" || u === "litres") {
+      return { amount: qty * 1e3, unit: "ml" };
+    }
+    if (u === "fl oz" || u === "floz" || u === "fluid ounce" || u === "fluid ounces") {
+      return { amount: qty * 29.5735295625, unit: "ml" };
+    }
+    return null;
+  }
+  function singularHousehold(raw) {
+    let w = String(raw || "").trim().toLowerCase().replace(/\./g, "");
+    if (!w || w.length > 24) return null;
+    const aliases = {
+      tablespoon: "tbsp",
+      tablespoons: "tbsp",
+      tbsp: "tbsp",
+      tblsp: "tbsp",
+      tbs: "tbsp",
+      teaspoon: "tsp",
+      teaspoons: "tsp",
+      tsp: "tsp",
+      serving: "serving",
+      servings: "serving",
+      portion: "portion",
+      portions: "portion",
+      slice: "slice",
+      slices: "slice",
+      biscuit: "biscuit",
+      biscuits: "biscuit",
+      cookie: "cookie",
+      cookies: "cookie",
+      piece: "piece",
+      pieces: "piece",
+      bar: "bar",
+      bars: "bar",
+      can: "can",
+      cans: "can",
+      bottle: "bottle",
+      bottles: "bottle",
+      cup: "cup",
+      cups: "cup",
+      row: "row",
+      rows: "row",
+      pack: "pack",
+      packs: "pack",
+      pouch: "pouch",
+      pouches: "pouch"
+    };
+    if (aliases[w]) return aliases[w];
+    if (/^[a-z][a-z/-]*$/.test(w)) {
+      if (w.endsWith("ies") && w.length > 4) return `${w.slice(0, -3)}y`;
+      if (w.endsWith("sses")) return w.slice(0, -2);
+      if (w.endsWith("s") && !w.endsWith("ss") && w.length > 3) return w.slice(0, -1);
+      return w;
+    }
     return null;
   }
   function parseServingSizeText(text) {
@@ -732,11 +800,34 @@ var HybridNutrition = (() => {
     if (!raw) return null;
     const paren = /\(([^)]*)\)/.exec(raw);
     const outside = raw.replace(/\([^)]*\)/g, " ");
-    const match = (paren ? AMOUNT_UNIT.exec(paren[1]) : null) ?? AMOUNT_UNIT.exec(outside);
+    const match = (paren ? AMOUNT_UNIT.exec(paren[1]) : null) ?? AMOUNT_UNIT.exec(outside) ?? AMOUNT_UNIT.exec(raw);
     if (!match) return null;
     const qty = toNumber(match[1]);
     if (qty == null) return null;
     return normaliseAmount(qty, match[2]);
+  }
+  function parseHouseholdServing(text) {
+    if (text == null) return null;
+    const raw = String(text).trim();
+    if (!raw) return null;
+    const head = HOUSEHOLD_HEAD.exec(raw.replace(/\([^)]*\)/g, " ").trim()) ?? HOUSEHOLD_HEAD.exec(raw);
+    if (!head) return null;
+    const count = toNumber(head[1]);
+    const unit = singularHousehold(head[2]);
+    if (count == null || !unit) return null;
+    if (normaliseAmount(1, unit)) return null;
+    const total = parseServingSizeText(raw);
+    if (!total) return null;
+    return { unit, count, total };
+  }
+  function resolveServingAmount(fields) {
+    const qty = toNumber(fields.servingQuantity ?? null);
+    const unit = fields.servingQuantityUnit != null ? String(fields.servingQuantityUnit) : "";
+    if (qty != null && unit) {
+      const fromFields = normaliseAmount(qty, unit);
+      if (fromFields) return fromFields;
+    }
+    return parseServingSizeText(fields.servingSizeText);
   }
   function hasExplicitServingConversion(food) {
     const basis = food.servingUnit.toLowerCase();
@@ -747,31 +838,63 @@ var HybridNutrition = (() => {
       return false;
     });
   }
-  function enrichFoodServings(food) {
-    if (hasExplicitServingConversion(food)) return food;
-    const parsed = parseServingSizeText(food.servingSizeText);
-    if (!parsed) return food;
-    const basis = food.servingUnit.toLowerCase();
-    if (parsed.unit !== basis) return food;
-    const row = {
-      id: `${food.id}-parsed-serving`,
-      foodId: food.id,
-      label: String(food.servingSizeText || "serving").trim() || "serving",
-      quantity: 1,
-      unit: "serving",
-      grams: parsed.unit === "g" ? parsed.amount : null,
-      millilitres: parsed.unit === "ml" ? parsed.amount : null,
-      isDefault: true,
-      sortOrder: 0
-    };
-    return { ...food, servings: [...food.servings || [], row] };
+  function hasUnit(food, unit) {
+    return (food.servings || []).some((s) => s.unit.toLowerCase() === unit.toLowerCase());
   }
-  function pickDefaultLogQuantity(food) {
-    const enriched = enrichFoodServings(food);
+  function enrichFoodServings(food, fields) {
+    const basis = food.servingUnit.toLowerCase();
+    const text = fields?.servingSizeText ?? food.servingSizeText;
+    const resolved = resolveServingAmount({
+      servingSizeText: text,
+      servingQuantity: fields?.servingQuantity,
+      servingQuantityUnit: fields?.servingQuantityUnit
+    }) ?? parseServingSizeText(text);
+    const rows = [...food.servings || []];
+    let changed = false;
+    if (resolved && resolved.unit === basis && !hasExplicitServingConversion(food)) {
+      rows.push({
+        id: `${food.id}-parsed-serving`,
+        foodId: food.id,
+        label: String(text || `${resolved.amount} ${resolved.unit}`).trim() || "serving",
+        quantity: 1,
+        unit: "serving",
+        grams: resolved.unit === "g" ? resolved.amount : null,
+        millilitres: resolved.unit === "ml" ? resolved.amount : null,
+        isDefault: true,
+        sortOrder: 0
+      });
+      changed = true;
+    }
+    const household = parseHouseholdServing(text);
+    if (household && household.total.unit === basis && household.unit !== "serving" && !hasUnit({ ...food, servings: rows }, household.unit)) {
+      const perOne = household.total.amount / household.count;
+      if (perOne > 0 && Number.isFinite(perOne)) {
+        rows.push({
+          id: `${food.id}-parsed-${household.unit}`,
+          foodId: food.id,
+          label: `1 ${household.unit}`,
+          quantity: 1,
+          unit: household.unit,
+          grams: household.total.unit === "g" ? perOne : null,
+          millilitres: household.total.unit === "ml" ? perOne : null,
+          isDefault: false,
+          sortOrder: 1
+        });
+        changed = true;
+      }
+    }
+    return changed ? { ...food, servings: rows, servingSizeText: text ?? food.servingSizeText } : food;
+  }
+  function pickDefaultLogQuantity(food, fields) {
+    const enriched = enrichFoodServings(food, fields);
     const basis = food.servingUnit;
     const basisKey = basis.toLowerCase();
     const units = loggableUnits(enriched, enriched.servings || []);
-    const parsed = parseServingSizeText(food.servingSizeText);
+    const parsed = resolveServingAmount({
+      servingSizeText: fields?.servingSizeText ?? food.servingSizeText,
+      servingQuantity: fields?.servingQuantity,
+      servingQuantityUnit: fields?.servingQuantityUnit
+    }) ?? parseServingSizeText(food.servingSizeText);
     if (parsed && parsed.unit === basisKey) {
       return { food: enriched, quantity: parsed.amount, unit: basis };
     }

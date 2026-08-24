@@ -74,12 +74,15 @@ export {
   sumMacros,
 } from './recipe';
 
-export type { DefaultLogQuantity, ParsedServingAmount } from './serving-parse';
+export type { DefaultLogQuantity, HouseholdServing, ParsedServingAmount, ServingSizeFields } from './serving-parse';
 
 export {
   enrichFoodServings,
+  normaliseAmount,
+  parseHouseholdServing,
   parseServingSizeText,
   pickDefaultLogQuantity,
+  resolveServingAmount,
 } from './serving-parse';
 
 export type { LogContext } from './log';
