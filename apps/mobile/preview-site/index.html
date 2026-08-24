@@ -43,8 +43,6 @@
 input[type=range]{appearance:none;-webkit-appearance:none;height:8px;padding:0;border:0;border-radius:999px;background:linear-gradient(90deg,var(--gold),#3a2d16);accent-color:var(--gold)}
 input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:1px solid var(--gold);border-radius:50%;background:#111;box-shadow:0 0 0 3px #0006}input[type=range]::-moz-range-thumb{width:26px;height:26px;border:1px solid var(--gold);border-radius:50%;background:#111;box-shadow:0 0 0 3px #0006}
 
-.updatebtn{border:1px solid var(--gold);border-radius:999px;background:transparent;color:var(--gold2);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:6px 10px;min-height:36px}
-.updatebanner{display:none;margin:0 0 12px;padding:12px;border:1px solid #d6a63a66;border-radius:14px;background:#d6a63a18;color:var(--text)}.updatebanner.show{display:block}.updatebanner b{color:var(--gold2)}
 .targetbar{height:8px;background:#2a2416;border-radius:999px;overflow:hidden;margin-top:6px}.targetbar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:999px}.targetrow{display:grid;grid-template-columns:88px 1fr 48px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.targetrow:last-child{border-bottom:0}
 
 .savestatus{padding:7px 9px;border:1px solid var(--line);border-radius:999px;background:#111;color:var(--muted);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.savestatus.ok{border-color:#9cb48b66;color:var(--ok)}.savestatus.saving{border-color:#d4a35b66;color:var(--warn)}.savestatus.bad{border-color:#cb817466;color:var(--bad)}.autosavecard{border-color:#9cb48b55;background:linear-gradient(180deg,#121812,#101010)}.autosavegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}@media(max-width:420px){.autosavegrid{grid-template-columns:1fr}.topright{gap:6px}.savestatus{font-size:9px;padding:6px 7px}}
@@ -618,12 +616,6 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .stat small{display:block; color:var(--muted); font-size:9px; letter-spacing:.12em; text-transform:uppercase}
 .stat b{display:block; margin-top:4px; font-family:var(--font-display); font-size:26px; letter-spacing:.01em}
 
-.updatebtn,.updatebtn{
-  min-height:36px; padding:7px 11px;
-  border:1px solid rgba(212,165,116,.4); border-radius:999px;
-  background:transparent; color:var(--copper2);
-  font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
-}
 .savestatus,.savestatus{
   padding:7px 10px; border:1px solid var(--line); border-radius:999px;
   background:rgba(14,18,22,.9); color:var(--muted);
@@ -694,7 +686,7 @@ body{background:transparent}
 <script src="./food-catalog.js"></script>
 </head>
 <body>
-<div class="app"><header class="top"><div class="brand"><div class="mark" aria-hidden="true">THE</div><div><b>THE Hybrid</b><small>Track Dawn · Athlete</small></div></div><div class="topright"><button id="workoutClock" class="stopwatch" onclick="toggleWorkoutClock()">00:00</button><button type=button class=updatebtn onclick=applyAppUpdate()>Update</button><div id="saveStatusChip" class="savestatus ok">Saved</div></div></header><main id="appScreen"></main></div>
+<div class="app"><header class="top"><div class="brand"><div class="mark" aria-hidden="true">THE</div><div><b>THE Hybrid</b><small>Track Dawn · Athlete</small></div></div><div class="topright"><button id="workoutClock" class="stopwatch" onclick="toggleWorkoutClock()">00:00</button><div id="saveStatusChip" class="savestatus ok">Saved</div></div></header><main id="appScreen"></main></div>
 <nav id="bottomNav" class="nav"><div class="navin"><button data-tab="home" onclick="go('home')"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg><span>Home</span></button><button data-tab="programs" onclick="go('programs')"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Library</span></button><button data-tab="calendar" onclick="go('calendar')"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3.5v4M16.5 3.5v4M3.5 10h17"/></svg><span>Calendar</span></button><button data-tab="settings" onclick="go('settings')"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.04.08H10l-.04-.08a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.08-.04V10l.08-.04a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.04-.08H14l.04.08a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.1.4.3.75.6 1l.08.04V14l-.08.04c-.3.25-.5.6-.6.96Z"/></svg><span>Settings</span></button></div></nav>
 <div id="modalRoot"></div><div id="restRoot"></div>
 <script>
@@ -713,11 +705,7 @@ let storageBroken=false,memoryStore=null;
 function readStorage(){try{return localStorage.getItem(STORAGE)}catch(e){storageBroken=true;return memoryStore}}
 function writeStorage(v){memoryStore=v;try{localStorage.setItem(STORAGE,v);return true}catch(e){storageBroken=true;return false}}
 function removeStorage(){memoryStore=null;try{localStorage.removeItem(STORAGE)}catch(e){storageBroken=true}}
-function updateBanner(){return `<div id=updateBanner class="updatebanner${window.pendingAppUpdate?' show':''}"><b>New version available.</b><br>Tap update to load the latest build.<div class=btns><button class="btn small primary" onclick=applyAppUpdate()>Update now</button><button class="btn small" onclick=hideUpdateBanner()>Later</button></div></div>`}
-function showUpdateBanner(){window.pendingAppUpdate=true;let x=$('updateBanner');if(x)x.classList.add('show')}
-function hideUpdateBanner(){window.pendingAppUpdate=false;let x=$('updateBanner');if(x)x.classList.remove('show')}
-function applyAppUpdate(){window.pendingAppUpdate=false;try{if(window.waitingWorker)window.waitingWorker.postMessage({type:'SKIP_WAITING'})}catch(e){}setTimeout(()=>location.reload(),window.waitingWorker?350:50)}
-function storageNotice(){return updateBanner()+(storageBroken?`<div class=notice style="margin-bottom:12px"><b>Storage warning.</b><br>This browser/file mode is blocking normal local save. The app will still run, but export a backup before closing.</div>`:'')}
+function storageNotice(){return storageBroken?`<div class=notice style="margin-bottom:12px"><b>Storage warning.</b><br>This browser/file mode is blocking normal local save. The app will still run, but export a backup before closing.</div>`:''}
 function ensureProgramTemplates(state){state=state||{};state.templates=Array.isArray(state.templates)?state.templates:[];state.archivedTemplates=Array.isArray(state.archivedTemplates)?state.archivedTemplates:[];state.hiddenTemplateIds=state.hiddenTemplateIds||[];
   const want=new Set(['Full Body A']);
   const fromSeed=(seed.templates||[]).filter(x=>want.has(String(x.name||'')));
@@ -1024,7 +1012,7 @@ function sessionHasConditioning(x){return (x?.tasks||[]).some(t=>t.kind==='condi
 function sessionConditioningStarted(x){return (x?.tasks||[]).some(t=>t.kind==='conditioning'&&(t.complete||blockElapsed(t)>0||Object.values(t.result||{}).some(v=>String(v??'').trim()!=='')))}
 function sessionStressCard(x){return''}
 
-function render(){if(S.tab==='tools'||S.tab==='coachlock')S.tab='programs';applyDisplayPrefs();nav(true);clock(false);document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));({home,programs,calendar,library,checkin,settings}[S.tab]||home)();if(window.pendingAppUpdate)showUpdateBanner()}
+function render(){if(S.tab==='tools'||S.tab==='coachlock')S.tab='programs';applyDisplayPrefs();nav(true);clock(false);document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));({home,programs,calendar,library,checkin,settings}[S.tab]||home)()}
 function checkin(){athSleepTab='checkin';openAthleteSleepOverview('checkin')}
 
 function weekStartKey(d=today()){let x=new Date(d+'T00:00:00'),m=(x.getDay()+6)%7;x.setDate(x.getDate()-m);return x.toISOString().slice(0,10)}
@@ -1538,7 +1526,6 @@ function loadSnapshot(){let start=Date.now()-7*86400000,done=S.sessions.filter(x
 async function refreshStoragePersistence(){try{if(navigator.storage?.persisted){let persisted=await navigator.storage.persisted();S.meta=S.meta||{};S.meta.storagePersisted=!!persisted;save('storage-check');return persisted}}catch(e){}return false}
 async function requestStoragePersistence(){try{if(!navigator.storage?.persist)return alert('This browser does not support protected storage. Autosave still works on this device.');let granted=await navigator.storage.persist();S.meta=S.meta||{};S.meta.storagePersisted=!!granted;save('storage-persist');alert(granted?'Protected storage granted. Your browser is less likely to clear this app data automatically.':'Protected storage was not granted. Autosave still works, but keep occasional backups.');settings()}catch(e){alert('Could not request protected storage. Autosave still works, but keep occasional backups.')}}
 function settings(){let h=dataHealth(),last=h.lastBackup?new Date(h.lastBackup).toLocaleString():'Never on this device',lastComplete=h.lastCompleted?`${dateLabel(h.lastCompleted.date)} · ${h.lastCompleted.name}`:'None yet',persisted=!!S.meta?.storagePersisted,lastSave=S.meta?.lastSavedAt?new Date(S.meta.lastSavedAt).toLocaleString():'Not yet';shell('Settings','Athlete defaults',`<div class=stack>
-<div class=card><div class=eyebrow>App</div><div class=title>Update</div><div class=meta>Pull the latest athlete build after we push fixes. Current: <b>${esc(LOCAL_BUILD)}</b></div><button class="btn primary block" style="margin-top:12px" onclick=applyAppUpdate()>Update now</button></div>
 ${(window.Whoop&&Whoop.cardHtml)?Whoop.cardHtml():''}${(window.Concept2&&Concept2.cardHtml)?Concept2.cardHtml():''}
 <div class=card><div class=eyebrow>Training</div><div class=title>Heart-rate profile</div><div class=meta>Used for conditioning load and zone context. Resting and max HR should match you, not a default.</div><div class=two style="margin-top:12px"><div class=field><label>Resting HR</label><input type=number min=30 max=120 value="${esc(S.profile.restingHr)}" onchange="S.profile.restingHr=num(this.value);save()"></div><div class=field><label>Max HR</label><input type=number min=120 max=230 value="${esc(S.profile.maxHr)}" onchange="S.profile.maxHr=num(this.value);save()"></div></div></div>
 <div class=card><div class=eyebrow>Data</div><div class=title>${persisted?'Protected storage':'Save on this device'}</div><div class=meta>Autosave is always on. Last save: ${esc(lastSave)} · Last backup: ${esc(last)} · Last completed: ${esc(lastComplete)}</div><div class=btns style="margin-top:12px"><button class="btn small" onclick=exportData()>Export backup</button></div></div>
@@ -1572,18 +1559,16 @@ if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
       window.location.reload();
     });
     navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' }).then(reg => {
-      function noteWaiting(worker){
+      function activateWaiting(worker){
         if (!worker) return;
-        window.waitingWorker = worker;
-        if (navigator.serviceWorker.controller) showUpdateBanner();
-        else worker.postMessage({ type: 'SKIP_WAITING' });
+        worker.postMessage({ type: 'SKIP_WAITING' });
       }
-      if (reg.waiting) noteWaiting(reg.waiting);
+      if (reg.waiting) activateWaiting(reg.waiting);
       reg.addEventListener('updatefound', () => {
         const nw = reg.installing;
         if (!nw) return;
         nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed') noteWaiting(nw);
+          if (nw.state === 'installed') activateWaiting(nw);
         });
       });
       reg.update().catch(() => {});
