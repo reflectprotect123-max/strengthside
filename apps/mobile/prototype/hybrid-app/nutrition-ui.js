@@ -824,6 +824,12 @@
     </div></div><span class=ath-chev aria-hidden=true>›</span></button>`;
   }
 
+  function replaceNutrition(db) {
+    if (!db) return;
+    saveN(db);
+    renderNutrition();
+  }
+
   window.NutritionUI = {
     open: openNutrition,
     addFood,
@@ -855,5 +861,6 @@
     logCustom,
     homeModuleHtml,
     load: loadN,
+    replace: replaceNutrition,
   };
 })();

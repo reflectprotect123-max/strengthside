@@ -288,6 +288,7 @@
 
   global.Whoop = {
     cardHtml, metaLine, renderPanels, autoSyncIfPossible,
-    signIn, signOut, connect, sync, disconnect, refreshStatus
+    signIn, signOut, connect, sync, disconnect, refreshStatus,
+    client, token, email
   };
 })(window);

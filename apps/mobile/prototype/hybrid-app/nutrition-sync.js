@@ -1,17 +1,24 @@
 /**
  * Nutrition cloud sync for the Hybrid HTML athlete app.
  *
- * Writes the athlete's NutritionDB slice to athlete_domain_snapshots (domain
- * nutrition) via upsert_athlete_domain_snapshot — same contract as THE-HYBRID-ENGINE1.
+ * Dual write when signed in:
+ *  1. Opaque NutritionDB snapshot → athlete_domain_snapshots (domain nutrition)
+ *  2. Live log rows → food_log_entries as quick_add (no catalogue FK required)
  *
- * Requires Supabase auth (shared session with WHOOP / Concept2).
- * LocalStorage remains the offline source of truth; cloud is merged on pull
- * and pushed after local saves when signed in.
+ * Same auth session as WHOOP / Concept2. LocalStorage stays offline-first.
  */
 (function (global) {
   const WRITER = 'html-athlete-nutrition';
   const DOMAIN = 'nutrition';
   const BASE_KEY = 'hybrid-nutrition-sync-base-v1';
+  const ID_MAP_KEY = 'hybrid-nutrition-cloud-ids-v1';
+
+  const status = {
+    lastSyncAt: null,
+    lastError: '',
+    lastOk: false,
+    busy: false,
+  };
 
   function core() {
     return global.HybridNutrition && global.HybridNutrition.Core;
@@ -29,7 +36,11 @@
   }
 
   async function isSignedIn() {
-    return !!(await sessionUserId());
+    try {
+      return !!(await sessionUserId());
+    } catch {
+      return false;
+    }
   }
 
   function fp(db) {
@@ -57,6 +68,46 @@
     } catch (_) {}
   }
 
+  function loadIdMap() {
+    try {
+      return JSON.parse(localStorage.getItem(ID_MAP_KEY) || '{}') || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveIdMap(map) {
+    try {
+      localStorage.setItem(ID_MAP_KEY, JSON.stringify(map));
+    } catch (_) {}
+  }
+
+  function toUuid(localId) {
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(localId || ''))) {
+      return String(localId);
+    }
+    const map = loadIdMap();
+    if (map[localId]) return map[localId];
+    const uuid =
+      (global.crypto && typeof global.crypto.randomUUID === 'function' && global.crypto.randomUUID()) ||
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    map[localId] = uuid;
+    saveIdMap(map);
+    return uuid;
+  }
+
+  function setStatus(patch) {
+    Object.assign(status, patch || {});
+  }
+
+  function getStatus() {
+    return { ...status };
+  }
+
   /** @returns {Promise<{revision:number,writer:string,updatedAt:number,snapshot:unknown}|null>} */
   async function pullRemote() {
     const uid = await sessionUserId();
@@ -79,21 +130,95 @@
   }
 
   /**
-   * Push local nutrition DB to Supabase.
-   * @returns {Promise<{ok:boolean, reason?:string, revision?:number}>}
+   * Look up a product barcode in the shared Supabase foods catalogue.
+   * @returns {Promise<object|null>}
    */
-  async function pushNutrition(localDb) {
-    const C = core();
-    if (!C) throw new Error('Nutrition core missing');
+  async function lookupBarcodeCloud(code) {
+    const bc = String(code || '').replace(/\D/g, '');
+    if (!bc || bc.length < 8) return null;
+    if (!(await isSignedIn())) return null;
+    const { data, error } = await client()
+      .from('foods')
+      .select(
+        'id,name,brand,barcode,serving_qty,serving_unit,calories,protein_g,carbs_g,fat_g,nutrition_basis_qty,nutrition_basis_unit,serving_size_text,source,external_id,nutrients',
+      )
+      .eq('barcode', bc)
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    const food = {
+      id: 'sb-' + data.id,
+      name: data.name,
+      brand: data.brand || null,
+      barcode: data.barcode || bc,
+      servingQty: Number(data.serving_qty) || 100,
+      servingUnit: data.serving_unit || 'g',
+      calories: Number(data.calories) || 0,
+      proteinG: Number(data.protein_g) || 0,
+      carbsG: Number(data.carbs_g) || 0,
+      fatG: Number(data.fat_g) || 0,
+      nutritionBasisQty: Number(data.nutrition_basis_qty) || 100,
+      nutritionBasisUnit: data.nutrition_basis_unit || 'g',
+      servingSizeText: data.serving_size_text || null,
+      source: data.source || 'supabase',
+      externalId: data.external_id || data.id,
+      nutrients: data.nutrients || {},
+      servings: [],
+      cachedAt: new Date().toISOString(),
+      supabaseFoodId: data.id,
+    };
+    if (global.FoodCatalogAU && FoodCatalogAU.rememberLive) FoodCatalogAU.rememberLive(food);
+    return food;
+  }
+
+  function entryToRow(entry, userId) {
+    const live = !entry.deletedAt;
+    return {
+      id: toUuid(entry.id),
+      user_id: userId,
+      log_date: entry.logDate,
+      meal: entry.meal || 'other',
+      entry_kind: 'quick_add',
+      food_id: null,
+      custom_food_id: null,
+      recipe_id: null,
+      quantity: Number(entry.quantity) > 0 ? Number(entry.quantity) : 1,
+      unit: entry.unit || 'serving',
+      calories: Number(entry.calories) || 0,
+      protein_g: Number(entry.proteinG) || 0,
+      carbs_g: Number(entry.carbsG) || 0,
+      fat_g: Number(entry.fatG) || 0,
+      nutrients: entry.nutrients || {},
+      display_name: entry.displayName || 'Food',
+      source_snapshot: {
+        ...(entry.sourceSnapshot || {}),
+        local_id: entry.id,
+        entry_kind_local: entry.entryKind || 'food',
+        synced_by: WRITER,
+      },
+      notes: entry.notes || null,
+      updated_at: entry.updatedAt || new Date().toISOString(),
+      deleted_at: live ? null : entry.deletedAt || new Date().toISOString(),
+    };
+  }
+
+  async function mirrorLogEntries(localDb) {
     const uid = await sessionUserId();
-    if (!uid) return { ok: false, reason: 'auth_required' };
+    if (!uid) return;
+    const entries = Array.isArray(localDb.logEntries) ? localDb.logEntries : [];
+    if (!entries.length) return;
+    const rows = entries.map((e) => entryToRow(e, uid));
+    // Upsert in chunks — PostgREST payload limits.
+    for (let i = 0; i < rows.length; i += 50) {
+      const chunk = rows.slice(i, i + 50);
+      const { error } = await client().from('food_log_entries').upsert(chunk, { onConflict: 'id' });
+      if (error) throw error;
+    }
+  }
 
-    const base = loadBase();
-    const prevRev = base && Number.isFinite(base.revision) ? base.revision : 0;
-    const sameAsLastPush = base && base.localFp === fp(localDb);
-    const revision = sameAsLastPush ? prevRev : prevRev + 1;
+  async function pushSnapshot(localDb, revision) {
+    const C = core();
     const now = Date.now();
-
     const { data: wrote, error } = await client().rpc('upsert_athlete_domain_snapshot', {
       p_domain: DOMAIN,
       p_schema_version: localDb.schemaVersion || C.NUTRITION_SCHEMA_VERSION || 1,
@@ -103,23 +228,63 @@
       p_snapshot: localDb,
     });
     if (error) throw error;
-    if (wrote === false) return { ok: false, reason: 'stale_revision' };
+    return { wrote: wrote !== false, revision, now };
+  }
 
-    saveBase({ revision, updatedAt: now, localFp: fp(localDb) });
-    return { ok: true, revision };
+  /**
+   * Push local nutrition DB to Supabase (snapshot + relational log rows).
+   * @returns {Promise<{ok:boolean, reason?:string, revision?:number}>}
+   */
+  async function pushNutrition(localDb) {
+    const C = core();
+    if (!C) throw new Error('Nutrition core missing');
+    const uid = await sessionUserId();
+    if (!uid) return { ok: false, reason: 'auth_required' };
+
+    setStatus({ busy: true, lastError: '' });
+    try {
+      const base = loadBase();
+      let prevRev = base && Number.isFinite(base.revision) ? base.revision : 0;
+      const sameAsLastPush = base && base.localFp === fp(localDb);
+      let revision = sameAsLastPush ? prevRev : prevRev + 1;
+
+      let result = await pushSnapshot(localDb, revision);
+      if (!result.wrote) {
+        // Stale — another device ahead. Refresh base and retry once.
+        const remote = await pullRemote();
+        if (remote) {
+          prevRev = remote.revision;
+          revision = prevRev + 1;
+          result = await pushSnapshot(localDb, revision);
+        }
+      }
+      if (!result.wrote) {
+        setStatus({ busy: false, lastOk: false, lastError: 'stale_revision' });
+        return { ok: false, reason: 'stale_revision' };
+      }
+
+      await mirrorLogEntries(localDb);
+      saveBase({ revision: result.revision, updatedAt: result.now, localFp: fp(localDb) });
+      setStatus({ busy: false, lastOk: true, lastSyncAt: new Date().toISOString(), lastError: '' });
+      return { ok: true, revision: result.revision };
+    } catch (e) {
+      setStatus({ busy: false, lastOk: false, lastError: (e && e.message) || 'sync failed' });
+      throw e;
+    }
   }
 
   /**
    * Merge remote nutrition slice into local DB when signed in.
-   * Falls back to local-only on auth/network errors.
    */
   async function reconcile(localDb) {
     const C = core();
     if (!C || !(await isSignedIn())) return localDb;
+    setStatus({ busy: true });
     let remote;
     try {
       remote = await pullRemote();
-    } catch (_) {
+    } catch (e) {
+      setStatus({ busy: false, lastError: (e && e.message) || 'pull failed' });
       return localDb;
     }
     if (!remote || remote.snapshot == null) {
@@ -127,6 +292,8 @@
         try {
           await pushNutrition(localDb);
         } catch (_) {}
+      } else {
+        setStatus({ busy: false });
       }
       return localDb;
     }
@@ -134,13 +301,28 @@
     try {
       remoteDb = C.sanitizeNutritionDB(remote.snapshot);
     } catch (_) {
+      setStatus({ busy: false, lastError: 'bad remote snapshot' });
       return localDb;
     }
     try {
       const merged = C.mergeNutrition(localDb, remoteDb);
       saveBase({ revision: remote.revision, updatedAt: remote.updatedAt, localFp: fp(merged) });
+      // Push merge if local had anything remote didn't.
+      if (fp(merged) !== fp(remoteDb)) {
+        try {
+          await pushNutrition(merged);
+        } catch (_) {}
+      } else {
+        setStatus({
+          busy: false,
+          lastOk: true,
+          lastSyncAt: new Date().toISOString(),
+          lastError: '',
+        });
+      }
       return merged;
     } catch (_) {
+      setStatus({ busy: false, lastError: 'schema mismatch' });
       return localDb;
     }
   }
@@ -149,8 +331,52 @@
   function schedulePush(localDb) {
     if (pushTimer) clearTimeout(pushTimer);
     pushTimer = setTimeout(() => {
-      pushNutrition(localDb).catch(() => {});
+      isSignedIn()
+        .then((ok) => (ok ? pushNutrition(localDb) : null))
+        .catch(() => {});
     }, 800);
+  }
+
+  function cardHtml() {
+    const s = getStatus();
+    const last = s.lastSyncAt ? new Date(s.lastSyncAt).toLocaleString() : 'Never';
+    const line = s.lastError
+      ? `Last error: ${s.lastError}`
+      : s.lastOk
+        ? `Cloud sync OK · ${last}`
+        : `Sign in (WHOOP card) to sync nutrition to Supabase. Last: ${last}`;
+    return `<div class=card><div class=eyebrow>Nutrition cloud</div><div class=title>Supabase sync</div><div class=meta>${esc(line)}</div>
+      <div class=btns style="margin-top:12px">
+        <button type="button" class="btn small primary" onclick="NutritionSync.syncNow()">Sync now</button>
+      </div></div>`;
+  }
+
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  async function syncNow() {
+    if (!(await isSignedIn())) {
+      global.alert('Sign in under WHOOP first — nutrition uses the same Supabase account.');
+      return;
+    }
+    const local =
+      (global.NutritionUI && typeof global.NutritionUI.load === 'function' && global.NutritionUI.load()) ||
+      null;
+    if (!local) {
+      global.alert('Nutrition data not loaded yet — open Nutrition once, then sync.');
+      return;
+    }
+    try {
+      const merged = await reconcile(local);
+      if (global.NutritionUI && typeof global.NutritionUI.replace === 'function') {
+        global.NutritionUI.replace(merged);
+      }
+      global.alert(getStatus().lastOk ? 'Nutrition synced to Supabase.' : 'Sync finished with warnings: ' + (getStatus().lastError || 'unknown'));
+      if (typeof global.settings === 'function') global.settings();
+    } catch (e) {
+      global.alert((e && e.message) || 'Sync failed');
+    }
   }
 
   global.NutritionSync = {
@@ -161,5 +387,9 @@
     pushNutrition,
     reconcile,
     schedulePush,
+    lookupBarcodeCloud,
+    getStatus,
+    cardHtml,
+    syncNow,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

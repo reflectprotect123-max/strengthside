@@ -11,7 +11,7 @@ cp "$SRC_DIR/whoop.js" "$ROOT/preview-site/whoop.js"
 mkdir -p "$ROOT/preview-site"
 cp "$SRC" "$ROOT/preview-site/index.html"
 cp "$SW" "$ROOT/preview-site/service-worker.js"
-# Nutrition (local-first MacroTrack core + engine bundle + UI)
+# Nutrition (local-first MacroTrack core + engine bundle + UI + cloud sync)
 for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/$f"
