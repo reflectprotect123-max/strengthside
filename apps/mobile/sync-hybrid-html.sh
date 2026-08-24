@@ -12,7 +12,7 @@ mkdir -p "$ROOT/preview-site"
 cp "$SRC" "$ROOT/preview-site/index.html"
 cp "$SW" "$ROOT/preview-site/service-worker.js"
 # Nutrition (local-first MacroTrack core + engine bundle + UI + cloud sync)
-for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js; do
+for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js strength-bundle.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/$f"
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"

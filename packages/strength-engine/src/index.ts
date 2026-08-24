@@ -13,6 +13,7 @@ export * from './exposure';
 export * from './calibration';
 export * from './progression';
 export * from './queryText';
+export * from './volumeBudget';
 
 export interface StrengthBlockItem {
   id: string;
