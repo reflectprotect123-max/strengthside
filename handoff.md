@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 23 August 2026.**
+> **AUTHORITATIVE CHECKPOINT — 24 August 2026.**
 > **Mono-app bet locked:** this Hybrid HTML athlete app is the whole
 > product. Do not build Coach / ARC / Expo as parallel products.
 > Charter (keep/kill + build order):
@@ -10,8 +10,10 @@
 ## 1. Current project state
 
 Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
-System; same Supabase as the hybrid repo). Engine Stage 3 tip + lite
-native shell branch: `cursor/lite-native-shell-4920`.
+System; same Supabase as the hybrid repo). **Ship branch: `main`**
+(`453a497` — Engine Stage 1–3 + lite native shell + v43c debug). Feature
+work branches off `main`; do not treat the old
+`cursor/engine-stage*` / `cursor/lite-native-*` stack as tip.
 
 **Live athlete deploy (Netlify):**
 https://papaya-cheesecake-059e06.netlify.app/
@@ -27,6 +29,7 @@ and `apps/web` were deleted — athlete UX lives here only.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` — `pnpm run sync` then `scripts/build-dogfood-apk.sh` |
+| Dogfood APK | debug build via `scripts/build-dogfood-apk.sh` → `app-debug.apk` |
 | Cache / Update | `the-hybrid-athlete-engine-v43c` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
@@ -61,8 +64,9 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   finish HR-TRIMP from `@hybrid/engine` via `engine-bundle.js` +
   `engine-adapter.js`. Wake lock held for live Engine / Strength sessions
   (Cap KeepAwake + Screen Wake Lock). Hybrid Strength **math** frozen.
-- **Nutrition (v43b):** Daily log / quick-add / **Scan label** (Android camera →
-  ML Kit OCR → confirm; web paste) / targets / weight / custom foods.
+- **Nutrition (v43c):** Daily log / quick-add / **Scan label** (Android camera →
+  ML Kit OCR → confirm; web opens paste; Cap native can Take photo) /
+  targets / weight / custom foods.
   Spec: `docs/superpowers/specs/2026-08-23-lite-native-shell-design.md`.
 - **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
@@ -73,9 +77,11 @@ Bottom nav: **Home · Library · Calendar · Settings**.
 Cache / Update stamp: `the-hybrid-athlete-engine-v43c` /
 `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23`.
 
-**Engine Stage 1–3 done.** **Lite native shell (v43b):** Capacitor Android
-dogfood wrap + training wake lock + **ML Kit** label scan + medium Track
-Dawn polish. Not Play Store / not iOS this pass.
+**Engine Stage 1–3 + lite native shell shipped on `main` (v43c):** Capacitor
+Android dogfood wrap + training wake lock + **ML Kit** label scan + medium
+Track Dawn polish + wake-lock leave / paste alias / web-scan fixes. Not Play
+Store / not iOS this pass. Next dogfood: install debug APK, verify wake lock
++ ML Kit scan on device.
 
 ### How Conditioning works (current contract)
 
@@ -196,22 +202,22 @@ Do **not** commit untracked `expo-*.png` leftovers if they reappear.
 
 ## 4. Precise next steps for the next session
 
-1. Read this block + `CLAUDE.md` / shared-Supabase contract.
-2. Confirm build id **`the-hybrid-athlete-engine-v30`** on Netlify
-   (hard refresh / Update now).
-   Next product talk: **heart rate recovery** (post-effort HR drop /
-   recovery scoring) — not built in the athlete HTML yet.
+1. Read this block + `CLAUDE.md` / shared-Supabase contract. Branch from
+   **`main`** (v43c tip).
+2. Confirm build id **`the-hybrid-athlete-engine-v43c`** on Netlify and in
+   the Cap dogfood APK (hard refresh / Update now). Dogfood on phone:
+   wake lock during Engine/Strength; Nutrition → Scan label → ML Kit.
 3. Keep building **this** HTML file only:
    `apps/mobile/prototype/hybrid-app/index.html` →
-   `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify staging dir
+   `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify / rebuild APK
    if shipping. Bump `LOCAL_BUILD` and service-worker `CACHE` together.
 4. Do **not** revive Everyday Readiness, Guide/block-help, Nutrition stub,
-   Expo, or `home.html` / PWA shells. Real Nutrition (v38) is the HTML
-   daily-log port — not Expo barcode/OCR/recipes. Hybrid Strength athlete
-   building is intentional (v30).
+   Expo, or `home.html` / PWA shells. Real Nutrition is the HTML daily-log
+   + Cap ML Kit scan / web paste. Hybrid Strength athlete building is
+   intentional (v30+).
 5. Wait for the athlete’s next ask. Sensible follow-ups if unspecified:
-   simplify Library chrome, deepen WHOOP field coverage, wire
-   `@hybrid/strength-engine`, or nutrition catalogue sync — only if requested.
+   heart rate recovery scoring, deepen WHOOP, or nutrition catalogue sync
+   — only if requested.
 6. Do not start Phase B/C unless asked — and if logging lands, it lands
    in this HTML app.
 
