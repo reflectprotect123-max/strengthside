@@ -38,7 +38,7 @@ if (!proxy.includes('access-control-allow-origin')) {
 }
 
 const whoopJs = readFileSync(join(dir, 'whoop.js'), 'utf8');
-if (!whoopJs.includes('resolveProxyBase') || !whoopJs.includes('papaya-cheesecake-059e06.netlify.app')) {
+if (!whoopJs.includes('resolveProxyBase') || !whoopJs.includes('thehybridsystem.netlify.app')) {
   throw new Error('whoop.js must route native/offline clients to athlete Netlify');
 }
 
@@ -64,7 +64,7 @@ sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(whoopJs, sandbox);
 await sandbox.Whoop.refreshStatus();
-if (!String(sandbox.lastFetch || '').startsWith('https://papaya-cheesecake-059e06.netlify.app/')) {
+if (!String(sandbox.lastFetch || '').startsWith('https://thehybridsystem.netlify.app/')) {
   throw new Error('expected athlete Netlify URL from localhost, got: ' + sandbox.lastFetch);
 }
 

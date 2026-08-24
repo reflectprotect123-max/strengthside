@@ -1,8 +1,8 @@
-# Athlete app (papaya-cheesecake). Functions + static site live under preview-site.
+# Athlete app. Functions + static site live under preview-site.
 [build]
   base = "apps/mobile/preview-site"
   publish = "."
 
 [functions]
-  directory = "netlify/functions"
+  directory = "apps/mobile/preview-site/netlify/functions"
   node_bundler = "esbuild"
