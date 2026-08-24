@@ -7,3 +7,11 @@ dist/
 .claude/commands/
 .claude/hooks/
 graphify-out/
+# Capacitor local build junk (keep apps/mobile/capacitor sources tracked)
+apps/mobile/capacitor/android/.gradle/
+apps/mobile/capacitor/android/**/build/
+apps/mobile/capacitor/android/local.properties
+apps/mobile/capacitor/android/.idea/
+apps/mobile/capacitor/android/captures/
+apps/mobile/capacitor/android/*.iml
+apps/mobile/capacitor/android/app/src/main/assets/public/

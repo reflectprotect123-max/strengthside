@@ -1,0 +1,16 @@
+{
+  "appId": "com.hybrid.athlete",
+  "appName": "THE Hybrid",
+  "webDir": "../preview-site",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "Camera": {
+      "permissions": ["camera"]
+    }
+  }
+}

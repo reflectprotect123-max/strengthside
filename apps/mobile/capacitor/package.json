@@ -1,0 +1,20 @@
+{
+  "name": "@hybrid/athlete-capacitor",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Capacitor Android shell wrapping the Hybrid HTML athlete app (preview-site).",
+  "scripts": {
+    "sync": "bash ../sync-hybrid-html.sh && npx cap sync android",
+    "open": "npx cap open android",
+    "copy": "npx cap copy android"
+  },
+  "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
+    "@capacitor-mlkit/text-recognition": "^8.2.0",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/camera": "^8.2.3",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  }
+}

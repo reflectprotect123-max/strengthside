@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">THE Hybrid</string>
+    <string name="title_activity_main">THE Hybrid</string>
+    <string name="package_name">com.hybrid.athlete</string>
+    <string name="custom_url_scheme">com.hybrid.athlete</string>
+</resources>

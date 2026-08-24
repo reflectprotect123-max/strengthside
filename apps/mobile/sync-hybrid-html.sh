@@ -28,7 +28,7 @@ if [[ -f "$SRC_DIR/engine-adapter.js" ]]; then
   cp "$SRC_DIR/engine-adapter.js" "$ROOT/preview-site/engine-adapter.js"
 fi
 # Concept2 + Echo FTMS
-for f in concept2.js echo-ftms.js; do
+for f in concept2.js echo-ftms.js native-bridge.js label-scan.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/$f"
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
