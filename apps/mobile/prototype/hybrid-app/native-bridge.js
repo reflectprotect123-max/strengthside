@@ -1,6 +1,6 @@
 /**
  * Thin Capacitor bridge for the Hybrid HTML athlete app.
- * Cap Android: KeepAwake + Camera + ML Kit Text Recognition.
+ * Cap Android: KeepAwake + Camera + ML Kit Text Recognition + Barcode.
  * Browser: file picker only (no OCR — paste label text).
  */
 (function (global) {
@@ -49,14 +49,16 @@
   /**
    * @returns {Promise<{ path?: string, dataUrl?: string, format: string }|null>}
    */
-  async function takePhoto() {
+  async function takePhoto(opts) {
+    opts = opts || {};
     const Cam = plugin('Camera');
     if (Cam && typeof Cam.getPhoto === 'function') {
       const photo = await Cam.getPhoto({
-        quality: 90,
-        allowEditing: false,
+        quality: opts.quality ?? 100,
+        width: opts.width ?? 2400,
+        allowEditing: opts.allowEditing ?? true,
         resultType: 'uri',
-        source: 'CAMERA',
+        source: opts.source || 'CAMERA',
         correctOrientation: true,
         saveToGallery: false,
       });
@@ -65,6 +67,10 @@
       if (path) return { path, format: (photo && photo.format) || 'jpeg' };
     }
     return pickImageFile();
+  }
+
+  async function pickPhotoFromGallery() {
+    return takePhoto({ source: 'PHOTOS', allowEditing: true });
   }
 
   function pickImageFile() {
@@ -94,7 +100,6 @@
       input.addEventListener('change', () => {
         const file = input.files && input.files[0];
         if (!file) return finish(null);
-        // Web has no ML Kit — dataUrl alone is not enough for OCR here.
         const reader = new FileReader();
         reader.onload = () => finish({ dataUrl: String(reader.result || ''), format: 'jpeg' });
         reader.onerror = () => finish(null);
@@ -108,8 +113,6 @@
 
   /**
    * On-device ML Kit Text Recognition (Latin). Cap Android only.
-   * @param {string} path file:// or content:// image path
-   * @returns {Promise<{ text: string, lines: Array<{text:string,left:number,top:number,right:number,bottom:number}> }>}
    */
   async function recognizeText(path) {
     const TR = plugin('TextRecognition');
@@ -135,6 +138,72 @@
     return { text: String(result.text || ''), lines: lines.filter((l) => l.text) };
   }
 
+  /**
+   * Write a data URL JPEG to cache and OCR it. Cap Android only.
+   */
+  async function recognizeDataUrl(dataUrl) {
+    const FS = plugin('Filesystem');
+    if (!FS || typeof FS.writeFile !== 'function') {
+      const err = new Error('Filesystem unavailable for live scan.');
+      err.code = 'ocr_unavailable';
+      throw err;
+    }
+    const base64 = String(dataUrl || '').replace(/^data:image\/\w+;base64,/, '');
+    const name = `label-scan-${Date.now()}.jpg`;
+    const written = await FS.writeFile({
+      path: name,
+      data: base64,
+      directory: 'CACHE',
+    });
+    const path = (written && written.uri) || fileUrl(name);
+    return recognizeText(path);
+  }
+
+  /**
+   * Scan one barcode via ML Kit. Cap Android only.
+   * @returns {Promise<string|null>} barcode digits
+   */
+  async function scanBarcodeOnce() {
+    const BS = plugin('BarcodeScanner');
+    if (!BS) {
+      const err = new Error('Barcode scanner unavailable.');
+      err.code = 'barcode_unavailable';
+      throw err;
+    }
+    if (typeof BS.scan === 'function') {
+      const result = await BS.scan();
+      const code = result && (result.rawValue || result.displayValue || result.content);
+      return code ? String(code).trim() : null;
+    }
+    if (typeof BS.startScan === 'function' && typeof BS.stopScan === 'function') {
+      return new Promise((resolve, reject) => {
+        let handle = null;
+        const done = (value) => {
+          try {
+            if (handle && handle.remove) handle.remove();
+          } catch (_) {}
+          BS.stopScan().catch(() => {});
+          resolve(value);
+        };
+        BS.addListener('barcodesScanned', (event) => {
+          const barcodes = (event && event.barcodes) || [];
+          const first = barcodes[0];
+          const code = first && (first.rawValue || first.displayValue);
+          if (code) done(String(code).trim());
+        })
+          .then((h) => {
+            handle = h;
+            return BS.startScan();
+          })
+          .catch(reject);
+        setTimeout(() => done(null), 45000);
+      });
+    }
+    const err = new Error('Barcode scanner unavailable.');
+    err.code = 'barcode_unavailable';
+    throw err;
+  }
+
   function onAppState(cb) {
     const App = plugin('App');
     if (!App || typeof App.addListener !== 'function') return () => {};
@@ -158,8 +227,11 @@
     keepAwake,
     allowSleep,
     takePhoto,
+    pickPhotoFromGallery,
     pickImageFile,
     recognizeText,
+    recognizeDataUrl,
+    scanBarcodeOnce,
     onAppState,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

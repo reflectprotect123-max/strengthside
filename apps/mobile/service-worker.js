@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-engine-v43c';
+const CACHE = 'the-hybrid-athlete-engine-v44';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -16,6 +16,9 @@ self.addEventListener('install', (event) => {
           './concept2.js',
           './native-bridge.js',
           './label-scan.js',
+          './label-scan-live.js',
+          './food-catalog.js',
+          './food-catalog-au.json',
           './manifest.json',
         ].map((url) => cache.add(url).catch(() => undefined)),
       ),

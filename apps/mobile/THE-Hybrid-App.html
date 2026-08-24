@@ -643,6 +643,17 @@ details.card > summary::-webkit-details-marker{display:none}
 
 /* Nutrition daily log */
 .nut-meters{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.nut-scan-live{position:fixed;inset:0;z-index:60;background:#07090bf2;display:flex;align-items:stretch;justify-content:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.nut-scan-panel{display:flex;flex-direction:column;width:100%;max-width:760px;padding:12px}
+.nut-scan-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.nut-scan-stage{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000;min-height:220px}
+.nut-scan-stage video{width:100%;height:min(42vh,360px);object-fit:cover;display:block}
+.nut-scan-tip{position:absolute;left:0;right:0;bottom:0;padding:10px 12px;background:linear-gradient(transparent,#000c);font-size:11px;color:#ddd}
+.nut-mock-label{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel)}
+.nut-mock-head{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px;font-weight:700;font-size:13px}
+.nut-mock-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.nut-mock-row.filled b{color:var(--zone)}
+.nut-raw-ocr{font-size:10px;white-space:pre-wrap;max-height:120px;overflow:auto;color:var(--dim);margin-top:8px}
 .nut-meter .row{justify-content:space-between;margin-bottom:4px;font-size:13px}
 .nut-meter .row span{color:var(--muted)}
 .nut-meter .row b{font-variant-numeric:tabular-nums}
@@ -679,6 +690,8 @@ body{background:transparent}
 <script src="./echo-ftms.js"></script>
 <script src="./native-bridge.js"></script>
 <script src="./label-scan.js"></script>
+<script src="./label-scan-live.js"></script>
+<script src="./food-catalog.js"></script>
 </head>
 <body>
 <div class="app"><header class="top"><div class="brand"><div class="mark" aria-hidden="true">THE</div><div><b>THE Hybrid</b><small>Track Dawn · Athlete</small></div></div><div class="topright"><button id="workoutClock" class="stopwatch" onclick="toggleWorkoutClock()">00:00</button><button type=button class=updatebtn onclick=applyAppUpdate()>Update</button><div id="saveStatusChip" class="savestatus ok">Saved</div></div></header><main id="appScreen"></main></div>
@@ -768,7 +781,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v43c';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v44';
 function ensureLocalReady(state){state=state||{};state.meta=state.meta||{};state.meta.localRevision=num(state.meta.localRevision);state.meta.ownerId=state.meta.ownerId||localRecordId('user');state.meta.deviceId=state.meta.deviceId||localRecordId('device');state.meta.installId=state.meta.installId||localRecordId('install');state.meta.createdAt=state.meta.createdAt||isoNow();state.meta.updatedAt=isoNow();delete state['cl'+'oud'];delete state['sy'+'ncQueue'];return state}
 function ensureEntityMeta(record,entity,state=S){if(!record||typeof record!=='object')return record;state=state||S;state.meta=state.meta||{};record._meta=record._meta||{};record._meta.entity=entity;record._meta.localId=record._meta.localId||record.id||localRecordId(entity);record._meta.ownerId=record._meta.ownerId||state.meta.ownerId;record._meta.deviceId=record._meta.deviceId||state.meta.deviceId;record._meta.createdAt=record._meta.createdAt||isoNow();record._meta.updatedAt=record._meta.updatedAt||record._meta.createdAt;record._meta.version=num(record._meta.version)||1;return record}
 function touchRecord(record,entity){if(!record)return record;ensureEntityMeta(record,entity,S);record._meta.updatedAt=isoNow();record._meta.version=num(record._meta.version)+1;return record}

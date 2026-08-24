@@ -30,7 +30,7 @@ and `apps/web` were deleted — athlete UX lives here only.
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` — `pnpm run sync` then `scripts/build-dogfood-apk.sh` |
 | Dogfood APK | **https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest** — CI replaces the APK on each mobile push; same link every time |
-| Cache / Update | `the-hybrid-athlete-engine-v43c` — tap **Update** / **Update now** |
+| Cache / Update | `the-hybrid-athlete-engine-v44` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
@@ -64,9 +64,7 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   finish HR-TRIMP from `@hybrid/engine` via `engine-bundle.js` +
   `engine-adapter.js`. Wake lock held for live Engine / Strength sessions
   (Cap KeepAwake + Screen Wake Lock). Hybrid Strength **math** frozen.
-- **Nutrition (v43c):** Daily log / quick-add / **Scan label** (Android camera →
-  ML Kit OCR → confirm; web opens paste; Cap native can Take photo) /
-  targets / weight / custom foods.
+- **Nutrition (v44):** **Add food** search over bundled **105+ AU catalogue** (offline; grows when OFF import runs) + **barcode** scan → catalogue → label fallback + **live label scan** (multi-frame ML Kit + mock AU panel fill-in) / web paste / quick add.
   Spec: `docs/superpowers/specs/2026-08-23-lite-native-shell-design.md`.
 - **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
