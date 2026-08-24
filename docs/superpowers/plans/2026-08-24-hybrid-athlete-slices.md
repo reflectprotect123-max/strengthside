@@ -60,8 +60,10 @@
 | 6 Engine weekly honesty | E1–E10 | `engine-weekly-honesty-design.md` | 10 |
 | 7 Recovery engine | R1–R10 | `recovery-engine-design.md` | 10 |
 | 8 Coordinator | C1–C10 | `four-system-coordinator-design.md` | 10 |
+| 9 Post-ship gaps | 9.1–9.10 | (gap audit after PR #36) | 10 |
+| 10 Recovery v2 + progress depth | T1–T10 | (roadmap deferred items) | 10 |
 
-**Total: 76 slices across 8 phases (all ≤10 each).**
+**Total: 86 slices across 10 phases (all ≤10 each).**
 
 ---
 
@@ -597,7 +599,7 @@
 
 - Phase B coach authoring UI
 - Expo / second athlete shell
-- Delivery load / heat ledger (recovery v2)
+- Full delivery load ledger (heat ledger v2 is in Phase 10; session-level delivery load is not)
 - Coordinator silent-apply actions beyond copy (future)
 - AI progression decider (adaptive engine v2)
 
@@ -664,6 +666,83 @@
 - PR #36 gap audit — sync pull not wired on boot
 - `docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md` — pull on load
 - `docs/superpowers/specs/2026-08-24-recovery-engine-design.md` — ≥12 worst-of cases
+
+---
+
+# Phase 10 — Recovery v2 + progress depth (≤10 slices)
+
+**Scope:** Ship deferred roadmap items after Phase 9 — per-lift progress drill-down, 7-day heat ledger in recovery posture, and cross-device strength snapshot merge (not empty-local-only pull).
+
+**Shipped:** PR #36 (continued) — cache **v54**.
+
+### Slice T1 — Exercise exposure history in adapter
+
+- [x] `exerciseExposureHistory()` — last N performed sets per lift
+- [x] Colocated smoke coverage via `strength-progress-ui.smoke.mjs`
+- [x] `pnpm run verify` green
+
+### Slice T2 — Progress exercise detail API
+
+- [x] `progressExerciseDetail()` — WM anchor, load hint, session history
+- [x] Export on `StrengthAdapter`
+- [x] `pnpm run verify` green
+
+### Slice T3 — Progress UI tap-through
+
+- [x] PR/WM rows open exercise detail sheet in `index.html`
+- [x] `strengthExerciseDetailHtml()` + `openStrengthExerciseDetail()`
+- [x] `openStrengthProgress()` restored
+- [x] `pnpm run verify` green
+
+### Slice T4 — Heat ledger pure function
+
+- [x] `heatLedger(recentCheckins, days)` in `recovery-engine.js`
+- [x] Export on `RecoveryEngine`
+- [x] `pnpm run verify` green
+
+### Slice T5 — Heat ledger wired into recovery posture
+
+- [x] `recentCheckinsForRecovery()` in UI passes last 7 check-ins
+- [x] `heat_ledger_elevated` reason when avg heat ≥ 3.5 + poor sleep
+- [x] Gate downgrade ok → caution when elevated heat + sleep ≤ 4
+- [x] `recovery-engine.smoke.mjs` case added
+- [x] `pnpm run verify` green
+
+### Slice T6 — Strength sync mergeSnapshots
+
+- [x] Merge WM (newest effectiveAt), PRs (best kg), load hints (newest updatedAt)
+- [x] Dedupe progression audit (last 200)
+- [x] `reconcile()` uses merge instead of remote-wins-only
+- [x] `strength-sync.smoke.mjs` merge test
+- [x] `pnpm run verify` green
+
+### Slice T7 — Progress + sync smokes expanded
+
+- [x] `strength-progress-ui.smoke.mjs` — detail + progressSummary
+- [x] `strength-sync.smoke.mjs` — `mergeSnapshots` vm test
+- [x] `recovery-engine.smoke.mjs` — heat ledger case
+- [x] `pnpm run verify` green
+
+### Slice T8 — Sync preview copies + cache bump
+
+- [x] `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Bump `LOCAL_BUILD` + SW `CACHE` to **v54**
+- [x] `check:hybrid-proxy` green
+
+### Slice T9 — Phase 10 verify gate
+
+- [x] Full `pnpm run verify` green
+
+### Slice T10 — Phase 10 handoff
+
+- [x] Slice T checkboxes updated
+- [x] PR updated
+
+## References (phase 10)
+
+- `docs/superpowers/specs/2026-08-24-strength-progress-ui-design.md` — per-lift detail
+- `docs/superpowers/specs/2026-08-24-recovery-engine-design.md` — heat ledger deferred item
+- `docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md` — merge on reconcile
 
 ## References (full plan)
 
