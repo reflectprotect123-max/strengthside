@@ -18,11 +18,10 @@ must(src.includes('function addFood('), 'addFood');
 must(src.includes('function showBarcodeSheet(') || src.includes('function openBarcodeAdd('), 'barcode sheet helper');
 must(src.includes('lookupTypedBarcode') || src.includes('resolveBarcodeCode'), 'typed barcode lookup');
 
-// Add food prefers barcode on native — not search sheet first
+// Add food opens barcode sheet first (scan is primary CTA inside)
 must(
-  /function addFood\([\s\S]*?scanBarcode\(meal\)/.test(src) ||
-    /function addFood\([\s\S]*?openBarcodeAdd\(meal\)/.test(src),
-  'addFood must open barcode first on native',
+  /function addFood\([\s\S]*?showBarcodeSheet\(meal\)/.test(src),
+  'addFood must open barcode sheet first',
 );
 
 // Meal Add uses addFood/barcode, not only quickAdd
