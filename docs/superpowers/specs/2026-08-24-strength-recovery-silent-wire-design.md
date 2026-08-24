@@ -1,7 +1,7 @@
 # Strength + recovery silent wire — design spec
 
 **Date:** 2026-08-24  
-**Status:** Approved in chat  
+**Status:** Implemented (PR #36)  
 **Scope:** Wire `@hybrid/strength-engine` into the Hybrid HTML athlete app with silent progression and minimal recovery gates. **Defer** the four-system Coordinator / engine brain until this phase exits.
 
 ## Problem
