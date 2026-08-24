@@ -13,8 +13,9 @@
     "check:migrations": "node checks/migrations-apply.mjs",
     "check:engine-adapter": "node apps/mobile/prototype/hybrid-app/engine-adapter.parity.mjs",
     "check:label-scan": "node apps/mobile/prototype/hybrid-app/label-scan.smoke.mjs",
+    "check:nutrition-ui": "node apps/mobile/prototype/hybrid-app/nutrition-ui.smoke.mjs",
     "//verify": "Everything CI runs. The two lists SHOULD agree \u2014 a check that runs in CI and not here sits red on main while every local run says green, which the hybrid repo paid for on 16 August 2026. If they ever have to differ, write the reason next to the difference.",
-    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:engine-adapter && pnpm run check:label-scan"
+    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:engine-adapter && pnpm run check:label-scan && pnpm run check:nutrition-ui"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

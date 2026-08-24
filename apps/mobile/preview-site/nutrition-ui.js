@@ -172,10 +172,10 @@
         </div>
         ${meters}
         <div class=btns>
-          <button class="btn small primary" onclick="NutritionUI.scanLabel()">Scan label</button>
-          <button class="btn small" onclick="NutritionUI.targets()">Targets</button>
-          <button class="btn small" onclick="NutritionUI.weight()">Weight</button>
-          <button class="btn small" onclick="NutritionUI.foods()">My foods</button>
+          <button type="button" class="btn small primary" onclick="NutritionUI.scanLabel()">Scan label</button>
+          <button type="button" class="btn small" onclick="NutritionUI.targets()">Targets</button>
+          <button type="button" class="btn small" onclick="NutritionUI.weight()">Weight</button>
+          <button type="button" class="btn small" onclick="NutritionUI.foods()">My foods</button>
         </div>
         ${mealBlocks}
         <button class="btn block" style="margin-top:12px" onclick="go('home')">Done</button>
@@ -321,7 +321,10 @@
     );
     db.logEntries.push(entry);
     markDayComplete(db, date);
-    saveN(db);
+    if (!saveN(db)) {
+      alert('Could not save — storage may be full. Try Export backup in Settings, then retry.');
+      return;
+    }
     closeSheet();
     renderNutrition();
   }
