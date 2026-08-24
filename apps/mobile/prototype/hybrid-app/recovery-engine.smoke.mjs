@@ -48,4 +48,14 @@ must(RecoveryEngine.blocksProgressionBumps({ gate: 'hold' }), 'hold blocks bumps
 must(!RecoveryEngine.blocksProgressionBumps({ gate: 'ok' }), 'ok does not block bumps');
 must(RecoveryEngine.postureCopy({ band: 'insufficient_data', gate: 'hold' }).includes('Check in'), 'copy for no check-in');
 
+const heatPosture = RecoveryEngine.recoveryPosture({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green', sleepQuality: 3, heatLoad: 4 },
+  recentCheckins: [
+    { heatLoad: 4 }, { heatLoad: 5 }, { heatLoad: 4 },
+  ],
+});
+must(heatPosture.gate === 'caution', 'elevated heat ledger downgrades green day');
+must(heatPosture.reasonCodes.includes('heat_ledger_elevated'), 'heat ledger reason');
+
 console.log('recovery-engine.smoke: ok', cases.length, 'cases');

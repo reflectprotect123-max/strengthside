@@ -374,6 +374,44 @@
     return { applied: applied, recoveryGate: recovery.gate };
   }
 
+  function exerciseExposureHistory(state, exerciseId, limit) {
+    limit = limit || 5;
+    var performed = performedFromState(state).filter(function (p) {
+      return p.exerciseId === exerciseId && p.status === 'completed';
+    });
+    var rows = performed.map(function (p) {
+      var loadKg = measurementValue(p, 'load');
+      var reps = measurementValue(p, 'reps');
+      if (!loadKg) return null;
+      return {
+        sessionId: p.assignedSessionId,
+        loadKg: loadKg,
+        reps: reps,
+        at: p.performedAt,
+        date: String(p.performedAt || '').slice(0, 10),
+      };
+    }).filter(Boolean);
+    rows.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+    return rows.slice(0, limit);
+  }
+
+  function progressExerciseDetail(state, exerciseId) {
+    if (!hasStrength() || !exerciseId) return { ok: false };
+    ensureStrengthState(state);
+    var ss = state.strengthState;
+    var hint = ss.loadHints[exerciseId] || null;
+    var wm = (ss.workingMaxEvents || []).filter(function (e) { return e.exerciseId === exerciseId; });
+    wm.sort(function (a, b) { return String(b.effectiveAt).localeCompare(String(a.effectiveAt)); });
+    return {
+      ok: true,
+      exerciseId: exerciseId,
+      name: exerciseNameFor(state, exerciseId),
+      history: exerciseExposureHistory(state, exerciseId, 5),
+      loadHint: hint,
+      workingMaxKg: wm.length ? wm[0].valueKg : null,
+    };
+  }
+
   function applyLoadHintsToExercise(state, ex) {
     if (!ex || !ex.exerciseId) return;
     var hint = ensureStrengthState(state).loadHints[ex.exerciseId];
@@ -399,6 +437,8 @@
     trainedExerciseIds: trainedExerciseIds,
     recordPrEvents: recordPrEvents,
     progressSummary: progressSummary,
+    progressExerciseDetail: progressExerciseDetail,
+    exerciseExposureHistory: exerciseExposureHistory,
     auditReasonText: auditReasonText,
     exerciseNameFor: exerciseNameFor,
     ENGINE_VERSION: ENGINE_VERSION,

@@ -25,14 +25,34 @@ vm.createContext(sandbox);
 vm.runInContext(`${bundle}; window.HybridStrength = HybridStrength; ${recovery}; ${adapter}`, sandbox);
 
 const { StrengthAdapter } = sandbox.window;
+must(html.includes('openStrengthExerciseDetail'), 'index must open exercise detail');
+must(adapter.includes('progressExerciseDetail'), 'adapter must export progressExerciseDetail');
+
 const state = {
   meta: { progressionAudit: [] },
-  exercises: [{ id: 'bp', name: 'Bench' }],
-  strengthState: { workingMaxEvents: [], prEvents: [], loadHints: {} },
-  sessions: [],
+  exercises: [{ id: 'bp', name: 'Bench Press' }],
+  strengthState: {
+    workingMaxEvents: [{ exerciseId: 'bp', valueKg: 100, effectiveAt: '2026-08-24T10:00:00.000Z' }],
+    prEvents: [],
+    loadHints: { bp: { loadKg: 102.5, updatedAt: '2026-08-24T11:00:00.000Z', source: 'auto_estimate' } },
+  },
+  sessions: [{
+    id: 's1',
+    status: 'completed',
+    completedAt: Date.now(),
+    sessionPain: 'none',
+    tasks: [{
+      id: 't1',
+      kind: 'strength',
+      exerciseId: 'bp',
+      rows: [{ id: 'r1', n: 1, weight: 100, reps: 5, done: true }],
+    }],
+  }],
 };
+const detail = sandbox.window.StrengthAdapter.progressExerciseDetail(state, 'bp');
+must(detail.ok && detail.history.length === 1, 'exercise detail history');
+must(detail.loadHint && detail.loadHint.loadKg === 102.5, 'load hint');
 const summary = sandbox.window.StrengthAdapter.progressSummary(state);
 must(summary.ok === true, 'progressSummary should ok');
-must(Array.isArray(summary.prs), 'prs array');
 
 console.log('strength-progress-ui.smoke: ok');

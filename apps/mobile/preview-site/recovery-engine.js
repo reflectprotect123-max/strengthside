@@ -56,8 +56,19 @@
     return Math.max(20, Math.min(100, Math.round(base)));
   }
 
+  function heatLedger(recentCheckins, days) {
+    days = days || 7;
+    var vals = (recentCheckins || []).filter(function (c) {
+      return c && num(c.heatLoad) > 0;
+    }).slice(-days).map(function (c) { return num(c.heatLoad); });
+    if (!vals.length) return { sum: 0, avg: 0, days: 0, elevated: false };
+    var sum = vals.reduce(function (a, b) { return a + b; }, 0);
+    var avg = sum / vals.length;
+    return { sum: sum, avg: avg, days: vals.length, elevated: avg >= 3.5 };
+  }
+
   /**
-   * @param {{ checkin?: object, checkinComplete?: boolean, whoopRecovery?: number, sessionPain?: string }} input
+   * @param {{ checkin?: object, checkinComplete?: boolean, whoopRecovery?: number, sessionPain?: string, recentCheckins?: object[] }} input
    */
   function recoveryPosture(input) {
     input = input || {};
@@ -105,6 +116,15 @@
     var band = bandFromGate(gate, sub);
     if (!sub && gate === 'hold') band = 'minimum';
 
+    var ledger = heatLedger(input.recentCheckins, 7);
+    if (ledger.elevated && num(checkin && checkin.sleepQuality) > 0 && num(checkin.sleepQuality) <= 4) {
+      reasonCodes.push('heat_ledger_elevated');
+      if (gate === 'ok') {
+        gate = 'caution';
+        band = band === 'build' ? 'control' : band;
+      }
+    }
+
     return {
       band: band,
       gate: gate,
@@ -115,6 +135,7 @@
         wearable: whoopRec > 0 ? { recoveryScore: num(whoopRec) } : null,
         sessionPainToday: input.sessionPain || null,
         heatLoad: checkin ? num(checkin.heatLoad) || null : null,
+        heatLedger: ledger,
       },
     };
   }
@@ -140,5 +161,6 @@
     recoverySignal: recoverySignal,
     blocksProgressionBumps: blocksProgressionBumps,
     postureCopy: postureCopy,
+    heatLedger: heatLedger,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

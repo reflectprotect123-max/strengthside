@@ -64,6 +64,56 @@
     return state;
   }
 
+  function mergeSnapshots(localSnap, remoteSnap) {
+    localSnap = localSnap || { strengthState: {}, progressionAudit: [] };
+    remoteSnap = remoteSnap || { strengthState: {}, progressionAudit: [] };
+    var local = localSnap.strengthState || {};
+    var remote = remoteSnap.strengthState || {};
+
+    var wmByEx = {};
+    (local.workingMaxEvents || []).concat(remote.workingMaxEvents || []).forEach(function (e) {
+      if (!e || !e.exerciseId) return;
+      var cur = wmByEx[e.exerciseId];
+      if (!cur || String(e.effectiveAt) > String(cur.effectiveAt)) wmByEx[e.exerciseId] = e;
+    });
+
+    var prBest = {};
+    (local.prEvents || []).concat(remote.prEvents || []).forEach(function (p) {
+      if (!p || !p.exerciseId) return;
+      var key = p.exerciseId + ':' + p.repCount;
+      var cur = prBest[key];
+      if (!cur || num(p.valueKg) > num(cur.valueKg)) prBest[key] = p;
+    });
+
+    var hints = Object.assign({}, remote.loadHints || {}, local.loadHints || {});
+    Object.keys(hints).forEach(function (id) {
+      var l = (local.loadHints || {})[id];
+      var r = (remote.loadHints || {})[id];
+      if (l && r) hints[id] = String(l.updatedAt) >= String(r.updatedAt) ? l : r;
+    });
+
+    var auditMap = {};
+    (remoteSnap.progressionAudit || []).concat(localSnap.progressionAudit || []).forEach(function (a) {
+      if (!a) return;
+      var key = String(a.at) + ':' + String(a.exerciseId) + ':' + String(a.action);
+      auditMap[key] = a;
+    });
+    var audit = Object.keys(auditMap).map(function (k) { return auditMap[k]; });
+    audit.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+    if (audit.length > 200) audit = audit.slice(audit.length - 200);
+
+    return {
+      snapshotVersion: SNAPSHOT_VERSION,
+      exportedAt: new Date().toISOString(),
+      strengthState: {
+        workingMaxEvents: Object.keys(wmByEx).map(function (k) { return wmByEx[k]; }),
+        prEvents: Object.keys(prBest).map(function (k) { return prBest[k]; }),
+        loadHints: hints,
+      },
+      progressionAudit: audit,
+    };
+  }
+
   function setStatus(patch) {
     Object.assign(status, patch || {});
   }
@@ -153,16 +203,16 @@
       return state;
     }
     var localSnap = snapshotFromState(state);
-    var remoteFp = fp(remote.snapshot);
+    var remoteSnap = remote.snapshot;
+    var remoteFp = fp(remoteSnap);
     var localFp = fp(localSnap);
     if (remoteFp === localFp) {
       setStatus({ busy: false, lastOk: true, lastSyncAt: new Date().toISOString() });
       saveBase({ revision: remote.revision, updatedAt: remote.updatedAt, localFp: localFp });
       return state;
     }
-    if (remote.updatedAt > (loadBase()?.updatedAt || 0) && (!localSnap.progressionAudit.length)) {
-      applySnapshot(state, remote.snapshot);
-    }
+    var mergedSnap = mergeSnapshots(localSnap, remoteSnap);
+    applySnapshot(state, mergedSnap);
     try { await pushStrength(state); } catch (_) {}
     setStatus({ busy: false, lastOk: true, lastSyncAt: new Date().toISOString() });
     return state;
@@ -222,6 +272,7 @@
     WRITER: WRITER,
     DOMAIN: DOMAIN,
     snapshotFromState: snapshotFromState,
+    mergeSnapshots: mergeSnapshots,
     isSignedIn: isSignedIn,
     pushStrength: pushStrength,
     reconcile: reconcile,
