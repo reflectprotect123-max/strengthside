@@ -57,30 +57,11 @@
       .split(',')[0]
       .trim() || null;
     const serving = String(p.serving_size || '').trim() || null;
+    const servingQtyField = p.serving_quantity != null ? p.serving_quantity : n.serving_quantity;
+    const servingUnitField =
+      p.serving_quantity_unit != null ? p.serving_quantity_unit : n.serving_quantity_unit;
     const id = 'off-' + code;
-    const servings = [];
-    // Attach an explicit serving→g/ml row when OFF states a mass/volume that
-    // matches the per-100g (or ml) basis. Never invent density.
-    const parsed =
-      window.HybridNutrition &&
-      HybridNutrition.Core &&
-      HybridNutrition.Core.parseServingSizeText
-        ? HybridNutrition.Core.parseServingSizeText(serving)
-        : parseServingSizeLocal(serving);
-    if (parsed && parsed.unit === 'g') {
-      servings.push({
-        id: id + '-serving',
-        foodId: id,
-        label: serving || 'serving',
-        quantity: 1,
-        unit: 'serving',
-        grams: parsed.amount,
-        millilitres: null,
-        isDefault: true,
-        sortOrder: 0,
-      });
-    }
-    return {
+    let food = {
       id,
       name,
       brand,
@@ -97,35 +78,83 @@
       source: 'openfoodfacts',
       externalId: code,
       nutrients: {},
-      servings,
+      servings: [],
       cachedAt: new Date().toISOString(),
     };
+    const fields = {
+      servingSizeText: serving,
+      servingQuantity: servingQtyField,
+      servingQuantityUnit: servingUnitField,
+    };
+    // Prefer nutrition-core enricher (structured OFF fields + household units).
+    if (global.HybridNutrition && HybridNutrition.Core && HybridNutrition.Core.enrichFoodServings) {
+      food = HybridNutrition.Core.enrichFoodServings(food, fields);
+    } else {
+      const parsed = parseServingSizeLocal(serving, servingQtyField, servingUnitField);
+      if (parsed && parsed.unit === 'g') {
+        food.servings = [
+          {
+            id: id + '-serving',
+            foodId: id,
+            label: serving || parsed.amount + ' g',
+            quantity: 1,
+            unit: 'serving',
+            grams: parsed.amount,
+            millilitres: null,
+            isDefault: true,
+            sortOrder: 0,
+          },
+        ];
+      }
+    }
+    return food;
   }
 
   /** Local fallback when nutrition-core is not loaded yet. */
-  function parseServingSizeLocal(text) {
+  function parseServingSizeLocal(text, qty, unit) {
+    if (qty != null && unit) {
+      let amount = Number(qty);
+      let u = String(unit).toLowerCase().trim();
+      if (Number.isFinite(amount) && amount > 0) {
+        if (u === 'g') return { amount, unit: 'g' };
+        if (u === 'mg') return { amount: amount / 1000, unit: 'g' };
+        if (u === 'kg') return { amount: amount * 1000, unit: 'g' };
+        if (u === 'ml') return { amount, unit: 'ml' };
+        if (u === 'l') return { amount: amount * 1000, unit: 'ml' };
+        if (u === 'cl') return { amount: amount * 10, unit: 'ml' };
+      }
+    }
     if (!text) return null;
     const raw = String(text).trim();
     const paren = /\(([^)]*)\)/.exec(raw);
     const outside = raw.replace(/\([^)]*\)/g, ' ');
-    const re = /(\d+(?:[.,]\d+)?|\d*[.,]\d+)\s*(kg|mg|ml|g|l)\b/i;
-    const m = (paren ? re.exec(paren[1]) : null) || re.exec(outside);
+    const re = /(\d+(?:[.,]\d+)?|\d*[.,]\d+)\s*(fl\.?\s*oz|floz|oz|kg|mg|ml|cl|g|l)\b/i;
+    const m = (paren ? re.exec(paren[1]) : null) || re.exec(outside) || re.exec(raw);
     if (!m) return null;
     let amount = Number(String(m[1]).replace(',', '.'));
     if (!Number.isFinite(amount) || amount <= 0) return null;
-    let unit = m[2].toLowerCase();
-    if (unit === 'kg') {
+    let u = m[2].toLowerCase().replace(/\./g, '').replace(/\s+/g, '');
+    if (u === 'kg') {
       amount *= 1000;
-      unit = 'g';
-    } else if (unit === 'mg') {
+      u = 'g';
+    } else if (u === 'mg') {
       amount /= 1000;
-      unit = 'g';
-    } else if (unit === 'l') {
+      u = 'g';
+    } else if (u === 'l') {
       amount *= 1000;
-      unit = 'ml';
+      u = 'ml';
+    } else if (u === 'cl') {
+      amount *= 10;
+      u = 'ml';
+    } else if (u === 'oz') {
+      amount *= 28.349523125;
+      u = 'g';
+    } else if (u === 'floz') {
+      amount *= 29.5735295625;
+      u = 'ml';
     }
-    if (unit !== 'g' && unit !== 'ml') return null;
-    return { amount, unit };
+    if (u !== 'g' && u !== 'ml') return null;
+    return { amount, unit: u };
   }
 
   async function offFetch(url) {
@@ -213,7 +242,7 @@
       '&json=1&page_size=' +
       Math.min(50, limit) +
       '&page=1' +
-      '&fields=code,product_name,product_name_en,brands,brand_owner,serving_size,nutriments';
+      '&fields=code,product_name,product_name_en,brands,brand_owner,serving_size,serving_quantity,serving_quantity_unit,nutriments';
     const data = await offFetch(url);
     const products = Array.isArray(data.products) ? data.products : [];
     const out = [];
@@ -236,7 +265,7 @@
       OFF_ORIGIN +
       '/api/v2/product/' +
       encodeURIComponent(bc) +
-      '.json?fields=code,product_name,product_name_en,brands,brand_owner,serving_size,nutriments';
+      '.json?fields=code,product_name,product_name_en,brands,brand_owner,serving_size,serving_quantity,serving_quantity_unit,nutriments';
     const data = await offFetch(url);
     if (!data || data.status !== 1) return null;
     const food = productToFood(data.product || data);
