@@ -16,7 +16,11 @@ work branches off `main`; do not treat the old
 `cursor/engine-stage*` / `cursor/lite-native-*` stack as tip.
 
 **Live athlete deploy (Netlify):**
-https://papaya-cheesecake-059e06.netlify.app/
+https://thehybridsystem.netlify.app/
+
+(Old URL `papaya-cheesecake-059e06.netlify.app` is dead — not in the Netlify
+account. Athlete app + WHOOP proxies deploy to `thehybridsystem` via
+`.github/workflows/deploy-athlete-netlify.yml`.)
 
 **The product athletes use is the Hybrid HTML app.** Not Expo, not
 `home.html`, not `prototype/pwa/`. Those were deleted on purpose. Do not

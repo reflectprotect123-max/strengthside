@@ -1,0 +1,40 @@
+# Deploy athlete HTML app + integration proxy functions to Netlify.
+# Requires repo secrets: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID (thehybridsystem site).
+name: Deploy athlete Netlify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/preview-site/**'
+      - 'apps/mobile/prototype/hybrid-app/**'
+      - 'apps/mobile/sync-hybrid-html.sh'
+      - 'netlify.toml'
+      - '.github/workflows/deploy-athlete-netlify.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync preview-site from prototype
+        run: bash apps/mobile/sync-hybrid-html.sh
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${NETLIFY_AUTH_TOKEN:-}" || -z "${NETLIFY_SITE_ID:-}" ]]; then
+            echo "::warning::NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID not set — skipping Netlify deploy"
+            exit 0
+          fi
+          npx --yes netlify-cli deploy --prod \
+            --site="$NETLIFY_SITE_ID" \
+            --dir=apps/mobile/preview-site \
+            --functions=apps/mobile/preview-site/netlify/functions \
+            --no-build \
+            --message "deploy athlete app (${GITHUB_SHA::7})"

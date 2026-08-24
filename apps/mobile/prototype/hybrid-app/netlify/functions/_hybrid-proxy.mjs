@@ -1,7 +1,7 @@
 /**
  * Same-origin shim onto THE-HYBRID-ENGINE1 Netlify functions.
  *
- * The athlete HTML (papaya-cheesecake) cannot call hybrid cross-origin —
+ * The athlete HTML (thehybridsystem) cannot call hybrid cross-origin —
  * those functions do not emit CORS headers. Tokens and WHOOP OAuth still
  * live only on hybrid; we just forward Authorization and the path.
  */
