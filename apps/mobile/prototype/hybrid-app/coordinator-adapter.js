@@ -71,11 +71,19 @@
       var c = (state.dailyCheckins || []).find(function (x) { return x.date === date; });
       var complete = checkinComplete(c);
       var painSession = sessions.find(function (s) { return s.date === date && s.sessionPain; });
+      var recentCheckins = (state.dailyCheckins || []).filter(function (x) {
+        return x && x.date <= date;
+      }).sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); }).slice(0, 7);
       var input = {
         checkin: c,
         checkinComplete: complete,
         whoopRecovery: c && num(c.whoopRecovery),
         sessionPain: painSession && painSession.sessionPain,
+        recentCheckins: recentCheckins,
+        recentSessions: sessions,
+        allSessions: state.sessions || [],
+        allCheckins: state.dailyCheckins || [],
+        endDate: date,
       };
       var posture = global.RecoveryEngine && global.RecoveryEngine.recoveryPosture
         ? global.RecoveryEngine.recoveryPosture(input)
@@ -124,6 +132,35 @@
       '<button class="btn block" style="margin-top:14px" onclick="closeSheet()">Done</button>';
   }
 
+  function applySilentReceipt(state, receipt) {
+    if (!state || !receipt) return state;
+    state.meta = state.meta || {};
+    var applied = [];
+    var now = receipt.generatedAt || new Date().toISOString();
+    (receipt.items || []).forEach(function (it) {
+      if (!it.silentApply) return;
+      if (it.domain === 'conditioning' && it.kind === 'ease') {
+        state.meta.condPrescriptionEase = { effort: 'easy', at: now, reason: it.message };
+        applied.push({ domain: it.domain, kind: it.kind, at: now });
+      } else if (it.domain === 'strength' || it.domain === 'recovery') {
+        applied.push({ domain: it.domain, kind: it.kind, message: it.message, at: now });
+      }
+    });
+    if (applied.length) state.meta.coordinatorApplied = applied;
+    state.meta.coordinatorLastReceipt = {
+      weekStart: receipt.weekStart,
+      generatedAt: now,
+      headline: receipt.headline,
+    };
+    return state;
+  }
+
+  function bootstrapSilent(state, endDate, days) {
+    var receipt = planWeek(state, endDate, days);
+    if (!receipt) return state;
+    return applySilentReceipt(state, receipt);
+  }
+
   function esc(v) {
     return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
@@ -134,5 +171,7 @@
     collectReceipts: collectReceipts,
     planWeek: planWeek,
     weeklySheetHtml: weeklySheetHtml,
+    applySilentReceipt: applySilentReceipt,
+    bootstrapSilent: bootstrapSilent,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
