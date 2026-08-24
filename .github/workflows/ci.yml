@@ -26,6 +26,7 @@ jobs:
       - run: pnpm run check:native-bridge
       - run: pnpm run check:nutrition-ui
       - run: pnpm run check:strength-resolve
+      - run: pnpm run check:strength-adapter-resolve
       - run: pnpm run check:strength-volume
       - run: pnpm run check:strength-progression
       - run: pnpm run check:strength-sync

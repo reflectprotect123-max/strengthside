@@ -428,6 +428,39 @@
     });
   }
 
+  /**
+   * Resolve prescribed load for an HTML exercise task (%WM etc.) via strength-engine.
+   * exercise.loadExpr optional: { exprKind: 'pct_of_max', exprArg: 0.7 }
+   */
+  function resolveExerciseLoad(state, exercise, asOfDate) {
+    if (!hasStrength() || !exercise || !exercise.loadExpr) return null;
+    var HS = global.HybridStrength;
+    var ctx = {
+      athleteId: (state.meta && state.meta.ownerId) || 'local',
+      scheduledDate: asOfDate,
+      workingMaxAt: function (exId) { return currentAnchorLoad(state, exId); },
+      lastPerformedLoad: function (_a, exId) { return null; },
+      bodyweightAt: function () { return num(state.profile && state.profile.bodyweight) || null; },
+    };
+    var fakeEx = {
+      id: exercise.exerciseId || exercise.id,
+      equipment: exercise.equipment || 'barbell_kg',
+      referenceMaxExerciseId: null,
+    };
+    var t = {
+      exprKind: exercise.loadExpr.exprKind,
+      exprArg: exercise.loadExpr.exprArg,
+      literalValue: null,
+      rangeLo: null,
+      rangeHi: null,
+      exprRefExercise: exercise.loadExpr.exprRefExercise || null,
+    };
+    var r = HS.Resolve.resolveTarget(t, fakeEx, ctx);
+    if (r.kind === 'scalar') return { loadKg: r.value, unresolvedReason: null };
+    if (r.kind === 'unresolved') return { loadKg: null, unresolvedReason: r.reason };
+    return null;
+  }
+
   global.StrengthAdapter = {
     hasStrength: hasStrength,
     ensureStrengthState: ensureStrengthState,
@@ -441,6 +474,7 @@
     exerciseExposureHistory: exerciseExposureHistory,
     auditReasonText: auditReasonText,
     exerciseNameFor: exerciseNameFor,
+    resolveExerciseLoad: resolveExerciseLoad,
     ENGINE_VERSION: ENGINE_VERSION,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

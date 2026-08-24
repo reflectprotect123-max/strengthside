@@ -16,6 +16,7 @@
     "check:native-bridge": "node apps/mobile/prototype/hybrid-app/native-bridge.barcode.smoke.mjs",
     "check:nutrition-ui": "node apps/mobile/prototype/hybrid-app/nutrition-ui.smoke.mjs && node apps/mobile/prototype/hybrid-app/nutrition-ui.barcode.smoke.mjs",
     "check:strength-resolve": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/strength-resolve.smoke.mjs",
+    "check:strength-adapter-resolve": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/strength-adapter-resolve.smoke.mjs",
     "check:strength-volume": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/strength-volume.smoke.mjs",
     "check:strength-progression": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/recovery-engine.smoke.mjs && node apps/mobile/prototype/hybrid-app/recovery-signals.smoke.mjs && node apps/mobile/prototype/hybrid-app/strength-progression.smoke.mjs && node apps/mobile/prototype/hybrid-app/strength-progress-ui.smoke.mjs && node apps/mobile/prototype/hybrid-app/load-headline.smoke.mjs && node apps/mobile/prototype/hybrid-app/coordinator.smoke.mjs",
     "check:strength-sync": "node apps/mobile/prototype/hybrid-app/strength-sync.smoke.mjs",
@@ -24,7 +25,7 @@
     "check:hybrid-proxy": "bash apps/mobile/sync-hybrid-html.sh && node apps/mobile/prototype/hybrid-app/hybrid-proxy.smoke.mjs",
     "seed:au-foods": "node scripts/push-au-food-catalog-to-supabase.mjs",
     "//verify": "Everything CI runs. The two lists SHOULD agree \u2014 a check that runs in CI and not here sits red on main while every local run says green, which the hybrid repo paid for on 16 August 2026. If they ever have to differ, write the reason next to the difference.",
-    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:engine-adapter && pnpm run check:label-scan && pnpm run check:native-bridge && pnpm run check:nutrition-ui && pnpm run check:strength-resolve && pnpm run check:strength-volume && pnpm run check:strength-progression && pnpm run check:strength-sync && pnpm run check:nutrition-sync && pnpm run check:food-catalog && pnpm run check:hybrid-proxy"
+    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:engine-adapter && pnpm run check:label-scan && pnpm run check:native-bridge && pnpm run check:nutrition-ui && pnpm run check:strength-resolve && pnpm run check:strength-adapter-resolve && pnpm run check:strength-volume && pnpm run check:strength-progression && pnpm run check:strength-sync && pnpm run check:nutrition-sync && pnpm run check:food-catalog && pnpm run check:hybrid-proxy"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
