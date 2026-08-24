@@ -1,234 +1,217 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 24 August 2026.**
-> **Mono-app bet locked:** this Hybrid HTML athlete app is the whole
-> product. Do not build Coach / ARC / Expo as parallel products.
-> Charter (keep/kill + build order):
-> `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
-> Where this block disagrees with anything below it, this one wins.
+> **AUTHORITATIVE CHECKPOINT — 24 August 2026 (evening).**
+> **Chat may be cleared after this write — treat this block as the full memory.**
+> **Mono-app bet locked:** Hybrid HTML athlete app is the whole product.
+> Do **not** build Coach / ARC / Expo as parallel products.
+> Charter: `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
+> Where this block disagrees with anything below it, **this one wins.**
+
+## 0. Read this first (next agent / next chat)
+
+1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
+2. Ship tip = **`main`** at **`03153e4`** — cache **`the-hybrid-athlete-engine-v59`**
+3. **Next build work** is already designed + planned (docs only — **not coded yet**):
+   - Spec: `docs/superpowers/specs/2026-08-24-five-systems-complete-design.md`
+   - Plan: `docs/superpowers/plans/2026-08-24-five-systems-complete.md`
+   - Branch / PR: `cursor/five-systems-complete-4920` → **PR #41** (draft)
+4. Start execution at **Phase 1 Task S1** in that plan (export Resolve / E1rm / Load).
+   Owner locks (do not re-litigate without ask):
+   - Approach **1 vertical** by domain
+   - Brains **invisible** (no Recovery dial; no autopilot accept/decline UI)
+   - Nutrition: **no** recipes UI; **no** expenditure charts; day-status wiring **yes**
+   - Conditioning progression = engine **`conAdapt`** (earned) — **not** cross-engine vote
+   - Coordinator: **no weekly peek** (remove `index.html` Coordinator `openWeeklyReview`)
+   - **Keep** `NutritionUI.openWeeklyReview` (MacroFactor adaptive check-in — different thing)
+5. Owner had **not** chosen Subagent-Driven vs Inline when chat cleared — **ask once**, then execute.
+6. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
+   `LOCAL_BUILD` + SW `CACHE` together.
+
+---
 
 ## 1. Current project state
 
 Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
-System; same Supabase as the hybrid repo). **Ship branch: `main`**
-(`453a497` — Engine Stage 1–3 + lite native shell + v43c debug). Feature
-work branches off `main`; do not treat the old
-`cursor/engine-stage*` / `cursor/lite-native-*` stack as tip.
+System; **same Supabase** as the hybrid repo). **Ship branch: `main`**
+(`03153e4` — polish + coach scrub **v59**; hybrid athlete Phases 1–12 merged
+earlier the same day). Feature work branches off `main`. Do **not** treat old
+`cursor/engine-stage*` / Expo stacks as tip.
 
-**Live athlete deploy (Netlify):**
-https://thehybridsystem.netlify.app/
+**Live athlete deploy (Netlify):** https://thehybridsystem.netlify.app/  
+(Old `papaya-cheesecake-059e06.netlify.app` is dead.)  
+Workflow: `.github/workflows/deploy-athlete-netlify.yml`
 
-(Old URL `papaya-cheesecake-059e06.netlify.app` is dead — not in the Netlify
-account. Athlete app + WHOOP proxies deploy to `thehybridsystem` via
-`.github/workflows/deploy-athlete-netlify.yml`.)
-
-**The product athletes use is the Hybrid HTML app.** Not Expo, not
-`home.html`, not `prototype/pwa/`. Those were deleted on purpose. Do not
-recreate them. Do not run Expo to see the app. Coach / ARC HTML prototypes
-and `apps/web` were deleted — athlete UX lives here only.
+**Dogfood APK:**  
+https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest  
+CI: `.github/workflows/dogfood-apk.yml` on `main` when `apps/mobile/**` changes.  
+Athletes tap **Update** in Settings for service-worker cache.
 
 | Role | Path |
 | --- | --- |
-| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ `whoop.js`, `service-worker.js`, `engine-*.js`, `concept2.js`, `echo-ftms.js`, `native-bridge.js`, `label-scan.js`) |
+| **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ adapters/bundles below) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
-| Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cap dogfood | `apps/mobile/capacitor/` — `pnpm run sync` then `scripts/build-dogfood-apk.sh` |
-| Dogfood APK | **https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest** — CI replaces the APK on each mobile push; same link every time |
-| Cache / Update | `the-hybrid-athlete-engine-v44` — tap **Update** / **Update now** |
-| Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
+| Synced copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
+| Cap dogfood | `apps/mobile/capacitor/` |
+| Cache / Update | **`the-hybrid-athlete-engine-v59`** |
+| Shell stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
-Storage is local-first (`localStorage` key `THE-builder-clean-v1`).
-`@hybrid/strength-engine` stays pure (zero I/O, zero React). Callers
-inject data. The HTML app is the only place athlete screens get built
-until a later, explicit rewrite.
+Storage: local-first `localStorage` key `THE-builder-clean-v1` (+ nutrition DB).  
+Owned Postgres: exactly **twelve** tables (`metric` … `coaching_note`) +
+`embed-coaching-note`. Never migrate hybrid-owned tables (`CLAUDE.md`).
 
-This repo still owns exactly twelve Postgres tables (`metric` through
-`coaching_note`) plus `embed-coaching-note`. Neither repo writes a
-migration against the other’s tables.
+### Five systems — engines exist; wiring incomplete
 
-Phase B (coach authoring) is **cancelled as a product track** in this
-repo (see mono-app charter). Logging / progress still lands **in this
-HTML app** — not a separate Phase C mobile stack.
+| # | System | Package / module | In app today |
+| --- | --- | --- | --- |
+| 1 | **Strength** | `@hybrid/strength-engine` (~120 tests) | Set logging, silent progression, PR/WM, Progress, volume guides, sync WM/PR — **missing** full `%WM` resolve on start, engine e1RM/Load exports, set-row cloud sync; load headline still uses **tonnage/50 stub** in places |
+| 2 | **Conditioning (The Engine)** | `@hybrid/engine` (~270 tests) | Zones, builder, BLE HR, weekly zone line, TRIMP finish, Concept2/Echo light — **`conAdapt` / `conProgLevel` not wired** on finish |
+| 3 | **Nutrition** | `nutrition-core` + `nutrition-engine` (~161+175) | Daily log, barcode/label, weekly adaptive check-in, sync — day-status → adaptive path incomplete; **recipes/charts out of next scope** by owner lock |
+| 4 | **Recovery** | `recovery-engine.js` (pure, not its own npm package) | Gates strength autopilot bumps; posture for Coordinator — **must stay invisible** (no Recovery dial / capacity chrome) |
+| 5 | **Coordinator** | `packages/strength-engine/src/coordinator.ts` + `coordinator-adapter.js` | Silent weekly brain — athlete **“This week” peek still present**; Phase 5 must **remove** it |
 
-Pain / illness flags are still raised. **Nothing consumes them.** That
-is inherited from the hybrid repo deleting `@hybrid/auto-coach`. A stop
-would be a new decision, not a restoration. Do not use HRV as a pain /
-injury / illness gate.
+**Visible dials:** The Engine (teal) + Hybrid Strength (copper) + Sleep/check-in + Nutrition + Calendar/Settings.  
+**Invisible brains:** Recovery + Coordinator decisions (+ silent strength/cond progression).
 
-### What the HTML app is today (athlete shell)
+### Athlete shell today
 
-Bottom nav: **Home · Library · Calendar · Settings**.
+Bottom nav: **Home · Library · Calendar · Settings** (Coach Tools **removed**).
 
-- **Home:** Sleep + Conditioning + **Nutrition**. Track Dawn UI
-  (graphite + copper + zone teal; Space Grotesk + Barlow Condensed).
-  Medium brand punch in sticky top (v43).
-- **Sleep:** Check-in \| Overview sheet from the Sleep module. WHOOP can
-  sync into Home / Sleep metrics when signed in.
-- **Conditioning (Stage 3 · v42 + wake v43):** Zones / prescription ease /
-  finish HR-TRIMP from `@hybrid/engine` via `engine-bundle.js` +
-  `engine-adapter.js`. Wake lock held for live Engine / Strength sessions
-  (Cap KeepAwake + Screen Wake Lock). Hybrid Strength **math** frozen.
-- **Nutrition (v44):** **Add food** search over bundled **105+ AU staples** (offline) + **live Open Food Facts** JSON API when online + **barcode** → local → OFF → label fallback + **live label scan** / web paste / quick add.
-  Spec: `docs/superpowers/specs/2026-08-23-lite-native-shell-design.md`.
-- **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
-  templates (nav id still `programs`). Everyday Readiness stays retired.
-- **Calendar:** week strip + schedule / preview / resume.
-- **Settings:** Update, WHOOP, Concept2, HR profile, Export backup.
-- **Coach Tools:** removed (v37).
+- **Home:** Sleep + Conditioning + Nutrition; briefing polish (v58).
+- **Library:** Hybrid Strength — Full Body A, build/edit, Progress.
+- **Calendar:** week strip + schedule / preview / resume (+ schedule today).
+- **Settings:** Update, WHOOP, Concept2, Nutrition/Strength sync, HR, Export, strength schedule.
+- **Coach/ARC athlete copy:** scrubbed **v59** → Session note, Lift cue, Workout builder, Add notes. Storage keys `coachNote` / `coachInstructions` **kept**. CSS `.liftcue` / `.bulletlist`.
 
-Cache / Update stamp: `the-hybrid-athlete-engine-v43c` /
-`ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23`.
+### Engine import Stages 1–4 (conditioning)
 
-**Engine Stage 1–3 + lite native shell shipped on `main` (v43c):** Capacitor
-Android dogfood wrap + training wake lock + **ML Kit** label scan + medium
-Track Dawn polish + wake-lock leave / paste alias / web-scan fixes. Not Play
-Store / not iOS this pass. Next dogfood: install debug APK, verify wake lock
-+ ML Kit scan on device.
+| Stage | Status |
+| --- | --- |
+| 1 Brain (`@hybrid/engine`) | ✅ shipped |
+| 2 Logger (weekly zones, finish split, provenance, intervals) | ✅ shipped |
+| 3 Connectors (Concept2 + Echo, Chrome Android/desktop) | ✅ light shipped |
+| 4 APK / store / iOS native BLE | 🟡 dogfood APK exists; **not** Play Store / iOS BLE — **out of** five-systems scope |
 
-### How Conditioning works (current contract)
+### Hybrid athlete roadmap Phases 1–12 — **shipped on `main`**
 
-- **Connect strap** = Web Bluetooth `heart_rate` GATT. Live BPM drives
-  the needle and the big number. Chrome on Android or desktop. **Not
-  iOS Safari.** Screen wake-lock while live HR is connected.
-- **Start / Pause** = session clock. First live HR can also auto-start
-  duration so strap-only use still logs minutes.
-- **Avg HR** = session field (BLE stream + typeable). Does **not** move
-  the needle.
-- **Complete** on a conditioning-primary session → conditioning summary
-  (minutes / avg / max HR / load) → Done → Home. Not the old strength
-  tonnage summary.
-- **← Back** leaves to Home, pauses BLE, and starts a 120s
-  “Are you finished?” watch. Yes finishes; Not yet stops nagging until
-  the next exit.
+Specs under `docs/superpowers/specs/2026-08-24-*.md`.  
+Plan: `docs/superpowers/plans/2026-08-24-hybrid-athlete-slices.md`.  
+PRs **#35–#37** family: volume budget, silent wire, Progress, load headline, strength sync, engine weekly honesty, recovery engine, Coordinator, gap closure, recovery v2, delivery ledger, illness record-only, schedule today.
 
-### Hybrid Strength workouts restored (v30) → Library fold (v31)
+### UI polish — **shipped on `main`**
 
-Athletes can build strength again. **v31:** Hybrid Strength build/edit lives in **Library**
-(nav tab; was Programs) — no Coach Tools unlock. Home **Build Hybrid Strength**, Library
-**Build strength** / Full Body A, athlete builder chrome + sticky Add lift / Review & save.
-Everyday Readiness + SZN seed lifts stay retired.
+Plan: `docs/superpowers/plans/2026-08-23-athlete-ui-ux-full-polish.md`
 
-### Twin instruments (v33)
+| PR | What | Cache |
+| --- | --- | --- |
+| #38 | Tokens, tap/focus floor, Library copper | v57 |
+| #39/#40 | Home/Engine/Calendar/Settings + coach scrub | **v59** |
 
-One machine, two dials: **The Engine** (teal / conditioning) and **Hybrid Strength**
-(copper / lifts). Shared `.ath-sticky` chrome, Track Dawn tokens only, Inter removed.
-Zero AI-slop gate in `docs/superpowers/plans/2026-08-23-athlete-ui-ux-full-polish.md`.
+Optional leftover: polish Task 8 final slop audit (not blocking five-systems).
 
-### Product naming (locked)
+### Naming (locked)
 
-- **The Engine** — conditioning / HR / zones / weekly dose. Never call this pillar “Morpheus” in product copy.
-- **Hybrid Strength** — lifts / prescription / working max / PRs / progression (`@hybrid/strength-engine`).
-- Together: **THE Hybrid System**. CSS `mph-*` prefixes are legacy Engine-slate class names; do not reintroduce Morpheus branding when editing them.
+- **The Engine** = conditioning (never Morpheus in athlete UI).
+- **Hybrid Strength** = lifts / WM / PRs / progression.
+- Together = **THE Hybrid System**. CSS `mph-*` = legacy Engine classes.
 
-### Product decisions locked this arc (do not silently reverse)
+### Hard product locks (do not silently reverse)
 
-- **Everyday Readiness is retired** for the athlete shell.
-  `purgeEverydayReadiness()` + `purgeStrengthTemplates()` run on load;
-  program blueprints seed nothing; Home Conditioning starts an ad-hoc
-  session. Do not re-seed ER without an explicit ask.
-- **Everyday Readiness / SZN seed lifts stay retired.** Full Body A starter and athlete Hybrid Strength templates are restored (v30).
-- **“What to do during this block” / Guide / block-help** UI is gone
-  (`showBlockHelp` hard-off).
-- **Athlete shell stays conditioning-first.** Do not reintroduce Home
-  weekly strength targets, Training snapshot Strength scores, lift-week
-  schedule copy, Programs Coach Tools disclosure, default PIN text,
-  calendar tonnage, RIR “junk volume” check-in copy, Session alerts,
-  Import/Danger on Settings, Nutrition stub, Day stress, or Stress
-  Engine finish chrome without an explicit athlete ask.
-
-## 2. Features / fixes completed (this arc → v25)
-
-Earlier foundation (still true): Hybrid HTML is the only athlete app;
-Expo / `home.html` / PWA false starts deleted; Sleep + Cond logger +
-BLE + Update flow.
-
-Shipped on `cursor/whoop-wire-4920` through **v25**:
-
-- **WHOOP wire** into the HTML app via hybrid proxies; Home metrics
-  update after sync (`window.today` / `window.S` exposure fixed).
-- **Cond finish fix:** strap-only duration fallback; refuse complete at
-  0 minutes; conditioning-primary finish screen.
-- **Settings cleanup:** Coach Tools removed from Settings; athlete
-  focus = Update / WHOOP / HR / backup.
-- **Strength templates retired** + blueprint strip + permanent purge
-  (v21).
-- **Athlete delete list** (v22): weekly strength targets, Training
-  snapshot, lift schedule copy, Programs coach chrome, Change program,
-  PIN text, calendar tonnage, RIR advice, Session alerts, Import/Danger,
-  fixtures, evaluation seed, “stealing from strength” copy.
-- **Residual clear** (v23): Nutrition stub, Day stress, Stress Engine,
-  Protect storage, program More/kind chrome, softer green check-in copy.
-- **Track Dawn UI polish** (v24): unified tokens, fonts, atmosphere,
-  Home effort panes, nav craft, quieter Programs/Calendar/Settings.
-- **The Engine naming lock** (v29): product copy says The Engine (conditioning) and Hybrid Strength (lifts); Morpheus branding removed from athlete UI.
-- **The Engine builder UX polish** (v28 · P0–P4): chips ≥44px + `aria-pressed` + brass focus-visible; sticky Start; compact zone bar on build (full zones + gauge on log); rounds/work/rest for Intervals/Tempo/Custom; CONDITIONING copy “Build today’s session · zones follow readiness”; advanced-field motion with reduced-motion respect. Mini synced.
-- **The Engine conditioning builder** (v27): Home → CONDITIONING module and **Start Conditioning** open Format / Modality / Effort / Minutes on The Engine zone slate; Start session opens the HR log. Standalone mini at `apps/mobile/prototype/hybrid-app/engine-cond-builder-mini.html`.
-- **The Engine conditioning builder** (v26): Home → Conditioning opens a Format / Modality / Effort / Minutes builder on The Engine zone slate; Start session opens the HR log.
-- **Everyday Readiness removed** (v25): no default program; Programs
-  empty state; Home Conditioning uses ad-hoc session.
-
-How to play: Netlify URL above, or synced `THE-Hybrid-App.html` after
-`bash apps/mobile/sync-hybrid-html.sh`. Tap **Update** after a push /
-deploy.
-
-Do **not** commit untracked `expo-*.png` leftovers if they reappear.
-
-## 3. Active roadblocks / unresolved bugs
-
-**Known limits (not defects to “fix” by deleting them):**
-
-- iOS Safari cannot use Web Bluetooth. Cond live HR is Chrome Android /
-  desktop. Typed Avg HR is the iPhone fallback.
-- Sleep rings / some metrics still mix check-in + WHOOP + fixture until
-  WHOOP coverage is complete for every field.
-- `checks/migrations-apply.mjs` fails at `create extension vector` on
-  clusters without pgvector at the OS level. Hosted Supabase has it.
-  Do not “fix” that by removing the extension.
-- Pain / illness flags are raised and unused. Do not silently restore
-  a hold.
-
-**Open product / behaviour gaps:**
-
-- Programs tab is an empty “No program loaded” state after ER removal —
-  may want to hide the tab later if it stays unused.
-- Mixed lift+cond historical sessions: Resume still prefers cond path;
-  completed ER history may remain locally; incomplete ER/SZN schedule
-  rows are purged.
-- Leave still **pauses** BLE (`leaveSimpleCond` → `pauseBleHr`).
-- Durable assigned-session logging (Phase C) and Phase B coach
-  authoring remain unstarted. Local complete → `localStorage` only.
-- No automated test suite for the HTML cond logger / purge / WHOOP
-  apply path. Verification is play + headless screenshots.
-- Header **Update** / play URL may still reference a branch preview in
-  places; Netlify is the athlete source of truth for this arc.
-
-## 4. Precise next steps for the next session
-
-1. Read this block + `CLAUDE.md` / shared-Supabase contract. Branch from
-   **`main`** (v43c tip).
-2. Confirm build id **`the-hybrid-athlete-engine-v43c`** on Netlify and in
-   the Cap dogfood APK (hard refresh / Update now). Dogfood on phone:
-   wake lock during Engine/Strength; Nutrition → Scan label → ML Kit.
-3. Keep building **this** HTML file only:
-   `apps/mobile/prototype/hybrid-app/index.html` →
-   `bash apps/mobile/sync-hybrid-html.sh` → deploy Netlify / rebuild APK
-   if shipping. Bump `LOCAL_BUILD` and service-worker `CACHE` together.
-4. Do **not** revive Everyday Readiness, Guide/block-help, Nutrition stub,
-   Expo, or `home.html` / PWA shells. Real Nutrition is the HTML daily-log
-   + Cap ML Kit scan / web paste. Hybrid Strength athlete building is
-   intentional (v30+).
-5. Wait for the athlete’s next ask. Sensible follow-ups if unspecified:
-   heart rate recovery scoring, deepen WHOOP, or nutrition catalogue sync
-   — only if requested.
-6. Do not start Phase B/C unless asked — and if logging lands, it lands
-   in this HTML app.
+- Everyday Readiness / SZN lifts **retired** (`purge*` on load).
+- Guide / block-help **off**.
+- Coach / ARC product / Expo / second athlete shell **cancelled**.
+- **Silent apply** for progression + Coordinator — no accept/decline autopilot UI.
+- **Soft volume** — never block save / clamp sets.
+- **Training never blocked**; pain Yes holds **strength bumps** only.
+- Illness = **record-only** (no auto-stop). Auto-coach deleted; restore = new decision.
+- Do not use HRV as pain/injury/illness gate.
+- `@hybrid/strength-engine` stays **pure** (zero I/O).
+- Shared-Supabase contract in `CLAUDE.md`.
 
 ---
 
-> Older checkpoints below are history. The Expo Home / `home.html` /
-> PWA work was a false start. The Hybrid HTML drop-in is the app.
-> Blocks dated before this evening checkpoint (including the early-morning
-> 22 Aug ER chassis note) are superseded.
+## 2. What shipped this evening (do not redo)
+
+- Hybrid athlete arc + Phases 1–12 on `main`
+- UI polish + **coach/ARC scrub v59** (`main` `03153e4`, PRs #38–#40)
+- Engines already tested in packages — gap is **HTML wiring**
+- Spec + plan for five-systems complete on branch **PR #41** (docs only)
+
+Useful command: `pnpm run verify`
+
+---
+
+## 3. Active gaps / known limits
+
+**Addressed by five-systems plan (not coded yet):** see §0 and the plan file.
+
+**Especially easy to forget:**
+
+- `strength-entry.ts` exports Volume/Progression/… but **not** Resolve/E1rm/Load yet (Task S1).
+- `index.html` `openWeeklyReview` = **Coordinator** peek (hide).  
+  `NutritionUI.openWeeklyReview` = **nutrition check-in** (keep).
+- `coordinator.smoke.mjs` currently **requires** Coordinator `openWeeklyReview` in index — update when hiding.
+- Cond `conAdapt` exists in `engine-bundle.js` but finish path does not persist `conProgress`.
+- Strength sync snapshot = WM/PR/audit today — set rows are Phase 1 Task S7.
+- Recovery must remain **UI-less**.
+
+**Platform limits (not defects to delete):**
+
+- iOS Safari: no Web Bluetooth HR — typed Avg HR fallback.
+- Local migrations check fails without OS pgvector — do not remove extension.
+- Stage 4 store / iOS native BLE out of five-systems scope.
+
+---
+
+## 4. Precise next steps (after chat clear)
+
+1. Read **§0–§4** + `CLAUDE.md`.
+2. Use branch / PR **#41** `cursor/five-systems-complete-4920` (rebase on `main` if needed).
+3. Ask owner: **Subagent-Driven** vs **Inline** execution (once).
+4. Execute plan from **Task S1** onward, phase gates green before next phase.
+5. Never add recipes/charts, Recovery dial, Coordinator weekly peek, Coach/Expo/ER.
+6. Each HTML ship: sync + cache bump + refresh this handoff stamp.
+7. Optional later: polish Task 8 slop audit; phone dogfood proof; Stage 4 store/iOS.
+
+### Critical paths
+
+```
+docs/superpowers/specs/2026-08-24-five-systems-complete-design.md
+docs/superpowers/plans/2026-08-24-five-systems-complete.md
+apps/mobile/prototype/hybrid-app/strength-entry.ts
+apps/mobile/prototype/hybrid-app/strength-adapter.js
+apps/mobile/prototype/hybrid-app/strength-sync.js
+apps/mobile/prototype/hybrid-app/load-headline.js
+apps/mobile/prototype/hybrid-app/engine-adapter.js
+apps/mobile/prototype/hybrid-app/recovery-engine.js
+apps/mobile/prototype/hybrid-app/coordinator-adapter.js
+apps/mobile/prototype/hybrid-app/nutrition-ui.js
+apps/mobile/prototype/hybrid-app/index.html
+apps/mobile/prototype/hybrid-app/service-worker.js
+```
+
+### Branches / PRs
+
+| Item | Notes |
+| --- | --- |
+| **`main` @ 03153e4** | Ship tip; cache **v59** |
+| **PR #41** | Spec + plan — **start here** |
+| Old open PRs (#2–#14, #32, …) | Expo/engine-stage/docs noise — ignore unless owner says otherwise |
+
+### How Conditioning works (still true)
+
+- Connect strap = Web Bluetooth `heart_rate` (Chrome Android/desktop; not iOS Safari).
+- Start/Pause = session clock; Complete → cond summary (minutes/avg/max/load + zone split).
+- Back → Home, pause BLE, 120s “finished?” watch.
+
+### Twin instruments (still true)
+
+The Engine (teal) + Hybrid Strength (copper); Track Dawn tokens; polish plan anti-slop list still applies.
+
+---
+
+> **History below this line is superseded for “where are we / what next.”**
+> Keep for archaeology only. Do not follow “next session” bullets that say
+> Expo, `home.html`, v43c, or Phase B/C as the active plan.
 
 ## 21 August 2026 — mobile Home first draft + Cursor tooling
 
