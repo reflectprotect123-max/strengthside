@@ -73,14 +73,16 @@ Cross-cutting:
 
 ## Exit criteria (roadmap complete)
 
-- [ ] All specs in this table exist and are internally consistent
-- [ ] Each spec has locked decisions, architecture, testing, and exit criteria
-- [ ] Build order respects shared-Supabase contract (`CLAUDE.md`)
-- [ ] No spec introduces progression banners or hard volume blocks without explicit new decision
+- [x] All specs in this table exist and are internally consistent
+- [x] Each spec has locked decisions, architecture, testing, and exit criteria
+- [x] Slice plan exists: `docs/superpowers/plans/2026-08-24-hybrid-athlete-slices.md` (≤10 slices per phase)
+- [x] Build order respects shared-Supabase contract (`CLAUDE.md`)
+- [x] No spec introduces progression banners or hard volume blocks without explicit new decision
 
 ## References
 
 - `handoff.md` — operational checkpoint
+- `docs/superpowers/plans/2026-08-24-hybrid-athlete-slices.md` — ≤10 slices per phase (agent execution plan)
 - `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
 - `docs/data/training-load-model.md` — load headline source math
 - `docs/research/strength-macrofactor-rp-2026-08-25/` — MacroFactor/RP research (reference, not build order)
