@@ -18,6 +18,7 @@
     "check:nutrition-sync": "node apps/mobile/prototype/hybrid-app/nutrition-sync.smoke.mjs",
     "check:food-catalog": "node apps/mobile/prototype/hybrid-app/food-catalog.smoke.mjs",
     "check:hybrid-proxy": "bash apps/mobile/sync-hybrid-html.sh && node apps/mobile/prototype/hybrid-app/hybrid-proxy.smoke.mjs",
+    "seed:au-foods": "node scripts/push-au-food-catalog-to-supabase.mjs",
     "//verify": "Everything CI runs. The two lists SHOULD agree \u2014 a check that runs in CI and not here sits red on main while every local run says green, which the hybrid repo paid for on 16 August 2026. If they ever have to differ, write the reason next to the difference.",
     "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:engine-adapter && pnpm run check:label-scan && pnpm run check:native-bridge && pnpm run check:nutrition-ui && pnpm run check:nutrition-sync && pnpm run check:food-catalog && pnpm run check:hybrid-proxy"
   },

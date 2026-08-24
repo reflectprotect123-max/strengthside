@@ -1,0 +1,31 @@
+# Seed bundled AU food staples into Supabase public.foods (service role required).
+# Repo secret: SUPABASE_SERVICE_ROLE_KEY
+name: Seed AU food catalog
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/prototype/hybrid-app/food-catalog-au.json'
+      - 'scripts/push-au-food-catalog-to-supabase.mjs'
+      - '.github/workflows/seed-au-foods-catalog.yml'
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Push AU catalog to Supabase
+        env:
+          SUPABASE_URL: https://orysjncrksmdfabpuftd.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+            echo "::warning::SUPABASE_SERVICE_ROLE_KEY not set — skipping foods seed"
+            exit 0
+          fi
+          node scripts/push-au-food-catalog-to-supabase.mjs
