@@ -14,6 +14,7 @@ export * from './calibration';
 export * from './progression';
 export * from './queryText';
 export * from './volumeBudget';
+export * from './coordinator';
 
 export interface StrengthBlockItem {
   id: string;

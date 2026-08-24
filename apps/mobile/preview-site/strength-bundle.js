@@ -20,6 +20,7 @@ var HybridStrength = (() => {
   // strength-entry.ts
   var strength_entry_exports = {};
   __export(strength_entry_exports, {
+    Coordinator: () => coordinator_exports,
     Exposure: () => exposure_exports,
     Performed: () => performed_exports,
     Pr: () => pr_exports,
@@ -279,6 +280,144 @@ var HybridStrength = (() => {
     if (equipment.incrementKg == null || equipment.incrementKg <= 0) return value;
     const steps = equipment.rounding === "nearest" ? Math.round(value / equipment.incrementKg) : Math.floor(value / equipment.incrementKg);
     return Number((steps * equipment.incrementKg).toFixed(6));
+  }
+
+  // ../../../../packages/strength-engine/src/coordinator.ts
+  var coordinator_exports = {};
+  __export(coordinator_exports, {
+    planCoordinator: () => planCoordinator
+  });
+  function zoneTotal(z) {
+    return Object.values(z).reduce((a, v) => a + (Number(v) || 0), 0);
+  }
+  function planCoordinator(receipts, opts) {
+    const items = [];
+    const reasonCodes = [];
+    const holds = receipts.strength.progressionAudit.filter((e) => e.action === "hold");
+    const progresses = receipts.strength.progressionAudit.filter((e) => e.action === "progress");
+    const painFlags = receipts.strength.sessionPainFlags.filter((p) => p.level === "yes");
+    if (painFlags.length) {
+      items.push({
+        domain: "strength",
+        kind: "hold",
+        message: `Session pain flagged ${painFlags.length} time(s) this week \u2014 autopilot held affected lifts.`,
+        silentApply: true
+      });
+      reasonCodes.push("strength_pain_flags");
+    }
+    const recoveryHolds = receipts.recovery.filter((r) => r.gate === "hold" || r.band === "minimum");
+    const recoveryControl = receipts.recovery.filter((r) => r.gate === "caution" || r.band === "control");
+    if (recoveryHolds.length >= 2) {
+      items.push({
+        domain: "recovery",
+        kind: "hold",
+        message: `${recoveryHolds.length} rough recovery day(s) \u2014 expect held load bumps unless you beat targets.`,
+        silentApply: false
+      });
+      reasonCodes.push("recovery_minimum_days");
+    } else if (recoveryControl.length >= 3) {
+      items.push({
+        domain: "recovery",
+        kind: "ease",
+        message: "Several control days \u2014 autopilot stays conservative.",
+        silentApply: false
+      });
+      reasonCodes.push("recovery_control_streak");
+    }
+    const noCheckinDays = receipts.recovery.filter((r) => r.band === "insufficient_data").length;
+    if (noCheckinDays >= 2) {
+      items.push({
+        domain: "recovery",
+        kind: "review",
+        message: `${noCheckinDays} day(s) without check-in \u2014 silent bumps stay off until you check in.`,
+        silentApply: true
+      });
+      reasonCodes.push("recovery_no_checkin");
+    }
+    if (progresses.length) {
+      items.push({
+        domain: "strength",
+        kind: "push",
+        message: `${progresses.length} silent load increase(s) applied this week.`,
+        silentApply: true
+      });
+      reasonCodes.push("strength_progress_applied");
+    }
+    if (holds.length > progresses.length && holds.length >= 2) {
+      items.push({
+        domain: "strength",
+        kind: "hold",
+        message: "More holds than bumps \u2014 mixed week or recovery gates active.",
+        silentApply: true
+      });
+      reasonCodes.push("strength_hold_heavy_week");
+    }
+    const zoneSec = zoneTotal(receipts.conditioning.weeklyZoneSeconds);
+    const zoneMin = Math.round(zoneSec / 60);
+    if (receipts.conditioning.sessionsCompleted === 0) {
+      items.push({
+        domain: "conditioning",
+        kind: "review",
+        message: "No conditioning sessions logged this week.",
+        silentApply: false
+      });
+      reasonCodes.push("conditioning_none");
+    } else if (zoneMin < 30) {
+      items.push({
+        domain: "conditioning",
+        kind: "ease",
+        message: `Light aerobic dose (${zoneMin} zone min) \u2014 optional easy session if planned.`,
+        silentApply: false
+      });
+      reasonCodes.push("conditioning_low_dose");
+    } else {
+      items.push({
+        domain: "conditioning",
+        kind: "maintain",
+        message: `${receipts.conditioning.sessionsCompleted} conditioning session(s) \xB7 ${zoneMin} zone min.`,
+        silentApply: false
+      });
+      reasonCodes.push("conditioning_on_track");
+    }
+    if (receipts.nutrition.daysInWindow > 0) {
+      const pct = Math.round(receipts.nutrition.daysLogged / receipts.nutrition.daysInWindow * 100);
+      if (receipts.nutrition.daysLogged === 0) {
+        items.push({
+          domain: "nutrition",
+          kind: "review",
+          message: "No nutrition days logged this week \u2014 adherence unknown.",
+          silentApply: false
+        });
+        reasonCodes.push("nutrition_none");
+      } else if (pct < 50) {
+        items.push({
+          domain: "nutrition",
+          kind: "review",
+          message: `Nutrition logged ${receipts.nutrition.daysLogged}/${receipts.nutrition.daysInWindow} days.`,
+          silentApply: false
+        });
+        reasonCodes.push("nutrition_sparse");
+      } else {
+        items.push({
+          domain: "nutrition",
+          kind: "maintain",
+          message: `Nutrition logged ${receipts.nutrition.daysLogged}/${receipts.nutrition.daysInWindow} days.`,
+          silentApply: false
+        });
+        reasonCodes.push("nutrition_logged");
+      }
+    }
+    let headline = "Steady week \u2014 keep logging.";
+    if (painFlags.length || recoveryHolds.length >= 2) headline = "Recovery led \u2014 autopilot stayed conservative.";
+    else if (progresses.length && !recoveryHolds.length) headline = "Good week \u2014 silent bumps landed where allowed.";
+    else if (zoneMin >= 90) headline = "Solid conditioning dose alongside strength.";
+    return {
+      weekStart: opts?.weekStart ?? "",
+      generatedAt: opts?.generatedAt ?? (/* @__PURE__ */ new Date()).toISOString(),
+      headline,
+      items,
+      reasonCodes
+    };
   }
   return __toCommonJS(strength_entry_exports);
 })();

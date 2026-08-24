@@ -9,3 +9,4 @@ export * as Performed from '../../../../packages/strength-engine/src/performed.t
 export * as Pr from '../../../../packages/strength-engine/src/pr.ts';
 export * as WorkingMax from '../../../../packages/strength-engine/src/workingMax.ts';
 export * as Rounding from '../../../../packages/strength-engine/src/rounding.ts';
+export * as Coordinator from '../../../../packages/strength-engine/src/coordinator.ts';
