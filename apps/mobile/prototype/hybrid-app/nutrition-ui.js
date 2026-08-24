@@ -164,7 +164,7 @@
             )
             .join('')
         : `<div class=meta>Nothing logged.</div>`;
-      return `<div class=card style="margin-top:10px"><div class=row><div><div class=eyebrow>${esc(meal)}</div></div><button class="btn small primary" onclick="NutritionUI.quickAdd('${meal}')">Add</button></div>${rows}</div>`;
+      return `<div class=card style="margin-top:10px"><div class=row><div><div class=eyebrow>${esc(meal)}</div></div><button class="btn small primary" onclick="NutritionUI.addFood('${meal}')">Add</button></div>${rows}</div>`;
     }).join('');
 
     const pct = (n, t) => (t > 0 ? Math.min(100, Math.round((n / t) * 100)) : 0);
@@ -286,14 +286,50 @@
   let foodQueryTimer = null;
   let foodQuerySeq = 0;
 
+  function isNativeApp() {
+    return !!(window.NativeBridge && NativeBridge.isNative && NativeBridge.isNative());
+  }
+
+  /** Barcode is the fast path — camera on APK, digits on web. Search is secondary. */
   function addFood(meal) {
     meal = meal || 'snack';
     ensureCatalog().then(() => {
-      sheet(`<h2>Add food</h2>
-        <p class=lead>Search AU staples + live Open Food Facts, scan a barcode, or scan a label.</p>
-        <div class=field><label>Search</label><input id=nutFoodQuery placeholder="Oats, Chobani, chicken…" oninput="NutritionUI.onFoodQuery('${meal}')"></div>
+      if (isNativeApp()) {
+        scanBarcode(meal);
+        return;
+      }
+      showBarcodeSheet(meal);
+    });
+  }
+
+  function showBarcodeSheet(meal) {
+    meal = meal || 'snack';
+    sheet(`<h2>Scan barcode</h2>
+      <p class=lead>Point at the barcode — fastest way to log a pack. Falls back to Open Food Facts, then label scan.</p>
+      <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Scan barcode</button>
+      <div class=field style="margin-top:14px"><label>Or type barcode digits</label><input id=nutBarcodeDigits type="tel" inputmode="numeric" autocomplete="off" placeholder="e.g. 9300657012345"></div>
+      <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.lookupTypedBarcode('${meal}')">Look up barcode</button>
+      <p class=meta style="margin-top:14px">Or search food by name</p>
+      <div class=btns>
+        <button type="button" class="btn small" onclick="NutritionUI.showSearchSheet('${meal}')">Search</button>
+        <button type="button" class="btn small" onclick="NutritionUI.scanLabel('${meal}')">Label</button>
+        <button type="button" class="btn small" onclick="NutritionUI.showPasteLabel('${meal}')">Paste</button>
+        <button type="button" class="btn small" onclick="NutritionUI.quickAdd('${meal}')">Quick add</button>
+      </div>`);
+    setTimeout(() => {
+      const el = $('nutBarcodeDigits');
+      if (el) el.focus();
+    }, 50);
+  }
+
+  function showSearchSheet(meal) {
+    meal = meal || 'snack';
+    ensureCatalog().then(() => {
+      sheet(`<h2>Search food</h2>
+        <p class=lead>AU staples offline + live Open Food Facts when online.</p>
+        <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Scan barcode</button>
+        <div class=field style="margin-top:12px"><label>Search</label><input id=nutFoodQuery placeholder="Oats, Chobani, chicken…" oninput="NutritionUI.onFoodQuery('${meal}')"></div>
         <div class=btns>
-          <button type="button" class="btn small" onclick="NutritionUI.scanBarcode('${meal}')">Barcode</button>
           <button type="button" class="btn small" onclick="NutritionUI.scanLabel('${meal}')">Label</button>
           <button type="button" class="btn small" onclick="NutritionUI.showPasteLabel('${meal}')">Paste</button>
           <button type="button" class="btn small" onclick="NutritionUI.quickAdd('${meal}')">Quick add</button>
@@ -302,6 +338,49 @@
         <p class=meta>${esc(catalogCountLabel())}</p>`);
       onFoodQuery(meal);
     });
+  }
+
+  async function resolveBarcodeCode(code, meal) {
+    meal = meal || 'snack';
+    await ensureCatalog();
+    const status = $('nutBarcodeStatus');
+    if (status) status.textContent = 'Looking up ' + code + '…';
+    const food =
+      (FoodCatalogAU.lookupBarcode && FoodCatalogAU.lookupBarcode(code)) ||
+      (FoodCatalogAU.lookupBarcodeMerged && (await FoodCatalogAU.lookupBarcodeMerged(code)));
+    if (food) {
+      closeSheet();
+      logCatalogFood(food.id, meal);
+      return true;
+    }
+    closeSheet();
+    sheet(`<h2>Barcode not found</h2>
+      <p class=lead>${esc(code)} — not in local staples or Open Food Facts. Scan the nutrition label instead.</p>
+      <button type="button" class="btn primary block" onclick="NutritionUI.scanLabel('${meal}')">Scan label</button>
+      <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
+      <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.scanBarcode('${meal}')">Try another barcode</button>
+      <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
+    return false;
+  }
+
+  async function lookupTypedBarcode(meal) {
+    meal = meal || 'snack';
+    const raw = String($('nutBarcodeDigits')?.value || '').trim();
+    const code = window.FoodCatalogAU && FoodCatalogAU.normalizeBarcode
+      ? FoodCatalogAU.normalizeBarcode(raw)
+      : raw.replace(/\D/g, '');
+    if (!code || code.length < 8) {
+      alert('Enter the barcode digits (usually 8–13 numbers under the lines).');
+      return;
+    }
+    sheet(`<h2>Scan barcode</h2><p class=lead>Looking up ${esc(code)}…</p><p class=meta id=nutBarcodeStatus>Open Food Facts</p>`);
+    try {
+      await resolveBarcodeCode(code, meal);
+    } catch (e) {
+      sheet(`<h2>Barcode lookup failed</h2><p class=lead>${esc((e && e.message) || 'Lookup failed')}</p>
+        <button type="button" class="btn primary block" onclick="NutritionUI.showBarcodeSheet('${meal}')">Try again</button>
+        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.scanLabel('${meal}')">Scan label instead</button>`);
+    }
   }
 
   function onFoodQuery(meal) {
@@ -385,38 +464,26 @@
 
   async function scanBarcode(meal) {
     meal = meal || 'snack';
-    const native = !!(window.NativeBridge && NativeBridge.isNative && NativeBridge.isNative());
-    if (!native) return alert('Barcode scan needs the Android app.');
     await ensureCatalog();
+    if (!isNativeApp()) {
+      showBarcodeSheet(meal);
+      return;
+    }
     closeSheet();
     sheet(`<h2>Scan barcode</h2><p class=lead>Point at the barcode…</p><p class=meta id=nutBarcodeStatus>Opening scanner</p>`);
     try {
       const code = await NativeBridge.scanBarcodeOnce();
       if (!code) throw new Error('No barcode detected.');
-      const status = $('nutBarcodeStatus');
-      if (status) status.textContent = 'Looking up ' + code + '…';
-      const food =
-        (FoodCatalogAU.lookupBarcode && FoodCatalogAU.lookupBarcode(code)) ||
-        (FoodCatalogAU.lookupBarcodeMerged && (await FoodCatalogAU.lookupBarcodeMerged(code)));
-      if (food) {
-        closeSheet();
-        logCatalogFood(food.id, meal);
-        return;
-      }
-      closeSheet();
-      sheet(`<h2>Barcode not found</h2>
-        <p class=lead>${esc(code)} — not in local staples or Open Food Facts. Scan the nutrition label instead.</p>
-        <button type="button" class="btn primary block" onclick="NutritionUI.scanLabel('${meal}')">Scan label</button>
-        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.showPasteLabel('${meal}')">Paste label text</button>
-        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.quickAdd('${meal}')">Enter manually</button>`);
+      await resolveBarcodeCode(code, meal);
     } catch (e) {
       if (e && e.code === 'barcode_unavailable') {
-        alert('Barcode scanner unavailable on this build.');
-        addFood(meal);
+        alert('Barcode scanner unavailable on this build — type the digits instead.');
+        showBarcodeSheet(meal);
         return;
       }
       sheet(`<h2>Scan barcode</h2><p class=lead>${esc((e && e.message) || 'Scan failed')}</p>
         <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Try again</button>
+        <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.showBarcodeSheet('${meal}')">Type barcode</button>
         <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.scanLabel('${meal}')">Scan label instead</button>`);
     }
   }
@@ -744,6 +811,10 @@
   window.NutritionUI = {
     open: openNutrition,
     addFood,
+    showBarcodeSheet,
+    showSearchSheet,
+    lookupTypedBarcode,
+    resolveBarcodeCode,
     onFoodQuery,
     logCatalogFood,
     scanBarcode,
