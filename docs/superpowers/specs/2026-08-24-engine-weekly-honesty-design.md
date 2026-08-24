@@ -1,7 +1,7 @@
 # Engine weekly honesty — design spec
 
 **Date:** 2026-08-24  
-**Status:** Approved in chat (Stage 2 remainder from engine import)  
+**Status:** Implemented (PR #36 — zone helpers pre-existing; load headline + weekly review added)  
 **Scope:** Close **Stage 2 logger gaps** for The Engine dial — weekly zone dose, finish zone split, provenance — without touching Hybrid Strength.
 
 ## Problem
@@ -65,12 +65,12 @@ interface ConditioningResult {
 
 ## Exit criteria
 
-- [ ] 7-day zone aggregate on Home CONDITIONING
-- [ ] Finish zone split on cond-primary sessions
-- [ ] Zone provenance stored on session result
-- [ ] Simple log interval clock works for intervals/tempo/custom with work/rest
-- [ ] Hybrid Strength behavior unchanged (regression smoke)
-- [ ] `pnpm run verify` green
+- [x] 7-day zone aggregate on Home CONDITIONING
+- [x] Finish zone split on cond-primary sessions
+- [x] Zone provenance stored on session result
+- [x] Simple log interval clock works for intervals/tempo/custom with work/rest
+- [x] Hybrid Strength behavior unchanged (regression smoke)
+- [x] `pnpm run verify` green
 
 ## References
 

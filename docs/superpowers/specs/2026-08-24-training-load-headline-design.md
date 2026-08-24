@@ -1,7 +1,7 @@
 # Training load headline — design spec
 
 **Date:** 2026-08-24  
-**Status:** Approved in chat (after silent wire; can parallel Progress UI if thin)  
+**Status:** Implemented (PR #36)  
 **Scope:** One displayed training load figure with a **visible cardio / strength split**, per `docs/data/training-load-model.md`. Sleep/Home consumption only — not a fourth dial.
 
 ## Problem
@@ -82,11 +82,11 @@ Prefer **adapter v1** to avoid cross-repo engine package scope creep; extract pu
 
 ## Exit criteria
 
-- [ ] 7-day headline + split rendered on Sleep or Home
-- [ ] Strength and conditioning channels documented in code comments with `training-load-model.md` cite
-- [ ] Pain-blocked sessions included in strength fatigue channel
-- [ ] No invented Recovery-Sync formula
-- [ ] `pnpm run verify` green
+- [x] 7-day headline + split rendered on Sleep or Home
+- [x] Strength and conditioning channels documented in code comments with `training-load-model.md` cite
+- [x] Pain-blocked sessions included in strength fatigue channel
+- [x] No invented Recovery-Sync formula
+- [x] `pnpm run verify` green
 
 ## References
 

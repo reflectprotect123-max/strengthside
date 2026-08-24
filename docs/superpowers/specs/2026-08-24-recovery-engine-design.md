@@ -1,7 +1,7 @@
 # Recovery engine (full) — design spec
 
 **Date:** 2026-08-24  
-**Status:** Approved in chat (build after minimal gates + Coordinator inputs)  
+**Status:** Implemented (PR #36)  
 **Scope:** Expand recovery beyond `recovery-signals.js` bump gates into a **pure recovery policy module** that other domains can read. Still **no third Home dial**; still **never block training** in solo dogfood unless explicit future safety decision.
 
 ## Problem
@@ -102,11 +102,11 @@ Emergency stop, training pause, clinician review → **Coordinator spec**, not h
 
 ## Exit criteria
 
-- [ ] Pure recovery-engine module with typed output
-- [ ] `recovery-signals.js` delegates to engine (no duplicate mapping)
-- [ ] Posture available for Progress audit plain-English strings
-- [ ] No training-start blocking added
-- [ ] `pnpm run verify` green
+- [x] Pure recovery-engine module with typed output
+- [x] `recovery-signals.js` delegates to engine (no duplicate mapping)
+- [x] Posture available for Progress audit plain-English strings
+- [x] No training-start blocking added
+- [x] `pnpm run verify` green
 
 ## References
 

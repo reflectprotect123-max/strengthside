@@ -10,6 +10,12 @@
 | --- | --- | --- |
 | Volume budget (soft guides) | `2026-08-24-strength-volume-budget-design.md` | Shipped |
 | Silent strength + recovery wire | `2026-08-24-strength-recovery-silent-wire-design.md` | Shipped |
+| Strength progress UI | `2026-08-24-strength-progress-ui-design.md` | Shipped (PR #36) |
+| Training load headline | `2026-08-24-training-load-headline-design.md` | Shipped (PR #36) |
+| Strength cloud sync | `2026-08-24-strength-cloud-sync-design.md` | Shipped (PR #36) |
+| Full recovery engine | `2026-08-24-recovery-engine-design.md` | Shipped (PR #36) |
+| Four-system Coordinator | `2026-08-24-four-system-coordinator-design.md` | Shipped (PR #36) |
+| Engine weekly honesty | `2026-08-24-engine-weekly-honesty-design.md` | Shipped (PR #36) |
 | Engine Stage 1–3 (cond math, wake lock, native shell) | `2026-08-23-engine-import-design.md` | Shipped on `main` |
 | Nutrition local-first + cloud sync | `2026-08-24-nutrition-macrofactor-visual-design.md` + `nutrition-sync.js` | Shipped |
 
@@ -18,12 +24,12 @@
 ```text
 1. Strength volume guides          ✅
 2. Silent progression + recovery   ✅
-3. Strength progress UI            ← next (read-only proof)
-4. Training load headline          ← after progress UI or parallel if thin
-5. Strength cloud sync             ← when local-first isn't enough
-6. Engine weekly honesty gaps      ← Stage 2 logger gaps (partially open)
-7. Full recovery engine            ← after Coordinator inputs exist
-8. Four-system Coordinator         ← last; needs all domain receipts
+3. Strength progress UI            ✅
+4. Training load headline          ✅
+5. Strength cloud sync             ✅
+6. Engine weekly honesty gaps      ✅
+7. Full recovery engine            ✅
+8. Four-system Coordinator         ✅
 ```
 
 **Rule:** Strength + recovery before engine brain. Coordinator never blocks solo dogfood.

@@ -1,7 +1,7 @@
 # Strength cloud sync — design spec
 
 **Date:** 2026-08-24  
-**Status:** Approved in chat (build when Account job needs it)  
+**Status:** Implemented (PR #36)  
 **Scope:** Mirror local strength progression state to Supabase using the same pattern as nutrition sync. **Local-first remains source of truth on device.**
 
 ## Problem
@@ -80,12 +80,12 @@ interface StrengthDomainSnapshot {
 
 ## Exit criteria
 
-- [ ] `strength-sync.js` + Settings card
-- [ ] Push after completed strength workout
-- [ ] Pull on app load when authenticated
-- [ ] Stale revision handled like nutrition
-- [ ] `check:strength-sync` in verify + CI
-- [ ] No migration against foreign tables
+- [x] `strength-sync.js` + Settings card
+- [x] Push after completed strength workout
+- [x] Pull on app load when authenticated
+- [x] Stale revision handled like nutrition
+- [x] `check:strength-sync` in verify + CI
+- [x] No migration against foreign tables
 
 ## References
 

@@ -1,7 +1,7 @@
 # Four-system Coordinator — design spec
 
 **Date:** 2026-08-24  
-**Status:** Approved in chat (build last — after strength, recovery, load headline)  
+**Status:** Implemented (PR #36)  
 **Scope:** Weekly **engine brain** that reads domain receipts and produces **silent recommendations** for solo dogfood. **Not** accept/decline UX in v1.
 
 ## Problem
@@ -134,12 +134,12 @@ Implement **silent apply** instead of Coordinator receipt UX with accept buttons
 
 ## Exit criteria
 
-- [ ] Pure `Coordinator.plan()` with tests
-- [ ] Receipt collectors from existing HTML state
-- [ ] Weekly read-only sheet reachable from app
-- [ ] Strength silent apply unchanged and still authoritative for load bumps
-- [ ] No cross-domain migration
-- [ ] `pnpm run verify` green
+- [x] Pure `Coordinator.plan()` with tests
+- [x] Receipt collectors from existing HTML state
+- [x] Weekly read-only sheet reachable from app
+- [x] Strength silent apply unchanged and still authoritative for load bumps
+- [x] No cross-domain migration
+- [x] `pnpm run verify` green
 
 ## References
 

@@ -1,7 +1,7 @@
 # Strength progress UI — design spec
 
 **Date:** 2026-08-24  
-**Status:** Approved in chat (build after silent wire)  
+**Status:** Implemented (PR #36)  
 **Scope:** Read-only **Progress** surfaces for solo dogfood. Silent progression stays silent — this is proof, not permission.
 
 ## Problem
@@ -96,12 +96,12 @@ Tap exercise → optional detail: last 5 session exposures (load × reps), still
 
 ## Exit criteria
 
-- [ ] Progress surface reachable from Home or Library (one path)
-- [ ] PR list from real logged sets
-- [ ] Working max list from `strengthState`
-- [ ] Audit list read-only with plain-English reason mapping
-- [ ] No progression accept/decline UI introduced
-- [ ] `pnpm run verify` green
+- [x] Progress surface reachable from Home or Library (one path)
+- [x] PR list from real logged sets
+- [x] Working max list from `strengthState`
+- [x] Audit list read-only with plain-English reason mapping
+- [x] No progression accept/decline UI introduced
+- [x] `pnpm run verify` green
 
 ## References
 

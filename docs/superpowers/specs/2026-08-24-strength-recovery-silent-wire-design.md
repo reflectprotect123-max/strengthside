@@ -171,14 +171,14 @@ Keep existing `HybridStrength.Volume` soft guides (`volumeBudget.ts`). No change
 
 ## Exit criteria
 
-- [ ] Strength engine wired via bundle + adapter
-- [ ] Session-end pain prompt on strength sessions
-- [ ] Recovery gate blocks silent bumps (check-in band)
-- [ ] Progress, hold, deload all silent
-- [ ] Audit log written locally
-- [ ] Volume guides remain soft
-- [ ] `pnpm run verify` green
-- [ ] No Coordinator / weekly four-system sheet in this phase
+- [x] Strength engine wired via bundle + adapter
+- [x] Session-end pain prompt on strength sessions
+- [x] Recovery gate blocks silent bumps (check-in band)
+- [x] Progress, hold, deload all silent
+- [x] Audit log written locally
+- [x] Volume guides remain soft
+- [x] `pnpm run verify` green
+- [x] No Coordinator / weekly four-system sheet in this phase
 
 ## Relationship to GPT four-system package
 
@@ -189,7 +189,19 @@ Ingest GPT package as **future reference** for Coordinator design. This spec imp
 - HRV advisory rule
 - Silent apply instead of Coordinator receipt UX (solo dogfood choice)
 
-Coordinator builds on `progressionAudit` + recovery signals in a later phase.
+Coordinator builds on `progressionAudit` + recovery signals in a later phase — see `2026-08-24-four-system-coordinator-design.md`.
+
+## Spec index (deferred work)
+
+| Spec | Phase |
+| --- | --- |
+| `2026-08-24-hybrid-athlete-roadmap-design.md` | Master build order |
+| `2026-08-24-strength-progress-ui-design.md` | Progress UI |
+| `2026-08-24-strength-cloud-sync-design.md` | Account / sync |
+| `2026-08-24-training-load-headline-design.md` | Combined load |
+| `2026-08-24-recovery-engine-design.md` | Full recovery |
+| `2026-08-24-four-system-coordinator-design.md` | Engine brain |
+| `2026-08-24-engine-weekly-honesty-design.md` | Engine Stage 2 gaps |
 
 ## References
 
