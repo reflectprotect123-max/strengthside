@@ -311,32 +311,95 @@
     }
   }
 
+  function amountLabelForUnit(unit) {
+    const u = String(unit || '').toLowerCase();
+    if (u === 'serving' || u === 'portion') return 'Servings';
+    if (u === 'g') return 'Grams';
+    if (u === 'ml') return 'Millilitres';
+    if (u === 'slice') return 'Slices';
+    if (u === 'tbsp') return 'Tablespoons';
+    if (u === 'tsp') return 'Teaspoons';
+    if (u === 'can') return 'Cans';
+    if (u === 'biscuit' || u === 'cookie' || u === 'piece' || u === 'bar') {
+      return u.charAt(0).toUpperCase() + u.slice(1) + 's';
+    }
+    return 'Amount';
+  }
+
+  /** Prefer "how many servings?" when a pack serving→g/ml conversion exists. */
+  function catalogConfirmDefaults(food) {
+    const C = Core();
+    const enriched =
+      C && C.enrichFoodServings ? C.enrichFoodServings(food) : food;
+    const units =
+      C && C.loggableUnits
+        ? C.loggableUnits(enriched, enriched.servings || [])
+        : { [enriched.servingUnit || 'g']: enriched.servingQty || 100 };
+    const servingKey = Object.keys(units).find((k) => k.toLowerCase() === 'serving');
+    if (servingKey != null) {
+      return { food: enriched, quantity: 1, unit: servingKey, units };
+    }
+    const household = Object.keys(units).find((k) => {
+      const u = k.toLowerCase();
+      return u !== 'g' && u !== 'ml' && u !== String(enriched.servingUnit || '').toLowerCase();
+    });
+    if (household) {
+      return { food: enriched, quantity: 1, unit: household, units };
+    }
+    if (C && C.pickDefaultLogQuantity) {
+      const picked = C.pickDefaultLogQuantity(enriched);
+      return { food: picked.food, quantity: picked.quantity, unit: picked.unit, units };
+    }
+    return {
+      food: enriched,
+      quantity: enriched.servingQty || 100,
+      unit: enriched.servingUnit || 'g',
+      units,
+    };
+  }
+
+  function packServingNote(food) {
+    const basis = food.servingUnit || 'g';
+    const servingRow = (food.servings || []).find((s) => String(s.unit).toLowerCase() === 'serving');
+    const grams =
+      basis === 'g' && servingRow && servingRow.grams != null ? Number(servingRow.grams) : null;
+    const ml =
+      basis === 'ml' && servingRow && servingRow.millilitres != null
+        ? Number(servingRow.millilitres)
+        : null;
+    const pack = food.servingSizeText ? String(food.servingSizeText) : null;
+    if (grams != null && grams > 0) {
+      return pack
+        ? `1 serving = ${grams} g · pack says “${pack}”`
+        : `1 serving = ${grams} g`;
+    }
+    if (ml != null && ml > 0) {
+      return pack
+        ? `1 serving = ${ml} ml · pack says “${pack}”`
+        : `1 serving = ${ml} ml`;
+    }
+    if (pack) return `Pack serving: ${pack}`;
+    return `Macros per ${food.servingQty || 100} ${basis} — enter how much you ate`;
+  }
+
   function showCatalogConfirm(food, meal) {
     const C = Core();
     if (!C || !food) return alert('Food not found.');
-    const picked = C.pickDefaultLogQuantity ? C.pickDefaultLogQuantity(food) : {
-      food,
-      quantity: food.servingQty || 100,
-      unit: food.servingUnit || 'g',
-    };
-    pendingCatalogFood = picked.food;
-    const units = C.loggableUnits
-      ? C.loggableUnits(picked.food, picked.food.servings || [])
-      : { [picked.unit]: picked.quantity };
+    const defaults = catalogConfirmDefaults(food);
+    pendingCatalogFood = defaults.food;
+    const units = defaults.units;
     const unitOpts = Object.keys(units)
-      .map((u) => `<option value="${esc(u)}" ${u === picked.unit ? 'selected' : ''}>${esc(u)}</option>`)
+      .map((u) => `<option value="${esc(u)}" ${u === defaults.unit ? 'selected' : ''}>${esc(u)}</option>`)
       .join('');
-    const macros = previewMacros(picked.food, picked.quantity, picked.unit);
-    const sizeNote = picked.food.servingSizeText
-      ? `Pack serving: ${picked.food.servingSizeText}`
-      : `Macros stored per ${picked.food.servingQty || 100} ${picked.food.servingUnit || 'g'}`;
-    const brand = picked.food.brand ? ` · ${picked.food.brand}` : '';
+    const macros = previewMacros(defaults.food, defaults.quantity, defaults.unit);
+    const brand = defaults.food.brand ? ` · ${defaults.food.brand}` : '';
+    const qtyLabel = amountLabelForUnit(defaults.unit);
     sheet(`<h2>Confirm food</h2>
-      <p class=lead><b>${esc(picked.food.name)}</b>${esc(brand)}</p>
-      <p class=meta>${esc(sizeNote)}. Nothing is saved until you confirm.</p>
+      <p class=lead><b>${esc(defaults.food.name)}</b>${esc(brand)}</p>
+      <p class=meta>${esc(packServingNote(defaults.food))}</p>
       <div class=field><label>Meal</label><select id=nutMeal>${MEALS.map((m) => `<option value="${m}" ${m === (meal || 'snack') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
       <div class=two>
-        <div class=field><label>Amount</label><input id=nutQty type=number min=0.1 step=0.1 value="${esc(String(picked.quantity))}" oninput="NutritionUI.refreshCatalogPreview()"></div>
+        <div class=field><label id=nutQtyLabel>${esc(qtyLabel)}</label><input id=nutQty type=number min=0.1 step=0.1 value="${esc(String(defaults.quantity))}" oninput="NutritionUI.refreshCatalogPreview()"></div>
         <div class=field><label>Unit</label><select id=nutUnit onchange="NutritionUI.onCatalogUnitChange()">${unitOpts}</select></div>
       </div>
       <p class=meta id=nutCatalogPreview style="margin-top:10px">${Math.round(macros.calories)} kcal · P ${macros.proteinG.toFixed(1)} · C ${macros.carbsG.toFixed(1)} · F ${macros.fatG.toFixed(1)}</p>
@@ -352,6 +415,8 @@
     const units = C.loggableUnits ? C.loggableUnits(food, food.servings || []) : {};
     const nextQty = units[unit] != null ? units[unit] : Number($('nutQty')?.value) || 1;
     if ($('nutQty')) $('nutQty').value = String(nextQty);
+    const label = $('nutQtyLabel');
+    if (label) label.textContent = amountLabelForUnit(unit);
     refreshCatalogPreview();
   }
 
