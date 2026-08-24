@@ -6,8 +6,10 @@ REPO="$(cd "$ROOT/../../.." && pwd)"
 cd "$REPO"
 bash apps/mobile/sync-hybrid-html.sh
 cd "$ROOT"
-pnpm install
-pnpm exec cap sync android
+if [[ ! -x node_modules/.bin/cap ]]; then
+  npm install --no-fund --no-audit
+fi
+npx cap sync android
 
 if [[ -z "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ]]; then
   for candidate in "$HOME/Android/Sdk" /opt/android-sdk /usr/lib/android-sdk; do
