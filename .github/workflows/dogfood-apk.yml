@@ -9,6 +9,9 @@ on:
       - 'packages/nutrition-core/**'
       - '.github/workflows/dogfood-apk.yml'
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -47,6 +50,32 @@ jobs:
 
       - name: Build debug dogfood APK
         run: bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
+
+      - name: Publish dogfood-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          APK="apps/mobile/capacitor/android/app/build/outputs/apk/debug/app-debug.apk"
+          BUILD="$(grep -o "LOCAL_BUILD='[^']*'" apps/mobile/prototype/hybrid-app/index.html | head -1 | cut -d"'" -f2)"
+          SHA="$(git rev-parse --short HEAD)"
+          NOTES="Debug Android shell for THE Hybrid athlete app.
+
+          **Build stamp:** \`${BUILD}\`
+          **Commit:** \`${SHA}\`
+
+          Install on phone: open this release on GitHub → Assets → \`the-hybrid-athlete-dogfood-debug.apk\` → Install.
+          Allow installs from your browser/files app if Android asks."
+
+          if gh release view dogfood-latest >/dev/null 2>&1; then
+            gh release edit dogfood-latest --title "Dogfood APK (latest)" --notes "$NOTES" --latest
+            gh release upload dogfood-latest "$APK#the-hybrid-athlete-dogfood-debug.apk" --clobber
+          else
+            gh release create dogfood-latest "$APK#the-hybrid-athlete-dogfood-debug.apk" \
+              --title "Dogfood APK (latest)" \
+              --notes "$NOTES" \
+              --latest
+          fi
 
       - uses: actions/upload-artifact@v4
         with:

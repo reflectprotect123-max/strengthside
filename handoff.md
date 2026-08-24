@@ -29,7 +29,7 @@ and `apps/web` were deleted — athlete UX lives here only.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced play copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` — `pnpm run sync` then `scripts/build-dogfood-apk.sh` |
-| Dogfood APK | debug build via `scripts/build-dogfood-apk.sh` → `app-debug.apk` |
+| Dogfood APK | **https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest** — CI replaces the APK on each mobile push; same link every time |
 | Cache / Update | `the-hybrid-athlete-engine-v43c` — tap **Update** / **Update now** |
 | Migration stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 

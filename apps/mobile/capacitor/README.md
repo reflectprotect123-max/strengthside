@@ -25,6 +25,20 @@ bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
 
 APK lands under `apps/mobile/capacitor/android/app/build/outputs/apk/debug/` (and is copied to `/opt/cursor/artifacts/` when that path exists).
 
+## Install on your phone (stable link)
+
+Bookmark this — the URL never changes; CI replaces the APK when we push mobile fixes:
+
+**https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest**
+
+Open on your phone → **Assets** → `the-hybrid-athlete-dogfood-debug.apk` → Install. Allow installs from your browser if Android asks.
+
+Local build (optional):
+
+```bash
+bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
+```
+
 ## Native modules used
 
 | Plugin | Why |
