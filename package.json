@@ -16,7 +16,7 @@
     "check:native-bridge": "node apps/mobile/prototype/hybrid-app/native-bridge.barcode.smoke.mjs",
     "check:nutrition-ui": "node apps/mobile/prototype/hybrid-app/nutrition-ui.smoke.mjs && node apps/mobile/prototype/hybrid-app/nutrition-ui.barcode.smoke.mjs",
     "check:strength-volume": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/strength-volume.smoke.mjs",
-    "check:strength-progression": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/recovery-signals.smoke.mjs && node apps/mobile/prototype/hybrid-app/strength-progression.smoke.mjs",
+    "check:strength-progression": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/recovery-engine.smoke.mjs && node apps/mobile/prototype/hybrid-app/recovery-signals.smoke.mjs && node apps/mobile/prototype/hybrid-app/strength-progression.smoke.mjs && node apps/mobile/prototype/hybrid-app/strength-progress-ui.smoke.mjs && node apps/mobile/prototype/hybrid-app/load-headline.smoke.mjs && node apps/mobile/prototype/hybrid-app/strength-sync.smoke.mjs && node apps/mobile/prototype/hybrid-app/coordinator.smoke.mjs",
     "check:nutrition-sync": "node apps/mobile/prototype/hybrid-app/nutrition-sync.smoke.mjs",
     "check:food-catalog": "node apps/mobile/prototype/hybrid-app/food-catalog.smoke.mjs",
     "check:hybrid-proxy": "bash apps/mobile/sync-hybrid-html.sh && node apps/mobile/prototype/hybrid-app/hybrid-proxy.smoke.mjs",

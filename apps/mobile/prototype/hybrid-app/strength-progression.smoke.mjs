@@ -10,7 +10,7 @@ import vm from 'node:vm';
 const dir = dirname(fileURLToPath(import.meta.url));
 const bundle = readFileSync(join(dir, 'strength-bundle.js'), 'utf8');
 const adapterSrc = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
-const recoverySrc = readFileSync(join(dir, 'recovery-signals.js'), 'utf8');
+const recoverySrc = readFileSync(join(dir, 'recovery-engine.js'), 'utf8') + readFileSync(join(dir, 'recovery-signals.js'), 'utf8');
 
 const sandbox = { window: {}, console };
 vm.createContext(sandbox);
