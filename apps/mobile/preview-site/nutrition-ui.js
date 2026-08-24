@@ -285,12 +285,161 @@
     if (!results.length) return '<div class=meta>No matches. Try scan label or quick add.</div>';
     return results
       .map((r) => {
-        const sub = [r.brand, `${Math.round(r.calories)} kcal · P ${Math.round(r.proteinG)} · C ${Math.round(r.carbsG)} · F ${Math.round(r.fatG)}`]
+        const sub = [r.brand, `${Math.round(r.calories)} kcal / 100 g · P ${Math.round(r.proteinG)} · C ${Math.round(r.carbsG)} · F ${Math.round(r.fatG)}`]
           .filter(Boolean)
           .join(' · ');
         return `<div class="nut-entry"><div><b>${esc(r.name)}</b><div class=meta>${esc(sub)}</div></div><button type="button" class="btn small primary" onclick="NutritionUI.logCatalogFood('${esc(r.id)}','${meal || 'snack'}')">Log</button></div>`;
       })
       .join('');
+  }
+
+  let pendingCatalogFood = null;
+
+  function previewMacros(food, quantity, unit) {
+    const C = Core();
+    if (!C || !food) return { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+    try {
+      return C.resolveFoodMacros(food, food.servings || [], quantity, unit);
+    } catch (_) {
+      try {
+        const basis = food.servingUnit || 'g';
+        const qty = Number(food.servingQty) > 0 ? Number(food.servingQty) : 100;
+        return C.resolveFoodMacros(food, food.servings || [], qty, basis);
+      } catch {
+        return { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
+      }
+    }
+  }
+
+  function showCatalogConfirm(food, meal) {
+    const C = Core();
+    if (!C || !food) return alert('Food not found.');
+    const picked = C.pickDefaultLogQuantity ? C.pickDefaultLogQuantity(food) : {
+      food,
+      quantity: food.servingQty || 100,
+      unit: food.servingUnit || 'g',
+    };
+    pendingCatalogFood = picked.food;
+    const units = C.loggableUnits
+      ? C.loggableUnits(picked.food, picked.food.servings || [])
+      : { [picked.unit]: picked.quantity };
+    const unitOpts = Object.keys(units)
+      .map((u) => `<option value="${esc(u)}" ${u === picked.unit ? 'selected' : ''}>${esc(u)}</option>`)
+      .join('');
+    const macros = previewMacros(picked.food, picked.quantity, picked.unit);
+    const sizeNote = picked.food.servingSizeText
+      ? `Pack serving: ${picked.food.servingSizeText}`
+      : `Macros stored per ${picked.food.servingQty || 100} ${picked.food.servingUnit || 'g'}`;
+    const brand = picked.food.brand ? ` · ${picked.food.brand}` : '';
+    sheet(`<h2>Confirm food</h2>
+      <p class=lead><b>${esc(picked.food.name)}</b>${esc(brand)}</p>
+      <p class=meta>${esc(sizeNote)}. Nothing is saved until you confirm.</p>
+      <div class=field><label>Meal</label><select id=nutMeal>${MEALS.map((m) => `<option value="${m}" ${m === (meal || 'snack') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class=two>
+        <div class=field><label>Amount</label><input id=nutQty type=number min=0.1 step=0.1 value="${esc(String(picked.quantity))}" oninput="NutritionUI.refreshCatalogPreview()"></div>
+        <div class=field><label>Unit</label><select id=nutUnit onchange="NutritionUI.onCatalogUnitChange()">${unitOpts}</select></div>
+      </div>
+      <p class=meta id=nutCatalogPreview style="margin-top:10px">${Math.round(macros.calories)} kcal · P ${macros.proteinG.toFixed(1)} · C ${macros.carbsG.toFixed(1)} · F ${macros.fatG.toFixed(1)}</p>
+      <button type="button" class="btn primary block" style="margin-top:12px" onclick="NutritionUI.confirmCatalogLog()">Log food</button>
+      <button type="button" class="btn block" style="margin-top:8px" onclick="closeSheet()">Cancel</button>`);
+  }
+
+  function onCatalogUnitChange() {
+    const C = Core();
+    const food = pendingCatalogFood;
+    if (!C || !food) return;
+    const unit = String($('nutUnit')?.value || food.servingUnit || 'g');
+    const units = C.loggableUnits ? C.loggableUnits(food, food.servings || []) : {};
+    const nextQty = units[unit] != null ? units[unit] : Number($('nutQty')?.value) || 1;
+    if ($('nutQty')) $('nutQty').value = String(nextQty);
+    refreshCatalogPreview();
+  }
+
+  function refreshCatalogPreview() {
+    const food = pendingCatalogFood;
+    if (!food) return;
+    const qty = Number($('nutQty')?.value);
+    const unit = String($('nutUnit')?.value || food.servingUnit || 'g');
+    if (!(qty > 0)) return;
+    const macros = previewMacros(food, qty, unit);
+    const el = $('nutCatalogPreview');
+    if (el) {
+      el.textContent = `${Math.round(macros.calories)} kcal · P ${macros.proteinG.toFixed(1)} · C ${macros.carbsG.toFixed(1)} · F ${macros.fatG.toFixed(1)}`;
+    }
+  }
+
+  function confirmCatalogLog() {
+    const C = Core();
+    const db = loadN();
+    const food = pendingCatalogFood;
+    if (!C || !db || !food) return alert('Food not found.');
+    const date = nutDate || todayStr();
+    const meal = String($('nutMeal')?.value || 'snack');
+    const quantity = Number($('nutQty')?.value);
+    const unit = String($('nutUnit')?.value || food.servingUnit || 'g');
+    if (!(quantity > 0)) return alert('Enter an amount greater than zero.');
+    let entry;
+    try {
+      upsertCatalogFood(db, food);
+      entry = C.logEntryFromFood(
+        { id: uid(), logDate: date, meal, at: isoNow() },
+        food,
+        quantity,
+        unit,
+      );
+    } catch (e) {
+      // Fall back to basis unit — never guess density.
+      try {
+        const basis = food.servingUnit || 'g';
+        const qty = Number(food.servingQty) > 0 ? Number(food.servingQty) : 100;
+        entry = C.logEntryFromFood(
+          { id: uid(), logDate: date, meal, at: isoNow() },
+          food,
+          qty,
+          basis,
+        );
+      } catch (e2) {
+        return alert((e2 && e2.message) || (e && e.message) || 'Could not log this food.');
+      }
+    }
+    db.logEntries.push(entry);
+    markDayComplete(db, date);
+    pendingCatalogFood = null;
+    if (!saveN(db)) return alert('Could not save.');
+    closeSheet();
+    renderNutrition();
+  }
+
+  function logCatalogFood(foodId, meal) {
+    const C = Core();
+    const db = loadN();
+    const catalogFood = window.FoodCatalogAU && FoodCatalogAU.getFood(foodId);
+    const custom = db && db.customFoods.find((f) => f.id === foodId);
+    if (catalogFood) {
+      showCatalogConfirm(catalogFood, meal || 'snack');
+      return;
+    }
+    if (!custom || !C || !db) return alert('Food not found.');
+    // Custom foods: log in their own unit (no servings table).
+    const date = nutDate || todayStr();
+    const unit = custom.servingUnit || 'g';
+    const qty = Number(custom.servingQty) > 0 ? Number(custom.servingQty) : 1;
+    let entry;
+    try {
+      entry = C.logEntryFromCustomFood(
+        { id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() },
+        custom,
+        qty,
+        unit,
+      );
+    } catch (e) {
+      return alert((e && e.message) || 'Could not log this food.');
+    }
+    db.logEntries.push(entry);
+    markDayComplete(db, date);
+    if (!saveN(db)) return alert('Could not save.');
+    closeSheet();
+    renderNutrition();
   }
 
   let foodQueryTimer = null;
@@ -442,67 +591,6 @@
         paint(early, 'Open Food Facts unavailable — local only');
       }
     }, 280);
-  }
-
-  function logCatalogFood(foodId, meal) {
-    const C = Core();
-    const db = loadN();
-    const date = nutDate || todayStr();
-    const catalogFood = window.FoodCatalogAU && FoodCatalogAU.getFood(foodId);
-    const custom = db.customFoods.find((f) => f.id === foodId);
-    const food = catalogFood || custom;
-    if (!food || !C) return alert('Food not found.');
-    let entry;
-    try {
-      if (catalogFood) {
-        // Prefer one pack "serving" when serving-size text states grams/ml that
-        // match the food basis; otherwise log in grams (never guess density).
-        const picked =
-          C.pickDefaultLogQuantity
-            ? C.pickDefaultLogQuantity(catalogFood)
-            : { food: catalogFood, quantity: catalogFood.servingQty || 100, unit: catalogFood.servingUnit || 'g' };
-        upsertCatalogFood(db, picked.food);
-        entry = C.logEntryFromFood(
-          { id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() },
-          picked.food,
-          picked.quantity,
-          picked.unit,
-        );
-      } else {
-        const unit = custom.servingUnit || 'g';
-        const qty = Number(custom.servingQty) > 0 ? Number(custom.servingQty) : 1;
-        entry = C.logEntryFromCustomFood(
-          { id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() },
-          custom,
-          qty,
-          unit,
-        );
-      }
-    } catch (e) {
-      // Last-resort basis-unit log — still no density guess.
-      if (catalogFood) {
-        try {
-          const unit = catalogFood.servingUnit || 'g';
-          const qty = Number(catalogFood.servingQty) > 0 ? Number(catalogFood.servingQty) : 100;
-          upsertCatalogFood(db, catalogFood);
-          entry = C.logEntryFromFood(
-            { id: uid(), logDate: date, meal: meal || 'snack', at: isoNow() },
-            catalogFood,
-            qty,
-            unit,
-          );
-        } catch (e2) {
-          return alert((e2 && e2.message) || (e && e.message) || 'Could not log this food.');
-        }
-      } else {
-        return alert((e && e.message) || 'Could not log this food.');
-      }
-    }
-    db.logEntries.push(entry);
-    markDayComplete(db, date);
-    if (!saveN(db)) return alert('Could not save.');
-    closeSheet();
-    renderNutrition();
   }
 
   async function scanBarcode(meal) {
@@ -878,6 +966,10 @@
     resolveBarcodeCode,
     onFoodQuery,
     logCatalogFood,
+    showCatalogConfirm,
+    confirmCatalogLog,
+    onCatalogUnitChange,
+    refreshCatalogPreview,
     scanBarcode,
     scanLabel,
     scanFromCamera,

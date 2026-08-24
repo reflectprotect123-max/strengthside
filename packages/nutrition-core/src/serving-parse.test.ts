@@ -5,7 +5,7 @@ import {
   parseServingSizeText,
   pickDefaultLogQuantity,
 } from './serving-parse';
-import { resolveFoodMacros } from './recipe';
+import { loggableUnits, resolveFoodMacros } from './recipe';
 
 const kTime = (): CachedFood => ({
   id: 'off-9310072770123',
@@ -62,13 +62,23 @@ describe('enrichFoodServings + pickDefaultLogQuantity', () => {
     });
   });
 
-  it('logs one serving as 25 g of macros without guessing density', () => {
+  it('logs one pack serving as grams (not unit serving)', () => {
     const { food, quantity, unit } = pickDefaultLogQuantity(kTime());
-    expect(unit).toBe('serving');
-    expect(quantity).toBe(1);
+    expect(unit).toBe('g');
+    expect(quantity).toBe(25);
+    expect(food.servings[0]?.grams).toBe(25);
     const macros = resolveFoodMacros(food, food.servings, quantity, unit);
     expect(macros.calories).toBeCloseTo(115, 5); // 25/100 * 460
     expect(macros.proteinG).toBeCloseTo(1.75, 5);
+  });
+
+  it('still allows unit serving via loggableUnits when conversion exists', () => {
+    const { food } = pickDefaultLogQuantity(kTime());
+    const units = loggableUnits(food, food.servings);
+    expect(units.serving).toBe(1);
+    expect(units.g).toBe(100);
+    const macros = resolveFoodMacros(food, food.servings, 1, 'serving');
+    expect(macros.calories).toBeCloseTo(115, 5);
   });
 
   it('falls back to grams when serving text has no measurable amount', () => {

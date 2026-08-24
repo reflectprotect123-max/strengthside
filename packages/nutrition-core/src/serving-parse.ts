@@ -102,26 +102,41 @@ export function enrichFoodServings(food: CachedFood): CachedFood {
 }
 
 /**
- * Choose quantity + unit for a one-tap log (barcode / search Log).
+ * Choose quantity + unit for a barcode / search log.
  *
- * Prefer one `serving` when an explicit g/ml conversion exists; otherwise fall
- * back to the food's own unit. Prefer the parsed serving amount as the gram
- * quantity when logging in grams so "25 g per serving" becomes 25 g, not 100 g.
+ * Always prefers the food's own basis unit (usually grams). When serving-size
+ * text states e.g. "25 g", that amount becomes the default quantity — one pack
+ * serving expressed in grams — rather than logging unit "serving".
+ *
+ * Unit "serving" is still available via `loggableUnits` when an explicit g/ml
+ * conversion exists; this picker simply does not default to it.
  */
 export function pickDefaultLogQuantity(food: CachedFood): DefaultLogQuantity {
   const enriched = enrichFoodServings(food);
-  const units = loggableUnits(enriched, enriched.servings || []);
-  const servingKey = Object.keys(units).find((k) => k.toLowerCase() === 'serving');
-  if (servingKey != null) {
-    return { food: enriched, quantity: units[servingKey], unit: servingKey };
-  }
-
   const basis = food.servingUnit;
+  const basisKey = basis.toLowerCase();
+  const units = loggableUnits(enriched, enriched.servings || []);
+
   const parsed = parseServingSizeText(food.servingSizeText);
-  if (parsed && parsed.unit === basis.toLowerCase()) {
+  if (parsed && parsed.unit === basisKey) {
     return { food: enriched, quantity: parsed.amount, unit: basis };
   }
 
-  const qty = units[basis] ?? (Number.isFinite(food.servingQty) && food.servingQty > 0 ? food.servingQty : 100);
+  // Serving row may already carry grams/ml even if text was missing.
+  const servingRow = (enriched.servings || []).find((s) => s.unit.toLowerCase() === 'serving');
+  if (servingRow) {
+    const amount =
+      basisKey === 'g'
+        ? servingRow.grams
+        : basisKey === 'ml'
+          ? servingRow.millilitres
+          : null;
+    if (amount != null && Number.isFinite(amount) && amount > 0) {
+      return { food: enriched, quantity: amount, unit: basis };
+    }
+  }
+
+  const qty =
+    units[basis] ?? (Number.isFinite(food.servingQty) && food.servingQty > 0 ? food.servingQty : 100);
   return { food: enriched, quantity: qty, unit: basis };
 }

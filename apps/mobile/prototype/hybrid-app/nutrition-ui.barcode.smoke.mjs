@@ -46,6 +46,7 @@ must(
 
 // One-tap log must not hardcode unit "serving" without an explicit g/ml conversion
 must(src.includes('pickDefaultLogQuantity'), 'use pickDefaultLogQuantity for catalog log');
+must(src.includes('showCatalogConfirm') && src.includes('confirmCatalogLog'), 'confirm sheet before catalog log');
 must(!/logEntryFromFood\([^)]*1,\s*['"]serving['"]\)/.test(src), 'must not hardcode 1 serving without conversion');
 
 console.log('nutrition-ui.barcode.smoke: ok');
