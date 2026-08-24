@@ -768,15 +768,19 @@ var HybridNutrition = (() => {
   }
   function pickDefaultLogQuantity(food) {
     const enriched = enrichFoodServings(food);
-    const units = loggableUnits(enriched, enriched.servings || []);
-    const servingKey = Object.keys(units).find((k) => k.toLowerCase() === "serving");
-    if (servingKey != null) {
-      return { food: enriched, quantity: units[servingKey], unit: servingKey };
-    }
     const basis = food.servingUnit;
+    const basisKey = basis.toLowerCase();
+    const units = loggableUnits(enriched, enriched.servings || []);
     const parsed = parseServingSizeText(food.servingSizeText);
-    if (parsed && parsed.unit === basis.toLowerCase()) {
+    if (parsed && parsed.unit === basisKey) {
       return { food: enriched, quantity: parsed.amount, unit: basis };
+    }
+    const servingRow = (enriched.servings || []).find((s) => s.unit.toLowerCase() === "serving");
+    if (servingRow) {
+      const amount = basisKey === "g" ? servingRow.grams : basisKey === "ml" ? servingRow.millilitres : null;
+      if (amount != null && Number.isFinite(amount) && amount > 0) {
+        return { food: enriched, quantity: amount, unit: basis };
+      }
     }
     const qty = units[basis] ?? (Number.isFinite(food.servingQty) && food.servingQty > 0 ? food.servingQty : 100);
     return { food: enriched, quantity: qty, unit: basis };
