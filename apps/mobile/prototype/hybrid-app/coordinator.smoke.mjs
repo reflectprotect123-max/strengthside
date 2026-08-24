@@ -33,5 +33,7 @@ const state = {
 };
 const receipt = sandbox.window.CoordinatorAdapter.planWeek(state, '2026-08-24', 7);
 must(receipt && receipt.headline, 'planWeek failed');
+must(/Recovery|Strength|Conditioning|Nutrition/i.test(receipt.headline), 'headline references a domain');
+must(Array.isArray(receipt.items) && receipt.items.length >= 1, 'receipt items');
 
 console.log('coordinator.smoke: ok', receipt.headline);

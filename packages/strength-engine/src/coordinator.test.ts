@@ -28,6 +28,24 @@ describe('planCoordinator', () => {
     expect(r.headline).toMatch(/Recovery/i);
   });
 
+  it('matches golden recovery-led headline for pain + hold week', () => {
+    const r = planCoordinator({
+      ...emptyReceipts(),
+      strength: {
+        progressionAudit: [{ at: 't', sessionId: 's', exerciseId: 'sq', action: 'hold', reasonCodes: ['session_pain_yes'] }],
+        sessionPainFlags: [{ sessionId: 's', level: 'yes', at: 't' }],
+      },
+      recovery: [
+        { date: '2026-08-22', band: 'minimum', gate: 'hold' },
+        { date: '2026-08-23', band: 'minimum', gate: 'hold' },
+      ],
+      conditioning: { weeklyZoneSeconds: { aerobic: 600 }, sessionsCompleted: 1 },
+    });
+    expect(r.headline).toBe('Recovery led — autopilot stayed conservative.');
+    expect(r.reasonCodes).toContain('strength_pain_flags');
+    expect(r.reasonCodes).toContain('recovery_minimum_days');
+  });
+
   it('celebrates progress when recovery allows', () => {
     const r = planCoordinator({
       ...emptyReceipts(),
