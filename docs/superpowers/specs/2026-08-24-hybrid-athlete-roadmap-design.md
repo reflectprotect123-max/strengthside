@@ -1,7 +1,7 @@
 # Hybrid athlete app — post-silent-wire roadmap
 
 **Date:** 2026-08-24  
-**Status:** Approved direction in chat  
+**Status:** Arc complete (phases 1–11 shipped)  
 **Scope:** Sequencing for everything after silent strength/recovery wire. One product, one HTML app, two dials.
 
 ## What is shipped (do not re-litigate)
@@ -16,6 +16,7 @@
 | Full recovery engine | `2026-08-24-recovery-engine-design.md` | Shipped (PR #36) |
 | Four-system Coordinator | `2026-08-24-four-system-coordinator-design.md` | Shipped (PR #36) |
 | Engine weekly honesty | `2026-08-24-engine-weekly-honesty-design.md` | Shipped (PR #36) |
+| Post-ship gaps + recovery v2 + arc completion | Phases 9–11 slice plan | Shipped (PR #36 + arc finish) |
 | Engine Stage 1–3 (cond math, wake lock, native shell) | `2026-08-23-engine-import-design.md` | Shipped on `main` |
 | Nutrition local-first + cloud sync | `2026-08-24-nutrition-macrofactor-visual-design.md` + `nutrition-sync.js` | Shipped |
 
@@ -30,9 +31,14 @@
 6. Engine weekly honesty gaps      ✅
 7. Full recovery engine            ✅
 8. Four-system Coordinator         ✅
+9. Post-ship gap closure           ✅
+10. Recovery v2 + progress depth   ✅
+11. Arc completion (delivery ledger + coordinator silent apply) ✅
 ```
 
 **Rule:** Strength + recovery before engine brain. Coordinator never blocks solo dogfood.
+
+**Arc status:** Phases 1–11 complete for solo-athlete HTML app. Remaining items are explicitly cancelled (Phase B, Expo) or future research (AI progression decider v2).
 
 ## Five jobs → spec map
 

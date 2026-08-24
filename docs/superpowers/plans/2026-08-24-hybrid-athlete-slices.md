@@ -62,8 +62,9 @@
 | 8 Coordinator | C1–C10 | `four-system-coordinator-design.md` | 10 |
 | 9 Post-ship gaps | 9.1–9.10 | (gap audit after PR #36) | 10 |
 | 10 Recovery v2 + progress depth | T1–T10 | (roadmap deferred items) | 10 |
+| 11 Arc completion | U1–U10 | (delivery ledger + coordinator silent apply) | 10 |
 
-**Total: 86 slices across 10 phases (all ≤10 each).**
+**Total: 96 slices across 11 phases (all ≤10 each).**
 
 ---
 
@@ -597,11 +598,10 @@
 
 ## What this plan does **not** cover
 
-- Phase B coach authoring UI
-- Expo / second athlete shell
-- Full delivery load ledger (heat ledger v2 is in Phase 10; session-level delivery load is not)
-- Coordinator silent-apply actions beyond copy (future)
+- Phase B coach authoring UI (cancelled per mono-app charter)
+- Expo / second athlete shell (cancelled)
 - AI progression decider (adaptive engine v2)
+- Clinician review / emergency stop UX (research Phase 6 — out of solo-athlete scope)
 
 ---
 
@@ -743,6 +743,80 @@
 - `docs/superpowers/specs/2026-08-24-strength-progress-ui-design.md` — per-lift detail
 - `docs/superpowers/specs/2026-08-24-recovery-engine-design.md` — heat ledger deferred item
 - `docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md` — merge on reconcile
+
+---
+
+# Phase 11 — Arc completion (≤10 slices)
+
+**Scope:** Close the last deferred hybrid-athlete arc items — session-level delivery load ledger, coordinator silent apply beyond copy, load headline recovery dampener.
+
+**Shipped:** PR (arc finish branch) — cache **v55**.
+
+### Slice U1 — deliveryLoadLedger pure function
+
+- [x] `deliveryLoadLedger()` — training + background vs rolling weekly budget
+- [x] Export on `RecoveryEngine`
+- [x] `pnpm run verify` green
+
+### Slice U2 — Delivery ledger wired into recovery posture
+
+- [x] `delivery_load_elevated` reason; gate downgrade ok → caution
+- [x] `capacityHint` reduced when delivery elevated
+- [x] `recovery-engine.smoke.mjs` cases
+- [x] `pnpm run verify` green
+
+### Slice U3 — recoveryInputForPosture UI helper
+
+- [x] Pass sessions + check-ins + endDate to all posture calls
+- [x] `recentCompletedSessions()` helper
+- [x] `pnpm run verify` green
+
+### Slice U4 — deliveryLoadCopy on Home/Sleep
+
+- [x] One-liner when delivery ledger elevated
+- [x] Informational only — no training block
+- [x] `pnpm run verify` green
+
+### Slice U5 — Load headline recovery dampener
+
+- [x] When gate hold/caution, append conservative copy under load headline
+- [x] `pnpm run verify` green
+
+### Slice U6 — Coordinator recentCheckins in collectReceipts
+
+- [x] Recovery posture per day uses heat + delivery inputs
+- [x] `pnpm run verify` green
+
+### Slice U7 — Coordinator silent apply hooks
+
+- [x] `applySilentReceipt()` + `bootstrapSilent()` in coordinator-adapter
+- [x] Low-dose conditioning ease → `condPrescriptionEase` meta
+- [x] `coordinator.smoke.mjs` + vitest
+- [x] `pnpm run verify` green
+
+### Slice U8 — Cond builder ease hint consumption
+
+- [x] `applyCondEaseHint()` before Engine cond builder
+- [x] Bootstrap on app load + after session complete
+- [x] `pnpm run verify` green
+
+### Slice U9 — Sync preview copies + cache bump
+
+- [x] `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Bump `LOCAL_BUILD` + SW `CACHE` to **v55**
+- [x] `check:hybrid-proxy` green
+
+### Slice U10 — Phase 11 verify gate + arc handoff
+
+- [x] Full `pnpm run verify` green
+- [x] Slice U checkboxes updated
+- [x] Roadmap arc-complete note
+
+## References (phase 11)
+
+- `docs/superpowers/specs/2026-08-24-recovery-engine-design.md` — delivery load ledger
+- `docs/superpowers/specs/2026-08-24-four-system-coordinator-design.md` — silent apply
+- `docs/superpowers/specs/2026-08-24-training-load-headline-design.md` — recovery dampener copy
 
 ## References (full plan)
 
