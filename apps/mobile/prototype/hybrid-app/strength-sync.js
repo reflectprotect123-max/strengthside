@@ -47,7 +47,7 @@
 
   function snapshotFromState(state) {
     state = state || {};
-    if (global.StrengthAdapter && StrengthAdapter.ensureStrengthState) StrengthAdapter.ensureStrengthState(state);
+    if (global.StrengthAdapter && global.StrengthAdapter.ensureStrengthState) global.StrengthAdapter.ensureStrengthState(state);
     return {
       snapshotVersion: SNAPSHOT_VERSION,
       exportedAt: new Date().toISOString(),
@@ -207,6 +207,17 @@
     }
   }
 
+  async function bootstrap() {
+    if (!(await isSignedIn()) || !global.S) return;
+    try {
+      var merged = await reconcile(global.S);
+      if (merged && merged !== global.S) {
+        global.S = merged;
+        if (typeof global.save === 'function') global.save('strength-sync-pull');
+      }
+    } catch (_) {}
+  }
+
   global.StrengthSync = {
     WRITER: WRITER,
     DOMAIN: DOMAIN,
@@ -214,6 +225,7 @@
     isSignedIn: isSignedIn,
     pushStrength: pushStrength,
     reconcile: reconcile,
+    bootstrap: bootstrap,
     schedulePush: schedulePush,
     getStatus: getStatus,
     cardHtml: cardHtml,
