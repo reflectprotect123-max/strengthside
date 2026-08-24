@@ -60,6 +60,32 @@
     return Array.from(ids);
   }
 
+  function htmlRowToSessionLoadSet(row) {
+    var measurements = [];
+    var load = num(row.weight);
+    var reps = num(row.reps);
+    if (load > 0) measurements.push({ metricKey: 'load', value: load });
+    if (reps > 0) measurements.push({ metricKey: 'reps', value: reps });
+    return { measurements: measurements };
+  }
+
+  /** Completed HTML rows → engine sessionLoad.tonnageKg (not tonnage/50). */
+  function sessionLoadFromRows(rows) {
+    var filtered = (rows || []).filter(function (r) {
+      return r.done && r.targetKind !== 'seconds';
+    });
+    var HS = global.HybridStrength;
+    if (HS && HS.Load && HS.Load.sessionLoad) {
+      return HS.Load.sessionLoad(filtered.map(htmlRowToSessionLoadSet)).tonnageKg;
+    }
+    var tonnage = filtered.reduce(function (a, x) {
+      return a + num(x.weight) * num(x.reps);
+    }, 0);
+    if (tonnage > 0) return tonnage;
+    // Last-resort legacy scale when bundle missing and no load logged (bodyweight reps only)
+    return filtered.reduce(function (a, x) { return a + num(x.reps); }, 0) / 50;
+  }
+
   function htmlRowToPerformed(session, task, ex, row) {
     var exerciseId = ex.exerciseId || task.exerciseId;
     var performedAt = new Date(session.completedAt || Date.now()).toISOString();
@@ -495,6 +521,7 @@
   global.StrengthAdapter = {
     hasStrength: hasStrength,
     ensureStrengthState: ensureStrengthState,
+    sessionLoadFromRows: sessionLoadFromRows,
     performedFromSession: performedFromSession,
     applySilentProgression: applySilentProgression,
     applyLoadHintsToTasks: applyLoadHintsToTasks,
