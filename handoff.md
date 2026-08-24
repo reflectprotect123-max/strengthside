@@ -1,7 +1,10 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 24 August 2026 (evening).**
+> **AUTHORITATIVE CHECKPOINT — 24 August 2026 (evening, five-engine merge).**
 > **Chat may be cleared after this write — treat this block as the full memory.**
+> **Five engines (locked):** Strength · Conditioning (The Engine) · Nutrition ·
+> Recovery · Coordinator. Not two dials. Visible logging only; Recovery and
+> Coordinator stay invisible brains.
 > **Mono-app bet locked:** Hybrid HTML athlete app is the whole product.
 > Do **not** build Coach / ARC / Expo as parallel products.
 > Charter: `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
@@ -10,20 +13,23 @@
 ## 0. Read this first (next agent / next chat)
 
 1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
-2. Ship tip = **`main`** at **`03153e4`** — cache **`the-hybrid-athlete-engine-v59`**
-3. **Next build work** is already designed + planned (docs only — **not coded yet**):
+2. Ship tip = **`main`** at **`4c3cc4d`** — cache **`the-hybrid-athlete-engine-v59`**.
+   Five-engine spec + plan + this checkpoint landed on `main` via **PR #42**
+   (docs). Twin-instrument copy below this block is **history**.
+3. **Build in progress** — Phase 1 Strength on `cursor/five-engines-strength-e9c2`:
    - Spec: `docs/superpowers/specs/2026-08-24-five-systems-complete-design.md`
    - Plan: `docs/superpowers/plans/2026-08-24-five-systems-complete.md`
-   - Branch / PR: `cursor/five-systems-complete-4920` → **PR #41** (draft)
-4. Start execution at **Phase 1 Task S1** in that plan (export Resolve / E1rm / Load).
-   Owner locks (do not re-litigate without ask):
-   - Approach **1 vertical** by domain
+4. Start / resume at **Phase 1 Task S1** (export Resolve / E1rm / Load) unless a
+   later S-task is already committed. Owner locks (do not re-litigate):
+   - Approach **1 vertical** by domain (Strength → Nutrition → Conditioning →
+     Recovery → Coordinator)
    - Brains **invisible** (no Recovery dial; no autopilot accept/decline UI)
    - Nutrition: **no** recipes UI; **no** expenditure charts; day-status wiring **yes**
    - Conditioning progression = engine **`conAdapt`** (earned) — **not** cross-engine vote
    - Coordinator: **no weekly peek** (remove `index.html` Coordinator `openWeeklyReview`)
    - **Keep** `NutritionUI.openWeeklyReview` (MacroFactor adaptive check-in — different thing)
-5. Owner had **not** chosen Subagent-Driven vs Inline when chat cleared — **ask once**, then execute.
+5. Owner said **start the build** (24 Aug evening). Execute with
+   subagent-driven-development, one phase per PR. Do not re-ask SDD vs inline.
 6. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
    `LOCAL_BUILD` + SW `CACHE` together.
 
@@ -33,8 +39,8 @@
 
 Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
 System; **same Supabase** as the hybrid repo). **Ship branch: `main`**
-(`03153e4` — polish + coach scrub **v59**; hybrid athlete Phases 1–12 merged
-earlier the same day). Feature work branches off `main`. Do **not** treat old
+(`4c3cc4d` — five-engine docs via PR #42; polish + coach scrub **v59** at
+`03153e4`). Feature work branches off `main`. Do **not** treat old
 `cursor/engine-stage*` / Expo stacks as tip.
 
 **Live athlete deploy (Netlify):** https://thehybridsystem.netlify.app/  
@@ -110,9 +116,19 @@ Optional leftover: polish Task 8 final slop audit (not blocking five-systems).
 
 ### Naming (locked)
 
+THE Hybrid System is **five engines**:
+
+| Engine | Athlete name | Visibility |
+| --- | --- | --- |
+| Strength | Hybrid Strength | Visible (Library / log / Progress) |
+| Conditioning | The Engine | Visible (Home / HR log) |
+| Nutrition | Nutrition | Visible (Home daily log) |
+| Recovery | — | **Invisible** (gates only; no dial) |
+| Coordinator | — | **Invisible** (silent apply; no weekly peek) |
+
 - **The Engine** = conditioning (never Morpheus in athlete UI).
 - **Hybrid Strength** = lifts / WM / PRs / progression.
-- Together = **THE Hybrid System**. CSS `mph-*` = legacy Engine classes.
+- CSS `mph-*` = legacy Engine classes. Do not reintroduce two-dial-only framing.
 
 ### Hard product locks (do not silently reverse)
 
@@ -134,7 +150,7 @@ Optional leftover: polish Task 8 final slop audit (not blocking five-systems).
 - Hybrid athlete arc + Phases 1–12 on `main`
 - UI polish + **coach/ARC scrub v59** (`main` `03153e4`, PRs #38–#40)
 - Engines already tested in packages — gap is **HTML wiring**
-- Spec + plan for five-systems complete on branch **PR #41** (docs only)
+- Five-engine spec + plan + handoff on **`main`** via **PR #42** (supersedes draft PR #41)
 
 Useful command: `pnpm run verify`
 
