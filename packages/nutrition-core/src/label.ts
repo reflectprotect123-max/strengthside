@@ -26,6 +26,8 @@
  * a wrong one gets eaten.
  */
 
+import { normaliseAmount } from './serving-parse';
+
 /** One recognized line of text and its bounding box, in image pixels. */
 export interface OcrLine {
   text: string;
@@ -343,7 +345,15 @@ function parseEnergyKcal(cell: string): number | null {
 
 /* ---------- serving size ---------- */
 
-const SERVING_SIZE = new RegExp(`(${DECIMAL})\\s*(kg|mg|ml|g|l)\\b`, 'i');
+/**
+ * Mass/volume tokens on a serving-size line. Same set as `serving-parse`
+ * (`oz` / `fl oz` / `cl` / `lb` included). After the match, `normaliseAmount`
+ * folds them to `g` or `ml` so scale maths never sees `kg` or `oz` as a basis.
+ */
+const SERVING_SIZE = new RegExp(
+  `(${DECIMAL})\\s*(fl\\.?\\s*oz|floz|fluid\\s*ounces?|ounces?|oz|lbs?|pounds?|kg|mg|ml|cl|g|l)\\b`,
+  'i',
+);
 
 /**
  * The serving denominator, from the panel's own "Serving size" line.
@@ -358,16 +368,23 @@ const SERVING_SIZE = new RegExp(`(${DECIMAL})\\s*(kg|mg|ml|g|l)\\b`, 'i');
  * text OUTSIDE the brackets is read instead — with the bracket removed rather
  * than the whole line scanned, so "2 biscuits (1 cup)" still yields nothing
  * instead of finding a number in the part already rejected.
+ *
+ * Returned unit is always normalised `g` or `ml` (via `normaliseAmount`).
  */
 function parseServingSize(texts: readonly string[]): { qty: number; unit: string } | null {
   const line = texts.find((t) => norm(t).includes('serving size'));
   if (!line) return null;
   const paren = /\(([^)]*)\)/.exec(line);
   const outside = line.replace(/\([^)]*\)/g, ' ');
-  const m = (paren ? SERVING_SIZE.exec(stripThousands(paren[1])) : null) ?? SERVING_SIZE.exec(stripThousands(outside));
+  const m =
+    (paren ? SERVING_SIZE.exec(stripThousands(paren[1])) : null) ??
+    SERVING_SIZE.exec(stripThousands(outside));
   if (!m) return null;
   const qty = toNumber(m[1]);
-  return qty == null ? null : { qty, unit: m[2].toLowerCase() };
+  if (qty == null) return null;
+  const normalised = normaliseAmount(qty, m[2]);
+  if (!normalised) return null;
+  return { qty: normalised.amount, unit: normalised.unit };
 }
 
 /* ---------- basis ---------- */
