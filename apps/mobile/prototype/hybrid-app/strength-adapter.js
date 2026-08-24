@@ -412,19 +412,46 @@
     };
   }
 
-  function applyLoadHintsToExercise(state, ex) {
-    if (!ex || !ex.exerciseId) return;
-    var hint = ensureStrengthState(state).loadHints[ex.exerciseId];
-    if (!hint || !hint.loadKg) return;
+  function workingMaxKgForExercise(state, exerciseId, asOfDate) {
+    if (!exerciseId || !global.HybridStrength?.WorkingMax?.currentWorkingMax) return null;
+    var events = (ensureStrengthState(state).workingMaxEvents || []).filter(function (e) {
+      return e.exerciseId === exerciseId;
+    });
+    var wm = global.HybridStrength.WorkingMax.currentWorkingMax(events, asOfDate);
+    return wm ? wm.valueKg : null;
+  }
+
+  function equipmentForExercise(exercise) {
+    var eq = exercise && exercise.equipment;
+    if (!eq || typeof eq !== 'object') return null;
+    return eq;
+  }
+
+  function fillBlankRowWeights(ex, loadKg) {
+    if (loadKg == null) return;
     (ex.rows || []).forEach(function (row) {
-      if (!row.done && (row.weight === '' || row.weight == null)) row.weight = hint.loadKg;
+      if (!row.done && (row.weight === '' || row.weight == null)) row.weight = loadKg;
     });
   }
 
-  function applyLoadHintsToTasks(state, tasks) {
+  function applyLoadHintsToExercise(state, ex, asOfDate) {
+    if (!ex) return;
+    var exerciseId = ex.exerciseId || ex.id;
+    if (!exerciseId) return;
+    var hint = ensureStrengthState(state).loadHints[exerciseId];
+    if (hint && hint.loadKg) fillBlankRowWeights(ex, hint.loadKg);
+    if (ex.loadExpr) {
+      var resolved = resolveExerciseLoad(state, ex, asOfDate);
+      if (resolved && resolved.loadKg != null) fillBlankRowWeights(ex, resolved.loadKg);
+    }
+  }
+
+  function applyLoadHintsToTasks(state, tasks, asOfDate) {
     (tasks || []).forEach(function (t) {
-      if (t.kind === 'strength') applyLoadHintsToExercise(state, t);
-      if (t.kind === 'superset') (t.exercises || []).forEach(function (ex) { applyLoadHintsToExercise(state, ex); });
+      if (t.kind === 'strength') applyLoadHintsToExercise(state, t, asOfDate);
+      if (t.kind === 'superset') {
+        (t.exercises || []).forEach(function (ex) { applyLoadHintsToExercise(state, ex, asOfDate); });
+      }
     });
   }
 
@@ -434,17 +461,21 @@
    */
   function resolveExerciseLoad(state, exercise, asOfDate) {
     if (!hasStrength() || !exercise || !exercise.loadExpr) return null;
+    if (!global.HybridStrength.Resolve?.resolveTarget) return null;
     var HS = global.HybridStrength;
+    var scheduledDate = asOfDate || isoNow().slice(0, 10);
     var ctx = {
       athleteId: (state.meta && state.meta.ownerId) || 'local',
-      scheduledDate: asOfDate,
-      workingMaxAt: function (exId) { return currentAnchorLoad(state, exId); },
-      lastPerformedLoad: function (_a, exId) { return null; },
-      bodyweightAt: function () { return num(state.profile && state.profile.bodyweight) || null; },
+      scheduledDate: scheduledDate,
+      workingMaxAt: function (exId, asOf) {
+        return workingMaxKgForExercise(state, exId, asOf || scheduledDate);
+      },
+      lastPerformedLoad: function (_a, _exId) { return null; },
+      bodyweightAt: function (_a, _asOf) { return num(state.profile && state.profile.bodyweight) || null; },
     };
     var fakeEx = {
       id: exercise.exerciseId || exercise.id,
-      equipment: exercise.equipment || 'barbell_kg',
+      equipment: equipmentForExercise(exercise),
       referenceMaxExerciseId: null,
     };
     var t = {

@@ -21,14 +21,168 @@ var HybridStrength = (() => {
   var strength_entry_exports = {};
   __export(strength_entry_exports, {
     Coordinator: () => coordinator_exports,
+    E1rm: () => e1rm_exports,
     Exposure: () => exposure_exports,
+    Load: () => load_exports,
     Performed: () => performed_exports,
     Pr: () => pr_exports,
     Progression: () => progression_exports,
+    Resolve: () => resolve_exports,
     Rounding: () => rounding_exports,
     Volume: () => volumeBudget_exports,
     WorkingMax: () => workingMax_exports
   });
+
+  // ../../../../packages/strength-engine/src/resolve.ts
+  var resolve_exports = {};
+  __export(resolve_exports, {
+    resolveTarget: () => resolveTarget
+  });
+
+  // ../../../../packages/strength-engine/src/rounding.ts
+  var rounding_exports = {};
+  __export(rounding_exports, {
+    roundLoadToEquipment: () => roundLoadToEquipment
+  });
+  function roundLoadToEquipment(value, equipment) {
+    if (!Number.isFinite(value)) {
+      throw new Error(`roundLoadToEquipment requires a finite load, got: ${value}`);
+    }
+    if (!equipment) return value;
+    if (equipment.rounding === "none") return value;
+    if (equipment.rackValuesKg?.length) {
+      if (equipment.rounding === "nearest") {
+        return equipment.rackValuesKg.reduce(
+          (closest, v) => Math.abs(v - value) < Math.abs(closest - value) ? v : closest
+        );
+      }
+      const below = equipment.rackValuesKg.filter((v) => v <= value);
+      if (below.length) {
+        return Math.max(...below);
+      }
+      return equipment.rackValuesKg[0];
+    }
+    if (equipment.incrementKg == null || equipment.incrementKg <= 0) return value;
+    const steps = equipment.rounding === "nearest" ? Math.round(value / equipment.incrementKg) : Math.floor(value / equipment.incrementKg);
+    return Number((steps * equipment.incrementKg).toFixed(6));
+  }
+
+  // ../../../../packages/strength-engine/src/resolve.ts
+  function requiredArg(t) {
+    if (t.exprArg == null) {
+      throw new Error(`prescribed_target ${t.exprKind} row missing exprArg: ${JSON.stringify(t)}`);
+    }
+    return t.exprArg;
+  }
+  function resolveTarget(t, ex, ctx) {
+    if (t.literalValue != null) return { kind: "scalar", value: t.literalValue, exact: t.literalValue };
+    if (t.rangeLo != null) {
+      if (t.rangeHi == null) {
+        throw new Error(`prescribed_target range row missing rangeHi: ${JSON.stringify(t)}`);
+      }
+      return { kind: "range", lo: t.rangeLo, hi: t.rangeHi };
+    }
+    switch (t.exprKind) {
+      case "pct_of_max": {
+        const arg = requiredArg(t);
+        const refId = t.exprRefExercise ?? ex.referenceMaxExerciseId ?? ex.id;
+        const max = ctx.workingMaxAt(refId, ctx.scheduledDate);
+        if (max == null) return { kind: "unresolved", reason: "no_working_max" };
+        const exact = max * arg;
+        return { kind: "scalar", value: roundLoadToEquipment(exact, ex.equipment), exact };
+      }
+      case "lwp_delta": {
+        const arg = requiredArg(t);
+        const last = ctx.lastPerformedLoad(ctx.athleteId, ex.id);
+        if (last == null) return { kind: "unresolved", reason: "no_history" };
+        const exact = last + arg;
+        return { kind: "scalar", value: roundLoadToEquipment(exact, ex.equipment), exact };
+      }
+      case "pct_of_bodyweight": {
+        const arg = requiredArg(t);
+        const bw = ctx.bodyweightAt(ctx.athleteId, ctx.scheduledDate);
+        if (bw == null) return { kind: "unresolved", reason: "no_bodyweight" };
+        const exact = bw * arg;
+        return { kind: "scalar", value: roundLoadToEquipment(exact, ex.equipment), exact };
+      }
+      case "rpe_autoreg":
+        return { kind: "deferred_to_athlete" };
+      default:
+        throw new Error(`prescribed_target row with no resolution strategy: ${JSON.stringify(t)}`);
+    }
+  }
+
+  // ../../../../packages/strength-engine/src/e1rm.ts
+  var e1rm_exports = {};
+  __export(e1rm_exports, {
+    BRZYCKI_MAX_REPS: () => BRZYCKI_MAX_REPS,
+    e1rm: () => e1rm
+  });
+  var BRZYCKI_MAX_REPS = 36;
+  function e1rm(loadKg, reps, formula = "epley") {
+    if (reps <= 0) throw new Error("e1rm requires reps > 0");
+    if (reps === 1) return loadKg;
+    if (formula === "brzycki") {
+      const r = Math.min(reps, BRZYCKI_MAX_REPS);
+      return loadKg * (36 / (37 - r));
+    }
+    return loadKg * (1 + reps / 30);
+  }
+
+  // ../../../../packages/strength-engine/src/load.ts
+  var load_exports = {};
+  __export(load_exports, {
+    blockCompliance: () => blockCompliance,
+    intensity: () => intensity,
+    sessionCompliance: () => sessionCompliance,
+    sessionLoad: () => sessionLoad
+  });
+
+  // ../../../../packages/strength-engine/src/performed.ts
+  var performed_exports = {};
+  __export(performed_exports, {
+    measurementValue: () => measurementValue
+  });
+  function measurementValue(set, key) {
+    return set.measurements.find((m) => m.metricKey === key)?.value ?? null;
+  }
+
+  // ../../../../packages/strength-engine/src/load.ts
+  function sessionLoad(sets) {
+    let tonnageKg = 0;
+    let workReps = 0;
+    for (const set of sets) {
+      const reps = measurementValue(set, "reps") ?? 0;
+      const load = measurementValue(set, "load");
+      if (load != null) tonnageKg += reps * load;
+      else workReps += reps;
+    }
+    return { tonnageKg, workReps, conditioningLoad: 0 };
+  }
+  function intensity(sets, workingMax) {
+    let repWeightedLoad = 0;
+    let totalReps = 0;
+    for (const set of sets) {
+      const reps = measurementValue(set, "reps");
+      const load = measurementValue(set, "load");
+      if (reps == null || load == null) continue;
+      repWeightedLoad += reps * load;
+      totalReps += reps;
+    }
+    if (!totalReps || !workingMax) return null;
+    return repWeightedLoad / totalReps / workingMax;
+  }
+  function sessionCompliance(assigned, performed) {
+    const required = assigned.filter((s) => !s.isOptional);
+    if (!required.length) return 1;
+    const done = required.filter((s) => performed.some((p) => p.prescribedSetId === s.id && p.status === "completed"));
+    return done.length / required.length;
+  }
+  function blockCompliance(requiredSetIds, performed) {
+    if (!requiredSetIds.length) return 1;
+    const done = requiredSetIds.filter((id) => performed.some((p) => p.prescribedSetId === id && p.status === "completed"));
+    return done.length / requiredSetIds.length;
+  }
 
   // ../../../../packages/strength-engine/src/volumeBudget.ts
   var volumeBudget_exports = {};
@@ -179,17 +333,6 @@ var HybridStrength = (() => {
   __export(exposure_exports, {
     strengthExposuresFor: () => strengthExposuresFor
   });
-
-  // ../../../../packages/strength-engine/src/performed.ts
-  var performed_exports = {};
-  __export(performed_exports, {
-    measurementValue: () => measurementValue
-  });
-  function measurementValue(set, key) {
-    return set.measurements.find((m) => m.metricKey === key)?.value ?? null;
-  }
-
-  // ../../../../packages/strength-engine/src/exposure.ts
   function strengthExposuresFor(exerciseId, performed, resolvedTargets = {}) {
     const relevant = performed.filter((p) => p.exerciseId === exerciseId);
     const bySession = /* @__PURE__ */ new Map();
@@ -252,34 +395,6 @@ var HybridStrength = (() => {
     const latestManual = upTo.find((e) => e.source !== "auto_estimate");
     if (latestManual && latestManual.effectiveAt >= latest.effectiveAt) return latestManual;
     return latest;
-  }
-
-  // ../../../../packages/strength-engine/src/rounding.ts
-  var rounding_exports = {};
-  __export(rounding_exports, {
-    roundLoadToEquipment: () => roundLoadToEquipment
-  });
-  function roundLoadToEquipment(value, equipment) {
-    if (!Number.isFinite(value)) {
-      throw new Error(`roundLoadToEquipment requires a finite load, got: ${value}`);
-    }
-    if (!equipment) return value;
-    if (equipment.rounding === "none") return value;
-    if (equipment.rackValuesKg?.length) {
-      if (equipment.rounding === "nearest") {
-        return equipment.rackValuesKg.reduce(
-          (closest, v) => Math.abs(v - value) < Math.abs(closest - value) ? v : closest
-        );
-      }
-      const below = equipment.rackValuesKg.filter((v) => v <= value);
-      if (below.length) {
-        return Math.max(...below);
-      }
-      return equipment.rackValuesKg[0];
-    }
-    if (equipment.incrementKg == null || equipment.incrementKg <= 0) return value;
-    const steps = equipment.rounding === "nearest" ? Math.round(value / equipment.incrementKg) : Math.floor(value / equipment.incrementKg);
-    return Number((steps * equipment.incrementKg).toFixed(6));
   }
 
   // ../../../../packages/strength-engine/src/coordinator.ts
