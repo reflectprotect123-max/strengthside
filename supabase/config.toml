@@ -1,0 +1,36 @@
+# TheStrengthEngine — Supabase (shared project)
+#
+# This repo owns strength migrations only (see supabase/migrations/).
+# Nutrition / MacroTrack tables and ecosystem RPCs live in THE-HYBRID-ENGINE1
+# and are already applied on the shared hosted project.
+#
+# Link for local CLI work:
+#   npx supabase link --project-ref orysjncrksmdfabpuftd
+#
+# Do NOT add nutrition migrations here — shared Postgres contract (CLAUDE.md).
+
+project_id = "orysjncrksmdfabpuftd"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "https://thehybridsystem.netlify.app"
+additional_redirect_urls = ["https://thehybridsystem.netlify.app", "capacitor://localhost"]
+
+[functions]
+enabled = true

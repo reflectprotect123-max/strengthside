@@ -3,8 +3,9 @@
  * Depends on window.HybridNutrition (nutrition-bundle.js) and app helpers:
  * $, esc, today, id, sheet, closeSheet, go, shell, nav, clock.
  *
- * Storage is a SEPARATE localStorage key from training (hybrid-nutrition-v1).
- * Tables stay on the hybrid repo's MacroTrack schema — no migrations here.
+ * Storage is local-first (`hybrid-nutrition-v1`). When signed in to Supabase
+ * (same session as WHOOP), NutritionSync pushes/pulls the nutrition domain
+ * snapshot to athlete_domain_snapshots on the shared project.
  */
 (function () {
   const KEY = 'hybrid-nutrition-v1';
@@ -29,6 +30,7 @@
   function saveN(db) {
     try {
       localStorage.setItem(KEY, JSON.stringify(db));
+      if (window.NutritionSync && NutritionSync.schedulePush) NutritionSync.schedulePush(db);
       return true;
     } catch {
       return false;
@@ -111,7 +113,15 @@
 
   function openNutrition(date) {
     nutDate = date || todayStr();
-    ensureCatalog().finally(() => renderNutrition());
+    ensureCatalog()
+      .then(async () => {
+        if (window.NutritionSync && NutritionSync.reconcile) {
+          const local = loadN();
+          const merged = await NutritionSync.reconcile(local);
+          if (merged && merged !== local) saveN(merged);
+        }
+      })
+      .finally(() => renderNutrition());
   }
 
   function ensureCatalog() {
@@ -290,16 +300,10 @@
     return !!(window.NativeBridge && NativeBridge.isNative && NativeBridge.isNative());
   }
 
-  /** Barcode is the fast path — camera on APK, digits on web. Search is secondary. */
+  /** Barcode is the fast path — sheet first, then camera on APK. Search is secondary. */
   function addFood(meal) {
     meal = meal || 'snack';
-    ensureCatalog().then(() => {
-      if (isNativeApp()) {
-        scanBarcode(meal);
-        return;
-      }
-      showBarcodeSheet(meal);
-    });
+    ensureCatalog().then(() => showBarcodeSheet(meal));
   }
 
   function showBarcodeSheet(meal) {
@@ -470,19 +474,31 @@
       return;
     }
     closeSheet();
-    sheet(`<h2>Scan barcode</h2><p class=lead>Point at the barcode…</p><p class=meta id=nutBarcodeStatus>Opening scanner</p>`);
+    sheet(`<h2>Scan barcode</h2><p class=lead>Point at the barcode on the pack. Hold steady until it beeps.</p><p class=meta id=nutBarcodeStatus>Opening camera…</p>`);
     try {
       const code = await NativeBridge.scanBarcodeOnce();
-      if (!code) throw new Error('No barcode detected.');
+      if (!code) {
+        showBarcodeSheet(meal);
+        return;
+      }
       await resolveBarcodeCode(code, meal);
     } catch (e) {
+      if (e && e.code === 'barcode_cancelled') {
+        showBarcodeSheet(meal);
+        return;
+      }
       if (e && e.code === 'barcode_unavailable') {
         alert('Barcode scanner unavailable on this build — type the digits instead.');
         showBarcodeSheet(meal);
         return;
       }
-      sheet(`<h2>Scan barcode</h2><p class=lead>${esc((e && e.message) || 'Scan failed')}</p>
-        <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Try again</button>
+      if (e && e.code === 'barcode_permission_denied') {
+        alert('Camera permission is required to scan barcodes. Allow camera access in Settings, or type the digits.');
+        showBarcodeSheet(meal);
+        return;
+      }
+      sheet(`<h2>Scan failed</h2><p class=lead>${esc((e && e.message) || 'Could not read the barcode. Try again with better light.')}</p>
+        <button type="button" class="btn primary block" onclick="NutritionUI.scanBarcode('${meal}')">Scan again</button>
         <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.showBarcodeSheet('${meal}')">Type barcode</button>
         <button type="button" class="btn block" style="margin-top:8px" onclick="NutritionUI.scanLabel('${meal}')">Scan label instead</button>`);
     }
@@ -808,6 +824,12 @@
     </div></div><span class=ath-chev aria-hidden=true>›</span></button>`;
   }
 
+  function replaceNutrition(db) {
+    if (!db) return;
+    saveN(db);
+    renderNutrition();
+  }
+
   window.NutritionUI = {
     open: openNutrition,
     addFood,
@@ -839,5 +861,6 @@
     logCustom,
     homeModuleHtml,
     load: loadN,
+    replace: replaceNutrition,
   };
 })();

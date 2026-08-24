@@ -676,6 +676,7 @@ body{background:transparent}
 <script src="./whoop.js"></script>
 <script src="./concept2.js"></script>
 <script src="./nutrition-bundle.js"></script>
+<script src="./nutrition-sync.js"></script>
 <script src="./nutrition-ui.js"></script>
 <script src="./engine-bundle.js"></script>
 <script src="./engine-adapter.js"></script>
@@ -1527,6 +1528,7 @@ async function refreshStoragePersistence(){try{if(navigator.storage?.persisted){
 async function requestStoragePersistence(){try{if(!navigator.storage?.persist)return alert('This browser does not support protected storage. Autosave still works on this device.');let granted=await navigator.storage.persist();S.meta=S.meta||{};S.meta.storagePersisted=!!granted;save('storage-persist');alert(granted?'Protected storage granted. Your browser is less likely to clear this app data automatically.':'Protected storage was not granted. Autosave still works, but keep occasional backups.');settings()}catch(e){alert('Could not request protected storage. Autosave still works, but keep occasional backups.')}}
 function settings(){let h=dataHealth(),last=h.lastBackup?new Date(h.lastBackup).toLocaleString():'Never on this device',lastComplete=h.lastCompleted?`${dateLabel(h.lastCompleted.date)} · ${h.lastCompleted.name}`:'None yet',persisted=!!S.meta?.storagePersisted,lastSave=S.meta?.lastSavedAt?new Date(S.meta.lastSavedAt).toLocaleString():'Not yet';shell('Settings','Athlete defaults',`<div class=stack>
 ${(window.Whoop&&Whoop.cardHtml)?Whoop.cardHtml():''}${(window.Concept2&&Concept2.cardHtml)?Concept2.cardHtml():''}
+${(window.NutritionSync&&NutritionSync.cardHtml)?NutritionSync.cardHtml():''}
 <div class=card><div class=eyebrow>Training</div><div class=title>Heart-rate profile</div><div class=meta>Used for conditioning load and zone context. Resting and max HR should match you, not a default.</div><div class=two style="margin-top:12px"><div class=field><label>Resting HR</label><input type=number min=30 max=120 value="${esc(S.profile.restingHr)}" onchange="S.profile.restingHr=num(this.value);save()"></div><div class=field><label>Max HR</label><input type=number min=120 max=230 value="${esc(S.profile.maxHr)}" onchange="S.profile.maxHr=num(this.value);save()"></div></div></div>
 <div class=card><div class=eyebrow>Data</div><div class=title>${persisted?'Protected storage':'Save on this device'}</div><div class=meta>Autosave is always on. Last save: ${esc(lastSave)} · Last backup: ${esc(last)} · Last completed: ${esc(lastComplete)}</div><div class=btns style="margin-top:12px"><button class="btn small" onclick=exportData()>Export backup</button></div></div>
 

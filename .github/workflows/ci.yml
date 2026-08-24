@@ -23,7 +23,9 @@ jobs:
       - run: pnpm run build
       - run: pnpm run check:engine-adapter
       - run: pnpm run check:label-scan
+      - run: pnpm run check:native-bridge
       - run: pnpm run check:nutrition-ui
+      - run: pnpm run check:nutrition-sync
       - run: pnpm run check:food-catalog
       - run: pnpm run check:hybrid-proxy
       - name: Migrations apply (no environment gaps permitted here)

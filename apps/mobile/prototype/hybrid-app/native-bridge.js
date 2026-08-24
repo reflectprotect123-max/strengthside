@@ -160,6 +160,22 @@
   }
 
   /**
+   * Extract product barcode digits (EAN/UPC) from ML Kit barcode objects.
+   * @param {unknown} barcodes
+   * @returns {string|null}
+   */
+  function pickProductBarcode(barcodes) {
+    const list = Array.isArray(barcodes) ? barcodes : [];
+    for (const bc of list) {
+      if (!bc || typeof bc !== 'object') continue;
+      const raw = bc.rawValue || bc.displayValue || bc.content || '';
+      const digits = String(raw).replace(/\D/g, '');
+      if (digits.length >= 8 && digits.length <= 14) return digits;
+    }
+    return null;
+  }
+
+  /**
    * Scan one barcode via ML Kit. Cap Android only.
    * @returns {Promise<string|null>} barcode digits
    */
@@ -170,15 +186,36 @@
       err.code = 'barcode_unavailable';
       throw err;
     }
+    const productFormats = ['EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128'];
     if (typeof BS.scan === 'function') {
-      const result = await BS.scan();
-      const code = result && (result.rawValue || result.displayValue || result.content);
-      return code ? String(code).trim() : null;
+      try {
+        const result = await BS.scan({ formats: productFormats, autoZoom: true });
+        return pickProductBarcode(result && result.barcodes);
+      } catch (e) {
+        const msg = String((e && e.message) || e || '').toLowerCase();
+        if (msg.includes('cancel')) {
+          const err = new Error('Scan cancelled.');
+          err.code = 'barcode_cancelled';
+          throw err;
+        }
+        throw e;
+      }
+    }
+    if (typeof BS.requestPermissions === 'function') {
+      const perm = await BS.requestPermissions();
+      if (!perm || perm.camera !== 'granted') {
+        const err = new Error('Camera permission denied.');
+        err.code = 'barcode_permission_denied';
+        throw err;
+      }
     }
     if (typeof BS.startScan === 'function' && typeof BS.stopScan === 'function') {
       return new Promise((resolve, reject) => {
         let handle = null;
+        let settled = false;
         const done = (value) => {
+          if (settled) return;
+          settled = true;
           try {
             if (handle && handle.remove) handle.remove();
           } catch (_) {}
@@ -186,17 +223,15 @@
           resolve(value);
         };
         BS.addListener('barcodesScanned', (event) => {
-          const barcodes = (event && event.barcodes) || [];
-          const first = barcodes[0];
-          const code = first && (first.rawValue || first.displayValue);
-          if (code) done(String(code).trim());
+          const code = pickProductBarcode((event && event.barcodes) || []);
+          if (code) done(code);
         })
           .then((h) => {
             handle = h;
-            return BS.startScan();
+            return BS.startScan({ formats: productFormats, lensFacing: 'BACK' });
           })
           .catch(reject);
-        setTimeout(() => done(null), 45000);
+        setTimeout(() => done(null), 60000);
       });
     }
     const err = new Error('Barcode scanner unavailable.');

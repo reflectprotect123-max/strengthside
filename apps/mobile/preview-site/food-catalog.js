@@ -229,6 +229,12 @@
     const local = lookupBarcode(code);
     if (local) return local;
     try {
+      if (global.NutritionSync && typeof global.NutritionSync.lookupBarcodeCloud === 'function') {
+        const cloud = await global.NutritionSync.lookupBarcodeCloud(code);
+        if (cloud) return cloud;
+      }
+    } catch (_) {}
+    try {
       return await lookupBarcodeLive(code);
     } catch (_) {
       return null;
@@ -248,6 +254,7 @@
     catalogMeta,
     normalizeBarcode,
     productToFood,
+    rememberLive,
     searchLive,
     lookupBarcodeLive,
     searchMerged,
