@@ -34,10 +34,12 @@ for f in concept2.js echo-ftms.js native-bridge.js label-scan.js label-scan-live
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
 done
-# Concept2 Netlify proxies (preview-site deploy)
+# Integration Netlify proxies (preview-site deploy — WHOOP + Concept2)
 if [[ -d "$SRC_DIR/netlify/functions" ]]; then
   mkdir -p "$ROOT/preview-site/netlify/functions"
-  cp -f "$SRC_DIR"/netlify/functions/concept2-*.mjs "$ROOT/preview-site/netlify/functions/" 2>/dev/null || true
-  cp -f "$SRC_DIR"/netlify/functions/concept2-*.mjs "$ROOT/prototype/hybrid-app/netlify/functions/" 2>/dev/null || true
+  cp -f "$SRC_DIR"/netlify/functions/*.mjs "$ROOT/preview-site/netlify/functions/"
+fi
+if [[ -f "$SRC_DIR/netlify.toml" ]]; then
+  cp -f "$SRC_DIR/netlify.toml" "$ROOT/preview-site/netlify.toml"
 fi
 echo "Synced THE-Hybrid-App.html + preview-site + service-worker.js + nutrition + engine + concept2 + echo"

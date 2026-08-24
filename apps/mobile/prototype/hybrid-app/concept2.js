@@ -6,12 +6,33 @@
   const SUPABASE_URL = 'https://orysjncrksmdfabpuftd.supabase.co';
   const SUPABASE_ANON =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeXNqbmNya3NtZGZhYnB1ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MTE4NzksImV4cCI6MjA5OTk4Nzg3OX0.GTMBfFtH5O6SikzHo75sXGIZoEhmuJ7TvXiACd7T078';
+  const ATHLETE_NETLIFY = 'https://papaya-cheesecake-059e06.netlify.app';
   const FN = {
     connect: '/.netlify/functions/concept2-connect',
     sync: '/.netlify/functions/concept2-sync',
     status: '/.netlify/functions/integrations-status',
     disconnect: '/.netlify/functions/integrations-disconnect',
   };
+  function resolveProxyBase() {
+    try {
+      const loc = global.location;
+      if (!loc || !loc.hostname) return ATHLETE_NETLIFY;
+      const host = String(loc.hostname).toLowerCase();
+      if (host === 'papaya-cheesecake-059e06.netlify.app') return '';
+      if (loc.protocol === 'file:' || loc.protocol === 'capacitor:') return ATHLETE_NETLIFY;
+      if (host === 'localhost' || host === '127.0.0.1') return ATHLETE_NETLIFY;
+      if (host.endsWith('.github.io')) return ATHLETE_NETLIFY;
+      return ATHLETE_NETLIFY;
+    } catch (_) {
+      return ATHLETE_NETLIFY;
+    }
+  }
+  function fnUrl(path, query) {
+    const q = query ? '?' + new URLSearchParams(query) : '';
+    const rel = path + q;
+    const base = resolveProxyBase();
+    return base ? base.replace(/\/$/, '') + rel : rel;
+  }
   let sb = null;
   const ui = { busy: false, message: '' };
 
@@ -55,7 +76,7 @@
       e.code = 'auth_required';
       throw e;
     }
-    const url = opts.query ? path + '?' + new URLSearchParams(opts.query) : path;
+    const url = fnUrl(path, opts.query);
     const res = await fetch(url, {
       method,
       headers: { authorization: 'Bearer ' + t, accept: 'application/json' },
