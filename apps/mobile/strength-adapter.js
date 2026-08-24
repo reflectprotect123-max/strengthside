@@ -192,6 +192,99 @@
     };
   }
 
+  function exerciseNameFor(state, exerciseId) {
+    var ex = (state.exercises || []).find(function (e) { return e.id === exerciseId; });
+    return (ex && ex.name) || exerciseId || 'Lift';
+  }
+
+  var AUDIT_REASONS = {
+    three_on_target: 'Three on-target sessions',
+    repeated_deterioration: 'Repeated misses — deload',
+    mixed_signal: 'Mixed signals — hold',
+    insufficient_exposure: 'Still calibrating',
+    session_pain_yes: 'Session pain',
+    no_checkin_today: 'No check-in today',
+    performance_overrides_subjective_gate: 'Beat targets — bump anyway',
+    recovery_gate_hold: 'Recovery gate',
+    recovery_gate_caution: 'Control day gate',
+    checkin_minimum: 'Minimum day',
+    checkin_control: 'Control day',
+    whoop_low: 'Low WHOOP recovery',
+    whoop_moderate: 'Moderate WHOOP',
+  };
+
+  function auditReasonText(codes) {
+    return (codes || []).map(function (c) {
+      if (AUDIT_REASONS[c]) return AUDIT_REASONS[c];
+      if (c.indexOf('recovery_gate_') === 0) return 'Recovery gate (' + c.replace('recovery_gate_', '') + ')';
+      return c.replace(/_/g, ' ');
+    }).join(' · ');
+  }
+
+  function recordPrEvents(state, session) {
+    if (!hasStrength()) return;
+    ensureStrengthState(state);
+    var performed = performedFromSession(session);
+    var prEvents = state.strengthState.prEvents.slice();
+    var history = priorPrEvents(performedFromState(state), session.id).concat(prEvents);
+    performed.filter(function (p) { return p.status === 'completed'; }).forEach(function (set) {
+      var load = measurementValue(set, 'load');
+      var reps = measurementValue(set, 'reps');
+      if (!load || !reps) return;
+      if (global.HybridStrength.Pr.detectPr({ exerciseId: set.exerciseId, reps: reps, loadKg: load }, history)) {
+        var ev = {
+          exerciseId: set.exerciseId,
+          repCount: reps,
+          valueKg: load,
+          achievedAt: set.performedAt,
+          performedSetId: set.id,
+        };
+        prEvents.push(ev);
+        history.push(ev);
+      }
+    });
+    state.strengthState.prEvents = prEvents;
+  }
+
+  function progressSummary(state) {
+    if (!hasStrength()) return { ok: false, prs: [], workingMaxes: [], recentAudit: [] };
+    ensureStrengthState(state);
+    var todayStr = new Date().toISOString().slice(0, 10);
+    var prs = (state.strengthState.prEvents || []).slice().sort(function (a, b) {
+      return String(b.achievedAt).localeCompare(String(a.achievedAt));
+    }).slice(0, 20).map(function (p) {
+      return {
+        exerciseId: p.exerciseId,
+        name: exerciseNameFor(state, p.exerciseId),
+        repCount: p.repCount,
+        valueKg: p.valueKg,
+        achievedAt: p.achievedAt,
+      };
+    });
+
+    var wmByEx = {};
+    (state.strengthState.workingMaxEvents || []).forEach(function (e) {
+      if (!wmByEx[e.exerciseId] || e.effectiveAt > wmByEx[e.exerciseId].effectiveAt) wmByEx[e.exerciseId] = e;
+    });
+    var workingMaxes = Object.keys(wmByEx).map(function (id) {
+      return { exerciseId: id, name: exerciseNameFor(state, id), valueKg: wmByEx[id].valueKg, effectiveAt: wmByEx[id].effectiveAt };
+    }).sort(function (a, b) { return b.valueKg - a.valueKg; }).slice(0, 8);
+
+    var recentAudit = ((state.meta && state.meta.progressionAudit) || []).slice(-20).reverse().map(function (a) {
+      var label = a.action === 'progress' ? '+' + (a.deltaKg != null ? a.deltaKg.toFixed(1) : '?') + ' kg' : a.action;
+      return {
+        exerciseId: a.exerciseId,
+        name: exerciseNameFor(state, a.exerciseId),
+        action: a.action,
+        label: label,
+        at: a.at,
+        reasons: auditReasonText(a.reasonCodes),
+      };
+    });
+
+    return { ok: true, prs: prs, workingMaxes: workingMaxes, recentAudit: recentAudit };
+  }
+
   /**
    * Apply silent progression for a just-completed session.
    * Mutates state.strengthState and state.meta.progressionAudit; caller saves.
@@ -304,6 +397,10 @@
     applySilentProgression: applySilentProgression,
     applyLoadHintsToTasks: applyLoadHintsToTasks,
     trainedExerciseIds: trainedExerciseIds,
+    recordPrEvents: recordPrEvents,
+    progressSummary: progressSummary,
+    auditReasonText: auditReasonText,
+    exerciseNameFor: exerciseNameFor,
     ENGINE_VERSION: ENGINE_VERSION,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
