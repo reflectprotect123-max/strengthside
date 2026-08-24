@@ -3,8 +3,9 @@
  * Depends on window.HybridNutrition (nutrition-bundle.js) and app helpers:
  * $, esc, today, id, sheet, closeSheet, go, shell, nav, clock.
  *
- * Storage is a SEPARATE localStorage key from training (hybrid-nutrition-v1).
- * Tables stay on the hybrid repo's MacroTrack schema — no migrations here.
+ * Storage is local-first (`hybrid-nutrition-v1`). When signed in to Supabase
+ * (same session as WHOOP), NutritionSync pushes/pulls the nutrition domain
+ * snapshot to athlete_domain_snapshots on the shared project.
  */
 (function () {
   const KEY = 'hybrid-nutrition-v1';
@@ -29,6 +30,7 @@
   function saveN(db) {
     try {
       localStorage.setItem(KEY, JSON.stringify(db));
+      if (window.NutritionSync && NutritionSync.schedulePush) NutritionSync.schedulePush(db);
       return true;
     } catch {
       return false;
@@ -111,7 +113,15 @@
 
   function openNutrition(date) {
     nutDate = date || todayStr();
-    ensureCatalog().finally(() => renderNutrition());
+    ensureCatalog()
+      .then(async () => {
+        if (window.NutritionSync && NutritionSync.reconcile) {
+          const local = loadN();
+          const merged = await NutritionSync.reconcile(local);
+          if (merged && merged !== local) saveN(merged);
+        }
+      })
+      .finally(() => renderNutrition());
   }
 
   function ensureCatalog() {
