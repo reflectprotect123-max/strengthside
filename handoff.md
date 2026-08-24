@@ -68,7 +68,7 @@ Bottom nav: **Home · Library · Calendar · Settings**.
   finish HR-TRIMP from `@hybrid/engine` via `engine-bundle.js` +
   `engine-adapter.js`. Wake lock held for live Engine / Strength sessions
   (Cap KeepAwake + Screen Wake Lock). Hybrid Strength **math** frozen.
-- **Nutrition (v44):** **Add food** search over bundled **105+ AU catalogue** (offline; grows when OFF import runs) + **barcode** scan → catalogue → label fallback + **live label scan** (multi-frame ML Kit + mock AU panel fill-in) / web paste / quick add.
+- **Nutrition (v44):** **Add food** search over bundled **105+ AU staples** (offline) + **live Open Food Facts** JSON API when online + **barcode** → local → OFF → label fallback + **live label scan** / web paste / quick add.
   Spec: `docs/superpowers/specs/2026-08-23-lite-native-shell-design.md`.
 - **Library:** Hybrid Strength workouts — build, Full Body A, edit/schedule
   templates (nav id still `programs`). Everyday Readiness stays retired.
