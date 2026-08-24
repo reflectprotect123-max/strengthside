@@ -1,0 +1,56 @@
+name: Dogfood APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/nutrition-core/**'
+      - '.github/workflows/dogfood-apk.yml'
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.33.0 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: pnpm }
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK
+        run: |
+          set -euo pipefail
+          SDK="$HOME/Android/Sdk"
+          mkdir -p "$SDK/cmdline-tools"
+          curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools-unpack
+          rm -rf "$SDK/cmdline-tools/latest"
+          mv /tmp/cmdline-tools-unpack/cmdline-tools "$SDK/cmdline-tools/latest"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build debug dogfood APK
+        run: bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: the-hybrid-athlete-dogfood-debug
+          path: apps/mobile/capacitor/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
