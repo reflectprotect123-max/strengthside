@@ -47,6 +47,9 @@ export async function proxyHybrid(event, functionName) {
   const outHeaders = {
     'content-type': upstream.headers.get('content-type') || 'application/json; charset=utf-8',
     'cache-control': 'no-store',
+    // Capacitor (https://localhost) and GitHub Pages call these proxies cross-origin.
+    'access-control-allow-origin': '*',
+    'access-control-allow-headers': 'authorization,content-type',
   };
   const location = upstream.headers.get('location');
   if (location) outHeaders.location = location;
