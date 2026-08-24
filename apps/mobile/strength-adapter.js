@@ -401,20 +401,40 @@
   }
 
   function exerciseExposureHistory(state, exerciseId, limit) {
-    limit = limit || 5;
+    limit = limit || 8;
+    var sessionsById = {};
+    (state.sessions || []).forEach(function (s) {
+      if (s.id) sessionsById[s.id] = s;
+    });
     var performed = performedFromState(state).filter(function (p) {
       return p.exerciseId === exerciseId && p.status === 'completed';
     });
-    var rows = performed.map(function (p) {
+    var bySession = {};
+    performed.forEach(function (p) {
       var loadKg = measurementValue(p, 'load');
       var reps = measurementValue(p, 'reps');
-      if (!loadKg) return null;
+      if (!loadKg) return;
+      var sid = p.assignedSessionId;
+      if (!bySession[sid]) bySession[sid] = { sessionId: sid, sets: [] };
+      bySession[sid].sets.push({ loadKg: loadKg, reps: reps, at: p.performedAt });
+    });
+    var rows = Object.keys(bySession).map(function (sid) {
+      var bucket = bySession[sid];
+      var sess = sessionsById[sid] || {};
+      var best = null;
+      bucket.sets.forEach(function (set) {
+        if (!best || set.loadKg > best.loadKg || (set.loadKg === best.loadKg && set.reps > best.reps)) best = set;
+      });
+      if (!best) return null;
+      var at = sess.completedAt ? new Date(sess.completedAt).toISOString() : best.at;
       return {
-        sessionId: p.assignedSessionId,
-        loadKg: loadKg,
-        reps: reps,
-        at: p.performedAt,
-        date: String(p.performedAt || '').slice(0, 10),
+        sessionId: sid,
+        sessionName: sess.name || '',
+        loadKg: best.loadKg,
+        reps: best.reps,
+        setCount: bucket.sets.length,
+        at: at,
+        date: String(sess.date || at || '').slice(0, 10),
       };
     }).filter(Boolean);
     rows.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
@@ -432,7 +452,7 @@
       ok: true,
       exerciseId: exerciseId,
       name: exerciseNameFor(state, exerciseId),
-      history: exerciseExposureHistory(state, exerciseId, 5),
+      history: exerciseExposureHistory(state, exerciseId, 8),
       loadHint: hint,
       workingMaxKg: wm.length ? wm[0].valueKg : null,
     };
