@@ -2,6 +2,9 @@
  * Browser entry for athlete Hybrid HTML app.
  * Bundled to strength-bundle.js as window.HybridStrength.
  */
+export * as Resolve from '../../../../packages/strength-engine/src/resolve.ts';
+export * as E1rm from '../../../../packages/strength-engine/src/e1rm.ts';
+export * as Load from '../../../../packages/strength-engine/src/load.ts';
 export * as Volume from '../../../../packages/strength-engine/src/volumeBudget.ts';
 export * as Progression from '../../../../packages/strength-engine/src/progression.ts';
 export * as Exposure from '../../../../packages/strength-engine/src/exposure.ts';
