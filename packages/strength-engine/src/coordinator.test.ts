@@ -71,4 +71,17 @@ describe('planCoordinator', () => {
     expect(ease).toBeTruthy();
     expect(ease?.silentApply).toBe(true);
   });
+
+  it('surfaces illness and low fuel flags in weekly review', () => {
+    const r = planCoordinator({
+      ...emptyReceipts(),
+      recovery: [
+        { date: '2026-08-22', band: 'build', gate: 'ok', illness: true },
+        { date: '2026-08-23', band: 'build', gate: 'ok' },
+      ],
+      nutrition: { daysLogged: 3, daysInWindow: 7, lowEnergyFlag: true },
+    });
+    expect(r.reasonCodes).toContain('recovery_illness_flagged');
+    expect(r.reasonCodes).toContain('nutrition_low_energy');
+  });
 });

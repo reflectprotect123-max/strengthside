@@ -84,4 +84,11 @@ const deliveryPosture = RecoveryEngine.recoveryPosture({
 must(deliveryPosture.gate === 'caution', 'elevated delivery downgrades green day');
 must(deliveryPosture.reasonCodes.includes('delivery_load_elevated'), 'delivery reason');
 
+const illnessPosture = RecoveryEngine.recoveryPosture({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green', illness: 'yes' },
+});
+must(illnessPosture.reasonCodes.includes('illness_flag_active'), 'illness advisory');
+must(illnessPosture.gate === 'ok', 'illness does not block training');
+
 console.log('recovery-engine.smoke: ok', cases.length, 'cases');

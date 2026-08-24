@@ -48,4 +48,14 @@ must(easeItem && easeItem.silentApply, 'low dose conditioning ease is silent app
 CoordinatorAdapter.applySilentReceipt(lowDoseState, lowReceipt);
 must(lowDoseState.meta.condPrescriptionEase && lowDoseState.meta.condPrescriptionEase.effort === 'easy', 'ease hint stored');
 
+const flagState = {
+  sessions: [],
+  dailyCheckins: [{ date: '2026-08-24', readinessColor: 'green', illness: 'yes', fuel: 'poor' }],
+  meta: { progressionAudit: [] },
+  strengthState: { workingMaxEvents: [], prEvents: [], loadHints: {} },
+};
+const flagReceipt = CoordinatorAdapter.planWeek(flagState, '2026-08-24', 7);
+must((flagReceipt.reasonCodes || []).includes('recovery_illness_flagged'), 'illness in weekly receipt');
+must((flagReceipt.reasonCodes || []).includes('nutrition_low_energy'), 'low fuel in weekly receipt');
+
 console.log('coordinator.smoke: ok', receipt.headline);

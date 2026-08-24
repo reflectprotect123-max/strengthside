@@ -63,8 +63,9 @@
 | 9 Post-ship gaps | 9.1–9.10 | (gap audit after PR #36) | 10 |
 | 10 Recovery v2 + progress depth | T1–T10 | (roadmap deferred items) | 10 |
 | 11 Arc completion | U1–U10 | (delivery ledger + coordinator silent apply) | 10 |
+| 12 Check-in + library loop | W1–W10 | (illness record + schedule today) | 10 |
 
-**Total: 96 slices across 11 phases (all ≤10 each).**
+**Total: 106 slices across 12 phases (all ≤10 each).**
 
 ---
 
@@ -817,6 +818,65 @@
 - `docs/superpowers/specs/2026-08-24-recovery-engine-design.md` — delivery load ledger
 - `docs/superpowers/specs/2026-08-24-four-system-coordinator-design.md` — silent apply
 - `docs/superpowers/specs/2026-08-24-training-load-headline-design.md` — recovery dampener copy
+
+---
+
+# Phase 12 — Check-in depth + library loop (≤10 slices)
+
+**Scope:** Illness record-only flag on daily check-in, low-fuel weekly coordinator receipt, one-tap schedule-from-library.
+
+**Shipped:** PR (arc finish branch) — cache **v56**.
+
+### Slice W1 — Illness field on daily check-in
+
+- [x] `illness: 'none' | 'yes'` migrated in `upgradeAlpha2`
+- [x] Fuel + illness card on Sleep overview
+- [x] `checkinComplete` counts illness
+- [x] `pnpm run verify` green
+
+### Slice W2 — Illness advisory in recovery posture
+
+- [x] `illness_flag_active` reason — gate unchanged (record-only)
+- [x] `recovery-engine.smoke.mjs` case
+- [x] `pnpm run verify` green
+
+### Slice W3 — Coordinator illness + low fuel weekly items
+
+- [x] `recovery_illness_flagged` receipt when illness days > 0
+- [x] `nutrition_low_energy` when poor fuel check-ins
+- [x] Vitest + coordinator smoke
+- [x] `pnpm run verify` green
+
+### Slice W4 — scheduleTemplateToday from library
+
+- [x] One-tap “Schedule today” on template overview
+- [x] Navigates to Calendar on success
+- [x] `pnpm run verify` green
+
+### Slice W5 — recoveryInputForPosture illness passthrough
+
+- [x] Coordinator adapter passes illness per recovery day
+- [x] `pnpm run verify` green
+
+### Slice W6 — Sync preview copies + cache bump
+
+- [x] `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Bump `LOCAL_BUILD` + SW `CACHE` to **v56**
+- [x] `check:hybrid-proxy` green
+
+### Slice W7 — Phase 12 verify gate
+
+- [x] Full `pnpm run verify` green
+
+### Slice W8 — Phase 12 handoff
+
+- [x] Slice W checkboxes updated
+- [x] PR updated
+
+## References (phase 12)
+
+- `docs/superpowers/specs/2026-08-24-recovery-engine-design.md` — illness record-only
+- `docs/superpowers/specs/2026-08-24-four-system-coordinator-design.md` — weekly nutrition honesty
 
 ## References (full plan)
 

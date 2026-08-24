@@ -32,7 +32,7 @@
     var fuelChanged = String(c.fuel || 'okay') !== 'okay';
     return !!(num(c.steps) || num(c.workDifficulty) || num(c.workStress) || num(c.sleepQuality) ||
       num(c.energy) || num(c.muscleSoreness) || num(c.jointStress) || num(c.mentalStress) ||
-      fuelChanged || num(c.whoopRecovery) || num(c.restingHr) || num(c.hrv) || num(c.bodyweight) ||
+      fuelChanged || (c && c.illness === 'yes') || num(c.whoopRecovery) || num(c.restingHr) || num(c.hrv) || num(c.bodyweight) ||
       num(c.sleepHours) || num(c.heatLoad) || String(c.notes || '').trim());
   }
 
@@ -88,10 +88,15 @@
       var posture = global.RecoveryEngine && global.RecoveryEngine.recoveryPosture
         ? global.RecoveryEngine.recoveryPosture(input)
         : { band: complete ? 'build' : 'insufficient_data', gate: complete ? 'ok' : 'hold' };
-      return { date: date, band: posture.band, gate: posture.gate };
+      return { date: date, band: posture.band, gate: posture.gate, illness: !!(c && c.illness === 'yes') };
     });
 
     var nutritionDays = 0;
+    var lowEnergyFlag = false;
+    windowDates.forEach(function (date) {
+      var c = (state.dailyCheckins || []).find(function (x) { return x.date === date; });
+      if (c && String(c.fuel || 'okay') === 'poor') lowEnergyFlag = true;
+    });
     if (global.NutritionUI && typeof global.NutritionUI.load === 'function') {
       try {
         var db = global.NutritionUI.load();
@@ -108,7 +113,7 @@
       strength: { progressionAudit: auditWindow, sessionPainFlags: painFlags },
       conditioning: { weeklyZoneSeconds: weeklyZone, sessionsCompleted: condSessions },
       recovery: recovery,
-      nutrition: { daysLogged: nutritionDays, daysInWindow: days },
+      nutrition: { daysLogged: nutritionDays, daysInWindow: days, lowEnergyFlag: lowEnergyFlag },
     };
   }
 

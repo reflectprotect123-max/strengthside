@@ -182,6 +182,10 @@
       reasonCodes.push('session_pain_mild_advisory');
     }
 
+    if (checkin && checkin.illness === 'yes') {
+      reasonCodes.push('illness_flag_active');
+    }
+
     var band = bandFromGate(gate, sub);
     if (!sub && gate === 'hold') band = 'minimum';
 

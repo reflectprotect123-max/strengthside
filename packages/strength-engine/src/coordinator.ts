@@ -25,10 +25,12 @@ export interface DomainReceipts {
     date: string;
     band: 'build' | 'control' | 'minimum' | 'insufficient_data';
     gate: 'ok' | 'caution' | 'hold';
+    illness?: boolean;
   }>;
   nutrition: {
     daysLogged: number;
     daysInWindow: number;
+    lowEnergyFlag?: boolean;
   };
 }
 
@@ -71,6 +73,16 @@ export function planCoordinator(receipts: DomainReceipts, opts?: { weekStart?: s
 
   const recoveryHolds = receipts.recovery.filter(r => r.gate === 'hold' || r.band === 'minimum');
   const recoveryControl = receipts.recovery.filter(r => r.gate === 'caution' || r.band === 'control');
+  const illnessDays = receipts.recovery.filter(r => r.illness).length;
+  if (illnessDays > 0) {
+    items.push({
+      domain: 'recovery',
+      kind: 'review',
+      message: `Illness flagged ${illnessDays} day(s) this week — informational only; training is never blocked.`,
+      silentApply: false,
+    });
+    reasonCodes.push('recovery_illness_flagged');
+  }
   if (recoveryHolds.length >= 2) {
     items.push({
       domain: 'recovery',
@@ -150,6 +162,15 @@ export function planCoordinator(receipts: DomainReceipts, opts?: { weekStart?: s
 
   if (receipts.nutrition.daysInWindow > 0) {
     const pct = Math.round((receipts.nutrition.daysLogged / receipts.nutrition.daysInWindow) * 100);
+    if (receipts.nutrition.lowEnergyFlag) {
+      items.push({
+        domain: 'nutrition',
+        kind: 'review',
+        message: 'Low fuel reported on check-in — autopilot loads unchanged; log nutrition if tracking.',
+        silentApply: false,
+      });
+      reasonCodes.push('nutrition_low_energy');
+    }
     if (receipts.nutrition.daysLogged === 0) {
       items.push({
         domain: 'nutrition',
