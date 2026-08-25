@@ -135,10 +135,11 @@
     var effort = effortMeta(opts.effort || 'easy');
     var fmt = formatMeta(fmtKey);
     var whoop = opts.whoop || null;
+    var settings = opts.settings || {};
     var rx = global.HybridEngine.Conditioning.conPrescription(fmtKey, {
       whoop: whoop,
       modality: opts.modality,
-      settings: opts.settings,
+      settings: settings,
     });
 
     var zones = opts.zones || [];
@@ -149,13 +150,39 @@
       zones[0] ||
       null;
 
-    var mins = Math.max(0, Number(opts.minutes) || 30);
-    var rounds = Math.max(1, Number(opts.rounds) || fmt.rounds || 1);
-    var workSec = Math.max(0, Number(opts.workSec) || fmt.workSec || 0);
-    var restSec = Math.max(
-      0,
-      opts.restSec != null ? Number(opts.restSec) : fmt.restSec || 0,
-    );
+    // Prefer engine level-adjusted params; explicit builder numbers still win when provided.
+    var mins;
+    if (opts.minutes != null && opts.minutes !== '') {
+      mins = Math.max(0, Number(opts.minutes) || 0);
+    } else if (rx.minutes != null) {
+      mins = Math.max(0, Number(rx.minutes) || 0);
+    } else {
+      mins = Math.max(0, Number(fmt.minutes) || 30);
+    }
+    var rounds;
+    if (opts.rounds != null && opts.rounds !== '') {
+      rounds = Math.max(1, Number(opts.rounds) || 1);
+    } else if (rx.rounds != null) {
+      rounds = Math.max(1, Number(rx.rounds) || 1);
+    } else {
+      rounds = Math.max(1, Number(fmt.rounds) || 1);
+    }
+    var workSec;
+    if (opts.workSec != null && opts.workSec !== '') {
+      workSec = Math.max(0, Number(opts.workSec) || 0);
+    } else if (rx.work != null) {
+      workSec = Math.max(0, Number(rx.work) || 0);
+    } else {
+      workSec = Math.max(0, Number(fmt.workSec) || 0);
+    }
+    var restSec;
+    if (opts.restSec != null && opts.restSec !== '') {
+      restSec = Math.max(0, Number(opts.restSec) || 0);
+    } else if (rx.rest != null) {
+      restSec = Math.max(0, Number(rx.rest) || 0);
+    } else {
+      restSec = Math.max(0, Number(fmt.restSec) || 0);
+    }
 
     // Red-day ease mirrors engine levers, applied on top of builder numbers.
     if (rx.dailyAdj < 0) {
@@ -284,6 +311,88 @@
     if (m.indexOf('ski') >= 0) return 'ski';
     if (m.indexOf('bike') >= 0 || m.indexOf('echo') >= 0 || m.indexOf('air') >= 0) return 'bike';
     return null;
+  }
+
+  /** HTML Home zone seconds → engine CondResult.zsec (low/mod/high). */
+  function htmlZonesToEngineZsec(zs) {
+    zs = zs || {};
+    return {
+      low: Number(zs.recovery) || 0,
+      mod: Number(zs.aerobic) || 0,
+      high: (Number(zs.anaerobic) || 0) + (Number(zs.peak) || 0),
+    };
+  }
+
+  /**
+   * Build CondResult for conAdapt from an HTML conditioning task + app state.
+   */
+  function condResultFromTask(task, state) {
+    if (!task || task.kind !== 'conditioning') return null;
+    var result = task.result || {};
+    var fmt = task.condFmt || task.fmt || 'steady';
+    var whoop = null;
+    try {
+      if (typeof global.athWhoopSampleForEngine === 'function') whoop = global.athWhoopSampleForEngine();
+    } catch (_) {}
+    var recScore = null;
+    if (whoop && whoop.recoveryScore != null) recScore = Number(whoop.recoveryScore);
+    else if (state && state.profile && state.profile.whoopRecovery != null) {
+      recScore = Number(state.profile.whoopRecovery);
+    }
+    return {
+      fmt: fmt,
+      modality: htmlModalityToEngine(task.modality) || undefined,
+      zsec: htmlZonesToEngineZsec(result.zoneSeconds),
+      dur: Number(result.duration) || 0,
+      rec: Number.isFinite(recScore) ? recScore : null,
+      sim: false,
+      felt: result.felt != null ? String(result.felt) : undefined,
+      effort: task.effort || undefined,
+    };
+  }
+
+  /**
+   * Persist conAdapt progression into state.settings.conProgress (silent).
+   */
+  function applyConAdapt(state, rec) {
+    if (!hasEngine() || !state) return state;
+    if (!global.HybridEngine.Conditioning || !global.HybridEngine.Conditioning.conAdapt) return state;
+    state.settings = state.settings || {};
+    var result = global.HybridEngine.Conditioning.conAdapt(rec, state.settings);
+    state.settings.conProgress = result.conProgress;
+    state.meta = state.meta || {};
+    state.meta.lastConAdapt = {
+      delta: result.delta,
+      at: new Date().toISOString(),
+    };
+    return state;
+  }
+
+  /**
+   * Prefer engine zone bucketing when possible; fall back to HTML band list.
+   * Returns HTML zone key (recovery/aerobic/anaerobic/peak).
+   */
+  function zoneKeyForBpm(bpm, htmlZones) {
+    var hr = Number(bpm) || 0;
+    if (hasEngine() && global.HybridEngine.Hr && global.HybridEngine.Hr.zoneKeyOf && htmlZones && htmlZones.length >= 3) {
+      try {
+        var zonesObj = {
+          list: [
+            { key: 'low', lo: htmlZones[0].lo, hi: htmlZones[0].hi, name: htmlZones[0].name },
+            { key: 'mod', lo: htmlZones[1].lo, hi: htmlZones[1].hi, name: htmlZones[1].name },
+            { key: 'high', lo: htmlZones[2].lo, hi: htmlZones[htmlZones.length - 1].hi, name: htmlZones[2].name },
+          ],
+        };
+        var eng = global.HybridEngine.Hr.zoneKeyOf(hr, zonesObj);
+        return ENGINE_ZONE_TO_HTML[eng] || 'aerobic';
+      } catch (_) {}
+    }
+    if (!htmlZones || !htmlZones.length) return 'aerobic';
+    if (hr < htmlZones[0].lo) return htmlZones[0].key;
+    for (var i = 0; i < htmlZones.length; i++) {
+      if (hr >= htmlZones[i].lo && hr <= htmlZones[i].hi) return htmlZones[i].key;
+    }
+    return htmlZones[htmlZones.length - 1].key;
   }
 
   function taskToEngineCondResult(result) {
@@ -508,6 +617,10 @@
     condLoad: condLoad,
     weeklyZoneSeconds: weeklyZoneSeconds,
     htmlModalityToEngine: htmlModalityToEngine,
+    htmlZonesToEngineZsec: htmlZonesToEngineZsec,
+    condResultFromTask: condResultFromTask,
+    applyConAdapt: applyConAdapt,
+    zoneKeyForBpm: zoneKeyForBpm,
     applyConcept2Results: applyConcept2Results,
     tagEchoDeviceMetrics: tagEchoDeviceMetrics,
   };

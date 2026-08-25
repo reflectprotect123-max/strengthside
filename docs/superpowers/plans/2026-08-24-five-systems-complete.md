@@ -277,45 +277,45 @@ Merge rule: union by session `id`; prefer newer `completedAt`.
 - Read: `apps/mobile/prototype/hybrid-app/nutrition-ui.js` (`buildDailyRecords` / check-in)
 - Read: `packages/nutrition-engine/src/engine.ts` (`weeklyCheckIn`)
 
-- [ ] Document in a short comment block in `nutrition-ui.js` which fields `weeklyCheckIn` needs for day completeness.
-- [ ] Commit only if code changes follow in N2; otherwise fold into N2.
+- [x] Document in a short comment block in `nutrition-ui.js` which fields `weeklyCheckIn` needs for day completeness.
+- [x] Commit only if code changes follow in N2; otherwise fold into N2.
 
 ### Task N2 — Athlete can set day status (complete / fasted / partial)
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/nutrition-ui.js`
 
-- [ ] **Step 1:** On day screen, add three quiet controls (not a new product module): Complete / Fasted / Partial — write via existing `dayStatus` store helpers.
-- [ ] **Step 2:** Default remains `complete` when logging food if unset (current behavior).
-- [ ] **Step 3:** Extend `nutrition-ui.smoke.mjs` to assert status setter exists / markup hook.
-- [ ] **Step 4:** Commit `feat(nutrition): day status complete/fasted/partial`
+- [x] **Step 1:** On day screen, add three quiet controls (not a new product module): Complete / Fasted / Partial — write via existing `dayStatus` store helpers.
+- [x] **Step 2:** Default remains `complete` when logging food if unset (current behavior).
+- [x] **Step 3:** Extend `nutrition-ui.smoke.mjs` to assert status setter exists / markup hook.
+- [x] **Step 4:** Commit `feat(nutrition): day status complete/fasted/partial`
 
 ### Task N3 — Pass dayStatus into weeklyCheckIn records
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/nutrition-ui.js` (record builder for check-in)
 
-- [ ] **Step 1:** Failing unit/smoke — fasted day excluded or flagged per engine contract (match `weeklyCheckIn` / coverage rules already in engine tests).
-- [ ] **Step 2:** Wire status into records array.
-- [ ] **Step 3:** Smoke PASS.
-- [ ] **Step 4:** Commit `feat(nutrition): dayStatus into adaptive check-in inputs`
+- [x] **Step 1:** Failing unit/smoke — fasted day excluded or flagged per engine contract (match `weeklyCheckIn` / coverage rules already in engine tests).
+- [x] **Step 2:** Wire status into records array.
+- [x] **Step 3:** Smoke PASS.
+- [x] **Step 4:** Commit `feat(nutrition): dayStatus into adaptive check-in inputs`
 
 ### Task N4 — Guardrails: no recipes/charts
 
-- [ ] Grep plan + PR: confirm no recipe screens / chart canvases added.
-- [ ] Commit not required if clean; note in handoff.
+- [x] Grep plan + PR: confirm no recipe screens / chart canvases added.
+- [x] Commit not required if clean; note in handoff.
 
 ### Task N5 — Sync + cache + verify
 
-- [ ] `bash apps/mobile/sync-hybrid-html.sh`
-- [ ] Cache bump
-- [ ] `pnpm run verify`
-- [ ] Commit `chore: nutrition day-status ship stamp`
+- [x] `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Cache bump
+- [x] `pnpm run verify`
+- [x] Commit `chore: nutrition day-status ship stamp`
 
 ### Task N6 — Phase 2 handoff
 
-- [ ] Handoff + checkboxes
-- [ ] Commit `docs: handoff nutrition phase complete`
+- [x] Handoff + checkboxes
+- [x] Commit `docs: handoff nutrition phase complete`
 
 ---
 
@@ -345,7 +345,7 @@ function applyConAdapt(state, rec) {
 }
 ```
 
-- [ ] Steps: failing smoke → implement → pass → commit `feat(engine): applyConAdapt persists conProgress`
+- [x] Steps: failing smoke → implement → pass → commit `feat(engine): applyConAdapt persists conProgress`
 
 ### Task E2 — Map HTML cond finish → `CondResult` for adapt
 
@@ -353,38 +353,38 @@ function applyConAdapt(state, rec) {
 - Modify: `apps/mobile/prototype/hybrid-app/engine-adapter.js`
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (`finalizeSimpleCondResult` / finish)
 
-- [ ] Build `rec` with `fmt`, `modality`, `zsec`/`zoneSeconds`, `dur`, `rec` (session WHOOP), `sim:false`, `felt` if present.
-- [ ] Call `applyConAdapt` after successful complete (silent).
-- [ ] Commit `feat(engine): run conAdapt on conditioning complete`
+- [x] Build `rec` with `fmt`, `modality`, `zsec`/`zoneSeconds`, `dur`, `rec` (session WHOOP), `sim:false`, `felt` if present.
+- [x] Call `applyConAdapt` after successful complete (silent).
+- [x] Commit `feat(engine): run conAdapt on conditioning complete`
 
 ### Task E3 — Prescription reads `conProgLevel`
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/engine-adapter.js` (`sessionPatchFromBuilder` / `conPrescription` call site)
 
-- [ ] Pass `settings` including `conProgress` into prescription so level advances minutes/rounds per engine rules.
-- [ ] Smoke: level 0 vs level 2 patch differs (or assert `conProgLevel` consulted).
-- [ ] Commit `feat(engine): prescription consumes conProgLevel`
+- [x] Pass `settings` including `conProgress` into prescription so level advances minutes/rounds per engine rules.
+- [x] Smoke: level 0 vs level 2 patch differs (or assert `conProgLevel` consulted).
+- [x] Commit `feat(engine): prescription consumes conProgLevel`
 
 ### Task E4 — Prefer engine zone-second helper
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/engine-adapter.js` and/or `index.html` `tickCondZoneSeconds`
 
-- [ ] Where HTML duplicates zone bucketing, call `HybridEngine.Hr` helpers if equivalent; keep BLE tick loop in HTML.
-- [ ] `engine-adapter.parity.mjs` still green.
-- [ ] Commit `feat(engine): prefer Hr helpers for zone seconds`
+- [x] Where HTML duplicates zone bucketing, call `HybridEngine.Hr` helpers if equivalent; keep BLE tick loop in HTML.
+- [x] `engine-adapter.parity.mjs` still green.
+- [x] Commit `feat(engine): prefer Hr helpers for zone seconds`
 
 ### Task E5 — No insights UI (receipt-only)
 
-- [ ] If any insight signals are computed, attach to Coordinator domain receipts only — no Home insight card.
-- [ ] Commit if code; else note in handoff.
+- [x] If any insight signals are computed, attach to Coordinator domain receipts only — no Home insight card.
+- [x] Commit if code; else note in handoff.
 
 ### Task E6–E8 — Sync, cache, verify, handoff
 
-- [ ] Sync + cache bump + `pnpm run verify`
-- [ ] Handoff Phase 3
-- [ ] Commits: `chore: conditioning conAdapt ship stamp` / `docs: handoff conditioning phase complete`
+- [x] Sync + cache bump + `pnpm run verify`
+- [x] Handoff Phase 3
+- [x] Commits: `chore: conditioning conAdapt ship stamp` / `docs: handoff conditioning phase complete`
 
 ---
 
