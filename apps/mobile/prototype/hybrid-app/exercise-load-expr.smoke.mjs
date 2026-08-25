@@ -26,7 +26,6 @@ if (!saveMatch) throw new Error('saveExercise not found in index.html');
 const dom = {
   exName: { value: 'Back Squat' },
   exCat: { value: 'Squat' },
-  exPercent: { checked: false },
   exSets: { value: '3' },
   exReps: { value: '8' },
   exRest: { value: '120' },

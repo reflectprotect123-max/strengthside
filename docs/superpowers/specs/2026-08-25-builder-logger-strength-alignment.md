@@ -60,8 +60,14 @@ New copper card above set rows (`StrengthAdapter.sessionLoadContext`):
 
 - Starter templates with default `%WM` on main barbell lifts
 - Superset logger parity (same headline pattern)
-- Removing legacy `exerciseProfile()` entirely
 - Overturn loadHints-before-%WM precedence
+
+## Legacy removed (same PR family)
+
+- Library picker `· %` badges (`percentCalc` private 1RM table)
+- Builder “Enable 1RM % calculator” checkbox
+- `exerciseProfile` % table → redirects to Progress when engine is loaded
+- Dead helpers: `percentTableHtml`, `saveExerciseManualMax`, `setExercisePercentFlag`
 
 ## Verify
 
