@@ -12,7 +12,7 @@ export const ALIASES = {
   'trap bar dl': 'trap bar deadlift',
   'barbell deadlift': 'deadlift',
   'barbell bench press': 'bench press',
-  'barbell shoulder press': 'strict press',
+  'barbell shoulder press': 'shoulder press',
   'barbell split squat': 'split squat',
   'barbell sldl': 'stiff leg deadlift',
 

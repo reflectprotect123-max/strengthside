@@ -73,7 +73,8 @@ must(exerciseIdFor('Clean Deadlift') !== exerciseIdFor('Deadlift'), 'clean deadl
 // Explicit alias map — abbreviations and redundant prefixes only.
 must(exerciseIdFromRaw('Trap Bar DL') === exerciseIdFromRaw('Trap Bar Deadlift'), 'trap bar dl alias');
 must(exerciseIdFromRaw('Barbell Deadlift') === exerciseIdFromRaw('Deadlift'), 'barbell deadlift alias');
-must(exerciseIdFromRaw('Barbell Bench Press') === exerciseIdFromRaw('Bench Press'), 'barbell bench alias');
+must(exerciseIdFromRaw('Barbell Shoulder Press') === exerciseIdFromRaw('Shoulder Press'), 'barbell shoulder press → shoulder press');
+must(exerciseIdFromRaw('Barbell Shoulder Press') !== exerciseIdFromRaw('Strict Press'), 'strict press stays separate');
 must(resolveExerciseName('Pause Back Squat').aliased === false, 'pause squat not aliased');
 must(resolveExerciseName('Deficit Deadlift').aliased === false, 'deficit deadlift not aliased');
 must(resolveExerciseName('Trap Bar DL').aliased === true, 'trap bar dl reports aliased');
