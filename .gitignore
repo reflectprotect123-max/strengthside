@@ -18,6 +18,12 @@ apps/mobile/capacitor/android/app/src/main/assets/public/
 
 apps/mobile/**/.netlify/
 .cursor/
+
+# Personal training exports and anything generated from them. The TrainHeroic
+# importer reads a real account export; none of it belongs in the repo.
+trainheroic-userData-export-*
+THE-trainheroic-import*.json
+training_data.csv
 tmp/
 supabase/.temp/
 .capgo
