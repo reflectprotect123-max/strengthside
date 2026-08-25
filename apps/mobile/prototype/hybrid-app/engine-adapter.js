@@ -5,11 +5,12 @@
 (function (global) {
   'use strict';
 
+  // Storage keys stay recovery/aerobic/anaerobic for session zoneSeconds compat.
+  // Athlete-facing names are Easy / Medium / Hard (3 arcs — matches engine low/mod/high).
   var ZONE_META = [
-    { key: 'recovery', short: 'Rec', name: 'Recovery', color: '#33c4ff' },
-    { key: 'aerobic', short: 'Aer', name: 'Aerobic', color: '#3dff9e' },
-    { key: 'anaerobic', short: 'An', name: 'Anaerobic', color: '#ffc24d' },
-    { key: 'peak', short: 'Peak', name: 'Peak', color: '#ff5b57' },
+    { key: 'recovery', short: 'Easy', name: 'Easy', color: '#33c4ff' },
+    { key: 'aerobic', short: 'Med', name: 'Medium', color: '#3dff9e' },
+    { key: 'anaerobic', short: 'Hard', name: 'Hard', color: '#ff5b57' },
   ];
 
   function hasEngine() {
@@ -18,8 +19,7 @@
   }
 
   /**
-   * Map engine conZones (3 bands: low/mod/high) → HTML gauge shape (4 bands).
-   * Overload (high) is split into anaerobic + peak for the existing UI.
+   * Map engine conZones (3 bands: low/mod/high) → HTML gauge (Easy/Medium/Hard).
    *
    * Pass `whoop: { recoveryScore, restingHr?, ... }` for REZONE_PROVISIONAL.
    * Do not invent recovery — omit whoop when the athlete has no real score
@@ -50,21 +50,11 @@
     var mod = z.list[1];
     var high = z.list[2];
 
-    // Split Overload into anaerobic | peak; keep bands ordered and non-empty.
-    var peakSplit = Math.round((high.lo + high.hi) / 2);
-    peakSplit = Math.max(high.lo, Math.min(peakSplit, high.hi - 1));
-
-    var recoverHi = low.hi;
-    var aerobicHi = mod.hi;
-    var anaerobicHi = peakSplit;
-    var maxHr = high.hi;
-
-    // HTML exclusivity: next band starts at previous hi + 1 (same as athZonesForReadiness).
+    // HTML exclusivity: next band starts at previous hi + 1.
     var out = [
-      Object.assign({}, ZONE_META[0], { lo: low.lo, hi: recoverHi }),
-      Object.assign({}, ZONE_META[1], { lo: recoverHi + 1, hi: aerobicHi }),
-      Object.assign({}, ZONE_META[2], { lo: aerobicHi + 1, hi: anaerobicHi }),
-      Object.assign({}, ZONE_META[3], { lo: anaerobicHi + 1, hi: maxHr }),
+      Object.assign({}, ZONE_META[0], { lo: low.lo, hi: low.hi }),
+      Object.assign({}, ZONE_META[1], { lo: low.hi + 1, hi: mod.hi }),
+      Object.assign({}, ZONE_META[2], { lo: mod.hi + 1, hi: high.hi }),
     ];
 
     for (var i = 0; i < out.length; i++) {
@@ -206,6 +196,10 @@
       rounds: rounds,
       workSec: workSec,
       restSec: restSec,
+      targetWatts:
+        opts.targetWatts != null && opts.targetWatts !== ''
+          ? Math.max(0, Number(opts.targetWatts) || 0) || ''
+          : '',
       notes: '',
       condRxLevel: rx.level || 0,
       condRxDailyAdj: rx.dailyAdj || 0,
@@ -370,7 +364,7 @@
 
   /**
    * Prefer engine zone bucketing when possible; fall back to HTML band list.
-   * Returns HTML zone key (recovery/aerobic/anaerobic/peak).
+   * Returns HTML zone key (recovery/aerobic/anaerobic — Easy/Medium/Hard).
    */
   function zoneKeyForBpm(bpm, htmlZones) {
     var hr = Number(bpm) || 0;
@@ -380,7 +374,7 @@
           list: [
             { key: 'low', lo: htmlZones[0].lo, hi: htmlZones[0].hi, name: htmlZones[0].name },
             { key: 'mod', lo: htmlZones[1].lo, hi: htmlZones[1].hi, name: htmlZones[1].name },
-            { key: 'high', lo: htmlZones[2].lo, hi: htmlZones[htmlZones.length - 1].hi, name: htmlZones[2].name },
+            { key: 'high', lo: htmlZones[2].lo, hi: htmlZones[2].hi, name: htmlZones[2].name },
           ],
         };
         var eng = global.HybridEngine.Hr.zoneKeyOf(hr, zonesObj);

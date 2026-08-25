@@ -82,16 +82,17 @@ for (const row of picks) {
     restingHr: row.rest || undefined,
     whoop,
   });
-  assert(html.length === 4, 'adapter returns 4 bands');
-  assert(html[0].lo === z.list[0].lo && html[0].hi === z.list[0].hi, 'recovery matches low');
-  assert(html[1].lo === z.list[0].hi + 1 && html[1].hi === z.list[1].hi, 'aerobic maps mod');
-  assert(html[3].hi === z.list[2].hi, 'peak ends at max');
+  assert(html.length === 3, 'adapter returns 3 bands');
+  assert(html[0].name === 'Easy' && html[1].name === 'Medium' && html[2].name === 'Hard', 'Easy/Med/Hard labels');
+  assert(html[0].lo === z.list[0].lo && html[0].hi === z.list[0].hi, 'Easy matches low');
+  assert(html[1].lo === z.list[0].hi + 1 && html[1].hi === z.list[1].hi, 'Medium maps mod');
+  assert(html[2].lo === z.list[1].hi + 1 && html[2].hi === z.list[2].hi, 'Hard ends at max');
   assert(html.every((b) => b.lo < b.hi), 'HTML bands non-empty');
 }
 
 // --- effort / format surface ---
 const hard = Adapter.effortMeta('hard');
-assert(hard.zoneKey === 'anaerobic' && hard.engineZone === 'high', 'hard → anaerobic/high');
+assert(hard.zoneKey === 'anaerobic' && hard.engineZone === 'high' && hard.name === 'Hard', 'hard → Hard/high');
 const fmt = Adapter.formatMeta('intervals');
 assert(fmt.key === 'intervals' && fmt.rounds === 8, 'intervals base rounds');
 
