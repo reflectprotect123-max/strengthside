@@ -277,45 +277,45 @@ Merge rule: union by session `id`; prefer newer `completedAt`.
 - Read: `apps/mobile/prototype/hybrid-app/nutrition-ui.js` (`buildDailyRecords` / check-in)
 - Read: `packages/nutrition-engine/src/engine.ts` (`weeklyCheckIn`)
 
-- [ ] Document in a short comment block in `nutrition-ui.js` which fields `weeklyCheckIn` needs for day completeness.
-- [ ] Commit only if code changes follow in N2; otherwise fold into N2.
+- [x] Document in a short comment block in `nutrition-ui.js` which fields `weeklyCheckIn` needs for day completeness.
+- [x] Commit only if code changes follow in N2; otherwise fold into N2.
 
 ### Task N2 — Athlete can set day status (complete / fasted / partial)
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/nutrition-ui.js`
 
-- [ ] **Step 1:** On day screen, add three quiet controls (not a new product module): Complete / Fasted / Partial — write via existing `dayStatus` store helpers.
-- [ ] **Step 2:** Default remains `complete` when logging food if unset (current behavior).
-- [ ] **Step 3:** Extend `nutrition-ui.smoke.mjs` to assert status setter exists / markup hook.
-- [ ] **Step 4:** Commit `feat(nutrition): day status complete/fasted/partial`
+- [x] **Step 1:** On day screen, add three quiet controls (not a new product module): Complete / Fasted / Partial — write via existing `dayStatus` store helpers.
+- [x] **Step 2:** Default remains `complete` when logging food if unset (current behavior).
+- [x] **Step 3:** Extend `nutrition-ui.smoke.mjs` to assert status setter exists / markup hook.
+- [x] **Step 4:** Commit `feat(nutrition): day status complete/fasted/partial`
 
 ### Task N3 — Pass dayStatus into weeklyCheckIn records
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/nutrition-ui.js` (record builder for check-in)
 
-- [ ] **Step 1:** Failing unit/smoke — fasted day excluded or flagged per engine contract (match `weeklyCheckIn` / coverage rules already in engine tests).
-- [ ] **Step 2:** Wire status into records array.
-- [ ] **Step 3:** Smoke PASS.
-- [ ] **Step 4:** Commit `feat(nutrition): dayStatus into adaptive check-in inputs`
+- [x] **Step 1:** Failing unit/smoke — fasted day excluded or flagged per engine contract (match `weeklyCheckIn` / coverage rules already in engine tests).
+- [x] **Step 2:** Wire status into records array.
+- [x] **Step 3:** Smoke PASS.
+- [x] **Step 4:** Commit `feat(nutrition): dayStatus into adaptive check-in inputs`
 
 ### Task N4 — Guardrails: no recipes/charts
 
-- [ ] Grep plan + PR: confirm no recipe screens / chart canvases added.
-- [ ] Commit not required if clean; note in handoff.
+- [x] Grep plan + PR: confirm no recipe screens / chart canvases added.
+- [x] Commit not required if clean; note in handoff.
 
 ### Task N5 — Sync + cache + verify
 
-- [ ] `bash apps/mobile/sync-hybrid-html.sh`
-- [ ] Cache bump
-- [ ] `pnpm run verify`
-- [ ] Commit `chore: nutrition day-status ship stamp`
+- [x] `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Cache bump
+- [x] `pnpm run verify`
+- [x] Commit `chore: nutrition day-status ship stamp`
 
 ### Task N6 — Phase 2 handoff
 
-- [ ] Handoff + checkboxes
-- [ ] Commit `docs: handoff nutrition phase complete`
+- [x] Handoff + checkboxes
+- [x] Commit `docs: handoff nutrition phase complete`
 
 ---
 
@@ -345,7 +345,7 @@ function applyConAdapt(state, rec) {
 }
 ```
 
-- [ ] Steps: failing smoke → implement → pass → commit `feat(engine): applyConAdapt persists conProgress`
+- [x] Steps: failing smoke → implement → pass → commit `feat(engine): applyConAdapt persists conProgress`
 
 ### Task E2 — Map HTML cond finish → `CondResult` for adapt
 
@@ -353,38 +353,38 @@ function applyConAdapt(state, rec) {
 - Modify: `apps/mobile/prototype/hybrid-app/engine-adapter.js`
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (`finalizeSimpleCondResult` / finish)
 
-- [ ] Build `rec` with `fmt`, `modality`, `zsec`/`zoneSeconds`, `dur`, `rec` (session WHOOP), `sim:false`, `felt` if present.
-- [ ] Call `applyConAdapt` after successful complete (silent).
-- [ ] Commit `feat(engine): run conAdapt on conditioning complete`
+- [x] Build `rec` with `fmt`, `modality`, `zsec`/`zoneSeconds`, `dur`, `rec` (session WHOOP), `sim:false`, `felt` if present.
+- [x] Call `applyConAdapt` after successful complete (silent).
+- [x] Commit `feat(engine): run conAdapt on conditioning complete`
 
 ### Task E3 — Prescription reads `conProgLevel`
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/engine-adapter.js` (`sessionPatchFromBuilder` / `conPrescription` call site)
 
-- [ ] Pass `settings` including `conProgress` into prescription so level advances minutes/rounds per engine rules.
-- [ ] Smoke: level 0 vs level 2 patch differs (or assert `conProgLevel` consulted).
-- [ ] Commit `feat(engine): prescription consumes conProgLevel`
+- [x] Pass `settings` including `conProgress` into prescription so level advances minutes/rounds per engine rules.
+- [x] Smoke: level 0 vs level 2 patch differs (or assert `conProgLevel` consulted).
+- [x] Commit `feat(engine): prescription consumes conProgLevel`
 
 ### Task E4 — Prefer engine zone-second helper
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/engine-adapter.js` and/or `index.html` `tickCondZoneSeconds`
 
-- [ ] Where HTML duplicates zone bucketing, call `HybridEngine.Hr` helpers if equivalent; keep BLE tick loop in HTML.
-- [ ] `engine-adapter.parity.mjs` still green.
-- [ ] Commit `feat(engine): prefer Hr helpers for zone seconds`
+- [x] Where HTML duplicates zone bucketing, call `HybridEngine.Hr` helpers if equivalent; keep BLE tick loop in HTML.
+- [x] `engine-adapter.parity.mjs` still green.
+- [x] Commit `feat(engine): prefer Hr helpers for zone seconds`
 
 ### Task E5 — No insights UI (receipt-only)
 
-- [ ] If any insight signals are computed, attach to Coordinator domain receipts only — no Home insight card.
-- [ ] Commit if code; else note in handoff.
+- [x] If any insight signals are computed, attach to Coordinator domain receipts only — no Home insight card.
+- [x] Commit if code; else note in handoff.
 
 ### Task E6–E8 — Sync, cache, verify, handoff
 
-- [ ] Sync + cache bump + `pnpm run verify`
-- [ ] Handoff Phase 3
-- [ ] Commits: `chore: conditioning conAdapt ship stamp` / `docs: handoff conditioning phase complete`
+- [x] Sync + cache bump + `pnpm run verify`
+- [x] Handoff Phase 3
+- [x] Commits: `chore: conditioning conAdapt ship stamp` / `docs: handoff conditioning phase complete`
 
 ---
 
@@ -398,36 +398,36 @@ function applyConAdapt(state, rec) {
 - Modify: `apps/mobile/prototype/hybrid-app/recovery-engine.js`
 - Test: `apps/mobile/prototype/hybrid-app/recovery-engine.smoke.mjs`
 
-- [ ] Ensure `domains.heatLoad` and step-derived background signals populate from check-in.
-- [ ] Extend smoke cases (≥ existing 12 matrix — add heat high → capacityHint lower).
-- [ ] Commit `feat(recovery): heat ledger into posture`
+- [x] Ensure `domains.heatLoad` and step-derived background signals populate from check-in.
+- [x] Extend smoke cases (≥ existing 12 matrix — add heat high → capacityHint lower).
+- [x] Commit `feat(recovery): heat ledger into posture`
 
 ### Task R2 — `capacityHint` always populated when data sufficient
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/recovery-engine.js`
 
-- [ ] When band known, set `capacityHint` 0–100; when `insufficient_data`, `null`.
-- [ ] Smoke asserts shape.
-- [ ] Commit `feat(recovery): capacityHint on posture`
+- [x] When band known, set `capacityHint` 0–100; when `insufficient_data`, `null`.
+- [x] Smoke asserts shape.
+- [x] Commit `feat(recovery): capacityHint on posture`
 
 ### Task R3 — Load headline dampener (copy only)
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/load-headline.js`
 
-- [ ] When recovery gate is `hold`/`caution`, reasonCodes / headline wording soften — **no** block of Start.
-- [ ] Update `load-headline.smoke.mjs`.
-- [ ] Commit `feat(recovery): load headline dampener copy`
+- [x] When recovery gate is `hold`/`caution`, reasonCodes / headline wording soften — **no** block of Start.
+- [x] Update `load-headline.smoke.mjs`.
+- [x] Commit `feat(recovery): load headline dampener copy`
 
 ### Task R4 — Grep guard: no Recovery dial UI
 
-- [ ] Grep `index.html` for new Recovery nav/module — must not exist.
-- [ ] Commit N/A if clean.
+- [x] Grep `index.html` for new Recovery nav/module — must not exist.
+- [x] Commit N/A if clean.
 
 ### Task R5–R6 — Sync, cache, verify, handoff
 
-- [ ] Ship stamp + handoff commits
+- [x] Ship stamp + handoff commits
 
 ---
 
@@ -443,44 +443,44 @@ function applyConAdapt(state, rec) {
 
 **Important:** Do **not** remove `NutritionUI.openWeeklyReview`.
 
-- [ ] **Step 1:** Grep `index.html` for `openWeeklyReview(` and “This week” / “Weekly review” Coordinator sheet — remove buttons/links and `openWeeklyReview` function (or make it no-op unused).
-- [ ] **Step 2:** Change `coordinator.smoke.mjs` — **must not** require `openWeeklyReview` in index; instead assert `bootstrapSilent` / `applySilentReceipt` still exist and `NutritionUI` check-in unrelated.
-- [ ] **Step 3:** Smoke PASS.
-- [ ] **Step 4:** Commit `feat(coordinator): hide weekly review peek`
+- [x] **Step 1:** Grep `index.html` for `openWeeklyReview(` and “This week” / “Weekly review” Coordinator sheet — remove buttons/links and `openWeeklyReview` function (or make it no-op unused).
+- [x] **Step 2:** Change `coordinator.smoke.mjs` — **must not** require `openWeeklyReview` in index; instead assert `bootstrapSilent` / `applySilentReceipt` still exist and `NutritionUI` check-in unrelated.
+- [x] **Step 3:** Smoke PASS.
+- [x] **Step 4:** Commit `feat(coordinator): hide weekly review peek`
 
 ### Task C2 — Keep `weeklySheetHtml` for tests only (optional)
 
-- [ ] Adapter may retain `weeklySheetHtml` for smoke fixtures but nothing in athlete nav calls it.
-- [ ] Commit if cleanup needed.
+- [x] Adapter may retain `weeklySheetHtml` for smoke fixtures but nothing in athlete nav calls it.
+- [x] Commit if cleanup needed.
 
 ### Task C3 — Silent apply coverage check
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/coordinator-adapter.js` only if gaps
 
-- [ ] Confirm `bootstrapSilent` still runs on finish / boot paths from `index.html`.
-- [ ] Cond low-dose silent ease still applied.
-- [ ] `coordinator.smoke.mjs` green.
-- [ ] Commit only if fixes needed.
+- [x] Confirm `bootstrapSilent` still runs on finish / boot paths from `index.html`.
+- [x] Cond low-dose silent ease still applied.
+- [x] `coordinator.smoke.mjs` green.
+- [x] Commit only if fixes needed.
 
 ### Task C4 — Do not reimplement strength progression in Coordinator
 
-- [ ] Review `coordinator.ts` — still reads receipts only; no `decideProgression` clone.
-- [ ] No commit if already true.
+- [x] Review `coordinator.ts` — still reads receipts only; no `decideProgression` clone.
+- [x] No commit if already true.
 
 ### Task C5 — Final sync + cache + full verify
 
-- [ ] `bash apps/mobile/sync-hybrid-html.sh`
-- [ ] Final cache bump for five-systems arc
-- [ ] `pnpm run verify` green
-- [ ] Commit `chore: five systems complete ship stamp`
+- [x] `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Final cache bump for five-systems arc
+- [x] `pnpm run verify` green
+- [x] Commit `chore: five systems complete ship stamp`
 
 ### Task C6 — Final handoff + mark plan complete
 
-- [ ] Update `handoff.md` authoritative checkpoint: five systems wiring complete; invisible brains; vNN cache
-- [ ] Mark all phase checkboxes `[x]` in this plan
-- [ ] Update roadmap status line in `2026-08-24-hybrid-athlete-roadmap-design.md` if needed
-- [ ] Commit `docs: five systems complete handoff`
+- [x] Update `handoff.md` authoritative checkpoint: five systems wiring complete; invisible brains; vNN cache
+- [x] Mark all phase checkboxes `[x]` in this plan
+- [x] Update roadmap status line in `2026-08-24-hybrid-athlete-roadmap-design.md` if needed
+- [x] Commit `docs: five systems complete handoff`
 
 ---
 
@@ -504,11 +504,11 @@ function applyConAdapt(state, rec) {
 
 ## Anti-regression (every phase PR)
 
-- [ ] Library → Full Body A still starts and logs a set
-- [ ] Home still shows Sleep / Conditioning / Nutrition
-- [ ] Nutrition weekly **check-in** still opens (`NutritionUI.openWeeklyReview`)
-- [ ] Coordinator **athlete** weekly sheet does **not** open
-- [ ] `pnpm run verify` green
+- [x] Library → Full Body A still starts and logs a set
+- [x] Home still shows Sleep / Conditioning / Nutrition
+- [x] Nutrition weekly **check-in** still opens (`NutritionUI.openWeeklyReview`)
+- [x] Coordinator **athlete** weekly sheet does **not** open
+- [x] `pnpm run verify` green
 
 ---
 

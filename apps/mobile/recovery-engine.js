@@ -76,9 +76,12 @@
   function sessionTrainingLoad(s) {
     if (!s || s.status !== 'completed') return 0;
     var sum = s.summary || {};
-    var total = num(sum.totalLoad);
-    if (total > 0) return total;
-    return num(sum.strengthLoad) + num(sum.conditioningLoad);
+    var strength = num(sum.strengthLoad);
+    var cond = num(sum.conditioningLoad);
+    // Phase 1 sessionLoad is tonnage kg; delivery ledger historically used ~tonnage/50
+    // (same family as conditioning TRIMP). Scale strength so week-over-week ratios stay sane.
+    if (strength > 0 || cond > 0) return strength / 50 + cond;
+    return num(sum.totalLoad);
   }
 
   function windowLoad(sessions, checkins, startMs, endMs) {
@@ -156,6 +159,8 @@
           wearable: whoopRec > 0 ? { recoveryScore: num(whoopRec) } : null,
           sessionPainToday: input.sessionPain || null,
           heatLoad: checkin ? num(checkin.heatLoad) || null : null,
+          steps: checkin ? num(checkin.steps) || null : null,
+          backgroundLoad: checkin ? checkinBackgroundLoad(checkin) || null : null,
         },
       };
     }
@@ -190,9 +195,10 @@
     if (!sub && gate === 'hold') band = 'minimum';
 
     var ledger = heatLedger(input.recentCheckins, 7);
-    if (ledger.elevated && num(checkin && checkin.sleepQuality) > 0 && num(checkin.sleepQuality) <= 4) {
+    // Elevated heat softens capacity always; with poor sleep it also downgrades gate.
+    if (ledger.elevated) {
       reasonCodes.push('heat_ledger_elevated');
-      if (gate === 'ok') {
+      if (num(checkin && checkin.sleepQuality) > 0 && num(checkin.sleepQuality) <= 4 && gate === 'ok') {
         gate = 'caution';
         band = band === 'build' ? 'control' : band;
       }
@@ -213,6 +219,7 @@
     }
 
     var cap = capacityHint(checkin, gate);
+    if (ledger.elevated && cap != null) cap = Math.max(20, cap - 8);
     if (delivery.elevated && cap != null) cap = Math.max(20, cap - 10);
 
     return {
@@ -225,6 +232,8 @@
         wearable: whoopRec > 0 ? { recoveryScore: num(whoopRec) } : null,
         sessionPainToday: input.sessionPain || null,
         heatLoad: checkin ? num(checkin.heatLoad) || null : null,
+        steps: checkin ? num(checkin.steps) || null : null,
+        backgroundLoad: checkin ? checkinBackgroundLoad(checkin) || null : null,
         heatLedger: ledger,
         deliveryLedger: delivery,
       },

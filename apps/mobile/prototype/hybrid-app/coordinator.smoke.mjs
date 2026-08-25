@@ -1,5 +1,6 @@
 /**
  * Smoke: Coordinator bundle + adapter weekly plan.
+ * Phase 5: athlete Coordinator weekly peek removed; NutritionUI check-in remains.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -14,9 +15,18 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const bundle = readFileSync(join(dir, 'strength-bundle.js'), 'utf8');
 const coordAdapter = readFileSync(join(dir, 'coordinator-adapter.js'), 'utf8');
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const nutritionUi = readFileSync(join(dir, 'nutrition-ui.js'), 'utf8');
 
-must(html.includes('openWeeklyReview'), 'index must open weekly review');
 must(html.includes('coordinator-adapter.js'), 'index loads coordinator-adapter');
+must(html.includes('bootstrapSilent'), 'index still bootstraps silent coordinator');
+must(!html.includes('onclick="openWeeklyReview()"'), 'Coordinator peek onclick removed');
+must(!html.includes("onclick=\"event.stopPropagation();openWeeklyReview()\""), 'Coordinator peek stopPropagation removed');
+must(!html.includes('This week · review'), 'Coordinator This week · review copy removed');
+must(nutritionUi.includes('openWeeklyReview'), 'NutritionUI weekly check-in remains');
+must(nutritionUi.includes('NutritionUI'), 'nutrition-ui exports NutritionUI');
+must(coordAdapter.includes('bootstrapSilent'), 'adapter bootstrapSilent exists');
+must(coordAdapter.includes('applySilentReceipt'), 'adapter applySilentReceipt exists');
+must(coordAdapter.includes('weeklySheetHtml'), 'weeklySheetHtml kept for fixtures');
 
 const sandbox = { window: { EngineAdapter: { weeklyZoneSeconds: () => ({ aerobic: 600 }) } }, console };
 vm.createContext(sandbox);
@@ -49,6 +59,8 @@ const easeItem = (lowReceipt.items || []).find(function (i) { return i.domain ==
 must(easeItem && easeItem.silentApply, 'low dose conditioning ease is silent apply');
 CoordinatorAdapter.applySilentReceipt(lowDoseState, lowReceipt);
 must(lowDoseState.meta.condPrescriptionEase && lowDoseState.meta.condPrescriptionEase.effort === 'easy', 'ease hint stored');
+must(typeof CoordinatorAdapter.bootstrapSilent === 'function', 'bootstrapSilent callable');
+CoordinatorAdapter.bootstrapSilent(lowDoseState, '2026-08-24', 7);
 
 const flagState = {
   sessions: [],

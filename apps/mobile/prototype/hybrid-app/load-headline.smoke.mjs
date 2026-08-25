@@ -46,4 +46,12 @@ const r = LoadHeadline.computeLoadHeadline(sessions, { days: 7, now });
 if (r.headline == null) throw new Error('expected headline with sessions');
 if (r.strengthDisplay == null || r.conditioningDisplay == null) throw new Error('missing split');
 
+const damp = LoadHeadline.computeLoadHeadline(sessions, { days: 7, now, recoveryGate: 'caution' });
+if (!damp.reasonCodes.includes('recovery_dampened')) throw new Error('recovery dampener reason missing');
+if (!damp.recoveryDampened) throw new Error('recoveryDampened flag missing');
+const dampHtml = LoadHeadline.loadHeadlineHtml(damp);
+if (!dampHtml.includes('autopilot stays conservative')) throw new Error('dampener copy missing from html');
+const okHtml = LoadHeadline.loadHeadlineHtml(r);
+if (okHtml.includes('autopilot stays conservative')) throw new Error('ok gate should not dampen copy');
+
 console.log('load-headline.smoke: ok', r);

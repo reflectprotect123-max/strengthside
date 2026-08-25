@@ -143,6 +143,14 @@
     return latest.proposedExpenditureKcal ?? latest.observedExpenditureKcal ?? latest.previousExpenditureKcal ?? null;
   }
 
+  /*
+   * weeklyCheckIn (nutrition-engine) needs DailyRecord fields:
+   *   day, calories, weightKg, nutritionStatus
+   * Countable intake (nutritionIsCountable): status === 'complete' with
+   * calories != null, OR status === 'fasted' with calories === 0.
+   * partial / unlogged never count toward coverage — unknown is not zero.
+   * buildDailyRecords below maps db.dayStatus → nutritionStatus for that gate.
+   */
   function buildDailyRecords(db, endDate, lookbackDays = 28) {
     const C = Core();
     const records = [];
@@ -364,6 +372,7 @@
         </div>
         ${checkInBannerHtml(checkInState, 'day')}
         ${meters}
+        ${dayStatusControlsHtml(db, date)}
         <div class=btns>
           <button type="button" class="btn small primary" onclick="NutritionUI.addFood()">Add food</button>
           <button type="button" class="btn small" onclick="NutritionUI.scanLabel()">Scan label</button>
@@ -937,11 +946,52 @@
     renderNutrition();
   }
 
-  function markDayComplete(db, date) {
+  function dayStatusFor(db, date) {
+    const row = (db.dayStatus || []).find((d) => d.logDate === date);
+    return row && row.status ? row.status : null;
+  }
+
+  function setDayStatusRow(db, date, status) {
+    const allowed = { complete: 1, fasted: 1, partial: 1 };
+    if (!allowed[status]) return;
+    db.dayStatus = db.dayStatus || [];
     const i = db.dayStatus.findIndex((d) => d.logDate === date);
-    const row = { userId: '', logDate: date, status: 'complete', note: null, updatedAt: isoNow() };
+    const row = { userId: '', logDate: date, status, note: null, updatedAt: isoNow() };
     if (i >= 0) db.dayStatus[i] = row;
     else db.dayStatus.push(row);
+  }
+
+  /** Logging food defaults the day to complete when unset (existing behaviour). */
+  function markDayComplete(db, date) {
+    if (dayStatusFor(db, date)) return;
+    setDayStatusRow(db, date, 'complete');
+  }
+
+  function setDayStatus(status) {
+    const db = loadN();
+    const date = nutDate || todayStr();
+    setDayStatusRow(db, date, status);
+    if (!saveN(db)) {
+      alert('Could not save — storage may be full.');
+      return;
+    }
+    renderNutrition();
+  }
+
+  function dayStatusControlsHtml(db, date) {
+    const cur = dayStatusFor(db, date) || 'complete';
+    const opts = [
+      ['complete', 'Complete'],
+      ['fasted', 'Fasted'],
+      ['partial', 'Partial'],
+    ];
+    const buttons = opts
+      .map(([value, label]) => {
+        const on = cur === value ? ' primary' : '';
+        return `<button type="button" class="btn small${on} nut-day-status-btn" data-status="${value}" onclick="NutritionUI.setDayStatus('${value}')">${label}</button>`;
+      })
+      .join('');
+    return `<div class="nut-day-status" role="group" aria-label="Day status"><span class=meta>Day status</span><div class=btns style="margin-top:6px">${buttons}</div></div>`;
   }
 
   function editEntry(entryId) {
@@ -1361,6 +1411,8 @@
     openWeeklyReview,
     acceptWeeklyReview,
     declineWeeklyReview,
+    setDayStatus,
+    buildDailyRecords,
     targets,
     saveTargets,
     weight,

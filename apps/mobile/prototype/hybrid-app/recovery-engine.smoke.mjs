@@ -50,13 +50,35 @@ must(RecoveryEngine.postureCopy({ band: 'insufficient_data', gate: 'hold' }).inc
 
 const heatPosture = RecoveryEngine.recoveryPosture({
   checkinComplete: true,
-  checkin: { readinessColor: 'green', sleepQuality: 3, heatLoad: 4 },
+  checkin: { readinessColor: 'green', sleepQuality: 3, heatLoad: 4, steps: 12000 },
   recentCheckins: [
     { heatLoad: 4 }, { heatLoad: 5 }, { heatLoad: 4 },
   ],
 });
 must(heatPosture.gate === 'caution', 'elevated heat ledger downgrades green day');
 must(heatPosture.reasonCodes.includes('heat_ledger_elevated'), 'heat ledger reason');
+must(heatPosture.domains.heatLoad === 4, 'domains.heatLoad from check-in');
+must(heatPosture.domains.steps === 12000, 'domains.steps from check-in');
+must(heatPosture.domains.backgroundLoad > 0, 'domains.backgroundLoad step-derived');
+must(typeof heatPosture.capacityHint === 'number', 'capacityHint populated when data sufficient');
+
+const coolCap = RecoveryEngine.recoveryPosture({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green', sleepQuality: 8, heatLoad: 1 },
+  recentCheckins: [{ heatLoad: 1 }, { heatLoad: 1 }],
+});
+const hotCap = RecoveryEngine.recoveryPosture({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green', sleepQuality: 8, heatLoad: 5 },
+  recentCheckins: [{ heatLoad: 5 }, { heatLoad: 5 }, { heatLoad: 4 }],
+});
+must(hotCap.capacityHint < coolCap.capacityHint, 'heat high lowers capacityHint');
+must(hotCap.reasonCodes.includes('heat_ledger_elevated'), 'heat elevated reason without poor sleep');
+must(coolCap.capacityHint != null && hotCap.capacityHint != null, 'capacityHint numeric when band known');
+
+const noData = RecoveryEngine.recoveryPosture({ checkinComplete: false });
+must(noData.capacityHint === null, 'insufficient_data capacityHint null');
+must(noData.band === 'insufficient_data', 'insufficient_data band');
 
 const heavySessions = [];
 const now = Date.now();
@@ -64,7 +86,8 @@ for (let i = 0; i < 5; i++) {
   heavySessions.push({
     status: 'completed',
     completedAt: now - i * 86400000,
-    summary: { totalLoad: 4, strengthLoad: 2, conditioningLoad: 2 },
+    // Post Phase 1: strengthLoad is tonnage kg; ledger scales /50 for delivery ratios.
+    summary: { strengthLoad: 500, conditioningLoad: 3, totalLoad: 503 },
   });
 }
 const deliveryLedger = RecoveryEngine.deliveryLoadLedger(heavySessions, [], {
@@ -73,6 +96,8 @@ const deliveryLedger = RecoveryEngine.deliveryLoadLedger(heavySessions, [], {
 });
 must(deliveryLedger.delivered >= 12, 'delivery ledger sums sessions');
 must(deliveryLedger.elevated, 'heavy week elevated without budget history');
+// Scaled strength (500/50=10) + cond 3 → ~13 per session; not raw 503.
+must(deliveryLedger.training < 200, 'strength channel scaled for delivery (not raw kg)');
 
 const deliveryPosture = RecoveryEngine.recoveryPosture({
   checkinComplete: true,

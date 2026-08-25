@@ -1,6 +1,7 @@
 /**
  * Smoke: nutrition log persistence via @hybrid/nutrition-core (no DOM).
  * Mirrors NutritionUI.saveQuickAdd — proves entries round-trip through sanitize.
+ * Phase 2: day-status hooks + dayStatus → weeklyCheckIn countable gate.
  * Run: node apps/mobile/prototype/hybrid-app/nutrition-ui.smoke.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -25,6 +26,7 @@ vm.createContext(sandbox);
 vm.runInContext(bundle, sandbox);
 
 const C = sandbox.HybridNutrition.Core;
+const E = sandbox.HybridNutrition.Engine;
 const KEY = 'hybrid-nutrition-v1';
 const date = '2026-08-24';
 
@@ -76,5 +78,36 @@ if (!ui.includes('nut-sheet')) throw new Error('nut-sheet class missing');
 if (!ui.includes('openWeeklyReview')) throw new Error('weekly review hook missing');
 if (!ui.includes('checkInUiState')) throw new Error('check-in state missing');
 if (!ui.includes('nut-checkin-banner')) throw new Error('check-in banner class missing');
+if (!ui.includes('nut-day-status')) throw new Error('day status markup hook missing');
+if (!ui.includes('setDayStatus')) throw new Error('setDayStatus setter missing');
+if (!ui.includes('buildDailyRecords')) throw new Error('buildDailyRecords missing');
+
+// N3: dayStatus feeds countable gate — fasted@0 counts; partial does not.
+if (!E || !E.nutritionIsCountable) throw new Error('Engine.nutritionIsCountable missing');
+if (!E.nutritionIsCountable({ day: date, calories: 0, nutritionStatus: 'fasted' })) {
+  throw new Error('fasted zero-cal should be countable');
+}
+if (E.nutritionIsCountable({ day: date, calories: 500, nutritionStatus: 'partial' })) {
+  throw new Error('partial must not be countable');
+}
+if (E.nutritionIsCountable({ day: date, calories: 120, nutritionStatus: 'fasted' })) {
+  throw new Error('fasted with food must not be countable');
+}
+
+// Simulate buildDailyRecords status mapping (same rules as nutrition-ui.js).
+function mapStatus(declared, hasEntries) {
+  const inferred = declared || (hasEntries ? 'complete' : 'unlogged');
+  if (inferred === 'partial' || inferred === 'fasted' || inferred === 'complete') return inferred;
+  return 'unlogged';
+}
+const fastedMapped = mapStatus('fasted', false);
+if (fastedMapped !== 'fasted') throw new Error('dayStatus fasted not preserved');
+if (!E.nutritionIsCountable({ day: date, calories: 0, nutritionStatus: fastedMapped })) {
+  throw new Error('mapped fasted day should count toward weeklyCheckIn coverage');
+}
+const partialMapped = mapStatus('partial', true);
+if (E.nutritionIsCountable({ day: date, calories: 400, nutritionStatus: partialMapped })) {
+  throw new Error('mapped partial day must be excluded from coverage');
+}
 
 console.log('nutrition-ui.smoke: ok');
