@@ -9,8 +9,8 @@ import { fileURLToPath } from 'node:url';
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v75'")) {
-  throw new Error('expected cache v75');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v76'")) {
+  throw new Error('expected cache v76');
 }
 if (!html.includes('function repairFullBodyADefaultPctWm')) {
   throw new Error('repairFullBodyADefaultPctWm missing');

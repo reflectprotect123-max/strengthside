@@ -22,6 +22,7 @@ jobs:
       - run: pnpm run test
       - run: pnpm run build
       - run: pnpm run check:engine-adapter
+      - run: pnpm run check:cond-thin-twin
       - run: pnpm run check:engine-adapt
       - run: pnpm run check:label-scan
       - run: pnpm run check:native-bridge
