@@ -19,18 +19,20 @@ const sync = readFileSync(join(dir, '../../sync-hybrid-html.sh'), 'utf8');
 const upload = readFileSync(join(dir, '../../capacitor/scripts/upload-capgo-bundle.sh'), 'utf8');
 const importer = readFileSync(join(dir, '../../../../tools/trainheroic-import/import-trainheroic.mjs'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v79'"), 'LOCAL_BUILD v79');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v80'"), 'LOCAL_BUILD v80');
 must(html.includes("TRAINHEROIC_SEED_URL='./seeds/trainheroic-import.json'"), 'seed URL constant');
 must(html.includes('function mergeStrengthState('), 'strengthState merge helper');
 must(html.includes('async function maybeApplyTrainHeroicOtaSeed('), 'OTA boot hook');
 must(html.includes('S.meta.trainheroicSeedId=seedId'), 'seed id tracked in meta');
+must(html.includes('openLatestTrainHeroicDay'), 'calendar jump helper');
+must(html.includes('trainheroicSeedError'), 'seed error surfaced');
 must(html.includes('maybeApplyTrainHeroicOtaSeed()'), 'boot hook invoked');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v79'"), 'SW cache v79');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v80'"), 'SW cache v80');
 must(sw.includes("'./seeds/trainheroic-import.json'"), 'SW caches seed file');
 must(sync.includes('preview-site/seeds'), 'sync copies seeds dir');
 must(upload.includes('TRAINHEROIC_SEED_FILE'), 'upload accepts seed file env');
 must(upload.includes('trainheroic-import.json'), 'upload copies seed into bundle');
-must(importer.includes("seedId: 'trainheroic-2026-08-25'"), 'importer emits seedId');
+must(importer.includes("seedId: 'trainheroic-2026-08-25-v2'"), 'importer emits seedId');
 
 if (failures.length) {
   console.error('trainheroic-ota-seed.smoke FAIL');
