@@ -240,17 +240,6 @@
     const cols = sheet.columns;
     const last = sheet.sets - 1;
     const planned = sheet.sets + ' sets';
-    const header = `<div class="setrow builder-colhead" style="border-bottom:1px solid var(--line)">
-      <div class="setnum"></div>
-      ${cols
-        .map(
-          (c, ci) =>
-            `<div><span class="mini">Type</span><select class="logcol-kind" aria-label="Column ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select></div>`,
-        )
-        .join('')}
-      <div><span class="mini">RIR</span></div>
-      <div></div>
-    </div>`;
 
     const rows = Array.from({ length: sheet.sets }, (_, i) => {
       const isLast = i === last;
@@ -259,7 +248,12 @@
           const meta = kindMeta(c.kind);
           const val = (c.values || [])[i] == null ? '' : c.values[i];
           const ph = meta.placeholder || '';
-          return `<div><span class="mini">${meta.loggerLabel}</span><input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></div>`;
+          // First set: dropdown headers (look like logger mini labels). Later sets: hard labels.
+          const head =
+            i === 0
+              ? `<select class="logcol-kind mini-select" aria-label="Column ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>`
+              : `<span class="mini">${meta.loggerLabel}</span>`;
+          return `<div>${head}<input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></div>`;
         })
         .join('');
       const rirMini = isLast ? 'RIR · counts' : 'RIR';
@@ -281,7 +275,6 @@
       </div>
       <div class="guardrail" style="margin-top:10px">Log <b>RIR on your last set</b> (set ${sheet.sets}) — it drives the next session load.</div>
       <div class="divider"></div>
-      ${header}
       ${rows}
       <div class="btns">
         <button type="button" class="btn small" onclick="LogColumns.addSet()">Add set</button>
@@ -292,7 +285,6 @@
     </div>`;
   }
 
-  /** @deprecated old list UI — keep name for any callers */
   function builderColumnsHtml() {
     return builderLoggerTwinHtml();
   }

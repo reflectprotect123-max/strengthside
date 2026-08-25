@@ -13,7 +13,7 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!html.includes('LogColumns.builderLoggerTwinHtml')) throw new Error('builder logger twin not wired');
 if (!html.includes('LogColumns.loggerCellsHtml')) throw new Error('logger columns UI not wired');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v73'")) throw new Error('expected cache v72');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v74'")) throw new Error('expected cache v72');
 if (!html.includes('Rest seconds')) throw new Error('builder missing Rest seconds above twin');
 if (!html.includes('id=exPick')) throw new Error('builder missing exercise selection');
 
@@ -33,7 +33,7 @@ if (LC.getSetCount() !== 4) throw new Error('set count');
 if (LC.getRestSec() !== 150) throw new Error('rest');
 const twin = LC.builderLoggerTwinHtml();
 if (!twin.includes('builderLoggerCard')) throw new Error('twin card missing');
-if (!twin.includes('logcol-kind')) throw new Error('column dropdowns missing');
+if (!twin.includes('mini-select') && !twin.includes('logcol-kind')) throw new Error('column dropdowns missing');
 if (!twin.includes('builder-setrow')) throw new Error('set rows missing');
 if (!twin.includes('Rest 02:30')) throw new Error('rest chip missing');
 if (!twin.includes('Progress')) throw new Error('Progress header missing');

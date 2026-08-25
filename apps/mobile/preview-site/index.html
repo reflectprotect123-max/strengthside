@@ -104,7 +104,7 @@ body.minimal-ui .streamhero .lead, body.minimal-ui .programchips, body.minimal-u
 .loadheadline .meta{margin-top:4px;font-size:12px;line-height:1.45}
 .logcol-row select,.logcol-row input,.builder-colhead select,.builder-setrow input{width:100%;min-height:var(--tap-min);border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 10px}
 .builder-colhead{opacity:.95}
-.builder-colhead select{font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--copper2)}
+.builder-colhead select,.mini-select{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--copper2);border:0;background:transparent;padding:0 0 4px;min-height:auto;width:100%}
 .calibrationchip{display:inline-block;margin-top:8px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .setrow.last-set{border-left:2px solid var(--copper);padding-left:6px;margin-left:-8px}
 .setrow.last-set .mini{color:var(--copper2)}
@@ -809,7 +809,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v73';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v74';
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
 function ensureLocalReady(state){state=state||{};state.meta=state.meta||{};state.meta.localRevision=num(state.meta.localRevision);state.meta.ownerId=state.meta.ownerId||localRecordId('user');state.meta.deviceId=state.meta.deviceId||localRecordId('device');state.meta.installId=state.meta.installId||localRecordId('install');state.meta.createdAt=state.meta.createdAt||isoNow();state.meta.updatedAt=isoNow();state.strengthState=state.strengthState||{workingMaxEvents:[],prEvents:[],loadHints:{}};state.meta.progressionAudit=state.meta.progressionAudit||[];delete state['cl'+'oud'];delete state['sy'+'ncQueue'];return state}
