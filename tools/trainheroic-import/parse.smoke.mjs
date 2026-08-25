@@ -18,6 +18,7 @@ import {
   exerciseIdFor,
   normaliseDate,
 } from './parse.mjs';
+import { resolveExerciseName, exerciseIdFromRaw } from './aliases.mjs';
 
 const failures = [];
 function must(cond, msg) {
@@ -66,7 +67,16 @@ eq(normaliseExerciseName('Bench Press'), 'bench press', 'press keeps its double-
 must(exerciseIdFor('Bench Press') === exerciseIdFor('bench press'), 'press id stable under case');
 // Qualified variants stay separate — merging them would invent a history.
 must(exerciseIdFor('Pause Back Squat') !== exerciseIdFor('Back Squat'), 'qualified variant stays separate');
-must(exerciseIdFor('Clean Deadlift') !== exerciseIdFor('Deadlift'), 'clean deadlift is not a deadlift');
+must(exerciseIdFor('Deficit Deadlift') !== exerciseIdFor('Deadlift'), 'deficit deadlift stays separate');
+must(exerciseIdFor('Clean Deadlift') !== exerciseIdFor('Deadlift'), 'clean deadlift stays separate');
+
+// Explicit alias map — abbreviations and redundant prefixes only.
+must(exerciseIdFromRaw('Trap Bar DL') === exerciseIdFromRaw('Trap Bar Deadlift'), 'trap bar dl alias');
+must(exerciseIdFromRaw('Barbell Deadlift') === exerciseIdFromRaw('Deadlift'), 'barbell deadlift alias');
+must(exerciseIdFromRaw('Barbell Bench Press') === exerciseIdFromRaw('Bench Press'), 'barbell bench alias');
+must(resolveExerciseName('Pause Back Squat').aliased === false, 'pause squat not aliased');
+must(resolveExerciseName('Deficit Deadlift').aliased === false, 'deficit deadlift not aliased');
+must(resolveExerciseName('Trap Bar DL').aliased === true, 'trap bar dl reports aliased');
 
 // --- Rows with nothing logged are the common case, and are skipped ----------
 eq(setsFromRow({ ExerciseData: 'rep x  pound' }).sets, [], 'prescription-only row yields no sets');

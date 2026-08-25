@@ -16,7 +16,12 @@
  *      13.23, 17.64, 17.64 pound` is 90 kg for 6/8/8, not 90 reps at 6 kg).
  *   3. Exercise names collide on punctuation and case, so the same lift lands
  *      under several ids unless names are normalised before grouping.
+ *   4. Some names are abbreviations or redundant prefixes for the same lift
+ *      (`Trap Bar DL`, `Barbell Deadlift`). Those are folded via aliases.mjs;
+ *      training variants (`Pause Back Squat`, `Deficit Deadlift`) are not.
  */
+
+import { exerciseIdFromRaw, resolveExerciseName } from './aliases.mjs';
 
 /** TrainHeroic writes lb with float noise; kg is the app's storage unit. */
 const LB_PER_KG = 2.20462;
@@ -88,8 +93,7 @@ export function normaliseExerciseName(raw) {
 }
 
 export function exerciseIdFor(raw) {
-  const slug = normaliseExerciseName(raw).replace(/\s+/g, '-');
-  return slug ? `th-${slug}` : '';
+  return exerciseIdFromRaw(raw);
 }
 
 /** Pound-encoded regardless of label (defect 1). Snapped to 0.5 kg because the
@@ -198,6 +202,7 @@ export function buildSessions(rows) {
     rowsSwapped: 0,
     rowsNoDate: 0,
     unitLabels: {},
+    aliasesApplied: 0,
   };
 
   for (const row of rows) {
@@ -219,7 +224,9 @@ export function buildSessions(rows) {
     const session = byDay.get(key);
 
     const exTitle = String(row.ExerciseTitle || '').trim();
-    const exerciseId = exerciseIdFor(exTitle);
+    const resolved = resolveExerciseName(exTitle);
+    if (resolved.aliased) stats.aliasesApplied++;
+    const exerciseId = exerciseIdFromRaw(exTitle);
     if (!exerciseId) continue;
 
     if (!session.tasks.has(exerciseId)) {
@@ -250,7 +257,7 @@ export function canonicalNames(rows) {
   const counts = new Map();
   for (const row of rows) {
     const title = String(row.ExerciseTitle || '').trim();
-    const id = exerciseIdFor(title);
+    const id = exerciseIdFromRaw(title);
     if (!id) continue;
     if (!counts.has(id)) counts.set(id, new Map());
     const m = counts.get(id);

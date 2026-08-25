@@ -274,6 +274,7 @@ function main(argv) {
   console.log(`  ${fmt(appSessions.length)}  sessions  ${sessions[0].date} → ${latestDate}`);
   console.log(`  ${fmt(exercises.length)}  exercises`);
   console.log(`  ${fmt(merged.length)}  exercise names merged from spelling variants`);
+  console.log(`  ${fmt(stats.aliasesApplied)}  rows folded via explicit alias map`);
   console.log(`  ${fmt(workingMaxEvents.length)}  working maxes seeded (>=${MIN_DAYS_FOR_WORKING_MAX} logged days)`);
   console.log(`  ${fmt(stale.length)}  of those are stale (>${STALE_AFTER_DAYS}d since last logged — re-test before trusting)`);
   console.log(`  ${fmt(skipped.length)}  lifts left unseeded (too little history)`);
