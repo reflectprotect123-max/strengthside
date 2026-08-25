@@ -1,5 +1,5 @@
 /**
- * Smoke: lift sheet optional %WM loadExpr (S3) — HTML field + saveExercise persistence.
+ * Smoke: lift sheet %WM via log columns (weight_pct_wm) → loadExpr on save.
  * Run: node apps/mobile/prototype/hybrid-app/exercise-load-expr.smoke.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -9,15 +9,13 @@ import vm from 'node:vm';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const logSrc = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 
-if (!html.includes('id=exPctWm')) {
-  throw new Error('exerciseSheet missing #exPctWm field');
+if (!html.includes('LogColumns.builderColumnsHtml')) {
+  throw new Error('exerciseSheet missing log columns builder UI');
 }
-if (!html.includes('Load % of working max')) {
-  throw new Error('exerciseSheet missing Load % of working max label');
-}
-if (!html.includes("exprKind:'pct_of_max'")) {
-  throw new Error('saveExercise missing pct_of_max loadExpr persistence');
+if (!html.includes('LogColumns.syncLegacyFromColumns')) {
+  throw new Error('saveExercise missing LogColumns.syncLegacyFromColumns');
 }
 
 const saveMatch = html.match(/function saveExercise\([\s\S]*?(?=function [a-zA-Z])/);
@@ -27,7 +25,6 @@ const dom = {
   exName: { value: 'Back Squat' },
   exCat: { value: 'Squat' },
   exSets: { value: '3' },
-  exReps: { value: '8' },
   exRest: { value: '120' },
   exNote: { value: '' },
   exGuidePurpose: { value: '' },
@@ -36,15 +33,13 @@ const dom = {
   exGuideEffort: { value: '' },
   exGuideMistakes: { value: '' },
   exGuideAlternatives: { value: '' },
-  exPctWm: { value: '70' },
 };
 
-const draft = {
-  blocks: [{ exercises: [] }],
-};
+const draft = { blocks: [{ exercises: [] }] };
 
 const sandbox = {
   console,
+  window: {},
   $: (id) => dom[id],
   S: { exercises: [{ id: 'squat', name: 'Back Squat', category: 'Squat', builtIn: true }] },
   draft,
@@ -58,10 +53,26 @@ const sandbox = {
   persistDraft: () => {},
   closeSheet: () => {},
   builder: () => {},
-  alert: (m) => { throw new Error('alert: ' + m); },
+  alert: (m) => {
+    throw new Error('alert: ' + m);
+  },
 };
+sandbox.window = sandbox;
 
 vm.createContext(sandbox);
+vm.runInContext(logSrc, sandbox);
+sandbox.LogColumns = sandbox.window.LogColumns || sandbox.LogColumns;
+if (!sandbox.LogColumns) throw new Error('LogColumns failed to load');
+
+sandbox.LogColumns.beginSheet({ reps: '8' });
+// mutate sheet columns to pct + reps
+const cols = sandbox.LogColumns.getSheetColumns();
+cols[0].kind = 'weight_pct_wm';
+cols[0].value = '70';
+cols[1].kind = 'reps';
+cols[1].value = '8';
+sandbox.LogColumns.getSheetColumns = () => cols.map((c) => ({ ...c }));
+
 vm.runInContext(saveMatch[0], sandbox);
 sandbox.saveExercise(0, -1);
 
@@ -72,13 +83,17 @@ if (!saved?.loadExpr || saved.loadExpr.exprKind !== 'pct_of_max') {
 if (saved.loadExpr.exprArg !== 0.7) {
   throw new Error(`Expected exprArg 0.7, got ${saved.loadExpr.exprArg}`);
 }
+if (!saved.logColumns || saved.logColumns[0].kind !== 'weight_pct_wm') {
+  throw new Error('Expected logColumns weight_pct_wm');
+}
 
-dom.exPctWm.value = '';
+cols[0].kind = 'weight_kg';
+cols[0].value = '';
 draft.blocks[0].exercises = [];
 sandbox.saveExercise(0, -1);
 const cleared = draft.blocks[0].exercises[0];
 if (cleared?.loadExpr) {
-  throw new Error('Empty %WM should omit loadExpr');
+  throw new Error('weight_kg empty should omit loadExpr');
 }
 
 console.log('exercise-load-expr.smoke: ok');
