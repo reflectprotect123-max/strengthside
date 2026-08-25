@@ -86,6 +86,11 @@ if (zsec.low !== 10 || zsec.mod !== 20 || zsec.high !== 7) throw new Error('html
 
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 if (!html.includes('applyConAdapt')) throw new Error('index.html missing applyConAdapt wiring');
+if (!html.includes('function completeConditioning') || html.indexOf('applyConAdapt') < 0) throw new Error('applyConAdapt wiring check');
+// Hybrid train path must also adapt (not only simpleCondLog finishers).
+const cc = html.slice(html.indexOf('function completeConditioning'), html.indexOf('function completeConditioning') + 500);
+if (!cc.includes('applyConAdapt')) throw new Error('completeConditioning missing applyConAdapt');
+
 if (!html.includes('settings:S.settings')) throw new Error('index.html missing settings pass-through');
 if (!html.includes('zoneKeyForBpm')) throw new Error('index.html missing zoneKeyForBpm');
 

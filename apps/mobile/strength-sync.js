@@ -12,6 +12,11 @@
 
   var status = { lastSyncAt: null, lastError: '', lastOk: false, busy: false };
 
+  function num(v) {
+    var n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
   function client() {
     if (global.Whoop && typeof global.Whoop.client === 'function') return global.Whoop.client();
     throw new Error('Supabase client unavailable — sign in first.');

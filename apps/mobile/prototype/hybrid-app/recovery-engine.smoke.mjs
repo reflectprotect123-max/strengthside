@@ -86,8 +86,8 @@ for (let i = 0; i < 5; i++) {
   heavySessions.push({
     status: 'completed',
     completedAt: now - i * 86400000,
-    // Post Phase 1: strengthLoad is tonnage kg; ledger scales /50 for delivery ratios.
-    summary: { strengthLoad: 500, conditioningLoad: 3, totalLoad: 503 },
+    // Post Phase 1: strengthLoad is tonnage kg; ledger prefers summary.tonnage /50.
+    summary: { strengthLoad: 500, conditioningLoad: 3, tonnage: 500, totalLoad: 503 },
   });
 }
 const deliveryLedger = RecoveryEngine.deliveryLoadLedger(heavySessions, [], {
@@ -98,6 +98,37 @@ must(deliveryLedger.delivered >= 12, 'delivery ledger sums sessions');
 must(deliveryLedger.elevated, 'heavy week elevated without budget history');
 // Scaled strength (500/50=10) + cond 3 → ~13 per session; not raw 503.
 must(deliveryLedger.training < 200, 'strength channel scaled for delivery (not raw kg)');
+
+// Mixed-scale history: legacy strengthLoad already /50; new rows have tonnage kg.
+const mixed = [];
+const endIso = new Date(now).toISOString().slice(0, 10);
+for (let i = 0; i < 3; i++) {
+  mixed.push({
+    status: 'completed',
+    completedAt: now - (8 + i) * 86400000,
+    summary: { strengthLoad: 10, conditioningLoad: 3, tonnage: 500, totalLoad: 13 },
+  });
+}
+for (let i = 0; i < 3; i++) {
+  mixed.push({
+    status: 'completed',
+    completedAt: now - i * 86400000,
+    summary: { strengthLoad: 500, conditioningLoad: 3, tonnage: 500, totalLoad: 503 },
+  });
+}
+const mixedLedger = RecoveryEngine.deliveryLoadLedger(mixed, [], {
+  allSessions: mixed,
+  endDate: endIso,
+});
+must(mixedLedger.ratio < 5, `mixed history ratio should stay sane, got ${mixedLedger.ratio}`);
+const mixedPosture = RecoveryEngine.recoveryPosture({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green', sleepQuality: 8 },
+  recentSessions: mixed,
+  allSessions: mixed,
+  endDate: endIso,
+});
+must(mixedPosture.gate === 'ok', `mixed history must not freeze green day (gate=${mixedPosture.gate})`);
 
 const deliveryPosture = RecoveryEngine.recoveryPosture({
   checkinComplete: true,

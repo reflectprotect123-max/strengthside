@@ -16,6 +16,14 @@
       if (!s || s.status !== 'completed') return;
       var t = num(s.completedAt);
       if (t < startMs || t > endMs) return;
+      if (key === 'strengthLoad') {
+        // Prefer tonnage (scale-stable kg) → /50 display units; avoids mixed v59/v60 history skew.
+        var tonnage = num(s.summary && s.summary.tonnage);
+        if (tonnage > 0) {
+          total += tonnage / 50;
+          return;
+        }
+      }
       total += num(s.summary && s.summary[key]);
     });
     return total;
