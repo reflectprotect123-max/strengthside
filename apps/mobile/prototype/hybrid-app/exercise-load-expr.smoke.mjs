@@ -1,6 +1,5 @@
 /**
- * Smoke: lift sheet optional %WM loadExpr (S3) — HTML field + saveExercise persistence.
- * Run: node apps/mobile/prototype/hybrid-app/exercise-load-expr.smoke.mjs
+ * Smoke: lift sheet %WM via log columns (weight_pct_wm) → loadExpr on save.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -9,25 +8,22 @@ import vm from 'node:vm';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const logSrc = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 
-if (!html.includes('id=exPctWm')) {
-  throw new Error('exerciseSheet missing #exPctWm field');
+if (!html.includes('LogColumns.builderLoggerTwinHtml')) {
+  throw new Error('exerciseSheet missing logger-twin builder UI');
 }
-if (!html.includes('Load % of working max')) {
-  throw new Error('exerciseSheet missing Load % of working max label');
-}
-if (!html.includes("exprKind:'pct_of_max'")) {
-  throw new Error('saveExercise missing pct_of_max loadExpr persistence');
+if (!html.includes('LogColumns.syncLegacyFromColumns')) {
+  throw new Error('saveExercise missing LogColumns.syncLegacyFromColumns');
 }
 
-const saveMatch = html.match(/function saveExercise\([\s\S]*?(?=function [a-zA-Z])/);
+const saveMatch = html.match(/function saveExercise\([\s\S]*?(?=const modalities|function [a-zA-Z])/);
 if (!saveMatch) throw new Error('saveExercise not found in index.html');
 
 const dom = {
   exName: { value: 'Back Squat' },
   exCat: { value: 'Squat' },
   exSets: { value: '3' },
-  exReps: { value: '8' },
   exRest: { value: '120' },
   exNote: { value: '' },
   exGuidePurpose: { value: '' },
@@ -36,15 +32,14 @@ const dom = {
   exGuideEffort: { value: '' },
   exGuideMistakes: { value: '' },
   exGuideAlternatives: { value: '' },
-  exPctWm: { value: '70' },
 };
 
-const draft = {
-  blocks: [{ exercises: [] }],
-};
+const draft = { blocks: [{ exercises: [] }] };
 
 const sandbox = {
   console,
+  window: {},
+  document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) },
   $: (id) => dom[id],
   S: { exercises: [{ id: 'squat', name: 'Back Squat', category: 'Squat', builtIn: true }] },
   draft,
@@ -58,27 +53,48 @@ const sandbox = {
   persistDraft: () => {},
   closeSheet: () => {},
   builder: () => {},
-  alert: (m) => { throw new Error('alert: ' + m); },
+  alert: (m) => {
+    throw new Error('alert: ' + m);
+  },
 };
+sandbox.window = sandbox;
 
 vm.createContext(sandbox);
+vm.runInContext(logSrc, sandbox);
+sandbox.LogColumns = sandbox.LogColumns || sandbox.window.LogColumns;
+sandbox.LogColumns.beginSheet({ sets: 3, reps: '8', restSec: 120 });
+sandbox.LogColumns.onKindChange(0, 'weight_pct_wm');
+sandbox.LogColumns.onCellChange(0, 0, '70');
+sandbox.LogColumns.onCellChange(0, 1, '70');
+sandbox.LogColumns.onCellChange(0, 2, '70');
+sandbox.LogColumns.onKindChange(1, 'reps');
+sandbox.LogColumns.onCellChange(1, 0, '8');
+sandbox.LogColumns.onCellChange(1, 1, '8');
+sandbox.LogColumns.onCellChange(1, 2, '8');
+
 vm.runInContext(saveMatch[0], sandbox);
 sandbox.saveExercise(0, -1);
 
 const saved = draft.blocks[0].exercises[0];
 if (!saved?.loadExpr || saved.loadExpr.exprKind !== 'pct_of_max') {
-  throw new Error('Expected loadExpr.exprKind pct_of_max');
+  throw new Error('Expected loadExpr.exprKind pct_of_max got ' + JSON.stringify(saved?.loadExpr));
 }
 if (saved.loadExpr.exprArg !== 0.7) {
   throw new Error(`Expected exprArg 0.7, got ${saved.loadExpr.exprArg}`);
 }
+if (!saved.logColumns || saved.logColumns[0].kind !== 'weight_pct_wm') {
+  throw new Error('Expected logColumns weight_pct_wm');
+}
 
-dom.exPctWm.value = '';
+sandbox.LogColumns.onKindChange(0, 'weight_kg');
+sandbox.LogColumns.onCellChange(0, 0, '');
+sandbox.LogColumns.onCellChange(0, 1, '');
+sandbox.LogColumns.onCellChange(0, 2, '');
 draft.blocks[0].exercises = [];
 sandbox.saveExercise(0, -1);
 const cleared = draft.blocks[0].exercises[0];
 if (cleared?.loadExpr) {
-  throw new Error('Empty %WM should omit loadExpr');
+  throw new Error('weight_kg empty should omit loadExpr');
 }
 
 console.log('exercise-load-expr.smoke: ok');

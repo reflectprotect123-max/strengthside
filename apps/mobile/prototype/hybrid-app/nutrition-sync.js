@@ -342,46 +342,6 @@
     }, 800);
   }
 
-  function cardHtml() {
-    const s = getStatus();
-    const last = s.lastSyncAt ? new Date(s.lastSyncAt).toLocaleString() : 'Never';
-    const line = s.lastError
-      ? `Last error: ${s.lastError}`
-      : s.lastOk
-        ? `Cloud sync OK · ${last}`
-        : `Uses Account sign-in above. Last: ${last}`;
-    return `<div class=card><div class=eyebrow>Nutrition</div><div class=title>Cloud status</div><div class=meta>${esc(line)}</div>
-      <div class=meta style="margin-top:8px">Synced automatically after Sign in & sync / Sync all.</div></div>`;
-  }
-
-  function esc(v) {
-    return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
-
-  async function syncNow() {
-    if (!(await isSignedIn())) {
-      global.alert('Sign in under WHOOP first — nutrition uses the same Supabase account.');
-      return;
-    }
-    const local =
-      (global.NutritionUI && typeof global.NutritionUI.load === 'function' && global.NutritionUI.load()) ||
-      null;
-    if (!local) {
-      global.alert('Nutrition data not loaded yet — open Nutrition once, then sync.');
-      return;
-    }
-    try {
-      const merged = await reconcile(local);
-      if (global.NutritionUI && typeof global.NutritionUI.replace === 'function') {
-        global.NutritionUI.replace(merged);
-      }
-      global.alert(getStatus().lastOk ? 'Nutrition synced to Supabase.' : 'Sync finished with warnings: ' + (getStatus().lastError || 'unknown'));
-      if (typeof global.settings === 'function') global.settings();
-    } catch (e) {
-      global.alert((e && e.message) || 'Sync failed');
-    }
-  }
-
   global.NutritionSync = {
     WRITER,
     DOMAIN,
@@ -392,7 +352,5 @@
     schedulePush,
     lookupBarcodeCloud,
     getStatus,
-    cardHtml,
-    syncNow,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

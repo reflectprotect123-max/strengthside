@@ -304,35 +304,6 @@
     }, 800);
   }
 
-  function esc(v) {
-    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
-      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-    });
-  }
-
-  function cardHtml() {
-    var s = getStatus();
-    var last = s.lastSyncAt ? new Date(s.lastSyncAt).toLocaleString() : 'Never';
-    var line = s.lastError ? 'Last error: ' + s.lastError : s.lastOk ? 'Cloud sync OK · ' + last : 'Uses Account sign-in above. Last: ' + last;
-    return '<div class=card><div class=eyebrow>Strength</div><div class=title>Cloud status</div><div class=meta>' + esc(line) + '</div>' +
-      '<div class=meta style="margin-top:8px">Synced automatically after Sign in & sync / Sync all.</div></div>';
-  }
-
-  async function syncNow() {
-    if (!(await isSignedIn())) {
-      global.alert('Sign in under WHOOP first — strength uses the same Supabase account.');
-      return;
-    }
-    try {
-      if (global.S) global.S = await reconcile(global.S);
-      if (typeof global.save === 'function') global.save('strength-sync');
-      global.alert(getStatus().lastOk ? 'Strength progression synced.' : 'Sync finished: ' + (getStatus().lastError || 'unknown'));
-      if (typeof global.settings === 'function') global.settings();
-    } catch (e) {
-      global.alert((e && e.message) || 'Sync failed');
-    }
-  }
-
   async function bootstrap() {
     if (!(await isSignedIn()) || !global.S) return;
     try {
@@ -356,7 +327,5 @@
     bootstrap: bootstrap,
     schedulePush: schedulePush,
     getStatus: getStatus,
-    cardHtml: cardHtml,
-    syncNow: syncNow,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
