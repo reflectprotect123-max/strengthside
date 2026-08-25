@@ -76,11 +76,12 @@
   function sessionTrainingLoad(s) {
     if (!s || s.status !== 'completed') return 0;
     var sum = s.summary || {};
-    var strength = num(sum.strengthLoad);
+    // Prefer summary.tonnage (always raw kg across v59→v60+) then /50 for delivery ratios.
+    // strengthLoad alone is ambiguous: pre-v60 was already /50; post-v60 is raw tonnageKg.
+    var tonnage = num(sum.tonnage);
+    var strength = tonnage > 0 ? tonnage / 50 : num(sum.strengthLoad);
     var cond = num(sum.conditioningLoad);
-    // Phase 1 sessionLoad is tonnage kg; delivery ledger historically used ~tonnage/50
-    // (same family as conditioning TRIMP). Scale strength so week-over-week ratios stay sane.
-    if (strength > 0 || cond > 0) return strength / 50 + cond;
+    if (strength > 0 || cond > 0) return strength + cond;
     return num(sum.totalLoad);
   }
 
