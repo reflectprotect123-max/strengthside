@@ -98,6 +98,19 @@ must(resolveExerciseName('Pause Back Squat', catalog).aliased === false, 'pause 
 must(resolveExerciseName('Deficit Deadlift', catalog).aliased === false, 'deficit deadlift not aliased');
 must(resolveExerciseName('Trap Bar DL', catalog).aliased === true, 'trap bar dl reports aliased');
 
+// Hip thrust — barbell / BB / Barbell fold together; machine and DB stay separate.
+const htCatalog = buildNameCatalog([
+  { ExerciseTitle: 'Hip Thrust' },
+  { ExerciseTitle: 'Hip Thrust Machine' },
+  { ExerciseTitle: 'DB Glute Hip Thrust' },
+]);
+must(exerciseIdFromRaw('Barbell Hip Thrust', htCatalog) === exerciseIdFromRaw('Hip Thrust', htCatalog), 'barbell hip thrust → hip thrust');
+must(exerciseIdFromRaw('Barbell Glute Hip Thrust', htCatalog) === exerciseIdFromRaw('Hip Thrust', htCatalog), 'barbell glute hip thrust → hip thrust');
+must(exerciseIdFromRaw('B-Stance BB Hip Thrust', htCatalog) === exerciseIdFromRaw('Hip Thrust', htCatalog), 'b-stance bb hip thrust → hip thrust');
+must(exerciseIdFromRaw('Hip Thrust Machine', htCatalog) !== exerciseIdFromRaw('Hip Thrust', htCatalog), 'machine stays separate');
+must(exerciseIdFromRaw('DB Glute Hip Thrust', htCatalog) !== exerciseIdFromRaw('Hip Thrust', htCatalog), 'DB stays separate');
+must(exerciseIdFromRaw('Feet Elevated Hip Thrust + Band', htCatalog) !== exerciseIdFromRaw('Hip Thrust', htCatalog), 'feet elevated stays separate');
+
 // --- Rows with nothing logged are the common case, and are skipped ----------
 eq(setsFromRow({ ExerciseData: 'rep x  pound' }).sets, [], 'prescription-only row yields no sets');
 eq(setsFromRow({ ExerciseData: 'x' }).sets, [], 'empty row yields no sets');

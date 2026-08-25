@@ -29,6 +29,7 @@ export const DEFAULT_BARBELL_BASES = new Set([
   'reverse lunge',
   'overhead press',
   'z press',
+  'hip thrust',
 ]);
 
 /** Second word in a two-word name that should come first: deadlift sumo → sumo deadlift. */
@@ -60,9 +61,18 @@ export const VARIANT_BLOCKLIST = new Set([
   'front box squat',
   'snatch grip barbell row',
   'front squat back squat',
-  'hip thrust',
   'romanian deadlift from deficit',
   'barbell row', // bare "row" is too generic — keep barbell row as its own lift
+  // hip thrust variants — different implement or setup, not barbell label drift
+  'hip thrust machine',
+  'feet elevated hip thrust + band',
+  'db glute hip thrust',
+  'dumbbell glute hip thrust',
+  'single leg hip thrust',
+  'single leg glute hip thrust',
+  'deficit barbell hip thrust',
+  '1 1 4 glute hip thrust',
+  '1 1 4 banded glute hip thrust',
 ]);
 
 /** Oddballs and abbreviations the rules cannot infer. Keys/values are normalised. */
@@ -139,6 +149,12 @@ export const EXPLICIT_ALIASES = {
   'football bar bench press': 'football bar floor press',
   'slight incline bb bench press': 'incline bench press',
   '30 degree incline db bench press': 'incline db bench press',
+
+  // barbell hip thrust — Barbell and BB are the same implement; Machine/DB/feet-elevated stay separate
+  'barbell glute hip thrust': 'hip thrust',
+  'glute hip thrust': 'hip thrust',
+  'b stance bb hip thrust': 'hip thrust',
+  'bb hip thrust pyramid drop set': 'hip thrust',
 };
 
 /** Collect every normalised exercise title in the export (pass 1). */
