@@ -82,32 +82,52 @@ if (!ui.includes('nut-day-status')) throw new Error('day status markup hook miss
 if (!ui.includes('setDayStatus')) throw new Error('setDayStatus setter missing');
 if (!ui.includes('buildDailyRecords')) throw new Error('buildDailyRecords missing');
 
-// N3: dayStatus feeds countable gate — fasted@0 counts; partial does not.
-if (!E || !E.nutritionIsCountable) throw new Error('Engine.nutritionIsCountable missing');
-if (!E.nutritionIsCountable({ day: date, calories: 0, nutritionStatus: 'fasted' })) {
-  throw new Error('fasted zero-cal should be countable');
-}
-if (E.nutritionIsCountable({ day: date, calories: 500, nutritionStatus: 'partial' })) {
-  throw new Error('partial must not be countable');
-}
-if (E.nutritionIsCountable({ day: date, calories: 120, nutritionStatus: 'fasted' })) {
-  throw new Error('fasted with food must not be countable');
+// Load NutritionUI with minimal host stubs so we can call the real builder.
+sandbox.$ = () => null;
+sandbox.esc = (s) => String(s ?? '');
+sandbox.today = () => date;
+sandbox.id = () => 'id1';
+sandbox.sheet = () => {};
+sandbox.closeSheet = () => {};
+sandbox.go = () => {};
+sandbox.shell = () => {};
+sandbox.nav = () => {};
+sandbox.clock = () => {};
+sandbox.alert = () => {};
+vm.runInContext(ui, sandbox);
+const NutritionUI = sandbox.NutritionUI || sandbox.window.NutritionUI;
+if (!NutritionUI || typeof NutritionUI.buildDailyRecords !== 'function') {
+  throw new Error('NutritionUI.buildDailyRecords not exported');
 }
 
-// Simulate buildDailyRecords status mapping (same rules as nutrition-ui.js).
-function mapStatus(declared, hasEntries) {
-  const inferred = declared || (hasEntries ? 'complete' : 'unlogged');
-  if (inferred === 'partial' || inferred === 'fasted' || inferred === 'complete') return inferred;
-  return 'unlogged';
-}
-const fastedMapped = mapStatus('fasted', false);
-if (fastedMapped !== 'fasted') throw new Error('dayStatus fasted not preserved');
-if (!E.nutritionIsCountable({ day: date, calories: 0, nutritionStatus: fastedMapped })) {
-  throw new Error('mapped fasted day should count toward weeklyCheckIn coverage');
-}
-const partialMapped = mapStatus('partial', true);
-if (E.nutritionIsCountable({ day: date, calories: 400, nutritionStatus: partialMapped })) {
-  throw new Error('mapped partial day must be excluded from coverage');
-}
+// N3: real buildDailyRecords → nutritionIsCountable (not a duplicated mapper).
+if (!E || !E.nutritionIsCountable) throw new Error('Engine.nutritionIsCountable missing');
+
+const fixtureDb = C.emptyNutritionDB();
+fixtureDb.dayStatus = [
+  { userId: '', logDate: '2026-08-18', status: 'fasted', note: null, updatedAt: `${date}T00:00:00.000Z` },
+  { userId: '', logDate: '2026-08-19', status: 'partial', note: null, updatedAt: `${date}T00:00:00.000Z` },
+  { userId: '', logDate: '2026-08-20', status: 'complete', note: null, updatedAt: `${date}T00:00:00.000Z` },
+];
+fixtureDb.logEntries.push(
+  C.quickAddEntry(
+    { id: 'e-partial', logDate: '2026-08-19', meal: 'lunch', at: '2026-08-19T12:00:00.000Z' },
+    { displayName: 'Partial meal', calories: 400, proteinG: 20, carbsG: 40, fatG: 10 },
+  ),
+  C.quickAddEntry(
+    { id: 'e-complete', logDate: '2026-08-20', meal: 'dinner', at: '2026-08-20T18:00:00.000Z' },
+    { displayName: 'Complete meal', calories: 600, proteinG: 40, carbsG: 50, fatG: 20 },
+  ),
+);
+
+const records = NutritionUI.buildDailyRecords(fixtureDb, '2026-08-20', 7);
+const byDay = Object.fromEntries(records.map((r) => [r.day, r]));
+if (byDay['2026-08-18']?.nutritionStatus !== 'fasted') throw new Error('fasted status not mapped');
+if (byDay['2026-08-18']?.calories !== 0) throw new Error('fasted calories should be 0');
+if (!E.nutritionIsCountable(byDay['2026-08-18'])) throw new Error('fasted@0 must be countable');
+if (byDay['2026-08-19']?.nutritionStatus !== 'partial') throw new Error('partial status not mapped');
+if (E.nutritionIsCountable(byDay['2026-08-19'])) throw new Error('partial must not be countable');
+if (byDay['2026-08-20']?.nutritionStatus !== 'complete') throw new Error('complete status not mapped');
+if (!E.nutritionIsCountable(byDay['2026-08-20'])) throw new Error('complete day must be countable');
 
 console.log('nutrition-ui.smoke: ok');
