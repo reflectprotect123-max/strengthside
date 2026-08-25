@@ -30,6 +30,7 @@ jobs:
       - run: pnpm run check:e1rm-value
       - run: pnpm run check:strength-adapter-resolve
       - run: pnpm run check:strength-session-start-load
+      - run: pnpm run check:strength-load-context
       - run: pnpm run check:exercise-load-expr
       - run: pnpm run check:strength-volume
       - run: pnpm run check:strength-progression
