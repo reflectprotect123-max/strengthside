@@ -481,12 +481,19 @@
     });
   }
 
+  function autopilotReadyForExercise(state, exerciseId, minSessions) {
+    if (!exerciseId || !hasStrength()) return false;
+    var cal = calibrationForExercise(state, exerciseId);
+    if (!cal) return false;
+    return num(cal.count) >= num(minSessions || 2);
+  }
+
   function applyLoadHintsToExercise(state, ex, asOfDate) {
     if (!ex) return;
     var exerciseId = ex.exerciseId || ex.id;
     if (!exerciseId) return;
     var hint = ensureStrengthState(state).loadHints[exerciseId];
-    if (hint && hint.loadKg) fillBlankRowWeights(ex, hint.loadKg);
+    if (hint && hint.loadKg && autopilotReadyForExercise(state, exerciseId, 2)) fillBlankRowWeights(ex, hint.loadKg);
     if (ex.loadExpr) {
       var resolved = resolveExerciseLoad(state, ex, asOfDate);
       if (resolved && resolved.loadKg != null) fillBlankRowWeights(ex, resolved.loadKg);
@@ -509,7 +516,7 @@
   function calibrationStateForExposures(exposures) {
     var usable = (exposures || []).filter(function (e) { return e.exposureClass !== 'pain_blocked'; });
     if (!usable.length) return 'uncalibrated';
-    return usable.length >= 3 ? 'calibrated' : 'building';
+    return usable.length >= 2 ? 'calibrated' : 'building';
   }
 
   function calibrationForExercise(state, exerciseId) {
@@ -519,7 +526,7 @@
     var cal = calibrationStateForExposures(exposures);
     var label = cal === 'calibrated'
       ? 'Load model ready'
-      : (usable.length > 0 ? 'Building load model · ' + usable.length + '/3 sessions' : 'No history yet');
+      : (usable.length > 0 ? 'Building load model · ' + usable.length + '/2 sessions' : 'No history yet');
     return { state: cal, count: usable.length, label: label };
   }
 
@@ -543,7 +550,7 @@
     var headline = 'Log weight manually';
     var detail = '';
 
-    if (hint && hint.loadKg) {
+    if (hint && hint.loadKg && autopilotReadyForExercise(state, exerciseId, 2)) {
       loadKg = hint.loadKg;
       source = hint.source === 'auto_estimate' ? 'progression' : 'hint';
       headline = loadKg + ' kg · progression';

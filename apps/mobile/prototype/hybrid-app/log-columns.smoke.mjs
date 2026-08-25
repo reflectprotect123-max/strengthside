@@ -13,9 +13,10 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!html.includes('LogColumns.builderLoggerTwinHtml')) throw new Error('builder logger twin not wired');
 if (!html.includes('LogColumns.loggerCellsHtml')) throw new Error('logger columns UI not wired');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v76'")) throw new Error('expected cache v76');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v78'")) throw new Error('expected cache v78');
 if (!html.includes('Rest seconds')) throw new Error('builder missing Rest seconds above twin');
-if (!html.includes('id=exPick')) throw new Error('builder missing exercise selection');
+if (!html.includes('id=exNameVisible')) throw new Error('builder missing single exercise-name input');
+if (!html.includes('id=exNameOptions')) throw new Error('builder missing exercise suggestions datalist');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
 sandbox.window = sandbox;

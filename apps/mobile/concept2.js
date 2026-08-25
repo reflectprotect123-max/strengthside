@@ -234,6 +234,58 @@
       renderPanels();
     }
   }
+
+  /**
+   * Quiet path for Account Sync all / Sign in & sync.
+   * Pulls Logbook when this Hybrid account already linked Concept2 on the backend.
+   * Does not open OAuth UI.
+   */
+  async function syncIfLinked(opts) {
+    opts = opts || {};
+    try {
+      await refreshStatus();
+    } catch (err) {
+      if (err && err.code === 'auth_required') {
+        return { ok: false, reason: 'auth_required', message: 'Sign in required' };
+      }
+      // Status probe failed — still try sync; 401 means not linked.
+    }
+    if (!st().connected) {
+      return { ok: false, reason: 'not_linked', message: 'not linked' };
+    }
+    try {
+      const body = await api(FN.sync, opts.backfill ? { query: { backfill: '1' } } : undefined);
+      const list = Array.isArray(body && body.normalized) ? body.normalized : [];
+      const counts = applyImport(list);
+      const c = st();
+      c.connected = true;
+      c.lastSyncAt = (body && body.syncedAt) || new Date().toISOString();
+      c.resultCount = list.length;
+      c.lastSummary =
+        (global.HybridEngine &&
+          global.HybridEngine.Concept2 &&
+          global.HybridEngine.Concept2.concept2ImportSummary(counts)) ||
+        counts.summary ||
+        '';
+      if (typeof global.save === 'function') global.save();
+      return {
+        ok: true,
+        reason: 'synced',
+        count: list.length,
+        summary: c.lastSummary || (list.length ? list.length + ' results' : 'nothing new'),
+      };
+    } catch (err) {
+      if (err && err.status === 401) {
+        st().connected = false;
+        if (typeof global.save === 'function') global.save();
+        return { ok: false, reason: 'not_linked', message: 'not linked' };
+      }
+      if (err && err.code === 'auth_required') {
+        return { ok: false, reason: 'auth_required', message: 'Sign in required' };
+      }
+      return { ok: false, reason: 'error', message: (err && err.message) || 'Concept2 sync failed' };
+    }
+  }
   async function connect() {
     if (ui.busy) return;
     ui.busy = true;
@@ -305,6 +357,7 @@
     renderPanels,
     connect,
     sync,
+    syncIfLinked,
     disconnect,
     refreshStatus,
   };

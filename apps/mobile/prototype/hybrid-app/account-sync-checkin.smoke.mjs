@@ -17,6 +17,12 @@ if (!whoop.includes('async function syncAll')) throw new Error('Whoop.syncAll mi
 if (!whoop.includes('Sign in & sync')) throw new Error('Sign in & sync CTA missing');
 if (!whoop.includes('syncAll,')) throw new Error('Whoop export missing syncAll');
 if (!whoop.includes('cloudStatusLines')) throw new Error('Account cloud status lines missing');
+if (!whoop.includes('Concept2.syncIfLinked')) throw new Error('syncAll missing Concept2.syncIfLinked');
+if (!whoop.includes('Syncing Concept2')) throw new Error('syncAll missing Concept2 progress message');
+
+const concept2 = readFileSync(join(dir, 'concept2.js'), 'utf8');
+if (!concept2.includes('async function syncIfLinked')) throw new Error('Concept2.syncIfLinked missing');
+if (!concept2.includes('syncIfLinked,')) throw new Error('Concept2 export missing syncIfLinked');
 
 if (strength.includes('function cardHtml')) throw new Error('StrengthSync.cardHtml should be removed');
 if (nutrition.includes('function cardHtml')) throw new Error('NutritionSync.cardHtml should be removed');
@@ -31,9 +37,10 @@ if (!html.includes('ATH_CHECKIN_STEPS')) throw new Error('ATH_CHECKIN_STEPS miss
 if (!html.includes('function athCheckinAnswer')) throw new Error('athCheckinAnswer missing');
 if (!html.includes('checkin-choice')) throw new Error('checkin-choice UI missing');
 if (html.includes("athSleepSlider('sleepQuality'")) throw new Error('old sleepQuality slider still in check-in card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v76'")) throw new Error('expected cache v76');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v78'")) throw new Error('expected cache v78');
 if (html.includes("loadStarter('Full Body B')")) throw new Error('Full Body B starter button still present');
 if (html.includes("loadStarter('Full Body C')")) throw new Error('Full Body C starter button still present');
 if (!html.includes("loadStarter('Full Body A')")) throw new Error('Full Body A starter missing');
+if (!html.includes('Concept2 Logbook when already linked')) throw new Error('Settings copy missing Concept2-in-sync note');
 
 console.log('account-sync-checkin.smoke: ok');

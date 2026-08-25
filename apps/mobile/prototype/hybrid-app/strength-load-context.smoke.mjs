@@ -21,7 +21,7 @@ if (!StrengthAdapter?.sessionLoadContext) {
 }
 
 const date = '2026-08-20';
-const state = {
+const baseState = {
   meta: { ownerId: 'a1' },
   strengthState: {
     workingMaxEvents: [{
@@ -40,14 +40,42 @@ const ex = {
   loadExpr: { exprKind: 'pct_of_max', exprArg: 0.7 },
 };
 
-const ctx = StrengthAdapter.sessionLoadContext(state, ex, date);
-if (!ctx.ok || ctx.loadKg !== 62.5 || ctx.source !== 'progression') {
-  throw new Error('Expected progression hint 62.5, got ' + JSON.stringify(ctx));
+// With no usable exposure history, %WM prescription wins over hint.
+const coldCtx = StrengthAdapter.sessionLoadContext(baseState, ex, date);
+if (!coldCtx.ok || coldCtx.loadKg !== 70 || coldCtx.source !== 'prescription') {
+  throw new Error('Expected prescription 70kg on cold start, got ' + JSON.stringify(coldCtx));
 }
 
-const cal = StrengthAdapter.calibrationForExercise(state, 'squat');
-if (!cal || cal.state !== 'uncalibrated') {
-  throw new Error('Expected uncalibrated, got ' + JSON.stringify(cal));
+const coldCal = StrengthAdapter.calibrationForExercise(baseState, 'squat');
+if (!coldCal || coldCal.state !== 'uncalibrated' || coldCal.count !== 0) {
+  throw new Error('Expected cold uncalibrated state, got ' + JSON.stringify(coldCal));
+}
+
+// After 2 usable sessions, autopilot hint should drive the headline/context.
+const state = {
+  ...baseState,
+  sessions: [
+    {
+      id: 's1',
+      status: 'completed',
+      date: '2026-08-18',
+      tasks: [{ kind: 'strength', exerciseId: 'squat', rows: [{ done: true, weight: 60, reps: 8, rir: 2, targetKind: '' }] }],
+    },
+    {
+      id: 's2',
+      status: 'completed',
+      date: '2026-08-19',
+      tasks: [{ kind: 'strength', exerciseId: 'squat', rows: [{ done: true, weight: 62.5, reps: 8, rir: 2, targetKind: '' }] }],
+    },
+  ],
+};
+const warmCtx = StrengthAdapter.sessionLoadContext(state, ex, date);
+if (!warmCtx.ok || warmCtx.loadKg !== 62.5 || warmCtx.source !== 'progression') {
+  throw new Error('Expected progression hint 62.5 after 2 sessions, got ' + JSON.stringify(warmCtx));
+}
+const warmCal = StrengthAdapter.calibrationForExercise(state, 'squat');
+if (!warmCal || warmCal.state !== 'calibrated' || warmCal.count < 2) {
+  throw new Error('Expected calibrated after 2 sessions, got ' + JSON.stringify(warmCal));
 }
 
 console.log('strength-load-context.smoke: ok');

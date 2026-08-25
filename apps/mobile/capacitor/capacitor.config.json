@@ -18,6 +18,14 @@
       "defaultChannel": "dogfood",
       "appReadyTimeout": 10000,
       "responseTimeout": 20
+    },
+    "BluetoothLe": {
+      "displayStrings": {
+        "scanning": "Scanning…",
+        "cancel": "Cancel",
+        "availableDevices": "Available devices",
+        "noDeviceFound": "No device found"
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Rogue Echo Bike V3 FTMS Indoor Bike Data parser + Web Bluetooth connect.
+ * Rogue Echo Bike V3 FTMS Indoor Bike Data parser + Web/Native Bluetooth connect.
  * Ported from hybrid research starter (read-only telemetry; no Control Point).
  * Calories are device-tagged only — never treat as portable nutrition calories.
  */
@@ -121,19 +121,33 @@
     return metrics;
   }
 
-  function bluetoothAvailable() {
+  function nativeBleAvailable() {
+    return !!(global.NativeBle && NativeBle.isAvailable && NativeBle.isAvailable());
+  }
+
+  function webBluetoothAvailable() {
     return !!(global.navigator && global.navigator.bluetooth && global.navigator.bluetooth.requestDevice);
+  }
+
+  function bluetoothAvailable() {
+    return nativeBleAvailable() || webBluetoothAvailable();
   }
 
   function unsupportedReason() {
     if (bluetoothAvailable()) return '';
+    if (global.NativeBridge && NativeBridge.isNative && NativeBridge.isNative()) {
+      return 'Bluetooth LE unavailable in this app build.';
+    }
     var ua = String((global.navigator && global.navigator.userAgent) || '');
-    if (/iPhone|iPad|iPod/i.test(ua)) return 'Echo FTMS needs Chrome on Android (or desktop). iOS Safari cannot connect.';
-    return 'Web Bluetooth unavailable — use Chrome on Android or desktop for Echo.';
+    if (/iPhone|iPad|iPod/i.test(ua)) return 'Echo FTMS needs the Hybrid app or Chrome on Android.';
+    return 'Bluetooth unavailable — use the Hybrid app or Chrome on Android.';
   }
 
   async function connectEchoV3(onEvent, onDisconnected) {
-    if (!bluetoothAvailable()) throw new Error(unsupportedReason() || 'Web Bluetooth unavailable');
+    if (nativeBleAvailable()) {
+      return global.NativeBle.connectEchoFtms(onEvent, onDisconnected);
+    }
+    if (!webBluetoothAvailable()) throw new Error(unsupportedReason() || 'Bluetooth unavailable');
     var device = await global.navigator.bluetooth.requestDevice({
       filters: [{ services: [ECHO_V3.service] }],
       optionalServices: [ECHO_V3.heartRateService],

@@ -27,6 +27,7 @@ jobs:
       - run: pnpm run check:label-scan
       - run: pnpm run check:native-bridge
       - run: pnpm run check:capgo-live-update
+      - run: pnpm run check:native-ble
       - run: pnpm run check:nutrition-ui
       - run: pnpm run check:strength-resolve
       - run: pnpm run check:e1rm-value
@@ -36,7 +37,7 @@ jobs:
       - run: pnpm run check:account-sync-checkin
       - run: pnpm run check:log-columns
       - run: pnpm run check:exercise-load-expr
-      - run: pnpm run check:fullbody-a-pct-wm
+      - run: pnpm run check:autopilot-policy
       - run: pnpm run check:strength-volume
       - run: pnpm run check:strength-progression
       - run: pnpm run check:strength-sync

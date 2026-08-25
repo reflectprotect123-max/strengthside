@@ -153,6 +153,10 @@
     }
     var w = st();
     lines += statusChip('WHOOP', !!w.connected, w.connected ? metaLine() : 'not connected');
+    if (global.Concept2 && typeof global.Concept2.metaLine === 'function') {
+      var c2 = (global.S && global.S.settings && global.S.settings.concept2) || {};
+      lines += statusChip('Concept2', !!c2.connected, global.Concept2.metaLine());
+    }
     return lines;
   }
   function cardHtml() {
@@ -161,7 +165,7 @@
     const msg = ui.message ? '<div class=meta style="margin-top:8px">' + esc(ui.message) + '</div>' : '';
     if (!w.email) {
       return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Sign in & sync</div>' +
-        '<div class=meta>One sign-in syncs strength, nutrition, and WHOOP. Same THE Hybrid Engine account.</div>' +
+        '<div class=meta>One sign-in syncs strength, nutrition, WHOOP, and Concept2 Logbook (when already linked on this account).</div>' +
         '<div class=field style="margin-top:12px"><label>Email</label><input id=whoopEmail type=email autocomplete=username placeholder="you@email.com"></div>' +
         '<div class=field><label>Password</label><input id=whoopPassword type=password autocomplete=current-password></div>' +
         '<div class=btns style="margin-top:12px"><button class="btn primary block" onclick="Whoop.signIn()"' + busy + '>Sign in & sync</button></div>' + msg + '</div>';
@@ -325,6 +329,25 @@
           }
         } catch (err) {
           bits.push('Nutrition: ' + ((err && err.message) || 'failed'));
+        }
+      }
+
+      if (global.Concept2 && typeof global.Concept2.syncIfLinked === 'function') {
+        try {
+          ui.message = 'Syncing Concept2…';
+          renderPanels();
+          var c2 = await global.Concept2.syncIfLinked();
+          if (c2 && c2.ok) {
+            bits.push(c2.summary ? 'Concept2 (' + c2.summary + ')' : 'Concept2');
+          } else if (c2 && c2.reason === 'not_linked') {
+            bits.push('Concept2 (not linked)');
+          } else if (c2 && c2.reason === 'auth_required') {
+            bits.push('Concept2 (sign-in required)');
+          } else {
+            bits.push('Concept2: ' + ((c2 && c2.message) || 'failed'));
+          }
+        } catch (err) {
+          bits.push('Concept2: ' + ((err && err.message) || 'failed'));
         }
       }
 
