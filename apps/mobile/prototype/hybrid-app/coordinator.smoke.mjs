@@ -25,8 +25,10 @@ vm.runInContext(`${bundle}; window.HybridStrength = HybridStrength; ${coordAdapt
 if (!sandbox.window.HybridStrength.Coordinator?.planCoordinator) throw new Error('Coordinator missing from bundle');
 
 const { CoordinatorAdapter } = sandbox.window;
+// Pin completedAt inside the fixture week. Date.now() rolls off 2026-08-24 after midnight UTC.
+const completedAt = Date.parse('2026-08-24T12:00:00');
 const state = {
-  sessions: [{ id: 's1', status: 'completed', date: '2026-08-24', completedAt: Date.now(), tasks: [{ kind: 'conditioning', result: { zoneSeconds: { aerobic: 600 } } }] }],
+  sessions: [{ id: 's1', status: 'completed', date: '2026-08-24', completedAt, tasks: [{ kind: 'conditioning', result: { zoneSeconds: { aerobic: 600 } } }] }],
   dailyCheckins: [{ date: '2026-08-24', readinessColor: 'green', steps: 8000 }],
   meta: { progressionAudit: [] },
   strengthState: { workingMaxEvents: [], prEvents: [], loadHints: {} },
@@ -37,7 +39,7 @@ must(/Recovery|Strength|Conditioning|Nutrition/i.test(receipt.headline), 'headli
 must(Array.isArray(receipt.items) && receipt.items.length >= 1, 'receipt items');
 
 const lowDoseState = {
-  sessions: [{ id: 's2', status: 'completed', date: '2026-08-24', completedAt: Date.now(), tasks: [{ kind: 'conditioning', result: { zoneSeconds: { aerobic: 600 } } }] }],
+  sessions: [{ id: 's2', status: 'completed', date: '2026-08-24', completedAt, tasks: [{ kind: 'conditioning', result: { zoneSeconds: { aerobic: 600 } } }] }],
   dailyCheckins: [],
   meta: { progressionAudit: [] },
   strengthState: { workingMaxEvents: [], prEvents: [], loadHints: {} },

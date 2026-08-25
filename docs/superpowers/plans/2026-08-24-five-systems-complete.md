@@ -74,7 +74,7 @@
 **Interfaces:**
 - Produces: `window.HybridStrength.Resolve.resolveTarget`, `HybridStrength.E1rm.e1rm`, `HybridStrength.Load.sessionLoad`, `HybridStrength.Rounding.roundLoadToEquipment`
 
-- [ ] **Step 1: Write failing smoke**
+- [x] **Step 1: Write failing smoke**
 
 Create `strength-resolve.smoke.mjs` that loads the bundle and asserts:
 
@@ -96,11 +96,11 @@ if (!HS?.Load?.sessionLoad) throw new Error('Load missing');
 console.log('strength-resolve.smoke: ok');
 ```
 
-- [ ] **Step 2: Run smoke — expect FAIL** (`Resolve missing`)
+- [x] **Step 2: Run smoke — expect FAIL** (`Resolve missing`)
 
 Run: `node apps/mobile/prototype/hybrid-app/strength-resolve.smoke.mjs`
 
-- [ ] **Step 3: Add exports to `strength-entry.ts`**
+- [x] **Step 3: Add exports to `strength-entry.ts`**
 
 ```ts
 export * as Resolve from '../../../../packages/strength-engine/src/resolve.ts';
@@ -109,16 +109,16 @@ export * as Load from '../../../../packages/strength-engine/src/load.ts';
 // keep existing Volume, Progression, Exposure, Performed, Pr, WorkingMax, Rounding, Coordinator
 ```
 
-- [ ] **Step 4: Rebuild + pass smoke**
+- [x] **Step 4: Rebuild + pass smoke**
 
 ```bash
 bash apps/mobile/prototype/hybrid-app/build-strength.sh
 node apps/mobile/prototype/hybrid-app/strength-resolve.smoke.mjs
 ```
 
-- [ ] **Step 5: Wire `check:strength-resolve` into `package.json` verify + `.github/workflows/ci.yml`**
+- [x] **Step 5: Wire `check:strength-resolve` into `package.json` verify + `.github/workflows/ci.yml`**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/mobile/prototype/hybrid-app/strength-entry.ts \
@@ -169,20 +169,20 @@ function resolveExerciseLoad(state, exercise, asOfDate) {
 }
 ```
 
-- [ ] **Step 1: Failing smoke** — fixture WM 100kg + `loadExpr: { exprKind:'pct_of_max', exprArg:0.7 }` → `loadKg === 70` (or rounded)
-- [ ] **Step 2: Implement `resolveExerciseLoad` + export on `StrengthAdapter`
-- [ ] **Step 3: Smoke PASS**
-- [ ] **Step 4: Commit** `feat(strength): adapter resolveExerciseLoad for %WM`
+- [x] **Step 1: Failing smoke** — fixture WM 100kg + `loadExpr: { exprKind:'pct_of_max', exprArg:0.7 }` → `loadKg === 70` (or rounded)
+- [x] **Step 2: Implement `resolveExerciseLoad` + export on `StrengthAdapter`
+- [x] **Step 3: Smoke PASS**
+- [x] **Step 4: Commit** `feat(strength): adapter resolveExerciseLoad for %WM`
 
 ### Task S3 — Builder: optional `%WM` load expression on lift sheet
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (`exerciseSheet`, `saveExercise`)
 
-- [ ] **Step 1:** Add optional field on Add/Edit lift: “Load % of working max” (number 1–100). Empty = no `loadExpr` (current behavior).
-- [ ] **Step 2:** Persist `exercise.loadExpr = { exprKind:'pct_of_max', exprArg: pct/100 }` when set.
-- [ ] **Step 3:** Manual / smoke: save lift with 70% → draft JSON has `loadExpr`.
-- [ ] **Step 4:** Commit `feat(strength): optional %WM field on lift sheet`
+- [x] **Step 1:** Add optional field on Add/Edit lift: “Load % of working max” (number 1–100). Empty = no `loadExpr` (current behavior).
+- [x] **Step 2:** Persist `exercise.loadExpr = { exprKind:'pct_of_max', exprArg: pct/100 }` when set.
+- [x] **Step 3:** Manual / smoke: save lift with 70% → draft JSON has `loadExpr`.
+- [x] **Step 4:** Commit `feat(strength): optional %WM field on lift sheet`
 
 ### Task S4 — `startSession`: stamp resolved loads onto rows
 
@@ -190,19 +190,19 @@ function resolveExerciseLoad(state, exercise, asOfDate) {
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (`startSession` / flatten path)
 - Modify: `apps/mobile/prototype/hybrid-app/strength-adapter.js` (`applyLoadHintsToTasks` or sibling)
 
-- [ ] **Step 1:** When starting strength session, for each exercise with `loadExpr`, call `resolveExerciseLoad`; if resolved, prefill row `weight` (do not overwrite athlete-edited weights on resume).
-- [ ] **Step 2:** If unresolved `no_working_max`, leave weight blank (no invented load).
-- [ ] **Step 3:** Smoke or manual path documented in smoke comment.
-- [ ] **Step 4:** Commit `feat(strength): resolve %WM loads on session start`
+- [x] **Step 1:** When starting strength session, for each exercise with `loadExpr`, call `resolveExerciseLoad`; if resolved, prefill row `weight` (do not overwrite athlete-edited weights on resume).
+- [x] **Step 2:** If unresolved `no_working_max`, leave weight blank (no invented load).
+- [x] **Step 3:** Smoke or manual path documented in smoke comment.
+- [x] **Step 4:** Commit `feat(strength): resolve %WM loads on session start`
 
 ### Task S5 — Engine e1RM on finish (replace inline formula)
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (`e1rmValue` / `sessionE1rmList`)
 
-- [ ] **Step 1:** Change `e1rmValue(load, reps)` to call `HybridStrength.E1rm.e1rm(load, reps, 'brzycki')` when available; keep local fallback only if bundle missing.
-- [ ] **Step 2:** Existing finish summary still lists e1RMs.
-- [ ] **Step 3:** Commit `feat(strength): finish e1RM via engine`
+- [x] **Step 1:** Change `e1rmValue(load, reps)` to call `HybridStrength.E1rm.e1rm(load, reps, 'brzycki')` when available; keep local fallback only if bundle missing.
+- [x] **Step 2:** Existing finish summary still lists e1RMs.
+- [x] **Step 3:** Commit `feat(strength): finish e1RM via engine`
 
 ### Task S6 — Session load via engine (kill tonnage/50 stub)
 
@@ -210,10 +210,10 @@ function resolveExerciseLoad(state, exercise, asOfDate) {
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (`strengthLoad`)
 - Modify: `apps/mobile/prototype/hybrid-app/load-headline.js` if it uses the stub
 
-- [ ] **Step 1:** Map completed rows → performed measurements shape expected by `Load.sessionLoad`.
-- [ ] **Step 2:** Use `tonnageKg` (and/or documented intensity) for strength channel of load headline — **not** `tonnage/50`.
-- [ ] **Step 3:** Update `load-headline.smoke.mjs` expectations if numbers change.
-- [ ] **Step 4:** Commit `feat(strength): sessionLoad replaces tonnage/50 stub`
+- [x] **Step 1:** Map completed rows → performed measurements shape expected by `Load.sessionLoad`.
+- [x] **Step 2:** Use `tonnageKg` (and/or documented intensity) for strength channel of load headline — **not** `tonnage/50`.
+- [x] **Step 3:** Update `load-headline.smoke.mjs` expectations if numbers change.
+- [x] **Step 4:** Commit `feat(strength): sessionLoad replaces tonnage/50 stub`
 
 ### Task S7 — Strength sync: include completed set rows in snapshot
 
@@ -236,10 +236,10 @@ performedSessions: (state.sessions || [])
 
 Merge rule: union by session `id`; prefer newer `completedAt`.
 
-- [ ] **Step 1:** Extend smoke — snapshot round-trip includes a fixture session with rows.
-- [ ] **Step 2:** Implement snapshot + merge.
-- [ ] **Step 3:** Bump `SNAPSHOT_VERSION` if needed for compatibility.
-- [ ] **Step 4:** Commit `feat(strength): sync completed set rows in domain snapshot`
+- [x] **Step 1:** Extend smoke — snapshot round-trip includes a fixture session with rows.
+- [x] **Step 2:** Implement snapshot + merge.
+- [x] **Step 3:** Bump `SNAPSHOT_VERSION` if needed for compatibility.
+- [x] **Step 4:** Commit `feat(strength): sync completed set rows in domain snapshot`
 
 ### Task S8 — Progress history trust (list-only)
 
@@ -247,23 +247,23 @@ Merge rule: union by session `id`; prefer newer `completedAt`.
 - Modify: `apps/mobile/prototype/hybrid-app/strength-adapter.js` (`progressExerciseDetail`)
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (detail HTML if needed)
 
-- [ ] **Step 1:** Ensure per-lift detail shows last loads from completed sessions (already partial — fill gaps only).
-- [ ] **Step 2:** No charts.
-- [ ] **Step 3:** `check:strength-progression` still green.
-- [ ] **Step 4:** Commit `feat(strength): deepen Progress lift history lists`
+- [x] **Step 1:** Ensure per-lift detail shows last loads from completed sessions (already partial — fill gaps only).
+- [x] **Step 2:** No charts.
+- [x] **Step 3:** `check:strength-progression` still green.
+- [x] **Step 4:** Commit `feat(strength): deepen Progress lift history lists`
 
 ### Task S9 — Phase 1 sync + cache bump
 
-- [ ] Run `bash apps/mobile/sync-hybrid-html.sh`
-- [ ] Bump `LOCAL_BUILD` + SW `CACHE` (next free after v59)
-- [ ] `pnpm run verify` green
-- [ ] Commit `chore: strength complete phase ship stamp`
+- [x] Run `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Bump `LOCAL_BUILD` + SW `CACHE` (next free after v59)
+- [x] `pnpm run verify` green
+- [x] Commit `chore: strength complete phase ship stamp`
 
 ### Task S10 — Phase 1 handoff
 
-- [ ] Update `handoff.md` top checkpoint: Strength resolve + sync sets shipped; brains still silent
-- [ ] Mark Phase 1 tasks `[x]` in this plan
-- [ ] Commit `docs: handoff strength phase complete`
+- [x] Update `handoff.md` top checkpoint: Strength resolve + sync sets shipped; brains still silent
+- [x] Mark Phase 1 tasks `[x]` in this plan
+- [x] Commit `docs: handoff strength phase complete`
 
 ---
 

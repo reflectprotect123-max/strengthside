@@ -60,6 +60,32 @@
     return Array.from(ids);
   }
 
+  function htmlRowToSessionLoadSet(row) {
+    var measurements = [];
+    var load = num(row.weight);
+    var reps = num(row.reps);
+    if (load > 0) measurements.push({ metricKey: 'load', value: load });
+    if (reps > 0) measurements.push({ metricKey: 'reps', value: reps });
+    return { measurements: measurements };
+  }
+
+  /** Completed HTML rows → engine sessionLoad.tonnageKg (not tonnage/50). */
+  function sessionLoadFromRows(rows) {
+    var filtered = (rows || []).filter(function (r) {
+      return r.done && r.targetKind !== 'seconds';
+    });
+    var HS = global.HybridStrength;
+    if (HS && HS.Load && HS.Load.sessionLoad) {
+      return HS.Load.sessionLoad(filtered.map(htmlRowToSessionLoadSet)).tonnageKg;
+    }
+    var tonnage = filtered.reduce(function (a, x) {
+      return a + num(x.weight) * num(x.reps);
+    }, 0);
+    if (tonnage > 0) return tonnage;
+    // Bodyweight-only (no load logged): engine tonnageKg is 0 when bundle present
+    return 0;
+  }
+
   function htmlRowToPerformed(session, task, ex, row) {
     var exerciseId = ex.exerciseId || task.exerciseId;
     var performedAt = new Date(session.completedAt || Date.now()).toISOString();
@@ -375,20 +401,40 @@
   }
 
   function exerciseExposureHistory(state, exerciseId, limit) {
-    limit = limit || 5;
+    limit = limit || 8;
+    var sessionsById = {};
+    (state.sessions || []).forEach(function (s) {
+      if (s.id) sessionsById[s.id] = s;
+    });
     var performed = performedFromState(state).filter(function (p) {
       return p.exerciseId === exerciseId && p.status === 'completed';
     });
-    var rows = performed.map(function (p) {
+    var bySession = {};
+    performed.forEach(function (p) {
       var loadKg = measurementValue(p, 'load');
       var reps = measurementValue(p, 'reps');
-      if (!loadKg) return null;
+      if (!loadKg) return;
+      var sid = p.assignedSessionId;
+      if (!bySession[sid]) bySession[sid] = { sessionId: sid, sets: [] };
+      bySession[sid].sets.push({ loadKg: loadKg, reps: reps, at: p.performedAt });
+    });
+    var rows = Object.keys(bySession).map(function (sid) {
+      var bucket = bySession[sid];
+      var sess = sessionsById[sid] || {};
+      var best = null;
+      bucket.sets.forEach(function (set) {
+        if (!best || set.loadKg > best.loadKg || (set.loadKg === best.loadKg && set.reps > best.reps)) best = set;
+      });
+      if (!best) return null;
+      var at = sess.completedAt ? new Date(sess.completedAt).toISOString() : best.at;
       return {
-        sessionId: p.assignedSessionId,
-        loadKg: loadKg,
-        reps: reps,
-        at: p.performedAt,
-        date: String(p.performedAt || '').slice(0, 10),
+        sessionId: sid,
+        sessionName: sess.name || '',
+        loadKg: best.loadKg,
+        reps: best.reps,
+        setCount: bucket.sets.length,
+        at: at,
+        date: String(sess.date || at || '').slice(0, 10),
       };
     }).filter(Boolean);
     rows.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
@@ -406,31 +452,96 @@
       ok: true,
       exerciseId: exerciseId,
       name: exerciseNameFor(state, exerciseId),
-      history: exerciseExposureHistory(state, exerciseId, 5),
+      history: exerciseExposureHistory(state, exerciseId, 8),
       loadHint: hint,
       workingMaxKg: wm.length ? wm[0].valueKg : null,
     };
   }
 
-  function applyLoadHintsToExercise(state, ex) {
-    if (!ex || !ex.exerciseId) return;
-    var hint = ensureStrengthState(state).loadHints[ex.exerciseId];
-    if (!hint || !hint.loadKg) return;
+  function workingMaxKgForExercise(state, exerciseId, asOfDate) {
+    if (!exerciseId || !global.HybridStrength?.WorkingMax?.currentWorkingMax) return null;
+    var events = (ensureStrengthState(state).workingMaxEvents || []).filter(function (e) {
+      return e.exerciseId === exerciseId;
+    });
+    var wm = global.HybridStrength.WorkingMax.currentWorkingMax(events, asOfDate);
+    return wm ? wm.valueKg : null;
+  }
+
+  function equipmentForExercise(exercise) {
+    var eq = exercise && exercise.equipment;
+    if (!eq || typeof eq !== 'object') return null;
+    return eq;
+  }
+
+  function fillBlankRowWeights(ex, loadKg) {
+    if (loadKg == null) return;
     (ex.rows || []).forEach(function (row) {
-      if (!row.done && (row.weight === '' || row.weight == null)) row.weight = hint.loadKg;
+      if (!row.done && (row.weight === '' || row.weight == null)) row.weight = loadKg;
     });
   }
 
-  function applyLoadHintsToTasks(state, tasks) {
+  function applyLoadHintsToExercise(state, ex, asOfDate) {
+    if (!ex) return;
+    var exerciseId = ex.exerciseId || ex.id;
+    if (!exerciseId) return;
+    var hint = ensureStrengthState(state).loadHints[exerciseId];
+    if (hint && hint.loadKg) fillBlankRowWeights(ex, hint.loadKg);
+    if (ex.loadExpr) {
+      var resolved = resolveExerciseLoad(state, ex, asOfDate);
+      if (resolved && resolved.loadKg != null) fillBlankRowWeights(ex, resolved.loadKg);
+    }
+  }
+
+  function applyLoadHintsToTasks(state, tasks, asOfDate) {
     (tasks || []).forEach(function (t) {
-      if (t.kind === 'strength') applyLoadHintsToExercise(state, t);
-      if (t.kind === 'superset') (t.exercises || []).forEach(function (ex) { applyLoadHintsToExercise(state, ex); });
+      if (t.kind === 'strength') applyLoadHintsToExercise(state, t, asOfDate);
+      if (t.kind === 'superset') {
+        (t.exercises || []).forEach(function (ex) { applyLoadHintsToExercise(state, ex, asOfDate); });
+      }
     });
+  }
+
+  /**
+   * Resolve prescribed load for an HTML exercise task (%WM etc.) via strength-engine.
+   * exercise.loadExpr optional: { exprKind: 'pct_of_max', exprArg: 0.7 }
+   */
+  function resolveExerciseLoad(state, exercise, asOfDate) {
+    if (!hasStrength() || !exercise || !exercise.loadExpr) return null;
+    if (!global.HybridStrength.Resolve?.resolveTarget) return null;
+    var HS = global.HybridStrength;
+    var scheduledDate = asOfDate || isoNow().slice(0, 10);
+    var ctx = {
+      athleteId: (state.meta && state.meta.ownerId) || 'local',
+      scheduledDate: scheduledDate,
+      workingMaxAt: function (exId, asOf) {
+        return workingMaxKgForExercise(state, exId, asOf || scheduledDate);
+      },
+      lastPerformedLoad: function (_a, _exId) { return null; },
+      bodyweightAt: function (_a, _asOf) { return num(state.profile && state.profile.bodyweight) || null; },
+    };
+    var fakeEx = {
+      id: exercise.exerciseId || exercise.id,
+      equipment: equipmentForExercise(exercise),
+      referenceMaxExerciseId: null,
+    };
+    var t = {
+      exprKind: exercise.loadExpr.exprKind,
+      exprArg: exercise.loadExpr.exprArg,
+      literalValue: null,
+      rangeLo: null,
+      rangeHi: null,
+      exprRefExercise: exercise.loadExpr.exprRefExercise || null,
+    };
+    var r = HS.Resolve.resolveTarget(t, fakeEx, ctx);
+    if (r.kind === 'scalar') return { loadKg: r.value, unresolvedReason: null };
+    if (r.kind === 'unresolved') return { loadKg: null, unresolvedReason: r.reason };
+    return null;
   }
 
   global.StrengthAdapter = {
     hasStrength: hasStrength,
     ensureStrengthState: ensureStrengthState,
+    sessionLoadFromRows: sessionLoadFromRows,
     performedFromSession: performedFromSession,
     applySilentProgression: applySilentProgression,
     applyLoadHintsToTasks: applyLoadHintsToTasks,
@@ -441,6 +552,7 @@
     exerciseExposureHistory: exerciseExposureHistory,
     auditReasonText: auditReasonText,
     exerciseNameFor: exerciseNameFor,
+    resolveExerciseLoad: resolveExerciseLoad,
     ENGINE_VERSION: ENGINE_VERSION,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

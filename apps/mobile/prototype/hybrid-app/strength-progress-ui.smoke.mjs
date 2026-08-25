@@ -38,6 +38,8 @@ const state = {
   },
   sessions: [{
     id: 's1',
+    name: 'Full Body A',
+    date: '2026-08-24',
     status: 'completed',
     completedAt: Date.now(),
     sessionPain: 'none',
@@ -45,13 +47,19 @@ const state = {
       id: 't1',
       kind: 'strength',
       exerciseId: 'bp',
-      rows: [{ id: 'r1', n: 1, weight: 100, reps: 5, done: true }],
+      rows: [
+        { id: 'r1', n: 1, weight: 100, reps: 5, done: true },
+        { id: 'r2', n: 2, weight: 102.5, reps: 5, done: true },
+      ],
     }],
   }],
 };
 const detail = sandbox.window.StrengthAdapter.progressExerciseDetail(state, 'bp');
-must(detail.ok && detail.history.length === 1, 'exercise detail history');
+must(detail.ok && detail.history.length === 1, 'exercise detail history groups sets by session');
+must(detail.history[0].sessionName === 'Full Body A', 'history includes session name');
+must(detail.history[0].loadKg === 102.5 && detail.history[0].setCount === 2, 'history shows top load per session');
 must(detail.loadHint && detail.loadHint.loadKg === 102.5, 'load hint');
+must(html.includes('No logged sessions yet'), 'empty history copy is session-honest');
 const summary = sandbox.window.StrengthAdapter.progressSummary(state);
 must(summary.ok === true, 'progressSummary should ok');
 

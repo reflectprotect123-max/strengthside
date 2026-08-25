@@ -8,7 +8,7 @@
   var WRITER = 'html-athlete-strength';
   var DOMAIN = 'strength';
   var BASE_KEY = 'hybrid-strength-sync-base-v1';
-  var SNAPSHOT_VERSION = 1;
+  var SNAPSHOT_VERSION = 2;
 
   var status = { lastSyncAt: null, lastError: '', lastOk: false, busy: false };
 
@@ -45,6 +45,74 @@
     return JSON.stringify(snapshot);
   }
 
+  function completedAtMs(session) {
+    var v = session && session.completedAt;
+    if (v == null) return 0;
+    var n = Number(v);
+    return Number.isFinite(n) ? n : Date.parse(String(v)) || 0;
+  }
+
+  function isStrengthTask(task) {
+    return task && (task.kind === 'strength' || task.kind === 'superset');
+  }
+
+  function performedSessionsFromState(state) {
+    return (state.sessions || [])
+      .filter(function (s) { return s.status === 'completed'; })
+      .slice(-40)
+      .map(function (s) {
+        return {
+          id: s.id,
+          date: s.date,
+          name: s.name,
+          completedAt: s.completedAt,
+          tasks: (s.tasks || []).filter(isStrengthTask),
+        };
+      });
+  }
+
+  function mergePerformedSessions(localList, remoteList) {
+    var map = {};
+    (localList || []).concat(remoteList || []).forEach(function (s) {
+      if (!s || !s.id) return;
+      var cur = map[s.id];
+      if (!cur || completedAtMs(s) > completedAtMs(cur)) map[s.id] = s;
+    });
+    var merged = Object.keys(map).map(function (k) { return map[k]; });
+    merged.sort(function (a, b) { return completedAtMs(a) - completedAtMs(b); });
+    if (merged.length > 40) merged = merged.slice(merged.length - 40);
+    return merged;
+  }
+
+  function applyPerformedSessions(state, incoming) {
+    if (!incoming || !incoming.length) return;
+    state.sessions = state.sessions || [];
+    var byId = {};
+    state.sessions.forEach(function (s, i) {
+      if (s && s.id) byId[s.id] = i;
+    });
+    incoming.forEach(function (remote) {
+      if (!remote || !remote.id) return;
+      var idx = byId[remote.id];
+      if (idx == null) {
+        state.sessions.push(Object.assign({}, remote, { status: 'completed' }));
+        byId[remote.id] = state.sessions.length - 1;
+        return;
+      }
+      var local = state.sessions[idx];
+      if (!local || local.status !== 'completed') return;
+      if (completedAtMs(local) >= completedAtMs(remote)) return;
+      var preserved = (local.tasks || []).filter(function (t) { return !isStrengthTask(t); });
+      state.sessions[idx] = Object.assign({}, local, {
+        date: remote.date != null ? remote.date : local.date,
+        name: remote.name != null ? remote.name : local.name,
+        completedAt: remote.completedAt,
+        status: 'completed',
+        tasks: preserved.concat(remote.tasks || []),
+      });
+    });
+  }
+
   function snapshotFromState(state) {
     state = state || {};
     if (global.StrengthAdapter && global.StrengthAdapter.ensureStrengthState) global.StrengthAdapter.ensureStrengthState(state);
@@ -53,6 +121,7 @@
       exportedAt: new Date().toISOString(),
       strengthState: state.strengthState || { workingMaxEvents: [], prEvents: [], loadHints: {} },
       progressionAudit: ((state.meta && state.meta.progressionAudit) || []).slice(-200),
+      performedSessions: performedSessionsFromState(state),
     };
   }
 
@@ -61,6 +130,7 @@
     state.strengthState = snap.strengthState || state.strengthState || { workingMaxEvents: [], prEvents: [], loadHints: {} };
     state.meta = state.meta || {};
     state.meta.progressionAudit = snap.progressionAudit || state.meta.progressionAudit || [];
+    applyPerformedSessions(state, snap.performedSessions || []);
     return state;
   }
 
@@ -111,6 +181,7 @@
         loadHints: hints,
       },
       progressionAudit: audit,
+      performedSessions: mergePerformedSessions(localSnap.performedSessions, remoteSnap.performedSessions),
     };
   }
 
@@ -272,6 +343,7 @@
     WRITER: WRITER,
     DOMAIN: DOMAIN,
     snapshotFromState: snapshotFromState,
+    applySnapshot: applySnapshot,
     mergeSnapshots: mergeSnapshots,
     isSignedIn: isSignedIn,
     pushStrength: pushStrength,
