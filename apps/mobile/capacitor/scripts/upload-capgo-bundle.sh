@@ -26,6 +26,17 @@ fi
 
 cd "$REPO"
 bash apps/mobile/sync-hybrid-html.sh
+
+SEED_SRC="${TRAINHEROIC_SEED_FILE:-}"
+if [[ -z "$SEED_SRC" && -f "$REPO/THE-trainheroic-import.json" ]]; then
+  SEED_SRC="$REPO/THE-trainheroic-import.json"
+fi
+if [[ -n "$SEED_SRC" && -f "$SEED_SRC" ]]; then
+  mkdir -p "$REPO/apps/mobile/preview-site/seeds"
+  cp -f "$SEED_SRC" "$REPO/apps/mobile/preview-site/seeds/trainheroic-import.json"
+  echo "upload-capgo-bundle: bundled TrainHeroic seed ($(wc -c < "$SEED_SRC") bytes)"
+fi
+
 cd "$ROOT"
 
 if [[ ! -x node_modules/.bin/cap ]]; then

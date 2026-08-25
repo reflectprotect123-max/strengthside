@@ -22,6 +22,28 @@ Then in the app: **Settings → import backup**. The app writes a
 recovery snapshot of your current state before merging, so the import is
 reversible by re-importing that snapshot.
 
+### OTA auto-import (Capgo dogfood)
+
+The same JSON can ship inside the Capgo bundle so history lands without a
+manual file pick:
+
+1. Generate the import file (above).
+2. Upload with the seed bundled:
+
+```bash
+export TRAINHEROIC_SEED_FILE=~/THE-trainheroic-import.json
+export CAPGO_BUNDLE_VERSION=1.0.3
+bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh
+```
+
+On next OTA update, the app fetches `./seeds/trainheroic-import.json` once,
+merges silently, and records `meta.trainheroicSeedId`. A pre-merge recovery
+snapshot is kept in `localStorage` under `the-pre-trainheroic-ota`. Re-import
+that snapshot from Settings if you need to undo.
+
+To refresh history after a new export, bump `seedId` in
+`import-trainheroic.mjs` and upload a new bundle.
+
 `strength-bundle.js` must exist. If the run complains it is missing:
 
 ```bash

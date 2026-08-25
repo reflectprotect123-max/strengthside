@@ -42,4 +42,9 @@ fi
 if [[ -f "$SRC_DIR/netlify.toml" ]]; then
   cp -f "$SRC_DIR/netlify.toml" "$ROOT/preview-site/netlify.toml"
 fi
+# Optional bundled seeds (TrainHeroic history OTA — personal data, gitignored)
+if [[ -d "$SRC_DIR/seeds" ]]; then
+  mkdir -p "$ROOT/preview-site/seeds"
+  cp -f "$SRC_DIR/seeds/"*.json "$ROOT/preview-site/seeds/" 2>/dev/null || true
+fi
 echo "Synced THE-Hybrid-App.html + preview-site + service-worker.js + nutrition + engine + concept2 + echo"
