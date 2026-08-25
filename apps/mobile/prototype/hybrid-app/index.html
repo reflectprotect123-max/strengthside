@@ -40,6 +40,14 @@
 .checkstatus.minimum{border-color:#cb817480;background:linear-gradient(180deg,#241313,#150d0d)}
 .checkstatus .statusbig{font-size:26px;font-weight:900;letter-spacing:-.045em}
 .checkstatus.build .statusbig{color:var(--ok)}.checkstatus.control .statusbig{color:var(--warn)}.checkstatus.minimum .statusbig{color:var(--bad)}
+.checkin-step{margin-top:8px}
+.checkin-choice{display:block;width:100%;min-height:56px;padding:14px 16px;margin-top:10px;text-align:left;border:1px solid var(--line);border-radius:14px;background:var(--panel2);color:var(--text)}
+.checkin-choice:focus-visible{outline:none;box-shadow:var(--focus)}
+.checkin-choice.selected{border-color:var(--copper);background:var(--copper-dim)}
+.checkin-choice b{display:block;font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:.01em}
+.checkin-choice span{display:block;margin-top:4px;color:var(--muted);font-size:13px;line-height:1.4}
+.checkin-progress{height:3px;background:var(--line);border-radius:999px;overflow:hidden;margin:12px 0 4px}
+.checkin-progress i{display:block;height:100%;background:var(--copper);border-radius:999px;transition:width .2s var(--ease)}
 .sliderfield{padding:10px 0 16px}.sliderhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}.sliderhead b{font-size:18px;letter-spacing:-.02em}.slidervalue{color:var(--muted);font-weight:850}.sliderlabels{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:3px}
 input[type=range]{appearance:none;-webkit-appearance:none;height:8px;padding:0;border:0;border-radius:999px;background:linear-gradient(90deg,var(--gold),#3a2d16);accent-color:var(--gold)}
 input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:1px solid var(--gold);border-radius:50%;background:#111;box-shadow:0 0 0 3px #0006}input[type=range]::-moz-range-thumb{width:26px;height:26px;border:1px solid var(--gold);border-radius:50%;background:#111;box-shadow:0 0 0 3px #0006}
@@ -798,7 +806,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v66';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v67';
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
 function strengthSchedule(){ensureStrengthSchedule(S);return S.settings.strengthSchedule}
@@ -1056,7 +1064,7 @@ function sessionConditioningStarted(x){return (x?.tasks||[]).some(t=>t.kind==='c
 function sessionStressCard(x){return''}
 
 function render(){if(S.tab==='tools'||S.tab==='coachlock')S.tab='programs';applyDisplayPrefs();nav(true);clock(false);document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===S.tab));({home,programs,calendar,library,checkin,settings}[S.tab]||home)()}
-function checkin(){athSleepTab='checkin';openAthleteSleepOverview('checkin')}
+function checkin(){athSleepTab='checkin';athCheckinReset();openAthleteSleepOverview('checkin')}
 
 function weekStartKey(d=today()){let x=new Date(d+'T00:00:00'),m=(x.getDay()+6)%7;x.setDate(x.getDate()-m);return x.toISOString().slice(0,10)}
 function athClamp(n,min,max){return Math.min(max,Math.max(min,n))}
@@ -1111,10 +1119,123 @@ function tickCondZoneSeconds(bpm){
 
 function athModulesHtml(){let m=athHomeMetrics(),zones=athZonesForReadiness(m.recovery),zoneSecs=athTodayZoneSeconds(),zoneTotal=athZoneSecondsTotal(zoneSecs);let sleepRings=athRingsSvg([{progress:m.recovery/100,color:'#3dff9e'},{progress:m.strain/100,color:'#33c4ff'},{progress:m.sleep/100,color:'#e0bc87'}]);let longDate=new Date(today()+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});let athlete=(S.profile&& (S.profile.displayName||S.profile.name))||'Athlete';let workout=(S.sessions.find(x=>x.date===today()&&(x.status==='scheduled'||x.status==='active'))||{}).name||'No session scheduled';return`<div class=ath-session><div class=ath-date>${esc(longDate)}</div><div class=ath-athlete><div class=ath-avatar aria-hidden=true><svg class=ath-flash viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></div><div><p class=ath-name>${esc(athlete)}</p><p class=ath-workout>${esc(workout)}</p></div></div><button type=button class=ath-module onclick="openAthleteSleepOverview()" aria-label="Sleep — check-in and readiness overview"><span class=ath-label>SLEEP</span>${sleepRings}<div class=ath-legend><div class=ath-row><span class=ath-dot style="background:#3dff9e"></span><span class=ath-ll>Recovery</span><span class=ath-lv>${m.recovery}%</span></div><div class=ath-row><span class=ath-dot style="background:#33c4ff"></span><span class=ath-ll>Strain</span><span class=ath-lv>${m.strain}%</span></div><div class=ath-row><span class=ath-dot style="background:#e0bc87"></span><span class=ath-ll>Sleep</span><span class=ath-lv>${m.sleep}%</span></div><p class=ath-sleep-hint>Check-in inside</p></div><span class=ath-chev aria-hidden=true>›</span></button><button type=button class=ath-module onclick="openAthleteConditioningOverview()" aria-label="Conditioning zones — The Engine overview"><span class=ath-label>CONDITIONING</span><div class=ath-cond><p class=ath-hint>${zoneTotal?`Today · ${formatZoneClock(zoneTotal)} in zones`:`Build today’s session · zones follow readiness`}</p>${athZoneBarHtml(zones)}<div class=ath-legend>${zones.map(z=>`<div class=ath-row><span class=ath-dot style="background:${z.color}"></span><span class=ath-zn>${z.short}</span><span class=ath-zr>${z.lo}–${z.hi}</span><span class=ath-zt id=athZoneTime_${z.key}>${formatZoneClock(zoneSecs[z.key]||0)}</span></div>`).join('')}</div>${athWeeklyZoneLineHtml()}${athLoadHeadlineHtml()}${recoveryPostureHintHtml()}</div><span class=ath-chev aria-hidden=true>›</span></button>${(window.NutritionUI&&NutritionUI.homeModuleHtml)?NutritionUI.homeModuleHtml():''}</div>`}
 let athSleepTab='checkin';
+
+let athCheckinStep=0;
+const ATH_CHECKIN_STEPS=[
+  {key:'sleepQuality',title:'How was sleep?',choices:[
+    {label:'Rough',hint:'Tossed, short, or broken',value:3},
+    {label:'OK',hint:'Fine — nothing special',value:6},
+    {label:'Solid',hint:'Rested and ready',value:9}
+  ]},
+  {key:'energy',title:'Energy right now?',choices:[
+    {label:'Low',hint:'Dragging',value:3},
+    {label:'Steady',hint:'Normal day',value:6},
+    {label:'High',hint:'Ready to push',value:9}
+  ]},
+  {key:'muscleSoreness',title:'Muscle soreness?',choices:[
+    {label:'None',hint:'Fresh',value:0},
+    {label:'Some',hint:'Worked but usable',value:4},
+    {label:'Heavy',hint:'Limiting movement',value:8}
+  ]},
+  {key:'jointStress',title:'Joints feel?',choices:[
+    {label:'Fine',hint:'Nothing to note',value:0},
+    {label:'Tight',hint:'Aware of them',value:4},
+    {label:'Angry',hint:'Needs care today',value:8}
+  ]},
+  {key:'mentalStress',title:'Headspace?',choices:[
+    {label:'Calm',hint:'Clear',value:0},
+    {label:'Busy',hint:'A lot on',value:4},
+    {label:'Overloaded',hint:'Hard to focus',value:8}
+  ]},
+  {key:'workStress',title:'Work / life load?',choices:[
+    {label:'Light',hint:'Easy day',value:0},
+    {label:'Normal',hint:'Usual demand',value:4},
+    {label:'Heavy',hint:'Long or hard day',value:8}
+  ]},
+  {key:'heatLoad',title:'Heat / environment?',choices:[
+    {label:'Cool',hint:'Comfortable',value:0},
+    {label:'Warm',hint:'Noticeable',value:4},
+    {label:'Hot',hint:'Draining',value:8}
+  ]},
+  {key:'fuel',title:'Fuel / food today?',choices:[
+    {label:'Poor',hint:'Under-fueled',value:'poor'},
+    {label:'Okay',hint:'Adequately fed',value:'okay'},
+    {label:'Good',hint:'Well fueled',value:'good'}
+  ]},
+  {key:'illness',title:'Feeling ill?',choices:[
+    {label:'No',hint:'Training never blocked either way',value:'none'},
+    {label:'Yes',hint:'Record only — no auto-stop',value:'yes'}
+  ]},
+  {key:'sleepHours',title:'Hours of sleep?',kind:'number',optional:true,placeholder:'7.5',step:0.25}
+];
+function athCheckinStepIndex(){return Math.max(0,Math.min(athCheckinStep,ATH_CHECKIN_STEPS.length-1))}
+function athCheckinReset(){athCheckinStep=0}
+function athCheckinAnswer(value){
+  let step=ATH_CHECKIN_STEPS[athCheckinStepIndex()];
+  if(!step)return;
+  setDailyValue(step.key,value,true);
+  if(athCheckinStepIndex()>=ATH_CHECKIN_STEPS.length-1){
+    saveAthleteSleepCheckinQuiet();
+    return;
+  }
+  athCheckinStep=athCheckinStepIndex()+1;
+  openAthleteSleepOverview('checkin');
+}
+function athCheckinSkip(){
+  if(athCheckinStepIndex()>=ATH_CHECKIN_STEPS.length-1){
+    saveAthleteSleepCheckinQuiet();
+    return;
+  }
+  athCheckinStep=athCheckinStepIndex()+1;
+  openAthleteSleepOverview('checkin');
+}
+function athCheckinBack(){
+  if(athCheckinStep<=0)return;
+  athCheckinStep-=1;
+  openAthleteSleepOverview('checkin');
+}
+function athCheckinNumberNext(){
+  let el=$('checkinNum');
+  let step=ATH_CHECKIN_STEPS[athCheckinStepIndex()];
+  if(el&&step)setDailyValue(step.key,el.value,true);
+  athCheckinSkip();
+}
+function saveAthleteSleepCheckinQuiet(){
+  let c=dailyCheckin(today(),true),s=readinessScore(c);
+  Object.assign(c,{readinessColor:s.color,mainLimiter:s.reason,backgroundLoad:s.backgroundLoad,recoveryPenalty:s.recoveryPenalty,wearablePenalty:s.wearablePenalty,updatedAt:Date.now()});
+  touchRecord(c,'daily_checkins');
+  save('checkin');
+  athSleepTab='overview';
+  athCheckinStep=0;
+  openAthleteSleepOverview('overview');
+}
+function athCheckinCardForSleep(){
+  let c=dailyCheckin(today(),true);
+  let i=athCheckinStepIndex();
+  let step=ATH_CHECKIN_STEPS[i];
+  let total=ATH_CHECKIN_STEPS.length;
+  let pct=Math.round((i/total)*100);
+  let prog=`<div class=checkin-progress aria-hidden=true><i style="width:${pct}%"></i></div><div class=meta>${i+1} of ${total}</div>`;
+  let nav=`<div class=btns style="margin-top:14px">${i>0?`<button type=button class="btn" onclick="athCheckinBack()">Back</button>`:''}${step.optional?`<button type=button class="btn" onclick="athCheckinSkip()">Skip</button>`:''}</div>`;
+  let body='';
+  if(step.kind==='number'){
+    body=`<div class=field style="margin-top:14px"><label>${esc(step.title)}</label><input id=checkinNum type=number step="${step.step||1}" inputmode=decimal placeholder="${esc(step.placeholder||'')}" value="${esc(c[step.key]||'')}"></div>
+      <button type=button class="btn primary block" style="margin-top:14px" onclick="athCheckinNumberNext()">${i>=total-1?'Finish':'Next'}</button>`;
+  }else{
+    let cur=c[step.key];
+    body=step.choices.map(ch=>{
+      let sel=String(cur)===String(ch.value)?' selected':'';
+      let hint=ch.hint?`<span>${esc(ch.hint)}</span>`:'';
+      return `<button type=button class="checkin-choice${sel}" onclick='athCheckinAnswer(${JSON.stringify(ch.value)})'><b>${esc(ch.label)}</b>${hint}</button>`;
+    }).join('');
+  }
+  return `<div class="stack checkin-step">${checkinStatusCard()}<div class=card><div class=eyebrow>Check-in</div><h2 style="font-size:28px;margin-top:6px">${esc(step.title)}</h2>${prog}<div style="margin-top:8px">${body}</div>${nav}</div></div>`;
+}
+
 function setAthSleepTab(tab){athSleepTab=tab==='overview'?'overview':'checkin';openAthleteSleepOverview()}
 function athSleepOverviewBody(){let m=athHomeMetrics(),band=m.recovery>=67?'High':(m.recovery>=34?'Moderate':'Low'),bandColor=m.recovery>=67?'#9fc59b':(m.recovery>=34?'#d1a464':'#cf7f7c'),offset=452.4*(1-m.recovery/100),needle=(m.recovery/100)*360;return`<div class=card><div class=ath-gauge><svg width="176" height="176" viewBox="0 0 192 192" aria-hidden="true"><defs><linearGradient id="brassBezel" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c8a06d"/><stop offset="45%" stop-color="#8a6a3f"/><stop offset="55%" stop-color="#8a6a3f"/><stop offset="100%" stop-color="#e0bc87"/></linearGradient></defs><circle cx="96" cy="96" r="90" fill="none" stroke="url(#brassBezel)" stroke-width="2.5" opacity=".8"/><g transform="rotate(-90 96 96)"><circle cx="96" cy="96" r="72" fill="none" stroke="#ffffff0f" stroke-width="11"/><circle cx="96" cy="96" r="72" fill="none" stroke="#3dff9e" stroke-width="11" stroke-linecap="round" stroke-dasharray="452.4" stroke-dashoffset="${offset}"/></g><g transform="rotate(${needle} 96 96)"><line x1="96" y1="96" x2="96" y2="34" stroke="#e0bc87" stroke-width="2" stroke-linecap="round"/></g><circle cx="96" cy="96" r="4.5" fill="#e0bc87"/></svg><div class=ath-gcenter><div class=ath-gval>${m.recovery}<small>%</small></div><div class=ath-gcap>Recovery</div></div></div><div class=ath-band><div class=ath-bandlab><span>Readiness</span><b style="color:${bandColor}">${band}</b></div><div class=ath-btrack><span></span><span></span><span></span><div class=ath-bthumb style="left:${athClamp(m.recovery,4,96)}%"></div></div></div></div><div class=ath-trends><div class=ath-trend><div class=ath-th>∿ HRV</div><div class=ath-tv>${m.hrv}<small>ms</small></div><div class=ath-td style="color:#9fc59b">from WHOOP sync / check-in</div></div><div class=ath-trend><div class=ath-th>♥ Resting HR</div><div class=ath-tv>${m.rhr}<small>bpm</small></div><div class=ath-td style="color:#9fc59b">from WHOOP sync / check-in</div></div><div class=ath-trend><div class=ath-th>☾ Sleep</div><div class=ath-tv>${m.sleep}<small>%</small></div><div class=ath-td style="color:#9fc59b">from WHOOP sync / check-in</div></div><div class=ath-trend><div class=ath-th>⚡ Strain</div><div class=ath-tv>${m.strain}</div><div class=ath-td style="color:#aaa49a">from WHOOP sync when connected</div></div><p class=meta id=whoopSleepLine style="margin-top:12px"></p><div style="margin-top:12px">${athLoadHeadlineHtml()}${recoveryPostureHintHtml()}</div><div style="margin-top:12px">${(window.Whoop&&Whoop.cardHtml)?Whoop.cardHtml():''}${(window.Concept2&&Concept2.cardHtml)?Concept2.cardHtml():''}</div></div>`}
 function setIllnessFlag(level){setDailyValue('illness',level,true);openAthleteSleepOverview()}
-function athCheckinCardForSleep(){let c=dailyCheckin(today(),true),ill=c.illness||'none';return`<div class=stack>${checkinStatusCard()}<div class=card><div class=eyebrow>Readiness inputs</div>${athSleepSlider('sleepQuality','Sleep Quality',1,10,'Low','High',c)}${athSleepSlider('energy','Energy',1,10,'Low','High',c)}${athSleepSlider('muscleSoreness','Soreness',0,10,'None','Severe',c)}${athSleepSlider('jointStress','Joint Stress',0,10,'None','Severe',c)}${athSleepSlider('mentalStress','Mental Stress',0,10,'None','Severe',c)}${athSleepSlider('workStress','Work Stress',0,10,'None','Severe',c)}${athSleepSlider('heatLoad','Heat load',0,10,'Low','High',c)}</div><div class=card><div class=eyebrow>Fuel & illness</div><div class=field><label>Fuel / energy availability</label><select onchange="setDailyValue('fuel',this.value,true);openAthleteSleepOverview()">${fuelOptions(c.fuel)}</select></div><div class=field><label>Illness today?</label><div class=two><button type=button class="btn ${ill==='none'?'primary':''}" onclick="setIllnessFlag('none')">No</button><button type=button class="btn ${ill==='yes'?'primary':''}" onclick="setIllnessFlag('yes')">Yes</button></div><div class=meta style="margin-top:6px">Record only — training is never blocked.</div></div></div><div class=card><div class=eyebrow>Numbers</div><div class=two><div class=field><label>Sleep hours</label><input type=number step=.25 placeholder=7.5 value="${esc(c.sleepHours||'')}" onchange="setDailyValue('sleepHours',this.value,true);openAthleteSleepOverview()"></div><div class=field><label>Steps</label><input type=number placeholder=8000 value="${esc(c.steps||'')}" onchange="setDailyValue('steps',this.value,true);openAthleteSleepOverview()"></div><div class=field><label>HRV</label><input type=number placeholder=62 inputmode=numeric value="${esc(c.hrv||'')}" onchange="setDailyValue('hrv',this.value,true);openAthleteSleepOverview()"></div><div class=field><label>Resting HR</label><input type=number placeholder=48 inputmode=numeric value="${esc(c.restingHr||'')}" onchange="setDailyValue('restingHr',this.value,true);openAthleteSleepOverview()"></div><div class=field><label>WHOOP recovery %</label><input type=number placeholder=71 inputmode=numeric value="${esc(c.whoopRecovery||'')}" onchange="setDailyValue('whoopRecovery',this.value,true);openAthleteSleepOverview()"></div><div class=field><label>Bodyweight</label><input type=number step=.1 placeholder=kg inputmode=decimal value="${esc(c.bodyweight||'')}" onchange="setDailyValue('bodyweight',this.value,true);openAthleteSleepOverview()"></div></div></div><button class="btn primary block" onclick="saveAthleteSleepCheckin()" aria-label="Save today's check-in">Save check-in</button></div>`}
+
 function athSleepSlider(key,label,min,max,low,high,c,step=1){let raw=c[key],val=raw===''||raw===undefined?min:raw,display=raw===''||raw===undefined?'—':raw;return`<div class=sliderfield><div class=sliderhead><b>${esc(label)}</b><span id="val_${key}" class=slidervalue>${esc(display)}</span></div><input type=range min="${min}" max="${max}" step="${step}" value="${esc(val)}" oninput="setDailyValue('${key}',this.value,true);$('val_${key}').textContent=this.value" onchange="openAthleteSleepOverview()"><div class=sliderlabels><span>${esc(low)}</span><span>${esc(high)}</span></div></div>`}
 function saveAthleteSleepCheckin(){let c=dailyCheckin(today(),true),s=readinessScore(c);Object.assign(c,{readinessColor:s.color,mainLimiter:s.reason,backgroundLoad:s.backgroundLoad,recoveryPenalty:s.recoveryPenalty,wearablePenalty:s.wearablePenalty,updatedAt:Date.now()});touchRecord(c,'daily_checkins');save();alert('Check-in saved.');render();athSleepTab='overview';openAthleteSleepOverview()}
 function openAthleteSleepOverview(tab){if(tab==='checkin'||tab==='overview')athSleepTab=tab;let athlete=(S.profile&&(S.profile.displayName||S.profile.name))||'Athlete';let tabs=`<div class=ath-tabs role=tablist aria-label="Sleep"><button type=button role=tab class="ath-tab ${athSleepTab==='checkin'?'active':''}" aria-selected="${athSleepTab==='checkin'}" id=athTabCheckin onclick="setAthSleepTab('checkin')">Check-in</button><button type=button role=tab class="ath-tab ${athSleepTab==='overview'?'active':''}" aria-selected="${athSleepTab==='overview'}" id=athTabOverview onclick="setAthSleepTab('overview')">Overview</button></div>`;let body=athSleepTab==='checkin'?athCheckinCardForSleep():athSleepOverviewBody();sheet(`<div class=eyebrow>Sleep</div><h2>${esc(dateLabel(today()))}</h2><p class=lead style="text-transform:lowercase">${esc(athlete)}</p>${tabs}${body}`);growTextAreas(); if(window.Whoop){ Whoop.renderPanels(); if(!(arguments[1]&&arguments[1].skipWhoopSync)) Whoop.autoSyncIfPossible(); }}
@@ -1599,7 +1720,7 @@ function loadSnapshot(){let start=Date.now()-7*86400000,done=S.sessions.filter(x
 async function refreshStoragePersistence(){try{if(navigator.storage?.persisted){let persisted=await navigator.storage.persisted();S.meta=S.meta||{};S.meta.storagePersisted=!!persisted;save('storage-check');return persisted}}catch(e){}return false}
 async function requestStoragePersistence(){try{if(!navigator.storage?.persist)return alert('This browser does not support protected storage. Autosave still works on this device.');let granted=await navigator.storage.persist();S.meta=S.meta||{};S.meta.storagePersisted=!!granted;save('storage-persist');alert(granted?'Protected storage granted. Your browser is less likely to clear this app data automatically.':'Protected storage was not granted. Autosave still works, but keep occasional backups.');settings()}catch(e){alert('Could not request protected storage. Autosave still works, but keep occasional backups.')}}
 function settings(){let h=dataHealth(),last=h.lastBackup?new Date(h.lastBackup).toLocaleString():'Never on this device',lastComplete=h.lastCompleted?`${dateLabel(h.lastCompleted.date)} · ${h.lastCompleted.name}`:'None yet',persisted=!!S.meta?.storagePersisted,lastSave=S.meta?.lastSavedAt?new Date(S.meta.lastSavedAt).toLocaleString():'Not yet';shell('Settings','Athlete defaults',`<div class="settings-group">
-<div class=card><div class=eyebrow>Connections</div><div class=title>Wearables & sync</div>${(window.Whoop&&Whoop.cardHtml)?Whoop.cardHtml():''}${(window.Concept2&&Concept2.cardHtml)?Concept2.cardHtml():''}${(window.NutritionSync&&NutritionSync.cardHtml)?NutritionSync.cardHtml():''}${(window.StrengthSync&&StrengthSync.cardHtml)?StrengthSync.cardHtml():''}</div>
+<div class=card><div class=eyebrow>Connections</div><div class=title>Account, wearables & sync</div><div class=meta style="margin-bottom:12px">Sign in once — strength and nutrition sync with the same account. Connect WHOOP when you want recovery pulled in. Concept2 stays separate (Bluetooth).</div>${(window.Whoop&&Whoop.cardHtml)?Whoop.cardHtml():''}${(window.Concept2&&Concept2.cardHtml)?Concept2.cardHtml():''}${(window.NutritionSync&&NutritionSync.cardHtml)?NutritionSync.cardHtml():''}${(window.StrengthSync&&StrengthSync.cardHtml)?StrengthSync.cardHtml():''}</div>
 <div class=card><div class=eyebrow>Training</div><div class=title>Strength schedule</div><div class=meta>Typical week shape for volume guides only — not a session timer.</div><div class=three style="margin-top:12px"><div class=field><label>Sessions / week</label><input id=schSessions type=number min=1 max=7 value="${esc(strengthSchedule().sessionsPerWeek)}" onchange="saveStrengthSchedule()"></div><div class=field><label>Typical minutes</label><input id=schMinutes type=number min=20 max=180 value="${esc(strengthSchedule().minutesPerSession)}" onchange="saveStrengthSchedule()"></div><div class=field><label>Split</label><select id=schSplit onchange="saveStrengthSchedule()"><option value="full_body" ${strengthSchedule().splitType==='full_body'?'selected':''}>Full body</option><option value="upper_lower" ${strengthSchedule().splitType==='upper_lower'?'selected':''}>Upper / lower</option><option value="push_pull_legs" ${strengthSchedule().splitType==='push_pull_legs'?'selected':''}>Push / pull / legs</option></select></div></div>${(()=>{let b=strengthVolumeBudget();return b?`<div class=meta style="margin-top:10px">Guides: ~<b>${b.sessionWorkingSetCap}</b> working sets/session · ~<b>${b.perMuscleWeeklyCap.grow}</b>/muscle/week</div>`:''})()}</div>
 <div class=card><div class=eyebrow>Heart rate</div><div class=title>Zone profile</div><div class=meta>For The Engine load and zone context.</div><div class=two style="margin-top:12px"><div class=field><label>Resting HR</label><input type=number min=30 max=120 value="${esc(S.profile.restingHr)}" onchange="S.profile.restingHr=num(this.value);save()"></div><div class=field><label>Max HR</label><input type=number min=120 max=230 value="${esc(S.profile.maxHr)}" onchange="S.profile.maxHr=num(this.value);save()"></div></div></div>
 <div class=card><div class=eyebrow>Export</div><div class=title>${persisted?'Protected storage':'Save on this device'}</div><div class=meta>Last save: ${esc(lastSave)} · Last backup: ${esc(last)} · Last completed: ${esc(lastComplete)}</div><div class=btns style="margin-top:12px"><button type=button class="btn small primary" onclick=exportData()>Export backup</button></div></div>

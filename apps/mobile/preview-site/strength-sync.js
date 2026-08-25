@@ -313,9 +313,9 @@
   function cardHtml() {
     var s = getStatus();
     var last = s.lastSyncAt ? new Date(s.lastSyncAt).toLocaleString() : 'Never';
-    var line = s.lastError ? 'Last error: ' + s.lastError : s.lastOk ? 'Cloud sync OK · ' + last : 'Sign in (WHOOP) to sync strength progression. Last: ' + last;
-    return '<div class=card><div class=eyebrow>Strength cloud</div><div class=title>Progression sync</div><div class=meta>' + esc(line) + '</div>' +
-      '<div class=btns style="margin-top:12px"><button type="button" class="btn small primary" onclick="StrengthSync.syncNow()">Sync now</button></div></div>';
+    var line = s.lastError ? 'Last error: ' + s.lastError : s.lastOk ? 'Cloud sync OK · ' + last : 'Uses Account sign-in above. Last: ' + last;
+    return '<div class=card><div class=eyebrow>Strength</div><div class=title>Cloud status</div><div class=meta>' + esc(line) + '</div>' +
+      '<div class=meta style="margin-top:8px">Synced automatically after Sign in & sync / Sync all.</div></div>';
   }
 
   async function syncNow() {

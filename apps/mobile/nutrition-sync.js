@@ -349,11 +349,9 @@
       ? `Last error: ${s.lastError}`
       : s.lastOk
         ? `Cloud sync OK · ${last}`
-        : `Sign in (WHOOP card) to sync nutrition to Supabase. Last: ${last}`;
-    return `<div class=card><div class=eyebrow>Nutrition cloud</div><div class=title>Supabase sync</div><div class=meta>${esc(line)}</div>
-      <div class=btns style="margin-top:12px">
-        <button type="button" class="btn small primary" onclick="NutritionSync.syncNow()">Sync now</button>
-      </div></div>`;
+        : `Uses Account sign-in above. Last: ${last}`;
+    return `<div class=card><div class=eyebrow>Nutrition</div><div class=title>Cloud status</div><div class=meta>${esc(line)}</div>
+      <div class=meta style="margin-top:8px">Synced automatically after Sign in & sync / Sync all.</div></div>`;
   }
 
   function esc(v) {

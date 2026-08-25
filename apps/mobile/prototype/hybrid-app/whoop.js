@@ -136,24 +136,48 @@
     const when = w.lastSyncAt ? new Date(w.lastSyncAt).toLocaleString() : 'never';
     return 'Connected · sample ' + (w.sampleDate || '—') + ' · synced ' + when;
   }
+  function statusChip(label, ok, detail) {
+    return '<div class=meta style="margin-top:6px"><b>' + esc(label) + '</b> · ' + esc(ok ? 'OK' : '—') + (detail ? ' · ' + esc(detail) : '') + '</div>';
+  }
+  function cloudStatusLines() {
+    var lines = '';
+    if (global.StrengthSync && global.StrengthSync.getStatus) {
+      var ss = global.StrengthSync.getStatus();
+      var sLast = ss.lastSyncAt ? new Date(ss.lastSyncAt).toLocaleString() : 'never';
+      lines += statusChip('Strength', !!ss.lastOk && !ss.lastError, ss.lastError || sLast);
+    }
+    if (global.NutritionSync && global.NutritionSync.getStatus) {
+      var ns = global.NutritionSync.getStatus();
+      var nLast = ns.lastSyncAt ? new Date(ns.lastSyncAt).toLocaleString() : 'never';
+      lines += statusChip('Nutrition', !!ns.lastOk && !ns.lastError, ns.lastError || nLast);
+    }
+    var w = st();
+    lines += statusChip('WHOOP', !!w.connected, w.connected ? metaLine() : 'not connected');
+    return lines;
+  }
   function cardHtml() {
     const w = st();
     const busy = ui.busy ? ' disabled' : '';
     const msg = ui.message ? '<div class=meta style="margin-top:8px">' + esc(ui.message) + '</div>' : '';
     if (!w.email) {
-      return '<div class=card id=whoopCard><div class=eyebrow>WHOOP</div><div class=title>Hybrid account</div>' +
-        '<div class=meta>Sign in with the same THE Hybrid Engine account that owns WHOOP. Tokens stay on the hybrid backend.</div>' +
+      return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Sign in & sync</div>' +
+        '<div class=meta>One sign-in syncs strength, nutrition, and WHOOP. Same THE Hybrid Engine account.</div>' +
         '<div class=field style="margin-top:12px"><label>Email</label><input id=whoopEmail type=email autocomplete=username placeholder="you@email.com"></div>' +
         '<div class=field><label>Password</label><input id=whoopPassword type=password autocomplete=current-password></div>' +
-        '<div class=btns style="margin-top:12px"><button class="btn primary block" onclick="Whoop.signIn()"' + busy + '>Sign in</button></div>' + msg + '</div>';
+        '<div class=btns style="margin-top:12px"><button class="btn primary block" onclick="Whoop.signIn()"' + busy + '>Sign in & sync</button></div>' + msg + '</div>';
     }
-    const actions = w.connected
-      ? '<button class="btn primary" onclick="Whoop.sync()"' + busy + '>Sync now</button><button class="btn" onclick="Whoop.disconnect()"' + busy + '>Disconnect</button>'
-      : '<button class="btn primary" onclick="Whoop.connect()"' + busy + '>Connect WHOOP</button>';
-    return '<div class=card id=whoopCard><div class=eyebrow>WHOOP</div><div class=title>' + (w.connected ? 'Connected' : 'Not connected') + '</div>' +
-      '<div class=meta>' + esc(w.email) + '<br>' + esc(metaLine()) + '</div>' +
-      '<div class=btns style="margin-top:12px">' + actions + '<button class="btn" onclick="Whoop.signOut()"' + busy + '>Sign out</button></div>' +
-      msg + '<div class=meta style="margin-top:10px">Live workout HR still uses the Bluetooth strap. WHOOP fills recovery / HRV / resting HR.</div></div>';
+    const whoopBtn = w.connected
+      ? '<button class="btn" onclick="Whoop.disconnect()"' + busy + '>Disconnect WHOOP</button>'
+      : '<button class="btn" onclick="Whoop.connect()"' + busy + '>Connect WHOOP</button>';
+    return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Signed in</div>' +
+      '<div class=meta>' + esc(w.email) + '</div>' +
+      cloudStatusLines() +
+      '<div class=btns style="margin-top:12px">' +
+      '<button class="btn primary block" onclick="Whoop.syncAll()"' + busy + '>Sync all</button>' +
+      whoopBtn +
+      '<button class="btn" onclick="Whoop.signOut()"' + busy + '>Sign out</button></div>' +
+      msg +
+      '<div class=meta style="margin-top:10px">Live workout HR still uses Bluetooth. WHOOP fills recovery / HRV / resting HR.</div></div>';
   }
   function renderPanels() {
     const card = document.getElementById('whoopCard');
@@ -189,8 +213,8 @@
   }
   async function sync(opts) {
     opts = opts || {};
-    if (ui.busy) return;
-    ui.busy = true; ui.message = 'Syncing WHOOP…'; renderPanels();
+    if (ui.busy && !opts.quiet) return;
+    if (!opts.quiet) { ui.busy = true; ui.message = 'Syncing WHOOP…'; renderPanels(); }
     try {
       const body = await api(FN.sync, opts.backfill ? { query: { backfill: '1' } } : undefined);
       let applied = false;
@@ -200,16 +224,22 @@
         await refreshStatus();
         applied = !!(st().lastNormalized && finiteNum(st().lastNormalized.recoveryScore));
       }
-      ui.message = applied
-        ? 'WHOOP synced — Home recovery / HRV / RHR updated'
-        : 'WHOOP reached but no recovery sample yet';
+      if (!opts.quiet) {
+        ui.message = applied
+          ? 'WHOOP synced — Home recovery / HRV / RHR updated'
+          : 'WHOOP reached but no recovery sample yet';
+      }
       try { await refreshStatus(); } catch (_) {}
-      ui.busy = false;
-      refreshVisibleUi();
+      if (!opts.quiet) {
+        ui.busy = false;
+        refreshVisibleUi();
+      }
     } catch (err) {
-      ui.message = err.code === 'auth_required' ? 'Sign in to sync WHOOP' : (err.message || 'Sync failed');
+      if (!opts.quiet) ui.message = err.code === 'auth_required' ? 'Sign in to sync WHOOP' : (err.message || 'Sync failed');
       throw err;
-    } finally { ui.busy = false; renderPanels(); }
+    } finally {
+      if (!opts.quiet) { ui.busy = false; renderPanels(); }
+    }
   }
   async function connect() {
     if (ui.busy) return;
@@ -244,6 +274,70 @@
     } catch (err) { ui.message = err.message || 'Disconnect failed'; }
     finally { ui.busy = false; renderPanels(); }
   }
+  async function syncAll() {
+    if (ui.busy) return;
+    ui.busy = true;
+    ui.message = 'Syncing account…';
+    renderPanels();
+    var bits = [];
+    try {
+      try {
+        await refreshStatus();
+        if (st().connected) {
+          ui.message = 'Syncing WHOOP…';
+          renderPanels();
+          await sync({ quiet: true });
+          bits.push('WHOOP');
+        } else {
+          bits.push('WHOOP (sign-in only — connect when ready)');
+        }
+      } catch (err) {
+        bits.push('WHOOP: ' + ((err && err.message) || 'failed'));
+      }
+
+      if (global.StrengthSync && typeof global.StrengthSync.reconcile === 'function' && global.S) {
+        try {
+          ui.message = 'Syncing strength…';
+          renderPanels();
+          global.S = await global.StrengthSync.reconcile(global.S);
+          if (typeof global.save === 'function') global.save('strength-sync');
+          bits.push('Strength');
+        } catch (err) {
+          bits.push('Strength: ' + ((err && err.message) || 'failed'));
+        }
+      }
+
+      if (global.NutritionSync && typeof global.NutritionSync.reconcile === 'function') {
+        try {
+          var local =
+            (global.NutritionUI && typeof global.NutritionUI.load === 'function' && global.NutritionUI.load()) ||
+            null;
+          if (local) {
+            ui.message = 'Syncing nutrition…';
+            renderPanels();
+            var merged = await global.NutritionSync.reconcile(local);
+            if (global.NutritionUI && typeof global.NutritionUI.replace === 'function') {
+              global.NutritionUI.replace(merged);
+            }
+            bits.push('Nutrition');
+          } else {
+            bits.push('Nutrition (open Nutrition once to enable)');
+          }
+        } catch (err) {
+          bits.push('Nutrition: ' + ((err && err.message) || 'failed'));
+        }
+      }
+
+      ui.message = 'Synced: ' + bits.join(' · ');
+      ui.busy = false;
+      refreshVisibleUi();
+    } catch (err) {
+      ui.message = (err && err.message) || 'Sync failed';
+    } finally {
+      ui.busy = false;
+      renderPanels();
+    }
+  }
   async function signIn() {
     const em = ((document.getElementById('whoopEmail') && document.getElementById('whoopEmail').value) || '').trim();
     const pw = (document.getElementById('whoopPassword') && document.getElementById('whoopPassword').value) || '';
@@ -254,10 +348,13 @@
       if (error) throw error;
       st().email = em;
       if (typeof global.save === 'function') global.save();
-      ui.message = 'Signed in';
-      try { await refreshStatus(); if (st().connected) await sync(); } catch (_) {}
-    } catch (err) { ui.message = err.message || 'Sign-in failed'; }
-    finally { ui.busy = false; renderPanels(); }
+      ui.busy = false;
+      await syncAll();
+    } catch (err) {
+      ui.message = err.message || 'Sign-in failed';
+      ui.busy = false;
+      renderPanels();
+    }
   }
   async function signOut() {
     try { await client().auth.signOut(); } catch (_) {}
@@ -288,7 +385,7 @@
 
   global.Whoop = {
     cardHtml, metaLine, renderPanels, autoSyncIfPossible,
-    signIn, signOut, connect, sync, disconnect, refreshStatus,
+    signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
     client, token, email
   };
 })(window);
