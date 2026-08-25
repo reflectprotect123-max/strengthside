@@ -398,36 +398,36 @@ function applyConAdapt(state, rec) {
 - Modify: `apps/mobile/prototype/hybrid-app/recovery-engine.js`
 - Test: `apps/mobile/prototype/hybrid-app/recovery-engine.smoke.mjs`
 
-- [ ] Ensure `domains.heatLoad` and step-derived background signals populate from check-in.
-- [ ] Extend smoke cases (≥ existing 12 matrix — add heat high → capacityHint lower).
-- [ ] Commit `feat(recovery): heat ledger into posture`
+- [x] Ensure `domains.heatLoad` and step-derived background signals populate from check-in.
+- [x] Extend smoke cases (≥ existing 12 matrix — add heat high → capacityHint lower).
+- [x] Commit `feat(recovery): heat ledger into posture`
 
 ### Task R2 — `capacityHint` always populated when data sufficient
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/recovery-engine.js`
 
-- [ ] When band known, set `capacityHint` 0–100; when `insufficient_data`, `null`.
-- [ ] Smoke asserts shape.
-- [ ] Commit `feat(recovery): capacityHint on posture`
+- [x] When band known, set `capacityHint` 0–100; when `insufficient_data`, `null`.
+- [x] Smoke asserts shape.
+- [x] Commit `feat(recovery): capacityHint on posture`
 
 ### Task R3 — Load headline dampener (copy only)
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/load-headline.js`
 
-- [ ] When recovery gate is `hold`/`caution`, reasonCodes / headline wording soften — **no** block of Start.
-- [ ] Update `load-headline.smoke.mjs`.
-- [ ] Commit `feat(recovery): load headline dampener copy`
+- [x] When recovery gate is `hold`/`caution`, reasonCodes / headline wording soften — **no** block of Start.
+- [x] Update `load-headline.smoke.mjs`.
+- [x] Commit `feat(recovery): load headline dampener copy`
 
 ### Task R4 — Grep guard: no Recovery dial UI
 
-- [ ] Grep `index.html` for new Recovery nav/module — must not exist.
-- [ ] Commit N/A if clean.
+- [x] Grep `index.html` for new Recovery nav/module — must not exist.
+- [x] Commit N/A if clean.
 
 ### Task R5–R6 — Sync, cache, verify, handoff
 
-- [ ] Ship stamp + handoff commits
+- [x] Ship stamp + handoff commits
 
 ---
 
@@ -443,44 +443,44 @@ function applyConAdapt(state, rec) {
 
 **Important:** Do **not** remove `NutritionUI.openWeeklyReview`.
 
-- [ ] **Step 1:** Grep `index.html` for `openWeeklyReview(` and “This week” / “Weekly review” Coordinator sheet — remove buttons/links and `openWeeklyReview` function (or make it no-op unused).
-- [ ] **Step 2:** Change `coordinator.smoke.mjs` — **must not** require `openWeeklyReview` in index; instead assert `bootstrapSilent` / `applySilentReceipt` still exist and `NutritionUI` check-in unrelated.
-- [ ] **Step 3:** Smoke PASS.
-- [ ] **Step 4:** Commit `feat(coordinator): hide weekly review peek`
+- [x] **Step 1:** Grep `index.html` for `openWeeklyReview(` and “This week” / “Weekly review” Coordinator sheet — remove buttons/links and `openWeeklyReview` function (or make it no-op unused).
+- [x] **Step 2:** Change `coordinator.smoke.mjs` — **must not** require `openWeeklyReview` in index; instead assert `bootstrapSilent` / `applySilentReceipt` still exist and `NutritionUI` check-in unrelated.
+- [x] **Step 3:** Smoke PASS.
+- [x] **Step 4:** Commit `feat(coordinator): hide weekly review peek`
 
 ### Task C2 — Keep `weeklySheetHtml` for tests only (optional)
 
-- [ ] Adapter may retain `weeklySheetHtml` for smoke fixtures but nothing in athlete nav calls it.
-- [ ] Commit if cleanup needed.
+- [x] Adapter may retain `weeklySheetHtml` for smoke fixtures but nothing in athlete nav calls it.
+- [x] Commit if cleanup needed.
 
 ### Task C3 — Silent apply coverage check
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/coordinator-adapter.js` only if gaps
 
-- [ ] Confirm `bootstrapSilent` still runs on finish / boot paths from `index.html`.
-- [ ] Cond low-dose silent ease still applied.
-- [ ] `coordinator.smoke.mjs` green.
-- [ ] Commit only if fixes needed.
+- [x] Confirm `bootstrapSilent` still runs on finish / boot paths from `index.html`.
+- [x] Cond low-dose silent ease still applied.
+- [x] `coordinator.smoke.mjs` green.
+- [x] Commit only if fixes needed.
 
 ### Task C4 — Do not reimplement strength progression in Coordinator
 
-- [ ] Review `coordinator.ts` — still reads receipts only; no `decideProgression` clone.
-- [ ] No commit if already true.
+- [x] Review `coordinator.ts` — still reads receipts only; no `decideProgression` clone.
+- [x] No commit if already true.
 
 ### Task C5 — Final sync + cache + full verify
 
-- [ ] `bash apps/mobile/sync-hybrid-html.sh`
-- [ ] Final cache bump for five-systems arc
-- [ ] `pnpm run verify` green
-- [ ] Commit `chore: five systems complete ship stamp`
+- [x] `bash apps/mobile/sync-hybrid-html.sh`
+- [x] Final cache bump for five-systems arc
+- [x] `pnpm run verify` green
+- [x] Commit `chore: five systems complete ship stamp`
 
 ### Task C6 — Final handoff + mark plan complete
 
-- [ ] Update `handoff.md` authoritative checkpoint: five systems wiring complete; invisible brains; vNN cache
-- [ ] Mark all phase checkboxes `[x]` in this plan
-- [ ] Update roadmap status line in `2026-08-24-hybrid-athlete-roadmap-design.md` if needed
-- [ ] Commit `docs: five systems complete handoff`
+- [x] Update `handoff.md` authoritative checkpoint: five systems wiring complete; invisible brains; vNN cache
+- [x] Mark all phase checkboxes `[x]` in this plan
+- [x] Update roadmap status line in `2026-08-24-hybrid-athlete-roadmap-design.md` if needed
+- [x] Commit `docs: five systems complete handoff`
 
 ---
 
@@ -504,11 +504,11 @@ function applyConAdapt(state, rec) {
 
 ## Anti-regression (every phase PR)
 
-- [ ] Library → Full Body A still starts and logs a set
-- [ ] Home still shows Sleep / Conditioning / Nutrition
-- [ ] Nutrition weekly **check-in** still opens (`NutritionUI.openWeeklyReview`)
-- [ ] Coordinator **athlete** weekly sheet does **not** open
-- [ ] `pnpm run verify` green
+- [x] Library → Full Body A still starts and logs a set
+- [x] Home still shows Sleep / Conditioning / Nutrition
+- [x] Nutrition weekly **check-in** still opens (`NutritionUI.openWeeklyReview`)
+- [x] Coordinator **athlete** weekly sheet does **not** open
+- [x] `pnpm run verify` green
 
 ---
 

@@ -36,7 +36,7 @@
 
   /**
    * @param {object[]} sessions
-   * @param {{ days?: number, now?: number }} opts
+   * @param {{ days?: number, now?: number, recoveryGate?: string }} opts
    */
   function computeLoadHeadline(sessions, opts) {
     opts = opts || {};
@@ -70,12 +70,17 @@
         rawStrength: strength7,
         rawConditioning: cond7,
         reasonCodes: ['insufficient_sessions'],
+        recoveryDampened: false,
       };
     }
 
     var sDisp = normalizeDisplay(strength7, mean(weeklyStrengths));
     var cDisp = normalizeDisplay(cond7, mean(weeklyConds));
     var headline = Math.round((sDisp + cDisp) * 10) / 10;
+    var reasonCodes = sessionCount < 3 ? ['building_baseline'] : [];
+    var gate = opts.recoveryGate || null;
+    var recoveryDampened = gate === 'hold' || gate === 'caution';
+    if (recoveryDampened) reasonCodes.push('recovery_dampened');
 
     return {
       headline: headline,
@@ -83,7 +88,8 @@
       conditioningDisplay: Math.round(cDisp * 10) / 10,
       rawStrength: strength7,
       rawConditioning: cond7,
-      reasonCodes: sessionCount < 3 ? ['building_baseline'] : [],
+      reasonCodes: reasonCodes,
+      recoveryDampened: recoveryDampened,
     };
   }
 
@@ -91,8 +97,12 @@
     if (!result || result.headline == null) {
       return '<p class="ath-hint" style="margin-top:8px">Training load · building baseline</p>';
     }
-    return '<p class="ath-hint" style="margin-top:8px">Training load <b>' + result.headline +
-      '</b> · cardio ' + result.conditioningDisplay + ' · strength ' + result.strengthDisplay + '</p>';
+    var line = '<p class="ath-hint" style="margin-top:8px">Training load <b>' + result.headline +
+      '</b> · cardio ' + result.conditioningDisplay + ' · strength ' + result.strengthDisplay;
+    if (result.recoveryDampened || (result.reasonCodes || []).indexOf('recovery_dampened') >= 0) {
+      line += ' · autopilot stays conservative';
+    }
+    return line + '</p>';
   }
 
   global.LoadHeadline = {

@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 25 August 2026 (Phases 1–3 shipped on branch).**
+> **AUTHORITATIVE CHECKPOINT — 25 August 2026 (five systems wiring complete).**
 > **Chat may be cleared after this write — treat this block as the full memory.**
 > **Five engines (locked):** Strength · Conditioning (The Engine) · Nutrition ·
 > Recovery · Coordinator. Not two dials. Visible logging only; Recovery and
@@ -13,32 +13,25 @@
 ## 0. Read this first (next agent / next chat)
 
 1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
-2. Ship cache = **`the-hybrid-athlete-engine-v62`** (`LOCAL_BUILD` + SW `CACHE`
-   bumped together on this branch).
-3. **Phase 1 Strength** is on `main` (PR #43): `%WM` resolve, engine e1RM,
-   `sessionLoad` tonnage kg, set-row sync, Progress by session.
-4. **Phase 2 Nutrition** (this branch): day status Complete / Fasted / Partial on
-   the day screen; `buildDailyRecords` feeds `nutritionStatus` into
-   `weeklyCheckIn`. **No** recipes/charts UI.
-5. **Phase 3 Conditioning** (this branch): `applyConAdapt` persists
-   `state.settings.conProgress` on cond complete; prescription reads
-   `conProgLevel`; zone tick prefers `EngineAdapter.zoneKeyForBpm`. No insights UI.
-6. **Brains still silent:** Recovery + Coordinator invisible — no Recovery dial;
-   Coordinator weekly peek (`openWeeklyReview` in `index.html`) **still present**
-   until Phase 5. **Keep** `NutritionUI.openWeeklyReview` (MacroFactor adaptive
-   check-in — different thing).
-7. **Next build:** Phase 4 Recovery (heat ledger + capacityHint + load-headline
-   dampener copy only) per
-   `docs/superpowers/plans/2026-08-24-five-systems-complete.md`.
-8. Do **not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI.
-9. `coordinator.smoke.mjs` pins `completedAt` to `2026-08-24T12:00:00` so the
-   fixture week does not depend on `Date.now()`.
-10. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
-    `LOCAL_BUILD` + SW `CACHE` together.
-11. Known debt from Phase 1 final review (post-merge): `strengthLoad` is now raw
-    kg while Recovery delivery ledger still ratios against historical
-    tonnage/50-scale values (~3 week transition); `%WM` rounding needs Equipment
-    on HTML exercises. Fix before or during Phase 4.
+2. Ship cache = **`the-hybrid-athlete-engine-v63`** (`LOCAL_BUILD` + SW `CACHE`
+   bumped together).
+3. **Five systems wiring complete** (PR #44 on this branch; Phase 1 already on
+   `main` via PR #43):
+   - **Strength:** `%WM` resolve (default barbell rounding), engine e1RM,
+     `sessionLoad` tonnage kg, set-row sync, Progress by session
+   - **Nutrition:** day status Complete/Fasted/Partial → `weeklyCheckIn`;
+     **no** recipes/charts; keep `NutritionUI.openWeeklyReview`
+   - **Conditioning:** `applyConAdapt` → `conProgress`; prescription reads
+     `conProgLevel`; zone tick via `zoneKeyForBpm`
+   - **Recovery:** heat/steps/background domains; `capacityHint`; load-headline
+     dampener copy only; **no** Recovery dial; delivery ledger scales
+     strength tonnage `/50` so ratios stay sane
+   - **Coordinator:** silent `bootstrapSilent` / `applySilentReceipt` only —
+     athlete **Coordinator weekly peek removed**
+4. **Invisible brains:** Recovery + Coordinator — no dials, no weekly peek.
+5. **Do not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI.
+6. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
+   `LOCAL_BUILD` + SW `CACHE` together.
 
 
 ---
@@ -66,7 +59,7 @@ Athletes tap **Update** in Settings for service-worker cache.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` |
-| Cache / Update | **`the-hybrid-athlete-engine-v62`** |
+| Cache / Update | **`the-hybrid-athlete-engine-v63`** |
 | Shell stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage: local-first `localStorage` key `THE-builder-clean-v1` (+ nutrition DB).  
@@ -80,8 +73,8 @@ Owned Postgres: exactly **twelve** tables (`metric` … `coaching_note`) +
 | 1 | **Strength** | `@hybrid/strength-engine` (~120 tests) | **Phase 1 complete (v60):** `%WM` resolve on start, engine e1RM + `sessionLoad` tonnage kg, set-row sync snapshot, Progress grouped by session |
 | 2 | **Conditioning (The Engine)** | `@hybrid/engine` (~270 tests) | **Phase 3 complete (v62):** `conAdapt` persists `conProgress`; prescription reads level; zone tick via adapter |
 | 3 | **Nutrition** | `nutrition-core` + `nutrition-engine` (~161+175) | **Phase 2 complete (v62):** day status Complete/Fasted/Partial → `weeklyCheckIn`; **no** recipes/charts UI |
-| 4 | **Recovery** | `recovery-engine.js` (pure, not its own npm package) | Gates strength autopilot bumps; posture for Coordinator — **must stay invisible** (no Recovery dial / capacity chrome) |
-| 5 | **Coordinator** | `packages/strength-engine/src/coordinator.ts` + `coordinator-adapter.js` | Silent weekly brain — athlete **“This week” peek still present**; Phase 5 must **remove** it |
+| 4 | **Recovery** | `recovery-engine.js` (pure, not its own npm package) | **Phase 4 complete:** heat/steps domains + capacityHint + headline dampener — still invisible |
+| 5 | **Coordinator** | `packages/strength-engine/src/coordinator.ts` + `coordinator-adapter.js` | **Phase 5 complete:** silent apply only; athlete weekly peek **removed** |
 
 **Visible dials:** The Engine (teal) + Hybrid Strength (copper) + Sleep/check-in + Nutrition + Calendar/Settings.  
 **Invisible brains:** Recovery + Coordinator decisions (+ silent strength/cond progression).

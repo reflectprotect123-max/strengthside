@@ -469,8 +469,9 @@
 
   function equipmentForExercise(exercise) {
     var eq = exercise && exercise.equipment;
-    if (!eq || typeof eq !== 'object') return null;
-    return eq;
+    if (eq && typeof eq === 'object' && (eq.incrementKg != null || eq.rackValuesKg)) return eq;
+    // HTML exercises rarely carry Equipment yet — default barbell 2.5 kg so %WM rounds.
+    return { id: 'default-barbell-kg', name: 'Barbell (kg)', incrementKg: 2.5, rackValuesKg: null, rounding: 'nearest' };
   }
 
   function fillBlankRowWeights(ex, loadKg) {
