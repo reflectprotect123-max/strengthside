@@ -12,6 +12,7 @@
     "build": "pnpm --filter @hybrid/strength-engine build",
     "check:migrations": "node checks/migrations-apply.mjs",
     "check:engine-adapter": "node apps/mobile/prototype/hybrid-app/engine-adapter.parity.mjs",
+    "check:engine-adapt": "node apps/mobile/prototype/hybrid-app/engine-adapt.smoke.mjs",
     "check:label-scan": "node apps/mobile/prototype/hybrid-app/label-scan.smoke.mjs",
     "check:native-bridge": "node apps/mobile/prototype/hybrid-app/native-bridge.barcode.smoke.mjs",
     "check:nutrition-ui": "node apps/mobile/prototype/hybrid-app/nutrition-ui.smoke.mjs && node apps/mobile/prototype/hybrid-app/nutrition-ui.barcode.smoke.mjs",
