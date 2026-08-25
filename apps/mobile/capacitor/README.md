@@ -43,6 +43,7 @@ bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
 
 | Plugin | Why |
 | --- | --- |
+| `@capacitor-community/bluetooth-le` | Native BLE for HR strap + Echo FTMS (APK) |
 | `@capacitor-community/keep-awake` | Screen on during Engine / Strength sessions |
 | `@capacitor/camera` | Nutrition label photo |
 | `@capacitor-mlkit/text-recognition` | On-device OCR (Latin) — no Tesseract, no cloud |

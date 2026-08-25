@@ -11,6 +11,14 @@
   "plugins": {
     "Camera": {
       "permissions": ["camera"]
+    },
+    "BluetoothLe": {
+      "displayStrings": {
+        "scanning": "Scanning…",
+        "cancel": "Cancel",
+        "availableDevices": "Available devices",
+        "noDeviceFound": "No device found"
+      }
     }
   }
 }
