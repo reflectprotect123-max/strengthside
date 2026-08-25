@@ -506,6 +506,81 @@
    * Resolve prescribed load for an HTML exercise task (%WM etc.) via strength-engine.
    * exercise.loadExpr optional: { exprKind: 'pct_of_max', exprArg: 0.7 }
    */
+  function calibrationStateForExposures(exposures) {
+    var usable = (exposures || []).filter(function (e) { return e.exposureClass !== 'pain_blocked'; });
+    if (!usable.length) return 'uncalibrated';
+    return usable.length >= 3 ? 'calibrated' : 'building';
+  }
+
+  function calibrationForExercise(state, exerciseId) {
+    if (!hasStrength() || !exerciseId) return null;
+    var exposures = global.HybridStrength.Exposure.strengthExposuresFor(exerciseId, performedFromState(state));
+    var usable = exposures.filter(function (e) { return e.exposureClass !== 'pain_blocked'; });
+    var cal = calibrationStateForExposures(exposures);
+    var label = cal === 'calibrated'
+      ? 'Load model ready'
+      : (usable.length > 0 ? 'Building load model · ' + usable.length + '/3 sessions' : 'No history yet');
+    return { state: cal, count: usable.length, label: label };
+  }
+
+  /**
+   * Explain today's prefilled load for logger/builder preview (hint vs %WM vs manual).
+   */
+  function sessionLoadContext(state, exercise, asOfDate) {
+    if (!exercise) return { ok: false };
+    var exerciseId = exercise.exerciseId || exercise.id;
+    if (!exerciseId) return { ok: false };
+    ensureStrengthState(state);
+    var hint = state.strengthState.loadHints[exerciseId];
+    var resolved = exercise.loadExpr ? resolveExerciseLoad(state, exercise, asOfDate) : null;
+    var wmKg = workingMaxKgForExercise(state, exerciseId, asOfDate);
+    var pct = exercise.loadExpr && exercise.loadExpr.exprKind === 'pct_of_max'
+      ? Math.round(num(exercise.loadExpr.exprArg) * 100)
+      : null;
+
+    var loadKg = null;
+    var source = 'manual';
+    var headline = 'Log weight manually';
+    var detail = '';
+
+    if (hint && hint.loadKg) {
+      loadKg = hint.loadKg;
+      source = hint.source === 'auto_estimate' ? 'progression' : 'hint';
+      headline = loadKg + ' kg · progression';
+      detail = 'Silent bump from recent on-target sessions';
+    }
+
+    if (exercise.loadExpr && resolved && resolved.loadKg != null) {
+      var presc = resolved.loadKg;
+      var prescLine = (pct != null ? pct + '% working max' : 'Prescription') + (wmKg ? ' · WM ' + wmKg + ' kg' : '');
+      if (!loadKg) {
+        loadKg = presc;
+        source = 'prescription';
+        headline = presc + ' kg · ' + (pct != null ? pct + '% WM' : 'prescription');
+        detail = prescLine;
+      } else if (loadKg !== presc) {
+        detail = (detail ? detail + ' · ' : '') + 'Prescription would be ' + presc + ' kg (' + prescLine + ')';
+      }
+    } else if (exercise.loadExpr && resolved && resolved.unresolvedReason === 'no_working_max') {
+      detail = (detail ? detail + ' · ' : '') + 'Add a working max in Progress to resolve ' + (pct != null ? pct + '% WM' : 'prescription');
+    }
+
+    if (!loadKg && wmKg) {
+      detail = (detail ? detail + ' · ' : '') + 'Working max ' + wmKg + ' kg';
+    }
+
+    return {
+      ok: true,
+      loadKg: loadKg,
+      source: source,
+      wmKg: wmKg,
+      pct: pct,
+      headline: headline,
+      detail: detail,
+      calibration: calibrationForExercise(state, exerciseId),
+    };
+  }
+
   function resolveExerciseLoad(state, exercise, asOfDate) {
     if (!hasStrength() || !exercise || !exercise.loadExpr) return null;
     if (!global.HybridStrength.Resolve?.resolveTarget) return null;
@@ -554,6 +629,8 @@
     auditReasonText: auditReasonText,
     exerciseNameFor: exerciseNameFor,
     resolveExerciseLoad: resolveExerciseLoad,
+    sessionLoadContext: sessionLoadContext,
+    calibrationForExercise: calibrationForExercise,
     ENGINE_VERSION: ENGINE_VERSION,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

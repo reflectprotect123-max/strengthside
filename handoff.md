@@ -13,7 +13,7 @@
 ## 0. Read this first (next agent / next chat)
 
 1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
-2. Ship cache = **`the-hybrid-athlete-engine-v64`** (`LOCAL_BUILD` + SW `CACHE`
+2. Ship cache = **`the-hybrid-athlete-engine-v65`** (`LOCAL_BUILD` + SW `CACHE`
    bumped together).
 3. **Five systems wiring complete** (PR #44 on this branch; Phase 1 already on
    `main` via PR #43):
@@ -59,7 +59,7 @@ Athletes tap **Update** in Settings for service-worker cache.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` |
-| Cache / Update | **`the-hybrid-athlete-engine-v64`** |
+| Cache / Update | **`the-hybrid-athlete-engine-v65`** |
 | Shell stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage: local-first `localStorage` key `THE-builder-clean-v1` (+ nutrition DB).  
