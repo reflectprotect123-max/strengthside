@@ -1,6 +1,7 @@
 /**
  * Smoke: unified Whoop.syncAll + one-step check-in helpers exist in HTML/JS.
- * Settings shows Account + Concept2 only — no separate Strength/Nutrition sync cards.
+ * Settings Connections = Account only (no Concept2 / Strength / Nutrition sync cards,
+ * no Strength schedule).
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -21,11 +22,15 @@ if (strength.includes('function cardHtml')) throw new Error('StrengthSync.cardHt
 if (nutrition.includes('function cardHtml')) throw new Error('NutritionSync.cardHtml should be removed');
 if (html.includes('NutritionSync.cardHtml')) throw new Error('Settings still mounts NutritionSync.cardHtml');
 if (html.includes('StrengthSync.cardHtml')) throw new Error('Settings still mounts StrengthSync.cardHtml');
+if (html.includes('Concept2.cardHtml')) throw new Error('UI still mounts Concept2.cardHtml');
+if (html.includes('Strength schedule')) throw new Error('Strength schedule Settings card still present');
+if (html.includes('function strengthVolumeBudgetHtml')) throw new Error('volume guide HTML helper still present');
+if (html.includes('schSessions')) throw new Error('schedule inputs still present');
 
 if (!html.includes('ATH_CHECKIN_STEPS')) throw new Error('ATH_CHECKIN_STEPS missing');
 if (!html.includes('function athCheckinAnswer')) throw new Error('athCheckinAnswer missing');
 if (!html.includes('checkin-choice')) throw new Error('checkin-choice UI missing');
 if (html.includes("athSleepSlider('sleepQuality'")) throw new Error('old sleepQuality slider still in check-in card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v68'")) throw new Error('expected cache v68');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v69'")) throw new Error('expected cache v69');
 
 console.log('account-sync-checkin.smoke: ok');
