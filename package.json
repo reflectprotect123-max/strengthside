@@ -15,6 +15,7 @@
     "check:engine-adapt": "node apps/mobile/prototype/hybrid-app/engine-adapt.smoke.mjs",
     "check:label-scan": "node apps/mobile/prototype/hybrid-app/label-scan.smoke.mjs",
     "check:native-bridge": "node apps/mobile/prototype/hybrid-app/native-bridge.barcode.smoke.mjs",
+    "check:capgo-live-update": "node apps/mobile/prototype/hybrid-app/capgo-live-update.smoke.mjs",
     "check:nutrition-ui": "node apps/mobile/prototype/hybrid-app/nutrition-ui.smoke.mjs && node apps/mobile/prototype/hybrid-app/nutrition-ui.barcode.smoke.mjs",
     "check:strength-resolve": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/strength-resolve.smoke.mjs",
     "check:e1rm-value": "bash apps/mobile/prototype/hybrid-app/build-strength.sh && node apps/mobile/prototype/hybrid-app/e1rm-value.smoke.mjs",
@@ -33,7 +34,7 @@
     "check:hybrid-proxy": "bash apps/mobile/sync-hybrid-html.sh && node apps/mobile/prototype/hybrid-app/hybrid-proxy.smoke.mjs",
     "seed:au-foods": "node scripts/push-au-food-catalog-to-supabase.mjs",
     "//verify": "Everything CI runs. The two lists SHOULD agree \u2014 a check that runs in CI and not here sits red on main while every local run says green, which the hybrid repo paid for on 16 August 2026. If they ever have to differ, write the reason next to the difference.",
-    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:engine-adapter && pnpm run check:engine-adapt && pnpm run check:label-scan && pnpm run check:native-bridge && pnpm run check:nutrition-ui && pnpm run check:strength-resolve && pnpm run check:e1rm-value && pnpm run check:strength-adapter-resolve && pnpm run check:strength-session-start-load && pnpm run check:strength-load-context && pnpm run check:account-sync-checkin && pnpm run check:log-columns && pnpm run check:exercise-load-expr && pnpm run check:fullbody-a-pct-wm && pnpm run check:strength-volume && pnpm run check:strength-progression && pnpm run check:strength-sync && pnpm run check:nutrition-sync && pnpm run check:food-catalog && pnpm run check:hybrid-proxy"
+    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:engine-adapter && pnpm run check:engine-adapt && pnpm run check:label-scan && pnpm run check:native-bridge && pnpm run check:capgo-live-update && pnpm run check:nutrition-ui && pnpm run check:strength-resolve && pnpm run check:e1rm-value && pnpm run check:strength-adapter-resolve && pnpm run check:strength-session-start-load && pnpm run check:strength-load-context && pnpm run check:account-sync-checkin && pnpm run check:log-columns && pnpm run check:exercise-load-expr && pnpm run check:fullbody-a-pct-wm && pnpm run check:strength-volume && pnpm run check:strength-progression && pnpm run check:strength-sync && pnpm run check:nutrition-sync && pnpm run check:food-catalog && pnpm run check:hybrid-proxy"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

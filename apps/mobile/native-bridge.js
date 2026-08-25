@@ -257,6 +257,27 @@
     };
   }
 
+  /**
+   * Capgo live-update handshake. Fail-soft: browser, missing plugin, or
+   * autoUpdate:false still leave the bundled WebView assets in charge.
+   * Required only when Capgo autoUpdate is later enabled (rollback safety).
+   */
+  function notifyLiveUpdateReady() {
+    if (!isNative()) return Promise.resolve('skipped');
+    const Updater = plugin('CapacitorUpdater');
+    if (!Updater || typeof Updater.notifyAppReady !== 'function') {
+      return Promise.resolve('unavailable');
+    }
+    return Updater.notifyAppReady()
+      .then(() => 'ready')
+      .catch(() => 'error');
+  }
+
+  // Fire once on load — never blocks UI; never throws into the app.
+  try {
+    notifyLiveUpdateReady();
+  } catch (_) {}
+
   global.NativeBridge = {
     isNative,
     keepAwake,
@@ -268,5 +289,6 @@
     recognizeDataUrl,
     scanBarcodeOnce,
     onAppState,
+    notifyLiveUpdateReady,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

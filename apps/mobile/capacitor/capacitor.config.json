@@ -11,6 +11,13 @@
   "plugins": {
     "Camera": {
       "permissions": ["camera"]
+    },
+    "CapacitorUpdater": {
+      "appId": "com.hybrid.athlete",
+      "autoUpdate": false,
+      "defaultChannel": "dogfood",
+      "appReadyTimeout": 10000,
+      "responseTimeout": 20
     }
   }
 }
