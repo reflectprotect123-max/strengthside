@@ -55,19 +55,36 @@ function numbersIn(half) {
 }
 
 /**
- * Names differ only by case, curly vs straight apostrophe, or spacing far more
- * often than they differ by meaning. Collapsing those is what keeps "World’s
- * Greatest Stretch" and "Worlds Greatest Stretch" from becoming two lifts.
+ * A trailing plural on the last word is a spelling choice, not a different
+ * lift: "Pendlay Rows" and "Pendlay Row" are one exercise, and left unfolded
+ * they split one history into two too-thin ones. `-ss` is preserved because
+ * "Press" and "Cross" are not plurals.
+ */
+function singularise(word) {
+  if (word.length <= 3) return word;
+  if (word.endsWith('ss') || word.endsWith('us')) return word;
+  return word.endsWith('s') ? word.slice(0, -1) : word;
+}
+
+/**
+ * Names differ only by case, curly vs straight apostrophe, spacing or plural
+ * far more often than they differ by meaning. Collapsing those is what keeps
+ * "World’s Greatest Stretch" and "Worlds Greatest Stretch" from becoming two
+ * lifts. Nothing beyond those is folded: "Pause Back Squat" and "Back Squat"
+ * are genuinely different lifts and merging them would invent a history.
  */
 export function normaliseExerciseName(raw) {
-  return String(raw || '')
+  const words = String(raw || '')
     .replace(/[\u2018\u2019\u02BC]/g, "'")
     .replace(/[\u2013\u2014]/g, '-')
-    .replace(/\s+/g, ' ')
-    .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+    .trim()
+    .split(' ')
+    .filter(Boolean);
+  if (!words.length) return '';
+  words[words.length - 1] = singularise(words[words.length - 1]);
+  return words.join(' ');
 }
 
 export function exerciseIdFor(raw) {

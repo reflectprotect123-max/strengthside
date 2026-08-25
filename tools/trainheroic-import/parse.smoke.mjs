@@ -57,6 +57,17 @@ eq(normaliseExerciseName('World\u2019s Greatest Stretch'), 'world s greatest str
 must(exerciseIdFor('Chin-Up') === exerciseIdFor('chin up'), 'punctuation and case fold to one id');
 must(exerciseIdFor('Back Squat') !== exerciseIdFor('Front Squat'), 'different lifts keep different ids');
 
+// A trailing plural is a spelling choice, not a different lift.
+must(exerciseIdFor('Pendlay Rows') === exerciseIdFor('Pendlay Row'), 'plural folds to one id');
+must(exerciseIdFor('Trap Bar Deadlifts') === exerciseIdFor('Trap Bar Deadlift'), 'plural deadlift folds');
+must(exerciseIdFor('Reverse Lunges') === exerciseIdFor('Reverse Lunge'), 'plural lunge folds');
+// `-ss` is not a plural: folding it would merge Press into Pres.
+eq(normaliseExerciseName('Bench Press'), 'bench press', 'press keeps its double-s');
+must(exerciseIdFor('Bench Press') === exerciseIdFor('bench press'), 'press id stable under case');
+// Qualified variants stay separate — merging them would invent a history.
+must(exerciseIdFor('Pause Back Squat') !== exerciseIdFor('Back Squat'), 'qualified variant stays separate');
+must(exerciseIdFor('Clean Deadlift') !== exerciseIdFor('Deadlift'), 'clean deadlift is not a deadlift');
+
 // --- Rows with nothing logged are the common case, and are skipped ----------
 eq(setsFromRow({ ExerciseData: 'rep x  pound' }).sets, [], 'prescription-only row yields no sets');
 eq(setsFromRow({ ExerciseData: 'x' }).sets, [], 'empty row yields no sets');
