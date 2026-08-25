@@ -24,7 +24,7 @@ const readme = readFileSync(join(root, 'README.md'), 'utf8');
 
 must(!!pkg.dependencies['@capgo/capacitor-updater'], 'package.json has @capgo/capacitor-updater');
 must(cfg.plugins && cfg.plugins.CapacitorUpdater, 'CapacitorUpdater in capacitor.config.json');
-must(cfg.plugins.CapacitorUpdater.autoUpdate === false, 'autoUpdate stays false until opt-in');
+must(cfg.plugins.CapacitorUpdater.autoUpdate === true, 'autoUpdate enabled for dogfood OTA');
 must(cfg.plugins.CapacitorUpdater.defaultChannel === 'dogfood', 'dogfood channel');
 must(!cfg.server || !cfg.server.url, 'no server.url — bundled assets remain default (Netlify not forced into WebView)');
 must(bridge.includes('notifyLiveUpdateReady'), 'native-bridge Capgo handshake');
@@ -43,4 +43,4 @@ if (failures.length) {
   failures.forEach((f) => console.error(' -', f));
   process.exit(1);
 }
-console.log('capgo-live-update.smoke: ok (plugin present, autoUpdate off, fail-soft handshake)');
+console.log('capgo-live-update.smoke: ok (plugin present, autoUpdate on, fail-soft handshake)');

@@ -55,7 +55,7 @@ Parse uses `HybridNutrition.Core.parseLabelText` / `parseLabelLines`. Web dogfoo
 
 Capgo does **not** replace Netlify. Netlify still hosts the browser app and WHOOP/Concept2 proxies. Capgo only can replace the **bundled WebView HTML/JS** inside an installed APK.
 
-**Default in this repo:** `plugins.CapacitorUpdater.autoUpdate` is **`false`**. Until you flip it and upload a bundle, the APK behaves exactly as before (bundled `preview-site`).
+**Default in this repo:** `plugins.CapacitorUpdater.autoUpdate` is **`true`** on channel **`dogfood`**. First bundle **`1.0.0`** is uploaded from Capgo Cloud; install a Capgo-enabled APK once, then HTML-only fixes can OTA.
 
 ### One-time enable (when you want OTA)
 

@@ -2,9 +2,8 @@
 # Optional: upload the synced Hybrid HTML bundle to Capgo (dogfood channel).
 #
 # Safe defaults:
-# - No CAPGO_TOKEN → exits 0 with a skip message (CI / local builds stay green).
-# - Does not change Netlify, bundled APK assets, or product code paths.
-# - Capgo autoUpdate stays false in capacitor.config.json until you opt in.
+# - No CAPGO_TOKEN → try repo-root .capgo, else exit 0 with skip message.
+# - Does not change Netlify or HTML source paths.
 #
 # Usage (from repo root):
 #   export CAPGO_TOKEN=...          # Capgo API key (never commit)
@@ -16,8 +15,12 @@ REPO="$(cd "$ROOT/../../.." && pwd)"
 CHANNEL="${CAPGO_CHANNEL:-dogfood}"
 VERSION="${CAPGO_BUNDLE_VERSION:-}"
 
+if [[ -z "${CAPGO_TOKEN:-}" && -f "$REPO/.capgo" ]]; then
+  CAPGO_TOKEN="$(cat "$REPO/.capgo")"
+fi
+
 if [[ -z "${CAPGO_TOKEN:-}" ]]; then
-  echo "upload-capgo-bundle: skip (CAPGO_TOKEN unset). Bundled APK / Netlify unchanged."
+  echo "upload-capgo-bundle: skip (CAPGO_TOKEN unset and no $REPO/.capgo). Bundled APK / Netlify unchanged."
   exit 0
 fi
 
@@ -29,11 +32,11 @@ if [[ ! -x node_modules/.bin/cap ]]; then
   npm install --no-fund --no-audit
 fi
 
-ARGS=(bundle upload --channel "$CHANNEL" --path ../preview-site)
-if [[ -n "$VERSION" ]]; then
-  ARGS+=(--bundle "$VERSION")
-fi
-
 echo "upload-capgo-bundle: uploading preview-site → channel=$CHANNEL"
-npx --yes @capgo/cli@latest "${ARGS[@]}"
-echo "upload-capgo-bundle: done. Enable plugins.CapacitorUpdater.autoUpdate in capacitor.config.json after the Capgo-enabled APK is installed."
+npx --yes @capgo/cli@latest bundle upload com.hybrid.athlete \
+  --apikey "$CAPGO_TOKEN" \
+  --path ../preview-site \
+  --channel "$CHANNEL" \
+  ${VERSION:+--bundle "$VERSION"} \
+  ${VERSION:+--comment "bundle $VERSION"}
+echo "upload-capgo-bundle: done."

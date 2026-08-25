@@ -14,7 +14,7 @@
     },
     "CapacitorUpdater": {
       "appId": "com.hybrid.athlete",
-      "autoUpdate": false,
+      "autoUpdate": true,
       "defaultChannel": "dogfood",
       "appReadyTimeout": 10000,
       "responseTimeout": 20
