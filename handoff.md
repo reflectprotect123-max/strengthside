@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 24 August 2026 (evening, five-engine merge).**
+> **AUTHORITATIVE CHECKPOINT — 25 August 2026 (Phase 1 Strength shipped).**
 > **Chat may be cleared after this write — treat this block as the full memory.**
 > **Five engines (locked):** Strength · Conditioning (The Engine) · Nutrition ·
 > Recovery · Coordinator. Not two dials. Visible logging only; Recovery and
@@ -13,24 +13,24 @@
 ## 0. Read this first (next agent / next chat)
 
 1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
-2. Ship tip = **`main`** at **`4c3cc4d`** — cache **`the-hybrid-athlete-engine-v59`**.
-   Five-engine spec + plan + this checkpoint landed on `main` via **PR #42**
-   (docs). Twin-instrument copy below this block is **history**.
-3. **Build in progress** — Phase 1 Strength on `cursor/five-engines-strength-e9c2`:
-   - Spec: `docs/superpowers/specs/2026-08-24-five-systems-complete-design.md`
-   - Plan: `docs/superpowers/plans/2026-08-24-five-systems-complete.md`
-4. Start / resume at **Phase 1 Task S1** (export Resolve / E1rm / Load) unless a
-   later S-task is already committed. Owner locks (do not re-litigate):
-   - Approach **1 vertical** by domain (Strength → Nutrition → Conditioning →
-     Recovery → Coordinator)
-   - Brains **invisible** (no Recovery dial; no autopilot accept/decline UI)
-   - Nutrition: **no** recipes UI; **no** expenditure charts; day-status wiring **yes**
-   - Conditioning progression = engine **`conAdapt`** (earned) — **not** cross-engine vote
-   - Coordinator: **no weekly peek** (remove `index.html` Coordinator `openWeeklyReview`)
-   - **Keep** `NutritionUI.openWeeklyReview` (MacroFactor adaptive check-in — different thing)
-5. Owner said **start the build** (24 Aug evening). Execute with
-   subagent-driven-development, one phase per PR. Do not re-ask SDD vs inline.
-6. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
+2. Ship cache = **`the-hybrid-athlete-engine-v60`** (`LOCAL_BUILD` + SW `CACHE`
+   bumped together on this branch).
+3. **Phase 1 Strength shipped** on `cursor/five-engines-strength-e9c2` (**PR #43**):
+   - `%WM` resolve on session start (builder field + `resolveExerciseLoad`)
+   - Engine e1RM on finish (Brzycki + RIR→effective reps)
+   - `sessionLoad` tonnage kg — **no** tonnage/50 stub
+   - Completed set rows in strength sync snapshot
+   - Progress history grouped by session
+4. **Brains still silent:** Recovery + Coordinator invisible — no Recovery dial;
+   Coordinator weekly peek (`openWeeklyReview` in `index.html`) **still present**
+   until Phase 5. **Keep** `NutritionUI.openWeeklyReview` (MacroFactor adaptive
+   check-in — different thing).
+5. **Next build:** Phase 2 Nutrition (day-status → adaptive check-in) per
+   `docs/superpowers/plans/2026-08-24-five-systems-complete.md` — **not yet coded**.
+6. Do **not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI.
+7. `coordinator.smoke.mjs` pins `completedAt` to `2026-08-24T12:00:00` (commit
+   `c45d333`) so the fixture week does not depend on `Date.now()`.
+8. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
    `LOCAL_BUILD` + SW `CACHE` together.
 
 ---
@@ -58,7 +58,7 @@ Athletes tap **Update** in Settings for service-worker cache.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` |
-| Cache / Update | **`the-hybrid-athlete-engine-v59`** |
+| Cache / Update | **`the-hybrid-athlete-engine-v60`** |
 | Shell stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage: local-first `localStorage` key `THE-builder-clean-v1` (+ nutrition DB).  
@@ -69,7 +69,7 @@ Owned Postgres: exactly **twelve** tables (`metric` … `coaching_note`) +
 
 | # | System | Package / module | In app today |
 | --- | --- | --- | --- |
-| 1 | **Strength** | `@hybrid/strength-engine` (~120 tests) | Set logging, silent progression, PR/WM, Progress, volume guides, sync WM/PR — **missing** full `%WM` resolve on start, engine e1RM/Load exports, set-row cloud sync; load headline still uses **tonnage/50 stub** in places |
+| 1 | **Strength** | `@hybrid/strength-engine` (~120 tests) | **Phase 1 complete (v60):** `%WM` resolve on start, engine e1RM + `sessionLoad` tonnage kg, set-row sync snapshot, Progress grouped by session |
 | 2 | **Conditioning (The Engine)** | `@hybrid/engine` (~270 tests) | Zones, builder, BLE HR, weekly zone line, TRIMP finish, Concept2/Echo light — **`conAdapt` / `conProgLevel` not wired** on finish |
 | 3 | **Nutrition** | `nutrition-core` + `nutrition-engine` (~161+175) | Daily log, barcode/label, weekly adaptive check-in, sync — day-status → adaptive path incomplete; **recipes/charts out of next scope** by owner lock |
 | 4 | **Recovery** | `recovery-engine.js` (pure, not its own npm package) | Gates strength autopilot bumps; posture for Coordinator — **must stay invisible** (no Recovery dial / capacity chrome) |
@@ -158,16 +158,14 @@ Useful command: `pnpm run verify`
 
 ## 3. Active gaps / known limits
 
-**Addressed by five-systems plan (not coded yet):** see §0 and the plan file.
+**Addressed by five-systems plan (Phase 2+ not coded yet):** see §0 and the plan file.
 
 **Especially easy to forget:**
 
-- `strength-entry.ts` exports Volume/Progression/… but **not** Resolve/E1rm/Load yet (Task S1).
-- `index.html` `openWeeklyReview` = **Coordinator** peek (hide).  
+- `index.html` `openWeeklyReview` = **Coordinator** peek (hide in Phase 5).  
   `NutritionUI.openWeeklyReview` = **nutrition check-in** (keep).
-- `coordinator.smoke.mjs` currently **requires** Coordinator `openWeeklyReview` in index — update when hiding.
+- `coordinator.smoke.mjs` pins `completedAt` (`c45d333`) — do not revert to `Date.now()`.
 - Cond `conAdapt` exists in `engine-bundle.js` but finish path does not persist `conProgress`.
-- Strength sync snapshot = WM/PR/audit today — set rows are Phase 1 Task S7.
 - Recovery must remain **UI-less**.
 
 **Platform limits (not defects to delete):**
@@ -181,12 +179,11 @@ Useful command: `pnpm run verify`
 ## 4. Precise next steps (after chat clear)
 
 1. Read **§0–§4** + `CLAUDE.md`.
-2. Use branch / PR **#41** `cursor/five-systems-complete-4920` (rebase on `main` if needed).
-3. Ask owner: **Subagent-Driven** vs **Inline** execution (once).
-4. Execute plan from **Task S1** onward, phase gates green before next phase.
-5. Never add recipes/charts, Recovery dial, Coordinator weekly peek, Coach/Expo/ER.
-6. Each HTML ship: sync + cache bump + refresh this handoff stamp.
-7. Optional later: polish Task 8 slop audit; phone dogfood proof; Stage 4 store/iOS.
+2. Merge **PR #43** (`cursor/five-engines-strength-e9c2`) when green; then branch for Phase 2.
+3. Execute plan from **Task N1** onward (Nutrition day-status → adaptive check-in).
+4. Never add recipes/charts, Recovery dial, Coordinator weekly peek (until Phase 5), Coach/Expo/ER.
+5. Each HTML ship: sync + cache bump + refresh this handoff stamp.
+6. Optional later: polish Task 8 slop audit; phone dogfood proof; Stage 4 store/iOS.
 
 ### Critical paths
 
