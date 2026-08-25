@@ -18,7 +18,7 @@ import {
   exerciseIdFor,
   normaliseDate,
 } from './parse.mjs';
-import { resolveExerciseName, exerciseIdFromRaw } from './aliases.mjs';
+import { resolveExerciseName, exerciseIdFromRaw, applyNamingRules, buildNameCatalog } from './aliases.mjs';
 
 const failures = [];
 function must(cond, msg) {
@@ -70,14 +70,33 @@ must(exerciseIdFor('Pause Back Squat') !== exerciseIdFor('Back Squat'), 'qualifi
 must(exerciseIdFor('Deficit Deadlift') !== exerciseIdFor('Deadlift'), 'deficit deadlift stays separate');
 must(exerciseIdFor('Clean Deadlift') !== exerciseIdFor('Deadlift'), 'clean deadlift stays separate');
 
-// Explicit alias map — abbreviations and redundant prefixes only.
-must(exerciseIdFromRaw('Trap Bar DL') === exerciseIdFromRaw('Trap Bar Deadlift'), 'trap bar dl alias');
-must(exerciseIdFromRaw('Barbell Deadlift') === exerciseIdFromRaw('Deadlift'), 'barbell deadlift alias');
-must(exerciseIdFromRaw('Barbell Shoulder Press') === exerciseIdFromRaw('Shoulder Press'), 'barbell shoulder press → shoulder press');
-must(exerciseIdFromRaw('Barbell Shoulder Press') !== exerciseIdFromRaw('Strict Press'), 'strict press stays separate');
-must(resolveExerciseName('Pause Back Squat').aliased === false, 'pause squat not aliased');
-must(resolveExerciseName('Deficit Deadlift').aliased === false, 'deficit deadlift not aliased');
-must(resolveExerciseName('Trap Bar DL').aliased === true, 'trap bar dl reports aliased');
+// --- Naming rules (TrainHeroic conventions) --------------------------------
+const catalog = buildNameCatalog([
+  { ExerciseTitle: 'Bench Press' },
+  { ExerciseTitle: 'Shoulder Press' },
+  { ExerciseTitle: 'Deadlift' },
+  { ExerciseTitle: 'Sumo Deadlift' },
+  { ExerciseTitle: 'Barbell Row' },
+]);
+
+eq(applyNamingRules('barbell bench press', catalog), 'bench press', 'barbell stripped when base exists');
+eq(applyNamingRules('barbell shoulder press', catalog), 'shoulder press', 'barbell shoulder → shoulder press');
+eq(applyNamingRules('barbell deadlift', catalog), 'deadlift', 'barbell deadlift → deadlift');
+eq(applyNamingRules('deadlift sumo', catalog), 'sumo deadlift', 'word order flip');
+eq(applyNamingRules('barbell row', catalog), 'barbell row', 'barbell row kept — bare row too generic');
+eq(applyNamingRules('strict press', catalog), 'strict press', 'strict press not folded to shoulder press');
+eq(applyNamingRules('db shoulder press', catalog), 'db shoulder press', 'DB prefix untouched');
+eq(applyNamingRules('pause back squat', catalog), 'pause back squat', 'variant kept');
+
+// Explicit alias map — abbreviations and oddballs only.
+must(exerciseIdFromRaw('Trap Bar DL', catalog) === exerciseIdFromRaw('Trap Bar Deadlift', catalog), 'trap bar dl alias');
+must(exerciseIdFromRaw('Barbell Deadlift', catalog) === exerciseIdFromRaw('Deadlift', catalog), 'barbell deadlift alias');
+must(exerciseIdFromRaw('Barbell Shoulder Press', catalog) === exerciseIdFromRaw('Shoulder Press', catalog), 'barbell shoulder → shoulder press');
+must(exerciseIdFromRaw('Barbell Shoulder Press', catalog) !== exerciseIdFromRaw('Strict Press', catalog), 'strict press stays separate');
+must(exerciseIdFromRaw('Deadlift Sumo', catalog) === exerciseIdFromRaw('Sumo Deadlift', catalog), 'deadlift sumo word-order rule');
+must(resolveExerciseName('Pause Back Squat', catalog).aliased === false, 'pause squat not aliased');
+must(resolveExerciseName('Deficit Deadlift', catalog).aliased === false, 'deficit deadlift not aliased');
+must(resolveExerciseName('Trap Bar DL', catalog).aliased === true, 'trap bar dl reports aliased');
 
 // --- Rows with nothing logged are the common case, and are skipped ----------
 eq(setsFromRow({ ExerciseData: 'rep x  pound' }).sets, [], 'prescription-only row yields no sets');

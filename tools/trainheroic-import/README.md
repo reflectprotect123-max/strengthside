@@ -56,9 +56,12 @@ each is handled explicitly in `parse.mjs`:
    17.64, 17.64 pound` is 90 kg for 6/8/8, not 90 reps at 6 kg. Left alone
    these wreck e1RM, so they are detected, corrected, and **counted in the
    audit** — a silent correction gives no way to check the guess.
-3. **Exercise names collide on case, punctuation and spacing.** `Chin-Up` and
-   `chin up` are one lift; `World’s` and `Worlds` are one stretch. Names are
-   folded before grouping and the merged variants are listed in the audit.
+3. **Exercise names collide** on case, punctuation, spacing and plural.
+4. **Naming rules** (`aliases.mjs`) fold coach typing noise:
+   - No prefix = barbell. `DB`/`KB`/`Cable`/`Trap Bar` = different implement.
+   - `Barbell Bench Press` → `Bench Press` (redundant prefix stripped).
+   - `Deadlift Sumo` → `Sumo Deadlift` (word-order flip).
+   - Variants stay separate: `Pause Back Squat`, `Deficit Deadlift`, `Strict Press` ≠ `Shoulder Press`.
 
 ## Working max seeding
 

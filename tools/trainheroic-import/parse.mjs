@@ -21,7 +21,7 @@
  *      training variants (`Pause Back Squat`, `Deficit Deadlift`) are not.
  */
 
-import { exerciseIdFromRaw, resolveExerciseName } from './aliases.mjs';
+import { exerciseIdFromRaw, resolveExerciseName, buildNameCatalog } from './aliases.mjs';
 
 /** TrainHeroic writes lb with float noise; kg is the app's storage unit. */
 const LB_PER_KG = 2.20462;
@@ -193,6 +193,7 @@ export function normaliseDate(raw) {
  * originally scheduled day would file it under a session the athlete skipped.
  */
 export function buildSessions(rows) {
+  const catalog = buildNameCatalog(rows);
   const byDay = new Map();
   const stats = {
     rowsTotal: rows.length,
@@ -224,9 +225,9 @@ export function buildSessions(rows) {
     const session = byDay.get(key);
 
     const exTitle = String(row.ExerciseTitle || '').trim();
-    const resolved = resolveExerciseName(exTitle);
+    const resolved = resolveExerciseName(exTitle, catalog);
     if (resolved.aliased) stats.aliasesApplied++;
-    const exerciseId = exerciseIdFromRaw(exTitle);
+    const exerciseId = exerciseIdFromRaw(exTitle, catalog);
     if (!exerciseId) continue;
 
     if (!session.tasks.has(exerciseId)) {
@@ -251,13 +252,13 @@ export function buildSessions(rows) {
   return { sessions, stats };
 }
 
-/** Canonical display name per id — the most frequent spelling wins, so the
- * catalog shows the one the athlete actually used most. */
+/** Canonical display name per id — the most frequent spelling wins. */
 export function canonicalNames(rows) {
+  const catalog = buildNameCatalog(rows);
   const counts = new Map();
   for (const row of rows) {
     const title = String(row.ExerciseTitle || '').trim();
-    const id = exerciseIdFromRaw(title);
+    const id = exerciseIdFromRaw(title, catalog);
     if (!id) continue;
     if (!counts.has(id)) counts.set(id, new Map());
     const m = counts.get(id);
