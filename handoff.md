@@ -37,8 +37,8 @@
 6. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
    `LOCAL_BUILD` + SW `CACHE` together.
 7. Hybrid companion: keep shared-Supabase contract; treat coach SQL as frozen
-   legacy. Gut commit lives on branch `cursor/schema-stub-no-coach-e9c2` (push
-   may need owner write access — see agent artifacts if 403).
+   legacy. The gut is pushed as `THE-HYBRID-ENGINE1` PR #28 (branch
+   `cursor/schema-stub-no-coach-e9c2`), verified green with `migrations-apply`.
 
 
 ---
