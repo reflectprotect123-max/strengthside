@@ -9,8 +9,8 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v85'")) {
-  throw new Error('expected cache v85');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v86'")) {
+  throw new Error('expected cache v86');
 }
 if (html.includes('repairFullBodyADefaultPctWm')) {
   throw new Error('legacy Full Body A %WM repair should be removed');
