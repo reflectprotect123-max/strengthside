@@ -1,8 +1,8 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 26 August 2026 (schema stub + no coaching).**
+> **AUTHORITATIVE CHECKPOINT — 26 August 2026 (evening).**
 > **Chat may be cleared after this write — treat this block as the full memory.**
-> **Product:** this repo only — Hybrid HTML athlete app + Capgo/dogfood.
+> **Product:** this repo only — Hybrid HTML athlete app + Capgo/dogfood + Netlify.
 > **Companion `THE-HYBRID-ENGINE1`:** schema stub for shared Supabase non-strength
 > migrations. Coach/ARC/Expo/Netlify coach surfaces deleted there; do not rebuild.
 > **Five engines (locked):** Strength · Conditioning (The Engine) · Nutrition ·
@@ -16,29 +16,17 @@
 ## 0. Read this first (next agent / next chat)
 
 1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
-2. Ship cache = **`the-hybrid-athlete-engine-v86`** (`LOCAL_BUILD` + SW `CACHE`
-   bumped together).
-3. **Five systems wiring complete** (PR #44 on this branch; Phase 1 already on
-   `main` via PR #43):
-   - **Strength:** `%WM` resolve (default barbell rounding), engine e1RM,
-     `sessionLoad` tonnage kg, set-row sync, Progress by session
-   - **Nutrition:** day status Complete/Fasted/Partial → `weeklyCheckIn`;
-     **no** recipes/charts; keep `NutritionUI.openWeeklyReview`
-   - **Conditioning:** `applyConAdapt` → `conProgress`; prescription reads
-     `conProgLevel`; zone tick via `zoneKeyForBpm`
-   - **Recovery:** heat/steps/background domains; `capacityHint`; load-headline
-     dampener copy only; **no** Recovery dial; delivery ledger scales
-     strength tonnage `/50` so ratios stay sane
-   - **Coordinator:** silent `bootstrapSilent` / `applySilentReceipt` only —
-     athlete **Coordinator weekly peek removed**
-4. **Invisible brains:** Recovery + Coordinator — no dials, no weekly peek.
-5. **Do not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI —
-   including in `THE-HYBRID-ENGINE1` (that repo is schema-only).
-6. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
-   `LOCAL_BUILD` + SW `CACHE` together.
-7. Hybrid companion: schema stub on `main` (PR #28 merged). Frozen coach SQL;
-   product is this repo only.
-
+2. Ship tip (`main`) = **`3c4b849`** — UI polish (#59) on top of web↔phone sync (#58 / `e08a304`).
+3. Ship cache = **`the-hybrid-athlete-engine-v87`** (`LOCAL_BUILD` + SW `CACHE` bumped together).
+4. Capgo dogfood = bundle **`1.0.12`** (channel `dogfood`, uploaded 26 Aug from tip after polish + sync). Prior: `1.0.11` (sync), `1.0.10` (OTA visible).
+5. Hosted web = https://thehybridsystem.netlify.app/ (deploys from `main`).
+6. **Open PRs: none.** Stale drafts closed 26 Aug (#56, #41, #32, #14, #13, #11, #8, #7, #4, #3, #2). Do not reopen without unique commits vs `main`.
+7. **Five systems wiring is complete on `main`** (Phases 1–5 + follow-on ships). Do not re-run “merge PR #43 / start Phase 2” — that plan is done.
+8. **Strength cloud sync v3 is on `main`** — `calendarSessions` + `templates` + progression/`performedSessions`; merge by `_meta.updatedAt`; `save()` → `StrengthSync.schedulePush`. Same Supabase account = sync both ways (Netlify ↔ Capgo phone). Spec: `docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md`.
+9. **Invisible brains:** Recovery + Coordinator — no dials, no weekly peek.
+10. **Do not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI — including in `THE-HYBRID-ENGINE1` (schema-only).
+11. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump `LOCAL_BUILD` + SW `CACHE` together; Capgo upload when dogfood should move.
+12. Pain / illness flags still raise; **nothing consumes them** (inherited deliberate gap — restore = new decision).
 
 ---
 
@@ -46,8 +34,8 @@
 
 Repo: `reflectprotect123-max/strengthside` — **the only product repo**.
 `THE-HYBRID-ENGINE1` is the shared-DB schema stub (no apps). **Ship branch:
-`main`**. Feature work branches off `main`. Do **not** treat old
-`cursor/engine-stage*` / Expo / hybrid coach stacks as tip.
+`main` @ `3c4b849`**. Feature work branches off `main`. Do **not** treat old
+`cursor/engine-stage*` / Expo / hybrid coach stacks / closed draft PRs as tip.
 
 **Live athlete deploy (Netlify):** https://thehybridsystem.netlify.app/  
 (Old `papaya-cheesecake-059e06.netlify.app` is dead.)  
@@ -56,43 +44,47 @@ Workflow: `.github/workflows/deploy-athlete-netlify.yml`
 **Dogfood APK:**  
 https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest  
 CI: `.github/workflows/dogfood-apk.yml` on `main` when `apps/mobile/**` changes.  
-Athletes tap **Update** in Settings for service-worker cache.
+Athletes tap **Update** in Settings for service-worker / Capgo OTA.
 
 | Role | Path |
 | --- | --- |
 | **Edit this** | `apps/mobile/prototype/hybrid-app/index.html` (+ adapters/bundles below) |
+| Sync / push helpers | `strength-sync.js`, `whoop.js` (auth client shared with WHOOP) |
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
-| Cap dogfood | `apps/mobile/capacitor/` |
-| Cache / Update | **`the-hybrid-athlete-engine-v86`** |
+| Cap dogfood | `apps/mobile/capacitor/` → `upload-capgo-bundle.sh` |
+| Cache / Update | **`the-hybrid-athlete-engine-v87`** |
+| Capgo channel | **`dogfood` @ `1.0.12`** |
 | Shell stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage: local-first `localStorage` key `THE-builder-clean-v1` (+ nutrition DB).  
+Cloud: `athlete_domain_snapshots` via StrengthSync (snapshot v3).  
 Owned Postgres: exactly **twelve** tables (`metric` … `coaching_note`) +
 `embed-coaching-note`. Never migrate hybrid-owned tables (`CLAUDE.md`).
 
-### Five systems — engines exist; wiring incomplete
+### Five systems — engines wired on `main`
 
 | # | System | Package / module | In app today |
 | --- | --- | --- | --- |
-| 1 | **Strength** | `@hybrid/strength-engine` (~120 tests) | **Phase 1 complete (v60):** `%WM` resolve on start, engine e1RM + `sessionLoad` tonnage kg, set-row sync snapshot, Progress grouped by session |
-| 2 | **Conditioning (The Engine)** | `@hybrid/engine` (~270 tests) | **Phase 3 complete (v62):** `conAdapt` persists `conProgress`; prescription reads level; zone tick via adapter |
-| 3 | **Nutrition** | `nutrition-core` + `nutrition-engine` (~161+175) | **Phase 2 complete (v62):** day status Complete/Fasted/Partial → `weeklyCheckIn`; **no** recipes/charts UI |
-| 4 | **Recovery** | `recovery-engine.js` (pure, not its own npm package) | **Phase 4 complete:** heat/steps domains + capacityHint + headline dampener — still invisible |
-| 5 | **Coordinator** | `packages/strength-engine/src/coordinator.ts` + `coordinator-adapter.js` | **Phase 5 complete:** silent apply only; athlete weekly peek **removed** |
+| 1 | **Strength** | `@hybrid/strength-engine` | `%WM` resolve, engine e1RM + `sessionLoad`, set-row sync, Progress by session, **cloud sync v3** (calendar + templates + progression) |
+| 2 | **Conditioning (The Engine)** | `@hybrid/engine` | `conAdapt` → `conProgress`; prescription reads level; zone tick via adapter |
+| 3 | **Nutrition** | `nutrition-core` + `nutrition-engine` | Day status Complete/Fasted/Partial → `weeklyCheckIn`; **no** recipes/charts UI |
+| 4 | **Recovery** | `recovery-engine.js` | Heat/steps domains + capacityHint + headline dampener — **still invisible** |
+| 5 | **Coordinator** | `coordinator.ts` + `coordinator-adapter.js` | Silent apply only; athlete weekly peek **removed** |
 
 **Visible dials:** The Engine (teal) + Hybrid Strength (copper) + Sleep/check-in + Nutrition + Calendar/Settings.  
 **Invisible brains:** Recovery + Coordinator decisions (+ silent strength/cond progression).
 
-### Athlete shell today
+### Athlete shell today (post-polish #59)
 
 Bottom nav: **Home · Library · Calendar · Settings** (Coach Tools **removed**).
 
-- **Home:** Sleep + Conditioning + Nutrition; briefing polish (v58).
-- **Library:** Hybrid Strength — Full Body A, build/edit, Progress.
-- **Calendar:** week strip + schedule / preview / resume (+ schedule today).
-- **Settings:** Update, WHOOP, Concept2, Nutrition/Strength sync, HR, Export, strength schedule.
-- **Coach/ARC athlete copy:** scrubbed **v59** → Session note, Lift cue, Workout builder, Add notes. Storage keys `coachNote` / `coachInstructions` **kept**. CSS `.liftcue` / `.bulletlist`.
+- **Home:** Sleep + Conditioning + Nutrition; briefing hierarchy polished.
+- **Library:** Hybrid Strength — templates / build / Progress; CTA hierarchy polished.
+- **Calendar:** week strip + session cards with accents; schedule / preview / resume.
+- **Settings:** Account (same account = sync both ways), Data, Update, WHOOP, Concept2, HR, Export.
+- **Logger:** `task-shell` / `task-nav` polish; deeper logging friction still open (see §4).
+- **Coach/ARC athlete copy:** scrubbed earlier — Session note, Lift cue, Workout builder, Add notes. Storage keys `coachNote` / `coachInstructions` **kept**.
 
 ### Engine import Stages 1–4 (conditioning)
 
@@ -101,24 +93,18 @@ Bottom nav: **Home · Library · Calendar · Settings** (Coach Tools **removed**
 | 1 Brain (`@hybrid/engine`) | ✅ shipped |
 | 2 Logger (weekly zones, finish split, provenance, intervals) | ✅ shipped |
 | 3 Connectors (Concept2 + Echo, Chrome Android/desktop) | ✅ light shipped |
-| 4 APK / store / iOS native BLE | 🟡 dogfood APK exists; **not** Play Store / iOS BLE — **out of** five-systems scope |
+| 4 APK / store / iOS native BLE | 🟡 dogfood APK + native BLE HR/Echo on `main`; **not** Play Store / iOS App Store |
 
-### Hybrid athlete roadmap Phases 1–12 — **shipped on `main`**
+### What landed 26 Aug (do not redo)
 
-Specs under `docs/superpowers/specs/2026-08-24-*.md`.  
-Plan: `docs/superpowers/plans/2026-08-24-hybrid-athlete-slices.md`.  
-PRs **#35–#37** family: volume budget, silent wire, Progress, load headline, strength sync, engine weekly honesty, recovery engine, Coordinator, gap closure, recovery v2, delivery ledger, illness record-only, schedule today.
-
-### UI polish — **shipped on `main`**
-
-Plan: `docs/superpowers/plans/2026-08-23-athlete-ui-ux-full-polish.md`
-
-| PR | What | Cache |
+| PR | Tip | What |
 | --- | --- | --- |
-| #38 | Tokens, tap/focus floor, Library copper | v57 |
-| #39/#40 | Home/Engine/Calendar/Settings + coach scrub | **v59** |
+| #58 | `e08a304` | Bidirectional web↔phone calendar + template sync (v87 / snapshot v3) |
+| #59 | `3c4b849` | Full UI polish: Home, Calendar, Library, Settings, Sleep, logger shells |
+| — | Capgo | Dogfood **`1.0.12`** uploaded from tip |
+| — | PRs | All remaining open drafts **closed** (obsolete vs tip) |
 
-Optional leftover: polish Task 8 final slop audit (not blocking five-systems).
+Earlier arc still true: hybrid athlete Phases 1–12, five-systems wiring, UI polish family (#38–#40), schema-stub companion (#55), builder/logger alignment, autopilot policy, TrainHeroic history import, etc. — all on `main`. See archaeology below for older session notes.
 
 ### Naming (locked)
 
@@ -148,15 +134,18 @@ THE Hybrid System is **five engines**:
 - Do not use HRV as pain/injury/illness gate.
 - `@hybrid/strength-engine` stays **pure** (zero I/O).
 - Shared-Supabase contract in `CLAUDE.md`.
+- Do not claim web↔phone session sync is “not built” — prove it with dogfood.
 
 ---
 
-## 2. What shipped this evening (do not redo)
+## 2. What shipped recently (do not redo)
 
-- Hybrid athlete arc + Phases 1–12 on `main`
-- UI polish + **coach/ARC scrub v59** (`main` `03153e4`, PRs #38–#40)
-- Engines already tested in packages — gap is **HTML wiring**
-- Five-engine spec + plan + handoff on **`main`** via **PR #42** (supersedes draft PR #41)
+- **PR #58** — strength sync snapshot v3 (calendar sessions + templates + progression); Settings sync-both-ways copy; SW **v87**
+- **PR #59** — full athlete-shell polish (Home / Calendar / Library / Settings / Sleep / logger)
+- Capgo dogfood **`1.0.12`** from tip
+- Open-PR ledger cleared (closed obsolete drafts)
+- Five-systems complete wiring + hybrid athlete Phases 1–12 (earlier on `main`)
+- Companion hybrid repo = schema stub only (#55)
 
 Useful command: `pnpm run verify`
 
@@ -164,67 +153,79 @@ Useful command: `pnpm run verify`
 
 ## 3. Active gaps / known limits
 
-**Addressed by five-systems plan (Phase 2+ not coded yet):** see §0 and the plan file.
+**Product gaps (next work — not “finish five-systems”):**
+
+- Phone dogfood of Capgo **`1.0.12`** + Netlify↔phone sync proof (same account) not yet confirmed by owner.
+- Concurrent hybrid week not yet encoded as Library templates + calendar placements.
+- Logger friction after a real phone session (fewer taps, clearer rest/next, mid-block leave) still open beyond shell polish.
+- Pain/illness **stop** consumer absent by design until a new decision.
 
 **Especially easy to forget:**
 
-- `index.html` `openWeeklyReview` = **Coordinator** peek (hide in Phase 5).  
-  `NutritionUI.openWeeklyReview` = **nutrition check-in** (keep).
-- `coordinator.smoke.mjs` pins `completedAt` (`c45d333`) — do not revert to `Date.now()`.
-- Cond `conAdapt` exists in `engine-bundle.js` but finish path does not persist `conProgress`.
+- `NutritionUI.openWeeklyReview` = **nutrition check-in** (keep). Coordinator weekly peek stays **gone**.
+- `coordinator.smoke.mjs` pins `completedAt` — do not revert to `Date.now()`.
+- Strength sync merge is by `_meta.updatedAt`; stamp `_meta` on `makeSession` / `saveTemplate`.
 - Recovery must remain **UI-less**.
 
 **Platform limits (not defects to delete):**
 
-- iOS Safari: no Web Bluetooth HR — typed Avg HR fallback.
+- iOS Safari: no Web Bluetooth HR — typed Avg HR fallback (native BLE is APK path).
 - Local migrations check fails without OS pgvector — do not remove extension.
-- Stage 4 store / iOS native BLE out of five-systems scope.
+- Play Store / iOS App Store distribution still out of scope.
 
 ---
 
 ## 4. Precise next steps (after chat clear)
 
-1. Read **§0–§4** + `CLAUDE.md`.
-2. Merge **PR #43** (`cursor/five-engines-strength-e9c2`) when green; then branch for Phase 2.
-3. Execute plan from **Task N1** onward (Nutrition day-status → adaptive check-in).
-4. Never add recipes/charts, Recovery dial, Coordinator weekly peek (until Phase 5), Coach/Expo/ER.
-5. Each HTML ship: sync + cache bump + refresh this handoff stamp.
-6. Optional later: polish Task 8 slop audit; phone dogfood proof; Stage 4 store/iOS.
+1. Read **§0–§4** + `CLAUDE.md`. Tip is **`main` @ `3c4b849`** — do not merge closed PRs or re-run five-systems Phase 2.
+2. **Dogfood Capgo `1.0.12`:** Update on phone; same account as Netlify; create/edit a calendar session on one side; confirm it appears on the other after pull/push.
+3. **Encode a concurrent hybrid week as templates** (strength + conditioning), place on calendar — product value over more chrome.
+4. **Logger friction pass** after a real session on phone.
+5. Only if product asks: pain/illness **stop** consumer (new decision).
+6. Each HTML ship: sync + cache bump + Capgo upload when dogfood should move + refresh this handoff stamp (`git rev-parse --short HEAD`).
 
 ### Critical paths
 
 ```
-docs/superpowers/specs/2026-08-24-five-systems-complete-design.md
-docs/superpowers/plans/2026-08-24-five-systems-complete.md
-apps/mobile/prototype/hybrid-app/strength-entry.ts
-apps/mobile/prototype/hybrid-app/strength-adapter.js
-apps/mobile/prototype/hybrid-app/strength-sync.js
-apps/mobile/prototype/hybrid-app/load-headline.js
-apps/mobile/prototype/hybrid-app/engine-adapter.js
-apps/mobile/prototype/hybrid-app/recovery-engine.js
-apps/mobile/prototype/hybrid-app/coordinator-adapter.js
-apps/mobile/prototype/hybrid-app/nutrition-ui.js
 apps/mobile/prototype/hybrid-app/index.html
+apps/mobile/prototype/hybrid-app/strength-sync.js
+apps/mobile/prototype/hybrid-app/whoop.js
 apps/mobile/prototype/hybrid-app/service-worker.js
+apps/mobile/sync-hybrid-html.sh
+apps/mobile/capacitor/scripts/upload-capgo-bundle.sh
+docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md
+docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md
+CLAUDE.md
 ```
 
 ### Branches / PRs
 
 | Item | Notes |
 | --- | --- |
-| **`main` @ 03153e4** | Ship tip; cache **v59** |
-| **PR #41** | Spec + plan — **start here** |
-| Old open PRs (#2–#14, #32, …) | Expo/engine-stage/docs noise — ignore unless owner says otherwise |
+| **`main` @ `3c4b849`** | Ship tip; cache **v87**; Capgo **1.0.12** |
+| Open PRs | **None** |
+| Closed drafts (#2–#14, #32, #41, #56, …) | Obsolete vs tip — ignore unless `git log main..branch` shows unique salvage |
 
 ### How Conditioning works (still true)
 
-- Connect strap = Web Bluetooth `heart_rate` (Chrome Android/desktop; not iOS Safari).
+- Connect strap = Web Bluetooth `heart_rate` (Chrome Android/desktop; not iOS Safari) or native BLE on dogfood APK.
 - Start/Pause = session clock; Complete → cond summary (minutes/avg/max/load + zone split).
 - Back → Home, pause BLE, 120s “finished?” watch.
 
 ### Twin instruments (still true)
 
 The Engine (teal) + Hybrid Strength (copper); Track Dawn tokens; polish plan anti-slop list still applies.
+
+### Session checklist
+
+- [x] Five-systems wiring complete on `main`
+- [x] Web↔phone strength sync v3 (PR #58) + UI polish (PR #59)
+- [x] Closed remaining open draft PRs (26 Aug)
+- [x] Capgo dogfood **`1.0.12`** uploaded
+- [ ] Phone dogfood of `1.0.12` + Netlify↔phone sync proof (same account)
+- [ ] Concurrent hybrid week as templates / calendar
+- [ ] Logger friction pass after real session use
+- [ ] Handoff §§0–4 match tip before next ship
 
 ---
 
