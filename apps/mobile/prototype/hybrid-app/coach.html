@@ -65,15 +65,6 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .wk{display:grid;place-items:center;color:var(--muted);font-size:12px}
 .cal{display:grid;gap:8px}
 .item{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-align:left;width:100%}
-
-/* athlete phone shell — coaching-loop logger only, not the Hybrid athlete app */
-.athlete-shell{max-width:430px;margin:0 auto;min-height:100vh;padding:16px 16px 96px;background:linear-gradient(180deg,#0a0c0e,#07090b)}
-.ath-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.setrow{display:grid;grid-template-columns:28px 1fr 1fr;gap:8px;align-items:center;margin-top:8px}
-.block-done{border-color:rgba(125,186,154,.4)}
-.sticky{position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:auto;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#0b0e11ee;border-top:1px solid var(--line)}
-.modal{position:fixed;inset:0;background:#0008;display:grid;place-items:end center;z-index:40}
-.sheet{width:min(560px,100%);padding:18px;border-radius:18px 18px 0 0;background:var(--panel);border:1px solid var(--line)}
 @media(max-width:980px){
   #coachApp{grid-template-columns:1fr}
   .side{display:flex;gap:8px;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}
@@ -85,8 +76,6 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 <body>
 <div id="gate"></div>
 <div id="coachApp" class="hidden"></div>
-<div id="athleteShell" class="athlete-shell hidden"></div>
-<div id="modal"></div>
 <script src="./coach-loop.js"></script>
 <script>
 const L = window.CoachLoop;
@@ -104,9 +93,6 @@ function ses(id){ return (S.sessions||[]).find(s => s.id === id); }
 function prog(id){ return (S.programs||[]).find(p => p.id === id); }
 function team(id){ return (S.teams||[]).find(t => t.id === id); }
 
-function closeModal(){ $('modal').innerHTML = ''; }
-function sheet(html){ $('modal').innerHTML = `<div class="modal" onclick="if(event.target===this)closeModal()"><div class="sheet">${html}</div></div>`; }
-
 function go(view, extra){ Object.assign(ui, extra||{}, { view }); render(); }
 function signOut(){ L.logout(S); persist(); ui.view='home'; render(); }
 function resetDemo(){ S = L.resetState(); ui.view='home'; render(); }
@@ -114,6 +100,11 @@ function resetDemo(){ S = L.resetState(); ui.view='home'; render(); }
 function tryLogin(email, pass){
   const r = L.login(S, email, pass);
   if (!r.ok){ ui.err = r.error; render(); return; }
+  if (r.account.role !== 'coach'){
+    L.logout(S);
+    ui.err = 'Coach workspace only. Athletes use the Hybrid athlete app.';
+    persist(); render(); return;
+  }
   ui.err = ''; persist(); render();
 }
 
@@ -355,110 +346,27 @@ function coachChrome(body){
     <aside class="rail">${needsHtml()}</aside>`;
 }
 
-function athleteSession(targetDate){
-  const acc = account();
-  const date = targetDate || L.today();
-  let s = L.todaySession(S, acc.athleteId, date);
-  if (!s){
-    s = (S.sessions||[]).filter(x => x.athleteId===acc.athleteId && x.date>=date).sort((a,b)=>a.date.localeCompare(b.date))[0]
-      || (S.sessions||[]).filter(x => x.athleteId===acc.athleteId).sort((a,b)=>b.date.localeCompare(a.date))[0];
-  }
-  return s;
-}
-
-function logRow(sid, bid, eid, ri, field, val){
-  const s = ses(sid); if (!s) return;
-  const patch = {}; patch[field] = val;
-  L.logSet(s, bid, eid, ri, patch);
-  persist(); render();
-}
-
-function pasteArrays(sid, bid, eid){
-  const reps = document.getElementById('arr-r-'+eid)?.value || '';
-  const load = document.getElementById('arr-l-'+eid)?.value || '';
-  const s = ses(sid);
-  L.logSetArrays(s, bid, eid, reps, load);
-  persist(); render();
-}
-
-function markBlock(sid, bid){
-  L.completeBlock(ses(sid), bid, true);
-  persist(); render();
-}
-
-function openSwap(sid, bid, eid){
-  const opts = (S.exercises||[]).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
-  sheet(`<h2>Swap exercise</h2><div class="field"><label>Replacement</label><select id="swapEx">${opts}</select></div>
-    <div class="field"><label>Note</label><textarea id="swapNote" placeholder="Why the swap"></textarea></div>
-    <button class="btn primary block" onclick="doSwap('${sid}','${bid}','${eid}')">Save swap</button>
-    <button class="btn block" style="margin-top:8px" onclick="closeModal()">Cancel</button>`);
-}
-function doSwap(sid, bid, eid){
-  const sel = document.getElementById('swapEx');
-  const ex = (S.exercises||[]).find(e => e.id===sel.value);
-  L.swapExercise(ses(sid), bid, eid, ex, document.getElementById('swapNote').value);
-  persist(); closeModal(); render();
-}
-
-function athleteHtml(){
-  const acc = account();
-  const s = athleteSession();
-  if (!s) return `<div class="ath-top"><div class="mark">THE</div><button class="btn ghost small" onclick="signOut()">Sign out</button></div><div class="card">No assigned session.</div>`;
-  const rem = L.remainingSummary(s);
-  const m = L.feedMetrics(s);
-  const blocks = (s.blocks||[]).map(b => {
-    const ex = (b.exercises||[]).map(e => {
-      L.ensureRows(e);
-      const rows = e.rows.map((r,i) => `<div class="setrow"><div class="muted">${r.n}</div>
-        <input placeholder="reps ${esc(r.target)}" value="${esc(r.reps)}" onchange="logRow('${s.id}','${b.id}','${e.id}',${i},'reps',this.value)">
-        <input placeholder="kg ${esc(r.prescribedLoad||'')}" value="${esc(r.weight)}" onchange="logRow('${s.id}','${b.id}','${e.id}',${i},'weight',this.value)"></div>`).join('');
-      return `<div style="margin-top:12px"><div class="row"><b>${esc(e.name)}</b><button class="btn ghost small" onclick="openSwap('${s.id}','${b.id}','${e.id}')">Swap</button></div>
-        <div class="muted">${esc(L.prescriptionLine(e))}</div>
-        ${rows}
-        <div class="field"><label>Per-set arrays (e.g. 8,8,6 @ 80,100,105)</label>
-          <div class="row"><input id="arr-r-${e.id}" placeholder="8,8,6"><input id="arr-l-${e.id}" placeholder="80,100,105"></div>
-          <button class="btn small" style="margin-top:6px" onclick="pasteArrays('${s.id}','${b.id}','${e.id}')">Apply arrays</button></div>
-        ${e.athleteNote?`<div class="muted">${esc(e.athleteNote)}</div>`:''}
-      </div>`;
-    }).join('');
-    const notes = b.notes ? `<div class="muted">${esc(b.notes)}</div>` : '';
-    return `<div class="card ${L.blockIsComplete(b)?'block-done':''}"><div class="row"><div><span class="eyebrow">${esc(b.letter||'')} · ${esc(b.category||'')}</span><h2>${esc(b.heading)}</h2></div>
-      <button class="btn small ${L.blockIsComplete(b)?'primary':''}" onclick="markBlock('${s.id}','${b.id}')">${L.blockIsComplete(b)?'Done':'Mark block done'}</button></div>${notes}${ex}</div>`;
-  }).join('');
-  return `<div class="ath-top"><div><div class="eyebrow">Today</div><h1>${esc(s.name)}</h1><div class="muted">${esc(s.sessionTitle||'')} · ${esc(s.date)}</div></div><button class="btn ghost small" onclick="signOut()">Sign out</button></div>
-    ${s.coachInstructions?`<div class="card">${esc(s.coachInstructions)}</div>`:''}
-    <div class="card"><div class="muted">Prescribed vs remaining</div><div class="row"><b>${m.blocksDone}/${m.blocksTotal} blocks</b><span>${rem.setsLeft} sets left</span></div></div>
-    <div class="stack" style="margin-top:12px">${blocks}</div>
-    <div class="sticky"><div class="muted">${esc(acc.name)} · ${m.volumeKg||0} kg logged</div></div>`;
-}
-
 function gateHtml(){
   return `<div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">THE</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace · local demo</div></div></div>
     <h1 style="margin-top:28px;font-family:var(--font-display);font-size:40px">Sign in</h1>
-    <p class="muted" style="margin-top:8px">Demo accounts. Password for all: <b>demo</b></p>
+    <p class="muted" style="margin-top:8px">Coach demo. Password: <b>demo</b></p>
     ${ui.err?`<div class="card" style="margin-top:12px;border-color:#d0897d">${esc(ui.err)}</div>`:''}
     <div class="field"><label>Email</label><input id="em" value="dan@thehybrid.local"></div>
     <div class="field"><label>Password</label><input id="pw" type="password" value="demo"></div>
     <button class="btn primary block" style="margin-top:16px" onclick="tryLogin($('em').value,$('pw').value)">Sign in</button>
     <div class="acct">
       <button class="btn" onclick="tryLogin('dan@thehybrid.local','demo')">Coach · Dan</button>
-      <button class="btn" onclick="tryLogin('veldman@thehybrid.local','demo')">Athlete · Dan Veldman</button>
-      <button class="btn" onclick="tryLogin('alex@thehybrid.local','demo')">Athlete · Alex Chen</button>
     </div>
-    <p class="muted" style="margin-top:24px">The Hybrid athlete app is unchanged. This page is a separate coach surface.</p>`;
+    <p class="muted" style="margin-top:24px">Athletes keep using the Hybrid athlete app. This page is coach-only.</p>`;
 }
 
 function render(){
   const acc = account();
   $('gate').classList.add('hidden');
   $('coachApp').classList.add('hidden');
-  $('athleteShell').classList.add('hidden');
-  closeModal();
-  if (!acc){ $('gate').classList.remove('hidden'); $('gate').innerHTML = gateHtml(); return; }
-  if (acc.role==='athlete'){
-    $('athleteShell').classList.remove('hidden');
-    $('athleteShell').innerHTML = athleteHtml();
-    return;
+  if (!acc || acc.role !== 'coach'){
+    if (acc) { L.logout(S); persist(); }
+    $('gate').classList.remove('hidden'); $('gate').innerHTML = gateHtml(); return;
   }
   $('coachApp').classList.remove('hidden');
   let body = '';
@@ -477,9 +385,7 @@ function render(){
 window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
 window.saveComment=saveComment; window.toggleCard=toggleCard; window.setCell=setCell;
 window.newProgram=newProgram; window.newTemplate=newTemplate; window.parseSets=parseSets;
-window.addEx=addEx; window.addBlk=addBlk; window.doAssign=doAssign; window.closeModal=closeModal;
-window.logRow=logRow; window.pasteArrays=pasteArrays; window.markBlock=markBlock;
-window.openSwap=openSwap; window.doSwap=doSwap;
+window.addEx=addEx; window.addBlk=addBlk; window.doAssign=doAssign;
 render();
 </script>
 </body>

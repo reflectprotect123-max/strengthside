@@ -12,25 +12,17 @@
 
 ## Coach workspace (separate surface)
 
-The Hybrid athlete app (`index.html` / `THE-Hybrid-App.html`) is **not** this. Coach login, the results feed, program/session builders, and assign-to-team live in a new page that does not change athlete screens.
+The Hybrid athlete app (`index.html` / `THE-Hybrid-App.html`) is **not** this and is not edited. Athletes keep logging there. This page is coach-only: Home feed, roster, library, program/session builders, assign-to-team.
 
 ```bash
 cd apps/mobile/prototype/hybrid-app
 python3 -m http.server 4173
-# Coach + coaching-loop athlete logger:
-#   http://localhost:4173/coach.html
+# http://localhost:4173/coach.html
 ```
 
-Demo password for every account: `demo`
+Coach demo: `dan@thehybrid.local` / `demo`
 
-| Role | Email |
-| --- | --- |
-| Coach (Dan) | `dan@thehybrid.local` |
-| Athlete (Dan Veldman) | `veldman@thehybrid.local` |
-| Athlete (Alex Chen) | `alex@thehybrid.local` |
-| Athlete (Jordan Hale) | `jordan@thehybrid.local` |
-
-Seeded: team **hybrid S&C**, program **Hybrid Strength Base** (weeks × days 1–7), and one completed session on Coach Home (Dan Veldman, Week 1 Day 1).
+Seeded roster (visible on Coach Home, not a login here): team **hybrid S&C**, athletes Dan Veldman, Alex Chen, Jordan Hale, program **Hybrid Strength Base**, one completed session (Dan Veldman, Week 1 Day 1).
 
 ## Brains (not a second app)
 
