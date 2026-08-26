@@ -30,6 +30,8 @@ jobs:
       - run: pnpm run check:native-ble
       - run: pnpm run check:trainheroic-parse
       - run: pnpm run check:trainheroic-ota-seed
+      - run: pnpm run check:hybrid-html-sync
+      - run: pnpm run check:builder-suggest
       - run: pnpm run check:nutrition-ui
       - run: pnpm run check:strength-resolve
       - run: pnpm run check:e1rm-value

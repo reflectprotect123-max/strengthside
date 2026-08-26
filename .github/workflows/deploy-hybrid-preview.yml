@@ -1,16 +1,11 @@
-# Deploys the interactive Hybrid HTML app to GitHub Pages.
-# Prerequisite (one-time, repo owner): Settings → Pages → Source: GitHub Actions
-# Until then, use the htmlpreview link in apps/mobile/PLAY.md — do not fail every push.
+# GitHub Pages deploy for the Hybrid HTML app.
+# Athlete product ships via Netlify + Capgo — Pages is optional.
+# Pages is NOT enabled on this repo; push-triggered deploys were failing CI noise.
+# Keep manual dispatch only until Settings → Pages → Source: GitHub Actions is set.
 name: Deploy Hybrid preview
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/mobile/preview-site/**'
-      - 'apps/mobile/THE-Hybrid-App.html'
-      - '.github/workflows/deploy-hybrid-preview.yml'
 
 permissions:
   contents: read
@@ -30,7 +25,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Require GitHub Pages
+        id: pages_ok
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "GitHub Pages not configured — nothing to deploy (use Netlify / Capgo)."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Prepare site
+        if: steps.pages_ok.outputs.enabled == 'true'
         run: |
           mkdir -p _site
           if [ -f apps/mobile/preview-site/index.html ]; then
@@ -41,10 +49,13 @@ jobs:
           test -f _site/index.html
 
       - uses: actions/configure-pages@v5
+        if: steps.pages_ok.outputs.enabled == 'true'
 
       - uses: actions/upload-pages-artifact@v3
+        if: steps.pages_ok.outputs.enabled == 'true'
         with:
           path: _site
 
       - id: deployment
+        if: steps.pages_ok.outputs.enabled == 'true'
         uses: actions/deploy-pages@v4
