@@ -10,6 +10,28 @@
 | **Deploy** | `apps/mobile/preview-site/` → Netlify |
 | **Live** | https://papaya-cheesecake-059e06.netlify.app/ |
 
+## Coach workspace (separate surface)
+
+The Hybrid athlete app (`index.html` / `THE-Hybrid-App.html`) is **not** this. Coach login, the results feed, program/session builders, and assign-to-team live in a new page that does not change athlete screens.
+
+```bash
+cd apps/mobile/prototype/hybrid-app
+python3 -m http.server 4173
+# Coach + coaching-loop athlete logger:
+#   http://localhost:4173/coach.html
+```
+
+Demo password for every account: `demo`
+
+| Role | Email |
+| --- | --- |
+| Coach (Dan) | `dan@thehybrid.local` |
+| Athlete (Dan Veldman) | `veldman@thehybrid.local` |
+| Athlete (Alex Chen) | `alex@thehybrid.local` |
+| Athlete (Jordan Hale) | `jordan@thehybrid.local` |
+
+Seeded: team **hybrid S&C**, program **Hybrid Strength Base** (weeks × days 1–7), and one completed session on Coach Home (Dan Veldman, Week 1 Day 1).
+
 ## Brains (not a second app)
 
 - **`packages/strength-engine/`** — pure lift logic (resolve, e1RM, WM, PR). Zero I/O. Wire into the HTML app later.
@@ -29,6 +51,6 @@ pnpm install
 pnpm run verify   # typecheck + test + migrations + engine build
 ```
 
-## Do not build here
+## Athlete product (unchanged)
 
-Coach dashboards, ARC prototypes, Expo shells, and parallel athlete apps were removed on purpose. All athlete UX lives in `hybrid-app/`.
+Athlete UX still lives only in `apps/mobile/prototype/hybrid-app/index.html`. This PR does not edit that file. Expo / ARC prototypes stay gone. The coach workspace is `coach.html` only.

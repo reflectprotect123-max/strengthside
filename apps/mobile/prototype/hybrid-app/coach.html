@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>THE Hybrid — Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#07090b;--panel:#12161a;--panel2:#181d22;--line:rgba(255,255,255,.08);
+  --text:#eef2f4;--muted:#9aa3ab;--dim:#6f7881;
+  --copper:#d4a574;--copper2:#e8c49a;--ok:#7dba9a;--warn:#d4a35b;
+  --font-body:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --font-display:"Barlow Condensed",ui-sans-serif,system-ui,sans-serif;
+  --tap:44px;
+}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100%}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+h1,h2,h3,p{margin:0}a{color:var(--copper2)}
+.eyebrow{color:var(--copper2);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.muted{color:var(--muted);font-size:13px;line-height:1.45}
+.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);font-weight:650}
+.btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
+.btn.ghost{background:transparent}
+.btn.block{width:100%}
+.btn.small{min-height:36px;padding:7px 10px;font-size:12px}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#0d1114}
+textarea{min-height:88px;resize:vertical}
+label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.field{margin-top:12px}
+.stack{display:grid;gap:12px}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.card{padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.hidden{display:none !important}
+
+/* gate */
+#gate{max-width:440px;margin:0 auto;padding:48px 20px}
+.mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--copper);border-radius:11px;color:var(--copper2);font-weight:800;letter-spacing:.12em;font-size:12px}
+.acct{display:grid;gap:8px;margin-top:18px}
+.acct button{text-align:left}
+
+/* coach chrome */
+#coachApp{display:grid;grid-template-columns:220px 1fr 280px;min-height:100vh}
+.side{padding:18px 12px;border-right:1px solid var(--line);background:#0b0e11}
+.side nav{display:grid;gap:4px;margin-top:22px}
+.side button{display:flex;align-items:center;gap:10px;width:100%;min-height:var(--tap);padding:8px 10px;border:0;border-radius:10px;background:transparent;color:var(--dim);text-align:left}
+.side button.on{background:rgba(212,165,116,.12);color:var(--copper2)}
+.main{padding:22px 28px 48px;min-width:0}
+.rail{padding:22px 16px;border-left:1px solid var(--line);background:#0b0e11}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.metric{text-align:center;padding:10px 4px}
+.metric b{display:block;font-family:var(--font-display);font-size:22px;font-weight:600}
+.metric span{color:var(--dim);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.ring{width:42px;height:42px;margin:0 auto 4px}
+.dateh{margin:22px 0 10px;font-family:var(--font-display);font-size:20px;letter-spacing:.02em}
+.presc{text-decoration:line-through;color:var(--dim)}
+.actual{color:var(--copper2)}
+.grid7{display:grid;grid-template-columns:88px repeat(7,1fr);gap:6px;align-items:stretch}
+.cell{min-height:72px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;font-size:12px}
+.cell.empty{color:var(--dim)}
+.wk{display:grid;place-items:center;color:var(--muted);font-size:12px}
+.cal{display:grid;gap:8px}
+.item{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-align:left;width:100%}
+
+/* athlete phone shell — coaching-loop logger only, not the Hybrid athlete app */
+.athlete-shell{max-width:430px;margin:0 auto;min-height:100vh;padding:16px 16px 96px;background:linear-gradient(180deg,#0a0c0e,#07090b)}
+.ath-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.setrow{display:grid;grid-template-columns:28px 1fr 1fr;gap:8px;align-items:center;margin-top:8px}
+.block-done{border-color:rgba(125,186,154,.4)}
+.sticky{position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:auto;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#0b0e11ee;border-top:1px solid var(--line)}
+.modal{position:fixed;inset:0;background:#0008;display:grid;place-items:end center;z-index:40}
+.sheet{width:min(560px,100%);padding:18px;border-radius:18px 18px 0 0;background:var(--panel);border:1px solid var(--line)}
+@media(max-width:980px){
+  #coachApp{grid-template-columns:1fr}
+  .side{display:flex;gap:8px;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .side nav{display:flex;margin:0}
+  .rail{display:none}
+}
+</style>
+</head>
+<body>
+<div id="gate"></div>
+<div id="coachApp" class="hidden"></div>
+<div id="athleteShell" class="athlete-shell hidden"></div>
+<div id="modal"></div>
+<script src="./coach-loop.js"></script>
+<script>
+const L = window.CoachLoop;
+let S = L.loadState();
+const ui = { view:'home', lib:'programs', athleteId:null, teamId:null, programId:null, templateId:null, sessionId:null, expandAll:false, expanded:{}, err:'' };
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const dash = (v) => (v == null || v === '') ? '–' : String(v);
+function persist(){ L.saveState(null, S); }
+function account(){ return L.currentAccount(S); }
+function athleteBy(id){ return (S.athletes||[]).find(a => a.id === id); }
+function tpl(id){ return (S.templates||[]).find(t => t.id === id); }
+function ses(id){ return (S.sessions||[]).find(s => s.id === id); }
+function prog(id){ return (S.programs||[]).find(p => p.id === id); }
+function team(id){ return (S.teams||[]).find(t => t.id === id); }
+
+function closeModal(){ $('modal').innerHTML = ''; }
+function sheet(html){ $('modal').innerHTML = `<div class="modal" onclick="if(event.target===this)closeModal()"><div class="sheet">${html}</div></div>`; }
+
+function go(view, extra){ Object.assign(ui, extra||{}, { view }); render(); }
+function signOut(){ L.logout(S); persist(); ui.view='home'; render(); }
+function resetDemo(){ S = L.resetState(); ui.view='home'; render(); }
+
+function tryLogin(email, pass){
+  const r = L.login(S, email, pass);
+  if (!r.ok){ ui.err = r.error; render(); return; }
+  ui.err = ''; persist(); render();
+}
+
+function ringSvg(done, total){
+  const p = total ? done/total : 0;
+  const c = 2*Math.PI*16;
+  const dashn = `${p*c} ${c}`;
+  return `<svg class="ring" viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="16" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4"/><circle cx="21" cy="21" r="16" fill="none" stroke="#7dba9a" stroke-width="4" stroke-dasharray="${dashn}" stroke-linecap="round" transform="rotate(-90 21 21)"/></svg>`;
+}
+
+function metricRow(m){
+  return `<div class="metrics">
+    <div class="metric">${ringSvg(m.blocksDone,m.blocksTotal)}<b>${m.blocksDone}/${m.blocksTotal}</b><span>Blocks</span></div>
+    <div class="metric"><b>${dash(m.readiness)}</b><span>Readiness</span></div>
+    <div class="metric"><b>${dash(m.minutes)}</b><span>Minutes</span></div>
+    <div class="metric"><b>${m.intensity==null?'–':m.intensity+'%'}</b><span>Intensity</span></div>
+    <div class="metric"><b>${m.volumeKg?m.volumeKg+' kg':'–'}</b><span>Volume</span></div>
+  </div>`;
+}
+
+function blockDetail(session){
+  return (session.blocks||[]).map(b => {
+    const letter = b.letter ? `<span class="pill">${esc(b.letter)}</span>` : '';
+    const ex = (b.exercises||[]).map(e => {
+      const actual = L.actualLine(e);
+      const swap = e.swappedFrom ? `<div class="muted">Swapped from ${esc(e.swappedFrom.name)}</div>` : '';
+      return `<div style="margin-top:10px"><div class="row"><b>${esc(e.name)}</b><span class="pill">${esc(e.metric||'Weight')}</span></div>
+        <div class="presc">${esc(L.prescriptionLine(e))}</div>
+        ${actual?`<div class="actual">${esc(actual)}</div>`:''}
+        ${e.athleteNote?`<div class="muted">${esc(e.athleteNote)}</div>`:''}${swap}</div>`;
+    }).join('');
+    const notes = b.notes ? `<div class="muted" style="margin-top:8px">${esc(b.notes)}</div>` : '';
+    return `<div class="card" style="margin-top:10px"><div class="row"><div><span class="eyebrow">${esc(b.category||b.type)}</span><div>${letter} ${esc(b.heading||'')}</div></div><span class="pill">${b.scoring==='weight'?'For Weight':'For Completion'}</span></div>${notes}${ex}</div>`;
+  }).join('');
+}
+
+function saveComment(sessionId){
+  const el = document.getElementById('note-'+sessionId);
+  const s = ses(sessionId); if (!s || !el) return;
+  L.setSessionComment(s, el.value, L.IDS.coach);
+  persist(); render();
+}
+
+function toggleCard(id){ ui.expanded[id] = !ui.expanded[id]; render(); }
+
+function feedHtml(){
+  const athletes = S.athletes||[];
+  const list = ui.filterAthlete && ui.filterAthlete!=='all'
+    ? (S.sessions||[]).filter(s => s.athleteId===ui.filterAthlete)
+    : S.sessions;
+  const groups = L.groupFeed(list, athletes);
+  const cards = groups.map(g => `<div class="dateh">${esc(g.label)}</div>` + g.cards.map(c => {
+    const s = c.session;
+    const open = ui.expandAll || ui.expanded[s.id];
+    const title = s.sessionTitle || s.name;
+    return `<div class="card">
+      <div class="row"><div><div class="eyebrow">${esc(c.athlete?.name||'Athlete')}</div><h2>${esc(s.name)}</h2><div class="muted">${esc(title)}</div></div><span class="pill">${esc(s.status)}</span></div>
+      ${metricRow(c.metrics)}
+      <div class="row" style="margin-top:12px"><button class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button></div>
+      ${open?blockDetail(s):''}
+      <div class="field"><label>Session note</label><textarea id="note-${s.id}">${esc(s.comment?.text||'')}</textarea>
+      <button class="btn primary block" style="margin-top:8px" onclick="saveComment('${s.id}')">Save session note</button></div>
+    </div>`;
+  }).join('')).join('') || `<div class="card muted">No logged sessions yet.</div>`;
+  const opts = athletes.map(a => `<option value="${a.id}" ${ui.filterAthlete===a.id?'selected':''}>${esc(a.name)}</option>`).join('');
+  return `<div class="topbar"><div><div class="eyebrow">Coach Home</div><h1>Welcome back, Coach ${esc(S.coach?.name||'Dan')}</h1></div>
+    <select onchange="ui.filterAthlete=this.value;render()"><option value="all">All athletes</option>${opts}</select></div>
+    <label class="row" style="justify-content:flex-start;gap:8px;margin-bottom:8px"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()" style="width:auto"> Expand all cards</label>
+    <div class="stack">${cards}</div>`;
+}
+
+function needsHtml(){
+  const n = L.needsProgramming(S);
+  if (!n.athletes.length && !n.teams.length) return `<div class="card"><div class="eyebrow">Needs programming</div><h2>All clear</h2><p class="muted">Every athlete on hybrid S&C has a program assigned.</p></div>`;
+  return `<div class="card"><div class="eyebrow">Needs programming</div><h2>${n.athletes.length} athlete${n.athletes.length===1?'':'s'}</h2><p class="muted">${n.athletes.map(a=>esc(a.name)).join(', ')}</p></div>`;
+}
+
+function monthKey(){ return L.today().slice(0,7); }
+
+function athleteListHtml(){
+  return `<div class="eyebrow">Athletes</div><h1>Roster</h1><div class="stack" style="margin-top:16px">${(S.athletes||[]).map(a => {
+    const n = (S.sessions||[]).filter(s => s.athleteId===a.id).length;
+    return `<button class="item" onclick="go('athlete',{athleteId:'${a.id}'})"><div class="row"><b>${esc(a.name)}</b><span class="pill">${n} sessions</span></div></button>`;
+  }).join('')}</div>`;
+}
+
+function athleteCalHtml(){
+  const a = athleteBy(ui.athleteId); if (!a) return athleteListHtml();
+  const rows = L.calendarFor(S, a.id, monthKey());
+  return `<button class="btn ghost small" onclick="go('athletes')">← Athletes</button>
+    <div class="eyebrow" style="margin-top:12px">${esc(a.name)}</div><h1>Calendar</h1>
+    <div class="cal" style="margin-top:16px">${rows.map(s => `<button class="item" onclick="ui.sessionId='${s.id}';ui.expanded[s.id]=true;go('home')"><div class="row"><b>${esc(s.date)}</b><span class="pill">${esc(s.status)}</span></div><div class="muted">${esc(s.name)} · ${esc(s.sessionTitle||'')}</div></button>`).join('')||'<div class="muted">No sessions this month.</div>'}</div>`;
+}
+
+function teamListHtml(){
+  return `<div class="eyebrow">Teams</div><h1>Teams</h1><div class="stack" style="margin-top:16px">${(S.teams||[]).map(t => `<button class="item" onclick="go('team',{teamId:'${t.id}'})"><div class="row"><b>${esc(t.name)}</b><span class="pill">${(t.athleteIds||[]).length}</span></div></button>`).join('')}</div>`;
+}
+
+function teamCalHtml(){
+  const t = team(ui.teamId); if (!t) return teamListHtml();
+  const rows = L.teamCalendar(S, t.id, monthKey());
+  return `<button class="btn ghost small" onclick="go('teams')">← Teams</button>
+    <div class="eyebrow" style="margin-top:12px">hybrid S&C</div><h1>${esc(t.name)}</h1>
+    <p class="muted">${(t.athleteIds||[]).map(id => esc(athleteBy(id)?.name||id)).join(' · ')}</p>
+    <div class="cal" style="margin-top:16px">${rows.map(s => `<div class="item"><div class="row"><b>${esc(s.date)}</b><span class="pill">${esc(athleteBy(s.athleteId)?.name||'')}</span></div><div class="muted">${esc(s.name)}</div></div>`).join('')}</div>`;
+}
+
+function libraryHtml(){
+  const tabs = [['programs','Programs'],['sessions','Session templates'],['exercises','Exercises']];
+  const tabbar = `<div class="row">${tabs.map(([k,l]) => `<button class="btn small ${ui.lib===k?'primary':''}" onclick="ui.lib='${k}';render()">${l}</button>`).join('')}</div>`;
+  if (ui.lib==='exercises'){
+    return `${tabbar}<div class="stack" style="margin-top:16px">${(S.exercises||[]).map(e => `<div class="card"><b>${esc(e.name)}</b><div class="muted">${esc(e.category)}</div></div>`).join('')}</div>`;
+  }
+  if (ui.lib==='sessions'){
+    return `${tabbar}<div style="margin-top:12px"><button class="btn primary" onclick="newTemplate()">New session</button></div>
+      <div class="stack" style="margin-top:16px">${(S.templates||[]).map(t => `<button class="item" onclick="go('session',{templateId:'${t.id}'})"><b>${esc(t.name)}</b><div class="muted">${(t.blocks||[]).length} blocks</div></button>`).join('')}</div>`;
+  }
+  return `${tabbar}<div style="margin-top:12px"><button class="btn primary" onclick="newProgram()">New program</button></div>
+    <div class="stack" style="margin-top:16px">${(S.programs||[]).map(p => `<button class="item" onclick="go('program',{programId:'${p.id}'})"><div class="row"><b>${esc(p.name)}</b><span class="pill">${p.weeks} weeks</span></div></button>`).join('')}</div>`;
+}
+
+function newProgram(){
+  const p = L.emptyProgram('New program', 4);
+  S.programs.push(p); persist(); go('program', { programId:p.id });
+}
+function newTemplate(){
+  const t = L.makeTemplate({ name:'New session', blocks:[L.makeBlock({ heading:'A', type:'strength', category:'Strength/Power', scoring:'weight' })] });
+  S.templates.push(t); persist(); go('session', { templateId:t.id });
+}
+
+function setCell(week, day, templateId){
+  const p = prog(ui.programId); if (!p) return;
+  L.setProgramCell(p, week, day, templateId || null); persist(); render();
+}
+
+function programHtml(){
+  const p = prog(ui.programId); if (!p) return libraryHtml();
+  const head = `<div></div>` + L.DAY_NAMES.map((d,i) => `<div class="wk">Day ${i+1}<br>${d}</div>`).join('');
+  const rows = [];
+  for (let w=1; w<=p.weeks; w++){
+    rows.push(`<div class="wk">Week ${w}</div>`);
+    for (let d=1; d<=7; d++){
+      const id = p.cells[L.cellKey(w,d)] || '';
+      const t = tpl(id);
+      const opts = `<option value="">—</option>` + (S.templates||[]).map(x => `<option value="${x.id}" ${x.id===id?'selected':''}>${esc(x.name)}</option>`).join('');
+      rows.push(`<div class="cell ${t?'':'empty'}"><select onchange="setCell(${w},${d},this.value)">${opts}</select></div>`);
+    }
+  }
+  return `<button class="btn ghost small" onclick="go('library',{lib:'programs'})">← Library</button>
+    <div class="field"><label>Program name</label><input value="${esc(p.name)}" oninput="prog(ui.programId).name=this.value;persist()"></div>
+    <div class="row" style="margin:12px 0"><span class="muted">${p.weeks} weeks × days 1–7</span>
+      <button class="btn small" onclick="L.addProgramWeek(prog(ui.programId));persist();render()">Add week</button></div>
+    <div class="grid7">${head}${rows.join('')}</div>
+    <div class="btns" style="margin-top:16px"><button class="btn primary" onclick="go('assign')">Assign program → team</button></div>`;
+}
+
+function sessionHtml(){
+  const t = tpl(ui.templateId); if (!t) return libraryHtml();
+  const blocks = (t.blocks||[]).map((b,i) => {
+    const cats = L.BLOCK_CATEGORIES.map(c => `<option ${b.category===c?'selected':''}>${c}</option>`).join('');
+    const scoring = `<select onchange="tpl(ui.templateId).blocks[${i}].scoring=this.value;persist()"><option value="completion" ${b.scoring==='completion'?'selected':''}>For Completion</option><option value="weight" ${b.scoring==='weight'?'selected':''}>For Weight</option></select>`;
+    const ex = (b.exercises||[]).map((e,j) => `<div class="card" style="margin-top:8px">
+      <div class="field"><label>Exercise</label><input value="${esc(e.name)}" oninput="tpl(ui.templateId).blocks[${i}].exercises[${j}].name=this.value;persist()"></div>
+      <div class="row" style="align-items:end"><div class="field" style="flex:1"><label>Sets × reps</label><input value="${esc(e.sets+' x '+e.reps)}" onchange="parseSets(ui.templateId,${i},${j},this.value)"></div>
+      <div class="field" style="flex:1"><label>Load</label><input value="${esc(e.load)}" oninput="tpl(ui.templateId).blocks[${i}].exercises[${j}].load=this.value;persist()"></div>
+      <div class="field" style="flex:1"><label>Metric</label><select onchange="tpl(ui.templateId).blocks[${i}].exercises[${j}].metric=this.value;persist()">${L.METRICS.map(m=>`<option ${e.metric===m?'selected':''}>${m}</option>`).join('')}</select></div></div>
+      <div class="muted" style="margin-top:6px">${esc(b.letter||'')} · rest in notes if EMOM</div>
+    </div>`).join('');
+    return `<div class="card" style="margin-top:12px">
+      <div class="row"><b>${esc(b.letter||'')} ${esc(b.heading)}</b><label class="row" style="gap:6px;margin:0"><input type="checkbox" ${b.superset?'checked':''} style="width:auto" onchange="tpl(ui.templateId).blocks[${i}].superset=this.checked;tpl(ui.templateId).blocks=L.decorateBlocks(tpl(ui.templateId).blocks);persist();render()"> Superset D1/D2</label></div>
+      <div class="field"><label>Heading</label><input value="${esc(b.heading)}" oninput="tpl(ui.templateId).blocks[${i}].heading=this.value;persist()"></div>
+      <div class="row" style="align-items:end"><div class="field" style="flex:1"><label>Category</label><select onchange="tpl(ui.templateId).blocks[${i}].category=this.value;persist()">${cats}</select></div>
+      <div class="field" style="flex:1"><label>Scoring</label>${scoring}</div></div>
+      <div class="field"><label>Notes</label><textarea oninput="tpl(ui.templateId).blocks[${i}].notes=this.value;persist()">${esc(b.notes||'')}</textarea></div>
+      ${ex}
+      ${b.type==='strength'?`<button class="btn small" style="margin-top:8px" onclick="addEx(${i})">Add exercise</button>`:''}
+    </div>`;
+  }).join('');
+  return `<button class="btn ghost small" onclick="go('library',{lib:'sessions'})">← Library</button>
+    <div class="field"><label>Session name</label><input value="${esc(t.name)}" oninput="tpl(ui.templateId).name=this.value;persist()"></div>
+    <div class="field"><label>Session note</label><textarea oninput="tpl(ui.templateId).coachInstructions=this.value;persist()">${esc(t.coachInstructions||'')}</textarea></div>
+    ${blocks}
+    <div class="row" style="margin-top:12px;flex-wrap:wrap">
+      <button class="btn" onclick="addBlk('strength')">Add strength block</button>
+      <button class="btn" onclick="addBlk('conditioning')">Add conditioning</button>
+      <button class="btn" onclick="addBlk('text')">Add prep / recovery</button>
+    </div>`;
+}
+
+function parseSets(tid, bi, ei, raw){
+  const t = tpl(tid); const e = t.blocks[bi].exercises[ei];
+  const m = String(raw).match(/(\d+)\s*[x×]\s*(.+)/i);
+  if (m){ e.sets = Number(m[1]); e.reps = m[2].trim(); }
+  persist();
+}
+function addEx(i){
+  const t = tpl(ui.templateId);
+  t.blocks[i].exercises = t.blocks[i].exercises || [];
+  t.blocks[i].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8-10', load:'', metric:'Weight' }));
+  persist(); render();
+}
+function addBlk(type){
+  const t = tpl(ui.templateId);
+  const heading = type==='conditioning'?'Conditioning':(type==='text'?'Prep':'Strength');
+  t.blocks.push(L.makeBlock({ type, heading, category: type==='conditioning'?'Conditioning':(type==='text'?'Prep':'Strength/Power'), scoring: type==='strength'?'weight':'completion' }));
+  t.blocks = L.decorateBlocks(t.blocks);
+  persist(); render();
+}
+
+function assignHtml(){
+  const p = prog(ui.programId) || S.programs[0];
+  ui.programId = p?.id;
+  const teams = (S.teams||[]).map(t => `<option value="${t.id}" ${t.id===L.IDS.team?'selected':''}>${esc(t.name)}</option>`).join('');
+  const progs = (S.programs||[]).map(x => `<option value="${x.id}" ${x.id===ui.programId?'selected':''}>${esc(x.name)}</option>`).join('');
+  return `<div class="eyebrow">Assign</div><h1>Assign program → team</h1>
+    <div class="field"><label>Program</label><select id="asgProg" onchange="ui.programId=this.value">${progs}</select></div>
+    <div class="field"><label>Team</label><select id="asgTeam">${teams}</select></div>
+    <div class="field"><label>Week start (Monday)</label><input id="asgDate" type="date" value="${L.mondayOf(L.today())}"></div>
+    <button class="btn primary block" style="margin-top:16px" onclick="doAssign()">Assign to hybrid S&C</button>
+    <p class="muted" style="margin-top:10px">Creates dated athlete sessions from the week × day grid.</p>
+    <div id="asgMsg" class="muted" style="margin-top:8px"></div>`;
+}
+function doAssign(){
+  const programId = $('asgProg').value;
+  const teamId = $('asgTeam').value;
+  const startDate = $('asgDate').value;
+  const r = L.assignProgram(S, { programId, teamId, startDate });
+  persist();
+  $('asgMsg').textContent = `Assigned ${r.created.length} sessions from ${r.start}.`;
+}
+
+function coachChrome(body){
+  const nav = [['home','Coach Home'],['athletes','Athletes'],['teams','Teams'],['library','Library'],['assign','Assign']];
+  return `<aside class="side"><div class="row" style="justify-content:flex-start;gap:10px"><div class="mark">THE</div><div><b>THE Hybrid</b><div class="muted">Coach</div></div></div>
+    <nav>${nav.map(([k,l]) => `<button class="${ui.view===k || (k==='library'&&['program','session'].includes(ui.view)) || (k==='athletes'&&ui.view==='athlete') || (k==='teams'&&ui.view==='team') ?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</nav>
+    <button class="btn ghost block" style="margin-top:24px" onclick="signOut()">Sign out</button>
+    <button class="btn ghost block" style="margin-top:8px" onclick="resetDemo()">Reset demo data</button></aside>
+    <main class="main">${body}</main>
+    <aside class="rail">${needsHtml()}</aside>`;
+}
+
+function athleteSession(targetDate){
+  const acc = account();
+  const date = targetDate || L.today();
+  let s = L.todaySession(S, acc.athleteId, date);
+  if (!s){
+    s = (S.sessions||[]).filter(x => x.athleteId===acc.athleteId && x.date>=date).sort((a,b)=>a.date.localeCompare(b.date))[0]
+      || (S.sessions||[]).filter(x => x.athleteId===acc.athleteId).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  }
+  return s;
+}
+
+function logRow(sid, bid, eid, ri, field, val){
+  const s = ses(sid); if (!s) return;
+  const patch = {}; patch[field] = val;
+  L.logSet(s, bid, eid, ri, patch);
+  persist(); render();
+}
+
+function pasteArrays(sid, bid, eid){
+  const reps = document.getElementById('arr-r-'+eid)?.value || '';
+  const load = document.getElementById('arr-l-'+eid)?.value || '';
+  const s = ses(sid);
+  L.logSetArrays(s, bid, eid, reps, load);
+  persist(); render();
+}
+
+function markBlock(sid, bid){
+  L.completeBlock(ses(sid), bid, true);
+  persist(); render();
+}
+
+function openSwap(sid, bid, eid){
+  const opts = (S.exercises||[]).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
+  sheet(`<h2>Swap exercise</h2><div class="field"><label>Replacement</label><select id="swapEx">${opts}</select></div>
+    <div class="field"><label>Note</label><textarea id="swapNote" placeholder="Why the swap"></textarea></div>
+    <button class="btn primary block" onclick="doSwap('${sid}','${bid}','${eid}')">Save swap</button>
+    <button class="btn block" style="margin-top:8px" onclick="closeModal()">Cancel</button>`);
+}
+function doSwap(sid, bid, eid){
+  const sel = document.getElementById('swapEx');
+  const ex = (S.exercises||[]).find(e => e.id===sel.value);
+  L.swapExercise(ses(sid), bid, eid, ex, document.getElementById('swapNote').value);
+  persist(); closeModal(); render();
+}
+
+function athleteHtml(){
+  const acc = account();
+  const s = athleteSession();
+  if (!s) return `<div class="ath-top"><div class="mark">THE</div><button class="btn ghost small" onclick="signOut()">Sign out</button></div><div class="card">No assigned session.</div>`;
+  const rem = L.remainingSummary(s);
+  const m = L.feedMetrics(s);
+  const blocks = (s.blocks||[]).map(b => {
+    const ex = (b.exercises||[]).map(e => {
+      L.ensureRows(e);
+      const rows = e.rows.map((r,i) => `<div class="setrow"><div class="muted">${r.n}</div>
+        <input placeholder="reps ${esc(r.target)}" value="${esc(r.reps)}" onchange="logRow('${s.id}','${b.id}','${e.id}',${i},'reps',this.value)">
+        <input placeholder="kg ${esc(r.prescribedLoad||'')}" value="${esc(r.weight)}" onchange="logRow('${s.id}','${b.id}','${e.id}',${i},'weight',this.value)"></div>`).join('');
+      return `<div style="margin-top:12px"><div class="row"><b>${esc(e.name)}</b><button class="btn ghost small" onclick="openSwap('${s.id}','${b.id}','${e.id}')">Swap</button></div>
+        <div class="muted">${esc(L.prescriptionLine(e))}</div>
+        ${rows}
+        <div class="field"><label>Per-set arrays (e.g. 8,8,6 @ 80,100,105)</label>
+          <div class="row"><input id="arr-r-${e.id}" placeholder="8,8,6"><input id="arr-l-${e.id}" placeholder="80,100,105"></div>
+          <button class="btn small" style="margin-top:6px" onclick="pasteArrays('${s.id}','${b.id}','${e.id}')">Apply arrays</button></div>
+        ${e.athleteNote?`<div class="muted">${esc(e.athleteNote)}</div>`:''}
+      </div>`;
+    }).join('');
+    const notes = b.notes ? `<div class="muted">${esc(b.notes)}</div>` : '';
+    return `<div class="card ${L.blockIsComplete(b)?'block-done':''}"><div class="row"><div><span class="eyebrow">${esc(b.letter||'')} · ${esc(b.category||'')}</span><h2>${esc(b.heading)}</h2></div>
+      <button class="btn small ${L.blockIsComplete(b)?'primary':''}" onclick="markBlock('${s.id}','${b.id}')">${L.blockIsComplete(b)?'Done':'Mark block done'}</button></div>${notes}${ex}</div>`;
+  }).join('');
+  return `<div class="ath-top"><div><div class="eyebrow">Today</div><h1>${esc(s.name)}</h1><div class="muted">${esc(s.sessionTitle||'')} · ${esc(s.date)}</div></div><button class="btn ghost small" onclick="signOut()">Sign out</button></div>
+    ${s.coachInstructions?`<div class="card">${esc(s.coachInstructions)}</div>`:''}
+    <div class="card"><div class="muted">Prescribed vs remaining</div><div class="row"><b>${m.blocksDone}/${m.blocksTotal} blocks</b><span>${rem.setsLeft} sets left</span></div></div>
+    <div class="stack" style="margin-top:12px">${blocks}</div>
+    <div class="sticky"><div class="muted">${esc(acc.name)} · ${m.volumeKg||0} kg logged</div></div>`;
+}
+
+function gateHtml(){
+  return `<div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">THE</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace · local demo</div></div></div>
+    <h1 style="margin-top:28px;font-family:var(--font-display);font-size:40px">Sign in</h1>
+    <p class="muted" style="margin-top:8px">Demo accounts. Password for all: <b>demo</b></p>
+    ${ui.err?`<div class="card" style="margin-top:12px;border-color:#d0897d">${esc(ui.err)}</div>`:''}
+    <div class="field"><label>Email</label><input id="em" value="dan@thehybrid.local"></div>
+    <div class="field"><label>Password</label><input id="pw" type="password" value="demo"></div>
+    <button class="btn primary block" style="margin-top:16px" onclick="tryLogin($('em').value,$('pw').value)">Sign in</button>
+    <div class="acct">
+      <button class="btn" onclick="tryLogin('dan@thehybrid.local','demo')">Coach · Dan</button>
+      <button class="btn" onclick="tryLogin('veldman@thehybrid.local','demo')">Athlete · Dan Veldman</button>
+      <button class="btn" onclick="tryLogin('alex@thehybrid.local','demo')">Athlete · Alex Chen</button>
+    </div>
+    <p class="muted" style="margin-top:24px">The Hybrid athlete app is unchanged. This page is a separate coach surface.</p>`;
+}
+
+function render(){
+  const acc = account();
+  $('gate').classList.add('hidden');
+  $('coachApp').classList.add('hidden');
+  $('athleteShell').classList.add('hidden');
+  closeModal();
+  if (!acc){ $('gate').classList.remove('hidden'); $('gate').innerHTML = gateHtml(); return; }
+  if (acc.role==='athlete'){
+    $('athleteShell').classList.remove('hidden');
+    $('athleteShell').innerHTML = athleteHtml();
+    return;
+  }
+  $('coachApp').classList.remove('hidden');
+  let body = '';
+  if (ui.view==='athletes') body = athleteListHtml();
+  else if (ui.view==='athlete') body = athleteCalHtml();
+  else if (ui.view==='teams') body = teamListHtml();
+  else if (ui.view==='team') body = teamCalHtml();
+  else if (ui.view==='library') body = libraryHtml();
+  else if (ui.view==='program') body = programHtml();
+  else if (ui.view==='session') body = sessionHtml();
+  else if (ui.view==='assign') body = assignHtml();
+  else body = feedHtml();
+  $('coachApp').innerHTML = coachChrome(body);
+}
+
+window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
+window.saveComment=saveComment; window.toggleCard=toggleCard; window.setCell=setCell;
+window.newProgram=newProgram; window.newTemplate=newTemplate; window.parseSets=parseSets;
+window.addEx=addEx; window.addBlk=addBlk; window.doAssign=doAssign; window.closeModal=closeModal;
+window.logRow=logRow; window.pasteArrays=pasteArrays; window.markBlock=markBlock;
+window.openSwap=openSwap; window.doSwap=doSwap;
+render();
+</script>
+</body>
+</html>
