@@ -35,23 +35,22 @@ index.html save()
 
 New file: `strength-sync.js` (IIFE, `window.StrengthSync`), loaded after `strength-adapter.js`.
 
-## Payload shape (v1 opaque)
+## Payload shape (v3 opaque)
 
 ```ts
 interface StrengthDomainSnapshot {
-  snapshotVersion: 1;
+  snapshotVersion: 3;
   exportedAt: string;
-  strengthState: {
-    workingMaxEvents: WorkingMaxEvent[];
-    prEvents: PrEvent[];
-    loadHints: Record<string, { loadKg: number; updatedAt: string; source: string }>;
-  };
+  strengthState: { ... };
   progressionAudit: ProgressionAuditEntry[];  // cap 200
-  // Optional v1: completed session summaries only (not full tasks) for cross-device PR detection
+  performedSessions: CompletedStrengthSession[]; // cap 40 — strength tasks only (v2 compat)
+  calendarSessions: Session[]; // scheduled + active + recent completed (full objects)
+  templates: Template[]; // library workouts for cross-device schedule
 }
 ```
 
-**Do not** sync full `S` blob — nutrition already proved domain-scoped snapshots work.
+Merge calendar sessions and templates by `_meta.updatedAt` (newest wins). Local-only ids are kept.
+
 
 ## Pull merge rules
 

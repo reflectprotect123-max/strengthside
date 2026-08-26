@@ -1,6 +1,9 @@
 /**
- * Strength progression cloud sync — athlete_domain_snapshots domain strength.
+ * Strength cloud sync — athlete_domain_snapshots domain strength.
  * Local-first; mirrors nutrition-sync pattern.
+ *
+ * Snapshot v3: progression + completed strength sets + calendar sessions + templates
+ * so web ↔ phone share schedule and library (same Supabase account).
  */
 (function (global) {
   'use strict';
@@ -8,7 +11,10 @@
   var WRITER = 'html-athlete-strength';
   var DOMAIN = 'strength';
   var BASE_KEY = 'hybrid-strength-sync-base-v1';
-  var SNAPSHOT_VERSION = 2;
+  var SNAPSHOT_VERSION = 3;
+  var MAX_COMPLETED_SESSIONS = 60;
+  var MAX_TEMPLATES = 100;
+  var MAX_PERFORMED = 40;
 
   var status = { lastSyncAt: null, lastError: '', lastOk: false, busy: false };
 
@@ -57,14 +63,52 @@
     return Number.isFinite(n) ? n : Date.parse(String(v)) || 0;
   }
 
+  function entityUpdatedAt(rec) {
+    if (!rec || typeof rec !== 'object') return 0;
+    var meta = rec._meta && rec._meta.updatedAt;
+    if (meta != null) {
+      var m = Date.parse(String(meta));
+      if (Number.isFinite(m)) return m;
+    }
+    if (rec.completedAt != null) {
+      var c = completedAtMs(rec);
+      if (c) return c;
+    }
+    if (rec.updatedAt != null) {
+      var n = Number(rec.updatedAt);
+      if (Number.isFinite(n) && n > 0) return n;
+      var p = Date.parse(String(rec.updatedAt));
+      if (Number.isFinite(p)) return p;
+    }
+    if (rec.createdAt != null) {
+      var cn = Number(rec.createdAt);
+      if (Number.isFinite(cn) && cn > 0) return cn;
+      var cp = Date.parse(String(rec.createdAt));
+      if (Number.isFinite(cp)) return cp;
+    }
+    return 0;
+  }
+
+  function stampExportMeta(rec, entity, exportedAt) {
+    if (!rec || typeof rec !== 'object') return rec;
+    var out = Object.assign({}, rec);
+    out._meta = Object.assign({}, rec._meta || {});
+    out._meta.entity = out._meta.entity || entity;
+    out._meta.localId = out._meta.localId || out.id;
+    out._meta.updatedAt = out._meta.updatedAt || exportedAt;
+    out._meta.createdAt = out._meta.createdAt || out._meta.updatedAt;
+    out._meta.version = num(out._meta.version) || 1;
+    return out;
+  }
+
   function isStrengthTask(task) {
     return task && (task.kind === 'strength' || task.kind === 'superset');
   }
 
   function performedSessionsFromState(state) {
     return (state.sessions || [])
-      .filter(function (s) { return s.status === 'completed'; })
-      .slice(-40)
+      .filter(function (s) { return s && s.status === 'completed'; })
+      .slice(-MAX_PERFORMED)
       .map(function (s) {
         return {
           id: s.id,
@@ -76,6 +120,45 @@
       });
   }
 
+  function calendarSessionsFromState(state, exportedAt) {
+    var sessions = state.sessions || [];
+    var live = sessions.filter(function (s) {
+      return s && s.id && s.status !== 'abandoned';
+    });
+    var open = live.filter(function (s) {
+      return s.status === 'scheduled' || s.status === 'active';
+    });
+    var done = live
+      .filter(function (s) { return s.status === 'completed'; })
+      .slice()
+      .sort(function (a, b) { return completedAtMs(a) - completedAtMs(b); });
+    if (done.length > MAX_COMPLETED_SESSIONS) {
+      done = done.slice(done.length - MAX_COMPLETED_SESSIONS);
+    }
+    var map = {};
+    done.concat(open).forEach(function (s) {
+      map[s.id] = stampExportMeta(s, 'sessions', exportedAt);
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+
+  function templatesFromState(state, exportedAt) {
+    return (state.templates || [])
+      .filter(function (t) { return t && t.id; })
+      .slice(0, MAX_TEMPLATES)
+      .map(function (t) { return stampExportMeta(t, 'templates', exportedAt); });
+  }
+
+  function mergeByUpdatedAt(localList, remoteList) {
+    var map = {};
+    (localList || []).concat(remoteList || []).forEach(function (item) {
+      if (!item || !item.id) return;
+      var cur = map[item.id];
+      if (!cur || entityUpdatedAt(item) >= entityUpdatedAt(cur)) map[item.id] = item;
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+
   function mergePerformedSessions(localList, remoteList) {
     var map = {};
     (localList || []).concat(remoteList || []).forEach(function (s) {
@@ -85,7 +168,7 @@
     });
     var merged = Object.keys(map).map(function (k) { return map[k]; });
     merged.sort(function (a, b) { return completedAtMs(a) - completedAtMs(b); });
-    if (merged.length > 40) merged = merged.slice(merged.length - 40);
+    if (merged.length > MAX_PERFORMED) merged = merged.slice(merged.length - MAX_PERFORMED);
     return merged;
   }
 
@@ -118,15 +201,42 @@
     });
   }
 
+  function applyEntityList(state, key, incoming) {
+    if (!incoming || !incoming.length) return;
+    state[key] = state[key] || [];
+    var byId = {};
+    state[key].forEach(function (item, i) {
+      if (item && item.id) byId[item.id] = i;
+    });
+    incoming.forEach(function (remote) {
+      if (!remote || !remote.id) return;
+      var idx = byId[remote.id];
+      if (idx == null) {
+        state[key].push(remote);
+        byId[remote.id] = state[key].length - 1;
+        return;
+      }
+      var local = state[key][idx];
+      if (entityUpdatedAt(remote) > entityUpdatedAt(local)) {
+        state[key][idx] = remote;
+      }
+    });
+  }
+
   function snapshotFromState(state) {
     state = state || {};
-    if (global.StrengthAdapter && global.StrengthAdapter.ensureStrengthState) global.StrengthAdapter.ensureStrengthState(state);
+    if (global.StrengthAdapter && global.StrengthAdapter.ensureStrengthState) {
+      global.StrengthAdapter.ensureStrengthState(state);
+    }
+    var exportedAt = new Date().toISOString();
     return {
       snapshotVersion: SNAPSHOT_VERSION,
-      exportedAt: new Date().toISOString(),
+      exportedAt: exportedAt,
       strengthState: state.strengthState || { workingMaxEvents: [], prEvents: [], loadHints: {} },
       progressionAudit: ((state.meta && state.meta.progressionAudit) || []).slice(-200),
       performedSessions: performedSessionsFromState(state),
+      calendarSessions: calendarSessionsFromState(state, exportedAt),
+      templates: templatesFromState(state, exportedAt),
     };
   }
 
@@ -135,6 +245,8 @@
     state.strengthState = snap.strengthState || state.strengthState || { workingMaxEvents: [], prEvents: [], loadHints: {} };
     state.meta = state.meta || {};
     state.meta.progressionAudit = snap.progressionAudit || state.meta.progressionAudit || [];
+    applyEntityList(state, 'sessions', snap.calendarSessions || []);
+    applyEntityList(state, 'templates', snap.templates || []);
     applyPerformedSessions(state, snap.performedSessions || []);
     return state;
   }
@@ -187,6 +299,8 @@
       },
       progressionAudit: audit,
       performedSessions: mergePerformedSessions(localSnap.performedSessions, remoteSnap.performedSessions),
+      calendarSessions: mergeByUpdatedAt(localSnap.calendarSessions, remoteSnap.calendarSessions),
+      templates: mergeByUpdatedAt(localSnap.templates, remoteSnap.templates),
     };
   }
 
@@ -307,10 +421,11 @@
   async function bootstrap() {
     if (!(await isSignedIn()) || !global.S) return;
     try {
-      var merged = await reconcile(global.S);
-      if (merged && merged !== global.S) {
-        global.S = merged;
-        if (typeof global.save === 'function') global.save('strength-sync-pull');
+      // reconcile mutates S in place — always persist so calendar/templates land on disk
+      await reconcile(global.S);
+      if (typeof global.save === 'function') global.save('strength-sync-pull');
+      if (typeof global.render === 'function' && !(global.S && global.S.active)) {
+        try { global.render(); } catch (_) {}
       }
     } catch (_) {}
   }
@@ -318,9 +433,11 @@
   global.StrengthSync = {
     WRITER: WRITER,
     DOMAIN: DOMAIN,
+    SNAPSHOT_VERSION: SNAPSHOT_VERSION,
     snapshotFromState: snapshotFromState,
     applySnapshot: applySnapshot,
     mergeSnapshots: mergeSnapshots,
+    entityUpdatedAt: entityUpdatedAt,
     isSignedIn: isSignedIn,
     pushStrength: pushStrength,
     reconcile: reconcile,
