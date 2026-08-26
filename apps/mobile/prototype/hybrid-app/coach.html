@@ -9,73 +9,122 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
 :root{
-  --bg:#07090b;--panel:#12161a;--panel2:#181d22;--line:rgba(255,255,255,.08);
+  --color-copper:#d4a574;--color-copper-bright:#e8c49a;
+  --color-bg-deep:#07090b;--color-bg-panel:#12161a;--line:rgba(255,255,255,.08);
+  --bg:var(--color-bg-deep);--panel:var(--color-bg-panel);--panel2:#181d22;
   --text:#eef2f4;--muted:#9aa3ab;--dim:#6f7881;
-  --copper:#d4a574;--copper2:#e8c49a;--ok:#7dba9a;--warn:#d4a35b;
+  --copper:var(--color-copper);--copper2:var(--color-copper-bright);
+  --ok:#7dba9a;--warn:#d4a35b;
+  --coach-nav-bg:var(--color-bg-deep);--coach-header-bg:#0a0c0e;
+  --coach-main-bg:#f4f6f8;--coach-main-text:#1a2228;--coach-main-muted:#5c6874;
+  --coach-card-bg:#ffffff;--coach-card-border:#e2e8ef;
+  --coach-nav-active:rgba(212,165,116,.14);--coach-link:#3d7ea6;
   --font-body:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
   --font-display:"Barlow Condensed",ui-sans-serif,system-ui,sans-serif;
-  --tap:44px;
+  --tap:44px;--focus:0 0 0 3px rgba(232,196,154,.45);
 }
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100%}
-button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
-h1,h2,h3,p{margin:0}a{color:var(--copper2)}
-.eyebrow{color:var(--copper2);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
-.muted{color:var(--muted);font-size:13px;line-height:1.45}
-.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);font-weight:650}
+*{box-sizing:border-box}
+html,body{margin:0;font-family:var(--font-body);min-height:100%}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:var(--focus)}
+h1,h2,h3,p{margin:0}
+a{color:var(--coach-link)}
+.hidden{display:none !important}
+
+/* gate — dark */
+#gate{max-width:440px;margin:0 auto;padding:48px 20px;background:var(--bg);color:var(--text);min-height:100vh}
+.mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--copper);border-radius:11px;color:var(--copper2);font-weight:800;letter-spacing:.12em;font-size:12px;flex-shrink:0}
+.acct{display:grid;gap:8px;margin-top:18px}
+.acct button{text-align:left;color:var(--text)}
+#gate .btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);font-weight:650;color:var(--text)}
+#gate .btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
+#gate .field{margin-top:12px}
+#gate label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+#gate input{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#0d1114;color:var(--text)}
+#gate .muted{color:var(--muted);font-size:13px;line-height:1.45}
+
+/* shell — R0 */
+#coachApp.coach-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;background:var(--coach-main-bg)}
+.coach-side{display:flex;flex-direction:column;padding:16px 10px;background:var(--coach-nav-bg);border-right:1px solid var(--line);color:var(--text);min-height:100vh}
+.coach-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 12px}
+.coach-brand b{font-size:14px;letter-spacing:.02em}
+.coach-brand .sub{color:var(--dim);font-size:11px;margin-top:2px}
+.coach-side nav{display:grid;gap:2px;flex:1;margin-top:8px}
+.coach-side nav button,.coach-side .nav-soon{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--dim);text-align:left;font-size:13px;font-weight:500}
+.coach-side nav button.on{background:var(--coach-nav-active);color:var(--copper2)}
+.coach-side nav button:hover:not(.on):not(:disabled){background:rgba(255,255,255,.04);color:var(--text)}
+.coach-side nav button:disabled,.coach-side .nav-soon{opacity:.42;cursor:not-allowed}
+.nav-ico{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.coach-side-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:6px}
+.coach-side-foot button{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:6px 10px;border:0;border-radius:8px;background:transparent;color:var(--dim);font-size:12px;text-align:left}
+.coach-side-foot button:hover{color:var(--text);background:rgba(255,255,255,.04)}
+
+.coach-workspace{display:flex;flex-direction:column;min-width:0;min-height:100vh}
+.coach-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;min-height:56px;background:var(--coach-header-bg);border-bottom:1px solid var(--line);color:var(--text)}
+.coach-header-title{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coach-header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.coach-header-actions .btn-assist{min-height:36px;padding:8px 14px;border:0;border-radius:8px;background:var(--copper);color:#14110d;font-size:12px;font-weight:700;opacity:.45;cursor:not-allowed}
+.icon-btn{position:relative;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--dim);cursor:not-allowed;opacity:.45}
+.icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75}
+.icon-btn .badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--copper);color:#14110d;font-size:9px;font-weight:800;line-height:16px;text-align:center}
+.coach-avatar{width:32px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--copper2)}
+
+.coach-body{display:grid;flex:1;grid-template-columns:1fr}
+.coach-body.has-rail{grid-template-columns:1fr 280px}
+.coach-main{padding:24px 28px 48px;color:var(--coach-main-text);min-width:0}
+.coach-rail{padding:24px 16px;border-left:1px solid var(--coach-card-border);background:var(--coach-main-bg);min-width:0}
+
+/* light main components */
+.eyebrow{color:var(--copper);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.muted{color:var(--coach-main-muted);font-size:13px;line-height:1.45}
+.coach-main h1,.coach-main h2{color:var(--coach-main-text)}
+.coach-main h1{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.01em}
+.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--coach-card-border);border-radius:10px;background:var(--coach-card-bg);font-weight:650;color:var(--coach-main-text)}
 .btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
-.btn.ghost{background:transparent}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--coach-link)}
 .btn.block{width:100%}
 .btn.small{min-height:36px;padding:7px 10px;font-size:12px}
-input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#0d1114}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--coach-card-border);border-radius:10px;background:#fff;color:var(--coach-main-text)}
 textarea{min-height:88px;resize:vertical}
-label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+label{display:block;margin:0 0 6px;color:var(--coach-main-muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .field{margin-top:12px}
 .stack{display:grid;gap:12px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-.card{padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
-.pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-.hidden{display:none !important}
+.card{padding:16px;border:1px solid var(--coach-card-border);border-radius:12px;background:var(--coach-card-bg);box-shadow:0 1px 2px rgba(16,24,32,.04)}
+.pill{padding:4px 8px;border:1px solid var(--coach-card-border);border-radius:999px;color:var(--coach-main-muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:#f8fafc}
+.slice-stub{display:grid;place-items:center;min-height:280px;text-align:center;gap:8px}
+.slice-stub b{font-family:var(--font-display);font-size:22px}
 
-/* gate */
-#gate{max-width:440px;margin:0 auto;padding:48px 20px}
-.mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--copper);border-radius:11px;color:var(--copper2);font-weight:800;letter-spacing:.12em;font-size:12px}
-.acct{display:grid;gap:8px;margin-top:18px}
-.acct button{text-align:left}
-
-/* coach chrome */
-#coachApp{display:grid;grid-template-columns:220px 1fr 280px;min-height:100vh}
-.side{padding:18px 12px;border-right:1px solid var(--line);background:#0b0e11}
-.side nav{display:grid;gap:4px;margin-top:22px}
-.side button{display:flex;align-items:center;gap:10px;width:100%;min-height:var(--tap);padding:8px 10px;border:0;border-radius:10px;background:transparent;color:var(--dim);text-align:left}
-.side button.on{background:rgba(212,165,116,.12);color:var(--copper2)}
-.main{padding:22px 28px 48px;min-width:0}
-.rail{padding:22px 16px;border-left:1px solid var(--line);background:#0b0e11}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
 .metric{text-align:center;padding:10px 4px}
-.metric b{display:block;font-family:var(--font-display);font-size:22px;font-weight:600}
-.metric span{color:var(--dim);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.metric b{display:block;font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--coach-main-text)}
+.metric span{color:var(--coach-main-muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
 .ring{width:42px;height:42px;margin:0 auto 4px}
-.dateh{margin:22px 0 10px;font-family:var(--font-display);font-size:20px;letter-spacing:.02em}
-.presc{text-decoration:line-through;color:var(--dim)}
-.actual{color:var(--copper2)}
+.dateh{margin:22px 0 10px;font-family:var(--font-display);font-size:20px;letter-spacing:.02em;color:var(--coach-main-text)}
+.presc{text-decoration:line-through;color:var(--coach-main-muted)}
+.actual{color:#9a7348;font-weight:600}
 .grid7{display:grid;grid-template-columns:88px repeat(7,1fr);gap:6px;align-items:stretch}
-.cell{min-height:72px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;font-size:12px}
-.cell.empty{color:var(--dim)}
-.wk{display:grid;place-items:center;color:var(--muted);font-size:12px}
+.cell{min-height:72px;padding:8px;border:1px solid var(--coach-card-border);border-radius:10px;background:#fff;text-align:left;font-size:12px;color:var(--coach-main-text)}
+.cell.empty{color:var(--coach-main-muted)}
+.wk{display:grid;place-items:center;color:var(--coach-main-muted);font-size:12px}
 .cal{display:grid;gap:8px}
-.item{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-align:left;width:100%}
+.item{padding:12px;border:1px solid var(--coach-card-border);border-radius:12px;background:var(--coach-card-bg);text-align:left;width:100%;color:var(--coach-main-text)}
+
 @media(max-width:980px){
-  #coachApp{grid-template-columns:1fr}
-  .side{display:flex;gap:8px;overflow:auto;border-right:0;border-bottom:1px solid var(--line)}
-  .side nav{display:flex;margin:0}
-  .rail{display:none}
+  #coachApp.coach-shell{grid-template-columns:1fr}
+  .coach-side{flex-direction:row;flex-wrap:wrap;min-height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .coach-side nav{display:flex;flex-wrap:wrap;margin:0}
+  .coach-body.has-rail{grid-template-columns:1fr}
+  .coach-rail{display:none}
 }
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
 </head>
 <body>
 <div id="gate"></div>
-<div id="coachApp" class="hidden"></div>
+<div id="coachApp" class="coach-shell hidden"></div>
 <script src="./coach-loop.js"></script>
 <script>
 const L = window.CoachLoop;
@@ -108,11 +157,45 @@ function tryLogin(email, pass){
   ui.err = ''; persist(); render();
 }
 
+function navActive(key){
+  if (key === 'home') return ui.view === 'home';
+  if (key === 'athletes') return ui.view === 'athletes' || ui.view === 'athlete';
+  if (key === 'teams') return ui.view === 'teams' || ui.view === 'team';
+  if (key === 'library') return ['library','program','session'].includes(ui.view);
+  return false;
+}
+
+function headerTitle(){
+  const coachName = S.coach?.name || 'Dan';
+  if (ui.view === 'home') return `Welcome back, Coach ${coachName}`;
+  const titles = { athletes:'My Athletes', athlete:'My Athletes', teams:'My Teams', team:'My Teams', library:'Library', program:'Library', session:'Library', assign:'Assign' };
+  return titles[ui.view] || 'Coach Home';
+}
+
+function icon(name){
+  const paths = {
+    home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    users:'<path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    teams:'<path d="M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M18 11a2.5 2.5 0 1 0 0-5"/><path d="M6 11a2.5 2.5 0 1 0 0-5"/><path d="M12 13c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4Z"/>',
+    library:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
+    chart:'<path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-6"/>',
+    gym:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M12 18h.01"/>',
+    support:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 4.8 1 2 2 0 0 0-1 1.8V14"/><path d="M12 17h.01"/>',
+    msg:'<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>',
+    bell:'<path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  };
+  return `<svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true">${paths[name]||''}</svg>`;
+}
+
+function sliceStub(label, slice){
+  return `<div class="card slice-stub"><div><b>${esc(label)}</b><p class="muted">${esc(slice)} — layout stub for chrome review (R0)</p></div></div>`;
+}
+
 function ringSvg(done, total){
   const p = total ? done/total : 0;
   const c = 2*Math.PI*16;
   const dashn = `${p*c} ${c}`;
-  return `<svg class="ring" viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="16" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4"/><circle cx="21" cy="21" r="16" fill="none" stroke="#7dba9a" stroke-width="4" stroke-dasharray="${dashn}" stroke-linecap="round" transform="rotate(-90 21 21)"/></svg>`;
+  return `<svg class="ring" viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="16" fill="none" stroke="#e2e8ef" stroke-width="4"/><circle cx="21" cy="21" r="16" fill="none" stroke="#7dba9a" stroke-width="4" stroke-dasharray="${dashn}" stroke-linecap="round" transform="rotate(-90 21 21)"/></svg>`;
 }
 
 function metricRow(m){
@@ -161,193 +244,83 @@ function feedHtml(){
     const open = ui.expandAll || ui.expanded[s.id];
     const title = s.sessionTitle || s.name;
     return `<div class="card">
-      <div class="row"><div><div class="eyebrow">${esc(c.athlete?.name||'Athlete')}</div><h2>${esc(s.name)}</h2><div class="muted">${esc(title)}</div></div><span class="pill">${esc(s.status)}</span></div>
+      <div class="row"><div><div class="eyebrow">${esc(c.athlete?.name||'Athlete')}</div><h2 style="font-size:20px;margin-top:4px">${esc(s.name)}</h2><div class="muted">${esc(title)}</div></div><span class="pill">${esc(s.status)}</span></div>
       ${metricRow(c.metrics)}
       <div class="row" style="margin-top:12px"><button class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button></div>
       ${open?blockDetail(s):''}
       <div class="field"><label>Session note</label><textarea id="note-${s.id}">${esc(s.comment?.text||'')}</textarea>
       <button class="btn primary block" style="margin-top:8px" onclick="saveComment('${s.id}')">Save session note</button></div>
     </div>`;
-  }).join('')).join('') || `<div class="card muted">No logged sessions yet.</div>`;
+  }).join('')).join('') || `<div class="card muted">No logged sessions found — try a different filter.</div>`;
   const opts = athletes.map(a => `<option value="${a.id}" ${ui.filterAthlete===a.id?'selected':''}>${esc(a.name)}</option>`).join('');
-  return `<div class="topbar"><div><div class="eyebrow">Coach Home</div><h1>Welcome back, Coach ${esc(S.coach?.name||'Dan')}</h1></div>
-    <select onchange="ui.filterAthlete=this.value;render()"><option value="all">All athletes</option>${opts}</select></div>
+  return `<div class="topbar"><div><div class="eyebrow">Latest feed</div></div>
+    <select onchange="ui.filterAthlete=this.value;render()" aria-label="Filter athletes"><option value="all">All Athletes</option>${opts}</select></div>
     <label class="row" style="justify-content:flex-start;gap:8px;margin-bottom:8px"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()" style="width:auto"> Expand all cards</label>
     <div class="stack">${cards}</div>`;
 }
 
 function needsHtml(){
   const n = L.needsProgramming(S);
-  if (!n.athletes.length && !n.teams.length) return `<div class="card"><div class="eyebrow">Needs programming</div><h2>All clear</h2><p class="muted">Every athlete on hybrid S&C has a program assigned.</p></div>`;
-  return `<div class="card"><div class="eyebrow">Needs programming</div><h2>${n.athletes.length} athlete${n.athletes.length===1?'':'s'}</h2><p class="muted">${n.athletes.map(a=>esc(a.name)).join(', ')}</p></div>`;
+  if (!n.athletes.length && !n.teams.length) {
+    return `<div class="card"><div class="eyebrow">Needs programming</div><h2 style="font-size:20px;margin-top:6px">All clear</h2><p class="muted" style="margin-top:8px">There are currently no teams or athletes in need of programming.</p></div>`;
+  }
+  return `<div class="card"><div class="eyebrow">Needs programming</div><h2 style="font-size:20px;margin-top:6px">${n.athletes.length} athlete${n.athletes.length===1?'':'s'}</h2><p class="muted" style="margin-top:8px">${n.athletes.map(a=>esc(a.name)).join(', ')}</p></div>`;
 }
 
 function monthKey(){ return L.today().slice(0,7); }
 
-function athleteListHtml(){
-  return `<div class="eyebrow">Athletes</div><h1>Roster</h1><div class="stack" style="margin-top:16px">${(S.athletes||[]).map(a => {
-    const n = (S.sessions||[]).filter(s => s.athleteId===a.id).length;
-    return `<button class="item" onclick="go('athlete',{athleteId:'${a.id}'})"><div class="row"><b>${esc(a.name)}</b><span class="pill">${n} sessions</span></div></button>`;
-  }).join('')}</div>`;
-}
-
-function athleteCalHtml(){
-  const a = athleteBy(ui.athleteId); if (!a) return athleteListHtml();
-  const rows = L.calendarFor(S, a.id, monthKey());
-  return `<button class="btn ghost small" onclick="go('athletes')">← Athletes</button>
-    <div class="eyebrow" style="margin-top:12px">${esc(a.name)}</div><h1>Calendar</h1>
-    <div class="cal" style="margin-top:16px">${rows.map(s => `<button class="item" onclick="ui.sessionId='${s.id}';ui.expanded[s.id]=true;go('home')"><div class="row"><b>${esc(s.date)}</b><span class="pill">${esc(s.status)}</span></div><div class="muted">${esc(s.name)} · ${esc(s.sessionTitle||'')}</div></button>`).join('')||'<div class="muted">No sessions this month.</div>'}</div>`;
-}
-
-function teamListHtml(){
-  return `<div class="eyebrow">Teams</div><h1>Teams</h1><div class="stack" style="margin-top:16px">${(S.teams||[]).map(t => `<button class="item" onclick="go('team',{teamId:'${t.id}'})"><div class="row"><b>${esc(t.name)}</b><span class="pill">${(t.athleteIds||[]).length}</span></div></button>`).join('')}</div>`;
-}
-
-function teamCalHtml(){
-  const t = team(ui.teamId); if (!t) return teamListHtml();
-  const rows = L.teamCalendar(S, t.id, monthKey());
-  return `<button class="btn ghost small" onclick="go('teams')">← Teams</button>
-    <div class="eyebrow" style="margin-top:12px">hybrid S&C</div><h1>${esc(t.name)}</h1>
-    <p class="muted">${(t.athleteIds||[]).map(id => esc(athleteBy(id)?.name||id)).join(' · ')}</p>
-    <div class="cal" style="margin-top:16px">${rows.map(s => `<div class="item"><div class="row"><b>${esc(s.date)}</b><span class="pill">${esc(athleteBy(s.athleteId)?.name||'')}</span></div><div class="muted">${esc(s.name)}</div></div>`).join('')}</div>`;
-}
-
-function libraryHtml(){
-  const tabs = [['programs','Programs'],['sessions','Session templates'],['exercises','Exercises']];
-  const tabbar = `<div class="row">${tabs.map(([k,l]) => `<button class="btn small ${ui.lib===k?'primary':''}" onclick="ui.lib='${k}';render()">${l}</button>`).join('')}</div>`;
-  if (ui.lib==='exercises'){
-    return `${tabbar}<div class="stack" style="margin-top:16px">${(S.exercises||[]).map(e => `<div class="card"><b>${esc(e.name)}</b><div class="muted">${esc(e.category)}</div></div>`).join('')}</div>`;
-  }
-  if (ui.lib==='sessions'){
-    return `${tabbar}<div style="margin-top:12px"><button class="btn primary" onclick="newTemplate()">New session</button></div>
-      <div class="stack" style="margin-top:16px">${(S.templates||[]).map(t => `<button class="item" onclick="go('session',{templateId:'${t.id}'})"><b>${esc(t.name)}</b><div class="muted">${(t.blocks||[]).length} blocks</div></button>`).join('')}</div>`;
-  }
-  return `${tabbar}<div style="margin-top:12px"><button class="btn primary" onclick="newProgram()">New program</button></div>
-    <div class="stack" style="margin-top:16px">${(S.programs||[]).map(p => `<button class="item" onclick="go('program',{programId:'${p.id}'})"><div class="row"><b>${esc(p.name)}</b><span class="pill">${p.weeks} weeks</span></div></button>`).join('')}</div>`;
-}
-
-function newProgram(){
-  const p = L.emptyProgram('New program', 4);
-  S.programs.push(p); persist(); go('program', { programId:p.id });
-}
-function newTemplate(){
-  const t = L.makeTemplate({ name:'New session', blocks:[L.makeBlock({ heading:'A', type:'strength', category:'Strength/Power', scoring:'weight' })] });
-  S.templates.push(t); persist(); go('session', { templateId:t.id });
-}
-
-function setCell(week, day, templateId){
-  const p = prog(ui.programId); if (!p) return;
-  L.setProgramCell(p, week, day, templateId || null); persist(); render();
-}
-
-function programHtml(){
-  const p = prog(ui.programId); if (!p) return libraryHtml();
-  const head = `<div></div>` + L.DAY_NAMES.map((d,i) => `<div class="wk">Day ${i+1}<br>${d}</div>`).join('');
-  const rows = [];
-  for (let w=1; w<=p.weeks; w++){
-    rows.push(`<div class="wk">Week ${w}</div>`);
-    for (let d=1; d<=7; d++){
-      const id = p.cells[L.cellKey(w,d)] || '';
-      const t = tpl(id);
-      const opts = `<option value="">—</option>` + (S.templates||[]).map(x => `<option value="${x.id}" ${x.id===id?'selected':''}>${esc(x.name)}</option>`).join('');
-      rows.push(`<div class="cell ${t?'':'empty'}"><select onchange="setCell(${w},${d},this.value)">${opts}</select></div>`);
-    }
-  }
-  return `<button class="btn ghost small" onclick="go('library',{lib:'programs'})">← Library</button>
-    <div class="field"><label>Program name</label><input value="${esc(p.name)}" oninput="prog(ui.programId).name=this.value;persist()"></div>
-    <div class="row" style="margin:12px 0"><span class="muted">${p.weeks} weeks × days 1–7</span>
-      <button class="btn small" onclick="L.addProgramWeek(prog(ui.programId));persist();render()">Add week</button></div>
-    <div class="grid7">${head}${rows.join('')}</div>
-    <div class="btns" style="margin-top:16px"><button class="btn primary" onclick="go('assign')">Assign program → team</button></div>`;
-}
-
-function sessionHtml(){
-  const t = tpl(ui.templateId); if (!t) return libraryHtml();
-  const blocks = (t.blocks||[]).map((b,i) => {
-    const cats = L.BLOCK_CATEGORIES.map(c => `<option ${b.category===c?'selected':''}>${c}</option>`).join('');
-    const scoring = `<select onchange="tpl(ui.templateId).blocks[${i}].scoring=this.value;persist()"><option value="completion" ${b.scoring==='completion'?'selected':''}>For Completion</option><option value="weight" ${b.scoring==='weight'?'selected':''}>For Weight</option></select>`;
-    const ex = (b.exercises||[]).map((e,j) => `<div class="card" style="margin-top:8px">
-      <div class="field"><label>Exercise</label><input value="${esc(e.name)}" oninput="tpl(ui.templateId).blocks[${i}].exercises[${j}].name=this.value;persist()"></div>
-      <div class="row" style="align-items:end"><div class="field" style="flex:1"><label>Sets × reps</label><input value="${esc(e.sets+' x '+e.reps)}" onchange="parseSets(ui.templateId,${i},${j},this.value)"></div>
-      <div class="field" style="flex:1"><label>Load</label><input value="${esc(e.load)}" oninput="tpl(ui.templateId).blocks[${i}].exercises[${j}].load=this.value;persist()"></div>
-      <div class="field" style="flex:1"><label>Metric</label><select onchange="tpl(ui.templateId).blocks[${i}].exercises[${j}].metric=this.value;persist()">${L.METRICS.map(m=>`<option ${e.metric===m?'selected':''}>${m}</option>`).join('')}</select></div></div>
-      <div class="muted" style="margin-top:6px">${esc(b.letter||'')} · rest in notes if EMOM</div>
-    </div>`).join('');
-    return `<div class="card" style="margin-top:12px">
-      <div class="row"><b>${esc(b.letter||'')} ${esc(b.heading)}</b><label class="row" style="gap:6px;margin:0"><input type="checkbox" ${b.superset?'checked':''} style="width:auto" onchange="tpl(ui.templateId).blocks[${i}].superset=this.checked;tpl(ui.templateId).blocks=L.decorateBlocks(tpl(ui.templateId).blocks);persist();render()"> Superset D1/D2</label></div>
-      <div class="field"><label>Heading</label><input value="${esc(b.heading)}" oninput="tpl(ui.templateId).blocks[${i}].heading=this.value;persist()"></div>
-      <div class="row" style="align-items:end"><div class="field" style="flex:1"><label>Category</label><select onchange="tpl(ui.templateId).blocks[${i}].category=this.value;persist()">${cats}</select></div>
-      <div class="field" style="flex:1"><label>Scoring</label>${scoring}</div></div>
-      <div class="field"><label>Notes</label><textarea oninput="tpl(ui.templateId).blocks[${i}].notes=this.value;persist()">${esc(b.notes||'')}</textarea></div>
-      ${ex}
-      ${b.type==='strength'?`<button class="btn small" style="margin-top:8px" onclick="addEx(${i})">Add exercise</button>`:''}
-    </div>`;
-  }).join('');
-  return `<button class="btn ghost small" onclick="go('library',{lib:'sessions'})">← Library</button>
-    <div class="field"><label>Session name</label><input value="${esc(t.name)}" oninput="tpl(ui.templateId).name=this.value;persist()"></div>
-    <div class="field"><label>Session note</label><textarea oninput="tpl(ui.templateId).coachInstructions=this.value;persist()">${esc(t.coachInstructions||'')}</textarea></div>
-    ${blocks}
-    <div class="row" style="margin-top:12px;flex-wrap:wrap">
-      <button class="btn" onclick="addBlk('strength')">Add strength block</button>
-      <button class="btn" onclick="addBlk('conditioning')">Add conditioning</button>
-      <button class="btn" onclick="addBlk('text')">Add prep / recovery</button>
-    </div>`;
-}
-
-function parseSets(tid, bi, ei, raw){
-  const t = tpl(tid); const e = t.blocks[bi].exercises[ei];
-  const m = String(raw).match(/(\d+)\s*[x×]\s*(.+)/i);
-  if (m){ e.sets = Number(m[1]); e.reps = m[2].trim(); }
-  persist();
-}
-function addEx(i){
-  const t = tpl(ui.templateId);
-  t.blocks[i].exercises = t.blocks[i].exercises || [];
-  t.blocks[i].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8-10', load:'', metric:'Weight' }));
-  persist(); render();
-}
-function addBlk(type){
-  const t = tpl(ui.templateId);
-  const heading = type==='conditioning'?'Conditioning':(type==='text'?'Prep':'Strength');
-  t.blocks.push(L.makeBlock({ type, heading, category: type==='conditioning'?'Conditioning':(type==='text'?'Prep':'Strength/Power'), scoring: type==='strength'?'weight':'completion' }));
-  t.blocks = L.decorateBlocks(t.blocks);
-  persist(); render();
-}
-
-function assignHtml(){
-  const p = prog(ui.programId) || S.programs[0];
-  ui.programId = p?.id;
-  const teams = (S.teams||[]).map(t => `<option value="${t.id}" ${t.id===L.IDS.team?'selected':''}>${esc(t.name)}</option>`).join('');
-  const progs = (S.programs||[]).map(x => `<option value="${x.id}" ${x.id===ui.programId?'selected':''}>${esc(x.name)}</option>`).join('');
-  return `<div class="eyebrow">Assign</div><h1>Assign program → team</h1>
-    <div class="field"><label>Program</label><select id="asgProg" onchange="ui.programId=this.value">${progs}</select></div>
-    <div class="field"><label>Team</label><select id="asgTeam">${teams}</select></div>
-    <div class="field"><label>Week start (Monday)</label><input id="asgDate" type="date" value="${L.mondayOf(L.today())}"></div>
-    <button class="btn primary block" style="margin-top:16px" onclick="doAssign()">Assign to hybrid S&C</button>
-    <p class="muted" style="margin-top:10px">Creates dated athlete sessions from the week × day grid.</p>
-    <div id="asgMsg" class="muted" style="margin-top:8px"></div>`;
-}
-function doAssign(){
-  const programId = $('asgProg').value;
-  const teamId = $('asgTeam').value;
-  const startDate = $('asgDate').value;
-  const r = L.assignProgram(S, { programId, teamId, startDate });
-  persist();
-  $('asgMsg').textContent = `Assigned ${r.created.length} sessions from ${r.start}.`;
-}
+function athleteListHtml(){ return sliceStub('My Athletes', 'Slice S5'); }
+function athleteCalHtml(){ return sliceStub('Athlete calendar', 'Slice S7'); }
+function teamListHtml(){ return sliceStub('My Teams', 'Slice S4'); }
+function teamCalHtml(){ return sliceStub('Team calendar', 'Slice S6'); }
+function libraryHtml(){ return sliceStub('Library', 'Slice S2 / S9'); }
+function programHtml(){ return sliceStub('Program grid', 'Slice S3'); }
+function sessionHtml(){ return sliceStub('Session builder', 'Slice S3'); }
+function assignHtml(){ return sliceStub('Assign program', 'Slice S6'); }
 
 function coachChrome(body){
-  const nav = [['home','Coach Home'],['athletes','Athletes'],['teams','Teams'],['library','Library'],['assign','Assign']];
-  return `<aside class="side"><div class="row" style="justify-content:flex-start;gap:10px"><div class="mark">THE</div><div><b>THE Hybrid</b><div class="muted">Coach</div></div></div>
-    <nav>${nav.map(([k,l]) => `<button class="${ui.view===k || (k==='library'&&['program','session'].includes(ui.view)) || (k==='athletes'&&ui.view==='athlete') || (k==='teams'&&ui.view==='team') ?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</nav>
-    <button class="btn ghost block" style="margin-top:24px" onclick="signOut()">Sign out</button>
-    <button class="btn ghost block" style="margin-top:8px" onclick="resetDemo()">Reset demo data</button></aside>
-    <main class="main">${body}</main>
-    <aside class="rail">${needsHtml()}</aside>`;
+  const nav = [
+    ['home','Coach Home','home',false],
+    ['athletes','Athletes','users',false],
+    ['teams','Teams','teams',false],
+    ['library','Library','library',false],
+    ['analytics','Analytics','chart',true],
+    ['gym','Gym Tools','gym',true],
+  ];
+  const navHtml = nav.map(([k,l,ic,off]) => {
+    if (off) return `<span class="nav-soon" title="Coming soon">${icon(ic)}${esc(l)}</span>`;
+    return `<button type="button" class="${navActive(k)?'on':''}" onclick="go('${k}')">${icon(ic)}${esc(l)}</button>`;
+  }).join('');
+  const initials = String(S.coach?.name||'D').slice(0,1).toUpperCase();
+  const hasRail = ui.view === 'home';
+  return `<aside class="coach-side" aria-label="Coach navigation">
+    <div class="coach-brand"><div class="mark">TH</div><div><b>THE Hybrid</b><div class="sub">hybrid S&C · coach workspace</div></div></div>
+    <nav>${navHtml}</nav>
+    <div class="coach-side-foot">
+      <span class="nav-soon" title="Coming soon">${icon('support')}Support</span>
+      <button type="button" onclick="resetDemo()">Reset demo data</button>
+      <button type="button" onclick="signOut()">Sign out</button>
+    </div>
+  </aside>
+  <div class="coach-workspace">
+    <header class="coach-header">
+      <div class="coach-header-title">${esc(headerTitle())}</div>
+      <div class="coach-header-actions">
+        <button type="button" class="btn-assist" disabled title="Coming soon">Manage Assistants</button>
+        <span class="icon-btn" title="Coming soon">${icon('msg')}<span class="badge">·</span></span>
+        <span class="icon-btn" title="Coming soon">${icon('bell')}</span>
+        <div class="coach-avatar" title="Coach profile">${initials}</div>
+      </div>
+    </header>
+    <div class="coach-body ${hasRail?'has-rail':''}">
+      <main class="coach-main">${body}</main>
+      ${hasRail?`<aside class="coach-rail" aria-label="Programming status">${needsHtml()}</aside>`:''}
+    </div>
+  </div>`;
 }
 
 function gateHtml(){
-  return `<div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">THE</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace · local demo</div></div></div>
+  return `<div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">TH</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace · local demo</div></div></div>
     <h1 style="margin-top:28px;font-family:var(--font-display);font-size:40px">Sign in</h1>
     <p class="muted" style="margin-top:8px">Coach demo. Password: <b>demo</b></p>
     ${ui.err?`<div class="card" style="margin-top:12px;border-color:#d0897d">${esc(ui.err)}</div>`:''}
@@ -383,9 +356,7 @@ function render(){
 }
 
 window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
-window.saveComment=saveComment; window.toggleCard=toggleCard; window.setCell=setCell;
-window.newProgram=newProgram; window.newTemplate=newTemplate; window.parseSets=parseSets;
-window.addEx=addEx; window.addBlk=addBlk; window.doAssign=doAssign;
+window.saveComment=saveComment; window.toggleCard=toggleCard;
 render();
 </script>
 </body>
