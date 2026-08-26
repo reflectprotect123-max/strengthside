@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-engine-v80';
+const CACHE = 'the-hybrid-athlete-engine-v81';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -28,6 +28,7 @@ self.addEventListener('install', (event) => {
           './food-catalog.js',
           './food-catalog-au.json',
           './manifest.json',
+          './seeds/trainheroic-import.js',
           './seeds/trainheroic-import.json',
         ].map((url) => cache.add(url).catch(() => undefined)),
       ),

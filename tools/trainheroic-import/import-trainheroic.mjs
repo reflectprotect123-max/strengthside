@@ -301,7 +301,7 @@ function main(argv) {
   if (auditOnly) return;
 
   const payload = {
-    seedId: 'trainheroic-2026-08-25-v2',
+    seedId: 'trainheroic-2026-08-25-v3',
     backupVersion: 13,
     exportedAt: new Date().toISOString(),
     app: 'THE — The Hybrid Engine',

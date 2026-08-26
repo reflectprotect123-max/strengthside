@@ -34,7 +34,10 @@ fi
 if [[ -n "$SEED_SRC" && -f "$SEED_SRC" ]]; then
   mkdir -p "$REPO/apps/mobile/preview-site/seeds"
   cp -f "$SEED_SRC" "$REPO/apps/mobile/preview-site/seeds/trainheroic-import.json"
-  echo "upload-capgo-bundle: bundled TrainHeroic seed ($(wc -c < "$SEED_SRC") bytes)"
+  # Capgo WebView fetch of large JSON can hang; script-tag load is reliable.
+  node -e "const fs=require('fs');const p=process.argv[1];const j=fs.readFileSync(p,'utf8');fs.writeFileSync(p.replace(/\\.json\$/,'.js'),'window.__TRAINHEROIC_SEED__='+j+';\\n');" \
+    "$REPO/apps/mobile/preview-site/seeds/trainheroic-import.json"
+  echo "upload-capgo-bundle: bundled TrainHeroic seed ($(wc -c < "$SEED_SRC") bytes + .js wrapper)"
 fi
 
 cd "$ROOT"
