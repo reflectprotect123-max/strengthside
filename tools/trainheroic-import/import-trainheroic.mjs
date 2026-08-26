@@ -304,7 +304,7 @@ function main(argv) {
   if (auditOnly) return;
 
   const payload = {
-    seedId: withSessions ? 'trainheroic-2026-08-25-v5-full' : 'trainheroic-2026-08-25-v5-anchors',
+    seedId: withSessions ? 'trainheroic-2026-08-25-v6-full' : 'trainheroic-2026-08-25-v6-anchors',
     kind: withSessions ? 'full-history' : 'anchors-only',
     backupVersion: 13,
     exportedAt: new Date().toISOString(),
