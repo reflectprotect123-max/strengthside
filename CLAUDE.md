@@ -1,9 +1,13 @@
 # Claude Code operating contract — TheStrengthEngine
 
-This repository is the strength half of THE Hybrid System, split out of
-`reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026 and pointing at the
-**same Supabase project**. It owns strength prescription, logging, working-max and
-PR tracking, and progression. Nothing else.
+This repository is **the product**: the Hybrid HTML athlete app, strength
+prescription/logging, working-max and PR tracking, progression, and Capgo/dogfood
+ship. It was split out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on
+19 August 2026 and still points at the **same Supabase project**.
+
+`THE-HYBRID-ENGINE1` is a **schema stub only** (as of 26 August 2026): no athlete
+app, no coach product, no Expo, no Netlify coach deploy. Coach/ARC UI was deleted
+there on purpose — do not rebuild coaching in either repo.
 
 Read `handoff.md` before making changes — it records where this tree came from, what
 is built, and what is not.
@@ -42,8 +46,10 @@ keeps that from becoming a disaster:
   `strength_block_item`, `prescribed_set`, `prescribed_target`, `assigned_session`,
   `performed_set`, `performed_measurement`, `working_max_event`, `pr_event`,
   `coaching_note` — plus their RLS and the `embed-coaching-note` function.
-- **The hybrid repo owns everything else**, including `auth`, the coach/athlete
-  relationship model, and `coaches_athlete_anywhere`.
+- **The hybrid stub owns the rest of the shared ledger** (auth helpers, nutrition
+  domain history, legacy coach/ARC relationship SQL including
+  `coaches_athlete_anywhere`). Those objects stay in Postgres as **frozen legacy** —
+  not a coaching product to revive.
 - **Neither repo writes a migration against the other's tables.** Not "prefers not
   to" — a migration touching a table this list does not name is a contract
   violation, and both CLAUDE.md files say so.
@@ -76,7 +82,8 @@ else is the app.
   `apps/mobile/THE-Hybrid-App.html` (or the githack / Update button).
 - Expo Home, `prototype/home.html`, and `prototype/pwa/` were **deleted**.
   Do not recreate them. Do not run Expo to see the app.
-- Athlete product is the Hybrid HTML app only. Coach / ARC prototypes and `apps/web` were removed.
+- Athlete product is the Hybrid HTML app only. Coach / ARC prototypes and `apps/web`
+  were removed here; the hybrid companion repo no longer ships coach either.
 - `@hybrid/strength-engine` stays the pure decision layer. The HTML app is the
   only place athlete screens get built until a later, explicit rewrite.
 

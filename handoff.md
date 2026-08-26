@@ -1,7 +1,10 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 25 August 2026 (five systems wiring complete).**
+> **AUTHORITATIVE CHECKPOINT — 26 August 2026 (schema stub + no coaching).**
 > **Chat may be cleared after this write — treat this block as the full memory.**
+> **Product:** this repo only — Hybrid HTML athlete app + Capgo/dogfood.
+> **Companion `THE-HYBRID-ENGINE1`:** schema stub for shared Supabase non-strength
+> migrations. Coach/ARC/Expo/Netlify coach surfaces deleted there; do not rebuild.
 > **Five engines (locked):** Strength · Conditioning (The Engine) · Nutrition ·
 > Recovery · Coordinator. Not two dials. Visible logging only; Recovery and
 > Coordinator stay invisible brains.
@@ -29,20 +32,23 @@
    - **Coordinator:** silent `bootstrapSilent` / `applySilentReceipt` only —
      athlete **Coordinator weekly peek removed**
 4. **Invisible brains:** Recovery + Coordinator — no dials, no weekly peek.
-5. **Do not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI.
+5. **Do not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI —
+   including in `THE-HYBRID-ENGINE1` (that repo is schema-only).
 6. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump
    `LOCAL_BUILD` + SW `CACHE` together.
+7. Hybrid companion: keep shared-Supabase contract; treat coach SQL as frozen
+   legacy. The gut is pushed as `THE-HYBRID-ENGINE1` PR #28 (branch
+   `cursor/schema-stub-no-coach-e9c2`), verified green with `migrations-apply`.
 
 
 ---
 
 ## 1. Current project state
 
-Repo: `reflectprotect123-max/strengthside` (strength half of THE Hybrid
-System; **same Supabase** as the hybrid repo). **Ship branch: `main`**
-(`4c3cc4d` — five-engine docs via PR #42; polish + coach scrub **v59** at
-`03153e4`). Feature work branches off `main`. Do **not** treat old
-`cursor/engine-stage*` / Expo stacks as tip.
+Repo: `reflectprotect123-max/strengthside` — **the only product repo**.
+`THE-HYBRID-ENGINE1` is the shared-DB schema stub (no apps). **Ship branch:
+`main`**. Feature work branches off `main`. Do **not** treat old
+`cursor/engine-stage*` / Expo / hybrid coach stacks as tip.
 
 **Live athlete deploy (Netlify):** https://thehybridsystem.netlify.app/  
 (Old `papaya-cheesecake-059e06.netlify.app` is dead.)  
