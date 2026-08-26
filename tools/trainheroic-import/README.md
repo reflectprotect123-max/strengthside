@@ -14,11 +14,19 @@ unzip trainheroic-userData-export-*.zip -d /tmp/th-export
 # See what is recoverable without writing anything:
 node tools/trainheroic-import/import-trainheroic.mjs /tmp/th-export --audit-only
 
-# Write the importable backup:
+# Write the importable backup (default = anchors only):
 node tools/trainheroic-import/import-trainheroic.mjs /tmp/th-export --out ~/THE-trainheroic-import.json
+
+# Optional: include calendar workout history too
+node tools/trainheroic-import/import-trainheroic.mjs /tmp/th-export --with-sessions --out ~/THE-trainheroic-import.json
 ```
 
-Then in the app: **Settings → import backup**. The app writes a
+**Default is anchors only** — working maxes, PR events, and exercise names.
+No completed sessions are written into Calendar. Dogfood starts fresh;
+percentages resolve against the seeded working maxes. Pass `--with-sessions`
+only if you want the full history visible on Calendar.
+
+Then in the app: **Settings → import backup** (or Capgo OTA auto-seed). The app writes a
 recovery snapshot of your current state before merging, so the import is
 reversible by re-importing that snapshot.
 

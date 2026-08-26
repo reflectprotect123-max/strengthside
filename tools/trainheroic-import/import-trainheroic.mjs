@@ -221,10 +221,13 @@ function fmt(n) {
 function main(argv) {
   const dir = argv[0];
   if (!dir) {
-    console.error('usage: import-trainheroic.mjs <export-dir> [--out FILE] [--audit-only]');
+    console.error('usage: import-trainheroic.mjs <export-dir> [--out FILE] [--audit-only] [--with-sessions]');
     process.exit(2);
   }
   const auditOnly = argv.includes('--audit-only');
+  // Default: anchors only (working maxes + PRs + exercise names). Calendar
+  // history is opt-in via --with-sessions — dogfood starts from scratch.
+  const withSessions = argv.includes('--with-sessions');
   const outIdx = argv.indexOf('--out');
   const outFile = outIdx >= 0 ? argv[outIdx + 1] : join(process.cwd(), 'THE-trainheroic-import.json');
 
@@ -271,7 +274,7 @@ function main(argv) {
   console.log(`  ${fmt(stats.rowsSwapped)}  rows had reps/load transposed (corrected)`);
   console.log(`  ${fmt(stats.rowsNoDate)}  rows had no usable date (skipped)`);
   console.log('');
-  console.log(`  ${fmt(appSessions.length)}  sessions  ${sessions[0].date} → ${latestDate}`);
+  console.log(`  ${fmt(appSessions.length)}  sessions recoverable  ${sessions[0].date} → ${latestDate}${withSessions ? '' : '  (omitted — anchors only)'}`);
   console.log(`  ${fmt(exercises.length)}  exercises`);
   console.log(`  ${fmt(merged.length)}  exercise names merged from spelling variants`);
   console.log(`  ${fmt(stats.aliasesApplied)}  rows folded via naming rules + aliases`);
@@ -301,13 +304,14 @@ function main(argv) {
   if (auditOnly) return;
 
   const payload = {
-    seedId: 'trainheroic-2026-08-25-v4',
+    seedId: withSessions ? 'trainheroic-2026-08-25-v5-full' : 'trainheroic-2026-08-25-v5-anchors',
+    kind: withSessions ? 'full-history' : 'anchors-only',
     backupVersion: 13,
     exportedAt: new Date().toISOString(),
     app: 'THE — The Hybrid Engine',
     build: 'trainheroic-import',
     state: {
-      sessions: appSessions,
+      sessions: withSessions ? appSessions : [],
       exercises,
       templates: [],
       dailyCheckins: [],
@@ -316,8 +320,13 @@ function main(argv) {
   };
   writeFileSync(outFile, JSON.stringify(payload));
   console.log('');
-  console.log(`Wrote ${outFile}`);
-  console.log('Import it in the app: Settings → import backup.');
+  console.log(`Wrote ${outFile} (${payload.kind})`);
+  if (withSessions) {
+    console.log('Import it in the app: Settings → import backup.');
+  } else {
+    console.log('Anchors only — working maxes + PRs + exercises. No calendar sessions.');
+    console.log('Pass --with-sessions if you want the full history back.');
+  }
 }
 
 main(process.argv.slice(2));
