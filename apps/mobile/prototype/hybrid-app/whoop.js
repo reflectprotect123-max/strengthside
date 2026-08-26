@@ -165,7 +165,7 @@
     const msg = ui.message ? '<div class=meta style="margin-top:8px">' + esc(ui.message) + '</div>' : '';
     if (!w.email) {
       return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Sign in & sync</div>' +
-        '<div class=meta>One sign-in syncs strength, nutrition, WHOOP, and Concept2 Logbook (when already linked on this account).</div>' +
+        '<div class=meta>One sign-in syncs calendar sessions, templates, strength, nutrition, WHOOP, and Concept2 Logbook (when already linked). Use the same account on web and phone.</div>' +
         '<div class=field style="margin-top:12px"><label>Email</label><input id=whoopEmail type=email autocomplete=username placeholder="you@email.com"></div>' +
         '<div class=field><label>Password</label><input id=whoopPassword type=password autocomplete=current-password></div>' +
         '<div class=btns style="margin-top:12px"><button class="btn primary block" onclick="Whoop.signIn()"' + busy + '>Sign in & sync</button></div>' + msg + '</div>';
