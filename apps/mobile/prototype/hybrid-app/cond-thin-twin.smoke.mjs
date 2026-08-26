@@ -19,8 +19,8 @@ const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(dir, 'service-worker.js'), 'utf8');
 const adapterSrc = fs.readFileSync(path.join(dir, 'engine-adapter.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v86'"), 'LOCAL_BUILD v86');
-must(sw.includes('the-hybrid-athlete-engine-v86'), 'service worker cache v86');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v87'"), 'LOCAL_BUILD v86');
+must(sw.includes('the-hybrid-athlete-engine-v87'), 'service worker cache v86');
 must(html.includes('function formatMmSs(') && html.includes('function parseMmSs('), 'mm:ss helpers');
 must(html.includes('function condPlanLineBuilder(') && html.includes('function condPlanLineTask('), 'plan line helpers');
 must(html.includes('mph-efforts') && html.includes('mph-planline'), 'thin twin CSS/classes');
