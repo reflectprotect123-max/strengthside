@@ -104,7 +104,28 @@ body.minimal-ui .streamhero .lead, body.minimal-ui .programchips, body.minimal-u
 .loadheadline .meta{margin-top:4px;font-size:12px;line-height:1.45}
 .logcol-row select,.logcol-row input,.builder-colhead select,.builder-setrow input{width:100%;min-height:var(--tap-min);border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 10px}
 .builder-colhead{opacity:.95}
-.builder-colhead select,.mini-select{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--copper2);border:0;background:transparent;padding:0 0 4px;min-height:auto;width:100%}
+/* mini-select used to be transparent copper-on-dark — native <option> lists
+   were unreadable. Solid panel + explicit option colors. */
+.builder-colhead select,.mini-select,.logcol-kind{
+  font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--text);border:1px solid var(--line);background:var(--panel2);
+  padding:8px 10px;min-height:var(--tap-min);width:100%;border-radius:10px;
+  color-scheme:dark;
+}
+.builder-colhead select option,.mini-select option,.logcol-kind option{
+  background:var(--panel2);color:var(--text);
+}
+.ex-suggest{
+  display:grid;gap:6px;margin-top:8px;max-height:220px;overflow:auto;
+  padding:8px;border:1px solid var(--line2);border-radius:12px;background:var(--panel2);
+}
+.ex-suggest .searchpick{display:grid;gap:2px;background:var(--panel3)}
+.ex-suggest .searchpick b{color:var(--text);font-size:14px;font-weight:700}
+.ex-suggest .searchpick span{color:var(--muted);font-size:11px}
+.ex-suggest-empty{
+  margin-top:8px;padding:10px 11px;border:1px dashed var(--line2);border-radius:11px;
+  color:var(--muted);font-size:12px;line-height:1.4;background:var(--panel3);
+}
 .calibrationchip{display:inline-block;margin-top:8px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .setrow.last-set{border-left:2px solid var(--copper);padding-left:6px;margin-left:-8px}
 .setrow.last-set .mini{color:var(--copper2)}
@@ -169,7 +190,7 @@ body.minimal-ui .programchip{font-size:10px;padding:5px 7px}
 
 
 /* ========== Athlete UI polish — Track Dawn (tokens in single :root above) ========== */
-html{background:var(--bg-deep);scrollbar-color:#4a5560 var(--bg-deep);scrollbar-width:thin;scroll-padding-top:calc(var(--nav-h) + env(safe-area-inset-top))}
+html{background:var(--bg-deep);color-scheme:dark;scrollbar-color:#4a5560 var(--bg-deep);scrollbar-width:thin;scroll-padding-top:calc(var(--nav-h) + env(safe-area-inset-top))}
 body{
   min-height:100svh;
   color:var(--text);
@@ -854,7 +875,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v85';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v86';
 const TRAINHEROIC_SEED_URL='./seeds/trainheroic-import.json';
 const TRAINHEROIC_SEED_JS='./trainheroic-import.js';
 const TRAINHEROIC_SEED_JS_NESTED='./seeds/trainheroic-import.js';
@@ -1612,8 +1633,13 @@ function options(sel='',query=''){let q=String(query||'').toLowerCase();return g
 function category(name){return S.exercises.find(x=>x.name.toLowerCase()===String(name).toLowerCase())?.category||'Custom'}
 function refreshExercisePicker(q){let pick=$('exPick');if(!pick)return;pick.innerHTML=`<option value="">Choose or type custom</option>${options('',q)}`}
 function choosePicked(){let pick=$('exPick');if(pick?.value){if($('exName'))$('exName').value=pick.value;if($('exCat'))$('exCat').value=category(pick.value);if($('exNameVisible'))$('exNameVisible').value=pick.value;let t=$('builderLiftTitle');if(t)t.textContent=pick.value}}
+/* Custom suggest list — native <datalist> is unreadable on this dark theme. */
+function exerciseSuggestHits(query){let q=String(query||'').trim().toLowerCase();if(q.length<1)return[];return (S.exercises||[]).filter(x=>x.name.toLowerCase().includes(q)||String(x.category||'').toLowerCase().includes(q)).slice(0,12)}
+function exerciseSuggestHtml(query){let q=String(query||'').trim();if(!q)return '';let hits=exerciseSuggestHits(q);if(!hits.length)return `<div class=ex-suggest-empty>No library match — keep typing to save a custom lift.</div>`;return `<div class=ex-suggest role=listbox aria-label="Exercise suggestions">${hits.map(x=>`<button type=button class=searchpick role=option onclick='pickExerciseSuggest(${JSON.stringify(x.name)})'><b>${esc(x.name)}</b><span>${esc(x.category||'Custom')}</span></button>`).join('')}</div>`}
+function onExerciseNameInput(el){let v=el.value||'';if($('exName'))$('exName').value=v;if($('exCat'))$('exCat').value=category(v);let t=$('builderLiftTitle');if(t)t.textContent=v||'New lift';let box=$('exSuggest');if(box)box.innerHTML=exerciseSuggestHtml(v)}
+function pickExerciseSuggest(name){if($('exNameVisible'))$('exNameVisible').value=name;if($('exName'))$('exName').value=name;if($('exCat'))$('exCat').value=category(name);let t=$('builderLiftTitle');if(t)t.textContent=name;let box=$('exSuggest');if(box)box.innerHTML=''}
 function exerciseSheet(i,j=-1){let y=j>=0?draft.blocks[i].exercises[j]:{name:'',category:'',sets:3,reps:'8',restSec:120,coachNote:'',guidelines:{}},g=y.guidelines||{};if(window.LogColumns)LogColumns.beginSheet(y);let title=y.name||'New lift';sheet(`<div class=eyebrow>Strength</div><div class=task id=builderLiftTitle>${esc(title)}</div><div class=meta style="margin-top:4px">Builder · same layout as logging</div>
-<div class=field style="margin-top:14px"><label>Exercise name</label><input id=exNameVisible value="${esc(y.name)}" list=exNameOptions placeholder="Bench Press" oninput="$('exName').value=this.value;if($('exCat'))$('exCat').value=category(this.value);let t=$('builderLiftTitle');if(t)t.textContent=this.value||'New lift'"><datalist id=exNameOptions>${options(y.name)}</datalist><div class=helper>Enter once, or choose a suggestion from your exercise library.</div></div>
+<div class=field style="margin-top:14px"><label>Exercise name</label><input id=exNameVisible value="${esc(y.name)}" autocomplete=off placeholder="Bench Press" oninput="onExerciseNameInput(this)" onfocus="onExerciseNameInput(this)"><div id=exSuggest>${y.name?exerciseSuggestHtml(y.name):''}</div><div class=helper>Type to search your library, or enter a new custom name.</div></div>
 <input type=hidden id=exName value="${esc(y.name)}"><input type=hidden id=exCat value="${esc(y.category||category(y.name))}">
 <div class=field><label>Rest seconds</label><input id=exRest type=number min=0 value="${window.LogColumns?LogColumns.getRestSec():y.restSec}" onchange="window.LogColumns&&LogColumns.onRestChange(this.value);if($('exSets')){}"></div>
 <input type=hidden id=exSets value="${window.LogColumns?LogColumns.getSetCount():y.sets}">
