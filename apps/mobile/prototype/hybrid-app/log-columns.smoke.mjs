@@ -16,7 +16,11 @@ if (!html.includes('LogColumns.loggerCellsHtml')) throw new Error('logger column
 if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v86'")) throw new Error('expected cache v86');
 if (!html.includes('Rest seconds')) throw new Error('builder missing Rest seconds above twin');
 if (!html.includes('id=exNameVisible')) throw new Error('builder missing single exercise-name input');
-if (!html.includes('id=exNameOptions')) throw new Error('builder missing exercise suggestions datalist');
+if (!html.includes('id=exSuggest')) throw new Error('builder missing custom exercise suggest mount');
+if (!html.includes('function exerciseSuggestHtml')) throw new Error('builder missing exerciseSuggestHtml');
+if (html.includes('id=exNameOptions') || html.includes('list=exNameOptions')) {
+  throw new Error('native datalist should be removed (unreadable on dark theme)');
+}
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
 sandbox.window = sandbox;
