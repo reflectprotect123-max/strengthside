@@ -25,6 +25,9 @@ trainheroic-userData-export-*
 THE-trainheroic-import*.json
 apps/mobile/preview-site/seeds/
 apps/mobile/prototype/hybrid-app/seeds/
+apps/mobile/preview-site/trainheroic-import.js
+apps/mobile/**/trainheroic-import.js
+apps/mobile/**/trainheroic-import.json
 training_data.csv
 tmp/
 supabase/.temp/

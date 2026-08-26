@@ -301,7 +301,7 @@ function main(argv) {
   if (auditOnly) return;
 
   const payload = {
-    seedId: 'trainheroic-2026-08-25-v3',
+    seedId: 'trainheroic-2026-08-25-v4',
     backupVersion: 13,
     exportedAt: new Date().toISOString(),
     app: 'THE — The Hybrid Engine',
@@ -314,7 +314,7 @@ function main(argv) {
       strengthState: { workingMaxEvents, prEvents, loadHints: {} },
     },
   };
-  writeFileSync(outFile, JSON.stringify(payload, null, 2));
+  writeFileSync(outFile, JSON.stringify(payload));
   console.log('');
   console.log(`Wrote ${outFile}`);
   console.log('Import it in the app: Settings → import backup.');

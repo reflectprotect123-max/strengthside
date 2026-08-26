@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-engine-v81';
+const CACHE = 'the-hybrid-athlete-engine-v82';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -30,6 +30,7 @@ self.addEventListener('install', (event) => {
           './manifest.json',
           './seeds/trainheroic-import.js',
           './seeds/trainheroic-import.json',
+          './trainheroic-import.js',
         ].map((url) => cache.add(url).catch(() => undefined)),
       ),
     ),
