@@ -18,10 +18,16 @@ for (const needle of [
   'Choose exercise',
   'New session',
   'block-card',
+  'engine-box',
+  'Effort',
+  'Steady-state',
 ]) {
   if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);
 }
 if (!src.includes('Uncategorized')) throw new Error('coach-loop.js missing Uncategorized category');
+if (!src.includes('COND_EFFORTS')) throw new Error('coach-loop.js missing COND_EFFORTS');
+if (!src.includes('applyCondBuilderToBlock')) throw new Error('coach-loop.js missing applyCondBuilderToBlock');
+if (!src.includes('condPlanLineBlock')) throw new Error('coach-loop.js missing condPlanLineBlock');
 
 const sandbox = { console, module: { exports: {} }, globalThis: {} };
 sandbox.globalThis = sandbox;
@@ -54,4 +60,24 @@ const session = L.instantiateSession(t, { athleteId: 'ath-1', date: '2026-08-27'
 if (!session.blocks.length) throw new Error('instantiateSession empty');
 if (session.coachInstructions !== 'Move well.') throw new Error('coach instructions copy');
 
-console.log('coach-session-builder: ok', { blocks: t.blocks.length, letter: t.blocks[0].letter });
+const cond = L.makeBlock({
+  type: 'conditioning',
+  condFmt: 'intervals',
+  effort: 'medium',
+  modality: 'Bike',
+  rounds: 4,
+  workSec: 240,
+  restSec: 180,
+});
+if (cond.effort !== 'medium') throw new Error('cond effort');
+if (cond.condFmt !== 'intervals') throw new Error('cond fmt');
+const plan = L.condPlanLineBlock(cond);
+if (!plan.includes('Bike') || !plan.includes('Medium') || !plan.includes('4×')) {
+  throw new Error('plan line: ' + plan);
+}
+L.applyCondBuilderToBlock(cond, { effort: 'hard', modality: 'Rower' });
+if (cond.effort !== 'hard' || cond.modality !== 'Rower') throw new Error('applyCondBuilder patch');
+if (L.formatMmSs(240) !== '4:00') throw new Error('formatMmSs');
+if (L.parseMmSs('3:00') !== 180) throw new Error('parseMmSs');
+
+console.log('coach-session-builder: ok', { blocks: t.blocks.length, letter: t.blocks[0].letter, plan });

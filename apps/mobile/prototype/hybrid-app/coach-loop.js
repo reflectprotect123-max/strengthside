@@ -23,6 +23,19 @@
   ];
   const SCORING = ['completion', 'weight'];
   const METRICS = ['Reps', 'Weight', 'Time', 'Distance', 'RPE', 'Watts'];
+  const COND_FORMATS = [
+    { key: 'steady', name: 'Steady-state', type: 'easy' },
+    { key: 'intervals', name: 'Intervals', type: 'intervals', rounds: 4, workSec: 240, restSec: 180 },
+    { key: 'tempo', name: 'Tempo', type: 'intervals', rounds: 10, workSec: 15, restSec: 60 },
+    { key: 'free', name: 'Free run', type: 'easy' },
+    { key: 'custom', name: 'Custom', type: 'custom', rounds: 6, workSec: 40, restSec: 80 },
+  ];
+  const COND_MODALITIES = ['Run', 'Walk', 'Bike', 'Rower', 'Ski erg', 'Circuit', 'Other'];
+  const COND_EFFORTS = [
+    { key: 'easy', name: 'Easy', zoneKey: 'recovery', rpe: '3–4', cue: 'full sentences' },
+    { key: 'medium', name: 'Medium', zoneKey: 'aerobic', rpe: '5–7', cue: 'short sentences' },
+    { key: 'hard', name: 'Hard', zoneKey: 'anaerobic', rpe: '8–9.5', cue: 'a few words at a time' },
+  ];
 
   const IDS = {
     coachAccount: 'acct-dan',
@@ -331,6 +344,109 @@
     return ex;
   }
 
+  function formatMmSs(sec) {
+    sec = Math.max(0, Math.round(num(sec) || 0));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function parseMmSs(raw) {
+    raw = String(raw == null ? '' : raw).trim();
+    if (!raw) return 0;
+    if (/^\d+$/.test(raw)) return Math.max(0, num(raw));
+    const m = raw.match(/^(\d+)\s*:\s*(\d{1,2})$/);
+    if (m) return Math.max(0, num(m[1]) * 60 + Math.min(59, num(m[2])));
+    return Math.max(0, Math.round(num(raw) || 0));
+  }
+
+  function condFormatMeta(key) {
+    return COND_FORMATS.find((f) => f.key === key) || COND_FORMATS[0];
+  }
+
+  function condEffortMeta(key) {
+    return COND_EFFORTS.find((e) => e.key === key) || COND_EFFORTS[0];
+  }
+
+  function fmtNeedsIntervalFields(fmt) {
+    fmt = typeof fmt === 'string' ? condFormatMeta(fmt) : fmt || condFormatMeta('steady');
+    return fmt.key === 'intervals' || fmt.key === 'tempo' || fmt.key === 'custom';
+  }
+
+  function condIntervalTotalMin(b) {
+    const rounds = Math.max(1, num(b.rounds) || 1);
+    const work = Math.max(0, num(b.workSec) || 0);
+    const rest = Math.max(0, num(b.restSec) || 0);
+    return Math.round(((rounds * (work + rest)) / 60) * 10) / 10;
+  }
+
+  function condPlanLineFromParts(opts) {
+    opts = opts || {};
+    const mod = opts.modality || '—';
+    const effort = condEffortMeta(opts.effort || 'easy');
+    const fmtKey = opts.fmt || opts.condFmt || 'steady';
+    const fmt = condFormatMeta(fmtKey);
+    const intervalish =
+      fmtNeedsIntervalFields(fmt) ||
+      (num(opts.workSec) > 0 &&
+        (num(opts.rounds) > 1 || fmtKey === 'intervals' || fmtKey === 'tempo' || fmtKey === 'custom'));
+    if (intervalish) {
+      return `${mod} · ${opts.rounds || 1}×${formatMmSs(opts.workSec)} / ${formatMmSs(opts.restSec)} · ${effort.name}`;
+    }
+    const mins =
+      opts.minutes != null && opts.minutes !== ''
+        ? opts.minutes
+        : opts.targetDurationMin || opts.timeCapMin || '—';
+    return `${mod} · ${mins} min · ${effort.name}`;
+  }
+
+  function condPlanLineBlock(block) {
+    if (!block) return '';
+    return condPlanLineFromParts({
+      modality: block.modality,
+      effort: block.effort || 'easy',
+      fmt: block.condFmt || 'steady',
+      rounds: block.rounds,
+      workSec: block.workSec,
+      restSec: block.restSec,
+      minutes: block.targetDurationMin || block.timeCapMin,
+      targetDurationMin: block.targetDurationMin,
+      timeCapMin: block.timeCapMin,
+    });
+  }
+
+  function applyCondBuilderToBlock(block, patch) {
+    patch = patch || {};
+    const fmt = condFormatMeta(patch.condFmt || block.condFmt || 'steady');
+    const effort = condEffortMeta(patch.effort || block.effort || 'easy');
+    const modality = patch.modality != null ? patch.modality : block.modality || 'Bike';
+    const interval = fmtNeedsIntervalFields(fmt);
+    let minutes = patch.targetDurationMin != null ? num(patch.targetDurationMin) : num(block.targetDurationMin) || 20;
+    let rounds = patch.rounds != null ? num(patch.rounds) : num(block.rounds) || fmt.rounds || 1;
+    let workSec = patch.workSec != null ? num(patch.workSec) : num(block.workSec) || fmt.workSec || 0;
+    let restSec = patch.restSec != null ? num(patch.restSec) : num(block.restSec) || fmt.restSec || 0;
+    if (interval && !workSec) workSec = fmt.workSec || 240;
+    if (interval && restSec == null) restSec = fmt.restSec || 180;
+    if (interval) minutes = condIntervalTotalMin({ rounds, workSec, restSec });
+    block.type = 'conditioning';
+    block.category = 'Conditioning';
+    block.scoring = 'completion';
+    block.heading = patch.heading != null ? patch.heading : block.heading || fmt.name;
+    block.condFmt = fmt.key;
+    block.conditioningType = fmt.type;
+    block.effort = effort.key;
+    block.modality = modality;
+    block.targetDurationMin = minutes;
+    block.timeCapMin = minutes;
+    block.rounds = Math.max(1, rounds || 1);
+    block.workSec = Math.max(0, workSec || 0);
+    block.restSec = Math.max(0, restSec || 0);
+    if (patch.targetWatts != null) block.targetWatts = patch.targetWatts;
+    if (patch.notes != null) block.notes = patch.notes;
+    block.planLine = condPlanLineBlock(block);
+    return block;
+  }
+
   function makeBlock(partial) {
     const block = {
       id: partial.id || uid('blk'),
@@ -345,7 +461,16 @@
       conditioningType: partial.conditioningType || '',
       modality: partial.modality || '',
       targetDurationMin: partial.targetDurationMin || 0,
+      timeCapMin: partial.timeCapMin || partial.targetDurationMin || 0,
+      effort: partial.effort || '',
+      condFmt: partial.condFmt || '',
+      rounds: partial.rounds == null ? 1 : partial.rounds,
+      workSec: partial.workSec || 0,
+      restSec: partial.restSec || 0,
+      targetWatts: partial.targetWatts == null ? '' : partial.targetWatts,
+      planLine: partial.planLine || '',
     };
+    if (block.type === 'conditioning') applyCondBuilderToBlock(block);
     return block;
   }
 
@@ -711,23 +836,25 @@
       blocks: [
         makeBlock({
           type: 'conditioning',
-          heading: 'Row Erg',
+          heading: 'Steady-state',
           category: 'Conditioning',
           scoring: 'completion',
-          conditioningType: 'easy',
+          condFmt: 'steady',
+          effort: 'easy',
           modality: 'Rower',
           targetDurationMin: 20,
-          notes: '20:00 easy aerobic row. Smooth first 2 minutes, then a pace you could hold while talking. Log duration, metres, and average watts.',
+          notes: 'Smooth first 2 minutes, then a pace you could hold while talking. Log duration, metres, and average watts.',
         }),
         makeBlock({
           type: 'conditioning',
-          heading: 'Fan Bike',
+          heading: 'Steady-state',
           category: 'Conditioning',
           scoring: 'completion',
-          conditioningType: 'easy',
+          condFmt: 'steady',
+          effort: 'easy',
           modality: 'Bike',
           targetDurationMin: 10,
-          notes: '10:00 easy fan bike to flush. Nasal breathing if possible.',
+          notes: 'Easy fan bike to flush. Nasal breathing if possible.',
         }),
       ],
     });
@@ -832,6 +959,11 @@
       ],
       exercises: coreExercises(),
       templates,
+      nutrition: {
+        targetsByAthlete: {},
+        mealDays: [],
+        checkInReviews: [],
+      },
       programs: [
         {
           id: IDS.program,
@@ -890,7 +1022,14 @@
       const raw = storage.getItem(STORAGE);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.version === 1 && Array.isArray(parsed.accounts)) return parsed;
+        if (parsed && parsed.version === 1 && Array.isArray(parsed.accounts)) {
+          parsed.nutrition = parsed.nutrition || {
+            targetsByAthlete: {},
+            mealDays: [],
+            checkInReviews: [],
+          };
+          return parsed;
+        }
       }
     } catch (e) {
       /* fall through to seed */
@@ -946,6 +1085,9 @@
     BLOCK_CATEGORIES,
     SCORING,
     METRICS,
+    COND_FORMATS,
+    COND_MODALITIES,
+    COND_EFFORTS,
     IDS,
     uid,
     clone,
@@ -965,6 +1107,15 @@
     isWorkBlock,
     letterBlocks,
     decorateBlocks,
+    formatMmSs,
+    parseMmSs,
+    condFormatMeta,
+    condEffortMeta,
+    fmtNeedsIntervalFields,
+    condIntervalTotalMin,
+    condPlanLineFromParts,
+    condPlanLineBlock,
+    applyCondBuilderToBlock,
     volumeKg,
     volumeFromRows,
     prescribedTonnage,
