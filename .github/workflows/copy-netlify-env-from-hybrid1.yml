@@ -28,6 +28,11 @@ jobs:
           TO_SITE=thehybridsystem
           APP_BASE_URL=https://thehybridsystem.netlify.app
 
+          # Run CLI from preview-site so it does not scan the pnpm monorepo
+          # and abort with "multiple projects detected".
+          bash apps/mobile/sync-hybrid-html.sh
+          cd apps/mobile/preview-site
+
           echo "Cloning env: $FROM_SITE → $TO_SITE (no values printed)"
           npx --yes netlify-cli env:clone \
             --auth="$NETLIFY_AUTH_TOKEN" \
@@ -45,8 +50,6 @@ jobs:
             --force
 
           echo "Redeploying athlete site so functions load env"
-          bash apps/mobile/sync-hybrid-html.sh
-          cd apps/mobile/preview-site
           npm install --omit=dev --no-fund --no-audit --prefix .
           npx --yes netlify-cli deploy --prod \
             --auth="$NETLIFY_AUTH_TOKEN" \
