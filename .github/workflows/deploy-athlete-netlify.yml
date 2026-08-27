@@ -1,5 +1,7 @@
-# Deploy athlete HTML app + integration proxy functions to Netlify.
-# Requires repo secrets: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID (thehybridsystem site).
+# Deploy athlete HTML app + integration functions to Netlify.
+# Requires repo secret: NETLIFY_AUTH_TOKEN.
+# Site defaults to slug "thehybridsystem" (confirmed from successful deploy logs).
+# Optional: NETLIFY_SITE_ID — UUID or slug. If set to a URL by mistake, ignored.
 name: Deploy athlete Netlify
 
 on:
@@ -28,13 +30,30 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
           set -euo pipefail
-          if [[ -z "${NETLIFY_AUTH_TOKEN:-}" || -z "${NETLIFY_SITE_ID:-}" ]]; then
-            echo "::warning::NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID not set — skipping Netlify deploy"
+          if [[ -z "${NETLIFY_AUTH_TOKEN:-}" ]]; then
+            echo "::warning::NETLIFY_AUTH_TOKEN not set — skipping Netlify deploy"
             exit 0
           fi
+          # Prefer secret when it is a real site id/slug. A common footgun is
+          # pasting APP_BASE_URL into NETLIFY_SITE_ID — reject that and use the
+          # known athlete site slug from prior successful deploys.
+          SITE="${NETLIFY_SITE_ID:-thehybridsystem}"
+          if [[ "$SITE" == http* || "$SITE" == *netlify.app* || "$SITE" == */* ]]; then
+            echo "::warning::NETLIFY_SITE_ID looks like a URL/path ('${SITE:0:32}…'); using slug thehybridsystem"
+            SITE=thehybridsystem
+          fi
+          if [[ -z "$SITE" ]]; then
+            SITE=thehybridsystem
+          fi
+          echo "Deploying to Netlify site: $SITE"
+          # Deploy FROM preview-site so netlify-cli does not scan the pnpm
+          # monorepo packages and abort with "multiple projects detected".
+          # WHOOP/Concept2 are thin proxies to hybrid1 — no @netlify/blobs install.
+          cd apps/mobile/preview-site
           npx --yes netlify-cli deploy --prod \
-            --site="$NETLIFY_SITE_ID" \
-            --dir=apps/mobile/preview-site \
-            --functions=apps/mobile/preview-site/netlify/functions \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$SITE" \
+            --dir=. \
+            --functions=netlify/functions \
             --no-build \
             --message "deploy athlete app (${GITHUB_SHA::7})"

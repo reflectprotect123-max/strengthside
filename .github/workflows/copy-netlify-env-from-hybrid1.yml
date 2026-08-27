@@ -1,0 +1,107 @@
+# Copy Netlify env from hybrid1 site → live athlete site (thehybridsystem).
+# Lists accessible sites first so we can resolve the real hybrid1 project id/slug.
+name: Copy Netlify env from hybrid1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/copy-netlify-env-from-hybrid1.yml'
+
+jobs:
+  copy-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone env hybrid1 → thehybridsystem + fix APP_BASE_URL + deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          # Optional override: paste hybrid1 Site ID UUID into this secret
+          HYBRID1_NETLIFY_SITE_ID: ${{ secrets.HYBRID1_NETLIFY_SITE_ID }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${NETLIFY_AUTH_TOKEN:-}" ]]; then
+            echo "::error::NETLIFY_AUTH_TOKEN missing"
+            exit 1
+          fi
+          TO_SITE=thehybridsystem
+          APP_BASE_URL=https://thehybridsystem.netlify.app
+
+          bash apps/mobile/sync-hybrid-html.sh
+          cd apps/mobile/preview-site
+
+          echo "Listing Netlify sites visible to this token (name / url / id only)"
+          npx --yes netlify-cli api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json
+          node -e '
+            const sites = JSON.parse(require("fs").readFileSync("/tmp/sites.json","utf8"));
+            const rows = (Array.isArray(sites) ? sites : []).map(s => ({
+              name: s.name, url: s.ssl_url || s.url, id: s.id
+            }));
+            for (const r of rows) console.log(`${r.name}\t${r.url}\t${r.id}`);
+            const from =
+              process.env.HYBRID1_NETLIFY_SITE_ID ||
+              rows.find(r => r.name === "thehybridengine1")?.id ||
+              rows.find(r => /hybridengine1/i.test(r.name || "") || /thehybridengine1/i.test(r.url || ""))?.id ||
+              "";
+            const to =
+              rows.find(r => r.name === "thehybridsystem")?.id ||
+              rows.find(r => /thehybridsystem/i.test(r.url || ""))?.id ||
+              "";
+            if (!from) {
+              console.error("Could not resolve hybrid1 site id.");
+              process.exit(2);
+            }
+            if (!to) {
+              console.error("Could not resolve thehybridsystem site id.");
+              process.exit(3);
+            }
+            console.log("FROM_SITE_RESOLVED=" + from);
+            console.log("TO_SITE_RESOLVED=" + to);
+            require("fs").writeFileSync("/tmp/from_site.txt", from);
+            require("fs").writeFileSync("/tmp/to_site.txt", to);
+          '
+
+          FROM_SITE="$(cat /tmp/from_site.txt)"
+          TO_SITE="$(cat /tmp/to_site.txt)"
+          echo "Cloning env: $FROM_SITE → $TO_SITE (no values printed)"
+          npx --yes netlify-cli env:clone \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --from="$FROM_SITE" \
+            --to="$TO_SITE" \
+            --force
+
+          echo "Setting APP_BASE_URL on athlete site to production origin"
+          # Existing vars (post-clone) cannot update context+scope in one call.
+          npx --yes netlify-cli env:set APP_BASE_URL "$APP_BASE_URL" \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$TO_SITE" \
+            --context production \
+            --force
+
+          echo "Redeploying athlete site so functions load env"
+          npm install --omit=dev --no-fund --no-audit --prefix .
+          npx --yes netlify-cli deploy --prod \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$TO_SITE" \
+            --dir=. \
+            --functions=netlify/functions \
+            --no-build \
+            --message "env clone from hybrid1 + APP_BASE_URL fix (${GITHUB_SHA::7})"
+
+          echo "Listing KEY NAMES only on athlete site"
+          npx --yes netlify-cli env:list \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$TO_SITE" \
+            --context production \
+            --json | node -e '
+              let s=""; process.stdin.on("data",d=>s+=d); process.stdin.on("end",()=>{
+                const j=JSON.parse(s);
+                const keys=Object.keys(j||{}).sort();
+                console.log("env keys:", keys.join(", ")||"(none)");
+                for (const need of ["APP_BASE_URL","APP_SESSION_SECRET","WHOOP_CLIENT_ID","WHOOP_CLIENT_SECRET","SUPABASE_URL"]) {
+                  console.log(need + ":", keys.includes(need) ? "present" : "MISSING");
+                }
+              });
+            '

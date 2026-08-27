@@ -4,6 +4,9 @@
  * The athlete HTML (thehybridsystem) cannot call hybrid cross-origin —
  * those functions do not emit CORS headers. Tokens and WHOOP OAuth still
  * live only on hybrid; we just forward Authorization and the path.
+ *
+ * Restored after a bad cutover that copied real WHOOP handlers onto
+ * thehybridsystem (env/blobs hell). hybrid1 WHOOP is still live.
  */
 const HYBRID_ORIGIN = 'https://thehybridengine1.netlify.app';
 

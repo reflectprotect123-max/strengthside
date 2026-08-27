@@ -49,15 +49,27 @@ async function mockFetch(url, opts) {
   const u = String(url);
   fetchCalls.push(u);
   if (u.includes('food-catalog-au.json')) {
-    return { ok: true, json: async () => JSON.parse(catalogJson) };
+    return { ok: true, headers: { get: () => 'application/json' }, json: async () => JSON.parse(catalogJson) };
   }
-  if (u.includes('/cgi/search.pl')) {
-    return { ok: true, json: async () => offSearchHit };
+  if (u.includes('/cgi/search.pl') || u.includes('openfoodfacts') && u.includes('search')) {
+    return { ok: true, headers: { get: () => 'application/json' }, json: async () => offSearchHit };
   }
-  if (u.includes('/api/v2/product/')) {
-    return { ok: true, json: async () => offProductHit };
+  if (u.includes('/api/v2/product/') || (u.includes('off-proxy') && u.includes('product'))) {
+    return {
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => offProductHit,
+    };
   }
-  return { ok: false, status: 404, json: async () => ({}) };
+  if (u.includes('off-proxy')) {
+    return { ok: true, headers: { get: () => 'application/json' }, json: async () => offSearchHit };
+  }
+  return {
+    ok: false,
+    status: 404,
+    headers: { get: () => 'application/json' },
+    json: async () => ({}),
+  };
 }
 
 const sandbox = { console, fetch: mockFetch };
@@ -89,9 +101,6 @@ if (!live.length || !/weet/i.test(live[0].name)) throw new Error('searchLive wee
 if (!String(live[0].id).startsWith('off-')) throw new Error('live id must be off-*');
 if (!fetchCalls.some((u) => u.includes('search.pl') && u.includes('australia'))) {
   throw new Error('searchLive must hit OFF AU search');
-}
-if (!fetchCalls.some((u) => /User-Agent/i.test(JSON.stringify(fetchCalls)) || true)) {
-  // User-Agent checked via implementation contract below
 }
 
 const liveBc = await F.lookupBarcodeLive('9300657009999');

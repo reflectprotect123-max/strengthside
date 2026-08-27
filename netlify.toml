@@ -1,4 +1,5 @@
 # Athlete app. Functions + static site live under preview-site.
+# WHOOP/Concept2 are thin proxies to thehybridengine1; nutrition off-proxy is local.
 [build]
   base = "apps/mobile/preview-site"
   publish = "."

@@ -19,6 +19,11 @@ if (!whoop.includes('syncAll,')) throw new Error('Whoop export missing syncAll')
 if (!whoop.includes('cloudStatusLines')) throw new Error('Account cloud status lines missing');
 if (!whoop.includes('Concept2.syncIfLinked')) throw new Error('syncAll missing Concept2.syncIfLinked');
 if (!whoop.includes('Syncing Concept2')) throw new Error('syncAll missing Concept2 progress message');
+if (whoop.includes('global.S = global.S || {}')) throw new Error('Whoop.st must not invent stub window.S');
+if (!whoop.includes('whoopFallback')) throw new Error('Whoop.st missing whoopFallback (no stub)');
+if (!whoop.includes('CoachSync.schedulePull')) throw new Error('syncAll missing CoachSync.schedulePull');
+if (!whoop.includes('StrengthSync.getStatus')) throw new Error('syncAll should surface StrengthSync.getStatus errors');
+if (!html.includes("Object.defineProperty(window,'S'")) throw new Error('index.html must bridge window.S to let S');
 
 const concept2 = readFileSync(join(dir, 'concept2.js'), 'utf8');
 if (!concept2.includes('async function syncIfLinked')) throw new Error('Concept2.syncIfLinked missing');
@@ -37,7 +42,7 @@ if (!html.includes('ATH_CHECKIN_STEPS')) throw new Error('ATH_CHECKIN_STEPS miss
 if (!html.includes('function athCheckinAnswer')) throw new Error('athCheckinAnswer missing');
 if (!html.includes('checkin-choice')) throw new Error('checkin-choice UI missing');
 if (html.includes("athSleepSlider('sleepQuality'")) throw new Error('old sleepQuality slider still in check-in card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v88'")) throw new Error('expected cache v86');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v92'")) throw new Error('expected cache v90');
 if (html.includes("loadStarter('Full Body B')")) throw new Error('Full Body B starter button still present');
 if (html.includes("loadStarter('Full Body C')")) throw new Error('Full Body C starter button still present');
 if (!html.includes("loadStarter('Full Body A')")) throw new Error('Full Body A starter missing');

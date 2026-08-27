@@ -67,7 +67,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          APK="apps/mobile/capacitor/android/app/build/outputs/apk/debug/app-debug.apk"
+          APK_SRC="apps/mobile/capacitor/android/app/build/outputs/apk/debug/app-debug.apk"
+          APK="apps/mobile/capacitor/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
+          cp -f "$APK_SRC" "$APK"
           BUILD="$(grep -o "LOCAL_BUILD='[^']*'" apps/mobile/prototype/hybrid-app/index.html | head -1 | cut -d"'" -f2)"
           SHA="$(git rev-parse --short HEAD)"
           NOTES="Debug Android shell for THE Hybrid athlete app.
@@ -78,11 +80,18 @@ jobs:
           Install on phone: open this release on GitHub → Assets → \`the-hybrid-athlete-dogfood-debug.apk\` → Install.
           Allow installs from your browser/files app if Android asks."
 
+          # Drop stale differently-named assets so the release has one clear APK.
+          gh release view dogfood-latest --json assets -q '.assets[].name' 2>/dev/null | while read -r name; do
+            if [[ -n "$name" && "$name" != "the-hybrid-athlete-dogfood-debug.apk" ]]; then
+              gh release delete-asset dogfood-latest "$name" --yes || true
+            fi
+          done
+
           if gh release view dogfood-latest >/dev/null 2>&1; then
             gh release edit dogfood-latest --title "Dogfood APK (latest)" --notes "$NOTES" --latest
-            gh release upload dogfood-latest "$APK#the-hybrid-athlete-dogfood-debug.apk" --clobber
+            gh release upload dogfood-latest "$APK" --clobber
           else
-            gh release create dogfood-latest "$APK#the-hybrid-athlete-dogfood-debug.apk" \
+            gh release create dogfood-latest "$APK" \
               --title "Dogfood APK (latest)" \
               --notes "$NOTES" \
               --latest

@@ -11,12 +11,26 @@
   var WRITER = 'html-athlete-strength';
   var DOMAIN = 'strength';
   var BASE_KEY = 'hybrid-strength-sync-base-v1';
+  var STATUS_KEY = 'hybrid-strength-sync-status-v1';
   var SNAPSHOT_VERSION = 3;
   var MAX_COMPLETED_SESSIONS = 60;
   var MAX_TEMPLATES = 100;
   var MAX_PERFORMED = 40;
 
   var status = { lastSyncAt: null, lastError: '', lastOk: false, busy: false };
+
+  // Persist last sync so Account does not flash "never" after every cold start.
+  try {
+    var rawStatus = localStorage.getItem(STATUS_KEY);
+    if (rawStatus) {
+      var s = JSON.parse(rawStatus);
+      if (s && typeof s === 'object') {
+        if (s.lastSyncAt) status.lastSyncAt = s.lastSyncAt;
+        if (typeof s.lastError === 'string') status.lastError = s.lastError;
+        if (typeof s.lastOk === 'boolean') status.lastOk = s.lastOk;
+      }
+    }
+  } catch (_) {}
 
   function num(v) {
     var n = Number(v);
@@ -306,6 +320,16 @@
 
   function setStatus(patch) {
     Object.assign(status, patch || {});
+    try {
+      localStorage.setItem(
+        STATUS_KEY,
+        JSON.stringify({
+          lastSyncAt: status.lastSyncAt,
+          lastError: status.lastError,
+          lastOk: status.lastOk,
+        }),
+      );
+    } catch (_) {}
   }
 
   function getStatus() {

@@ -17,7 +17,9 @@ const requiredFns = [
   'whoop-sync.mjs',
   'concept2-connect.mjs',
   'concept2-sync.mjs',
+  'off-proxy.mjs',
   '_hybrid-proxy.mjs',
+  '_lib/http.mjs',
 ];
 
 if (!existsSync(join(preview, 'netlify.toml'))) {
@@ -27,14 +29,26 @@ const toml = readFileSync(join(preview, 'netlify.toml'), 'utf8');
 if (!/directory\s*=\s*"netlify\/functions"/.test(toml)) {
   throw new Error('netlify.toml must point at netlify/functions');
 }
+if (/external_node_modules/.test(toml)) {
+  throw new Error('netlify.toml should not pin @netlify/blobs — proxies do not need it');
+}
 
 for (const name of requiredFns) {
   if (!existsSync(join(fnDir, name))) throw new Error('missing function: ' + name);
+}
+if (existsSync(join(fnDir, 'whoop-callback.mjs'))) {
+  throw new Error('whoop-callback must not ship on athlete site — OAuth callback lives on hybrid1');
+}
+if (existsSync(join(fnDir, '_lib/whoop.mjs'))) {
+  throw new Error('_lib/whoop.mjs must not ship — athlete site proxies to hybrid1');
 }
 
 const proxy = readFileSync(join(fnDir, '_hybrid-proxy.mjs'), 'utf8');
 if (!proxy.includes('access-control-allow-origin')) {
   throw new Error('_hybrid-proxy.mjs must emit CORS for Capacitor cross-origin calls');
+}
+if (!proxy.includes('thehybridengine1.netlify.app')) {
+  throw new Error('_hybrid-proxy.mjs must forward to hybrid1');
 }
 
 const whoopJs = readFileSync(join(dir, 'whoop.js'), 'utf8');

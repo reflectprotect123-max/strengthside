@@ -39,6 +39,12 @@ mustMatch('index.html → preview-site/index.html',
 mustMatch('service-worker.js → preview-site',
   join(proto, 'service-worker.js'),
   join(root, 'preview-site/service-worker.js'));
+mustMatch('netlify.toml → preview-site',
+  join(proto, 'netlify.toml'),
+  join(root, 'preview-site/netlify.toml'));
+mustMatch('package.json → preview-site',
+  join(proto, 'package.json'),
+  join(root, 'preview-site/package.json'));
 
 const bundles = [
   'strength-bundle.js',
@@ -48,6 +54,13 @@ const bundles = [
   'recovery-engine.js',
   'strength-adapter.js',
   'engine-adapter.js',
+  'coach-sync.js',
+  'coach-cloud.js',
+  'coach.html',
+  'coach-loop.js',
+  'coach-nutrition.js',
+  'coach-bridge.js',
+  'coach-views.js',
 ];
 for (const f of bundles) {
   mustMatch(f, join(proto, f), join(root, 'preview-site', f));

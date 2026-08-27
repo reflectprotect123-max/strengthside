@@ -307,6 +307,73 @@
     return `${meta.count.toLocaleString()} AU staples offline · live Open Food Facts when online`;
   }
 
+  const COACH_NUT_KEY = 'hybrid-coach-nutrition-bridge-v1';
+  const COACH_NUT_ATHLETE_KEY = 'hybrid-coach-nutrition-athlete-v1';
+
+  function loadCoachBridgeNutrition() {
+    try {
+      const raw = localStorage.getItem(COACH_NUT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function loadCoachAthleteNutState() {
+    try {
+      const raw = localStorage.getItem(COACH_NUT_ATHLETE_KEY);
+      return raw ? JSON.parse(raw) : { meals: {} };
+    } catch {
+      return { meals: {} };
+    }
+  }
+
+  function saveCoachAthleteNutState(st) {
+    try {
+      localStorage.setItem(COACH_NUT_ATHLETE_KEY, JSON.stringify(st));
+    } catch {}
+  }
+
+  function coachPrescribedHtml(date) {
+    const bridge = loadCoachBridgeNutrition();
+    const day = bridge && bridge.mealDays && bridge.mealDays.find((d) => d.date === date);
+    if (!day || !day.meals || !day.meals.length) return '';
+    const st = loadCoachAthleteNutState();
+    const rows = day.meals
+      .map((m) => {
+        const status = (st.meals && st.meals[m.id]) || m.status || 'prescribed';
+        const items = (m.items || []).map((i) => esc(i.name)).join(' · ');
+        const done = status === 'done';
+        const skipped = status === 'skipped';
+        return `<div class="card nut-coach-meal ${done ? 'done' : skipped ? 'skipped' : ''}">
+          <div class=row><div><div class=eyebrow>Coach · prescribed</div><b>${esc(m.title)}</b><div class=meta>${items || 'Meal'}</div></div>
+          <span class=pill>${done ? 'Done' : skipped ? 'Skipped' : 'Pending'}</span></div>
+          <div class=btns style="margin-top:10px">
+            <button type="button" class="btn small primary" ${done ? 'disabled' : ''} onclick="NutritionUI.coachMealDone('${m.id}')">✓ Ate it</button>
+            <button type="button" class="btn small" ${skipped ? 'disabled' : ''} onclick="NutritionUI.coachMealSkip('${m.id}')">Skip</button>
+            <button type="button" class="btn small" onclick="NutritionUI.addFood('snack')">Add different</button>
+          </div></div>`;
+      })
+      .join('');
+    return `<div class=stack><div class=eyebrow>From coach</div>${rows}</div>`;
+  }
+
+  function coachMealDone(mealId) {
+    const st = loadCoachAthleteNutState();
+    st.meals = st.meals || {};
+    st.meals[mealId] = 'done';
+    saveCoachAthleteNutState(st);
+    renderNutrition();
+  }
+
+  function coachMealSkip(mealId) {
+    const st = loadCoachAthleteNutState();
+    st.meals = st.meals || {};
+    st.meals[mealId] = 'skipped';
+    saveCoachAthleteNutState(st);
+    renderNutrition();
+  }
+
   function renderNutrition() {
     const C = Core();
     if (!C) {
@@ -321,6 +388,22 @@
     const totals = C.macroTotals(entries);
     ensureTodayTargets(db, date);
     const checkInState = checkInUiState(db, date, true);
+    const coachBridge = loadCoachBridgeNutrition();
+    if (coachBridge && coachBridge.targets && coachBridge.targets.calories) {
+      if (!db.program) db.program = { id: uid(), targets: [] };
+      db.program.targets = db.program.targets || [];
+      const idx = db.program.targets.findIndex((t) => t.date === date);
+      const coachT = {
+        date,
+        calories: coachBridge.targets.calories,
+        proteinG: coachBridge.targets.proteinG,
+        carbsG: coachBridge.targets.carbsG,
+        fatG: coachBridge.targets.fatG,
+        source: 'coach-bridge',
+      };
+      if (idx >= 0) db.program.targets[idx] = coachT;
+      else db.program.targets.push(coachT);
+    }
     saveN(db);
     const target = C.targetForDay(db.program, date) || {
       calories: 2500,
@@ -373,6 +456,7 @@
         ${checkInBannerHtml(checkInState, 'day')}
         ${meters}
         ${dayStatusControlsHtml(db, date)}
+        ${coachPrescribedHtml(date)}
         <div class=btns>
           <button type="button" class="btn small primary" onclick="NutritionUI.addFood()">Add food</button>
           <button type="button" class="btn small" onclick="NutritionUI.scanLabel()">Scan label</button>
@@ -1424,5 +1508,7 @@
     homeModuleHtml,
     load: loadN,
     replace: replaceNutrition,
+    coachMealDone,
+    coachMealSkip,
   };
 })();

@@ -12,9 +12,15 @@ mkdir -p "$ROOT/preview-site"
 cp "$SRC" "$ROOT/preview-site/index.html"
 cp "$SW" "$ROOT/preview-site/service-worker.js"
 # Nutrition (local-first MacroTrack core + engine bundle + UI + cloud sync)
-for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js strength-bundle.js recovery-engine.js recovery-signals.js strength-adapter.js log-columns.js load-headline.js coordinator-adapter.js strength-sync.js; do
+for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js strength-bundle.js recovery-engine.js recovery-signals.js strength-adapter.js log-columns.js load-headline.js coordinator-adapter.js strength-sync.js coach-sync.js coach-cloud.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/$f"
+    cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
+  fi
+done
+# Coach workspace (same Netlify origin as athlete — shared Supabase auth storage)
+for f in coach.html coach-loop.js coach-nutrition.js coach-bridge.js coach-views.js; do
+  if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
 done
@@ -34,13 +40,20 @@ for f in concept2.js echo-ftms.js native-bridge.js native-ble.js label-scan.js l
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
 done
-# Integration Netlify proxies (preview-site deploy — WHOOP + Concept2)
+# Integration Netlify proxies (WHOOP/Concept2 → hybrid1) + off-proxy for nutrition
 if [[ -d "$SRC_DIR/netlify/functions" ]]; then
   mkdir -p "$ROOT/preview-site/netlify/functions"
-  cp -f "$SRC_DIR"/netlify/functions/*.mjs "$ROOT/preview-site/netlify/functions/"
+  rm -rf "$ROOT/preview-site/netlify/functions"
+  cp -a "$SRC_DIR/netlify/functions" "$ROOT/preview-site/netlify/functions"
 fi
 if [[ -f "$SRC_DIR/netlify.toml" ]]; then
   cp -f "$SRC_DIR/netlify.toml" "$ROOT/preview-site/netlify.toml"
+fi
+if [[ -f "$SRC_DIR/package.json" ]]; then
+  cp -f "$SRC_DIR/package.json" "$ROOT/preview-site/package.json"
+fi
+if [[ -f "$SRC_DIR/.netlifyignore" ]]; then
+  cp -f "$SRC_DIR/.netlifyignore" "$ROOT/preview-site/.netlifyignore"
 fi
 # Optional bundled seeds (TrainHeroic history OTA — personal data, gitignored)
 if [[ -d "$SRC_DIR/seeds" ]]; then
