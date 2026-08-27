@@ -1,8 +1,5 @@
 {
   "name": "hybrid-athlete-preview",
   "private": true,
-  "type": "module",
-  "dependencies": {
-    "@netlify/blobs": "^10.7.10"
-  }
+  "type": "module"
 }

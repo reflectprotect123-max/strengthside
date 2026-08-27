@@ -1,4 +1,5 @@
 # Athlete app. Functions + static site live under preview-site.
+# WHOOP/Concept2 are thin proxies to thehybridengine1; nutrition off-proxy is local.
 [build]
   base = "apps/mobile/preview-site"
   publish = "."
@@ -6,4 +7,3 @@
 [functions]
   directory = "apps/mobile/preview-site/netlify/functions"
   node_bundler = "esbuild"
-  external_node_modules = ["@netlify/blobs"]

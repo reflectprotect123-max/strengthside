@@ -48,13 +48,8 @@ jobs:
           echo "Deploying to Netlify site: $SITE"
           # Deploy FROM preview-site so netlify-cli does not scan the pnpm
           # monorepo packages and abort with "multiple projects detected".
+          # WHOOP/Concept2 are thin proxies to hybrid1 — no @netlify/blobs install.
           cd apps/mobile/preview-site
-          # Match hybrid1: @netlify/blobs ^10.x for function Blobs API.
-          # Install into a side folder so we do not upload node_modules as
-          # static site files; esbuild external_node_modules resolves from here.
-          npm install --omit=dev --no-fund --no-audit --prefix .
-          # GitHub secrets are not function runtime env. config.mjs falls back
-          # to the production athlete origin when APP_BASE_URL is unset on the site.
           npx --yes netlify-cli deploy --prod \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$SITE" \
