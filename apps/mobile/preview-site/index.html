@@ -72,7 +72,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .home-brief .meta{margin-top:6px}
 .home-links{display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-3)}
 .home-links .btn{flex:1;min-width:88px;min-height:var(--tap-min)}
-.settings-group{display:grid;gap:var(--space-3)}
+.settings-group{display:grid;gap:var(--space-3);margin-top:18px;padding-bottom:8px;-webkit-overflow-scrolling:touch}
 .cal-head{margin-top:var(--space-3);margin-bottom:var(--space-2)}
 .cal-sessions{display:grid;gap:var(--space-2)}
 .ath-sticky.dial-engine{border-top-color:rgba(94,196,180,.35)}
@@ -913,7 +913,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v92';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v93';
 const TRAINHEROIC_SEED_URL='./seeds/trainheroic-import.json';
 const TRAINHEROIC_SEED_JS='./trainheroic-import.js';
 const TRAINHEROIC_SEED_JS_NESTED='./seeds/trainheroic-import.js';
@@ -1096,7 +1096,7 @@ function save(reason='auto'){
   if(ok&&window.StrengthSync&&StrengthSync.schedulePush&&reason!=='strength-sync-pull'&&reason!=='strength-sync')StrengthSync.schedulePush(S);
   if(ok&&window.CoachSync&&CoachSync.schedulePull&&reason!=='coach-sync-pull')CoachSync.schedulePull(S);
   return ok;
-}function dedupe(a){let o=[];(a||[]).forEach(x=>{if(x.name&&!o.some(y=>y.name.toLowerCase()===x.name.toLowerCase()))o.push(x)});return o.sort((a,b)=>a.name.localeCompare(b.name))}function tpl(i){return S.templates.find(x=>x.id===i)}function ses(i){return S.sessions.find(x=>x.id===i)}function activeSession(){let x=ses(S.active)||S.sessions.find(s=>s.status==='active');if(x){S.active=x.id;return x}S.active=null;return null}function nav(show=true){$('bottomNav').classList.toggle('hidden',!show)}function clock(show=false){$('workoutClock').classList.toggle('show',show)}function shell(title,eyebrow,body){$('appScreen').innerHTML=`<div class=eyebrow>${esc(eyebrow)}</div><h1>${esc(title)}</h1>${storageNotice()}${body}`;try{window.scrollTo({top:0,behavior:'instant'})}catch(e){window.scrollTo(0,0)}}
+}function dedupe(a){let o=[];(a||[]).forEach(x=>{if(x.name&&!o.some(y=>y.name.toLowerCase()===x.name.toLowerCase()))o.push(x)});return o.sort((a,b)=>a.name.localeCompare(b.name))}function tpl(i){return S.templates.find(x=>x.id===i)}function ses(i){return S.sessions.find(x=>x.id===i)}function activeSession(){let x=ses(S.active)||S.sessions.find(s=>s.status==='active');if(x){S.active=x.id;return x}S.active=null;return null}function nav(show=true){$('bottomNav').classList.toggle('hidden',!show)}function clock(show=false){$('workoutClock').classList.toggle('show',show)}function shell(title,eyebrow,body){$('appScreen').innerHTML=`<div class=eyebrow>${esc(eyebrow)}</div><h1>${esc(title)}</h1>${storageNotice()}${body}`;try{window.scrollTo({top:0,behavior:'auto'})}catch(e){window.scrollTo(0,0)}}
 function minimalUi(){return S.settings?.minimalUi!==false}function showBlockHelp(){return false}function applyDisplayPrefs(){document.body.classList.toggle('minimal-ui',minimalUi())}function setMinimalUi(v){S.settings=S.settings||{};S.settings.minimalUi=!!v;if(S.settings.minimalUi)S.settings.showBlockHelp=false;save();render()}function setBlockHelpVisible(v){S.settings=S.settings||{};S.settings.showBlockHelp=false;save();render()}function go(tab){if(tab==='tools'||tab==='coachlock')tab='programs';S.tab=tab;save();render()}
 function clamp(n,min,max){n=num(n);return Math.max(min,Math.min(max,n))}
 function dailyList(){S.dailyCheckins=Array.isArray(S.dailyCheckins)?S.dailyCheckins:[];return S.dailyCheckins}

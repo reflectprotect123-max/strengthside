@@ -179,8 +179,9 @@
   function refreshVisibleUi() {
     renderPanels();
     const tab = (appState() && appState().tab) || null;
-    if (tab === 'settings' && typeof global.settings === 'function') global.settings();
-    else if (typeof global.render === 'function') global.render();
+    // Settings: keep scroll position — only update the Account card via renderPanels.
+    if (tab === 'settings') return;
+    if (typeof global.render === 'function') global.render();
   }
   function applyImport(normalized) {
     if (!(global.EngineAdapter && typeof global.EngineAdapter.applyConcept2Results === 'function')) {

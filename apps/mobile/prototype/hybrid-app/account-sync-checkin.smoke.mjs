@@ -42,10 +42,21 @@ if (!html.includes('ATH_CHECKIN_STEPS')) throw new Error('ATH_CHECKIN_STEPS miss
 if (!html.includes('function athCheckinAnswer')) throw new Error('athCheckinAnswer missing');
 if (!html.includes('checkin-choice')) throw new Error('checkin-choice UI missing');
 if (html.includes("athSleepSlider('sleepQuality'")) throw new Error('old sleepQuality slider still in check-in card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v92'")) throw new Error('expected cache v90');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v93'")) throw new Error('expected cache v90');
 if (html.includes("loadStarter('Full Body B')")) throw new Error('Full Body B starter button still present');
 if (html.includes("loadStarter('Full Body C')")) throw new Error('Full Body C starter button still present');
 if (!html.includes("loadStarter('Full Body A')")) throw new Error('Full Body A starter missing');
 if (!html.includes('Concept2 Logbook when already linked')) throw new Error('Settings copy missing Concept2-in-sync note');
+
+// Settings scroll: WHOOP/Concept2 must NOT rebuild settings() on status refresh (scroll jump).
+if (/tab === 'settings'[\s\S]{0,160}global\.settings\(\)/.test(whoop)) {
+  throw new Error('whoop refreshVisibleUi must not call settings() (scroll jump)');
+}
+if (/tab === 'settings'[\s\S]{0,160}global\.settings\(\)/.test(concept2)) {
+  throw new Error('concept2 refreshVisibleUi must not call settings() (scroll jump)');
+}
+if (!whoop.includes("if (tab === 'settings') return")) {
+  throw new Error('whoop refreshVisibleUi must early-return on settings tab');
+}
 
 console.log('account-sync-checkin.smoke: ok');

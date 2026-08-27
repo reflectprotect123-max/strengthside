@@ -13,7 +13,7 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!html.includes('LogColumns.builderLoggerTwinHtml')) throw new Error('builder logger twin not wired');
 if (!html.includes('LogColumns.loggerCellsHtml')) throw new Error('logger columns UI not wired');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v92'")) throw new Error('expected cache v90');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v93'")) throw new Error('expected cache v90');
 if (!html.includes('Rest seconds')) throw new Error('builder missing Rest seconds above twin');
 if (!html.includes('id=exNameVisible')) throw new Error('builder missing single exercise-name input');
 if (!html.includes('id=exSuggest')) throw new Error('builder missing custom exercise suggest mount');
