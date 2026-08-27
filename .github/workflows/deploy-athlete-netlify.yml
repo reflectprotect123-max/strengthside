@@ -63,7 +63,10 @@ jobs:
           # monorepo packages and abort with "multiple projects detected".
           # WHOOP/Concept2 are thin proxies to hybrid1 — no @netlify/blobs install.
           cd apps/mobile/preview-site
-          npx --yes netlify-cli deploy --prod \
+          # Pin CLI: floating "latest" broke on 2026-08-27 with
+          # @netlify/ai@^1.0.1 (no such version on npm). 26.2.0 matches
+          # prior successful athlete deploys and resolves @netlify/ai@0.4.x.
+          npx --yes netlify-cli@26.2.0 deploy --prod \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$SITE" \
             --dir=. \
