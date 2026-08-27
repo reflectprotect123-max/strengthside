@@ -361,12 +361,11 @@ Rationale: templates + grid + calendars + training bridge prove coach↔athlete.
 
 ## 9. Immediate next PRs
 
-1. **R3** — session builder + Engine conditioning (shipped / in review)  
-2. **R4** — program grid (Library Programs list + week×Day 1–7 cells) — in progress  
-3. **R5–R6** — calendars + publish  
-4. **R10** — training bridge  
-5. Home / roster polish  
-6. **Nutrition N1–N5 last** (§11)
+1. **R3–R4** — session builder + Engine + program grid (shipped)  
+2. **R5–R6 + R10** — calendars, publish, local bridge (shipped)  
+3. **Cloud publish** — `assigned_session` coach write + athlete pull (this PR) — apply migration `20260827_coach_publish_assigned_session.sql` on shared Supabase  
+4. Home / roster polish  
+5. **Nutrition N1–N5** (domain + UI shipped; refine as needed)
 
 ---
 
