@@ -133,6 +133,15 @@
 
   /** Sheet draft while Edit lift is open */
   let sheet = { sets: 3, restSec: 120, columns: [] };
+  let changeHandler = null;
+
+  function setChangeHandler(fn) {
+    changeHandler = typeof fn === 'function' ? fn : null;
+  }
+
+  function notifyChange() {
+    if (typeof changeHandler === 'function') changeHandler();
+  }
 
   function beginSheet(ex) {
     const sets = Math.max(1, Number(ex && ex.sets) || 3);
@@ -166,12 +175,14 @@
     sheet.restSec = Math.max(0, Number(v) || 0);
     const btn = global.document && global.document.getElementById('builderRestBtn');
     if (btn) btn.textContent = 'Rest ' + fmtRest(sheet.restSec);
+    notifyChange();
   }
 
   function onKindChange(colIdx, kind) {
     if (!sheet.columns[colIdx]) return;
     sheet.columns[colIdx].kind = KIND_MAP[kind] ? kind : 'reps';
     refreshTwin();
+    notifyChange();
   }
 
   function onCellChange(colIdx, setIdx, value) {
@@ -186,6 +197,7 @@
       const chip = global.document && global.document.querySelector(`.builder-setrow[data-set="${setIdx}"] .target`);
       if (chip) chip.textContent = String(value || '').trim() || '—';
     }
+    notifyChange();
   }
 
   function resizeSets(n) {
@@ -202,11 +214,13 @@
 
   function addSet() {
     resizeSets(sheet.sets + 1);
+    notifyChange();
   }
 
   function removeSet() {
     if (sheet.sets <= 1) return;
     resizeSets(sheet.sets - 1);
+    notifyChange();
   }
 
   function addColumn() {
@@ -221,12 +235,14 @@
       values: splitValues('', sheet.sets),
     });
     refreshTwin();
+    notifyChange();
   }
 
   function removeColumn(idx) {
     if (sheet.columns.length <= 1) return;
     sheet.columns.splice(idx, 1);
     refreshTwin();
+    notifyChange();
   }
 
   function effortTarget(setIdx) {
@@ -339,6 +355,7 @@
     onKindChange,
     onCellChange,
     onValueChange: onCellChange,
+    setChangeHandler,
     addColumn,
     removeColumn,
     addSet,
