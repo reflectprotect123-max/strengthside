@@ -325,7 +325,18 @@ function openProgram(programId){
   ui.view = 'program';
   render();
 }
-function signOut(){ L.logout(S); persist(); ui.view='home'; render(); }
+async function signOut(){
+  try {
+    if (window.Whoop && typeof Whoop.client === 'function') {
+      await Whoop.client().auth.signOut();
+    }
+  } catch (_) { /* best-effort */ }
+  L.logout(S);
+  persist();
+  ui.view = 'home';
+  ui.err = '';
+  render();
+}
 function resetDemo(){
   S = L.resetState();
   Object.assign(ui, { view:'home', lib:'sessions', templateId:null, programId:null, cellMenu:null, cellPick:null, exPicker:null, err:'', calMonth:null, calDay:null, chipMenu:null, libPick:null });
@@ -333,15 +344,76 @@ function resetDemo(){
   render();
 }
 
-function tryLogin(email, pass){
-  const r = L.login(S, email, pass);
-  if (!r.ok){ ui.err = r.error; render(); return; }
-  if (r.account.role !== 'coach'){
-    L.logout(S);
-    ui.err = 'Coach workspace only. Athletes use the Hybrid athlete app.';
-    persist(); render(); return;
+/** Ensure a local coach account row for a Supabase-authenticated email. */
+function ensureCoachAccount(email, name){
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return null;
+  S.accounts = S.accounts || [];
+  let acc = S.accounts.find((a) => a.role === 'coach' && String(a.email || '').toLowerCase() === e);
+  if (!acc) {
+    acc = {
+      id: 'coach-cloud-' + e.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      email: e,
+      password: '',
+      role: 'coach',
+      name: name || e.split('@')[0] || 'Coach',
+      athleteId: null,
+    };
+    S.accounts.push(acc);
+  } else if (name) {
+    acc.name = name;
   }
-  ui.err = ''; persist(); render();
+  S.coach = S.coach || { id: acc.id, name: acc.name };
+  S.coach.name = acc.name;
+  S.currentUserId = acc.id;
+  return acc;
+}
+
+async function tryLogin(email, pass){
+  ui.err = '';
+  const e = String(email || '').trim();
+  const p = String(pass || '');
+  if (!e || !p) {
+    ui.err = 'Enter email and password';
+    render();
+    return;
+  }
+
+  // Offline / seeded demo accounts (dan@thehybrid.local · demo).
+  const local = L.login(S, e, p);
+  if (local.ok) {
+    if (local.account.role !== 'coach') {
+      L.logout(S);
+      ui.err = 'Coach workspace only. Athletes use the Hybrid athlete app.';
+      persist();
+      render();
+      return;
+    }
+    ui.err = '';
+    persist();
+    render();
+    return;
+  }
+
+  // Real account: same Supabase password auth as athlete Settings → Account.
+  try {
+    if (!(window.Whoop && typeof Whoop.client === 'function')) {
+      throw new Error(local.error || 'Auth not loaded — check network and refresh');
+    }
+    const { data, error } = await Whoop.client().auth.signInWithPassword({ email: e, password: p });
+    if (error) throw error;
+    const user = data && data.user;
+    if (!user) throw new Error('Sign-in succeeded but no user returned');
+    const meta = user.user_metadata || {};
+    const name = meta.full_name || meta.name || e.split('@')[0];
+    ensureCoachAccount(user.email || e, name);
+    ui.err = '';
+    persist();
+    render();
+  } catch (err) {
+    ui.err = (err && err.message) || local.error || 'Sign-in failed';
+    render();
+  }
 }
 
 function navActive(key){
@@ -1109,17 +1181,19 @@ function exportBridgeFile(){
 }
 
 function gateHtml(){
-  return `<div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">TH</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace · local demo</div></div></div>
+  return `<div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">TH</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace</div></div></div>
     <h1 style="margin-top:28px;font-family:var(--font-display);font-size:40px">Sign in</h1>
-    <p class="muted" style="margin-top:8px">Coach demo. Password: <b>demo</b></p>
+    <p class="muted" style="margin-top:8px">Use the <b>same email + password</b> as the athlete app (Settings → Account). That unlocks cloud publish for athletes.</p>
     ${ui.err?`<div class="card" style="margin-top:12px;border-color:#d0897d">${esc(ui.err)}</div>`:''}
-    <div class="field"><label>Email</label><input id="em" value="dan@thehybrid.local"></div>
-    <div class="field"><label>Password</label><input id="pw" type="password" value="demo"></div>
-    <button class="btn primary block" style="margin-top:16px" onclick="tryLogin($('em').value,$('pw').value)">Sign in</button>
+    <form id="gateForm" onsubmit="event.preventDefault();tryLogin($('em').value,$('pw').value);return false;">
+      <div class="field"><label>Email</label><input id="em" type="email" autocomplete="username" placeholder="you@email.com" value="" required></div>
+      <div class="field"><label>Password</label><input id="pw" type="password" autocomplete="current-password" value="" required></div>
+      <button type="submit" class="btn primary block" style="margin-top:16px">Sign in</button>
+    </form>
     <div class="acct">
-      <button class="btn" onclick="tryLogin('dan@thehybrid.local','demo')">Coach · Dan</button>
+      <button type="button" class="btn" onclick="tryLogin('dan@thehybrid.local','demo')">Demo coach (offline)</button>
     </div>
-    <p class="muted" style="margin-top:24px">Athletes keep using the Hybrid athlete app. This page is coach-only.</p>`;
+    <p class="muted" style="margin-top:24px">Demo button is local-only and cannot publish to the APK. Athletes keep using the Hybrid athlete app.</p>`;
 }
 
 function render(){
@@ -1166,9 +1240,25 @@ CoachViews.init({ L, S, ui, persist, esc, go, render, $, tpl, prog, ses, athlete
 render();
 (async function coachAuthBoot(){
   try {
-    if (window.Whoop && Whoop.client) {
-      const { data } = await Whoop.client().auth.getSession();
-      if (data && data.session) console.info('coach cloud: signed in');
+    if (!(window.Whoop && Whoop.client)) return;
+    const { data } = await Whoop.client().auth.getSession();
+    const session = data && data.session;
+    if (!session || !session.user) return;
+    const email = session.user.email;
+    if (!email) return;
+    const meta = session.user.user_metadata || {};
+    const name = meta.full_name || meta.name || email.split('@')[0];
+    // Already in as matching coach — leave UI alone.
+    const acc = account();
+    if (acc && acc.role === 'coach' && String(acc.email || '').toLowerCase() === email.toLowerCase()) {
+      console.info('coach cloud: signed in', email);
+      return;
+    }
+    // Session present but gate still up (or wrong local user) — enter coach workspace.
+    if (!acc || acc.role !== 'coach') {
+      ensureCoachAccount(email, name);
+      persist();
+      render();
     }
   } catch (_) {}
 })();

@@ -33,6 +33,13 @@ if (!html.includes('exercisesCatalogHtml') && !html.includes('Search exercises')
 }
 if (!html.includes('Session comment')) throw new Error('coach.html missing session comment drawer');
 if (!html.includes('function gateHtml')) throw new Error('coach.html missing gateHtml');
+if (!html.includes('ensureCoachAccount')) throw new Error('coach.html missing ensureCoachAccount');
+if (!html.includes('signInWithPassword')) {
+  throw new Error('coach.html must use Supabase signInWithPassword for real coach accounts');
+}
+if (!html.includes('same email + password')) {
+  throw new Error('coach.html gate must tell coaches to use athlete account credentials');
+}
 if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html.includes('Athlete ·')) {
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }
