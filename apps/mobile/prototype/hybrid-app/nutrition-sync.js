@@ -12,6 +12,7 @@
   const DOMAIN = 'nutrition';
   const BASE_KEY = 'hybrid-nutrition-sync-base-v1';
   const ID_MAP_KEY = 'hybrid-nutrition-cloud-ids-v1';
+  const STATUS_KEY = 'hybrid-nutrition-sync-status-v1';
 
   const status = {
     lastSyncAt: null,
@@ -19,6 +20,19 @@
     lastOk: false,
     busy: false,
   };
+
+  // Persist last sync so Account does not flash "never" after every cold start.
+  try {
+    const raw = localStorage.getItem(STATUS_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && typeof s === 'object') {
+        if (s.lastSyncAt) status.lastSyncAt = s.lastSyncAt;
+        if (typeof s.lastError === 'string') status.lastError = s.lastError;
+        if (typeof s.lastOk === 'boolean') status.lastOk = s.lastOk;
+      }
+    }
+  } catch (_) {}
 
   function core() {
     return global.HybridNutrition && global.HybridNutrition.Core;
@@ -102,6 +116,16 @@
 
   function setStatus(patch) {
     Object.assign(status, patch || {});
+    try {
+      localStorage.setItem(
+        STATUS_KEY,
+        JSON.stringify({
+          lastSyncAt: status.lastSyncAt,
+          lastError: status.lastError,
+          lastOk: status.lastOk,
+        }),
+      );
+    } catch (_) {}
   }
 
   function getStatus() {
