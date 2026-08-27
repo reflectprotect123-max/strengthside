@@ -16,9 +16,9 @@
   --copper:var(--color-copper);--copper2:var(--color-copper-bright);
   --ok:#7dba9a;--warn:#d4a35b;
   --coach-nav-bg:var(--color-bg-deep);--coach-header-bg:#0a0c0e;
-  --coach-main-bg:#f4f6f8;--coach-main-text:#1a2228;--coach-main-muted:#5c6874;
-  --coach-card-bg:#ffffff;--coach-card-border:#e2e8ef;
-  --coach-nav-active:rgba(212,165,116,.14);--coach-link:#3d7ea6;
+  --coach-main-bg:#07090b;--coach-main-text:var(--text);--coach-main-muted:var(--muted);
+  --coach-card-bg:var(--panel);--coach-card-border:var(--line);
+  --coach-nav-active:rgba(212,165,116,.14);--coach-link:var(--copper2);
   --font-body:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
   --font-display:"Barlow Condensed",ui-sans-serif,system-ui,sans-serif;
   --tap:44px;--focus:0 0 0 3px rgba(232,196,154,.45);
@@ -73,26 +73,26 @@ a{color:var(--coach-link)}
 .coach-body{display:grid;flex:1;grid-template-columns:1fr}
 .coach-body.has-rail{grid-template-columns:1fr 280px}
 .coach-main{padding:24px 28px 48px;color:var(--coach-main-text);min-width:0}
-.coach-rail{padding:24px 16px;border-left:1px solid var(--coach-card-border);background:var(--coach-main-bg);min-width:0}
+.coach-rail{padding:24px 16px;border-left:1px solid var(--line);background:var(--coach-main-bg);min-width:0}
 
-/* light main components */
+/* main — Track Dawn dark (matches athlete app) */
 .eyebrow{color:var(--copper);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
 .muted{color:var(--coach-main-muted);font-size:13px;line-height:1.45}
 .coach-main h1,.coach-main h2{color:var(--coach-main-text)}
 .coach-main h1{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.01em}
-.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--coach-card-border);border-radius:10px;background:var(--coach-card-bg);font-weight:650;color:var(--coach-main-text)}
+.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-weight:650;color:var(--text)}
 .btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
-.btn.ghost{background:transparent;border-color:transparent;color:var(--coach-link)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--copper2)}
 .btn.block{width:100%}
 .btn.small{min-height:36px;padding:7px 10px;font-size:12px}
-input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--coach-card-border);border-radius:10px;background:#fff;color:var(--coach-main-text)}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#0d1114;color:var(--text)}
 textarea{min-height:88px;resize:vertical}
-label{display:block;margin:0 0 6px;color:var(--coach-main-muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .field{margin-top:12px}
 .stack{display:grid;gap:12px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-.card{padding:16px;border:1px solid var(--coach-card-border);border-radius:12px;background:var(--coach-card-bg);box-shadow:0 1px 2px rgba(16,24,32,.04)}
-.pill{padding:4px 8px;border:1px solid var(--coach-card-border);border-radius:999px;color:var(--coach-main-muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:#f8fafc}
+.card{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.03)}
 .slice-stub{display:grid;place-items:center;min-height:280px;text-align:center;gap:8px}
 .slice-stub b{font-family:var(--font-display);font-size:22px}
 
@@ -103,14 +103,14 @@ label{display:block;margin:0 0 6px;color:var(--coach-main-muted);font-size:10px;
 .metric span{color:var(--coach-main-muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
 .ring{width:42px;height:42px;margin:0 auto 4px}
 .dateh{margin:22px 0 10px;font-family:var(--font-display);font-size:20px;letter-spacing:.02em;color:var(--coach-main-text)}
-.presc{text-decoration:line-through;color:var(--coach-main-muted)}
-.actual{color:#9a7348;font-weight:600}
+.presc{text-decoration:line-through;color:var(--dim)}
+.actual{color:var(--copper2);font-weight:600}
 .grid7{display:grid;grid-template-columns:88px repeat(7,1fr);gap:6px;align-items:stretch}
-.cell{min-height:72px;padding:8px;border:1px solid var(--coach-card-border);border-radius:10px;background:#fff;text-align:left;font-size:12px;color:var(--coach-main-text)}
-.cell.empty{color:var(--coach-main-muted)}
-.wk{display:grid;place-items:center;color:var(--coach-main-muted);font-size:12px}
+.cell{min-height:72px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;font-size:12px;color:var(--text)}
+.cell.empty{color:var(--dim)}
+.wk{display:grid;place-items:center;color:var(--muted);font-size:12px}
 .cal{display:grid;gap:8px}
-.item{padding:12px;border:1px solid var(--coach-card-border);border-radius:12px;background:var(--coach-card-bg);text-align:left;width:100%;color:var(--coach-main-text)}
+.item{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-align:left;width:100%;color:var(--text)}
 
 @media(max-width:980px){
   #coachApp.coach-shell{grid-template-columns:1fr}
@@ -195,7 +195,7 @@ function ringSvg(done, total){
   const p = total ? done/total : 0;
   const c = 2*Math.PI*16;
   const dashn = `${p*c} ${c}`;
-  return `<svg class="ring" viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="16" fill="none" stroke="#e2e8ef" stroke-width="4"/><circle cx="21" cy="21" r="16" fill="none" stroke="#7dba9a" stroke-width="4" stroke-dasharray="${dashn}" stroke-linecap="round" transform="rotate(-90 21 21)"/></svg>`;
+  return `<svg class="ring" viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="16" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="4"/><circle cx="21" cy="21" r="16" fill="none" stroke="#7dba9a" stroke-width="4" stroke-dasharray="${dashn}" stroke-linecap="round" transform="rotate(-90 21 21)"/></svg>`;
 }
 
 function metricRow(m){

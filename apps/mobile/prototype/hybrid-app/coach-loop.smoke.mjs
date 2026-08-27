@@ -14,7 +14,7 @@ if (!html.includes('coach-loop.js')) throw new Error('coach.html missing coach-l
 if (!html.includes('Coach Home')) throw new Error('coach.html missing Coach Home');
 if (!html.includes('hybrid S&C')) throw new Error('coach.html missing team name');
 if (!html.includes('coach-shell')) throw new Error('coach.html missing R0 coach-shell layout');
-if (!html.includes('--coach-main-bg')) throw new Error('coach.html missing light main pane tokens');
+if (!html.includes('--coach-main-bg:#07090b')) throw new Error('coach.html missing dark main pane tokens');
 if (!html.includes('Manage Assistants')) throw new Error('coach.html missing header actions');
 if (!html.includes('My Athletes')) throw new Error('coach.html missing athletes nav label');
 if (!html.includes('Analytics')) throw new Error('coach.html missing deferred Analytics nav');
