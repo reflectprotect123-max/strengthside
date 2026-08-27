@@ -2,6 +2,9 @@
 # Requires repo secret: NETLIFY_AUTH_TOKEN.
 # Site defaults to slug "thehybridsystem" (confirmed from successful deploy logs).
 # Optional: NETLIFY_SITE_ID — UUID or slug. If set to a URL by mistake, ignored.
+#
+# WHOOP contract: athlete site is PROXY-ONLY → thehybridengine1.
+# Ownership smoke runs BEFORE deploy; live smoke runs AFTER.
 name: Deploy athlete Netlify
 
 on:
@@ -12,6 +15,7 @@ on:
       - 'apps/mobile/preview-site/**'
       - 'apps/mobile/prototype/hybrid-app/**'
       - 'apps/mobile/sync-hybrid-html.sh'
+      - 'apps/mobile/capacitor/android/app/src/main/**'
       - 'netlify.toml'
       - '.github/workflows/deploy-athlete-netlify.yml'
 
@@ -23,6 +27,15 @@ jobs:
 
       - name: Sync preview-site from prototype
         run: bash apps/mobile/sync-hybrid-html.sh
+
+      - name: WHOOP ownership gate (block real-handler cutover)
+        run: node apps/mobile/prototype/hybrid-app/whoop-ownership.smoke.mjs
+
+      - name: WHOOP deep-link gate (Android OAuth return)
+        run: node apps/mobile/prototype/hybrid-app/whoop-deeplink.smoke.mjs
+
+      - name: Hybrid proxy smoke
+        run: node apps/mobile/prototype/hybrid-app/hybrid-proxy.smoke.mjs
 
       - name: Deploy to Netlify
         env:
@@ -57,3 +70,10 @@ jobs:
             --functions=netlify/functions \
             --no-build \
             --message "deploy athlete app (${GITHUB_SHA::7})"
+
+      - name: Live WHOOP production smoke (post-deploy)
+        if: ${{ success() }}
+        env:
+          WHOOP_LIVE_RETRIES: '5'
+          WHOOP_LIVE_RETRY_MS: '5000'
+        run: node apps/mobile/prototype/hybrid-app/whoop-live.smoke.mjs

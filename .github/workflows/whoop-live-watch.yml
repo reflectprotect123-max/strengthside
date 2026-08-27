@@ -1,0 +1,24 @@
+# Catch WHOOP ownership / redirect_uri drift even when nobody deploys.
+name: WHOOP live watch
+
+on:
+  schedule:
+    # Twice daily UTC
+    - cron: '17 6,18 * * *'
+  workflow_dispatch:
+
+jobs:
+  whoop-live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ownership contract (static)
+        run: |
+          bash apps/mobile/sync-hybrid-html.sh
+          node apps/mobile/prototype/hybrid-app/whoop-ownership.smoke.mjs
+          node apps/mobile/prototype/hybrid-app/whoop-deeplink.smoke.mjs
+      - name: Live production endpoints
+        env:
+          WHOOP_LIVE_RETRIES: '4'
+          WHOOP_LIVE_RETRY_MS: '5000'
+        run: node apps/mobile/prototype/hybrid-app/whoop-live.smoke.mjs

@@ -60,6 +60,26 @@ keeps that from becoming a disaster:
   renumber, and never rename a migration that has been pushed — the ledger is shared
   and renaming an applied migration breaks it for both repos.
 
+## WHOOP / Netlify ownership — do not cut over again
+
+`thehybridsystem.netlify.app` (athlete site in this repo) is **proxy-only** for
+WHOOP and Concept2. Tokens, OAuth pending state, Blobs, and `whoop-callback` live
+on `thehybridengine1.netlify.app`. The athlete functions only forward
+`Authorization` + path via `_hybrid-proxy.mjs`.
+
+- **Never** ship real WHOOP handlers (`whoop-callback`, `_lib/whoop.mjs`,
+  `@netlify/blobs`, etc.) on the athlete site. `pnpm run check:whoop-ownership`
+  fails the build if that shape returns.
+- OAuth `redirect_uri` host must stay `thehybridengine1.netlify.app`.
+  `pnpm run check:whoop-live` hits production and fails if athlete starts
+  issuing its own callback host (the cutover fingerprint).
+- Android must keep a `VIEW`/`BROWSABLE` intent for `com.hybrid.athlete` —
+  `pnpm run check:whoop-deeplink`. Capgo cannot fix a missing manifest filter.
+- Deploy workflow runs ownership **before** Netlify deploy and live smoke
+  **after**. Scheduled `whoop-live-watch` catches drift without a deploy.
+- Before claiming an upstream site is "dead," curl the live function and paste
+  status + timestamp into the PR. A false 404 assumption caused the last outage.
+
 ## Product ownership
 
 - `@hybrid/strength-engine` owns strength prescription resolution, load rounding,
