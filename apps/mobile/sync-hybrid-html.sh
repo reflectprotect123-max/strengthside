@@ -52,6 +52,9 @@ fi
 if [[ -f "$SRC_DIR/package.json" ]]; then
   cp -f "$SRC_DIR/package.json" "$ROOT/preview-site/package.json"
 fi
+if [[ -f "$SRC_DIR/.netlifyignore" ]]; then
+  cp -f "$SRC_DIR/.netlifyignore" "$ROOT/preview-site/.netlifyignore"
+fi
 # Optional bundled seeds (TrainHeroic history OTA — personal data, gitignored)
 if [[ -d "$SRC_DIR/seeds" ]]; then
   mkdir -p "$ROOT/preview-site/seeds"
