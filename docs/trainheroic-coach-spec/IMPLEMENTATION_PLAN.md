@@ -361,8 +361,8 @@ Rationale: templates + grid + calendars + training bridge prove coach↔athlete.
 
 ## 9. Immediate next PRs
 
-1. Finish **R3** — session builder + Engine conditioning on coach blocks  
-2. **R4** — program grid  
+1. **R3** — session builder + Engine conditioning (shipped / in review)  
+2. **R4** — program grid (Library Programs list + week×Day 1–7 cells) — in progress  
 3. **R5–R6** — calendars + publish  
 4. **R10** — training bridge  
 5. Home / roster polish  

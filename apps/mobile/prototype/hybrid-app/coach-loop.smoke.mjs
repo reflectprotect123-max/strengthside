@@ -24,6 +24,8 @@ if (/TrainHeroic|Train HYBRD|trainheroic/i.test(html)) {
   throw new Error('coach.html must not use third-party brand/copy');
 }
 if (!html.includes('Session note')) throw new Error('coach.html missing Session note');
+if (!html.includes('prog-days')) throw new Error('coach.html missing R4 program grid');
+if (!html.includes('Create program')) throw new Error('coach.html missing Create program');
 if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html.includes('Athlete ·')) {
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }

@@ -161,6 +161,40 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .mins-row button{min-width:40px;min-height:40px}
 .engine-hint{margin:8px 0 0;color:var(--dim);font-size:12px;line-height:1.4}
 
+/* program grid — R4 */
+.prog-list{display:grid;gap:10px}
+.prog-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.prog-row-main{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:0;border:0;background:transparent;color:var(--text);cursor:pointer;min-height:44px}
+.prog-row-main:hover b{color:var(--copper2)}
+.prog-row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.prog-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.prog-title{font-family:var(--font-display);font-size:28px;font-weight:600;background:transparent;border:0;border-bottom:1px solid transparent;padding:4px 0;width:min(100%,420px);color:var(--text)}
+.prog-title:focus{border-bottom-color:var(--copper);outline:none}
+.prog-icons{display:flex;gap:6px;align-items:center}
+.prog-icon{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--muted)}
+.prog-icon:hover{color:var(--copper2);border-color:rgba(212,165,116,.35)}
+.prog-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.prog-week{margin-top:22px}
+.prog-week-label{font-family:var(--font-display);font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.prog-days{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:8px;overflow-x:auto;padding-bottom:4px}
+.prog-day-h{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:0 4px 6px}
+.prog-cell{position:relative;min-height:120px;padding:0;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;color:var(--text);overflow:visible}
+.prog-cell.empty{cursor:pointer}
+.prog-cell.empty:hover{border-color:rgba(212,165,116,.3)}
+.prog-card{padding:10px;min-height:120px;display:flex;flex-direction:column;gap:8px}
+.prog-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.prog-card-mark{display:grid;place-items:center;width:22px;height:22px;border-radius:5px;border:1px solid var(--copper);color:var(--copper2);font-size:9px;font-weight:800;letter-spacing:.06em;flex-shrink:0}
+.prog-card-title{font-size:12px;font-weight:650;line-height:1.3;flex:1;min-width:0}
+.prog-card-body{display:flex;gap:8px;align-items:flex-start;margin-top:auto}
+.prog-card-body .letter-badge{width:24px;height:24px;font-size:11px}
+.prog-card-ex{font-size:12px;line-height:1.35}
+.prog-card-ex .muted{font-size:11px;margin-top:2px}
+.kebab-menu{position:absolute;top:36px;right:6px;z-index:20;min-width:180px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:0 12px 32px rgba(0,0,0,.45);display:grid;gap:2px}
+.kebab-menu button{width:100%;text-align:left;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:var(--text);font-size:13px;min-height:40px}
+.kebab-menu button:hover{background:rgba(212,165,116,.12);color:var(--copper2)}
+.kebab-menu button.danger{color:#d0897d}
+.prog-footer{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
 @media(max-width:980px){
   #coachApp.coach-shell{grid-template-columns:1fr}
   .coach-side{flex-direction:row;flex-wrap:wrap;min-height:auto;border-right:0;border-bottom:1px solid var(--line)}
@@ -179,7 +213,11 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 <script>
 const L = window.CoachLoop;
 let S = L.loadState();
-const ui = { view:'home', lib:'sessions', athleteId:null, teamId:null, programId:null, templateId:null, sessionId:null, expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'' };
+const ui = {
+  view:'home', lib:'sessions', athleteId:null, teamId:null, programId:null, templateId:null, sessionId:null,
+  expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'',
+  cellMenu:null, cellPick:null, progSearch:'',
+};
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -192,9 +230,33 @@ function ses(id){ return (S.sessions||[]).find(s => s.id === id); }
 function prog(id){ return (S.programs||[]).find(p => p.id === id); }
 function team(id){ return (S.teams||[]).find(t => t.id === id); }
 
-function go(view, extra){ Object.assign(ui, extra||{}, { view }); render(); }
+function go(view, extra){
+  Object.assign(ui, extra||{}, { view });
+  if (view !== 'session') ui.exPicker = null;
+  if (view !== 'program') { ui.cellMenu = null; ui.cellPick = null; }
+  render();
+}
+function openSession(templateId){
+  ui.templateId = templateId;
+  ui.lib = 'sessions';
+  ui.exPicker = null;
+  ui.view = 'session';
+  render();
+}
+function openProgram(programId){
+  ui.programId = programId;
+  ui.lib = 'programs';
+  ui.cellMenu = null;
+  ui.cellPick = null;
+  ui.view = 'program';
+  render();
+}
 function signOut(){ L.logout(S); persist(); ui.view='home'; render(); }
-function resetDemo(){ S = L.resetState(); ui.view='home'; render(); }
+function resetDemo(){
+  S = L.resetState();
+  Object.assign(ui, { view:'home', lib:'sessions', templateId:null, programId:null, cellMenu:null, cellPick:null, exPicker:null, err:'' });
+  render();
+}
 
 function tryLogin(email, pass){
   const r = L.login(S, email, pass);
@@ -324,12 +386,35 @@ function athleteListHtml(){ return sliceStub('My Athletes', 'Slice S5'); }
 function athleteCalHtml(){ return sliceStub('Athlete calendar', 'Slice S7'); }
 function teamListHtml(){ return sliceStub('My Teams', 'Slice S4'); }
 function teamCalHtml(){ return sliceStub('Team calendar', 'Slice S6'); }
-function programHtml(){ return sliceStub('Program grid', 'Slice S4'); }
-function assignHtml(){ return sliceStub('Assign program', 'Slice S6'); }
+function assignHtml(){ return sliceStub('Assign program', 'Slice S6 — calendars next'); }
 
 function libraryTabs(){
   const tabs = [['programs','Programs'],['sessions','Sessions'],['exercises','Exercises']];
-  return `<div class="lib-tabs">${tabs.map(([k,l]) => `<button type="button" class="${ui.lib===k?'on':''}" onclick="ui.lib='${k}';render()">${l}</button>`).join('')}</div>`;
+  return `<div class="lib-tabs">${tabs.map(([k,l]) => `<button type="button" class="${ui.lib===k?'on':''}" onclick="ui.lib='${k}';ui.cellMenu=null;render()">${l}</button>`).join('')}</div>`;
+}
+
+function programsListHtml(){
+  const q = String(ui.progSearch||'').trim().toLowerCase();
+  const list = (S.programs||[]).filter(p => !q || String(p.name).toLowerCase().includes(q));
+  const rows = list.map(p => {
+    const filled = Object.keys(p.cells||{}).length;
+    const weeks = Number(p.weeks)||1;
+    return `<div class="prog-row">
+      <button type="button" class="prog-row-main" onclick="openProgram('${p.id}')">
+        <div><b>${esc(p.name)}</b><div class="muted">${weeks} week${weeks===1?'':'s'} · ${filled} session${filled===1?'':'s'} placed</div></div>
+        <span class="pill">Open grid</span>
+      </button>
+      <div class="prog-row-actions">
+        <button type="button" class="btn small" onclick="go('assign',{programId:'${p.id}'})">Assign</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="row" style="margin-bottom:16px;flex-wrap:wrap">
+      <div class="field" style="margin:0;flex:1;min-width:180px"><label>Search programs</label>
+        <input value="${esc(ui.progSearch)}" oninput="ui.progSearch=this.value;render()" placeholder="Hybrid Strength…"></div>
+      <button type="button" class="btn primary small" onclick="newProgram()">Create program</button>
+    </div>
+    <div class="prog-list">${rows || '<div class="card muted">No programs yet.</div>'}</div>`;
 }
 
 function libraryHtml(){
@@ -338,7 +423,7 @@ function libraryHtml(){
     const rows = (S.templates||[]).map(t => {
       const n = (t.blocks||[]).length;
       const kinds = (t.blocks||[]).map(b => b.category || b.type).filter(Boolean).slice(0,2).join(' · ');
-      return `<button type="button" class="template-row" onclick="go('session',{templateId:'${t.id}'})">
+      return `<button type="button" class="template-row" data-template-id="${esc(t.id)}" onclick="openSession('${t.id}')">
         <div><b>${esc(t.name)}</b><div class="muted">${n} block${n===1?'':'s'}${kinds?' · '+esc(kinds):''}</div></div>
         <span class="pill">Edit</span></button>`;
     }).join('');
@@ -350,7 +435,8 @@ function libraryHtml(){
   if (ui.lib === 'exercises') {
     return `${tabs}<div class="card slice-stub" style="min-height:200px"><b>Exercises catalog</b><p class="muted">Slice S8 — use exercise picker in session builder for now.</p></div>`;
   }
-  return `${tabs}<div class="card slice-stub" style="min-height:200px"><b>Programs</b><p class="muted">Slice S4 — program grid comes next.</p></div>`;
+  ui.lib = 'programs';
+  return `${tabs}${programsListHtml()}`;
 }
 
 function newTemplate(){
@@ -361,7 +447,215 @@ function newTemplate(){
   });
   S.templates.push(t);
   persist();
-  go('session', { templateId:t.id, lib:'sessions' });
+  openSession(t.id);
+}
+
+function newProgram(){
+  const p = L.emptyProgram('New program', 1);
+  S.programs = S.programs || [];
+  S.programs.push(p);
+  persist();
+  openProgram(p.id);
+}
+
+function cellSummary(templateId){
+  const t = tpl(templateId);
+  if (!t) return null;
+  const work = (t.blocks||[]).find(b => b.type === 'strength' || b.type === 'conditioning') || (t.blocks||[])[0];
+  if (!work) return { title:t.name, letter:'A', line:'Empty session', sets:'' };
+  if (work.type === 'conditioning') {
+    return { title:t.name, letter:work.letter||'A', line:L.condPlanLineBlock(work)||work.heading||'Conditioning', sets:work.targetDurationMin?`${work.targetDurationMin} min`:'' };
+  }
+  if (work.type === 'text') {
+    return { title:t.name, letter:work.letter||'A', line:work.heading||'Notes', sets:'' };
+  }
+  const e = (work.exercises||[])[0];
+  return { title:t.name, letter:work.letter||'A', line:e?.name||work.heading||'Exercise', sets:e?.sets?`${e.sets} Sets`:'' };
+}
+
+function toggleCellMenu(week, day, ev){
+  if (ev) ev.stopPropagation();
+  const cur = ui.cellMenu;
+  if (cur && cur.week === week && cur.day === day) ui.cellMenu = null;
+  else ui.cellMenu = { week, day };
+  ui.cellPick = null;
+  render();
+}
+
+function openCellPick(week, day, mode){
+  ui.cellPick = { week, day, mode: mode || 'set' };
+  ui.cellMenu = null;
+  render();
+}
+
+function closeCellPick(){ ui.cellPick = null; render(); }
+
+function placeCellTemplate(templateId){
+  const pick = ui.cellPick; if (!pick) return;
+  const p = prog(ui.programId); if (!p) return;
+  if (pick.mode === 'set' || pick.mode === 'copy' || pick.mode === 'move') {
+    L.setProgramCell(p, pick.week, pick.day, templateId);
+    if (pick.mode === 'move' && pick.fromWeek != null) {
+      L.setProgramCell(p, pick.fromWeek, pick.fromDay, null);
+    }
+  }
+  ui.cellPick = null;
+  persist(); render();
+}
+
+function clearCell(week, day){
+  const p = prog(ui.programId); if (!p) return;
+  L.setProgramCell(p, week, day, null);
+  ui.cellMenu = null;
+  persist(); render();
+}
+
+function startCopyCell(week, day){
+  const p = prog(ui.programId); if (!p) return;
+  const tid = (p.cells||{})[L.cellKey(week, day)];
+  if (!tid) return;
+  ui.cellMenu = null;
+  ui.cellPick = { week:null, day:null, mode:'copyTarget', templateId:tid };
+  render();
+}
+
+function startMoveCell(week, day){
+  const p = prog(ui.programId); if (!p) return;
+  const tid = (p.cells||{})[L.cellKey(week, day)];
+  if (!tid) return;
+  ui.cellMenu = null;
+  ui.cellPick = { week:null, day:null, mode:'moveTarget', templateId:tid, fromWeek:week, fromDay:day };
+  render();
+}
+
+function onEmptyCell(week, day){
+  const pick = ui.cellPick;
+  if (pick && (pick.mode === 'copyTarget' || pick.mode === 'moveTarget')) {
+    const p = prog(ui.programId); if (!p) return;
+    L.setProgramCell(p, week, day, pick.templateId);
+    if (pick.mode === 'moveTarget') L.setProgramCell(p, pick.fromWeek, pick.fromDay, null);
+    ui.cellPick = null;
+    persist(); render();
+    return;
+  }
+  openCellPick(week, day, 'set');
+}
+
+function saveCellAsTemplate(week, day){
+  const p = prog(ui.programId); if (!p) return;
+  const tid = (p.cells||{})[L.cellKey(week, day)];
+  const src = tpl(tid); if (!src) return;
+  const fresh = L.makeTemplate({
+    name: src.name + ' (copy)',
+    coachInstructions: src.coachInstructions || '',
+    blocks: (src.blocks||[]).map(b => {
+      const { id, letter, ...rest } = b;
+      const exercises = (b.exercises||[]).map(e => {
+        const { id:eid, ...er } = e;
+        return L.makeExercise(er);
+      });
+      return L.makeBlock({ ...rest, exercises });
+    }),
+  });
+  S.templates.push(fresh);
+  ui.cellMenu = null;
+  persist();
+  openSession(fresh.id);
+}
+
+function addWeek(){
+  const p = prog(ui.programId); if (!p) return;
+  L.addProgramWeek(p);
+  persist(); render();
+}
+
+function progIcon(name){
+  const paths = {
+    eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+    folder:'<path d="M12 10v6"/><path d="M9 13h6"/><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z"/>',
+    gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  };
+  return `<svg viewBox="0 0 24 24" aria-hidden="true">${paths[name]||''}</svg>`;
+}
+
+function templatePickerHtml(){
+  const pick = ui.cellPick;
+  if (!pick || (pick.mode !== 'set' && pick.mode !== 'copy' && pick.mode !== 'move')) return '';
+  const list = (S.templates||[]).map(t =>
+    `<button type="button" class="picker-item" onclick="placeCellTemplate('${t.id}')"><span>${esc(t.name)}</span><span class="muted">${(t.blocks||[]).length} blocks</span></button>`
+  ).join('');
+  return `<div class="picker-overlay" onclick="if(event.target===this)closeCellPick()">
+    <div class="picker-panel" role="dialog" aria-label="Choose session template">
+      <div class="row"><b>Add from library</b><button type="button" class="btn ghost small" onclick="closeCellPick()">Close</button></div>
+      <p class="muted" style="margin-top:8px">Week ${pick.week} · Day ${pick.day}</p>
+      <div class="picker-list">${list || '<div class="muted">No session templates.</div>'}</div>
+    </div></div>`;
+}
+
+function programCellHtml(p, week, day){
+  const key = L.cellKey(week, day);
+  const tid = (p.cells||{})[key];
+  const menuOn = ui.cellMenu && ui.cellMenu.week === week && ui.cellMenu.day === day;
+  if (!tid) {
+    const hint = ui.cellPick && (ui.cellPick.mode === 'copyTarget' || ui.cellPick.mode === 'moveTarget')
+      ? `<span class="muted" style="padding:12px;display:block;font-size:11px">${ui.cellPick.mode==='moveTarget'?'Drop here to move':'Drop here to copy'}</span>`
+      : '';
+    return `<button type="button" class="prog-cell empty" aria-label="Week ${week} Day ${day} empty" onclick="onEmptyCell(${week},${day})">${hint}</button>`;
+  }
+  const sum = cellSummary(tid) || { title:'Session', letter:'A', line:'—', sets:'' };
+  const menu = menuOn ? `<div class="kebab-menu" role="menu">
+      <button type="button" onclick="openSession('${tid}')">Edit session</button>
+      <button type="button" onclick="startCopyCell(${week},${day})">Copy</button>
+      <button type="button" onclick="startMoveCell(${week},${day})">Move</button>
+      <button type="button" onclick="saveCellAsTemplate(${week},${day})">Save as template</button>
+      <button type="button" class="danger" onclick="clearCell(${week},${day})">Delete</button>
+    </div>` : '';
+  return `<div class="prog-cell">
+    <div class="prog-card">
+      <div class="prog-card-top">
+        <span class="prog-card-mark">TH</span>
+        <button type="button" class="prog-card-title" style="background:transparent;border:0;padding:0;text-align:left;color:inherit;cursor:pointer" onclick="openSession('${tid}')">${esc(sum.title)}</button>
+        <button type="button" class="kebab-btn" aria-label="Cell menu" onclick="toggleCellMenu(${week},${day},event)">⋯</button>
+      </div>
+      <div class="prog-card-body">
+        <span class="letter-badge">${esc(sum.letter)}</span>
+        <div class="prog-card-ex"><div>${esc(sum.line)}</div>${sum.sets?`<div class="muted">${esc(sum.sets)}</div>`:''}</div>
+      </div>
+    </div>${menu}</div>`;
+}
+
+function programHtml(){
+  const p = prog(ui.programId);
+  if (!p) return libraryHtml();
+  ui.lib = 'programs';
+  const weeks = Math.max(1, Number(p.weeks)||1);
+  const dayHeads = [1,2,3,4,5,6,7].map(d => `<div class="prog-day-h">Day ${d}</div>`).join('');
+  const weekBlocks = Array.from({ length: weeks }, (_, i) => {
+    const w = i + 1;
+    const cells = [1,2,3,4,5,6,7].map(d => programCellHtml(p, w, d)).join('');
+    return `<div class="prog-week"><div class="prog-week-label">Week ${w}</div>
+      <div class="prog-days">${dayHeads}${cells}</div></div>`;
+  }).join('');
+  const pasteHint = ui.cellPick && (ui.cellPick.mode === 'copyTarget' || ui.cellPick.mode === 'moveTarget')
+    ? `<p class="muted" style="margin-top:8px">${ui.cellPick.mode==='moveTarget'?'Click an empty cell to move the session.':'Click an empty cell to paste the copy.'} <button type="button" class="btn ghost small" onclick="closeCellPick()">Cancel</button></p>`
+    : '';
+  return `<button type="button" class="btn ghost small" onclick="go('library',{lib:'programs'})">← Back to programs</button>
+    <div class="prog-toolbar" style="margin-top:12px">
+      <input class="prog-title" value="${esc(p.name)}" aria-label="Program title" oninput="prog(ui.programId).name=this.value;persist()">
+      <div class="prog-icons">
+        <button type="button" class="prog-icon" title="Preview (coming soon)" disabled>${progIcon('eye')}</button>
+        <button type="button" class="prog-icon" title="Save to folder (coming soon)" disabled>${progIcon('folder')}</button>
+        <button type="button" class="prog-icon" title="Program settings (coming soon)" disabled>${progIcon('gear')}</button>
+        <button type="button" class="btn small" onclick="go('assign',{programId:ui.programId})">Assign</button>
+      </div>
+    </div>
+    ${pasteHint}
+    ${weekBlocks}
+    <div class="prog-footer">
+      <button type="button" class="btn" onclick="addWeek()">Add week</button>
+      <span class="muted">Empty cells stay blank — click to place a session template.</span>
+    </div>
+    ${templatePickerHtml()}`;
 }
 
 function tplBlocks(){ return tpl(ui.templateId)?.blocks || []; }
@@ -701,11 +995,16 @@ function render(){
 
 window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
 window.saveComment=saveComment; window.toggleCard=toggleCard;
-window.newTemplate=newTemplate; window.parseSets=parseSets; window.addEx=addEx; window.addBlk=addBlk;
+window.openSession=openSession; window.openProgram=openProgram;
+window.newTemplate=newTemplate; window.newProgram=newProgram; window.parseSets=parseSets; window.addEx=addEx; window.addBlk=addBlk;
 window.removeBlk=removeBlk; window.removeEx=removeEx; window.toggleSuperset=toggleSuperset;
 window.openExPicker=openExPicker; window.closeExPicker=closeExPicker; window.pickExercise=pickExercise;
 window.setRowRep=setRowRep; window.setRowLoad=setRowLoad;
 window.patchCond=patchCond; window.setCondFmt=setCondFmt; window.nudgeCondMin=nudgeCondMin;
+window.toggleCellMenu=toggleCellMenu; window.openCellPick=openCellPick; window.closeCellPick=closeCellPick;
+window.placeCellTemplate=placeCellTemplate; window.clearCell=clearCell;
+window.startCopyCell=startCopyCell; window.startMoveCell=startMoveCell; window.onEmptyCell=onEmptyCell;
+window.saveCellAsTemplate=saveCellAsTemplate; window.addWeek=addWeek;
 render();
 </script>
 </body>
