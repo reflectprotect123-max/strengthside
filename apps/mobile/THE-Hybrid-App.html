@@ -899,7 +899,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v91';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v92';
 const TRAINHEROIC_SEED_URL='./seeds/trainheroic-import.json';
 const TRAINHEROIC_SEED_JS='./trainheroic-import.js';
 const TRAINHEROIC_SEED_JS_NESTED='./seeds/trainheroic-import.js';
