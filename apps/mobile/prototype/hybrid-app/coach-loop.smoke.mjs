@@ -11,12 +11,28 @@ const src = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 const html = readFileSync(join(dir, 'coach.html'), 'utf8');
 
 if (!html.includes('coach-loop.js')) throw new Error('coach.html missing coach-loop.js');
+if (!html.includes('coach-nutrition.js')) throw new Error('coach.html missing coach-nutrition.js');
 if (!html.includes('Coach Home')) throw new Error('coach.html missing Coach Home');
 if (!html.includes('hybrid S&C')) throw new Error('coach.html missing team name');
+if (!html.includes('Nutrition')) throw new Error('coach.html missing Nutrition nav (greyed until N*)');
+if (!html.includes('coach-shell')) throw new Error('coach.html missing R0 coach-shell layout');
+if (!html.includes('--coach-main-bg:#07090b')) throw new Error('coach.html missing dark main pane tokens');
+if (!html.includes('Manage Assistants')) throw new Error('coach.html missing header actions');
+if (!html.includes('My Athletes')) throw new Error('coach.html missing athletes nav label');
+if (!html.includes('Analytics')) throw new Error('coach.html missing deferred Analytics nav');
 if (/TrainHeroic|Train HYBRD|trainheroic/i.test(html)) {
   throw new Error('coach.html must not use third-party brand/copy');
 }
-if (!html.includes('Session note')) throw new Error('coach.html missing Session note');
+if (!html.includes('Session comment') && !html.includes('Session note')) {
+  throw new Error('coach.html missing Session comment');
+}
+if (!html.includes('prog-days')) throw new Error('coach.html missing R4 program grid');
+if (!html.includes('Export bridge file')) throw new Error('coach.html missing bridge export');
+if (!html.includes('exercisesCatalogHtml') && !html.includes('Search exercises')) {
+  throw new Error('coach.html missing exercises catalog');
+}
+if (!html.includes('Session comment')) throw new Error('coach.html missing session comment drawer');
+if (!html.includes('function gateHtml')) throw new Error('coach.html missing gateHtml');
 if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html.includes('Athlete ·')) {
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }

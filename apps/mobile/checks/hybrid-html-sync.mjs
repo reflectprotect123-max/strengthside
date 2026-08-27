@@ -48,6 +48,13 @@ const bundles = [
   'recovery-engine.js',
   'strength-adapter.js',
   'engine-adapter.js',
+  'coach-sync.js',
+  'coach-cloud.js',
+  'coach.html',
+  'coach-loop.js',
+  'coach-nutrition.js',
+  'coach-bridge.js',
+  'coach-views.js',
 ];
 for (const f of bundles) {
   mustMatch(f, join(proto, f), join(root, 'preview-site', f));
