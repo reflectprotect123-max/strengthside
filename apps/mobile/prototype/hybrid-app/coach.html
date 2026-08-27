@@ -216,6 +216,9 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .cal-chip-title{font-weight:650;line-height:1.25}
 .cal-chip-meta{margin-top:4px;color:var(--dim);font-size:10px}
 .cal-empty-actions{margin-top:6px}
+.ex-cat-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ex-cat-row:last-child{border-bottom:0}
+.feed-card h2{font-family:var(--font-display);font-weight:600}
 
 @media(max-width:980px){
   #coachApp.coach-shell{grid-template-columns:1fr}
@@ -244,6 +247,7 @@ const ui = {
   cellMenu:null, cellPick:null, progSearch:'',
   calMonth:null, calDay:null, chipMenu:null, libPick:null,
   assignTeamId:null, assignStart:null, nutAthleteId:null,
+  exCatalogSearch:'', commentDrawer:null, filterAthlete:'all',
 };
 
 const $ = (id) => document.getElementById(id);
@@ -252,6 +256,7 @@ const dash = (v) => (v == null || v === '') ? '–' : String(v);
 function persist(){
   L.saveState(null, S);
   if (window.CoachBridge) CoachBridge.push(S);
+  if (window.CoachViews) CoachViews.bindState(S);
 }
 function account(){ return L.currentAccount(S); }
 function athleteBy(id){ return (S.athletes||[]).find(a => a.id === id); }
@@ -262,6 +267,7 @@ function team(id){ return (S.teams||[]).find(t => t.id === id); }
 
 function go(view, extra){
   Object.assign(ui, extra||{}, { view });
+  if (view === 'library' && !ui.lib) ui.lib = 'programs';
   if (view !== 'session') ui.exPicker = null;
   if (view !== 'program') { ui.cellMenu = null; ui.cellPick = null; }
   if (view === 'assign' && !ui.assignTeamId && S.teams && S.teams[0]) ui.assignTeamId = S.teams[0].id;
@@ -286,7 +292,8 @@ function openProgram(programId){
 function signOut(){ L.logout(S); persist(); ui.view='home'; render(); }
 function resetDemo(){
   S = L.resetState();
-  Object.assign(ui, { view:'home', lib:'sessions', templateId:null, programId:null, cellMenu:null, cellPick:null, exPicker:null, err:'' });
+  Object.assign(ui, { view:'home', lib:'sessions', templateId:null, programId:null, cellMenu:null, cellPick:null, exPicker:null, err:'', calMonth:null, calDay:null, chipMenu:null, libPick:null });
+  if (window.CoachViews) CoachViews.bindState(S);
   render();
 }
 
@@ -381,28 +388,61 @@ function toggleCard(id){ ui.expanded[id] = !ui.expanded[id]; render(); }
 
 function feedHtml(){
   const athletes = S.athletes||[];
-  const list = ui.filterAthlete && ui.filterAthlete!=='all'
-    ? (S.sessions||[]).filter(s => s.athleteId===ui.filterAthlete)
-    : S.sessions;
+  let list = S.sessions||[];
+  if (ui.filterAthlete === '1to1') {
+    const teamIds = new Set((S.teams||[]).flatMap(t => t.athleteIds||[]));
+    list = list.filter(s => !teamIds.has(s.athleteId));
+  } else if (ui.filterAthlete && ui.filterAthlete !== 'all') {
+    list = list.filter(s => s.athleteId === ui.filterAthlete);
+  }
   const groups = L.groupFeed(list, athletes);
   const cards = groups.map(g => `<div class="dateh">${esc(g.label)}</div>` + g.cards.map(c => {
     const s = c.session;
     const open = ui.expandAll || ui.expanded[s.id];
     const title = s.sessionTitle || s.name;
-    return `<div class="card">
+    const notePreview = s.comment?.text ? `<div class="muted" style="margin-top:8px">${esc(s.comment.text.slice(0,120))}${s.comment.text.length>120?'…':''}</div>` : '';
+    return `<div class="card feed-card">
       <div class="row"><div><div class="eyebrow">${esc(c.athlete?.name||'Athlete')}</div><h2 style="font-size:20px;margin-top:4px">${esc(s.name)}</h2><div class="muted">${esc(title)}</div></div><span class="pill">${esc(s.status)}</span></div>
       ${metricRow(c.metrics)}
-      <div class="row" style="margin-top:12px"><button class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button></div>
+      ${notePreview}
+      <div class="row" style="margin-top:12px;justify-content:flex-start;gap:8px;flex-wrap:wrap">
+        <button class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button>
+        <button class="btn small" onclick="openCommentDrawer('${s.id}')">Session comment</button>
+      </div>
       ${open?blockDetail(s):''}
-      <div class="field"><label>Session note</label><textarea id="note-${s.id}">${esc(s.comment?.text||'')}</textarea>
-      <button class="btn primary block" style="margin-top:8px" onclick="saveComment('${s.id}')">Save session note</button></div>
     </div>`;
-  }).join('')).join('') || `<div class="card muted">No logged sessions found — try a different filter.</div>`;
+  }).join('')).join('') || `<div class="card"><div class="eyebrow">Latest feed</div><h2 style="font-size:20px;margin-top:6px">No sessions yet</h2><p class="muted" style="margin-top:8px">When athletes log work, cards land here. Assign + publish from Library to get started.</p></div>`;
   const opts = athletes.map(a => `<option value="${a.id}" ${ui.filterAthlete===a.id?'selected':''}>${esc(a.name)}</option>`).join('');
   return `<div class="topbar"><div><div class="eyebrow">Latest feed</div></div>
-    <select onchange="ui.filterAthlete=this.value;render()" aria-label="Filter athletes"><option value="all">All Athletes</option>${opts}</select></div>
+    <select onchange="ui.filterAthlete=this.value;render()" aria-label="Filter athletes">
+      <option value="all" ${ui.filterAthlete==='all'?'selected':''}>All Athletes</option>
+      <option value="1to1" ${ui.filterAthlete==='1to1'?'selected':''}>1:1 Athletes</option>
+      ${opts}</select></div>
     <label class="row" style="justify-content:flex-start;gap:8px;margin-bottom:8px"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()" style="width:auto"> Expand all cards</label>
-    <div class="stack">${cards}</div>`;
+    <div class="stack">${cards}</div>
+    ${commentDrawerHtml()}`;
+}
+
+function openCommentDrawer(sessionId){
+  ui.commentDrawer = sessionId;
+  render();
+}
+
+function closeCommentDrawer(){ ui.commentDrawer = null; render(); }
+
+function commentDrawerHtml(){
+  if (!ui.commentDrawer) return '';
+  const s = ses(ui.commentDrawer);
+  if (!s) return '';
+  const a = athleteBy(s.athleteId);
+  return `<div class="picker-overlay" onclick="if(event.target===this)closeCommentDrawer()">
+    <div class="picker-panel" role="dialog" aria-label="Session comment">
+      <div class="row"><div><div class="eyebrow">${esc(a?.name||'Athlete')}</div><b>${esc(s.sessionTitle||s.name)}</b></div>
+      <button type="button" class="btn ghost small" onclick="closeCommentDrawer()">Close</button></div>
+      <div class="field" style="margin-top:12px"><label>Session comment</label>
+        <textarea id="note-${s.id}" placeholder="Comment on this session…">${esc(s.comment?.text||'')}</textarea></div>
+      <button class="btn primary block" style="margin-top:8px" onclick="saveComment('${s.id}');closeCommentDrawer()">Send</button>
+    </div></div>`;
 }
 
 function needsHtml(){
@@ -467,10 +507,37 @@ function libraryHtml(){
       <div class="stack">${rows || '<div class="card muted">No session templates yet.</div>'}</div>`;
   }
   if (ui.lib === 'exercises') {
-    return `${tabs}<div class="card slice-stub" style="min-height:200px"><b>Exercises catalog</b><p class="muted">Slice S8 — use exercise picker in session builder for now.</p></div>`;
+    return `${tabs}${exercisesCatalogHtml()}`;
   }
   ui.lib = 'programs';
   return `${tabs}${programsListHtml()}`;
+}
+
+function exercisesCatalogHtml(){
+  const q = String(ui.exCatalogSearch||'').trim().toLowerCase();
+  const list = (S.exercises||[]).filter(e => !q || String(e.name).toLowerCase().includes(q) || String(e.category||'').toLowerCase().includes(q));
+  const cats = {};
+  list.forEach(e => { const c = e.category || 'Other'; (cats[c]=cats[c]||[]).push(e); });
+  const blocks = Object.keys(cats).sort().map(cat => {
+    const rows = cats[cat].map(e => `<div class="ex-cat-row"><b>${esc(e.name)}</b><span class="muted">${e.builtIn?'Core':'Custom'}</span></div>`).join('');
+    return `<div class="card" style="margin-top:10px"><div class="eyebrow">${esc(cat)}</div><div class="stack" style="margin-top:10px;gap:6px">${rows}</div></div>`;
+  }).join('');
+  return `<div class="row" style="margin-bottom:16px;flex-wrap:wrap">
+      <div class="field" style="margin:0;flex:1;min-width:180px"><label>Search exercises</label>
+        <input value="${esc(ui.exCatalogSearch||'')}" oninput="ui.exCatalogSearch=this.value;render()" placeholder="Squat, row…"></div>
+      <button type="button" class="btn primary small" onclick="addCustomExercise()">New exercise</button>
+    </div>
+    <p class="muted">${list.length} exercise${list.length===1?'':'s'} · used by session builder picker</p>
+    ${blocks || '<div class="card muted">No exercises match.</div>'}`;
+}
+
+function addCustomExercise(){
+  const name = prompt('Exercise name');
+  if (!name || !String(name).trim()) return;
+  const category = prompt('Category (optional)', 'Custom') || 'Custom';
+  S.exercises = S.exercises || [];
+  S.exercises.push({ id: L.uid('ex'), name: String(name).trim(), category: String(category).trim(), builtIn: false, source: 'coach-custom' });
+  persist(); render();
 }
 
 function newTemplate(){
@@ -961,7 +1028,7 @@ function coachChrome(body){
   ];
   const navHtml = nav.map(([k,l,ic,off]) => {
     if (off) return `<span class="nav-soon" title="Coming soon">${icon(ic)}${esc(l)}</span>`;
-    return `<button type="button" class="${navActive(k)?'on':''}" onclick="go('${k}')">${icon(ic)}${esc(l)}</button>`;
+    return `<button type="button" class="${navActive(k)?'on':''}" data-nav="${k}" onclick="go('${k}')">${icon(ic)}${esc(l)}</button>`;
   }).join('');
   const initials = String(S.coach?.name||'D').slice(0,1).toUpperCase();
   const hasRail = ui.view === 'home';
@@ -970,6 +1037,7 @@ function coachChrome(body){
     <nav>${navHtml}</nav>
     <div class="coach-side-foot">
       <span class="nav-soon" title="Coming soon">${icon('support')}Support</span>
+      <button type="button" onclick="exportBridgeFile()">Export bridge file</button>
       <button type="button" onclick="resetDemo()">Reset demo data</button>
       <button type="button" onclick="signOut()">Sign out</button>
     </div>
@@ -989,6 +1057,18 @@ function coachChrome(body){
       ${hasRail?`<aside class="coach-rail" aria-label="Programming status">${needsHtml()}</aside>`:''}
     </div>
   </div>`;
+}
+
+function exportBridgeFile(){
+  if (!window.CoachBridge) return alert('Bridge module missing');
+  const r = CoachBridge.push(S);
+  if (!r.ok) return alert('Export failed: ' + (r.error||''));
+  const blob = new Blob([JSON.stringify(r.payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'the-coach-bridge-' + (r.payload.exportedAt||'').slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function gateHtml(){
@@ -1040,6 +1120,9 @@ window.toggleCellMenu=toggleCellMenu; window.openCellPick=openCellPick; window.c
 window.placeCellTemplate=placeCellTemplate; window.clearCell=clearCell;
 window.startCopyCell=startCopyCell; window.startMoveCell=startMoveCell; window.onEmptyCell=onEmptyCell;
 window.saveCellAsTemplate=saveCellAsTemplate; window.addWeek=addWeek;
+window.addCustomExercise=addCustomExercise;
+window.openCommentDrawer=openCommentDrawer; window.closeCommentDrawer=closeCommentDrawer;
+window.exportBridgeFile=exportBridgeFile;
 CoachViews.init({ L, S, ui, persist, esc, go, render, $, tpl, prog, ses, athleteBy, team });
 render();
 </script>

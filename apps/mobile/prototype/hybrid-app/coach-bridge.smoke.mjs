@@ -16,8 +16,9 @@ const indexHtml = readFileSync(join(dir, 'index.html'), 'utf8');
 for (const needle of ['coach-bridge.js', 'coach-views.js', 'CoachViews.init']) {
   if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);
 }
-if (!indexHtml.includes('coach-sync.js')) throw new Error('index.html missing coach-sync.js');
-if (!indexHtml.includes("reason!=='coach-sync-pull'")) throw new Error('index.html missing coach sync hook');
+if (!indexHtml.includes('pullCoachBridge')) throw new Error('index.html missing pullCoachBridge');
+if (!indexHtml.includes('importCoachBridge')) throw new Error('index.html missing importCoachBridge');
+if (!syncSrc.includes('importPayload')) throw new Error('coach-sync.js missing importPayload');
 
 const store = {};
 const localStorage = {

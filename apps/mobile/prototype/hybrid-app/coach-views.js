@@ -539,8 +539,13 @@
     ctx = context;
   }
 
+  function bindState(state) {
+    ctx.S = state;
+  }
+
   root.CoachViews = {
     init: init,
+    bindState: bindState,
     assignHtml: assignHtml,
     confirmAssign: confirmAssign,
     athleteListHtml: athleteListHtml,

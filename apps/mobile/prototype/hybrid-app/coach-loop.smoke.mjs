@@ -23,10 +23,16 @@ if (!html.includes('Analytics')) throw new Error('coach.html missing deferred An
 if (/TrainHeroic|Train HYBRD|trainheroic/i.test(html)) {
   throw new Error('coach.html must not use third-party brand/copy');
 }
-if (!html.includes('Session note')) throw new Error('coach.html missing Session note');
+if (!html.includes('Session comment') && !html.includes('Session note')) {
+  throw new Error('coach.html missing Session comment');
+}
 if (!html.includes('prog-days')) throw new Error('coach.html missing R4 program grid');
-if (!html.includes('coach-views.js')) throw new Error('coach.html missing coach-views.js');
-if (!html.includes('cal-grid')) throw new Error('coach.html missing R5/R6 calendars');
+if (!html.includes('Export bridge file')) throw new Error('coach.html missing bridge export');
+if (!html.includes('exercisesCatalogHtml') && !html.includes('Search exercises')) {
+  throw new Error('coach.html missing exercises catalog');
+}
+if (!html.includes('Session comment')) throw new Error('coach.html missing session comment drawer');
+if (!html.includes('function gateHtml')) throw new Error('coach.html missing gateHtml');
 if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html.includes('Athlete ·')) {
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }
