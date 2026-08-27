@@ -40,10 +40,11 @@ for f in concept2.js echo-ftms.js native-bridge.js native-ble.js label-scan.js l
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
 done
-# Integration Netlify proxies (preview-site deploy — WHOOP + Concept2)
+# Integration Netlify functions (WHOOP + Concept2 — real handlers, not hybrid proxies)
 if [[ -d "$SRC_DIR/netlify/functions" ]]; then
   mkdir -p "$ROOT/preview-site/netlify/functions"
-  cp -f "$SRC_DIR"/netlify/functions/*.mjs "$ROOT/preview-site/netlify/functions/"
+  rm -rf "$ROOT/preview-site/netlify/functions"
+  cp -a "$SRC_DIR/netlify/functions" "$ROOT/preview-site/netlify/functions"
 fi
 if [[ -f "$SRC_DIR/netlify.toml" ]]; then
   cp -f "$SRC_DIR/netlify.toml" "$ROOT/preview-site/netlify.toml"

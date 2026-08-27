@@ -1,5 +1,5 @@
 /**
- * Smoke: athlete Netlify deploy includes integration proxy functions + client routing.
+ * Smoke: athlete Netlify deploy includes WHOOP/Concept2 functions + client routing.
  * Run: node apps/mobile/prototype/hybrid-app/hybrid-proxy.smoke.mjs
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -15,9 +15,12 @@ const requiredFns = [
   'integrations-disconnect.mjs',
   'whoop-connect.mjs',
   'whoop-sync.mjs',
+  'whoop-callback.mjs',
   'concept2-connect.mjs',
   'concept2-sync.mjs',
-  '_hybrid-proxy.mjs',
+  '_lib/http.mjs',
+  '_lib/whoop.mjs',
+  '_lib/config.mjs',
 ];
 
 if (!existsSync(join(preview, 'netlify.toml'))) {
@@ -32,9 +35,21 @@ for (const name of requiredFns) {
   if (!existsSync(join(fnDir, name))) throw new Error('missing function: ' + name);
 }
 
-const proxy = readFileSync(join(fnDir, '_hybrid-proxy.mjs'), 'utf8');
-if (!proxy.includes('access-control-allow-origin')) {
-  throw new Error('_hybrid-proxy.mjs must emit CORS for Capacitor cross-origin calls');
+const httpLib = readFileSync(join(fnDir, '_lib/http.mjs'), 'utf8');
+if (!httpLib.includes('access-control-allow-origin')) {
+  throw new Error('_lib/http.mjs must emit CORS for Capacitor cross-origin calls');
+}
+if (!httpLib.includes('function preflight')) {
+  throw new Error('_lib/http.mjs must export preflight for OPTIONS');
+}
+
+// Must be real WHOOP handlers now — not thin proxies to deleted hybrid site.
+const whoopSync = readFileSync(join(fnDir, 'whoop-sync.mjs'), 'utf8');
+if (whoopSync.includes('proxyHybrid') || whoopSync.includes('thehybridengine1.netlify.app')) {
+  throw new Error('whoop-sync must not proxy to gutted hybrid Netlify');
+}
+if (!whoopSync.includes('fetchWhoopSnapshot')) {
+  throw new Error('whoop-sync must call real WHOOP snapshot logic');
 }
 
 const whoopJs = readFileSync(join(dir, 'whoop.js'), 'utf8');
@@ -42,7 +57,6 @@ if (!whoopJs.includes('resolveProxyBase') || !whoopJs.includes('thehybridsystem.
   throw new Error('whoop.js must route native/offline clients to athlete Netlify');
 }
 
-// Capacitor WebView origin → absolute athlete Netlify URL
 const sandbox = {
   console,
   fetch: async (url) => {
