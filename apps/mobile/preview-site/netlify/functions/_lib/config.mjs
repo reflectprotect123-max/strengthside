@@ -1,5 +1,29 @@
-const configuredBaseUrl = String(process.env.APP_BASE_URL || '').trim().replace(/\/$/, '');
-if (!/^https:\/\/[^\s/]+(?:\/[^\s]*)?$/i.test(configuredBaseUrl)) {
+function normalizeHttpsBase(raw) {
+  return String(raw || '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\/$/, '');
+}
+
+function isHttpsBase(url) {
+  return /^https:\/\/[^\s/]+(?:\/[^\s]*)?$/i.test(url);
+}
+
+/*
+ * Prefer explicit APP_BASE_URL. Fall back to Netlify's site URL when present,
+ * then the known athlete production host — OAuth callbacks must be absolute
+ * HTTPS and this host is the dogfood/prod surface.
+ */
+const PRODUCTION_APP_BASE_URL = 'https://thehybridsystem.netlify.app';
+const configuredBaseUrl = [
+  process.env.APP_BASE_URL,
+  process.env.URL,
+  PRODUCTION_APP_BASE_URL,
+]
+  .map(normalizeHttpsBase)
+  .find(isHttpsBase);
+
+if (!configuredBaseUrl) {
   throw new Error('APP_BASE_URL must be configured as an explicit HTTPS URL');
 }
 export const BASE_URL = configuredBaseUrl;

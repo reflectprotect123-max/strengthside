@@ -52,6 +52,11 @@ if (!whoopSync.includes('fetchWhoopSnapshot')) {
   throw new Error('whoop-sync must call real WHOOP snapshot logic');
 }
 
+const configLib = readFileSync(join(fnDir, '_lib/config.mjs'), 'utf8');
+if (!configLib.includes('thehybridsystem.netlify.app')) {
+  throw new Error('config.mjs must fall back to athlete Netlify production URL');
+}
+
 const whoopJs = readFileSync(join(dir, 'whoop.js'), 'utf8');
 if (!whoopJs.includes('resolveProxyBase') || !whoopJs.includes('thehybridsystem.netlify.app')) {
   throw new Error('whoop.js must route native/offline clients to athlete Netlify');
