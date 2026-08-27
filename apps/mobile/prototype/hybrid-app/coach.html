@@ -195,6 +195,28 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .kebab-menu button.danger{color:#d0897d}
 .prog-footer{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
+/* calendars + roster — R5/R6 */
+.roster-table{width:100%;border-collapse:collapse;font-size:13px}
+.roster-table th,.roster-table td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+.roster-table th{color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.linkish{background:transparent;border:0;padding:0;color:var(--copper2);font-weight:650;cursor:pointer;text-align:left}
+.cal-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:16px 0;flex-wrap:wrap}
+.cal-month{margin-top:8px}
+.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.cal-dow{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-day{min-height:88px;border:1px solid var(--line);border-radius:10px;background:#0e1216;padding:6px;position:relative}
+.cal-day.expanded{min-height:120px;border-color:rgba(212,165,116,.35)}
+.cal-day-num{width:100%;border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:700;text-align:left;padding:2px 4px;cursor:pointer}
+.cal-day-body{display:grid;gap:6px;margin-top:4px}
+.cal-chip{padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);position:relative;font-size:11px}
+.cal-chip.unpublished{border-style:dashed;opacity:.92}
+.cal-chip.published{border-color:rgba(125,186,154,.45)}
+.cal-chip-top{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+.cal-chip-title{font-weight:650;line-height:1.25}
+.cal-chip-meta{margin-top:4px;color:var(--dim);font-size:10px}
+.cal-empty-actions{margin-top:6px}
+
 @media(max-width:980px){
   #coachApp.coach-shell{grid-template-columns:1fr}
   .coach-side{flex-direction:row;flex-wrap:wrap;min-height:auto;border-right:0;border-bottom:1px solid var(--line)}
@@ -210,19 +232,27 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 <div id="coachApp" class="coach-shell hidden"></div>
 <script src="./coach-loop.js"></script>
 <script src="./coach-nutrition.js"></script>
+<script src="./coach-bridge.js"></script>
+<script src="./coach-views.js"></script>
 <script>
 const L = window.CoachLoop;
+const N = window.CoachNutrition;
 let S = L.loadState();
 const ui = {
   view:'home', lib:'sessions', athleteId:null, teamId:null, programId:null, templateId:null, sessionId:null,
   expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'',
   cellMenu:null, cellPick:null, progSearch:'',
+  calMonth:null, calDay:null, chipMenu:null, libPick:null,
+  assignTeamId:null, assignStart:null, nutAthleteId:null,
 };
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const dash = (v) => (v == null || v === '') ? '–' : String(v);
-function persist(){ L.saveState(null, S); }
+function persist(){
+  L.saveState(null, S);
+  if (window.CoachBridge) CoachBridge.push(S);
+}
 function account(){ return L.currentAccount(S); }
 function athleteBy(id){ return (S.athletes||[]).find(a => a.id === id); }
 function tpl(id){ return (S.templates||[]).find(t => t.id === id); }
@@ -234,6 +264,8 @@ function go(view, extra){
   Object.assign(ui, extra||{}, { view });
   if (view !== 'session') ui.exPicker = null;
   if (view !== 'program') { ui.cellMenu = null; ui.cellPick = null; }
+  if (view === 'assign' && !ui.assignTeamId && S.teams && S.teams[0]) ui.assignTeamId = S.teams[0].id;
+  if ((view === 'athlete' || view === 'team') && !ui.calMonth) ui.calMonth = L.today().slice(0, 7);
   render();
 }
 function openSession(templateId){
@@ -274,13 +306,14 @@ function navActive(key){
   if (key === 'athletes') return ui.view === 'athletes' || ui.view === 'athlete';
   if (key === 'teams') return ui.view === 'teams' || ui.view === 'team';
   if (key === 'library') return ['library','program','session'].includes(ui.view);
+  if (key === 'nutrition') return ui.view === 'nutrition';
   return false;
 }
 
 function headerTitle(){
   const coachName = S.coach?.name || 'Dan';
   if (ui.view === 'home') return `Welcome back, Coach ${coachName}`;
-  const titles = { athletes:'My Athletes', athlete:'My Athletes', teams:'My Teams', team:'My Teams', library:'Library', program:'Library', session:'Library', assign:'Assign' };
+  const titles = { athletes:'My Athletes', athlete:'My Athletes', teams:'My Teams', team:'My Teams', library:'Library', program:'Library', session:'Library', assign:'Assign', nutrition:'Nutrition' };
   return titles[ui.view] || 'Coach Home';
 }
 
@@ -380,13 +413,14 @@ function needsHtml(){
   return `<div class="card"><div class="eyebrow">Needs programming</div><h2 style="font-size:20px;margin-top:6px">${n.athletes.length} athlete${n.athletes.length===1?'':'s'}</h2><p class="muted" style="margin-top:8px">${n.athletes.map(a=>esc(a.name)).join(', ')}</p></div>`;
 }
 
-function monthKey(){ return L.today().slice(0,7); }
+function monthKey(){ return ui.calMonth || L.today().slice(0,7); }
 
-function athleteListHtml(){ return sliceStub('My Athletes', 'Slice S5'); }
-function athleteCalHtml(){ return sliceStub('Athlete calendar', 'Slice S7'); }
-function teamListHtml(){ return sliceStub('My Teams', 'Slice S4'); }
-function teamCalHtml(){ return sliceStub('Team calendar', 'Slice S6'); }
-function assignHtml(){ return sliceStub('Assign program', 'Slice S6 — calendars next'); }
+function athleteListHtml(){ return CoachViews.athleteListHtml(); }
+function athleteCalHtml(){ return CoachViews.athleteCalHtml(); }
+function teamListHtml(){ return CoachViews.teamListHtml(); }
+function teamCalHtml(){ return CoachViews.teamCalHtml(); }
+function assignHtml(){ return CoachViews.assignHtml(); }
+function nutritionHtml(){ return CoachViews.nutritionHtml(); }
 
 function libraryTabs(){
   const tabs = [['programs','Programs'],['sessions','Sessions'],['exercises','Exercises']];
@@ -921,7 +955,7 @@ function coachChrome(body){
     ['athletes','Athletes','users',false],
     ['teams','Teams','teams',false],
     ['library','Library','library',false],
-    ['nutrition','Nutrition','nutrition',true],
+    ['nutrition','Nutrition','nutrition',false],
     ['analytics','Analytics','chart',true],
     ['gym','Gym Tools','gym',true],
   ];
@@ -989,6 +1023,7 @@ function render(){
   else if (ui.view==='program') body = programHtml();
   else if (ui.view==='session') body = sessionHtml();
   else if (ui.view==='assign') body = assignHtml();
+  else if (ui.view==='nutrition') body = nutritionHtml();
   else body = feedHtml();
   $('coachApp').innerHTML = coachChrome(body);
 }
@@ -1005,6 +1040,7 @@ window.toggleCellMenu=toggleCellMenu; window.openCellPick=openCellPick; window.c
 window.placeCellTemplate=placeCellTemplate; window.clearCell=clearCell;
 window.startCopyCell=startCopyCell; window.startMoveCell=startMoveCell; window.onEmptyCell=onEmptyCell;
 window.saveCellAsTemplate=saveCellAsTemplate; window.addWeek=addWeek;
+CoachViews.init({ L, S, ui, persist, esc, go, render, $, tpl, prog, ses, athleteBy, team });
 render();
 </script>
 </body>

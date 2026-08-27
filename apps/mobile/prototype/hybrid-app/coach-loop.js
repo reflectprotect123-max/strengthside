@@ -502,6 +502,8 @@
       week: opts.week || null,
       day: opts.day || null,
       status: opts.status || 'scheduled',
+      published: opts.published === true,
+      publishedAt: opts.published ? new Date().toISOString() : null,
       coachInstructions: template.coachInstructions || '',
       blocks,
       notes: '',
@@ -658,6 +660,83 @@
       createdAt: new Date().toISOString(),
     });
     return { state, created, start };
+  }
+
+  function publishSession(session) {
+    if (!session) return session;
+    session.published = true;
+    session.publishedAt = new Date().toISOString();
+    return session;
+  }
+
+  function unpublishSession(session) {
+    if (!session) return session;
+    session.published = false;
+    session.publishedAt = null;
+    return session;
+  }
+
+  function publishAllSessions(sessions) {
+    (sessions || []).forEach(publishSession);
+    return sessions;
+  }
+
+  function hasUnpublished(sessions) {
+    return (sessions || []).some((s) => !s.published && s.status !== 'completed');
+  }
+
+  function athleteAccountEmail(state, athleteId) {
+    const acct = (state.accounts || []).find((a) => a.athleteId === athleteId);
+    return acct ? acct.email : null;
+  }
+
+  function addCalendarSession(state, opts) {
+    const template = (state.templates || []).find((t) => t.id === opts.templateId);
+    if (!template) throw new Error('template not found');
+    const session = instantiateSession(template, {
+      athleteId: opts.athleteId,
+      date: opts.date,
+      name: opts.name || template.name,
+      status: 'scheduled',
+      published: false,
+    });
+    session.sessionTitle = template.name;
+    state.sessions.push(session);
+    return session;
+  }
+
+  function monthDays(monthKey) {
+    const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
+    const y = parts[0];
+    const m = parts[1];
+    const last = new Date(y, m, 0).getDate();
+    const pad = (n) => String(n).padStart(2, '0');
+    const days = [];
+    for (let d = 1; d <= last; d++) days.push(`${y}-${pad(m)}-${pad(d)}`);
+    return days;
+  }
+
+  function shiftMonth(monthKey, delta) {
+    const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1 + num(delta), 1);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  }
+
+  function monthLabel(monthKey) {
+    const parts = String(monthKey || '').split('-').map(Number);
+    try {
+      return new Date(parts[0], parts[1] - 1, 1).toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return monthKey;
+    }
+  }
+
+  function sessionsOnDate(state, athleteId, date) {
+    return (state.sessions || []).filter((s) => s.athleteId === athleteId && s.date === date);
   }
 
   function needsProgramming(state) {
@@ -1139,6 +1218,16 @@
     setProgramCell,
     addProgramWeek,
     assignProgram,
+    publishSession,
+    unpublishSession,
+    publishAllSessions,
+    hasUnpublished,
+    athleteAccountEmail,
+    addCalendarSession,
+    monthDays,
+    shiftMonth,
+    monthLabel,
+    sessionsOnDate,
     needsProgramming,
     calendarFor,
     teamCalendar,

@@ -25,7 +25,8 @@ if (/TrainHeroic|Train HYBRD|trainheroic/i.test(html)) {
 }
 if (!html.includes('Session note')) throw new Error('coach.html missing Session note');
 if (!html.includes('prog-days')) throw new Error('coach.html missing R4 program grid');
-if (!html.includes('Create program')) throw new Error('coach.html missing Create program');
+if (!html.includes('coach-views.js')) throw new Error('coach.html missing coach-views.js');
+if (!html.includes('cal-grid')) throw new Error('coach.html missing R5/R6 calendars');
 if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html.includes('Athlete ·')) {
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }
