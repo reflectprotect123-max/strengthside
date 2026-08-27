@@ -1,5 +1,5 @@
-# One-shot: copy Netlify env from dead hybrid1 site → live athlete site,
-# then force APP_BASE_URL to thehybridsystem and prod-deploy so functions reload env.
+# Copy Netlify env from hybrid1 site → live athlete site (thehybridsystem).
+# Lists accessible sites first so we can resolve the real hybrid1 project id/slug.
 name: Copy Netlify env from hybrid1
 
 on:
@@ -18,21 +18,43 @@ jobs:
       - name: Clone env hybrid1 → thehybridsystem + fix APP_BASE_URL + deploy
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          # Optional override: paste hybrid1 Site ID UUID into this secret
+          HYBRID1_NETLIFY_SITE_ID: ${{ secrets.HYBRID1_NETLIFY_SITE_ID }}
         run: |
           set -euo pipefail
           if [[ -z "${NETLIFY_AUTH_TOKEN:-}" ]]; then
             echo "::error::NETLIFY_AUTH_TOKEN missing"
             exit 1
           fi
-          FROM_SITE=thehybridengine1
           TO_SITE=thehybridsystem
           APP_BASE_URL=https://thehybridsystem.netlify.app
 
-          # Run CLI from preview-site so it does not scan the pnpm monorepo
-          # and abort with "multiple projects detected".
           bash apps/mobile/sync-hybrid-html.sh
           cd apps/mobile/preview-site
 
+          echo "Listing Netlify sites visible to this token (name / url / id only)"
+          npx --yes netlify-cli api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json
+          node -e '
+            const sites = JSON.parse(require("fs").readFileSync("/tmp/sites.json","utf8"));
+            const rows = (Array.isArray(sites) ? sites : []).map(s => ({
+              name: s.name, url: s.ssl_url || s.url, id: s.id
+            }));
+            for (const r of rows) console.log(`${r.name}\t${r.url}\t${r.id}`);
+            const pick =
+              process.env.HYBRID1_NETLIFY_SITE_ID ||
+              rows.find(r => /hybridengine1/i.test(r.name || "") || /thehybridengine1/i.test(r.url || ""))?.id ||
+              rows.find(r => /hybrid.?engine/i.test(r.name || "") && !/thehybridsystem/i.test(r.name || ""))?.id ||
+              rows.find(r => /engine1/i.test(r.name || ""))?.id ||
+              "";
+            if (!pick) {
+              console.error("Could not auto-detect hybrid1 site. Set secret HYBRID1_NETLIFY_SITE_ID to its Site ID UUID.");
+              process.exit(2);
+            }
+            console.log("FROM_SITE_RESOLVED=" + pick);
+            require("fs").writeFileSync("/tmp/from_site.txt", pick);
+          '
+
+          FROM_SITE="$(cat /tmp/from_site.txt)"
           echo "Cloning env: $FROM_SITE → $TO_SITE (no values printed)"
           npx --yes netlify-cli env:clone \
             --auth="$NETLIFY_AUTH_TOKEN" \
@@ -59,7 +81,7 @@ jobs:
             --no-build \
             --message "env clone from hybrid1 + APP_BASE_URL fix (${GITHUB_SHA::7})"
 
-          echo "Listing KEY NAMES only on $TO_SITE (values redacted by design)"
+          echo "Listing KEY NAMES only on $TO_SITE"
           npx --yes netlify-cli env:list \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
