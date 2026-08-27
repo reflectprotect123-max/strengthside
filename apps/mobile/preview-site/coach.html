@@ -918,7 +918,7 @@ function programHtml(){
       <div class="prog-days">${dayHeads}${cells}</div></div>`;
   }).join('');
   const pasteHint = ui.cellPick && (ui.cellPick.mode === 'copyTarget' || ui.cellPick.mode === 'moveTarget')
-    ? `<p class="muted" style="margin-top:8px">${ui.cellPick.mode==='moveTarget'?'Click an empty cell to move the session.':'Click an empty cell to paste the copy.'} <button type="button" class="btn ghost small" onclick="closeCellPick()">Cancel</button></p>`
+    ? `<p class="prog-hint">${ui.cellPick.mode==='moveTarget'?'Click an empty cell to move the session.':'Click an empty cell to paste the copy.'} <button type="button" class="btn ghost small" onclick="closeCellPick()">Cancel</button></p>`
     : '';
   return `<button type="button" class="btn ghost small" onclick="go('library',{lib:'programs'})">← Back to programs</button>
     <div class="prog-toolbar" style="margin-top:12px">
