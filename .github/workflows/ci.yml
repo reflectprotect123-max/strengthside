@@ -54,6 +54,8 @@ jobs:
       - run: pnpm run check:coach-program-grid
       - run: pnpm run check:coach-bridge
       - run: pnpm run check:coach-calendars
+      - run: pnpm run check:coach-v1-e2e
+      - run: pnpm run check:coach-cloud
       - name: Migrations apply (no environment gaps permitted here)
         run: |
           node checks/migrations-apply.mjs | tee /tmp/migrations.log

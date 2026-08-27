@@ -233,9 +233,12 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 <body>
 <div id="gate"></div>
 <div id="coachApp" class="coach-shell hidden"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
+<script src="./whoop.js"></script>
 <script src="./coach-loop.js"></script>
 <script src="./coach-nutrition.js"></script>
 <script src="./coach-bridge.js"></script>
+<script src="./coach-cloud.js"></script>
 <script src="./coach-views.js"></script>
 <script>
 const L = window.CoachLoop;
@@ -257,6 +260,39 @@ function persist(){
   L.saveState(null, S);
   if (window.CoachBridge) CoachBridge.push(S);
   if (window.CoachViews) CoachViews.bindState(S);
+  scheduleCloudPush();
+}
+
+let cloudPushTimer = null;
+function scheduleCloudPush(){
+  if (!window.CoachCloud) return;
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(async () => {
+    try {
+      if (!(await CoachCloud.isSignedIn())) return;
+      const r = await CoachCloud.pushPublished(S);
+      if (r && r.errors && r.errors.length) console.warn('coach cloud push', r.errors);
+    } catch (e) {
+      console.warn('coach cloud push failed', e);
+    }
+  }, 800);
+}
+
+async function bindMyCloudIdToAthlete(athleteId){
+  if (!window.CoachCloud) return alert('Cloud module missing');
+  const uid = await CoachCloud.sessionUserId();
+  if (!uid) return alert('Sign in first (coach Settings / WHOOP account — same Supabase as athlete).');
+  const a = athleteBy(athleteId);
+  if (!a) return;
+  a.cloudUserId = uid;
+  persist(); render();
+}
+
+async function pushCloudNow(){
+  if (!window.CoachCloud) return alert('Cloud module missing');
+  if (!(await CoachCloud.isSignedIn())) return alert('Sign in with the athlete Supabase account (WHOOP sign-in) so publish can write assigned_session.');
+  const r = await CoachCloud.pushPublished(S);
+  alert(r.ok ? `Pushed ${r.pushed} session(s) to cloud.` : `Cloud push issues: ${(r.errors||[]).map(e=>e.error).join('; ')||r.reason}`);
 }
 function account(){ return L.currentAccount(S); }
 function athleteBy(id){ return (S.athletes||[]).find(a => a.id === id); }
@@ -1037,6 +1073,7 @@ function coachChrome(body){
     <nav>${navHtml}</nav>
     <div class="coach-side-foot">
       <span class="nav-soon" title="Coming soon">${icon('support')}Support</span>
+      <button type="button" onclick="pushCloudNow()">Push cloud now</button>
       <button type="button" onclick="exportBridgeFile()">Export bridge file</button>
       <button type="button" onclick="resetDemo()">Reset demo data</button>
       <button type="button" onclick="signOut()">Sign out</button>
@@ -1123,8 +1160,18 @@ window.saveCellAsTemplate=saveCellAsTemplate; window.addWeek=addWeek;
 window.addCustomExercise=addCustomExercise;
 window.openCommentDrawer=openCommentDrawer; window.closeCommentDrawer=closeCommentDrawer;
 window.exportBridgeFile=exportBridgeFile;
+window.bindMyCloudIdToAthlete=bindMyCloudIdToAthlete;
+window.pushCloudNow=pushCloudNow;
 CoachViews.init({ L, S, ui, persist, esc, go, render, $, tpl, prog, ses, athleteBy, team });
 render();
+(async function coachAuthBoot(){
+  try {
+    if (window.Whoop && Whoop.client) {
+      const { data } = await Whoop.client().auth.getSession();
+      if (data && data.session) console.info('coach cloud: signed in');
+    }
+  } catch (_) {}
+})();
 </script>
 </body>
 </html>

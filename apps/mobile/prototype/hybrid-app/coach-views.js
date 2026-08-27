@@ -121,12 +121,19 @@
   function athleteListHtml() {
     var rows = (S().athletes || [])
       .map(function (a) {
+        var cloud = a.cloudUserId
+          ? '<span class="pill">Cloud linked</span>'
+          : '<button type="button" class="btn small" onclick="bindMyCloudIdToAthlete(\'' +
+            a.id +
+            '\')">Link my account</button>';
         return (
           '<tr><td><button type="button" class="linkish" onclick="go(\'athlete\',{athleteId:\'' +
           a.id +
           '\'})">' +
           esc(a.name) +
-          '</button></td><td><span class="pill">Coach Plan</span></td><td class="muted">' +
+          '</button><div class="muted" style="font-size:11px">' +
+          esc(a.cloudUserId || 'No cloud user id') +
+          '</div></td><td><span class="pill">Coach Plan</span></td><td class="muted">' +
           esc((function () {
             var tm = (S().teams || []).find(function (t) {
               return (t.athleteIds || []).indexOf(a.id) >= 0;
@@ -135,12 +142,14 @@
           })()) +
           '</td><td><button type="button" class="btn small" onclick="go(\'athlete\',{athleteId:\'' +
           a.id +
-          '\'})">Calendar</button></td></tr>'
+          '\'})">Calendar</button> ' +
+          cloud +
+          '</td></tr>'
         );
       })
       .join('');
     return (
-      '<div class="row" style="margin-bottom:16px"><p class="muted">Roster — open an athlete calendar to publish sessions.</p></div>' +
+      '<div class="row" style="margin-bottom:16px"><p class="muted">Roster — link an athlete to your signed-in Supabase user (dogfood) or paste their auth user id, then Publish on their calendar.</p></div>' +
       '<div class="card" style="overflow-x:auto"><table class="roster-table"><thead><tr><th>Athlete</th><th>Type</th><th>Team</th><th>Actions</th></tr></thead><tbody>' +
       (rows || '<tr><td colspan="4" class="muted">No athletes</td></tr>') +
       '</tbody></table></div>'
@@ -243,6 +252,9 @@
     ui().chipMenu = null;
     persist();
     ctx.render();
+    if (root.CoachCloud && CoachCloud.pushPublished) {
+      CoachCloud.pushPublished(S(), { sessionIds: [id] }).catch(function () {});
+    }
   }
 
   function unpublishChip(id) {
@@ -251,6 +263,9 @@
     ui().chipMenu = null;
     persist();
     ctx.render();
+    if (root.CoachCloud && CoachCloud.unpublishSession) {
+      CoachCloud.unpublishSession(S(), s).catch(function () {});
+    }
   }
 
   function deleteChip(id) {
@@ -266,6 +281,12 @@
     L().publishAllSessions(list);
     persist();
     ctx.render();
+    if (root.CoachCloud && CoachCloud.pushPublished) {
+      var ids = (list || []).map(function (s) {
+        return s.id;
+      });
+      CoachCloud.pushPublished(S(), { sessionIds: ids }).catch(function () {});
+    }
   }
 
   function calDayCell(date, sessions, athleteId) {
