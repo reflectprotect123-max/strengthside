@@ -90,8 +90,12 @@
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
   }
+  // Ephemeral WHOOP UI state before index.html bridges window.S ↔ let S.
+  // Never invent a stub on global.S — that orphans StrengthSync from real app state.
+  var whoopFallback = { connected: false, lastSyncAt: null, sampleDate: null, email: null };
   function st() {
-    const S = appState() || (global.S = global.S || {});
+    const S = appState();
+    if (!S) return whoopFallback;
     S.settings = S.settings || {};
     S.settings.whoop = S.settings.whoop || { connected: false, lastSyncAt: null, sampleDate: null, email: null };
     return S.settings.whoop;
@@ -305,10 +309,14 @@
           renderPanels();
           global.S = await global.StrengthSync.reconcile(global.S);
           if (typeof global.save === 'function') global.save('strength-sync');
-          bits.push('Strength');
+          var ss = global.StrengthSync.getStatus ? global.StrengthSync.getStatus() : null;
+          if (ss && ss.lastError) bits.push('Strength: ' + ss.lastError);
+          else bits.push('Strength');
         } catch (err) {
           bits.push('Strength: ' + ((err && err.message) || 'failed'));
         }
+      } else if (!global.S) {
+        bits.push('Strength: app state not ready');
       }
 
       if (global.NutritionSync && typeof global.NutritionSync.reconcile === 'function') {
@@ -323,12 +331,25 @@
             if (global.NutritionUI && typeof global.NutritionUI.replace === 'function') {
               global.NutritionUI.replace(merged);
             }
-            bits.push('Nutrition');
+            var ns = global.NutritionSync.getStatus ? global.NutritionSync.getStatus() : null;
+            if (ns && ns.lastError) bits.push('Nutrition: ' + ns.lastError);
+            else bits.push('Nutrition');
           } else {
             bits.push('Nutrition (open Nutrition once to enable)');
           }
         } catch (err) {
           bits.push('Nutrition: ' + ((err && err.message) || 'failed'));
+        }
+      }
+
+      if (global.CoachSync && typeof global.CoachSync.schedulePull === 'function' && global.S) {
+        try {
+          ui.message = 'Syncing coach…';
+          renderPanels();
+          global.CoachSync.schedulePull(global.S);
+          bits.push('Coach');
+        } catch (err) {
+          bits.push('Coach: ' + ((err && err.message) || 'failed'));
         }
       }
 
