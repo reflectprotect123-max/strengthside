@@ -207,16 +207,15 @@
   }
   function refreshVisibleUi() {
     renderPanels();
-    // Refresh Sleep overview metrics without re-entering auto-sync (avoids a loop).
+    // Sleep overview: rebuild metrics without re-entering auto-sync.
     if (document.getElementById('whoopSleepLine') && typeof global.openAthleteSleepOverview === 'function') {
       global.openAthleteSleepOverview(undefined, { skipWhoopSync: true });
       return;
     }
     const tab = (appState() && appState().tab) || null;
-    if (tab === 'settings' && typeof global.settings === 'function') {
-      global.settings();
-      return;
-    }
+    // Settings: only swap the Account card in place. Calling settings() rebuilds
+    // the whole page and shell() scrolls to top — that feels like broken scroll.
+    if (tab === 'settings') return;
     if (typeof global.render === 'function') global.render();
   }
   async function sync(opts) {
