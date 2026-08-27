@@ -49,6 +49,9 @@ fi
 if [[ -f "$SRC_DIR/netlify.toml" ]]; then
   cp -f "$SRC_DIR/netlify.toml" "$ROOT/preview-site/netlify.toml"
 fi
+if [[ -f "$SRC_DIR/package.json" ]]; then
+  cp -f "$SRC_DIR/package.json" "$ROOT/preview-site/package.json"
+fi
 # Optional bundled seeds (TrainHeroic history OTA — personal data, gitignored)
 if [[ -d "$SRC_DIR/seeds" ]]; then
   mkdir -p "$ROOT/preview-site/seeds"

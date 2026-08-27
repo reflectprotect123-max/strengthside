@@ -5,3 +5,6 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+  # Provided by Netlify at runtime; mark external so esbuild does not fail
+  # when node_modules is not present during CLI deploy.
+  external_node_modules = ["@netlify/blobs"]

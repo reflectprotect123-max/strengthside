@@ -39,6 +39,12 @@ mustMatch('index.html → preview-site/index.html',
 mustMatch('service-worker.js → preview-site',
   join(proto, 'service-worker.js'),
   join(root, 'preview-site/service-worker.js'));
+mustMatch('netlify.toml → preview-site',
+  join(proto, 'netlify.toml'),
+  join(root, 'preview-site/netlify.toml'));
+mustMatch('package.json → preview-site',
+  join(proto, 'package.json'),
+  join(root, 'preview-site/package.json'));
 
 const bundles = [
   'strength-bundle.js',
