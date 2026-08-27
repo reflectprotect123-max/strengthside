@@ -18,6 +18,7 @@ const requiredFns = [
   'whoop-callback.mjs',
   'concept2-connect.mjs',
   'concept2-sync.mjs',
+  'off-proxy.mjs',
   '_lib/http.mjs',
   '_lib/whoop.mjs',
   '_lib/config.mjs',
