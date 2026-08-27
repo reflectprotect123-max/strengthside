@@ -52,6 +52,8 @@ jobs:
       - run: pnpm run check:coach-session-builder
       - run: pnpm run check:coach-nutrition
       - run: pnpm run check:coach-program-grid
+      - run: pnpm run check:coach-bridge
+      - run: pnpm run check:coach-calendars
       - name: Migrations apply (no environment gaps permitted here)
         run: |
           node checks/migrations-apply.mjs | tee /tmp/migrations.log
