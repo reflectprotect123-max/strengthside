@@ -899,7 +899,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v89';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v90';
 const TRAINHEROIC_SEED_URL='./seeds/trainheroic-import.json';
 const TRAINHEROIC_SEED_JS='./trainheroic-import.js';
 const TRAINHEROIC_SEED_JS_NESTED='./seeds/trainheroic-import.js';
@@ -1043,6 +1043,8 @@ function applyAthleteShellPatch(state){state=state||{};state.meta=state.meta||{}
 function cleanLoadedData(state){state=state||{};state.templates=(state.templates||[]).filter(t=>!legacyTemplate(t));for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');state.exercises=(state.exercises||[]).filter(e=>!new RegExp('^s'+'ump deadlift$','i').test(String(e.name||'')));for(const e of state.exercises||[]){if(new RegExp('^t'+'bar row$','i').test(String(e.name||''))){e.name='T-Bar Row';e.category='Strength — Pull';e.id='core-t-bar-row';e.builtIn=true;e.source='THE-core-100'}}state.exercises=dedupe(state.exercises||[]);return state}
 function load(){try{let raw=readStorage();let saved=JSON.parse(raw||'null'),upgraded=applyAthleteShellPatch(cleanLoadedData(upgradeAlpha2(saved||defaultState())));writeStorage(JSON.stringify(upgraded));return upgraded}catch(e){storageBroken=true;let upgraded=applyAthleteShellPatch(cleanLoadedData(upgradeAlpha2(defaultState())));writeStorage(JSON.stringify(upgraded));return upgraded}}
 S=load();
+/* Bridge window.S ↔ let S so Whoop.syncAll / StrengthSync hit real app state (not a stub). */
+Object.defineProperty(window,'S',{get(){return S},set(v){S=v},configurable:true});
 if(window.StrengthSync&&StrengthSync.bootstrap){StrengthSync.bootstrap();}
 let saveStatusTimer=null;
 function setSaveStatus(state='saved',label='Saved'){
