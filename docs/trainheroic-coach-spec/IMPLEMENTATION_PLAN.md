@@ -249,39 +249,69 @@ Wire to `coach-loop.js` templates — same block shape athlete logger consumes.
 
 ## 5. Engineering approach
 
-### 5.1 File layout (stay mono-html)
+### 5.0 Architecture — HTML now, modules when heavy (includes Nutrition)
+
+**Stay HTML for the coach shell** (`coach.html` screens). That matches the athlete mono-app and keeps review-as-we-go fast.
+
+**Do not put all domain logic in one giant HTML file.** Split like the athlete app already does:
+
+```
+coach.html              ← chrome + view render only
+coach-loop.js           ← training domain (sessions, programs, assign)
+coach-nutrition.js      ← nutrition domain (targets, meals, athlete payload) — LAST UI
+nutrition-engine        ← existing package (adaptive macros) — never rewrite in HTML
+nutrition-core          ← existing package (food search / day log)
+```
+
+| When | Move |
+| --- | --- |
+| Now → training loop done | HTML + `coach-loop.js` |
+| Nutrition N* (last) | UI still HTML; logic in `coach-nutrition.js` + call packages |
+| Coach HTML > ~2–3k lines of view code **or** multi-coach cloud | Consider Vite/multi-page split — **not required for N1–N5** |
+| Shared coach↔athlete live | Bridge / Supabase — bigger than HTML, not a React rewrite |
+
+**Answer to “will it need to be bigger than HTML?”**  
+- **UI:** No for v1 — HTML + JS modules is enough for training + nutrition meals/check.  
+- **Product:** Yes for **sync/bridge** (shared state, later cloud) — that is backend/storage work, not “leave HTML for React.”  
+- **Packages:** Nutrition adaptive engine already is “bigger than HTML” and stays a package.
+
+### 5.1 File layout (stay mono-html shell)
 
 ```
 apps/mobile/prototype/hybrid-app/
-  coach.html          ← layout + render functions per slice
-  coach-loop.js       ← state, seed, assign/publish/log read APIs
+  coach.html
+  coach-loop.js
+  coach-nutrition.js      ← domain ready; nav greyed until N*
   coach-loop.smoke.mjs
-  coach-screens/      ← NEW: optional reference viewer (dev-only HTML)
+  coach-nutrition.smoke.mjs
+  coach-session-builder.smoke.mjs
 ```
 
 Do **not** split into React/Expo. Match athlete app shipping model.
 
-### 5.2 Slice workflow (repeat per S0–S10)
+### 5.2 Slice workflow (repeat per S0–S10, then N1–N5)
 
 1. **Audit** — Open screenshot range; annotate regions (nav / toolbar / table / drawer)  
 2. **Token pass** — Add component tokens only when a slice needs them  
 3. **Static HTML/CSS** — Pixel-match at 1440×900 with seed data  
-4. **Wire** — Connect to `coach-loop.js` handlers  
+4. **Wire** — Connect to `coach-loop.js` / `coach-nutrition.js` handlers  
 5. **Capture** — Puppeteer screenshot at same viewport  
 6. **Compare** — Overlay or blink-diff; fix until structure matches  
-7. **Smoke** — Extend `coach-loop.smoke.mjs` for the slice’s critical path  
+7. **Smoke** — Extend smoke scripts for the slice’s critical path  
 
 ### 5.3 Bridge to athlete app (post UI)
 
-After S6–S7 + S10:
+After S6–S7 + S10 (training), then again for Nutrition N4:
 
 | Coach action | Athlete effect |
 | --- | --- |
 | Publish calendar chip | Session appears on athlete Calendar for that date |
 | Assign program | Stamps `assigned_session` rows athlete can open |
-| Athlete logs set | Coach Home card shows actuals (read shared storage / later Supabase) |
+| Athlete logs set | Coach Home card shows actuals |
+| **Publish meal day + targets (N4)** | **Athlete Nutrition shows prescribed meals** |
+| **Athlete green-check / skip / add** | **Adherence + logs feed weeklyCheckIn** |
 
-v1 local demo: share `localStorage` key or explicit import/export — cloud sync is a later PR against `docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md`.
+v1 local demo: share `localStorage` or explicit import/export — cloud sync later per strength-cloud-sync design.
 
 ---
 
@@ -299,16 +329,20 @@ v1 local demo: share `localStorage` key or explicit import/export — cloud sync
 
 ## 7. Recommended delivery order
 
+**Training coach loop first.** Nutrition is **last** — only after training UI + training bridge ship.
+
 ```
-S0 chrome → S1 Home collapsed → S2 Programs → S3 Program grid
-    → S9 Session builder (templates first — unblocks grid)
-    → S6 Team calendar → S7 Athlete calendar → S4 Teams → S5 Athletes
-    → S8 Exercises (read-only + create drawer)
-    → S10 Home expanded + comment
-    → Bridge PR (shared publish state with athlete app)
+S0 chrome (done / in review)
+    → S9 Session builder + Engine conditioning (in progress)
+    → S3/S4 Program grid
+    → S6 Team calendar → S7 Athlete calendar + publish
+    → Training bridge (coach publish → athlete calendar)
+    → S1/S10 Home feed polish + session comments
+    → S2/S4/S5/S8 roster tables as needed
+    → ★ Nutrition N1–N5 LAST (see §11)
 ```
 
-Rationale: templates + grid + calendars are the coach loop; roster tables can follow once assign/publish works end-to-end.
+Rationale: templates + grid + calendars + training bridge prove coach↔athlete. Nutrition reuses that bridge pattern; do not start N* until training publish works.
 
 ---
 
@@ -316,20 +350,23 @@ Rationale: templates + grid + calendars are the coach loop; roster tables can fo
 
 | Risk | Mitigation |
 | --- | --- |
-| TH light main + Hybrid dark athlete feel disjointed | Coach is a **separate surface** (`coach.html`); intentional desktop light workspace |
-| 222 screenshots drift from spec prose | Screenshots win on conflicts (`COACH_SPEC.md` header says so) |
-| Metric dropdown options incomplete in prose | Slice S9 blocks until dropdown screenshot is transcribed to enum in `coach-loop.js` |
-| Program grid edit vs published calendar | Do not assume grid edits rewrite live sessions; implement publish/unpublish on calendars only |
-| Scope creep (Analytics, messaging) | Disabled chrome items only until explicitly chartered |
+| TH light main vs Hybrid dark | **Resolved:** full Track Dawn dark on coach (matches athlete) |
+| 222 screenshots drift from spec prose | Screenshots win on layout; brand stays Hybrid |
+| Metric dropdown options incomplete in prose | Session builder blocks until dropdown shot transcribed |
+| Program grid edit vs published calendar | Publish/unpublish on calendars only |
+| Scope creep (Analytics, messaging) | Disabled chrome until chartered |
+| Nutrition before training bridge | **Forbidden** — Nutrition is last (§7 / §11) |
 
 ---
 
 ## 9. Immediate next PRs
 
-1. **This PR** — Import spec pack + this plan (no UI change)  
-2. **Merge PR #62** — Land coach shell + `coach-loop.js` demo  
-3. **PR: S0+S1** — Chrome + Home collapsed 1:1 against `000_coach-home-collapsed.webp`  
-4. **PR: S9+S3** — Session builder + program grid  
+1. Finish **R3** — session builder + Engine conditioning on coach blocks  
+2. **R4** — program grid  
+3. **R5–R6** — calendars + publish  
+4. **R10** — training bridge  
+5. Home / roster polish  
+6. **Nutrition N1–N5 last** (§11)
 
 ---
 
@@ -339,7 +376,51 @@ Rationale: templates + grid + calendars are the coach loop; roster tables can fo
 | --- | --- |
 | Field/button spec | `docs/trainheroic-coach-spec/COACH_SPEC.md` |
 | Screenshots | `docs/trainheroic-coach-spec/screenshots/` |
-| Coach demo code | `apps/mobile/prototype/hybrid-app/coach.html` (PR #62) |
+| Coach demo code | `apps/mobile/prototype/hybrid-app/coach.html` |
 | Flow brain dump | `docs/research/coach-workspace-grok/HOW_IT_FLOWS.md` |
 | Athlete tokens | `apps/mobile/prototype/hybrid-app/index.html` `:root` |
+| Nutrition packages | `packages/nutrition-engine`, `packages/nutrition-core` |
+| Athlete Nutrition UI | `apps/mobile/prototype/hybrid-app/nutrition-ui.js` |
 | Mono-app charter | `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md` |
+
+---
+
+## 11. Nutrition — LAST (after training coach loop)
+
+Do **not** start these slices until training assign/publish + athlete calendar bridge works.
+
+### Product contract
+
+| Rule | Detail |
+| --- | --- |
+| **Coach authors** | Macros (kcal / P/C/F) + meal days from food DB |
+| **Adaptive engine** | Existing `nutrition-engine` `weeklyCheckIn` — no rewrite |
+| **Coach override** | Anytime; overrides win until coach clears or accepts next proposal |
+| **Athlete surface** | Meals land in existing **Nutrition** module — not a second app |
+| **Athlete meal UX** | Prescribed meals → **green check** if eaten → **delete/skip** if not → **add** if ate something else |
+| **Not primary path** | Full per-bite MacroFactor logging; weigh-in + check/skip/add drives adherence |
+| **Food DB** | Coach search/author with existing catalog; athlete add-path reuses same search when they deviate |
+
+### Flow
+
+```
+Coach: set targets + build meal day (food DB)
+    → Bridge: day appears in athlete Nutrition
+        → Athlete: green-check / skip / add + bodyweight
+            → weeklyCheckIn proposes new macros
+                → Coach sees proposal; accept or override
+```
+
+### Slices (N1 → N5, last)
+
+| Slice | What | Effort |
+| --- | --- | --- |
+| **N1** | Coach targets board — current / proposed macros, override form | Small–medium |
+| **N2** | Coach check-in feed — weekly HOLDING / READY, weight trend summary | Small |
+| **N3** | Coach meal author — food search, meal slots, publish day | Small–medium |
+| **N4** | Bridge — coach targets + meals → athlete Nutrition store | Medium |
+| **N5** | Athlete Nutrition — prescribed meal rows with green-check / skip / add | Small |
+
+### Ownership rule
+
+When coach override and adaptive proposal both exist: **coach override wins** until coach explicitly accepts engine proposal or clears override.
