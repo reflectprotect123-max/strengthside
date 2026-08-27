@@ -38,14 +38,9 @@ jobs:
           # WHOOP/Concept2 handlers import @netlify/blobs (runtime API). Install
           # so esbuild/external_node_modules can resolve it during packaging.
           npm install --omit=dev --no-fund --no-audit
-          # Ensure production functions get APP_BASE_URL even if the UI var was
-          # saved under the wrong context/scope (Builds-only, preview-only, etc.).
-          npx --yes netlify-cli env:set APP_BASE_URL "https://thehybridsystem.netlify.app" \
-            --auth="$NETLIFY_AUTH_TOKEN" \
-            --site="$NETLIFY_SITE_ID" \
-            --context production \
-            --scope functions runtime \
-            --force
+          # Note: GitHub secrets (e.g. APP_BASE_URL) are NOT injected into Netlify
+          # functions. config.mjs falls back to https://thehybridsystem.netlify.app.
+          # Optional Netlify site env overrides that; do not block deploy on env:set.
           npx --yes netlify-cli deploy --prod \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$NETLIFY_SITE_ID" \
