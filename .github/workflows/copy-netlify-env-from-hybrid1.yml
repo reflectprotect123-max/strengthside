@@ -1,0 +1,73 @@
+# One-shot: copy Netlify env from dead hybrid1 site → live athlete site,
+# then force APP_BASE_URL to thehybridsystem and prod-deploy so functions reload env.
+name: Copy Netlify env from hybrid1
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/copy-netlify-env-from-hybrid1.yml'
+
+jobs:
+  copy-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone env hybrid1 → thehybridsystem + fix APP_BASE_URL + deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${NETLIFY_AUTH_TOKEN:-}" ]]; then
+            echo "::error::NETLIFY_AUTH_TOKEN missing"
+            exit 1
+          fi
+          FROM_SITE=thehybridengine1
+          TO_SITE=thehybridsystem
+          APP_BASE_URL=https://thehybridsystem.netlify.app
+
+          echo "Cloning env: $FROM_SITE → $TO_SITE (no values printed)"
+          npx --yes netlify-cli env:clone \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --from="$FROM_SITE" \
+            --to="$TO_SITE" \
+            --force
+
+          echo "Setting APP_BASE_URL on $TO_SITE to athlete origin"
+          npx --yes netlify-cli env:set APP_BASE_URL "$APP_BASE_URL" \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$TO_SITE" \
+            --context production \
+            --scope functions \
+            --scope runtime \
+            --force
+
+          echo "Redeploying athlete site so functions load env"
+          bash apps/mobile/sync-hybrid-html.sh
+          cd apps/mobile/preview-site
+          npm install --omit=dev --no-fund --no-audit --prefix .
+          npx --yes netlify-cli deploy --prod \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$TO_SITE" \
+            --dir=. \
+            --functions=netlify/functions \
+            --no-build \
+            --message "env clone from hybrid1 + APP_BASE_URL fix (${GITHUB_SHA::7})"
+
+          echo "Listing KEY NAMES only on $TO_SITE (values redacted by design)"
+          npx --yes netlify-cli env:list \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$TO_SITE" \
+            --context production \
+            --json | node -e '
+              let s=""; process.stdin.on("data",d=>s+=d); process.stdin.on("end",()=>{
+                const j=JSON.parse(s);
+                const keys=Object.keys(j||{}).sort();
+                console.log("env keys:", keys.join(", ")||"(none)");
+                for (const need of ["APP_BASE_URL","APP_SESSION_SECRET","WHOOP_CLIENT_ID","WHOOP_CLIENT_SECRET","SUPABASE_URL"]) {
+                  console.log(need + ":", keys.includes(need) ? "present" : "MISSING");
+                }
+              });
+            '
