@@ -49,6 +49,7 @@ jobs:
       - run: pnpm run check:food-catalog
       - run: pnpm run check:hybrid-proxy
       - run: pnpm run check:coach-loop
+      - run: pnpm run check:coach-session-builder
       - name: Migrations apply (no environment gaps permitted here)
         run: |
           node checks/migrations-apply.mjs | tee /tmp/migrations.log

@@ -13,6 +13,7 @@
   const STORAGE = 'THE-coach-loop-v1';
   const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const BLOCK_CATEGORIES = [
+    'Uncategorized',
     'Prep',
     'Speed/Agility',
     'Skill/Tech',
