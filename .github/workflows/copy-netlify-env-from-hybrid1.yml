@@ -73,12 +73,11 @@ jobs:
             --force
 
           echo "Setting APP_BASE_URL on athlete site to production origin"
+          # Existing vars (post-clone) cannot update context+scope in one call.
           npx --yes netlify-cli env:set APP_BASE_URL "$APP_BASE_URL" \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
             --context production \
-            --scope functions \
-            --scope runtime \
             --force
 
           echo "Redeploying athlete site so functions load env"
