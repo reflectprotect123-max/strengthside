@@ -2,15 +2,22 @@
  * AU food catalog — offline JSON + live Open Food Facts JSON API.
  * Local catalog is always searched first; live OFF fills gaps when online.
  * Never ships the multi-GB OFF dump.
+ *
+ * OFF .org search has been returning HTML 503 intermittently; we fall back to
+ * .net (OFF staging) and optionally the same-origin Netlify proxy.
  */
 (function (global) {
   const CATALOG_URL = './food-catalog-au.json';
-  const OFF_ORIGIN = 'https://world.openfoodfacts.org';
+  const OFF_ORIGINS = [
+    'https://world.openfoodfacts.org',
+    'https://world.openfoodfacts.net',
+  ];
   const USER_AGENT = 'TheStrengthEngine/1.0 (athlete nutrition; contact=dogfood)';
   let catalog = null;
   let loadPromise = null;
   let byBarcode = null;
   let byId = null;
+  let lastLiveError = '';
 
   function normalizeBarcode(code) {
     return String(code || '')
@@ -86,7 +93,6 @@
       servingQuantity: servingQtyField,
       servingQuantityUnit: servingUnitField,
     };
-    // Prefer nutrition-core enricher (structured OFF fields + household units).
     if (global.HybridNutrition && HybridNutrition.Core && HybridNutrition.Core.enrichFoodServings) {
       food = HybridNutrition.Core.enrichFoodServings(food, fields);
     } else {
@@ -110,7 +116,6 @@
     return food;
   }
 
-  /** Local fallback when nutrition-core is not loaded yet. */
   function parseServingSizeLocal(text, qty, unit) {
     if (qty != null && unit) {
       let amount = Number(qty);
@@ -157,16 +162,53 @@
     return { amount, unit: u };
   }
 
-  async function offFetch(url) {
+  function resolveProxyBase() {
+    try {
+      const host = String((global.location && global.location.hostname) || '');
+      if (host === 'thehybridsystem.netlify.app') return '';
+      if (host === 'localhost' || host === '127.0.0.1') return 'https://thehybridsystem.netlify.app';
+      // Capacitor / native WebView
+      if (String((global.location && global.location.protocol) || '').startsWith('http') === false) {
+        return 'https://thehybridsystem.netlify.app';
+      }
+      if (host && host !== 'thehybridsystem.netlify.app') return 'https://thehybridsystem.netlify.app';
+    } catch (_) {}
+    return 'https://thehybridsystem.netlify.app';
+  }
+
+  async function fetchJson(url) {
     const res = await fetch(url, {
       headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
       cache: 'no-store',
     });
     if (!res.ok) throw new Error('OFF HTTP ' + res.status);
     const ct = String((res.headers && res.headers.get && res.headers.get('content-type')) || '');
-    // OFF sometimes returns an HTML "temporarily unavailable" page with 200.
     if (ct.includes('text/html')) throw new Error('OFF unavailable');
     return res.json();
+  }
+
+  /** path starts with /cgi/ or /api/ */
+  async function offFetch(pathAndQuery) {
+    const path = String(pathAndQuery || '');
+    if (!path.startsWith('/')) throw new Error('bad OFF path');
+    let lastErr = null;
+    for (const origin of OFF_ORIGINS) {
+      try {
+        return await fetchJson(origin + path);
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    // Same-origin / athlete Netlify proxy (survives .org outages + Capacitor CORS).
+    try {
+      const base = resolveProxyBase();
+      const proxyUrl = base + '/.netlify/functions/off-proxy?path=' + encodeURIComponent(path);
+      return await fetchJson(proxyUrl);
+    } catch (e) {
+      lastErr = e;
+    }
+    lastLiveError = String((lastErr && lastErr.message) || lastErr || 'OFF failed');
+    throw lastErr || new Error('OFF failed');
   }
 
   async function loadCatalog(force) {
@@ -233,8 +275,8 @@
     limit = limit || 20;
     const q = String(query || '').trim();
     if (q.length < 2) return [];
-    const url =
-      OFF_ORIGIN +
+    lastLiveError = '';
+    const path =
       '/cgi/search.pl?action=process' +
       '&tagtype_0=countries&tag_contains_0=contains&tag_0=australia' +
       '&search_terms=' +
@@ -243,7 +285,7 @@
       Math.min(50, limit) +
       '&page=1' +
       '&fields=code,product_name,product_name_en,brands,brand_owner,serving_size,serving_quantity,serving_quantity_unit,nutriments';
-    const data = await offFetch(url);
+    const data = await offFetch(path);
     const products = Array.isArray(data.products) ? data.products : [];
     const out = [];
     const seen = new Set();
@@ -261,12 +303,12 @@
   async function lookupBarcodeLive(code) {
     const bc = normalizeBarcode(code);
     if (!bc || bc.length < 8) return null;
-    const url =
-      OFF_ORIGIN +
+    lastLiveError = '';
+    const path =
       '/api/v2/product/' +
       encodeURIComponent(bc) +
       '.json?fields=code,product_name,product_name_en,brands,brand_owner,serving_size,serving_quantity,serving_quantity_unit,nutriments';
-    const data = await offFetch(url);
+    const data = await offFetch(path);
     if (!data || data.status !== 1) return null;
     const food = productToFood(data.product || data);
     if (!food) return null;
@@ -321,7 +363,7 @@
 
   function catalogMeta() {
     if (!catalog) return null;
-    return { count: catalog.count, source: catalog.source, builtAt: catalog.builtAt };
+    return { count: catalog.count, source: catalog.source, builtAt: catalog.builtAt, lastLiveError };
   }
 
   global.FoodCatalogAU = {
