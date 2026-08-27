@@ -40,21 +40,31 @@ jobs:
               name: s.name, url: s.ssl_url || s.url, id: s.id
             }));
             for (const r of rows) console.log(`${r.name}\t${r.url}\t${r.id}`);
-            const pick =
+            const from =
               process.env.HYBRID1_NETLIFY_SITE_ID ||
+              rows.find(r => r.name === "thehybridengine1")?.id ||
               rows.find(r => /hybridengine1/i.test(r.name || "") || /thehybridengine1/i.test(r.url || ""))?.id ||
-              rows.find(r => /hybrid.?engine/i.test(r.name || "") && !/thehybridsystem/i.test(r.name || ""))?.id ||
-              rows.find(r => /engine1/i.test(r.name || ""))?.id ||
               "";
-            if (!pick) {
-              console.error("Could not auto-detect hybrid1 site. Set secret HYBRID1_NETLIFY_SITE_ID to its Site ID UUID.");
+            const to =
+              rows.find(r => r.name === "thehybridsystem")?.id ||
+              rows.find(r => /thehybridsystem/i.test(r.url || ""))?.id ||
+              "";
+            if (!from) {
+              console.error("Could not resolve hybrid1 site id.");
               process.exit(2);
             }
-            console.log("FROM_SITE_RESOLVED=" + pick);
-            require("fs").writeFileSync("/tmp/from_site.txt", pick);
+            if (!to) {
+              console.error("Could not resolve thehybridsystem site id.");
+              process.exit(3);
+            }
+            console.log("FROM_SITE_RESOLVED=" + from);
+            console.log("TO_SITE_RESOLVED=" + to);
+            require("fs").writeFileSync("/tmp/from_site.txt", from);
+            require("fs").writeFileSync("/tmp/to_site.txt", to);
           '
 
           FROM_SITE="$(cat /tmp/from_site.txt)"
+          TO_SITE="$(cat /tmp/to_site.txt)"
           echo "Cloning env: $FROM_SITE → $TO_SITE (no values printed)"
           npx --yes netlify-cli env:clone \
             --auth="$NETLIFY_AUTH_TOKEN" \
@@ -62,7 +72,7 @@ jobs:
             --to="$TO_SITE" \
             --force
 
-          echo "Setting APP_BASE_URL on $TO_SITE to athlete origin"
+          echo "Setting APP_BASE_URL on athlete site to production origin"
           npx --yes netlify-cli env:set APP_BASE_URL "$APP_BASE_URL" \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
@@ -81,7 +91,7 @@ jobs:
             --no-build \
             --message "env clone from hybrid1 + APP_BASE_URL fix (${GITHUB_SHA::7})"
 
-          echo "Listing KEY NAMES only on $TO_SITE"
+          echo "Listing KEY NAMES only on athlete site"
           npx --yes netlify-cli env:list \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
