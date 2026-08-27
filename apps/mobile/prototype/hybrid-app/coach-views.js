@@ -58,8 +58,9 @@
     var p = ctx.prog(ui().programId);
     if (!p) {
       return (
-        '<div class="card muted">Pick a program from Library → Programs, then Assign.</div>' +
-        '<button type="button" class="btn" onclick="go(\'library\',{lib:\'programs\'})">Go to programs</button>'
+        '<div class="empty-panel"><div class="eyebrow">Assign</div><h2>Pick a program</h2>' +
+        '<p class="muted">Open Library → Programs, then Assign from a program row.</p>' +
+        '<div class="empty-actions"><button type="button" class="btn primary small" onclick="go(\'library\',{lib:\'programs\'})">Go to programs</button></div></div>'
       );
     }
     var teams = (S().teams || [])
@@ -80,10 +81,10 @@
       .join('');
     var start = ui().assignStart || L().mondayOf(L().today());
     return (
-      '<button type="button" class="btn ghost small" onclick="go(\'library\',{lib:\'programs\'})">← Back</button>' +
-      '<div class="builder-top" style="margin-top:12px"><h1 style="font-family:var(--font-display);font-size:28px">Assign · ' +
+      '<div class="fade-in"><button type="button" class="btn ghost small page-back" onclick="go(\'library\',{lib:\'programs\'})">← Back</button>' +
+      '<div class="page-intro" style="margin-top:12px"><div class="eyebrow">Assign</div><h1>' +
       esc(p.name) +
-      '</h1></div>' +
+      '</h1><p class="lede">Stamp program cells onto each athlete calendar as unpublished sessions. Publish from the team or athlete calendar.</p></div>' +
       '<div class="card stack">' +
       '<div class="field"><label>Team</label><select onchange="ui.assignTeamId=this.value;render()">' +
       teams +
@@ -91,8 +92,7 @@
       '<div class="field"><label>Start week (Monday)</label><input type="date" value="' +
       esc(start) +
       '" onchange="ui.assignStart=this.value;persist()"></div>' +
-      '<p class="muted">Stamps program cells onto each athlete calendar as <b>unpublished</b> sessions. Publish from the team or athlete calendar.</p>' +
-      '<button type="button" class="btn primary block" onclick="CoachViews.confirmAssign()">Assign program</button></div>'
+      '<button type="button" class="btn primary block" onclick="CoachViews.confirmAssign()">Assign program</button></div></div>'
     );
   }
 
@@ -149,10 +149,14 @@
       })
       .join('');
     return (
-      '<div class="row" style="margin-bottom:16px"><p class="muted">Roster — link an athlete to your signed-in Supabase user (dogfood) or paste their auth user id, then Publish on their calendar.</p></div>' +
-      '<div class="card" style="overflow-x:auto"><table class="roster-table"><thead><tr><th>Athlete</th><th>Type</th><th>Team</th><th>Actions</th></tr></thead><tbody>' +
-      (rows || '<tr><td colspan="4" class="muted">No athletes</td></tr>') +
-      '</tbody></table></div>'
+      '<div class="fade-in"><div class="page-intro"><div class="eyebrow">My Athletes</div><h1>Roster</h1>' +
+      '<p class="lede">Link an athlete to your signed-in Supabase user (dogfood) or paste their auth user id, then publish on their calendar.</p></div>' +
+      (rows
+        ? '<div class="card" style="overflow-x:auto;padding:0"><table class="roster-table"><thead><tr><th>Athlete</th><th>Type</th><th>Team</th><th>Actions</th></tr></thead><tbody>' +
+          rows +
+          '</tbody></table></div>'
+        : '<div class="empty-panel"><div class="eyebrow">Roster</div><h2>No athletes yet</h2><p class="muted">Reset demo data to load the seeded roster, or add athletes from your workflow.</p></div>') +
+      '</div>'
     );
   }
 
@@ -173,10 +177,15 @@
       })
       .join('');
     return (
-      '<div class="row" style="margin-bottom:16px"><button type="button" class="btn primary small" onclick="CoachViews.openCreateTeam()">Create team</button></div>' +
-      '<div class="card" style="overflow-x:auto"><table class="roster-table"><thead><tr><th>Team</th><th>Athletes</th><th>Actions</th></tr></thead><tbody>' +
-      (rows || '<tr><td colspan="3" class="muted">No teams</td></tr>') +
-      '</tbody></table></div>'
+      '<div class="fade-in"><div class="page-intro"><div class="eyebrow">My Teams</div><h1>Teams</h1>' +
+      '<p class="lede">Group athletes for calendar assign and publish-all.</p></div>' +
+      '<div class="toolbar-row"><div></div><button type="button" class="btn primary small" onclick="CoachViews.openCreateTeam()">Create team</button></div>' +
+      (rows
+        ? '<div class="card" style="overflow-x:auto;padding:0"><table class="roster-table"><thead><tr><th>Team</th><th>Athletes</th><th>Actions</th></tr></thead><tbody>' +
+          rows +
+          '</tbody></table></div>'
+        : '<div class="empty-panel"><div class="eyebrow">Teams</div><h2>No teams yet</h2><p class="muted">Create a team, then open its calendar to assign programs.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="CoachViews.openCreateTeam()">Create team</button></div></div>') +
+      '</div>'
     );
   }
 
@@ -231,7 +240,9 @@
       '\',event)">⋯</button></div>' +
       '<div class="cal-chip-meta">' +
       esc(s.name) +
-      ' · <span class="pill">' +
+      ' · <span class="pill ' +
+      (s.published ? 'ok' : 'warn') +
+      '">' +
       (s.published ? 'Published' : 'Unpublished') +
       '</span></div>' +
       chipMenu(s.id) +
@@ -382,20 +393,20 @@
       })
       .join('');
     return (
-      '<button type="button" class="btn ghost small" onclick="go(\'' +
+      '<div class="fade-in"><button type="button" class="btn ghost small page-back" onclick="go(\'' +
       backView +
       "'" +
       (backExtra ? ',' + backExtra : '') +
       ')">← Back</button>' +
       '<div class="cal-toolbar">' +
-      '<div><h1 style="font-family:var(--font-display);font-size:24px;margin-top:8px">' +
+      '<div class="page-intro" style="margin:0"><div class="eyebrow">Calendar</div><h1>' +
       esc(title) +
-      '</h1><div class="muted">' +
+      '</h1><p class="lede" style="margin-top:4px">' +
       esc(L().monthLabel(mk)) +
-      '</div></div>' +
+      ' · click a day to expand</p></div>' +
       '<div class="row" style="gap:8px;flex-wrap:wrap">' +
-      '<button type="button" class="btn small" onclick="CoachViews.shiftCalMonth(-1)">‹</button>' +
-      '<button type="button" class="btn small" onclick="CoachViews.shiftCalMonth(1)">›</button>' +
+      '<button type="button" class="btn small" aria-label="Previous month" onclick="CoachViews.shiftCalMonth(-1)">‹</button>' +
+      '<button type="button" class="btn small" aria-label="Next month" onclick="CoachViews.shiftCalMonth(1)">›</button>' +
       '<button type="button" class="btn primary small"' +
       (canPublish ? '' : ' disabled') +
       ' onclick="CoachViews.publishAllVisible()">Publish all</button></div></div>' +
@@ -404,7 +415,8 @@
       '</div><div class="cal-grid">' +
       cells +
       '</div></div>' +
-      libraryPickOverlay()
+      libraryPickOverlay() +
+      '</div>'
     );
   }
 
@@ -460,7 +472,7 @@
       })
       .join('');
     var targets = t
-      ? '<div class="card"><div class="eyebrow">Active targets</div><div class="metrics" style="grid-template-columns:repeat(4,1fr);margin-top:10px">' +
+      ? '<div class="card"><div class="eyebrow">Active targets</div><div class="metrics cols-4" style="margin-top:10px">' +
         '<div class="metric"><b>' +
         t.calories +
         '</b><span>kcal</span></div>' +
@@ -476,15 +488,24 @@
         '<p class="muted" style="margin-top:8px">Source: ' +
         esc(resolved.reason) +
         '</p></div>'
-      : '<div class="card muted">No targets set — use override below.</div>';
+      : '<div class="empty-panel"><div class="eyebrow">Targets</div><h2>No targets set</h2><p class="muted">Save an override below to set coach macros for this athlete.</p></div>';
+    if (!athletes.length) {
+      return (
+        '<div class="empty-panel"><div class="eyebrow">Nutrition</div><h2>No athletes</h2>' +
+        '<p class="muted">Add athletes to the roster before setting targets or meals.</p></div>'
+      );
+    }
     return (
-      '<div class="row" style="margin-bottom:16px"><div><div class="eyebrow">Nutrition</div><h1 style="font-family:var(--font-display);font-size:28px">Coach targets & meals</h1></div></div>' +
-      '<div class="field"><label>Athlete</label><select onchange="ui.nutAthleteId=this.value;render()">' +
+      '<div class="fade-in"><div class="page-intro"><div class="eyebrow">Nutrition</div><h1>Coach targets & meals</h1>' +
+      '<p class="lede">Override macros and publish a meal day for ' +
+      esc((a && a.name) || 'the selected athlete') +
+      '.</p></div>' +
+      '<div class="card" style="margin-bottom:16px"><div class="field" style="margin:0"><label>Athlete</label><select onchange="ui.nutAthleteId=this.value;render()">' +
       opts +
-      '</select></div>' +
+      '</select></div></div>' +
       targets +
       '<div class="card stack" style="margin-top:16px"><div class="eyebrow">Override macros</div>' +
-      '<div class="rx-grid"><div class="field"><label>kcal</label><input id="nutKcal" type="number" value="' +
+      '<div class="rx-grid cols-4"><div class="field"><label>kcal</label><input id="nutKcal" type="number" value="' +
       esc((t && t.calories) || 2800) +
       '"></div>' +
       '<div class="field"><label>Protein (g)</label><input id="nutP" type="number" value="' +
@@ -496,14 +517,15 @@
       '<div class="field"><label>Fat (g)</label><input id="nutF" type="number" value="' +
       esc((t && t.fatG) || 80) +
       '"></div></div>' +
+      '<div class="row" style="justify-content:flex-start;gap:8px;flex-wrap:wrap;margin-top:4px">' +
       '<button type="button" class="btn primary" onclick="CoachViews.saveNutOverride()">Save override</button>' +
-      '<button type="button" class="btn small" onclick="CoachViews.clearNutOverride()">Clear override</button></div>' +
+      '<button type="button" class="btn ghost small" onclick="CoachViews.clearNutOverride()">Clear override</button></div></div>' +
       '<div class="card stack" style="margin-top:16px"><div class="eyebrow">Meal day · ' +
       esc(L().today()) +
       '</div>' +
       '<div class="field"><label>Meal title</label><input id="nutMealTitle" value="Training day"></div>' +
       '<div class="field"><label>Food line</label><input id="nutFoodLine" placeholder="Chicken breast · 200g"></div>' +
-      '<button type="button" class="btn" onclick="CoachViews.addMealDay()">Add meal & publish day</button></div>'
+      '<button type="button" class="btn primary" onclick="CoachViews.addMealDay()">Add meal & publish day</button></div></div>'
     );
   }
 

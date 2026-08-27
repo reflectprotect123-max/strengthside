@@ -8,23 +8,27 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
+/* Track Dawn — coach workspace polish (Dashboard as north star) */
 :root{
-  --color-copper:#d4a574;--color-copper-bright:#e8c49a;
+  --color-copper:#d4a574;--color-copper-bright:#e8c49a;--color-copper-dim:rgba(212,165,116,.22);
   --color-bg-deep:#07090b;--color-bg-panel:#12161a;--line:rgba(255,255,255,.08);
-  --bg:var(--color-bg-deep);--panel:var(--color-bg-panel);--panel2:#181d22;
+  --bg:var(--color-bg-deep);--panel:var(--color-bg-panel);--panel2:#181d22;--panel3:#0d1114;
   --text:#eef2f4;--muted:#9aa3ab;--dim:#6f7881;
   --copper:var(--color-copper);--copper2:var(--color-copper-bright);
-  --ok:#7dba9a;--warn:#d4a35b;
+  --ok:#7dba9a;--warn:#d4a35b;--bad:#d0897d;
   --coach-nav-bg:var(--color-bg-deep);--coach-header-bg:#0a0c0e;
   --coach-main-bg:#07090b;--coach-main-text:var(--text);--coach-main-muted:var(--muted);
   --coach-card-bg:var(--panel);--coach-card-border:var(--line);
   --coach-nav-active:rgba(212,165,116,.14);--coach-link:var(--copper2);
   --font-body:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
   --font-display:"Barlow Condensed",ui-sans-serif,system-ui,sans-serif;
-  --tap:44px;--focus:0 0 0 3px rgba(232,196,154,.45);
+  --tap:44px;--r:12px;--ease:180ms cubic-bezier(.22,1,.36,1);
+  --focus:0 0 0 2px var(--bg),0 0 0 4px rgba(232,196,154,.55);
+  --shadow:0 16px 40px rgba(0,0,0,.35);
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
-html,body{margin:0;font-family:var(--font-body);min-height:100%}
+html,body{margin:0;font-family:var(--font-body);min-height:100%;background:var(--bg);color:var(--text)}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;box-shadow:var(--focus)}
@@ -32,42 +36,65 @@ h1,h2,h3,p{margin:0}
 a{color:var(--coach-link)}
 .hidden{display:none !important}
 
-/* gate — dark */
+/* shared page chrome */
+.page-intro{margin-bottom:18px}
+.page-intro .eyebrow{margin-bottom:6px}
+.page-intro h1{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.01em;color:var(--coach-main-text)}
+.page-intro .lede{margin-top:8px;color:var(--coach-main-muted);font-size:13px;line-height:1.5;max-width:54ch}
+.page-back{margin-bottom:4px}
+.toolbar-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.toolbar-row .field{margin:0;flex:1;min-width:180px}
+.empty-panel{padding:22px 18px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+.empty-panel .eyebrow{margin-bottom:6px}
+.empty-panel h2{font-family:var(--font-display);font-size:22px;font-weight:600;margin-top:2px}
+.empty-panel .muted{margin-top:8px}
+.empty-panel .empty-actions{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.err-card{margin-top:12px;padding:12px 14px;border:1px solid var(--bad);border-radius:var(--r);background:rgba(208,137,125,.08);color:var(--text);font-size:13px;line-height:1.45}
+.check-row{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-bottom:12px;color:var(--muted);font-size:13px;cursor:pointer;user-select:none}
+.check-row input{width:auto;accent-color:var(--copper)}
+.fade-in{animation:coachFade .35s var(--ease) both}
+@keyframes coachFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* gate */
 #gate{max-width:440px;margin:0 auto;padding:48px 20px;background:var(--bg);color:var(--text);min-height:100vh}
 .mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--copper);border-radius:11px;color:var(--copper2);font-weight:800;letter-spacing:.12em;font-size:12px;flex-shrink:0}
 .acct{display:grid;gap:8px;margin-top:18px}
 .acct button{text-align:left;color:var(--text)}
-#gate .btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);font-weight:650;color:var(--text)}
+#gate .btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);font-weight:650;color:var(--text);transition:border-color var(--ease),background var(--ease),color var(--ease),transform var(--ease)}
+#gate .btn:hover{border-color:rgba(212,165,116,.35)}
 #gate .btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
+#gate .btn.primary:hover{background:var(--copper2);border-color:var(--copper2)}
 #gate .field{margin-top:12px}
 #gate label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
-#gate input{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#0d1114;color:var(--text)}
+#gate input{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:var(--panel3);color:var(--text);transition:border-color var(--ease)}
+#gate input:hover{border-color:rgba(255,255,255,.14)}
 #gate .muted{color:var(--muted);font-size:13px;line-height:1.45}
+#gate .gate-title{margin-top:28px;font-family:var(--font-display);font-size:clamp(34px,6vw,42px);font-weight:600;letter-spacing:.01em;line-height:1.05}
 
-/* shell — R0 */
+/* shell */
 #coachApp.coach-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;background:var(--coach-main-bg)}
 .coach-side{display:flex;flex-direction:column;padding:16px 10px;background:var(--coach-nav-bg);border-right:1px solid var(--line);color:var(--text);min-height:100vh}
 .coach-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 12px}
 .coach-brand b{font-size:14px;letter-spacing:.02em}
 .coach-brand .sub{color:var(--dim);font-size:11px;margin-top:2px}
 .coach-side nav{display:grid;gap:2px;flex:1;margin-top:8px}
-.coach-side nav button,.coach-side .nav-soon{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--dim);text-align:left;font-size:13px;font-weight:500}
+.coach-side nav button,.coach-side .nav-soon{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--dim);text-align:left;font-size:13px;font-weight:500;transition:background var(--ease),color var(--ease)}
 .coach-side nav button.on{background:var(--coach-nav-active);color:var(--copper2)}
 .coach-side nav button:hover:not(.on):not(:disabled){background:rgba(255,255,255,.04);color:var(--text)}
 .coach-side nav button:disabled,.coach-side .nav-soon{opacity:.42;cursor:not-allowed}
 .nav-ico{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .coach-side-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:6px}
-.coach-side-foot button{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:6px 10px;border:0;border-radius:8px;background:transparent;color:var(--dim);font-size:12px;text-align:left}
+.coach-side-foot button{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:6px 10px;border:0;border-radius:8px;background:transparent;color:var(--dim);font-size:12px;text-align:left;transition:background var(--ease),color var(--ease)}
 .coach-side-foot button:hover{color:var(--text);background:rgba(255,255,255,.04)}
 
 .coach-workspace{display:flex;flex-direction:column;min-width:0;min-height:100vh}
 .coach-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;min-height:56px;background:var(--coach-header-bg);border-bottom:1px solid var(--line);color:var(--text)}
 .coach-header-title{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .coach-header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.coach-header-actions .btn-assist{min-height:36px;padding:8px 14px;border:0;border-radius:8px;background:var(--copper);color:#14110d;font-size:12px;font-weight:700;opacity:.45;cursor:not-allowed}
-.icon-btn{position:relative;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--dim);cursor:not-allowed;opacity:.45}
+.coach-header-actions .btn-assist{min-height:36px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--dim);font-size:12px;font-weight:650;opacity:.5;cursor:not-allowed}
+.icon-btn{position:relative;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--dim);cursor:not-allowed;opacity:.4}
 .icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75}
-.icon-btn .badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--copper);color:#14110d;font-size:9px;font-weight:800;line-height:16px;text-align:center}
+.icon-btn .badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--panel2);color:var(--dim);font-size:9px;font-weight:800;line-height:16px;text-align:center;border:1px solid var(--line)}
 .coach-avatar{width:32px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--copper2)}
 
 .coach-body{display:grid;flex:1;grid-template-columns:1fr}
@@ -75,29 +102,40 @@ a{color:var(--coach-link)}
 .coach-main{padding:24px 28px 48px;color:var(--coach-main-text);min-width:0}
 .coach-rail{padding:24px 16px;border-left:1px solid var(--line);background:var(--coach-main-bg);min-width:0}
 
-/* main — Track Dawn dark (matches athlete app) */
+/* main primitives */
 .eyebrow{color:var(--copper);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
 .muted{color:var(--coach-main-muted);font-size:13px;line-height:1.45}
 .coach-main h1,.coach-main h2{color:var(--coach-main-text)}
 .coach-main h1{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.01em}
-.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-weight:650;color:var(--text)}
+.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-weight:650;color:var(--text);transition:border-color var(--ease),background var(--ease),color var(--ease),opacity var(--ease)}
+.btn:hover:not(:disabled){border-color:rgba(212,165,116,.35);background:#1c2228}
 .btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
+.btn.primary:hover:not(:disabled){background:var(--copper2);border-color:var(--copper2)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--copper2)}
+.btn.ghost:hover:not(:disabled){background:rgba(212,165,116,.08);border-color:transparent}
+.btn.danger,.btn.ghost.danger{color:var(--bad)}
 .btn.block{width:100%}
 .btn.small{min-height:36px;padding:7px 10px;font-size:12px}
-input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#0d1114;color:var(--text)}
+.btn:disabled,.btn[disabled]{opacity:.42;cursor:not-allowed}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);transition:border-color var(--ease)}
+input:hover,select:hover,textarea:hover{border-color:rgba(255,255,255,.14)}
 textarea{min-height:88px;resize:vertical}
 label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .field{margin-top:12px}
 .stack{display:grid;gap:12px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-.card{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.card{padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);transition:border-color var(--ease),box-shadow var(--ease)}
+.card.interactive:hover,.feed-card:hover{border-color:rgba(212,165,116,.28);box-shadow:var(--shadow)}
 .pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.03)}
+.pill.ok{border-color:rgba(125,186,154,.45);color:var(--ok)}
+.pill.warn{border-color:rgba(212,163,91,.45);color:var(--warn)}
 .slice-stub{display:grid;place-items:center;min-height:280px;text-align:center;gap:8px}
 .slice-stub b{font-family:var(--font-display);font-size:22px}
 
 .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px;flex-wrap:wrap}
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.topbar select{width:auto;min-width:160px}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}
+.metrics.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .metric{text-align:center;padding:10px 4px}
 .metric b{display:block;font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--coach-main-text)}
 .metric span{color:var(--coach-main-muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
@@ -110,48 +148,54 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .cell.empty{color:var(--dim)}
 .wk{display:grid;place-items:center;color:var(--muted);font-size:12px}
 .cal{display:grid;gap:8px}
-.item{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel);text-align:left;width:100%;color:var(--text)}
+.item{padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);text-align:left;width:100%;color:var(--text)}
 
-/* session builder — R3 */
+/* session builder */
 .lib-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:16px}
-.lib-tabs button{padding:8px 12px;border:0;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-9px}
+.lib-tabs button{padding:8px 12px;border:0;border-radius:8px 8px 0 0;background:transparent;color:var(--muted);font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-9px;transition:color var(--ease),border-color var(--ease)}
+.lib-tabs button:hover{color:var(--text)}
 .lib-tabs button.on{color:var(--copper2);border-bottom-color:var(--copper)}
 .builder-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
 .builder-title{font-family:var(--font-display);font-size:28px;font-weight:600;background:transparent;border:0;border-bottom:1px solid transparent;padding:4px 0;width:min(100%,520px);color:var(--text)}
 .builder-title:focus{border-bottom-color:var(--copper);outline:none}
+.builder-title:focus-visible{box-shadow:var(--focus);border-radius:4px}
 .builder-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .instructions-box{position:relative}
 .instructions-box textarea{min-height:120px}
 .char-count{position:absolute;top:8px;right:10px;font-size:11px;color:var(--dim)}
-.block-card{margin-top:16px;padding:0;border:1px solid var(--line);border-radius:12px;background:var(--panel2);overflow:hidden}
+.block-card{margin-top:16px;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);overflow:hidden}
 .block-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .letter-badge{display:grid;place-items:center;width:32px;height:32px;border-radius:999px;border:1px solid var(--line);font-weight:700;font-size:13px;color:var(--copper2);flex-shrink:0}
 .block-head select{max-width:180px;min-height:36px;padding:6px 8px;font-size:12px}
 .block-head .grow{flex:1;min-width:120px}
 .block-body{padding:14px}
 .exercise-card{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
-.exercise-pick{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0d1114;color:var(--text);font-weight:650}
+.exercise-pick{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);font-weight:650;transition:border-color var(--ease)}
 .exercise-pick:hover{border-color:rgba(212,165,116,.35)}
 .rx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.rx-grid.cols-4{grid-template-columns:repeat(4,1fr)}
 .rx-grid .field{margin-top:0}
 .set-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
 .set-table th,.set-table td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
 .set-table td{color:var(--text);font-size:13px;text-transform:none;font-weight:500;letter-spacing:0}
 .set-table input{padding:6px 8px;font-size:13px}
 .add-block-bar{margin-top:20px}
-.kebab-btn{min-height:32px;min-width:32px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted)}
-.picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:50;padding:20px}
-.picker-panel{width:min(520px,100%);max-height:min(80vh,640px);overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px}
+.kebab-btn{min-height:32px;min-width:32px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);transition:border-color var(--ease),color var(--ease)}
+.kebab-btn:hover{border-color:rgba(212,165,116,.35);color:var(--text)}
+.kebab-btn.danger{color:var(--bad);border-color:rgba(208,137,125,.35)}
+.kebab-btn.danger:hover{background:rgba(208,137,125,.1)}
+.picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:50;padding:20px;animation:coachFade .2s var(--ease) both}
+.picker-panel{width:min(520px,100%);max-height:min(80vh,640px);overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px;box-shadow:var(--shadow)}
 .picker-list{display:grid;gap:6px;margin-top:12px;max-height:360px;overflow:auto}
-.picker-item{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0d1114;color:var(--text)}
+.picker-item{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);transition:border-color var(--ease)}
 .picker-item:hover{border-color:rgba(212,165,116,.35)}
-.template-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text)}
-.template-row:hover{border-color:rgba(212,165,116,.25)}
+.template-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);color:var(--text);transition:border-color var(--ease),box-shadow var(--ease)}
+.template-row:hover{border-color:rgba(212,165,116,.28);box-shadow:var(--shadow)}
 .engine-box{margin-top:4px}
 .engine-plan{margin:0 0 12px;padding:10px 12px;border:1px solid rgba(212,165,116,.22);border-radius:10px;background:rgba(212,165,116,.06);color:var(--copper2);font-weight:650;font-size:14px}
 .engine-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .efforts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
-.eff{display:grid;gap:2px;min-height:56px;padding:10px 8px;border:1px solid var(--line);border-radius:10px;background:#0d1114;color:var(--muted);text-align:left}
+.eff{display:grid;gap:2px;min-height:56px;padding:10px 8px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--muted);text-align:left;transition:border-color var(--ease),background var(--ease),color var(--ease)}
 .eff.on{border-color:rgba(212,165,116,.55);background:rgba(212,165,116,.12);color:var(--copper2)}
 .eff b{font-size:14px}
 .eff small{font-size:11px;color:var(--dim);font-weight:500}
@@ -161,26 +205,31 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .mins-row button{min-width:40px;min-height:40px}
 .engine-hint{margin:8px 0 0;color:var(--dim);font-size:12px;line-height:1.4}
 
-/* program grid — R4 */
+/* program grid */
 .prog-list{display:grid;gap:10px}
-.prog-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.prog-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);transition:border-color var(--ease)}
+.prog-row:hover{border-color:rgba(212,165,116,.25)}
 .prog-row-main{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:0;border:0;background:transparent;color:var(--text);cursor:pointer;min-height:44px}
 .prog-row-main:hover b{color:var(--copper2)}
 .prog-row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .prog-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
 .prog-title{font-family:var(--font-display);font-size:28px;font-weight:600;background:transparent;border:0;border-bottom:1px solid transparent;padding:4px 0;width:min(100%,420px);color:var(--text)}
 .prog-title:focus{border-bottom-color:var(--copper);outline:none}
+.prog-title:focus-visible{box-shadow:var(--focus);border-radius:4px}
 .prog-icons{display:flex;gap:6px;align-items:center}
-.prog-icon{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--muted)}
+.prog-icon{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--muted);transition:border-color var(--ease),color var(--ease)}
 .prog-icon:hover{color:var(--copper2);border-color:rgba(212,165,116,.35)}
+.prog-icon:disabled,.prog-icon[disabled]{opacity:.35;cursor:not-allowed}
 .prog-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .prog-week{margin-top:22px}
 .prog-week-label{font-family:var(--font-display);font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 .prog-days{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:8px;overflow-x:auto;padding-bottom:4px}
 .prog-day-h{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:0 4px 6px}
-.prog-cell{position:relative;min-height:120px;padding:0;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;color:var(--text);overflow:visible}
-.prog-cell.empty{cursor:pointer}
-.prog-cell.empty:hover{border-color:rgba(212,165,116,.3)}
+.prog-cell{position:relative;min-height:120px;padding:0;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;color:var(--text);overflow:visible;transition:border-color var(--ease)}
+.prog-cell.empty{cursor:pointer;background-image:linear-gradient(135deg,transparent 48%,rgba(255,255,255,.03) 50%,transparent 52%);background-size:10px 10px}
+.prog-cell.empty:hover{border-color:rgba(212,165,116,.35);border-style:dashed}
+.prog-cell.empty::after{content:"+";position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-size:18px;opacity:0;transition:opacity var(--ease);pointer-events:none}
+.prog-cell.empty:hover::after{opacity:.7}
 .prog-card{padding:10px;min-height:120px;display:flex;flex-direction:column;gap:8px}
 .prog-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
 .prog-card-mark{display:grid;place-items:center;width:22px;height:22px;border-radius:5px;border:1px solid var(--copper);color:var(--copper2);font-size:9px;font-weight:800;letter-spacing:.06em;flex-shrink:0}
@@ -189,45 +238,67 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .prog-card-body .letter-badge{width:24px;height:24px;font-size:11px}
 .prog-card-ex{font-size:12px;line-height:1.35}
 .prog-card-ex .muted{font-size:11px;margin-top:2px}
-.kebab-menu{position:absolute;top:36px;right:6px;z-index:20;min-width:180px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:0 12px 32px rgba(0,0,0,.45);display:grid;gap:2px}
+.kebab-menu{position:absolute;top:36px;right:6px;z-index:20;min-width:180px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:var(--shadow);display:grid;gap:2px}
 .kebab-menu button{width:100%;text-align:left;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:var(--text);font-size:13px;min-height:40px}
 .kebab-menu button:hover{background:rgba(212,165,116,.12);color:var(--copper2)}
-.kebab-menu button.danger{color:#d0897d}
+.kebab-menu button.danger{color:var(--bad)}
 .prog-footer{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.prog-hint{margin:0 0 12px;padding:10px 12px;border:1px dashed rgba(212,165,116,.35);border-radius:10px;background:rgba(212,165,116,.06);color:var(--copper2);font-size:13px}
 
-/* calendars + roster — R5/R6 */
+/* calendars + roster */
 .roster-table{width:100%;border-collapse:collapse;font-size:13px}
-.roster-table th,.roster-table td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+.roster-table th,.roster-table td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left}
 .roster-table th{color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.roster-table tbody tr{transition:background var(--ease)}
+.roster-table tbody tr:hover{background:rgba(255,255,255,.025)}
 .linkish{background:transparent;border:0;padding:0;color:var(--copper2);font-weight:650;cursor:pointer;text-align:left}
-.cal-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:16px 0;flex-wrap:wrap}
+.linkish:hover{text-decoration:underline;text-underline-offset:3px}
+.cal-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:12px 0 16px;flex-wrap:wrap}
 .cal-month{margin-top:8px}
 .cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
 .cal-dow{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:center}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.cal-day{min-height:88px;border:1px solid var(--line);border-radius:10px;background:#0e1216;padding:6px;position:relative}
-.cal-day.expanded{min-height:120px;border-color:rgba(212,165,116,.35)}
+.cal-day{min-height:88px;border:1px solid var(--line);border-radius:10px;background:#0e1216;padding:6px;position:relative;transition:border-color var(--ease),background var(--ease)}
+.cal-day:hover{border-color:rgba(212,165,116,.28)}
+.cal-day.expanded{min-height:120px;border-color:rgba(212,165,116,.4);background:#10151a}
 .cal-day-num{width:100%;border:0;background:transparent;color:var(--muted);font-size:11px;font-weight:700;text-align:left;padding:2px 4px;cursor:pointer}
+.cal-day-num:hover{color:var(--copper2)}
 .cal-day-body{display:grid;gap:6px;margin-top:4px}
-.cal-chip{padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);position:relative;font-size:11px}
-.cal-chip.unpublished{border-style:dashed;opacity:.92}
-.cal-chip.published{border-color:rgba(125,186,154,.45)}
+.cal-chip{padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);position:relative;font-size:11px;transition:border-color var(--ease)}
+.cal-chip.unpublished{border-style:dashed;border-color:rgba(212,165,116,.35);opacity:.95}
+.cal-chip.published{border-color:rgba(125,186,154,.5);background:rgba(125,186,154,.06)}
 .cal-chip-top{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
 .cal-chip-title{font-weight:650;line-height:1.25}
 .cal-chip-meta{margin-top:4px;color:var(--dim);font-size:10px}
 .cal-empty-actions{margin-top:6px}
-.ex-cat-row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ex-cat-row{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
 .ex-cat-row:last-child{border-bottom:0}
 .feed-card h2{font-family:var(--font-display);font-weight:600}
+.feed-card{animation:coachFade .4s var(--ease) both}
 
+@media(max-width:1100px){
+  .metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .metrics.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media(max-width:980px){
   #coachApp.coach-shell{grid-template-columns:1fr}
   .coach-side{flex-direction:row;flex-wrap:wrap;min-height:auto;border-right:0;border-bottom:1px solid var(--line)}
   .coach-side nav{display:flex;flex-wrap:wrap;margin:0}
   .coach-body.has-rail{grid-template-columns:1fr}
   .coach-rail{display:none}
+  .coach-main{padding:18px 16px 40px}
+  .prog-days{grid-template-columns:repeat(7,minmax(96px,1fr))}
+  .rx-grid,.rx-grid.cols-4{grid-template-columns:1fr 1fr}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+@media(max-width:640px){
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cal-grid,.cal-dow-row{gap:4px}
+  .cal-day{min-height:72px;padding:4px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+
 </style>
 </head>
 <body>
@@ -509,26 +580,27 @@ function feedHtml(){
     const open = ui.expandAll || ui.expanded[s.id];
     const title = s.sessionTitle || s.name;
     const notePreview = s.comment?.text ? `<div class="muted" style="margin-top:8px">${esc(s.comment.text.slice(0,120))}${s.comment.text.length>120?'…':''}</div>` : '';
-    return `<div class="card feed-card">
-      <div class="row"><div><div class="eyebrow">${esc(c.athlete?.name||'Athlete')}</div><h2 style="font-size:20px;margin-top:4px">${esc(s.name)}</h2><div class="muted">${esc(title)}</div></div><span class="pill">${esc(s.status)}</span></div>
+    const statusPill = s.status === 'completed' ? 'pill ok' : (s.status === 'active' ? 'pill warn' : 'pill');
+    return `<div class="card feed-card interactive">
+      <div class="row"><div><div class="eyebrow">${esc(c.athlete?.name||'Athlete')}</div><h2 style="font-size:20px;margin-top:4px">${esc(s.name)}</h2><div class="muted">${esc(title)}</div></div><span class="${statusPill}">${esc(s.status)}</span></div>
       ${metricRow(c.metrics)}
       ${notePreview}
       <div class="row" style="margin-top:12px;justify-content:flex-start;gap:8px;flex-wrap:wrap">
-        <button class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button>
-        <button class="btn small" onclick="openCommentDrawer('${s.id}')">Session comment</button>
+        <button type="button" class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button>
+        <button type="button" class="btn small" onclick="openCommentDrawer('${s.id}')">Session comment</button>
       </div>
       ${open?blockDetail(s):''}
     </div>`;
-  }).join('')).join('') || `<div class="card"><div class="eyebrow">Latest feed</div><h2 style="font-size:20px;margin-top:6px">No sessions yet</h2><p class="muted" style="margin-top:8px">When athletes log work, cards land here. Assign + publish from Library to get started.</p></div>`;
+  }).join('')).join('') || `<div class="empty-panel"><div class="eyebrow">Latest feed</div><h2>No sessions yet</h2><p class="muted">When athletes log work, cards land here. Assign and publish from Library to get started.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="go('library',{lib:'programs'})">Open library</button></div></div>`;
   const opts = athletes.map(a => `<option value="${a.id}" ${ui.filterAthlete===a.id?'selected':''}>${esc(a.name)}</option>`).join('');
-  return `<div class="topbar"><div><div class="eyebrow">Latest feed</div></div>
+  return `<div class="fade-in"><div class="topbar"><div class="page-intro" style="margin:0"><div class="eyebrow">Latest feed</div><p class="lede" style="margin-top:4px">Logged sessions from your roster.</p></div>
     <select onchange="ui.filterAthlete=this.value;render()" aria-label="Filter athletes">
       <option value="all" ${ui.filterAthlete==='all'?'selected':''}>All Athletes</option>
       <option value="1to1" ${ui.filterAthlete==='1to1'?'selected':''}>1:1 Athletes</option>
       ${opts}</select></div>
-    <label class="row" style="justify-content:flex-start;gap:8px;margin-bottom:8px"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()" style="width:auto"> Expand all cards</label>
+    <label class="check-row"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()"> Expand all cards</label>
     <div class="stack">${cards}</div>
-    ${commentDrawerHtml()}`;
+    ${commentDrawerHtml()}</div>`;
 }
 
 function openCommentDrawer(sessionId){
@@ -556,9 +628,9 @@ function commentDrawerHtml(){
 function needsHtml(){
   const n = L.needsProgramming(S);
   if (!n.athletes.length && !n.teams.length) {
-    return `<div class="card"><div class="eyebrow">Needs programming</div><h2 style="font-size:20px;margin-top:6px">All clear</h2><p class="muted" style="margin-top:8px">There are currently no teams or athletes in need of programming.</p></div>`;
+    return `<div class="empty-panel"><div class="eyebrow">Needs programming</div><h2>All clear</h2><p class="muted">No teams or athletes need programming right now.</p></div>`;
   }
-  return `<div class="card"><div class="eyebrow">Needs programming</div><h2 style="font-size:20px;margin-top:6px">${n.athletes.length} athlete${n.athletes.length===1?'':'s'}</h2><p class="muted" style="margin-top:8px">${n.athletes.map(a=>esc(a.name)).join(', ')}</p></div>`;
+  return `<div class="card interactive"><div class="eyebrow">Needs programming</div><h2 style="font-size:20px;margin-top:6px">${n.athletes.length} athlete${n.athletes.length===1?'':'s'}</h2><p class="muted" style="margin-top:8px">${n.athletes.map(a=>esc(a.name)).join(', ')}</p></div>`;
 }
 
 function monthKey(){ return ui.calMonth || L.today().slice(0,7); }
@@ -572,7 +644,7 @@ function nutritionHtml(){ return CoachViews.nutritionHtml(); }
 
 function libraryTabs(){
   const tabs = [['programs','Programs'],['sessions','Sessions'],['exercises','Exercises']];
-  return `<div class="lib-tabs">${tabs.map(([k,l]) => `<button type="button" class="${ui.lib===k?'on':''}" onclick="ui.lib='${k}';ui.cellMenu=null;render()">${l}</button>`).join('')}</div>`;
+  return `<div class="lib-tabs" role="tablist">${tabs.map(([k,l]) => `<button type="button" role="tab" aria-selected="${ui.lib===k?'true':'false'}" class="${ui.lib===k?'on':''}" onclick="ui.lib='${k}';ui.cellMenu=null;render()">${l}</button>`).join('')}</div>`;
 }
 
 function programsListHtml(){
@@ -591,12 +663,12 @@ function programsListHtml(){
       </div>
     </div>`;
   }).join('');
-  return `<div class="row" style="margin-bottom:16px;flex-wrap:wrap">
-      <div class="field" style="margin:0;flex:1;min-width:180px"><label>Search programs</label>
+  return `<div class="toolbar-row">
+      <div class="field"><label>Search programs</label>
         <input value="${esc(ui.progSearch)}" oninput="ui.progSearch=this.value;render()" placeholder="Hybrid Strength…"></div>
       <button type="button" class="btn primary small" onclick="newProgram()">Create program</button>
     </div>
-    <div class="prog-list">${rows || '<div class="card muted">No programs yet.</div>'}</div>`;
+    <div class="prog-list">${rows || '<div class="empty-panel"><div class="eyebrow">Programs</div><h2>No programs yet</h2><p class="muted">Build a week×day grid, then assign it to a team.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="newProgram()">Create program</button></div></div>'}</div>`;
 }
 
 function libraryHtml(){
@@ -610,9 +682,9 @@ function libraryHtml(){
         <span class="pill">Edit</span></button>`;
     }).join('');
     return `${tabs}
-      <div class="row" style="margin-bottom:16px"><p class="muted">Session templates — same block shape the athlete app logs.</p>
+      <div class="toolbar-row"><p class="lede" style="margin:0;flex:1">Session templates — same block shape the athlete app logs.</p>
       <button type="button" class="btn primary small" onclick="newTemplate()">New session</button></div>
-      <div class="stack">${rows || '<div class="card muted">No session templates yet.</div>'}</div>`;
+      <div class="stack">${rows || '<div class="empty-panel"><div class="eyebrow">Sessions</div><h2>No templates yet</h2><p class="muted">Create a session, then drop it into a program grid.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="newTemplate()">New session</button></div></div>'}</div>`;
   }
   if (ui.lib === 'exercises') {
     return `${tabs}${exercisesCatalogHtml()}`;
@@ -630,13 +702,13 @@ function exercisesCatalogHtml(){
     const rows = cats[cat].map(e => `<div class="ex-cat-row"><b>${esc(e.name)}</b><span class="muted">${e.builtIn?'Core':'Custom'}</span></div>`).join('');
     return `<div class="card" style="margin-top:10px"><div class="eyebrow">${esc(cat)}</div><div class="stack" style="margin-top:10px;gap:6px">${rows}</div></div>`;
   }).join('');
-  return `<div class="row" style="margin-bottom:16px;flex-wrap:wrap">
-      <div class="field" style="margin:0;flex:1;min-width:180px"><label>Search exercises</label>
+  return `<div class="toolbar-row">
+      <div class="field"><label>Search exercises</label>
         <input value="${esc(ui.exCatalogSearch||'')}" oninput="ui.exCatalogSearch=this.value;render()" placeholder="Squat, row…"></div>
       <button type="button" class="btn primary small" onclick="addCustomExercise()">New exercise</button>
     </div>
-    <p class="muted">${list.length} exercise${list.length===1?'':'s'} · used by session builder picker</p>
-    ${blocks || '<div class="card muted">No exercises match.</div>'}`;
+    <p class="muted" style="margin-bottom:8px">${list.length} exercise${list.length===1?'':'s'} · used by session builder picker</p>
+    ${blocks || '<div class="empty-panel"><div class="eyebrow">Exercises</div><h2>No matches</h2><p class="muted">Try another search, or add a custom exercise.</p></div>'}`;
 }
 
 function addCustomExercise(){
@@ -846,7 +918,7 @@ function programHtml(){
       <div class="prog-days">${dayHeads}${cells}</div></div>`;
   }).join('');
   const pasteHint = ui.cellPick && (ui.cellPick.mode === 'copyTarget' || ui.cellPick.mode === 'moveTarget')
-    ? `<p class="muted" style="margin-top:8px">${ui.cellPick.mode==='moveTarget'?'Click an empty cell to move the session.':'Click an empty cell to paste the copy.'} <button type="button" class="btn ghost small" onclick="closeCellPick()">Cancel</button></p>`
+    ? `<p class="prog-hint">${ui.cellPick.mode==='moveTarget'?'Click an empty cell to move the session.':'Click an empty cell to paste the copy.'} <button type="button" class="btn ghost small" onclick="closeCellPick()">Cancel</button></p>`
     : '';
   return `<button type="button" class="btn ghost small" onclick="go('library',{lib:'programs'})">← Back to programs</button>
     <div class="prog-toolbar" style="margin-top:12px">
@@ -1092,7 +1164,7 @@ function sessionHtml(){
         ${scoring}
         <label class="row" style="gap:6px;margin:0;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500">
           <input type="checkbox" style="width:auto" ${b.superset?'checked':''} onchange="toggleSuperset(${i},this.checked)"> Superset</label>
-        <button type="button" class="kebab-btn" title="Delete block" onclick="removeBlk(${i})">Del</button>
+        <button type="button" class="kebab-btn danger" title="Delete block" aria-label="Delete block" onclick="removeBlk(${i})">Delete</button>
       </div>
       <div class="block-body">
         <div class="field"><label>Block title</label><input value="${esc(b.heading||'')}" oninput="tpl(ui.templateId).blocks[${i}].heading=this.value;persist()"></div>
@@ -1102,7 +1174,7 @@ function sessionHtml(){
     </section>`;
   }).join('');
   const instrLen = (t.coachInstructions||'').length;
-  return `<button type="button" class="btn ghost small" onclick="go('library',{lib:'sessions'})">← Back to sessions</button>
+  return `<div class="fade-in"><button type="button" class="btn ghost small page-back" onclick="go('library',{lib:'sessions'})">← Back to sessions</button>
     <div class="builder-top" style="margin-top:12px">
       <input class="builder-title" value="${esc(t.name)}" aria-label="Session title" oninput="tpl(ui.templateId).name=this.value;persist()">
       <div class="builder-actions"><span class="pill">Saved locally</span></div>
@@ -1114,14 +1186,14 @@ function sessionHtml(){
     </div>
     ${blocks}
     <div class="add-block-bar stack">
-      <button type="button" class="btn primary block" onclick="addBlk('strength')">Add Block</button>
-      <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn small" onclick="addBlk('strength')">+ Strength</button>
+      <p class="muted" style="margin:0">Add a block type</p>
+      <div class="row" style="justify-content:flex-start;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn primary small" onclick="addBlk('strength')">+ Strength</button>
         <button type="button" class="btn small" onclick="addBlk('conditioning')">+ Conditioning</button>
         <button type="button" class="btn small" onclick="addBlk('text')">+ Prep / recovery</button>
       </div>
     </div>
-    ${exercisePickerHtml()}`;
+    ${exercisePickerHtml()}</div>`;
 }
 
 function coachChrome(body){
@@ -1181,10 +1253,11 @@ function exportBridgeFile(){
 }
 
 function gateHtml(){
-  return `<div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">TH</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace</div></div></div>
-    <h1 style="margin-top:28px;font-family:var(--font-display);font-size:40px">Sign in</h1>
+  return `<div class="fade-in"><div class="row" style="justify-content:flex-start;gap:12px"><div class="mark">TH</div><div><b>THE Hybrid System</b><div class="muted">Coach workspace</div></div></div>
+    <div class="eyebrow" style="margin-top:28px">Coach access</div>
+    <h1 class="gate-title">Sign in</h1>
     <p class="muted" style="margin-top:8px">Use the <b>same email + password</b> as the athlete app (Settings → Account). That unlocks cloud publish for athletes.</p>
-    ${ui.err?`<div class="card" style="margin-top:12px;border-color:#d0897d">${esc(ui.err)}</div>`:''}
+    ${ui.err?`<div class="err-card" role="alert">${esc(ui.err)}</div>`:''}
     <form id="gateForm" onsubmit="event.preventDefault();tryLogin($('em').value,$('pw').value);return false;">
       <div class="field"><label>Email</label><input id="em" type="email" autocomplete="username" placeholder="you@email.com" value="" required></div>
       <div class="field"><label>Password</label><input id="pw" type="password" autocomplete="current-password" value="" required></div>
@@ -1193,7 +1266,7 @@ function gateHtml(){
     <div class="acct">
       <button type="button" class="btn" onclick="tryLogin('dan@thehybrid.local','demo')">Demo coach (offline)</button>
     </div>
-    <p class="muted" style="margin-top:24px">Demo button is local-only and cannot publish to the APK. Athletes keep using the Hybrid athlete app.</p>`;
+    <p class="muted" style="margin-top:24px">Demo is local-only and cannot publish to the APK. Athletes keep using the Hybrid athlete app.</p></div>`;
 }
 
 function render(){
