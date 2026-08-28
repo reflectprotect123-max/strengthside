@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 28 August 2026.**
+> **AUTHORITATIVE CHECKPOINT — 28 August 2026 (owner away).**
 > **Chat may be cleared after this write — treat §0–§4 as the full memory.**
 > **Product:** Hybrid HTML athlete app + Capgo/dogfood + Netlify. Coach = prototype only.
 > **Companion `THE-HYBRID-ENGINE1`:** shared-Supabase schema stub only — no apps.
@@ -13,20 +13,25 @@
 
 | | |
 | --- | --- |
+| **Owner** | **Away for a while** — no product direction changes; do not start Decision Hub implementation until owner returns with a signed spec. |
 | **Edit** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **Tip** | `main` @ **`7642cdb`** (+ handoff commit **`a1801e1`** on tip for smoke) |
+| **`main` tip** | **`7642cdb`** (PR #92 + smoke **`a1801e1`**) |
+| **Handoff branch** | `cursor/capgo-1-0-13-upload-84a0` @ **`895653d`** — Capgo 1.0.13 upload, secrets vault, Decision Hub briefing (**PR #93**) |
 | **Cache** | **`the-hybrid-athlete-engine-v94`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.13`** (uploaded 28 Aug) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html (prototype) |
 | **APK** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
 | **Lost a token?** | **§0.5 Secrets vault** |
+| **Decision Hub design chat** | `docs/decision-hub-chatgpt-briefing/START-HERE.md` · zip: `decision-hub-chatgpt-briefing.zip` |
 
 **Five engines are wired on `main`.** Do not re-run “finish five-systems” or Phase 2 merge plans.
 
 **Ship ritual:** `pnpm run verify` → sync HTML → bump cache → Capgo upload if dogfood moves → refresh this handoff (`git rev-parse --short HEAD`).
 
-**Parked (do not start unless owner says):** Decision Hub / AI automation · Coordinator rename · pain/illness **stop** consumer · Expo / second athlete shell · Play Store / iOS store.
+**Parked (do not start unless owner says):** Coordinator rename · pain/illness **stop** consumer · Expo / second athlete shell · Play Store / iOS store.
+
+**Decision Hub:** unparked for **design only** — see **§2 Decision Hub**. Owner may refine externally (ChatGPT); **no code** until owner approves.
 
 ---
 
@@ -135,18 +140,41 @@ Production env keys present (27 Aug clone): `APP_BASE_URL`, `APP_SESSION_SECRET`
 
 ## 2. What's open (do this next)
 
-### Checklist
+> **Owner away:** prefer bugfixes, verify green, and §2 checklist items that need no product calls. Do **not** implement Decision Hub (§2 below) without owner sign-off.
+
+### Checklist (product — resume when owner returns)
 
 - [ ] **Phone dogfood proof** — Settings → Update (Capgo 1.0.13); strapless cond → recovery session → **debt row moves** on Home
 - [ ] **Hybrid week in Library + Calendar** — encode concurrent strength + conditioning templates; place on calendar; prove web↔phone sync
 - [ ] **Logger friction** — fewer taps, clearer rest/next, sane mid-block exit after a real phone session
+- [ ] **Merge PR #93** — handoff + secrets vault + Decision Hub briefing onto `main`
 - [ ] **Handoff stamp** — refresh §0 tip/cache/PRs after each ship
 
 ### Optional / lower priority
 
 - **PR #91** — coach UI polish (draft, CI red) — finish or close
-- **PR #93** — handoff cleanup + secrets vault — merge
 - **Pain/illness stop** — flags exist; nothing consumes them unless product decides
+
+### Decision Hub (design track — **not approved for build**)
+
+Owner unparked this for architecture discussion (28 Aug). **Design only until owner returns.**
+
+| Locked intent | Detail |
+| --- | --- |
+| **Purpose** | **Automation** — silent decisions applied through existing adapters. **Not** explanation, chat, or weekly AI brief. |
+| **No LLM** | No GPT/Claude/embeddings for decisions. Deterministic **rule engine / expert system**. |
+| **Five engines** | Strength · Conditioning · Nutrition · Recovery · Coordinator — each feeds a **rich athlete snapshot** (not today’s thin 7-day Coordinator receipts). |
+| **Static libraries** | Versioned playbooks per engine (rules, tables, examples) — built once, interpreted each run. |
+| **Five interpreters** | Per-engine pipeline: static lib + snapshot → typed **domain decision** (JSON). |
+| **System output** | Coordinator layer merges five domain decisions → **`SystemDecision`** → validators → silent apply. |
+| **Pure engine package** | `@hybrid/strength-engine` stays zero I/O; interpreters live in adapters / new modules. |
+| **Phase F** | `coaching_note` / embed infra exists; **optional** for v1 — notes may be compiled into static rules manually. |
+
+**Suggested build order (when approved):** (1) snapshot schemas + exporters, (2) Strength interpreter + static lib, (3) Recovery → Cond → Nutrition, (4) Coordinator merge, (5) deepen static libs.
+
+**Briefing for external design chat:** `docs/decision-hub-chatgpt-briefing/` (also `decision-hub-chatgpt-briefing.zip` on PR #93 branch).
+
+**Do not:** add LLM calls, athlete-facing AI UI, weekly Coordinator peek, training blocks, or re-litigate five-systems wiring.
 
 ### Dogfood proof commands
 
@@ -211,12 +239,13 @@ apps/mobile/prototype/hybrid-app/service-worker.js
 apps/mobile/sync-hybrid-html.sh
 apps/mobile/capacitor/scripts/upload-capgo-bundle.sh
 packages/strength-engine/
+docs/decision-hub-chatgpt-briefing/START-HERE.md
 CLAUDE.md
 ```
 
 | PR | Status |
 | --- | --- |
-| **#93** | Handoff rewrite + secrets vault (this commit) |
+| **#93** | Handoff + secrets vault + Capgo 1.0.13 proof + Decision Hub briefing — merge when owner back |
 | **#91** | Coach UI polish — draft, CI red |
 
 Closed draft PRs (#2–#14, #32, #41, #56, …) are obsolete vs tip unless `git log main..branch` shows unique salvage.
