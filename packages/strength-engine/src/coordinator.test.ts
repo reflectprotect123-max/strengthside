@@ -72,6 +72,27 @@ describe('planCoordinator', () => {
     expect(ease?.silentApply).toBe(true);
   });
 
+  it('eases when recovery debt is elevated', () => {
+    const r = planCoordinator({
+      ...emptyReceipts(),
+      recovery: [{ date: '2026-08-22', band: 'build', gate: 'ok' }],
+      recoveryDebt: { score: 48, elevated: true, repay: 9, netRatio: 1.25 },
+      conditioning: { weeklyZoneSeconds: { aerobic: 3600 }, sessionsCompleted: 2 },
+    });
+    expect(r.reasonCodes).toContain('recovery_debt_elevated');
+    expect(r.items.some(i => i.domain === 'recovery' && i.kind === 'ease')).toBe(true);
+  });
+
+  it('holds when recovery debt is high', () => {
+    const r = planCoordinator({
+      ...emptyReceipts(),
+      recovery: [{ date: '2026-08-22', band: 'build', gate: 'ok' }],
+      recoveryDebt: { score: 62, elevated: true, repay: 0 },
+    });
+    expect(r.reasonCodes).toContain('recovery_debt_high');
+    expect(r.headline).toMatch(/Recovery led/i);
+  });
+
   it('surfaces illness and low fuel flags in weekly review', () => {
     const r = planCoordinator({
       ...emptyReceipts(),

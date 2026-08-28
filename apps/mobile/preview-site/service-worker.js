@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-engine-v93';
+const CACHE = 'the-hybrid-athlete-engine-v94';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -12,6 +12,7 @@ self.addEventListener('install', (event) => {
           './strength-bundle.js',
           './recovery-engine.js',
           './recovery-signals.js',
+          './recovery-prescription.js',
           './strength-adapter.js',
           './load-headline.js',
           './coordinator-adapter.js',

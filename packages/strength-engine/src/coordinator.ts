@@ -26,7 +26,16 @@ export interface DomainReceipts {
     band: 'build' | 'control' | 'minimum' | 'insufficient_data';
     gate: 'ok' | 'caution' | 'hold';
     illness?: boolean;
+    debtScore?: number;
+    debtElevated?: boolean;
+    strain?: number;
   }>;
+  recoveryDebt?: {
+    score: number;
+    elevated: boolean;
+    repay: number;
+    netRatio?: number;
+  };
   nutrition: {
     daysLogged: number;
     daysInWindow: number;
@@ -74,6 +83,24 @@ export function planCoordinator(receipts: DomainReceipts, opts?: { weekStart?: s
   const recoveryHolds = receipts.recovery.filter(r => r.gate === 'hold' || r.band === 'minimum');
   const recoveryControl = receipts.recovery.filter(r => r.gate === 'caution' || r.band === 'control');
   const illnessDays = receipts.recovery.filter(r => r.illness).length;
+  const debt = receipts.recoveryDebt;
+  if (debt && debt.elevated && debt.score >= 55) {
+    items.push({
+      domain: 'recovery',
+      kind: 'hold',
+      message: `Recovery debt ${debt.score} — heavy delivery week; autopilot held until load eases.`,
+      silentApply: true,
+    });
+    reasonCodes.push('recovery_debt_high');
+  } else if (debt && (debt.elevated || debt.score >= 40)) {
+    items.push({
+      domain: 'recovery',
+      kind: 'ease',
+      message: `Recovery debt ${debt.score}${debt.repay > 0 ? ` · ~${debt.repay} repay logged` : ''} — easy sessions pay down delivery load.`,
+      silentApply: true,
+    });
+    reasonCodes.push('recovery_debt_elevated');
+  }
   if (illnessDays > 0) {
     items.push({
       domain: 'recovery',
@@ -199,7 +226,9 @@ export function planCoordinator(receipts: DomainReceipts, opts?: { weekStart?: s
   }
 
   let headline = 'Steady week — keep logging.';
-  if (painFlags.length || recoveryHolds.length >= 2) headline = 'Recovery led — autopilot stayed conservative.';
+  if (painFlags.length || recoveryHolds.length >= 2 || (debt && debt.score >= 55)) {
+    headline = 'Recovery led — autopilot stayed conservative.';
+  } else if (debt && debt.elevated) headline = 'Heavy delivery week — easy work still helps.';
   else if (progresses.length && !recoveryHolds.length) headline = 'Good week — silent bumps landed where allowed.';
   else if (zoneMin >= 90) headline = 'Solid conditioning dose alongside strength.';
 

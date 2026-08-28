@@ -130,6 +130,32 @@ const mixedPosture = RecoveryEngine.recoveryPosture({
 });
 must(mixedPosture.gate === 'ok', `mixed history must not freeze green day (gate=${mixedPosture.gate})`);
 
+const repay15 = RecoveryEngine.recoveryRepayFromSession(
+  { duration: 900 },
+  { result: { duration: 900, zoneSeconds: { recovery: 600, aerobic: 300 } } },
+);
+must(repay15 === 9, `15 min easy → 9 repay, got ${repay15}`);
+
+const freshDebt = RecoveryEngine.recoveryDebtScore(
+  { delivered: 0, budget: 0, ratio: 0, elevated: false, sessionCount: 0 },
+  0,
+);
+must(freshDebt.score === 0, 'fresh week has zero debt');
+
+const debtBefore = RecoveryEngine.recoveryDebtScore(deliveryLedger, 0);
+const debtAfter = RecoveryEngine.recoveryDebtScore(deliveryLedger, repay15);
+must(debtAfter.score < debtBefore.score, 'repay lowers debt score');
+must(debtAfter.netDelivered < debtBefore.netDelivered, 'repay lowers net delivered');
+
+const snap = RecoveryEngine.recoveryDebtSnapshot({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green', sleepQuality: 8 },
+  recentSessions: heavySessions,
+  allSessions: heavySessions,
+  endDate: new Date(now).toISOString().slice(0, 10),
+});
+must(typeof snap.debt.score === 'number', 'snapshot debt score');
+
 const deliveryPosture = RecoveryEngine.recoveryPosture({
   checkinComplete: true,
   checkin: { readinessColor: 'green' },
@@ -146,5 +172,29 @@ const illnessPosture = RecoveryEngine.recoveryPosture({
 });
 must(illnessPosture.reasonCodes.includes('illness_flag_active'), 'illness advisory');
 must(illnessPosture.gate === 'ok', 'illness does not block training');
+
+must(
+  RecoveryEngine.whoopStrainBackgroundLoad(14, 0) === 1.8,
+  'strain 14 unlogged day → 1.8 background',
+);
+must(
+  RecoveryEngine.whoopStrainBackgroundLoad(14, 13) === 0.3,
+  'strain 14 logged day → capped double-count',
+);
+must(RecoveryEngine.whoopStrainBackgroundLoad(8, 0) === 0, 'light strain no excess');
+
+const strainLedger = RecoveryEngine.deliveryLoadLedger([], [
+  { date: new Date(now).toISOString().slice(0, 10), whoopStrain: 15, heatLoad: 1 },
+], { endDate: new Date(now).toISOString().slice(0, 10) });
+must(strainLedger.background >= 2, 'WHOOP strain raises delivery background');
+
+const bg = RecoveryEngine.checkinBackgroundLoad({
+  steps: 15000,
+  workStress: 5,
+  mentalStress: 4,
+  fuel: 'poor',
+  heatLoad: 4,
+});
+must(bg === 67, `background load unified formula, got ${bg}`);
 
 console.log('recovery-engine.smoke: ok', cases.length, 'cases');

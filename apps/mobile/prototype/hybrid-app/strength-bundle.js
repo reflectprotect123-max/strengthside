@@ -423,6 +423,24 @@ var HybridStrength = (() => {
     const recoveryHolds = receipts.recovery.filter((r) => r.gate === "hold" || r.band === "minimum");
     const recoveryControl = receipts.recovery.filter((r) => r.gate === "caution" || r.band === "control");
     const illnessDays = receipts.recovery.filter((r) => r.illness).length;
+    const debt = receipts.recoveryDebt;
+    if (debt && debt.elevated && debt.score >= 55) {
+      items.push({
+        domain: "recovery",
+        kind: "hold",
+        message: `Recovery debt ${debt.score} \u2014 heavy delivery week; autopilot held until load eases.`,
+        silentApply: true
+      });
+      reasonCodes.push("recovery_debt_high");
+    } else if (debt && (debt.elevated || debt.score >= 40)) {
+      items.push({
+        domain: "recovery",
+        kind: "ease",
+        message: `Recovery debt ${debt.score}${debt.repay > 0 ? ` \xB7 ~${debt.repay} repay logged` : ""} \u2014 easy sessions pay down delivery load.`,
+        silentApply: true
+      });
+      reasonCodes.push("recovery_debt_elevated");
+    }
     if (illnessDays > 0) {
       items.push({
         domain: "recovery",
@@ -542,7 +560,9 @@ var HybridStrength = (() => {
       }
     }
     let headline = "Steady week \u2014 keep logging.";
-    if (painFlags.length || recoveryHolds.length >= 2) headline = "Recovery led \u2014 autopilot stayed conservative.";
+    if (painFlags.length || recoveryHolds.length >= 2 || debt && debt.score >= 55) {
+      headline = "Recovery led \u2014 autopilot stayed conservative.";
+    } else if (debt && debt.elevated) headline = "Heavy delivery week \u2014 easy work still helps.";
     else if (progresses.length && !recoveryHolds.length) headline = "Good week \u2014 silent bumps landed where allowed.";
     else if (zoneMin >= 90) headline = "Solid conditioning dose alongside strength.";
     return {
