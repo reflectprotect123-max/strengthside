@@ -73,6 +73,24 @@
     return num(c.heatLoad) * 2 + num(c.steps) / 2500 + num(c.workStress) * 2 + num(c.mentalStress) * 1.5;
   }
 
+  /**
+   * WHOOP strain (0–21) as supplementary background load — captures unlogged
+   * cardiovascular day load without double-counting logged sessions.
+   * Light band tops ~9; moderate ~10–13; high 14+.
+   */
+  function whoopStrainBackgroundLoad(strain, dayTrainingLoad) {
+    strain = num(strain);
+    if (strain <= 0) return 0;
+    dayTrainingLoad = num(dayTrainingLoad);
+    var lightExcess = Math.max(0, strain - 8);
+    if (lightExcess <= 0) return 0;
+    if (dayTrainingLoad <= 0) {
+      return Math.round(lightExcess * 0.3 * 10) / 10;
+    }
+    var heavyExcess = Math.max(0, strain - 12);
+    return Math.round(heavyExcess * 0.15 * 10) / 10;
+  }
+
   function sessionTrainingLoad(s) {
     if (!s || s.status !== 'completed') return 0;
     var sum = s.summary || {};
@@ -87,18 +105,24 @@
 
   function windowLoad(sessions, checkins, startMs, endMs) {
     var training = 0;
+    var trainingByDate = {};
     (sessions || []).forEach(function (s) {
       if (!s || s.status !== 'completed') return;
       var t = num(s.completedAt);
       if (t < startMs || t > endMs) return;
-      training += sessionTrainingLoad(s);
+      var load = sessionTrainingLoad(s);
+      training += load;
+      var day = s.date || new Date(t).toISOString().slice(0, 10);
+      trainingByDate[day] = (trainingByDate[day] || 0) + load;
     });
     var background = 0;
     (checkins || []).forEach(function (c) {
       if (!c || !c.date) return;
       var t = Date.parse(c.date + 'T12:00:00');
       if (t < startMs || t > endMs) return;
-      background += checkinBackgroundLoad(c);
+      var dayTrain = trainingByDate[c.date] || 0;
+      background +=
+        checkinBackgroundLoad(c) + whoopStrainBackgroundLoad(c.whoopStrain, dayTrain);
     });
     return { training: training, background: background, total: training + background };
   }
@@ -379,6 +403,7 @@
     heatLedger: heatLedger,
     deliveryLoadLedger: deliveryLoadLedger,
     deliveryLoadCopy: deliveryLoadCopy,
+    whoopStrainBackgroundLoad: whoopStrainBackgroundLoad,
     sumRecoveryRepay: sumRecoveryRepay,
     recoveryRepayFromSession: recoveryRepayFromSession,
     recoveryRepayEstimateMinutes: recoveryRepayEstimateMinutes,

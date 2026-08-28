@@ -173,4 +173,19 @@ const illnessPosture = RecoveryEngine.recoveryPosture({
 must(illnessPosture.reasonCodes.includes('illness_flag_active'), 'illness advisory');
 must(illnessPosture.gate === 'ok', 'illness does not block training');
 
+must(
+  RecoveryEngine.whoopStrainBackgroundLoad(14, 0) === 1.8,
+  'strain 14 unlogged day → 1.8 background',
+);
+must(
+  RecoveryEngine.whoopStrainBackgroundLoad(14, 13) === 0.3,
+  'strain 14 logged day → capped double-count',
+);
+must(RecoveryEngine.whoopStrainBackgroundLoad(8, 0) === 0, 'light strain no excess');
+
+const strainLedger = RecoveryEngine.deliveryLoadLedger([], [
+  { date: new Date(now).toISOString().slice(0, 10), whoopStrain: 15, heatLoad: 1 },
+], { endDate: new Date(now).toISOString().slice(0, 10) });
+must(strainLedger.background >= 2, 'WHOOP strain raises delivery background');
+
 console.log('recovery-engine.smoke: ok', cases.length, 'cases');
