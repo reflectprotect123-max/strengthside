@@ -26,6 +26,128 @@
 10. **Do not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI — including in `THE-HYBRID-ENGINE1` (schema-only).
 11. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump `LOCAL_BUILD` + SW `CACHE` together; Capgo upload when dogfood should move.
 12. Pain / illness flags still raise; **nothing consumes them** (inherited deliberate gap — restore = new decision).
+13. **Lost a token?** Full recovery copy in **§0.5 Secrets vault** (mined from all agent chats + CI, 28 Aug 2026).
+
+---
+
+## 0.5 Secrets vault (agent recovery)
+
+> **Private repo only.** Credentials below were recovered from cloud-agent transcripts
+> (159 strengthside runs scanned), git history, CI logs, and live probes. Values marked
+> **Netlify UI only** were never pasted in chat — they live on the Netlify site env
+> (cloned from `thehybridengine1` → `thehybridsystem`, CI run `33056683953`, 27 Aug).
+
+### Capgo OTA
+
+| Key | Value |
+| --- | --- |
+| `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | `292f04bd-a0a6-490c-8b7d-03c234eb4915` |
+| App ID | `com.hybrid.athlete` |
+| Channel | `dogfood` |
+| Live bundle | **`1.0.13`** (uploaded 28 Aug) |
+| Upload cmd | `CAPGO_BUNDLE_VERSION=1.0.13 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+
+Source: user pasted key in cloud agent `bc-5ff1f483` (“the strength app”, 25 Aug 2026).
+Also add `CAPGO_TOKEN` to **Cursor Cloud environment secrets** so fresh VMs do not lose it.
+
+### Supabase (shared hosted — both repos migrate here)
+
+| Key | Value |
+| --- | --- |
+| Project ref | `orysjncrksmdfabpuftd` |
+| `SUPABASE_URL` | `https://orysjncrksmdfabpuftd.supabase.co` |
+| Region (default) | `ap-southeast-2` |
+| **`SUPABASE_ANON_KEY`** (public client — already in git) | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeXNqbmNya3NtZGZhYnB1ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MTE4NzksImV4cCI6MjA5OTk4Nzg3OX0.GTMBfFtH5O6SikzHo75sXGIZoEhmuJ7TvXiACd7T078` |
+
+In code: `apps/mobile/whoop.js`, `concept2.js`, `scripts/apply-hosted-strength-migrations.mjs`.
+
+**Not recovered from chats** (GitHub Actions secrets or Supabase dashboard only):
+
+| Key | Where to get it |
+| --- | --- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API |
+| `SUPABASE_ACCESS_TOKEN` (`sbp_…`) | https://supabase.com/dashboard/account/tokens |
+| `SUPABASE_DB_PASSWORD` | Supabase → Project Settings → Database |
+| `VOYAGE_API_KEY` | Voyage AI dashboard → Edge function `embed-coaching-note` |
+| `EMBED_WEBHOOK_SECRET` | Set on function deploy + DB webhook `x-webhook-secret` header |
+
+GitHub secrets page: https://github.com/reflectprotect123-max/strengthside/settings/secrets/actions
+
+### WHOOP
+
+| Key | Value |
+| --- | --- |
+| `WHOOP_CLIENT_ID` | `bbce411c-cbd1-446d-8663-709acf923cd8` |
+| `WHOOP_CLIENT_SECRET` | **Netlify UI only** — present on site (see below) |
+| OAuth callback | `https://thehybridsystem.netlify.app/.netlify/functions/whoop-callback` |
+| Webhook | `https://thehybridsystem.netlify.app/.netlify/functions/whoop-webhook` |
+| Native return URL | `com.hybrid.athlete://whoop` |
+
+WHOOP developer console must register the callback + webhook URLs above (not the dead
+`thehybridengine1.netlify.app` URLs).
+
+### Concept2
+
+| Key | Value |
+| --- | --- |
+| `CONCEPT2_CLIENT_ID` | **Netlify UI only** |
+| `CONCEPT2_CLIENT_SECRET` | **Netlify UI only** |
+| OAuth callback | `https://thehybridsystem.netlify.app/.netlify/functions/concept2-callback` |
+
+### Netlify deploy + function env
+
+| Item | Value |
+| --- | --- |
+| Athlete site | https://thehybridsystem.netlify.app/ (`thehybridsystem`) |
+| Site ID (`thehybridsystem`) | `68423862-b052-43af-b482-162b711c8214` |
+| Site ID (`thehybridengine1`, clone source) | `31f93df6-ea71-440f-a6af-55bb5367a237` |
+| `NETLIFY_AUTH_TOKEN` | **GitHub secret only** — create at https://app.netlify.com/user/applications#personal-access-tokens |
+| `NETLIFY_SITE_ID` (GitHub secret) | UUID above, or slug `thehybridsystem` |
+
+**Netlify site env** (production) — read/write values at
+https://app.netlify.com/sites/thehybridsystem/configuration/env
+
+Keys confirmed present after hybrid1→thehybridsystem clone (27 Aug):
+
+| Key | Value in handoff |
+| --- | --- |
+| `APP_BASE_URL` | `https://thehybridsystem.netlify.app` |
+| `APP_SESSION_SECRET` | Netlify UI only |
+| `WHOOP_CLIENT_ID` | `bbce411c-cbd1-446d-8663-709acf923cd8` (same as above) |
+| `WHOOP_CLIENT_SECRET` | Netlify UI only |
+| `CONCEPT2_CLIENT_ID` | Netlify UI only |
+| `CONCEPT2_CLIENT_SECRET` | Netlify UI only |
+| `SUPABASE_URL` | `https://orysjncrksmdfabpuftd.supabase.co` |
+| `HYBRID_SITE` | legacy from hybrid1 clone |
+| `VITE_COACH_DEMO_MODE` | legacy from hybrid1 clone |
+| `VITE_COACH_USER_IDS` | legacy from hybrid1 clone |
+
+Re-clone workflow if env drifts: `.github/workflows/copy-netlify-env-from-hybrid1.yml`
+
+### GitHub Actions secret names (values never in git)
+
+`NETLIFY_AUTH_TOKEN` · `NETLIFY_SITE_ID` · `HYBRID1_NETLIFY_SITE_ID` ·
+`SUPABASE_ACCESS_TOKEN` · `SUPABASE_DB_PASSWORD` · `SUPABASE_DB_REGION` ·
+`SUPABASE_SERVICE_ROLE_KEY`
+
+### Coach prototype demo logins (in git — not production Supabase auth)
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Coach offline demo | `dan@thehybrid.local` | `demo` |
+| Seeded athletes | `veldman@thehybrid.local`, `alex@thehybrid.local`, `jordan@thehybrid.local` | `demo` |
+
+Real coach sign-in uses Supabase `signInWithPassword` (athlete account credentials).
+
+### Claude Mem / Gemini (local dev VM only)
+
+Gemini API key: `~/.claude-mem/settings.json` — not on cloud agents by default; see `skills.md`.
+
+### Audit notes (what was searched)
+
+- **159** strengthside cloud-agent transcripts paginated; Capgo key found in `bc-5ff1f483`.
+- Git history: no `nfp_` (Netlify PAT), `sbp_` (Supabase mgmt), or Capgo leaks.
+- `.capgo` was never committed (`.gitignore`); restore from table above or Capgo console.
 
 ---
 
