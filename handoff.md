@@ -69,7 +69,7 @@ Owned Postgres: exactly **twelve** tables (`metric` … `coaching_note`) +
 | 1 | **Strength** | `@hybrid/strength-engine` | `%WM` resolve, engine e1RM + `sessionLoad`, set-row sync, Progress by session, **cloud sync v3** (calendar + templates + progression) |
 | 2 | **Conditioning (The Engine)** | `@hybrid/engine` | `conAdapt` → `conProgress`; prescription reads level; zone tick via adapter |
 | 3 | **Nutrition** | `nutrition-core` + `nutrition-engine` | Day status Complete/Fasted/Partial → `weeklyCheckIn`; **no** recipes/charts UI |
-| 4 | **Recovery** | `recovery-engine.js` | Heat/steps domains + capacityHint + headline dampener — **still invisible** |
+| 4 | **Recovery** | `recovery-engine.js` | Delivery ledger, recovery debt on Home, WHOOP strain background, repay from recovery sessions, posture gates for autopilot |
 | 5 | **Coordinator** | `coordinator.ts` + `coordinator-adapter.js` | Silent apply only; athlete weekly peek **removed** |
 
 **Visible dials:** The Engine (teal) + Hybrid Strength (copper) + Sleep/check-in + Nutrition + Calendar/Settings.  

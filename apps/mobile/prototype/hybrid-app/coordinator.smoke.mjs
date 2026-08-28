@@ -14,6 +14,7 @@ function must(cond, msg) {
 const dir = dirname(fileURLToPath(import.meta.url));
 const bundle = readFileSync(join(dir, 'strength-bundle.js'), 'utf8');
 const coordAdapter = readFileSync(join(dir, 'coordinator-adapter.js'), 'utf8');
+const recoveryEngine = readFileSync(join(dir, 'recovery-engine.js'), 'utf8');
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const nutritionUi = readFileSync(join(dir, 'nutrition-ui.js'), 'utf8');
 
@@ -30,7 +31,7 @@ must(coordAdapter.includes('weeklySheetHtml'), 'weeklySheetHtml kept for fixture
 
 const sandbox = { window: { EngineAdapter: { weeklyZoneSeconds: () => ({ aerobic: 600 }) } }, console };
 vm.createContext(sandbox);
-vm.runInContext(`${bundle}; window.HybridStrength = HybridStrength; ${coordAdapter}`, sandbox);
+vm.runInContext(`${recoveryEngine}\n${bundle}\nwindow.HybridStrength = HybridStrength;\n${coordAdapter}`, sandbox);
 
 if (!sandbox.window.HybridStrength.Coordinator?.planCoordinator) throw new Error('Coordinator missing from bundle');
 
@@ -71,5 +72,26 @@ const flagState = {
 const flagReceipt = CoordinatorAdapter.planWeek(flagState, '2026-08-24', 7);
 must((flagReceipt.reasonCodes || []).includes('recovery_illness_flagged'), 'illness in weekly receipt');
 must((flagReceipt.reasonCodes || []).includes('nutrition_low_energy'), 'low fuel in weekly receipt');
+
+const heavySessions = [];
+for (let i = 0; i < 5; i++) {
+  heavySessions.push({
+    id: 'hs' + i,
+    status: 'completed',
+    date: '2026-08-24',
+    completedAt: completedAt - i * 86400000,
+    summary: { strengthLoad: 500, conditioningLoad: 3, tonnage: 500, totalLoad: 503 },
+    tasks: [{ kind: 'strength' }],
+  });
+}
+const debtState = {
+  sessions: heavySessions,
+  dailyCheckins: [{ date: '2026-08-24', readinessColor: 'green', steps: 8000, sleepQuality: 8 }],
+  meta: { progressionAudit: [] },
+  strengthState: { workingMaxEvents: [], prEvents: [], loadHints: {} },
+};
+const debtReceipt = CoordinatorAdapter.planWeek(debtState, '2026-08-24', 7);
+must((debtReceipt.reasonCodes || []).includes('recovery_debt_elevated') ||
+  (debtReceipt.reasonCodes || []).includes('recovery_debt_high'), 'debt wired into coordinator');
 
 console.log('coordinator.smoke: ok', receipt.headline);

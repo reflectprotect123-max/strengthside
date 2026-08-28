@@ -225,7 +225,56 @@
     return min * hrr * (0.64 * Math.exp(coef * hrr));
   }
 
-  /** Simple cond finish path: score when avg HR is present. */
+  /** Zone-minute weights — TRIMP-ish scale for strapless / felt sessions. */
+  var ZONE_LOAD_PER_MIN = {
+    recovery: 0.2,
+    aerobic: 0.4,
+    anaerobic: 0.7,
+    peak: 0.9,
+  };
+
+  function effortCenterRpe(effortKey) {
+    if (hasEngine()) {
+      var efforts = global.HybridEngine.Constants.CON_EFFORTS;
+      var e = efforts && efforts[effortKey];
+      if (e && e.center != null) return Number(e.center) || 6;
+    }
+    if (effortKey === 'easy') return 3.5;
+    if (effortKey === 'hard') return 8.5;
+    return 6;
+  }
+
+  function fosterSessionLoad(minutes, rpe) {
+    var min = Number(minutes) || 0;
+    var r = Number(rpe) || 0;
+    if (min <= 0 || r <= 0) return 0;
+    return Math.round(min * (r / 10) * 0.8 * 10) / 10;
+  }
+
+  function zoneSecondsLoad(zoneSeconds, minutes) {
+    var zs = zoneSeconds || {};
+    var sec =
+      (Number(zs.recovery) || 0) +
+      (Number(zs.aerobic) || 0) +
+      (Number(zs.anaerobic) || 0) +
+      (Number(zs.peak) || 0);
+    if (sec <= 0 && minutes > 0) return 0;
+    if (sec <= 0) return 0;
+    var load =
+      (Number(zs.recovery) || 0) / 60 * ZONE_LOAD_PER_MIN.recovery +
+      (Number(zs.aerobic) || 0) / 60 * ZONE_LOAD_PER_MIN.aerobic +
+      (Number(zs.anaerobic) || 0) / 60 * ZONE_LOAD_PER_MIN.anaerobic +
+      (Number(zs.peak) || 0) / 60 * ZONE_LOAD_PER_MIN.peak;
+    if (load <= 0 && minutes > 0) {
+      load = minutes * ZONE_LOAD_PER_MIN.aerobic;
+    }
+    return Math.round(load * 10) / 10;
+  }
+
+  /**
+   * Conditioning load — HR TRIMP when avg HR exists; else zone seconds, Foster sRPE,
+   * or prescribed effort fallback (strapless sessions still count toward recovery debt).
+   */
   function condLoad(input) {
     var opts = input || {};
     var min = Number(opts.minutes) || 0;
@@ -238,9 +287,44 @@
         scored: true,
       };
     }
+    if (min <= 0) {
+      return {
+        load: 0,
+        method: 'Conditioning completed — duration missing.',
+        confidence: 'unknown',
+        scored: false,
+      };
+    }
+    var zoneLoad = zoneSecondsLoad(opts.zoneSeconds, min);
+    if (zoneLoad > 0) {
+      return {
+        load: zoneLoad,
+        method: 'Zone-time load (no avg HR)',
+        confidence: 'medium',
+        scored: true,
+      };
+    }
+    var rpe = Number(opts.rpe) || Number(opts.felt) || 0;
+    if (rpe > 0) {
+      return {
+        load: fosterSessionLoad(min, rpe),
+        method: 'Session RPE load (Foster)',
+        confidence: 'medium',
+        scored: true,
+      };
+    }
+    var effortLoad = fosterSessionLoad(min, effortCenterRpe(opts.effort || 'medium'));
+    if (effortLoad > 0) {
+      return {
+        load: effortLoad,
+        method: 'Effort-based load (no HR logged)',
+        confidence: 'low',
+        scored: true,
+      };
+    }
     return {
       load: 0,
-      method: 'Conditioning completed — no load score unless average heart rate is logged.',
+      method: 'Conditioning completed — log duration and RPE or avg HR to score load.',
       confidence: 'unknown',
       scored: false,
     };

@@ -88,8 +88,47 @@
       var posture = global.RecoveryEngine && global.RecoveryEngine.recoveryPosture
         ? global.RecoveryEngine.recoveryPosture(input)
         : { band: complete ? 'build' : 'insufficient_data', gate: complete ? 'ok' : 'hold' };
-      return { date: date, band: posture.band, gate: posture.gate, illness: !!(c && c.illness === 'yes') };
+      var debtDay = null;
+      if (global.RecoveryEngine && global.RecoveryEngine.recoveryDebtSnapshot) {
+        var daySnap = global.RecoveryEngine.recoveryDebtSnapshot(input);
+        debtDay = daySnap && daySnap.debt ? daySnap.debt : null;
+      }
+      return {
+        date: date,
+        band: posture.band,
+        gate: posture.gate,
+        illness: !!(c && c.illness === 'yes'),
+        debtScore: debtDay ? debtDay.score : undefined,
+        debtElevated: debtDay ? debtDay.elevated : undefined,
+        strain: c && num(c.whoopStrain) > 0 ? num(c.whoopStrain) : undefined,
+      };
     });
+
+    var recoveryDebt = null;
+    if (global.RecoveryEngine && global.RecoveryEngine.recoveryDebtSnapshot) {
+      var endCheckin = (state.dailyCheckins || []).find(function (x) { return x.date === endDate; });
+      var endComplete = checkinComplete(endCheckin);
+      var weekSnap = global.RecoveryEngine.recoveryDebtSnapshot({
+        checkin: endCheckin,
+        checkinComplete: endComplete,
+        whoopRecovery: endCheckin && num(endCheckin.whoopRecovery),
+        recentCheckins: (state.dailyCheckins || []).filter(function (x) {
+          return x && x.date <= endDate;
+        }).sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); }).slice(0, 7),
+        recentSessions: sessions,
+        allSessions: state.sessions || [],
+        allCheckins: state.dailyCheckins || [],
+        endDate: endDate,
+      });
+      if (weekSnap && weekSnap.debt) {
+        recoveryDebt = {
+          score: weekSnap.debt.score,
+          elevated: weekSnap.debt.elevated,
+          repay: weekSnap.repay || 0,
+          netRatio: weekSnap.debt.netRatio,
+        };
+      }
+    }
 
     var nutritionDays = 0;
     var lowEnergyFlag = false;
@@ -113,6 +152,7 @@
       strength: { progressionAudit: auditWindow, sessionPainFlags: painFlags },
       conditioning: { weeklyZoneSeconds: weeklyZone, sessionsCompleted: condSessions },
       recovery: recovery,
+      recoveryDebt: recoveryDebt || undefined,
       nutrition: { daysLogged: nutritionDays, daysInWindow: days, lowEnergyFlag: lowEnergyFlag },
     };
   }

@@ -188,4 +188,13 @@ const strainLedger = RecoveryEngine.deliveryLoadLedger([], [
 ], { endDate: new Date(now).toISOString().slice(0, 10) });
 must(strainLedger.background >= 2, 'WHOOP strain raises delivery background');
 
+const bg = RecoveryEngine.checkinBackgroundLoad({
+  steps: 15000,
+  workStress: 5,
+  mentalStress: 4,
+  fuel: 'poor',
+  heatLoad: 4,
+});
+must(bg === 67, `background load unified formula, got ${bg}`);
+
 console.log('recovery-engine.smoke: ok', cases.length, 'cases');

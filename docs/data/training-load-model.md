@@ -1,10 +1,14 @@
 # Training load — two-channel model
 
-Status: **design doc, not implemented.** Nothing in `@hybrid/strength-engine` computes a
-training-load score today. The ARC coach-site prototype shows a load figure on its
-Readiness screen (`13.2 · cardio 9.1 / strength 4.1`) — every one of those numbers is
-fixture data. This document records what the real number would be based on, so that when
-someone builds it they inherit the reasoning, not just the mockup.
+Status: **partially implemented in the Hybrid HTML app.** `@hybrid/strength-engine` still does not compute a
+training-load score server-side. The athlete app ships two related but distinct figures:
+
+1. **Training load headline** (`load-headline.js`) — 0–21 WHOOP-familiar scale, cardio · strength split,
+   normalized against rolling weekly history. Shown on Sleep overview.
+2. **Recovery debt** (`recovery-engine.js`) — 0–100 delivery ledger score (sessions + life load − repay).
+   Shown on Home Sleep module. Drives autopilot caution; not the same number as the headline.
+
+This document records what each number is based on, so future work inherits the reasoning, not just the mockup.
 
 ## The shape: one displayed figure, two computed channels
 
@@ -15,20 +19,32 @@ Training load  13.2
                cardio 9.1 · strength 4.1
 ```
 
-The split is not decoration. A 13.2 that is mostly cardio and a 13.2 that is mostly
-strength predict different things about tomorrow: cardiovascular load suppresses
+The split is not decoration. A 13.2 that is mostly cardio and a 13.2 that is mostly strength predict different things about tomorrow: cardiovascular load suppresses
 HRV-measured recovery directly, while strength load produces neuromuscular fatigue that
 HR-based measures partly miss (Buchheit 2014). Collapsing them into a single opaque
 figure is the WHOOP-strain failure mode — heavy lifting barely moves average heart rate,
 so an HR-only score rates a maximal squat session like a brisk walk. WHOOP itself had to
 bolt on a separate "muscular load" system to compensate.
 
+**Recovery debt** is a separate ledger: rolling 7-day delivered load (logged sessions +
+check-in background + WHOOP strain supplement) vs budget, minus recovery-session repay credits.
+It answers "have we stacked too much this week?" rather than "how hard was today's workout?"
+
 ## Channel 1 — conditioning load
 
-**Formula family:** zone-weighted duration (TRIMP-style): `Σ minutes-in-zone × zone weight`.
+**Formula family:** zone-weighted duration (TRIMP-style) with fallbacks when HR is missing.
 
-**Data source:** performed conditioning zone seconds, owned by the hybrid repo. Two
-provenances, per the existing contract there:
+**Implemented in** `engine-adapter.js` → `condLoad()`:
+
+1. **HR TRIMP** when average HR is logged — high confidence.
+2. **Zone seconds** — recovery/aerobic/anaerobic/peak minutes × zone weights when strap data exists.
+3. **Foster session-RPE** — `(RPE / 10) × minutes × 0.8` when RPE or felt is logged.
+4. **Prescribed effort** — same Foster scaling using engine effort center RPE (easy/medium/hard).
+
+Strapless sessions therefore still contribute to session `conditioningLoad` and recovery debt.
+
+**Data source:** performed conditioning zone seconds in local session state. Two
+provenances, per the existing contract:
 
 - `zsrc:'measured'` — chest-strap HR trace, minutes accrue to zones directly.
 - `zsrc:'felt'` — strapless session; end-of-session RPE credits the whole duration to
@@ -52,6 +68,9 @@ the boundaries that were in force on the day of the session.
    restores intensity. Requires a resolvable working max — the same `reference_max`
    chain the prescription resolver already walks.
 
+**Implemented today:** `HybridStrength.Load.sessionLoad` → raw tonnage kg stored on session
+summary; headline and delivery ledger divide by 50 for display-scale units.
+
 Session-RPE is the pragmatic default; relative tonnage is the upgrade when working-max
 coverage is good. Do not average the two.
 
@@ -68,6 +87,16 @@ the spirit of Morpheus's rolling 10-day HRV baseline) before summing. The headli
 then "load relative to what this athlete has been doing," which is the question a
 readiness screen is actually answering. The 0–21 scale in the prototype is cosmetic
 WHOOP-familiarity, not a requirement.
+
+`load-headline.js` implements this normalization for the athlete UI. Recovery debt uses
+its own 0–100 score from delivery ratio minus repay — do not merge the two displays.
+
+## Background load (life stress)
+
+Check-in background load (steps tiers, work/mental stress, fuel, heat) is computed once in
+`recovery-engine.checkinBackgroundLoad()` and shared with `readinessScore()` in the HTML app.
+Recovery delivery ledger adds WHOOP strain as supplementary background when logged training
+under-counts the day.
 
 ## Cross-repo note
 
@@ -113,5 +142,6 @@ Recorded so nobody mistakes fixture behavior for design:
 - The Recovery-Sync shift formula (`round((recovery − 85) / 3)` bpm on every zone
   boundary) is invented for the demo. The *behavior* (zones move with recovery) is
   Morpheus-validated product precedent; the *formula* has no evidential basis.
-- The 13.2 headline, the 9.1/4.1 split, and the 71/100 recovery score are fixtures.
-- The 0–21 scale is borrowed WHOOP vocabulary.
+- Demo fixture screens may still show placeholder 13.2 / 9.1 / 4.1 splits — live app
+  computes from logged sessions once enough history exists.
+- The 0–21 headline scale is borrowed WHOOP vocabulary.

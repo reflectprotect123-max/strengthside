@@ -67,10 +67,37 @@
     return { sum: sum, avg: avg, days: vals.length, elevated: avg >= 3.5 };
   }
 
+  /** Steps tier load — shared with readinessScore in index.html. */
+  function stepsLoad(steps) {
+    steps = num(steps);
+    if (!steps) return 0;
+    if (steps < 8000) return 5;
+    if (steps < 13000) return 10;
+    if (steps < 18000) return 20;
+    if (steps < 25000) return 30;
+    return 40;
+  }
+
+  function fuelPenalty(v) {
+    return v === 'poor' ? 10 : v === 'good' ? -5 : 0;
+  }
+
+  function heatPenalty(v) {
+    v = num(v);
+    return v >= 5 ? 15 : v === 4 ? 10 : v === 3 ? 5 : 0;
+  }
+
+  /** Daily life-load from check-in — always recomputed (never reads stored backgroundLoad). */
   function checkinBackgroundLoad(c) {
     if (!c) return 0;
-    if (num(c.backgroundLoad) > 0) return num(c.backgroundLoad);
-    return num(c.heatLoad) * 2 + num(c.steps) / 2500 + num(c.workStress) * 2 + num(c.mentalStress) * 1.5;
+    var work = num(c.workStress) || num(c.workDifficulty);
+    return (
+      stepsLoad(c.steps) +
+      work * 3 +
+      num(c.mentalStress) * 3 +
+      fuelPenalty(c.fuel) +
+      heatPenalty(c.heatLoad)
+    );
   }
 
   /**
@@ -401,6 +428,10 @@
     blocksProgressionBumps: blocksProgressionBumps,
     postureCopy: postureCopy,
     heatLedger: heatLedger,
+    stepsLoad: stepsLoad,
+    fuelPenalty: fuelPenalty,
+    heatPenalty: heatPenalty,
+    checkinBackgroundLoad: checkinBackgroundLoad,
     deliveryLoadLedger: deliveryLoadLedger,
     deliveryLoadCopy: deliveryLoadCopy,
     whoopStrainBackgroundLoad: whoopStrainBackgroundLoad,
