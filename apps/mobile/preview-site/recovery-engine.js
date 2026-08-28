@@ -263,6 +263,114 @@
     return 'High session count this week — autopilot stays conservative.';
   }
 
+  /** Sum recovery repay credits in a time window (same units as delivery ledger). */
+  function sumRecoveryRepay(sessions, startMs, endMs) {
+    var repay = 0;
+    (sessions || []).forEach(function (s) {
+      if (!s || s.status !== 'completed') return;
+      var t = num(s.completedAt);
+      if (t < startMs || t > endMs) return;
+      repay += num(s.summary && s.summary.recoveryRepayLoad);
+    });
+    return Math.round(repay * 10) / 10;
+  }
+
+  /**
+   * Repay load from a completed recovery session — easy minutes pay down delivery debt.
+   * @param {{ duration?: number }} summary session summary
+   * @param {{ result?: { duration?: number, zoneSeconds?: object } }} task conditioning task
+   */
+  function recoveryRepayFromSession(summary, task) {
+    summary = summary || {};
+    task = task || {};
+    var r = task.result || {};
+    var mins = num(r.duration) / 60;
+    if (mins <= 0) mins = num(summary.duration) / 60;
+    if (mins <= 0) return 0;
+    var zones = r.zoneSeconds || {};
+    var easyMin = (num(zones.recovery) + num(zones.aerobic) * 0.5) / 60;
+    var base = Math.max(mins, easyMin);
+    // ~0.6 delivery units per easy minute; 15 min → ~9 repay (net paydown vs cond load).
+    return Math.round(base * 0.6 * 10) / 10;
+  }
+
+  function recoveryRepayEstimateMinutes(minutes) {
+    minutes = Math.max(0, num(minutes));
+    return Math.round(minutes * 0.6 * 10) / 10;
+  }
+
+  /**
+   * Recovery debt score 0–100 (0 = fresh, 100 = deep debt) from ledger minus repay credits.
+   */
+  function recoveryDebtScore(ledger, repayTotal) {
+    ledger = ledger || {};
+    repayTotal = num(repayTotal);
+    var delivered = num(ledger.delivered);
+    var budget = num(ledger.budget);
+    var netDelivered = Math.max(0, delivered - repayTotal);
+    var grossRatio = num(ledger.ratio);
+    if (budget <= 0 && !grossRatio) {
+      grossRatio = ledger.elevated ? 1.25 : 0.95;
+    }
+    var netRatio = budget > 0 ? netDelivered / budget : Math.max(0, grossRatio - repayTotal / Math.max(delivered, 1));
+    var score;
+    if (budget > 0) {
+      score = Math.round(Math.max(0, Math.min(100, ((netRatio - 0.85) / 0.75) * 100)));
+    } else if (netDelivered <= 0 && !ledger.elevated) {
+      score = 0;
+    } else if (ledger.elevated) {
+      score = Math.max(40, 72 - Math.round(repayTotal * 3));
+    } else {
+      score = Math.max(0, Math.min(55, Math.round(netDelivered * 2.2) - Math.round(repayTotal * 2)));
+    }
+    var elevated = budget > 0 ? netRatio >= 1.2 : netDelivered >= 10 && num(ledger.sessionCount) >= 4;
+    return {
+      score: score,
+      grossRatio: Math.round(grossRatio * 100) / 100,
+      netRatio: Math.round(netRatio * 100) / 100,
+      repay: repayTotal,
+      netDelivered: Math.round(netDelivered * 10) / 10,
+      delivered: delivered,
+      budget: budget,
+      elevated: elevated,
+    };
+  }
+
+  function recoveryDebtCopy(debt, opts) {
+    opts = opts || {};
+    debt = debt || {};
+    if (debt.score <= 15) return 'Recovery debt low — full dose available when readiness allows.';
+    if (debt.score <= 40) return 'Recovery debt moderate — easy work still helps.';
+    if (opts.repayEstimate > 0) {
+      return (
+        'Recovery debt ' +
+        debt.score +
+        ' · ~' +
+        opts.repayEstimate +
+        ' repay from ' +
+        opts.minutes +
+        ' min easy'
+      );
+    }
+    return 'Recovery debt ' + debt.score + ' · easy sessions repay delivery load.';
+  }
+
+  /** Posture + ledger + rolling repay → debt score for Home and session copy. */
+  function recoveryDebtSnapshot(input) {
+    input = input || {};
+    var posture = recoveryPosture(input);
+    var ledger = posture.domains && posture.domains.deliveryLedger;
+    if (!ledger) {
+      return { posture: posture, debt: { score: 0, repay: 0, netRatio: 0, grossRatio: 0, elevated: false } };
+    }
+    var days = ledger.days || 7;
+    var endMs = Date.parse((input.endDate || new Date().toISOString().slice(0, 10)) + 'T23:59:59');
+    var startMs = endMs - (days - 1) * 86400000;
+    var repay = sumRecoveryRepay(input.allSessions || input.recentSessions || [], startMs, endMs);
+    var debt = recoveryDebtScore(ledger, repay);
+    return { posture: posture, ledger: ledger, debt: debt, repay: repay };
+  }
+
   global.RecoveryEngine = {
     recoveryPosture: recoveryPosture,
     recoverySignal: recoverySignal,
@@ -271,5 +379,11 @@
     heatLedger: heatLedger,
     deliveryLoadLedger: deliveryLoadLedger,
     deliveryLoadCopy: deliveryLoadCopy,
+    sumRecoveryRepay: sumRecoveryRepay,
+    recoveryRepayFromSession: recoveryRepayFromSession,
+    recoveryRepayEstimateMinutes: recoveryRepayEstimateMinutes,
+    recoveryDebtScore: recoveryDebtScore,
+    recoveryDebtCopy: recoveryDebtCopy,
+    recoveryDebtSnapshot: recoveryDebtSnapshot,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

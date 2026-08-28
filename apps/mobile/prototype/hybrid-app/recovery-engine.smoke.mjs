@@ -130,6 +130,32 @@ const mixedPosture = RecoveryEngine.recoveryPosture({
 });
 must(mixedPosture.gate === 'ok', `mixed history must not freeze green day (gate=${mixedPosture.gate})`);
 
+const repay15 = RecoveryEngine.recoveryRepayFromSession(
+  { duration: 900 },
+  { result: { duration: 900, zoneSeconds: { recovery: 600, aerobic: 300 } } },
+);
+must(repay15 === 9, `15 min easy → 9 repay, got ${repay15}`);
+
+const freshDebt = RecoveryEngine.recoveryDebtScore(
+  { delivered: 0, budget: 0, ratio: 0, elevated: false, sessionCount: 0 },
+  0,
+);
+must(freshDebt.score === 0, 'fresh week has zero debt');
+
+const debtBefore = RecoveryEngine.recoveryDebtScore(deliveryLedger, 0);
+const debtAfter = RecoveryEngine.recoveryDebtScore(deliveryLedger, repay15);
+must(debtAfter.score < debtBefore.score, 'repay lowers debt score');
+must(debtAfter.netDelivered < debtBefore.netDelivered, 'repay lowers net delivered');
+
+const snap = RecoveryEngine.recoveryDebtSnapshot({
+  checkinComplete: true,
+  checkin: { readinessColor: 'green', sleepQuality: 8 },
+  recentSessions: heavySessions,
+  allSessions: heavySessions,
+  endDate: new Date(now).toISOString().slice(0, 10),
+});
+must(typeof snap.debt.score === 'number', 'snapshot debt score');
+
 const deliveryPosture = RecoveryEngine.recoveryPosture({
   checkinComplete: true,
   checkin: { readinessColor: 'green' },

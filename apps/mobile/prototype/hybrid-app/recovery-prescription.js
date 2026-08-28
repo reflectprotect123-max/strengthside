@@ -31,7 +31,12 @@
       posture.capacityHint != null ? posture.capacityHint : gateFloorPct(posture.gate);
 
     var ledger = posture.domains && posture.domains.deliveryLedger;
-    if (ledger && ledger.elevated) {
+    var debt = ledger && global.RecoveryEngine && global.RecoveryEngine.recoveryDebtScore
+      ? global.RecoveryEngine.recoveryDebtScore(ledger, opts.repayTotal || 0)
+      : null;
+    if (debt && debt.score > 0) {
+      pct = Math.round(pct * (1 - Math.min(0.35, debt.score / 200)));
+    } else if (ledger && ledger.elevated) {
       pct = Math.round(pct * (num(ledger.ratio) >= 1.35 ? 0.72 : 0.88));
     }
 
@@ -69,28 +74,42 @@
     };
   }
 
-  function copyLine(rx, posture) {
+  function copyLine(rx, posture, opts) {
+    opts = opts || {};
     if (!rx) return '';
+    var main;
     if (posture && posture.band === 'insufficient_data') {
-      return (
+      main =
         'Check in to unlock full recovery dose · ' +
         rx.minutes +
         ' min suggested (' +
         rx.pct +
-        '%)'
-      );
-    }
-    if (rx.pct < 100) {
-      return (
+        '%)';
+    } else if (rx.pct < 100) {
+      main =
         rx.baselineMin +
         ' min plan · ' +
         rx.pct +
         '% today → ' +
         rx.minutes +
-        ' min easy'
-      );
+        ' min easy';
+    } else {
+      main = rx.minutes + ' min easy · full recovery dose';
     }
-    return rx.minutes + ' min easy · full recovery dose';
+    if (
+      opts.debt &&
+      global.RecoveryEngine &&
+      global.RecoveryEngine.recoveryRepayEstimateMinutes &&
+      global.RecoveryEngine.recoveryDebtCopy
+    ) {
+      var repayEst = global.RecoveryEngine.recoveryRepayEstimateMinutes(rx.minutes);
+      var debtLine = global.RecoveryEngine.recoveryDebtCopy(opts.debt, {
+        minutes: rx.minutes,
+        repayEstimate: repayEst,
+      });
+      if (debtLine && opts.debt.score > 15) return main + ' · ' + debtLine;
+    }
+    return main;
   }
 
   /** +2% per green recovery completion in window, cap +10. */
