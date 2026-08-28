@@ -17,7 +17,7 @@
 1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
 2. Ship tip (`main`) = **`7642cdb`** — PR #92 recovery + engine audit on #58/#59.
 3. Ship cache = **`the-hybrid-athlete-engine-v94`** (`LOCAL_BUILD` + SW `CACHE` bumped together).
-4. Capgo dogfood = bundle **`1.0.13`** (channel `dogfood` — upload pending `CAPGO_TOKEN`; prior **`1.0.12`** 26 Aug).
+4. Capgo dogfood = bundle **`1.0.13`** (channel `dogfood`, uploaded 28 Aug; prior **`1.0.12`** 26 Aug).
 5. Hosted web = https://thehybridsystem.netlify.app/ · Coach = https://thehybridsystem.netlify.app/coach.html
 6. **Open PRs:** #91 coach UI polish (draft, CI red). PR #92 **merged** 28 Aug.
 7. **Five systems wiring is complete on `main`** (Phases 1–5 + follow-on ships). Do not re-run “merge PR #43 / start Phase 2” — that plan is done.
@@ -53,7 +53,7 @@ Athletes tap **Update** in Settings for service-worker / Capgo OTA.
 | Synced copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` → `upload-capgo-bundle.sh` |
 | Cache / Update | **`the-hybrid-athlete-engine-v94`** |
-| Capgo channel | **`dogfood` @ `1.0.13`** (upload pending token) |
+| Capgo channel | **`dogfood` @ `1.0.13`** |
 | Shell stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage: local-first `localStorage` key `THE-builder-clean-v1` (+ nutrition DB).  
@@ -101,7 +101,7 @@ Bottom nav: **Home · Library · Calendar · Settings** (Coach Tools **removed**
 | #92 | `7642cdb` | Recovery debt/repay, engine audit, coach LogColumns |
 | #58 | `e08a304` | Bidirectional web↔phone calendar + template sync (snapshot v3) |
 | #59 | `3c4b849` | Full UI polish: Home, Calendar, Library, Settings, Sleep, logger shells |
-| — | Capgo | Dogfood **`1.0.13`** upload pending (was **`1.0.12`**) |
+| — | Capgo | Dogfood **`1.0.13`** uploaded 28 Aug (was **`1.0.12`**) |
 
 Earlier arc still true: hybrid athlete Phases 1–12, five-systems wiring, UI polish family (#38–#40), schema-stub companion (#55), builder/logger alignment, autopilot policy, TrainHeroic history import, etc. — all on `main`. See archaeology below for older session notes.
 
@@ -142,7 +142,7 @@ THE Hybrid System is **five engines**:
 - **PR #92** — recovery debt, repay, cond fallbacks, coordinator debt, coach LogColumns
 - **PR #58** — strength sync snapshot v3; SW **v94**
 - **PR #59** — full athlete-shell polish
-- Capgo **`1.0.13`** — upload pending; smoke `dogfood-debt.smoke.mjs` green
+- Capgo **`1.0.13`** — uploaded 28 Aug; smoke `dogfood-debt.smoke.mjs` green
 - Five-systems complete wiring + hybrid athlete Phases 1–12 (earlier on `main`)
 - Companion hybrid repo = schema stub only (#55)
 
@@ -154,7 +154,7 @@ Useful command: `pnpm run verify`
 
 **Product gaps (next work — not “finish five-systems”):**
 
-- Capgo **`1.0.13`** upload + phone dogfood: strapless cond → debt moves (CI smoke covers math).
+- Phone dogfood of Capgo **`1.0.13`**: strapless cond → debt moves (CI smoke covers math; owner confirm on device).
 - Concurrent hybrid week not yet encoded as Library templates + calendar placements.
 - Logger friction after a real phone session (fewer taps, clearer rest/next, mid-block leave) still open beyond shell polish.
 - Pain/illness **stop** consumer absent by design until a new decision.
@@ -177,12 +177,12 @@ Useful command: `pnpm run verify`
 ## 4. Precise next steps (after chat clear)
 
 1. Read **§0–§4** + `CLAUDE.md`. Tip is **`main` @ `7642cdb`**.
-2. **Capgo `1.0.13`:** `CAPGO_BUNDLE_VERSION=1.0.13 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` — then Settings → Update on phone.
+2. **Dogfood Capgo `1.0.13`:** Settings → Update on phone (bundle live on `dogfood` channel).
 3. **Dogfood proof:** `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs`; on phone confirm debt row moves after strapless cond + recovery session.
-3. **Encode a concurrent hybrid week as templates** (strength + conditioning), place on calendar — product value over more chrome.
-4. **Logger friction pass** after a real session on phone.
-5. Only if product asks: pain/illness **stop** consumer (new decision).
-6. Each HTML ship: sync + cache bump + Capgo upload when dogfood should move + refresh this handoff stamp (`git rev-parse --short HEAD`).
+4. **Encode a concurrent hybrid week as templates** (strength + conditioning), place on calendar — product value over more chrome.
+5. **Logger friction pass** after a real session on phone.
+6. Only if product asks: pain/illness **stop** consumer (new decision).
+7. Each HTML ship: sync + cache bump + Capgo upload when dogfood should move + refresh this handoff stamp (`git rev-parse --short HEAD`).
 
 ### Critical paths
 
@@ -202,7 +202,7 @@ CLAUDE.md
 
 | Item | Notes |
 | --- | --- |
-| **`main` @ `7642cdb`** | Ship tip; cache **v94**; Capgo **1.0.13** pending |
+| **`main` @ `7642cdb`** | Ship tip; cache **v94**; Capgo **1.0.13** live |
 | Open PRs | **#91** coach UI polish (draft) |
 | Closed drafts (#2–#14, #32, #41, #56, …) | Obsolete vs tip — ignore unless `git log main..branch` shows unique salvage |
 
@@ -223,7 +223,7 @@ The Engine (teal) + Hybrid Strength (copper); Track Dawn tokens; polish plan ant
 - [x] Closed remaining open draft PRs (26 Aug)
 - [x] PR #92 recovery + engine audit on `main`
 - [x] `dogfood-debt.smoke.mjs` in verify
-- [ ] Capgo **`1.0.13`** uploaded (`CAPGO_TOKEN`)
+- [x] Capgo **`1.0.13`** uploaded (28 Aug)
 - [ ] Phone dogfood: debt row moves after strapless cond + recovery session
 - [ ] Concurrent hybrid week as templates / calendar
 - [ ] Logger friction pass after real session use
