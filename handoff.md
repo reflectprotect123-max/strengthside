@@ -1,13 +1,12 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 26 August 2026 (evening).**
+> **AUTHORITATIVE CHECKPOINT — 28 August 2026.**
 > **Chat may be cleared after this write — treat this block as the full memory.**
 > **Product:** this repo only — Hybrid HTML athlete app + Capgo/dogfood + Netlify.
 > **Companion `THE-HYBRID-ENGINE1`:** schema stub for shared Supabase non-strength
 > migrations. Coach/ARC/Expo/Netlify coach surfaces deleted there; do not rebuild.
 > **Five engines (locked):** Strength · Conditioning (The Engine) · Nutrition ·
-> Recovery · Coordinator. Not two dials. Visible logging only; Recovery and
-> Coordinator stay invisible brains.
+> Recovery **debt row** on Home; gates/coordinator stay invisible brains.
 > **Mono-app bet locked:** Hybrid HTML athlete app is the whole product.
 > Do **not** build Coach / ARC / Expo as parallel products.
 > Charter: `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
@@ -16,14 +15,14 @@
 ## 0. Read this first (next agent / next chat)
 
 1. Product = **one** HTML app: `apps/mobile/prototype/hybrid-app/index.html`
-2. Ship tip (`main`) = **`3c4b849`** — UI polish (#59) on top of web↔phone sync (#58 / `e08a304`).
-3. Ship cache = **`the-hybrid-athlete-engine-v87`** (`LOCAL_BUILD` + SW `CACHE` bumped together).
-4. Capgo dogfood = bundle **`1.0.12`** (channel `dogfood`, uploaded 26 Aug from tip after polish + sync). Prior: `1.0.11` (sync), `1.0.10` (OTA visible).
-5. Hosted web = https://thehybridsystem.netlify.app/ (deploys from `main`).
-6. **Open PRs: none.** Stale drafts closed 26 Aug (#56, #41, #32, #14, #13, #11, #8, #7, #4, #3, #2). Do not reopen without unique commits vs `main`.
+2. Ship tip (`main`) = **`7642cdb`** — PR #92 recovery + engine audit on #58/#59.
+3. Ship cache = **`the-hybrid-athlete-engine-v94`** (`LOCAL_BUILD` + SW `CACHE` bumped together).
+4. Capgo dogfood = bundle **`1.0.13`** (channel `dogfood` — upload pending `CAPGO_TOKEN`; prior **`1.0.12`** 26 Aug).
+5. Hosted web = https://thehybridsystem.netlify.app/ · Coach = https://thehybridsystem.netlify.app/coach.html
+6. **Open PRs:** #91 coach UI polish (draft, CI red). PR #92 **merged** 28 Aug.
 7. **Five systems wiring is complete on `main`** (Phases 1–5 + follow-on ships). Do not re-run “merge PR #43 / start Phase 2” — that plan is done.
 8. **Strength cloud sync v3 is on `main`** — `calendarSessions` + `templates` + progression/`performedSessions`; merge by `_meta.updatedAt`; `save()` → `StrengthSync.schedulePush`. Same Supabase account = sync both ways (Netlify ↔ Capgo phone). Spec: `docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md`.
-9. **Invisible brains:** Recovery + Coordinator — no dials, no weekly peek.
+9. **Recovery debt row** on Home (0–100 ledger). Training load headline (Sleep overview) is separate. Coordinator weekly peek stays **gone**.
 10. **Do not** revive Everyday Readiness, Expo, Coach/ARC, recipes/charts UI — including in `THE-HYBRID-ENGINE1` (schema-only).
 11. After code: `pnpm run verify`; `bash apps/mobile/sync-hybrid-html.sh`; bump `LOCAL_BUILD` + SW `CACHE` together; Capgo upload when dogfood should move.
 12. Pain / illness flags still raise; **nothing consumes them** (inherited deliberate gap — restore = new decision).
@@ -34,7 +33,7 @@
 
 Repo: `reflectprotect123-max/strengthside` — **the only product repo**.
 `THE-HYBRID-ENGINE1` is the shared-DB schema stub (no apps). **Ship branch:
-`main` @ `3c4b849`**. Feature work branches off `main`. Do **not** treat old
+`main` @ `7642cdb`**. Feature work branches off `main`. Do **not** treat old
 `cursor/engine-stage*` / Expo / hybrid coach stacks / closed draft PRs as tip.
 
 **Live athlete deploy (Netlify):** https://thehybridsystem.netlify.app/  
@@ -53,8 +52,8 @@ Athletes tap **Update** in Settings for service-worker / Capgo OTA.
 | Then sync | `bash apps/mobile/sync-hybrid-html.sh` |
 | Synced copies | `apps/mobile/THE-Hybrid-App.html`, `apps/mobile/preview-site/` |
 | Cap dogfood | `apps/mobile/capacitor/` → `upload-capgo-bundle.sh` |
-| Cache / Update | **`the-hybrid-athlete-engine-v87`** |
-| Capgo channel | **`dogfood` @ `1.0.12`** |
+| Cache / Update | **`the-hybrid-athlete-engine-v94`** |
+| Capgo channel | **`dogfood` @ `1.0.13`** (upload pending token) |
 | Shell stamp | `ATHLETE_SHELL_VERSION=athlete-hybrid-strength-v10-2026-08-23` |
 
 Storage: local-first `localStorage` key `THE-builder-clean-v1` (+ nutrition DB).  
@@ -72,7 +71,7 @@ Owned Postgres: exactly **twelve** tables (`metric` … `coaching_note`) +
 | 4 | **Recovery** | `recovery-engine.js` | Delivery ledger, recovery debt on Home, WHOOP strain background, repay from recovery sessions, posture gates for autopilot |
 | 5 | **Coordinator** | `coordinator.ts` + `coordinator-adapter.js` | Silent apply only; athlete weekly peek **removed** |
 
-**Visible dials:** The Engine (teal) + Hybrid Strength (copper) + Sleep/check-in + Nutrition + Calendar/Settings.  
+**Visible dials:** The Engine + Hybrid Strength + Sleep (check-in + **recovery debt**) + Nutrition + Calendar/Settings.  
 **Invisible brains:** Recovery + Coordinator decisions (+ silent strength/cond progression).
 
 ### Athlete shell today (post-polish #59)
@@ -99,10 +98,10 @@ Bottom nav: **Home · Library · Calendar · Settings** (Coach Tools **removed**
 
 | PR | Tip | What |
 | --- | --- | --- |
-| #58 | `e08a304` | Bidirectional web↔phone calendar + template sync (v87 / snapshot v3) |
+| #92 | `7642cdb` | Recovery debt/repay, engine audit, coach LogColumns |
+| #58 | `e08a304` | Bidirectional web↔phone calendar + template sync (snapshot v3) |
 | #59 | `3c4b849` | Full UI polish: Home, Calendar, Library, Settings, Sleep, logger shells |
-| — | Capgo | Dogfood **`1.0.12`** uploaded from tip |
-| — | PRs | All remaining open drafts **closed** (obsolete vs tip) |
+| — | Capgo | Dogfood **`1.0.13`** upload pending (was **`1.0.12`**) |
 
 Earlier arc still true: hybrid athlete Phases 1–12, five-systems wiring, UI polish family (#38–#40), schema-stub companion (#55), builder/logger alignment, autopilot policy, TrainHeroic history import, etc. — all on `main`. See archaeology below for older session notes.
 
@@ -115,7 +114,7 @@ THE Hybrid System is **five engines**:
 | Strength | Hybrid Strength | Visible (Library / log / Progress) |
 | Conditioning | The Engine | Visible (Home / HR log) |
 | Nutrition | Nutrition | Visible (Home daily log) |
-| Recovery | — | **Invisible** (gates only; no dial) |
+| Recovery | — | **Debt row on Home** + invisible gates/coordinator |
 | Coordinator | — | **Invisible** (silent apply; no weekly peek) |
 
 - **The Engine** = conditioning (never Morpheus in athlete UI).
@@ -140,10 +139,10 @@ THE Hybrid System is **five engines**:
 
 ## 2. What shipped recently (do not redo)
 
-- **PR #58** — strength sync snapshot v3 (calendar sessions + templates + progression); Settings sync-both-ways copy; SW **v87**
-- **PR #59** — full athlete-shell polish (Home / Calendar / Library / Settings / Sleep / logger)
-- Capgo dogfood **`1.0.12`** from tip
-- Open-PR ledger cleared (closed obsolete drafts)
+- **PR #92** — recovery debt, repay, cond fallbacks, coordinator debt, coach LogColumns
+- **PR #58** — strength sync snapshot v3; SW **v94**
+- **PR #59** — full athlete-shell polish
+- Capgo **`1.0.13`** — upload pending; smoke `dogfood-debt.smoke.mjs` green
 - Five-systems complete wiring + hybrid athlete Phases 1–12 (earlier on `main`)
 - Companion hybrid repo = schema stub only (#55)
 
@@ -155,7 +154,7 @@ Useful command: `pnpm run verify`
 
 **Product gaps (next work — not “finish five-systems”):**
 
-- Phone dogfood of Capgo **`1.0.12`** + Netlify↔phone sync proof (same account) not yet confirmed by owner.
+- Capgo **`1.0.13`** upload + phone dogfood: strapless cond → debt moves (CI smoke covers math).
 - Concurrent hybrid week not yet encoded as Library templates + calendar placements.
 - Logger friction after a real phone session (fewer taps, clearer rest/next, mid-block leave) still open beyond shell polish.
 - Pain/illness **stop** consumer absent by design until a new decision.
@@ -165,7 +164,7 @@ Useful command: `pnpm run verify`
 - `NutritionUI.openWeeklyReview` = **nutrition check-in** (keep). Coordinator weekly peek stays **gone**.
 - `coordinator.smoke.mjs` pins `completedAt` — do not revert to `Date.now()`.
 - Strength sync merge is by `_meta.updatedAt`; stamp `_meta` on `makeSession` / `saveTemplate`.
-- Recovery must remain **UI-less**.
+- Recovery **debt row** is the only Recovery dial — do not add a second recovery product surface without decision.
 
 **Platform limits (not defects to delete):**
 
@@ -177,8 +176,9 @@ Useful command: `pnpm run verify`
 
 ## 4. Precise next steps (after chat clear)
 
-1. Read **§0–§4** + `CLAUDE.md`. Tip is **`main` @ `3c4b849`** — do not merge closed PRs or re-run five-systems Phase 2.
-2. **Dogfood Capgo `1.0.12`:** Update on phone; same account as Netlify; create/edit a calendar session on one side; confirm it appears on the other after pull/push.
+1. Read **§0–§4** + `CLAUDE.md`. Tip is **`main` @ `7642cdb`**.
+2. **Capgo `1.0.13`:** `CAPGO_BUNDLE_VERSION=1.0.13 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` — then Settings → Update on phone.
+3. **Dogfood proof:** `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs`; on phone confirm debt row moves after strapless cond + recovery session.
 3. **Encode a concurrent hybrid week as templates** (strength + conditioning), place on calendar — product value over more chrome.
 4. **Logger friction pass** after a real session on phone.
 5. Only if product asks: pain/illness **stop** consumer (new decision).
@@ -202,8 +202,8 @@ CLAUDE.md
 
 | Item | Notes |
 | --- | --- |
-| **`main` @ `3c4b849`** | Ship tip; cache **v87**; Capgo **1.0.12** |
-| Open PRs | **None** |
+| **`main` @ `7642cdb`** | Ship tip; cache **v94**; Capgo **1.0.13** pending |
+| Open PRs | **#91** coach UI polish (draft) |
 | Closed drafts (#2–#14, #32, #41, #56, …) | Obsolete vs tip — ignore unless `git log main..branch` shows unique salvage |
 
 ### How Conditioning works (still true)
@@ -221,8 +221,10 @@ The Engine (teal) + Hybrid Strength (copper); Track Dawn tokens; polish plan ant
 - [x] Five-systems wiring complete on `main`
 - [x] Web↔phone strength sync v3 (PR #58) + UI polish (PR #59)
 - [x] Closed remaining open draft PRs (26 Aug)
-- [x] Capgo dogfood **`1.0.12`** uploaded
-- [ ] Phone dogfood of `1.0.12` + Netlify↔phone sync proof (same account)
+- [x] PR #92 recovery + engine audit on `main`
+- [x] `dogfood-debt.smoke.mjs` in verify
+- [ ] Capgo **`1.0.13`** uploaded (`CAPGO_TOKEN`)
+- [ ] Phone dogfood: debt row moves after strapless cond + recovery session
 - [ ] Concurrent hybrid week as templates / calendar
 - [ ] Logger friction pass after real session use
 - [ ] Handoff §§0–4 match tip before next ship
