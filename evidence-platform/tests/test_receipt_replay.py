@@ -15,6 +15,7 @@ from platform_core.receipt_replay import (
     build_receipt,
     canonical_json,
     commit_receipt,
+    register_evaluator_artifact,
     replay_receipt,
     sha256_json,
     verify_receipt_chain,
@@ -47,13 +48,27 @@ def trace(action="hold"):
     }
 
 
-def bundle(expected_trace=None, llm_response=None):
-    return {
+FROZEN_PACKET = {"packet": "complete"}
+FROZEN_PROMPT = {"prompt": "bounded"}
+FROZEN_REQUEST = {"request": "lead_fallback"}
+FROZEN_ENVELOPE = {"envelope": "strength-test"}
+
+
+def bundle(expected_trace=None, llm_response=None, frozen_llm_context=None):
+    result = {
         "bundle_version": "2.0",
         "inputs": {"expected_trace": expected_trace or trace()},
         "frozen_artifacts": {},
         "frozen_llm_response": llm_response,
     }
+    if llm_response is not None:
+        result["frozen_llm_context"] = frozen_llm_context or {
+            "complete_decision_packet": FROZEN_PACKET,
+            "prompt": FROZEN_PROMPT,
+            "request": FROZEN_REQUEST,
+            "fallback_envelope": FROZEN_ENVELOPE,
+        }
+    return result
 
 
 def identity_evaluator(replay_bundle):
@@ -68,11 +83,11 @@ def contribution(response, write_authority="none"):
         "mode": "lead_fallback",
         "write_authority": write_authority,
         "silent_user_experience": True,
-        "complete_decision_packet_hash": sha256_json({"packet": "complete"}),
-        "prompt_hash": sha256_json({"prompt": "bounded"}),
-        "request_hash": sha256_json({"request": "lead_fallback"}),
+        "complete_decision_packet_hash": sha256_json(FROZEN_PACKET),
+        "prompt_hash": sha256_json(FROZEN_PROMPT),
+        "request_hash": sha256_json(FROZEN_REQUEST),
         "response_hash": sha256_json(response),
-        "fallback_envelope_hash": sha256_json({"envelope": "strength-test"}),
+        "fallback_envelope_hash": sha256_json(FROZEN_ENVELOPE),
     }
 
 
@@ -572,6 +587,119 @@ class ReceiptReplayTests(unittest.TestCase):
                 evaluator_version="1.0",
                 artifact_manifest=[],
             )
+
+    def test_build_receipt_rejects_llm_contribution_without_frozen_context(self):
+        response = {"provider": "gemma", "mode": "lead_fallback", "proposed_action": "hold"}
+        replay_bundle_no_context = {
+            "bundle_version": "2.0",
+            "inputs": {"expected_trace": trace()},
+            "frozen_artifacts": {},
+            "frozen_llm_response": response,
+        }
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:llm-no-frozen-context",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="lead_fallback",
+                decision_trace=trace(),
+                replay_bundle=replay_bundle_no_context,
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+                llm_contribution=contribution(response),
+            )
+
+    def test_build_receipt_rejects_llm_contribution_with_mismatched_frozen_prompt(self):
+        response = {"provider": "gemma", "mode": "lead_fallback", "proposed_action": "hold"}
+        replay_bundle_wrong_prompt = bundle(
+            llm_response=response,
+            frozen_llm_context={
+                "complete_decision_packet": FROZEN_PACKET,
+                "prompt": {"prompt": "a different prompt than what was hashed"},
+                "request": FROZEN_REQUEST,
+                "fallback_envelope": FROZEN_ENVELOPE,
+            },
+        )
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:llm-mismatched-prompt",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="lead_fallback",
+                decision_trace=trace(),
+                replay_bundle=replay_bundle_wrong_prompt,
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+                llm_contribution=contribution(response),
+            )
+
+    def test_evaluator_artifact_registration_is_idempotent_but_locks_content(self):
+        module_path = Path(self.temp.name) / "fake_evaluator.py"
+        module_path.write_text("VERSION = 1\n")
+        first = register_evaluator_artifact(
+            self.connection,
+            evaluator_id="fake",
+            evaluator_version="1.0",
+            module_path=module_path,
+            approval_event_id="PROMO-TEST",
+        )
+        self.assertEqual(first["status"], "registered")
+        second = register_evaluator_artifact(
+            self.connection,
+            evaluator_id="fake",
+            evaluator_version="1.0",
+            module_path=module_path,
+            approval_event_id="PROMO-TEST",
+        )
+        self.assertEqual(second["status"], "already_registered")
+        self.assertEqual(second["artifact_hash"], first["artifact_hash"])
+        module_path.write_text("VERSION = 2\n")
+        with self.assertRaises(ReceiptValidationError):
+            register_evaluator_artifact(
+                self.connection,
+                evaluator_id="fake",
+                evaluator_version="1.0",
+                module_path=module_path,
+                approval_event_id="PROMO-TEST",
+            )
+
+    def test_replay_detects_evaluator_artifact_drift(self):
+        module_path = Path(self.temp.name) / "drifting_evaluator.py"
+        module_path.write_text("VERSION = 1\n")
+        register_evaluator_artifact(
+            self.connection,
+            evaluator_id="drifting",
+            evaluator_version="1.0",
+            module_path=module_path,
+            approval_event_id="PROMO-TEST",
+        )
+        receipt = commit_receipt(
+            self.connection,
+            decision_id="decision:evaluator-drift",
+            athlete_scope_id="athlete:001",
+            created_at="2026-08-28T00:00:00Z",
+            decision_mode="deterministic",
+            decision_trace=trace(),
+            replay_bundle=bundle(),
+            evaluator_id="drifting",
+            evaluator_version="1.0",
+            artifact_manifest=[],
+        )
+        clean_result = replay_receipt(
+            self.connection, receipt["receipt_id"], {("drifting", "1.0"): identity_evaluator}
+        )
+        self.assertTrue(clean_result["ok"])
+        # Simulate the file changing underneath an already-registered version
+        # (bypassing register_evaluator_artifact's own immutability check,
+        # the way direct disk tampering or a bad deploy would).
+        module_path.write_text("VERSION = 999  # tampered\n")
+        drifted_result = replay_receipt(
+            self.connection, receipt["receipt_id"], {("drifting", "1.0"): identity_evaluator}
+        )
+        self.assertFalse(drifted_result["ok"])
+        self.assertIn("EVALUATOR_ARTIFACT_TAMPERED", drifted_result["failure_codes"])
 
 
 if __name__ == "__main__":

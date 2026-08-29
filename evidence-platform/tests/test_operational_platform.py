@@ -93,6 +93,16 @@ class OperationalPlatformTests(unittest.TestCase):
             self.connection.execute("UPDATE decision_receipts_v2 SET receipt_json=? WHERE receipt_id=?",(json.dumps({"action":"proceed"}),receipt["receipt_id"]))
         self.connection.rollback()
         self.assertTrue(replay(self.connection,receipt["receipt_id"])["ok"])
+    def test_legacy_decision_receipts_table_is_never_written_to(self):
+        # Defect 14 policy (docs/OPERATIONS-RUNBOOK.md): decision_receipts
+        # (v1, migration 001) is frozen; commit_receipt only ever writes to
+        # decision_receipts_v2 (migration 004). No mechanical migration of
+        # old rows is planned - the v1 schema can't losslessly populate v2's
+        # required fields (receipt_version, decision_mode, hash chain, ...).
+        for path in (ROOT/"platform_core").rglob("*.py"):
+            text=path.read_text(encoding="utf-8")
+            for statement in ("INTO decision_receipts(","INTO decision_receipts ("):
+                self.assertNotIn(statement,text,f"{path} writes to the frozen legacy decision_receipts table")
     def test_runtime_core_has_no_llm_or_network_client_imports(self):
         text="\n".join(p.read_text(encoding="utf-8") for p in (ROOT/"platform_core").rglob("*.py"))
         for forbidden in ("import google.generativeai","import openai","import requests","import httpx","urllib.request"):

@@ -12,6 +12,7 @@ import re
 import sqlite3
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 
@@ -190,6 +191,28 @@ def _validate_llm_contribution(
     for field in required_hashes:
         if not _is_sha256(item.get(field)):
             raise ReceiptValidationError(f"invalid LLM contribution hash: {field}")
+
+    # Defect 4: response_hash was the only LLM hash ever bound to a frozen
+    # object in the replay bundle - complete_decision_packet_hash, prompt_hash,
+    # request_hash, and fallback_envelope_hash were checked only for SHA-256
+    # *shape*, so any bytes satisfying that shape could sit in a receipt
+    # without ever having been the object the hash claims to represent.
+    frozen_context = replay_bundle.get("frozen_llm_context")
+    if not isinstance(frozen_context, Mapping):
+        raise ReceiptValidationError(
+            "replay_bundle.frozen_llm_context is required for an LLM contribution"
+        )
+    frozen_field_map = {
+        "complete_decision_packet_hash": "complete_decision_packet",
+        "prompt_hash": "prompt",
+        "request_hash": "request",
+        "fallback_envelope_hash": "fallback_envelope",
+    }
+    for hash_field, frozen_key in frozen_field_map.items():
+        if frozen_key not in frozen_context:
+            raise ReceiptValidationError(f"frozen_llm_context missing: {frozen_key}")
+        if sha256_json(frozen_context[frozen_key]) != item[hash_field]:
+            raise ReceiptValidationError(f"frozen {frozen_key} hash mismatch")
 
     frozen_response = replay_bundle.get("frozen_llm_response")
     if frozen_response is None:
@@ -652,6 +675,89 @@ def _record_replay_lookup_failure(
     return {**body, "failure_id": failure_id, "failure_hash": failure_hash}
 
 
+def _evaluator_artifact_id(evaluator_id: str, evaluator_version: str) -> str:
+    return f"EVALUATOR-{evaluator_id}-{evaluator_version}"
+
+
+def register_evaluator_artifact(
+    db: sqlite3.Connection,
+    *,
+    evaluator_id: str,
+    evaluator_version: str,
+    module_path: str | Path,
+    approval_event_id: str,
+) -> dict[str, Any]:
+    """Package an evaluator implementation as an immutable, hash-verified artifact.
+
+    Defect 11: replay used to depend entirely on an in-process Python dict
+    handed in by the caller - nothing stopped a future caller from silently
+    swapping in different code under the same evaluator_id/evaluator_version.
+    Once registered here, `replay_receipt` re-hashes the module on every
+    replay and fails loudly if the bytes on disk no longer match what this
+    evaluator_version was approved against. Registering the exact same
+    (id, version, hash) twice is a no-op; registering a different hash under
+    an already-registered (id, version) is a hard error - a version is
+    immutable, a real code change needs a new evaluator_version.
+    """
+    module_path = Path(module_path)
+    artifact_hash = hashlib.sha256(module_path.read_bytes()).hexdigest()
+    artifact_id = _evaluator_artifact_id(evaluator_id, evaluator_version)
+    existing = db.execute(
+        "SELECT artifact_hash FROM runtime_artifacts WHERE artifact_id=?", (artifact_id,)
+    ).fetchone()
+    if existing is not None:
+        if existing["artifact_hash"] != artifact_hash:
+            raise ReceiptValidationError(
+                f"evaluator {evaluator_id}@{evaluator_version} is already registered "
+                "with different code - bump evaluator_version for a real change"
+            )
+        return {"artifact_id": artifact_id, "artifact_hash": artifact_hash, "status": "already_registered"}
+    db.execute(
+        """
+        INSERT INTO runtime_artifacts(
+          artifact_id,artifact_type,version,artifact_path,artifact_hash,
+          trust_origin,llm_tainted,deterministic,status,approval_event_id
+        ) VALUES(?,?,?,?,?,?,?,?,?,?)
+        """,
+        (
+            artifact_id,
+            "evaluator",
+            evaluator_version,
+            str(module_path),
+            artifact_hash,
+            "human_promoted_verified",
+            0,
+            1,
+            "active",
+            approval_event_id,
+        ),
+    )
+    db.commit()
+    return {"artifact_id": artifact_id, "artifact_hash": artifact_hash, "status": "registered"}
+
+
+def _check_evaluator_artifact(db: sqlite3.Connection, evaluator_id: str, evaluator_version: str) -> list[str]:
+    """Return failure codes if a registered evaluator artifact's bytes have drifted.
+
+    No registration for this (id, version) is not itself a failure: artifact
+    registration is opt-in (pre-research posture), so this only adds
+    protection once a version has deliberately been packaged.
+    """
+    row = db.execute(
+        "SELECT artifact_path,artifact_hash FROM runtime_artifacts WHERE artifact_id=? AND artifact_type='evaluator' AND status='active'",
+        (_evaluator_artifact_id(evaluator_id, evaluator_version),),
+    ).fetchone()
+    if row is None:
+        return []
+    try:
+        actual_hash = hashlib.sha256(Path(row["artifact_path"]).read_bytes()).hexdigest()
+    except OSError:
+        return ["EVALUATOR_ARTIFACT_MISSING"]
+    if actual_hash != row["artifact_hash"]:
+        return ["EVALUATOR_ARTIFACT_TAMPERED"]
+    return []
+
+
 def replay_receipt(
     db: sqlite3.Connection,
     receipt_id: str,
@@ -747,6 +853,8 @@ def replay_receipt(
     else:
         verification = verify_receipt_data(receipt, replay_bundle, evaluator)
     failures.extend(verification["failure_codes"])
+    if evaluator_key[0] is not None and evaluator_key[1] is not None:
+        failures.extend(_check_evaluator_artifact(db, evaluator_key[0], evaluator_key[1]))
 
     prior_receipt_id = receipt.get("prior_receipt_id")
     if prior_receipt_id is None:
