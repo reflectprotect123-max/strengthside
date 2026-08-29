@@ -60,3 +60,53 @@ machine-extracted candidate.
 Known limitation: OpenRouter's free-tier (`:free`) models share a rate-limited pool
 across all free users; a 429 there is expected friction, not a bug - the client
 raises a clear `LLMClientError`, never a crash or a silent empty result.
+
+## Phase 2: bounded Gemini/Gemma lead-fallback gateway (added 29 August 2026)
+
+`platform_core/llm/` (contracts, packet_builder, envelope, router, gateway,
+response_builder, orchestrate) is deterministic - no network imports, its own test
+proves it never imports `llm_adapters`. Concrete providers
+(`llm_adapters/mock.py`, `gemma_local.py`, `gemini_cloud.py`) live outside
+`platform_core` and are injected in, never imported by it.
+
+`decide()` gained an optional `lead_fallback=` kwarg (a dict of
+`platform_core.llm.orchestrate.attempt_lead_fallback` kwargs: `routing_policy`,
+`lead`, `backup`, `fallback_envelope`, `current_plan`, `privacy_projection`,
+`policy_refs`, `whole_athlete_state`, ...). Omitting it keeps every existing
+caller's behavior byte-for-byte unchanged. When given, it is consulted **at most
+once**, only when the deterministic gate would otherwise abstain with
+`NO_DETERMINISTIC_ANSWER`:
+
+1. Build a `CompleteDecisionPacket` + `LLMDecisionRequest` (validated against
+   `contracts/THE-HYBRID-SHARED-DATA-CONTRACT-v1.schema.json`, hand-validated -
+   `platform_core` stays dependency-free by design, no `jsonschema` at runtime).
+2. Call the lead provider, then backup on any failure - a provider exception is
+   data, never a crash (`gateway.call_with_fallback` never raises).
+3. Map the model's minimal JSON output into a full `ActionCandidate` +
+   `LLMDecisionResponse` (`response_builder.py`) - the model is never asked to
+   author the structural envelope (provenance, uncertainty objects, `kind`
+   constants), only the semantic content.
+4. Validate the mapped candidate against the `FallbackActionEnvelope` (bounds,
+   allowed action/target types, forbidden combinations).
+5. On success: freeze the packet/prompt/request/envelope into
+   `replay_bundle["frozen_llm_context"]` and the response into
+   `frozen_llm_response`, then re-run the pure evaluator - which now reads the
+   frozen response instead of calling anything. **Replay reproduces a
+   lead-fallback decision without ever calling a provider again** - this is
+   asserted directly in `tests/test_llm_gateway.py`, not just claimed.
+6. On any failure at any step (provider down, malformed output, envelope
+   violation): the reason codes are recorded and the plan is left unchanged -
+   same `abstain` outcome as no model existing at all (Constitution section 13).
+
+Known contract-shape fix worth remembering: the shared contract's `Identifier`
+pattern forbids `/`, but real model ids (e.g. OpenRouter's
+`google/gemma-4-31b-it:free`) contain one - `response_builder._sanitize_model_id`
+maps it onto a valid Identifier rather than either rejecting real model ids or
+loosening the contract's own pattern.
+
+Known deliberate gap: `domain_outputs` / `whole_athlete_state` inside
+`CompleteDecisionPacket` are checked for presence only, not deep-validated
+against this contract's own `DomainOutputSet`/`WholeAthleteState` definitions -
+those are a different, richer shape than what Phase 1 actually built
+(`engines.common`'s engine-output shape and `schemas/athlete-state.schema.json`).
+Reconciling the two is a real, separate piece of work, not silently done here.

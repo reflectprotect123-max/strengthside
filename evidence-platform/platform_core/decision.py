@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .engines.common import EngineInputError, validate_engine_output, validate_snapshot
+from .llm.orchestrate import attempt_lead_fallback
 from .receipt_replay import (
     build_receipt,
     canonical_json,
@@ -136,22 +137,49 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
         ]
         requires_llm_fallback = True
 
+    # Phase 2: a frozen, already-validated lead-fallback response overrides
+    # a deterministic abstain. This block reads only what is already frozen
+    # in the bundle - no network call happens here, ever, so replay
+    # reproduces this exact branch from the same bundle with no provider
+    # call. The response was independently validated (contract + envelope)
+    # before ever being frozen into the bundle (platform_core/llm/orchestrate.py);
+    # this trusts that frozen, hash-chained artifact, the same way the
+    # deterministic path trusts a hash-verified model artifact.
+    llm_applied = False
+    frozen_llm_response = bundle.get("frozen_llm_response")
+    if requires_llm_fallback and frozen_llm_response and frozen_llm_response.get("mode") == "lead_fallback":
+        proposed = frozen_llm_response["proposed_decision"]
+        action = proposed["action_type"]
+        reasons = list(frozen_llm_response.get("decision_basis_codes", [])) + ["LEAD_FALLBACK_APPLIED"]
+        requires_llm_fallback = False
+        llm_applied = True
+
     model_ids = [str(model.get("model_id", "synthetic")) for model in models]
-    candidate = {
-        "candidate_id": "CAND-" + sha256_json(
-            {
-                "action": action,
-                "snapshot": snapshot,
-                "domains": domain_outputs,
-                "model_ids": model_ids,
-            }
-        )[:16].upper(),
-        "action": action,
-        "source": "big_mac_gate",
-        "authority_mode": "deterministic",
-        "eligible": action != "abstain",
-        "rejection_reason_codes": reasons if action == "abstain" else [],
-    }
+    if llm_applied:
+        candidate = {
+            "candidate_id": frozen_llm_response["proposed_decision"]["candidate_id"],
+            "action": action,
+            "source": frozen_llm_response["provider"],
+            "authority_mode": "lead_fallback",
+            "eligible": action != "abstain",
+            "rejection_reason_codes": [],
+        }
+    else:
+        candidate = {
+            "candidate_id": "CAND-" + sha256_json(
+                {
+                    "action": action,
+                    "snapshot": snapshot,
+                    "domains": domain_outputs,
+                    "model_ids": model_ids,
+                }
+            )[:16].upper(),
+            "action": action,
+            "source": "big_mac_gate",
+            "authority_mode": "deterministic",
+            "eligible": action != "abstain",
+            "rejection_reason_codes": reasons if action == "abstain" else [],
+        }
     validators = [
         {"validator": "five_domain_presence", "passed": True, "reason_codes": []},
         {
@@ -177,6 +205,7 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
         "rationale": reasons,
         "reason_codes": reasons,
         "requires_llm_fallback": requires_llm_fallback,
+        "llm_applied": llm_applied,
         "snapshot_hash": sha256_json(snapshot),
         "domain_output_hashes": {
             domain: sha256_json(domain_outputs[domain]) for domain in DOMAINS
@@ -186,7 +215,7 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
         "validator_results": validators,
         "final_decision": {
             "action": action,
-            "source": "big_mac_gate",
+            "source": candidate["source"],
             "committed_change": action != "abstain",
             "requires_llm_fallback": requires_llm_fallback,
         },
@@ -209,7 +238,16 @@ def _decision_id(snapshot, domain_outputs, models, artifact_errors):
     return "DEC-V2-" + digest[:24].upper()
 
 
-def decide(db, snapshot, domain_outputs, models=None, persist=False):
+def decide(db, snapshot, domain_outputs, models=None, persist=False, *, lead_fallback=None):
+    """Evaluate one decision. `lead_fallback`, if given, is a dict of kwargs
+    for platform_core.llm.orchestrate.attempt_lead_fallback (routing_policy,
+    lead, backup, fallback_envelope, current_plan, privacy_projection,
+    policy_refs, whole_athlete_state, ...). It is consulted at most once,
+    only when the deterministic pass would otherwise abstain with
+    NO_DETERMINISTIC_ANSWER, and only its frozen result (success or
+    failure) ever reaches the trace - omit it entirely to keep the
+    deterministic-only behavior every existing caller already depends on.
+    """
     try:
         snapshot = validate_snapshot(snapshot)
     except EngineInputError as exc:
@@ -235,7 +273,33 @@ def decide(db, snapshot, domain_outputs, models=None, persist=False):
         "frozen_llm_response": None,
     }
     trace = _evaluate_replay_bundle(replay_bundle)
-    decision_mode = "deterministic" if trace["action"] != "abstain" else "abstention"
+    llm_contribution = None
+
+    if lead_fallback is not None and trace["requires_llm_fallback"]:
+        decision_id_for_fallback = _decision_id(snapshot, domain_outputs, models, artifact_errors)
+        athlete_scope_id_for_fallback = str(
+            snapshot.get("athlete_scope_id") or snapshot.get("athlete_id")
+        )
+        result = attempt_lead_fallback(
+            decision_id=decision_id_for_fallback,
+            athlete_scope_id=athlete_scope_id_for_fallback,
+            domain_outputs=domain_outputs,
+            **lead_fallback,
+        )
+        if result["ok"]:
+            replay_bundle["frozen_llm_response"] = result["frozen_llm_response"]
+            replay_bundle["frozen_llm_context"] = result["frozen_llm_context"]
+            trace = _evaluate_replay_bundle(replay_bundle)
+            llm_contribution = result["llm_contribution"]
+        else:
+            trace["reason_codes"] = trace["reason_codes"] + result["reason_codes"]
+            trace["rationale"] = trace["rationale"] + result["reason_codes"]
+
+    decision_mode = (
+        "lead_fallback" if trace.get("llm_applied")
+        else "deterministic" if trace["action"] != "abstain"
+        else "abstention"
+    )
     # validate_snapshot already guaranteed one of each pair is a non-empty,
     # ISO-8601-valid string; no silent defaulting to "now"/"UNKNOWN-ATHLETE".
     created_at = str(snapshot.get("as_of") or snapshot.get("occurred_at"))
@@ -254,6 +318,7 @@ def decide(db, snapshot, domain_outputs, models=None, persist=False):
         "evaluator_id": EVALUATOR_ID,
         "evaluator_version": EVALUATOR_VERSION,
         "artifact_manifest": artifact_manifest,
+        "llm_contribution": llm_contribution,
     }
     if persist:
         return commit_receipt(db, **arguments)
