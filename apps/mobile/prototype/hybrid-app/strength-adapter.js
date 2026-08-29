@@ -311,11 +311,35 @@
     return { ok: true, prs: prs, workingMaxes: workingMaxes, recentAudit: recentAudit };
   }
 
+  function aiProgressionEnabled(state, opts) {
+    opts = opts || {};
+    if (opts.aiProgression === false) return false;
+    if (opts.aiProgression === true) return true;
+    if (!state.settings || state.settings.aiProgression === undefined) return true;
+    return state.settings.aiProgression !== false;
+  }
+
+  function mergeAiDecision(base, ai) {
+    if (!ai) return base;
+    var out = {
+      exerciseId: base.exerciseId,
+      action: ai.action,
+      deltaPct: ai.deltaPct != null ? ai.deltaPct : base.deltaPct,
+      deltaKg: base.deltaKg,
+      confidence: ai.confidence,
+      source: 'ai_openrouter',
+      reasonCodes: (base.reasonCodes || []).concat(ai.reasonCodes || []).concat(['ai_openrouter']),
+    };
+    if (out.action === 'progress' && out.deltaPct == null) out.deltaPct = 0.025;
+    if (out.action === 'deload' && out.deltaPct == null) out.deltaPct = -0.05;
+    return out;
+  }
+
   /**
    * Apply silent progression for a just-completed session.
    * Mutates state.strengthState and state.meta.progressionAudit; caller saves.
    */
-  function applySilentProgression(state, session, opts) {
+  async function applySilentProgression(state, session, opts) {
     opts = opts || {};
     if (!hasStrength()) {
       if (!opts.quiet) console.warn('StrengthAdapter: HybridStrength bundle missing — skip silent apply');
@@ -332,10 +356,38 @@
     var prEvents = state.strengthState.prEvents.slice();
     var exerciseIds = trainedExerciseIds(session);
     var applied = 0;
+    var useAi = aiProgressionEnabled(state, opts) && global.StrengthAI && global.fetch;
 
-    exerciseIds.forEach(function (exerciseId) {
+    for (var ei = 0; ei < exerciseIds.length; ei++) {
+      var exerciseId = exerciseIds[ei];
       var exposures = global.HybridStrength.Exposure.strengthExposuresFor(exerciseId, performed);
       var decision = global.HybridStrength.Progression.decideProgression(exposures, { exerciseId: exerciseId });
+      var decisionSource = 'deterministic';
+
+      if (useAi && session.sessionPain !== 'yes') {
+        try {
+          var cal = global.HybridStrength.Calibration && global.HybridStrength.Calibration.calibrationStateFor
+            ? global.HybridStrength.Calibration.calibrationStateFor(exposures)
+            : 'unknown';
+          var flash = global.StrengthAI.buildFlashCard(state, exerciseId, {
+            exposures: exposures,
+            exerciseName: exerciseNameFor(state, exerciseId),
+            calibration: cal,
+            sessionPain: session.sessionPain || 'none',
+            recoveryGate: recovery.gate,
+            recoveryReasonCodes: recovery.reasonCodes || [],
+            deterministic: { action: decision.action },
+            debtScore: opts.debtScore,
+          });
+          var ai = await global.StrengthAI.fetchProgressionDecision(flash);
+          decision = mergeAiDecision(decision, ai);
+          decisionSource = 'ai_openrouter';
+        } catch (err) {
+          if (!opts.quiet) console.warn('StrengthAdapter: AI fallback to rules', err);
+          decision.reasonCodes = (decision.reasonCodes || []).concat(['ai_fallback_deterministic']);
+        }
+      }
+
       var action = decision.action;
       var reasonCodes = decision.reasonCodes.slice();
       var performanceOverride = false;
@@ -392,10 +444,11 @@
         sessionPain: session.sessionPain || 'none',
         performanceOverride: performanceOverride,
         engineVersion: ENGINE_VERSION,
+        decisionSource: decisionSource,
       });
 
       if (action === 'progress' || action === 'deload') applied++;
-    });
+    }
 
     return { applied: applied, recoveryGate: recovery.gate };
   }
