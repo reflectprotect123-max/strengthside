@@ -5,12 +5,12 @@
     "json_schema": 15,
     "yaml": 4,
     "csv": 19,
-    "markdown_indexes": 36,
+    "markdown_indexes": 37,
     "source_files": 295,
-    "generated_files": 154
+    "generated_files": 163
   },
   "errors": [],
   "warnings": [],
-  "tests_passing": 132,
+  "tests_passing": 148,
   "note": "This validates the engineering package, not scientific truth. Source-file syntax/link defects are warnings because originals are immutable; generated-artifact defects are errors."
 }

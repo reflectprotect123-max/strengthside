@@ -24,7 +24,11 @@ from . import common
 SYSTEM = "coordinator"
 
 
-def evaluate(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+def evaluate(snapshot: Mapping[str, Any], db: Any = None) -> dict[str, Any]:
+    # `db` accepted for signature parity with the shared run_all(snapshot, db)
+    # contract - unused here until this engine gets its own Phase 4 model seam
+    # (see platform_core/engines/strength.py for the pattern once it exists).
+    del db
     snapshot = common.validate_snapshot(snapshot)
     directive = common.synthetic_directive(snapshot, SYSTEM)
     if directive is not None:

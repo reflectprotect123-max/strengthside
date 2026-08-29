@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, Mapping
 
 from ..receipt_replay import sha256_json
+from ..runtime_artifacts import load_trusted_model_artifacts
 
 
 ENGINE_VERSION = "0.1.0"
@@ -104,6 +105,26 @@ def make_output(
         "reason_codes": list(reason_codes),
         "synthetic_test_only": bool(synthetic),
     }
+
+
+def load_active_engine_model(db: Any, system: str) -> tuple[dict[str, Any] | None, list[str]]:
+    """Load this one engine's own active, hash-verified model, if any.
+
+    Entirely separate from BIG MAC's own model pool
+    (runtime_artifacts.system IS NULL) - scoped to runtime_artifacts rows
+    whose system column names this engine. Returns (None, []) when no
+    active model is registered - the ordinary, current state for every
+    engine. Non-empty errors mean an artifact IS registered but failed a
+    trust or integrity check (untrusted origin, missing file, hash
+    mismatch) - surfaced distinctly rather than silently treated as "no
+    model", the same way decision.py's own pool surfaces artifact_errors.
+    """
+    if system not in DOMAIN_NAMES:
+        raise EngineInputError(f"unknown system: {system}")
+    models, errors = load_trusted_model_artifacts(db, system=system)
+    if errors:
+        return None, errors
+    return (models[0] if models else None), []
 
 
 def validate_engine_output(output: Mapping[str, Any], expected_system: str) -> None:

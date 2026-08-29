@@ -18,15 +18,18 @@ _MODULES = {
 }
 
 
-def run_all(snapshot: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+def run_all(snapshot: Mapping[str, Any], db: Any = None) -> dict[str, dict[str, Any]]:
     """Run all five system engines against one athlete snapshot.
 
     Every engine validates the same snapshot independently and abstains
     independently - none of the five sees or depends on another's output.
     Cross-system arbitration happens later, in BIG MAC (`platform_core.decision`),
-    never here.
+    never here. `db`, when given, lets each engine check for its OWN
+    active, hash-verified model (runtime_artifacts.system=<name>) - as of
+    Phase 3 only platform_core/engines/strength.py's evaluate() actually
+    uses it; the other four accept and ignore it until their own turn.
     """
-    return {name: module.evaluate(snapshot) for name, module in _MODULES.items()}
+    return {name: module.evaluate(snapshot, db) for name, module in _MODULES.items()}
 
 
 __all__ = [

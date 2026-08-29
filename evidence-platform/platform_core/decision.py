@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import json
-from pathlib import Path
 from typing import Any, Mapping
 
 from .engines.common import EngineInputError, validate_engine_output, validate_snapshot
@@ -14,6 +11,7 @@ from .receipt_replay import (
     replay_receipt,
     sha256_json,
 )
+from .runtime_artifacts import load_trusted_model_artifacts
 
 
 DOMAINS = ("strength", "conditioning", "nutrition", "recovery", "coordinator")
@@ -32,31 +30,12 @@ def sha(value: Any) -> str:
 
 
 def load_runtime_models(db):
-    models = []
-    errors = []
-    for row in db.execute(
-        "SELECT * FROM runtime_artifacts WHERE artifact_type='model' AND status='active'"
-    ):
-        item = dict(row)
-        if (
-            item["llm_tainted"]
-            or item["trust_origin"] != "human_promoted_verified"
-            or not item["deterministic"]
-        ):
-            errors.append("UNTRUSTED_RUNTIME_ARTIFACT:" + item["artifact_id"])
-            continue
-        path = Path(item["artifact_path"])
-        if not path.is_file():
-            errors.append("MODEL_ARTIFACT_MISSING:" + item["artifact_id"])
-            continue
-        actual = hashlib.sha256(path.read_bytes()).hexdigest()
-        if actual != item["artifact_hash"]:
-            errors.append("MODEL_ARTIFACT_HASH_MISMATCH:" + item["artifact_id"])
-            continue
-        model = json.loads(path.read_text())
-        model["model_id"] = item["artifact_id"]
-        models.append(model)
-    return models, errors
+    """BIG MAC's own model pool (runtime_artifacts.system IS NULL) - kept as
+    a thin wrapper for backward compatibility; the real logic is shared
+    with per-engine model loading in runtime_artifacts.py so the two never
+    drift apart.
+    """
+    return load_trusted_model_artifacts(db, system=None)
 
 
 def validate_domain_outputs(domain_outputs):

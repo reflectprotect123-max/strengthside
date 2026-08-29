@@ -190,5 +190,110 @@ class EndToEndFiveEngineToDecisionTests(unittest.TestCase):
         self.assertEqual(receipt["action"], "abstain")
 
 
+class EngineScopedModelTests(unittest.TestCase):
+    """Phase 3: an engine can load its OWN active, hash-verified model,
+    entirely separate from BIG MAC's own pool (runtime_artifacts.system
+    IS NULL). No real model exists yet - only the seam is proven here,
+    using synthetic-only content, per the Constitution's synthetic-fixture
+    allowance.
+    """
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.connection = connect(Path(self.temp.name) / "evidence.db")
+        migrate(self.connection)
+
+    def tearDown(self):
+        self.connection.close()
+        self.temp.cleanup()
+
+    def _register_model(self, *, system, artifact_id, payload, trust_origin="human_promoted_verified",
+                         llm_tainted=0, deterministic=1, status="active"):
+        import hashlib
+        model_path = Path(self.temp.name) / f"{artifact_id}.json"
+        model_path.write_text(json.dumps(payload))
+        artifact_hash = hashlib.sha256(model_path.read_bytes()).hexdigest()
+        self.connection.execute(
+            "INSERT INTO runtime_artifacts(artifact_id,artifact_type,version,artifact_path,artifact_hash,"
+            "trust_origin,llm_tainted,deterministic,status,approval_event_id,rollback_artifact_id,activated_at,system) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (artifact_id, "model", "1.0", str(model_path), artifact_hash, trust_origin, llm_tainted,
+             deterministic, status, "PROMO-TEST", None, "now", system),
+        )
+        self.connection.commit()
+
+    def test_strength_abstains_when_no_model_registered_even_with_db(self):
+        from platform_core.engines import strength
+        output = strength.evaluate(REAL_SNAPSHOT, self.connection)
+        self.assertEqual(output["proposed_actions"][0]["action"], "abstain")
+        self.assertIn("NO_APPROVED_MODEL", output["reason_codes"])
+
+    def test_strength_applies_a_registered_synthetic_model(self):
+        from platform_core.engines import strength
+        self._register_model(
+            system="strength", artifact_id="STRENGTH-TEST-MODEL",
+            payload={"synthetic_test_only": True, "synthetic_directive": {"action": "hold"}, "confidence": 0.5},
+        )
+        output = strength.evaluate(REAL_SNAPSHOT, self.connection)
+        self.assertEqual(output["proposed_actions"][0]["action"], "hold")
+        self.assertIn("ENGINE_SCOPED_MODEL_APPLIED", output["reason_codes"])
+        self.assertTrue(output["synthetic_test_only"])
+
+    def test_strength_abstains_honestly_for_a_real_unimplemented_model(self):
+        from platform_core.engines import strength
+        self._register_model(
+            system="strength", artifact_id="STRENGTH-REAL-MODEL",
+            payload={"synthetic_test_only": False, "some_future_rule_param": 1},
+        )
+        output = strength.evaluate(REAL_SNAPSHOT, self.connection)
+        self.assertEqual(output["proposed_actions"][0]["action"], "abstain")
+        self.assertIn("ACTIVE_MODEL_APPLICATION_NOT_YET_IMPLEMENTED", output["reason_codes"])
+
+    def test_strength_surfaces_untrusted_artifact_rather_than_silently_ignoring(self):
+        from platform_core.engines import strength
+        self._register_model(
+            system="strength", artifact_id="STRENGTH-TAINTED-MODEL",
+            payload={"synthetic_test_only": True, "synthetic_directive": {"action": "hold"}},
+            llm_tainted=1,
+        )
+        output = strength.evaluate(REAL_SNAPSHOT, self.connection)
+        self.assertEqual(output["proposed_actions"][0]["action"], "abstain")
+        self.assertTrue(any("UNTRUSTED_RUNTIME_ARTIFACT" in code for code in output["reason_codes"]))
+
+    def test_a_model_scoped_to_another_system_never_leaks_into_strength(self):
+        from platform_core.engines import strength
+        self._register_model(
+            system="nutrition", artifact_id="NUTRITION-TEST-MODEL",
+            payload={"synthetic_test_only": True, "synthetic_directive": {"action": "hold"}},
+        )
+        output = strength.evaluate(REAL_SNAPSHOT, self.connection)
+        self.assertEqual(output["proposed_actions"][0]["action"], "abstain")
+        self.assertIn("NO_APPROVED_MODEL", output["reason_codes"])
+
+    def test_a_strength_scoped_model_never_leaks_into_big_macs_own_pool(self):
+        from platform_core.decision import load_runtime_models
+        self._register_model(
+            system="strength", artifact_id="STRENGTH-ONLY-MODEL",
+            payload={"synthetic_test_only": True, "synthetic_directive": {"action": "hold"}},
+        )
+        models, errors = load_runtime_models(self.connection)
+        self.assertEqual(models, [])
+        self.assertEqual(errors, [])
+
+    def test_run_all_threads_db_through_to_strength_only(self):
+        self._register_model(
+            system="strength", artifact_id="STRENGTH-RUNALL-MODEL",
+            payload={"synthetic_test_only": True, "synthetic_directive": {"action": "hold"}},
+        )
+        outputs = run_all(REAL_SNAPSHOT, self.connection)
+        self.assertEqual(outputs["strength"]["proposed_actions"][0]["action"], "hold")
+        self.assertEqual(outputs["nutrition"]["proposed_actions"][0]["action"], "abstain")
+
+    def test_load_active_engine_model_rejects_unknown_system(self):
+        from platform_core.engines.common import load_active_engine_model
+        with self.assertRaises(EngineInputError):
+            load_active_engine_model(self.connection, "not_a_real_system")
+
+
 if __name__ == "__main__":
     unittest.main()
