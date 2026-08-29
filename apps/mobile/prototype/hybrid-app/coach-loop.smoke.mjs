@@ -40,6 +40,9 @@ if (!html.includes('signInWithPassword')) {
 if (!html.includes('same email + password')) {
   throw new Error('coach.html gate must tell coaches to use athlete account credentials');
 }
+if (!html.includes('empty-panel')) throw new Error('coach.html missing empty-panel polish pattern');
+if (!html.includes('page-intro')) throw new Error('coach.html missing page-intro polish pattern');
+if (!html.includes('--ease')) throw new Error('coach.html missing motion token --ease');
 if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html.includes('Athlete ·')) {
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }
