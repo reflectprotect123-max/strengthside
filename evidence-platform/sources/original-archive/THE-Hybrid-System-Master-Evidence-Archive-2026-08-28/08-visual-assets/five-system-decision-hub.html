@@ -1,0 +1,253 @@
+<div id="five-system-decision-hub">
+  <style>
+    #five-system-decision-hub {
+      --bg: #070b13;
+      --panel: #101827;
+      --panel-2: #151f31;
+      --line: #65738d;
+      --text: #e9eef8;
+      --muted: #8d9ab0;
+      --cyan: #6be5e2;
+      --blue: #78a7ff;
+      --violet: #c28cff;
+      --gold: #f5c96a;
+      --green: #7de6a7;
+      --red: #ff8e9b;
+      display: block;
+      color: var(--text);
+      background: radial-gradient(circle at 50% 40%, #15233d 0%, var(--bg) 58%);
+      border: 1px solid #314057;
+      min-height: 720px;
+      padding: 22px 26px 28px;
+      box-sizing: border-box;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+    #five-system-decision-hub .hub-title {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: .02em;
+      margin-bottom: 18px;
+    }
+    #five-system-decision-hub .band {
+      border: 1px solid #687894;
+      padding: 13px 14px 15px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    #five-system-decision-hub .band-label {
+      position: absolute;
+      top: -10px;
+      left: 13px;
+      padding: 0 7px;
+      background: var(--bg);
+      color: #b9c6da;
+      font-size: 11px;
+      letter-spacing: .04em;
+    }
+    #five-system-decision-hub .source-grid,
+    #five-system-decision-hub .system-grid {
+      display: grid;
+      gap: 12px;
+    }
+    #five-system-decision-hub .source-grid { grid-template-columns: repeat(4, 1fr); }
+    #five-system-decision-hub .system-grid { grid-template-columns: repeat(5, 1fr); }
+    #five-system-decision-hub .node {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid #52627d;
+      min-height: 54px;
+      padding: 12px 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-sizing: border-box;
+      font-size: 12px;
+      line-height: 1.25;
+      cursor: pointer;
+      transition: border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+    #five-system-decision-hub .node:hover,
+    #five-system-decision-hub .node.is-selected {
+      border-color: var(--cyan);
+      background: #182b3b;
+      transform: translateY(-2px);
+    }
+    #five-system-decision-hub .source { color: #d8e1ef; }
+    #five-system-decision-hub .strength { border-color: var(--blue); }
+    #five-system-decision-hub .conditioning { border-color: var(--green); }
+    #five-system-decision-hub .nutrition { border-color: var(--gold); }
+    #five-system-decision-hub .recovery { border-color: var(--violet); }
+    #five-system-decision-hub .coordinator { border-color: var(--cyan); }
+    #five-system-decision-hub .flow {
+      height: 34px;
+      position: relative;
+    }
+    #five-system-decision-hub .flow::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      height: 100%;
+      border-left: 1px solid var(--line);
+    }
+    #five-system-decision-hub .flow::after {
+      content: "";
+      position: absolute;
+      left: calc(50% - 4px);
+      bottom: 0;
+      width: 7px;
+      height: 7px;
+      border-right: 1px solid var(--cyan);
+      border-bottom: 1px solid var(--cyan);
+      transform: rotate(45deg);
+    }
+    #five-system-decision-hub .system-flow {
+      height: 58px;
+      position: relative;
+    }
+    #five-system-decision-hub .system-flow::before {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 12px;
+      border-top: 1px solid var(--line);
+    }
+    #five-system-decision-hub .system-flow span {
+      position: absolute;
+      top: 12px;
+      width: 1px;
+      height: 46px;
+      background: var(--line);
+    }
+    #five-system-decision-hub .system-flow span::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: -3px;
+      width: 6px;
+      height: 6px;
+      border-right: 1px solid var(--cyan);
+      border-bottom: 1px solid var(--cyan);
+      transform: rotate(45deg);
+    }
+    #five-system-decision-hub .system-flow span:nth-child(1) { left: 10%; }
+    #five-system-decision-hub .system-flow span:nth-child(2) { left: 30%; }
+    #five-system-decision-hub .system-flow span:nth-child(3) { left: 50%; }
+    #five-system-decision-hub .system-flow span:nth-child(4) { left: 70%; }
+    #five-system-decision-hub .system-flow span:nth-child(5) { left: 90%; }
+    #five-system-decision-hub .model-wrap {
+      max-width: 470px;
+      margin: 0 auto;
+      border: 1px solid var(--cyan);
+      padding: 14px;
+      box-sizing: border-box;
+      background: rgba(16, 31, 47, .9);
+      box-shadow: 0 0 26px rgba(107, 229, 226, .1);
+    }
+    #five-system-decision-hub .model-title {
+      font-size: 15px;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    #five-system-decision-hub .model-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    #five-system-decision-hub .model-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    #five-system-decision-hub .model-inner .node:last-child { grid-column: 1 / -1; }
+    #five-system-decision-hub .bottom {
+      max-width: 470px;
+      margin: 0 auto;
+    }
+    #five-system-decision-hub .bottom .node { min-height: 48px; }
+    #five-system-decision-hub .detail {
+      min-height: 22px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+    @media (max-width: 650px) {
+      #five-system-decision-hub { padding: 18px 12px 22px; min-height: 980px; }
+      #five-system-decision-hub .source-grid,
+      #five-system-decision-hub .system-grid { grid-template-columns: 1fr 1fr; }
+      #five-system-decision-hub .system-grid .coordinator { grid-column: 1 / -1; }
+      #five-system-decision-hub .system-flow { display: none; }
+      #five-system-decision-hub .system-grid { margin-bottom: 20px; }
+      #five-system-decision-hub .model-inner { grid-template-columns: 1fr; }
+      #five-system-decision-hub .model-inner .node:last-child { grid-column: auto; }
+    }
+  </style>
+
+  <div class="hub-title">THE Hybrid System · Multi-model adaptive control architecture</div>
+
+  <section class="band">
+    <div class="band-label">Everything the system sees</div>
+    <div class="source-grid">
+      <div class="node source" data-detail="Research packs, reference libraries and versioned evidence claims.">Research &amp; reference libraries</div>
+      <div class="node source" data-detail="Sessions, check-ins, logs, WHOOP and athlete-entered observations.">Sessions · check-ins · WHOOP</div>
+      <div class="node source" data-detail="Facts and derived outputs produced by the five domain systems.">Engine outputs as facts</div>
+      <div class="node source" data-detail="Optional current evidence retrieval used during research, never directly at runtime.">Web research · optional</div>
+    </div>
+  </section>
+
+  <div class="flow" aria-hidden="true"></div>
+
+  <section class="band">
+    <div class="band-label">Five system feeds</div>
+    <div class="system-grid">
+      <div class="node strength" data-detail="Load, reps, sets, e1RM, RIR, progression and performance evidence.">Strength system</div>
+      <div class="node conditioning" data-detail="Zones, intervals, aerobic status, conditioning load and interference risk.">Conditioning system</div>
+      <div class="node nutrition" data-detail="Energy balance, fuelling, bodyweight trend, macros and intake uncertainty.">Nutrition system</div>
+      <div class="node recovery" data-detail="Sleep, HRV, soreness, illness, pain, heat, workload and recovery debt.">Recovery system</div>
+      <div class="node coordinator" data-detail="Cross-domain timing, priorities, constraints and authorised decision intents.">Coordinator system</div>
+    </div>
+  </section>
+
+  <div class="system-flow" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+
+  <section class="model-wrap">
+    <div class="model-title">Multi-model adaptive control system</div>
+    <div class="model-subtitle">Non-LLM learning and decision layer</div>
+    <div class="model-inner">
+      <div class="node" data-detail="Builds the current whole-athlete state from timestamped, quality-checked inputs.">State estimation</div>
+      <div class="node" data-detail="Learns your personal response to training, fuelling and recovery over time.">Personal adaptation</div>
+      <div class="node" data-detail="Balances performance, adaptation, recovery and real-life constraints to choose one action.">Constrained decision optimisation</div>
+    </div>
+  </section>
+
+  <div class="flow" aria-hidden="true"></div>
+
+  <section class="band bottom">
+    <div class="band-label">Validated system output</div>
+    <div class="node" data-detail="Safety invariants, schema checks, stale-data rules, audit receipt and authorised adapter application.">Hard validators · audit · silent apply</div>
+    <div class="flow" aria-hidden="true"></div>
+    <div class="node" data-detail="One final, explainable system decision is applied through the existing domain adapters.">One validated decision → athlete app</div>
+  </section>
+
+  <div class="detail" aria-live="polite">Select any box to inspect what it contributes.</div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('five-system-decision-hub');
+      const detail = root.querySelector('.detail');
+      const nodes = root.querySelectorAll('.node[data-detail]');
+      nodes.forEach((node) => {
+        node.addEventListener('click', () => {
+          nodes.forEach((item) => item.classList.remove('is-selected'));
+          node.classList.add('is-selected');
+          detail.textContent = node.dataset.detail;
+        });
+      });
+    })();
+  </script>
+</div>

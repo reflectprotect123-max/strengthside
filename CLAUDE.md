@@ -12,6 +12,29 @@ there on purpose — do not rebuild coaching in either repo.
 Read `handoff.md` before making changes — it records where this tree came from, what
 is built, and what is not.
 
+## evidence-platform/ — a separate, unwired subsystem (added 29 August 2026)
+
+`evidence-platform/` is a Python/SQLite governance and evidence-tracking system for a
+much larger planned architecture (five peer coaching engines feeding a final
+controller called **BIG MAC**, with Gemini/Gemma as a bounded, receipted fallback —
+never a direct writer). It has its **own** `pyproject.toml`, its own tests
+(`python3 -m pytest evidence-platform/tests/`), and its own CI job. It does **not**
+import from, depend on, or get imported by anything under `apps/`, `packages/`, or
+`supabase/` — as of this date it is real, tested code (1,473 lines, 49 passing
+tests) but **zero domain engines exist yet** (no strength/conditioning/nutrition/
+recovery/coordinator implementation) and it has never been wired to this repo's
+Supabase project or the athlete app. Its CI check is a **separate job** in
+`ci.yml`, not chained into `pnpm run verify` — that pipeline is Node/pnpm only and
+has no Python runtime, and this package has no JS entrypoint to hang a `pnpm -r`
+script off. `pnpm run verify` staying green never implies the Python suite is
+green; check the `evidence-platform` CI job status separately. Read
+`evidence-platform/README.md` and
+`evidence-platform/docs/SYSTEM-CONSTITUTION-v1.0-RATIFIED.md` before touching it.
+The current engineering task, per the handoff that introduced this tree, is
+repairing the 14 documented defects in its receipt/replay/contract-enforcement
+layer — not building coaching logic, and not inventing thresholds from the research
+corpus it carries.
+
 ## Where this came from, and why the history looks short
 
 `packages/strength-engine`, the five strength migrations and the

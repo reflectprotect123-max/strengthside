@@ -1,0 +1,106 @@
+<div id="hybrid-engine-exercise-search" class="he-library-live">
+  <style>
+    #hybrid-engine-exercise-search{--ink:#f4f1ea;--muted:#a9aaa4;--line:rgba(244,241,234,.13);--panel:#171916;--accent:#d5a85a;max-width:780px;margin:0 auto;color:var(--ink);font:15px/1.45 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    #hybrid-engine-exercise-search .he-shell{overflow:hidden;background:#11120f;border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 45px #0006}
+    #hybrid-engine-exercise-search .he-header{position:relative;overflow:hidden;padding:28px;background:radial-gradient(circle at 88% 5%,#d5a85a2e,transparent 34%),linear-gradient(135deg,#1b140d,#11120f 72%)}
+    #hybrid-engine-exercise-search .he-header:after{position:absolute;right:28px;bottom:0;left:28px;height:1px;background:linear-gradient(90deg,var(--accent),transparent);content:""}
+    #hybrid-engine-exercise-search .he-brand{margin-bottom:20px;color:var(--accent);font-size:11px;font-weight:800;letter-spacing:.16em}
+    #hybrid-engine-exercise-search .he-brand i{display:inline-block;width:7px;height:7px;margin-right:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px #d5a85acc}
+    #hybrid-engine-exercise-search .he-title{margin:0;font-size:31px;font-style:italic;letter-spacing:.04em;line-height:1}
+    #hybrid-engine-exercise-search .he-subtitle{margin:10px 0 0;color:var(--muted);font-size:14px}
+    #hybrid-engine-exercise-search .he-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:18px 28px 0}
+    #hybrid-engine-exercise-search .he-tab{min-height:44px;border:1px solid var(--line);border-radius:13px;background:#121211;color:var(--muted);font:inherit;font-weight:800;cursor:pointer}
+    #hybrid-engine-exercise-search .he-tab.active{border-color:var(--accent);background:linear-gradient(180deg,#d5a85a33,#d5a85a12);color:var(--ink)}
+    #hybrid-engine-exercise-search .he-panel{padding:24px 28px 30px}
+    #hybrid-engine-exercise-search .he-search{display:flex;gap:10px;margin-bottom:23px}
+    #hybrid-engine-exercise-search input{width:100%;box-sizing:border-box;padding:13px 15px;border:1px solid transparent;border-radius:24px;outline:none;background:#1a1b18;color:var(--ink);font:inherit}
+    #hybrid-engine-exercise-search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d5a85a26}
+    #hybrid-engine-exercise-search .he-heading{margin:0 0 15px;font-size:24px}
+    #hybrid-engine-exercise-search .he-create{display:flex;align-items:center;gap:14px;width:100%;margin-bottom:15px;padding:17px;border:1px solid var(--line);border-radius:15px;background:#1b1c19;color:var(--ink);font:inherit;font-weight:800;text-align:left;cursor:pointer}
+    #hybrid-engine-exercise-search .he-plus{display:grid;width:42px;height:42px;place-items:center;border:2px solid #5d8bf1;border-radius:50%;color:#5d8bf1;font-size:27px;font-weight:300}
+    #hybrid-engine-exercise-search .he-card{padding:17px 0;border-top:1px solid var(--line)}
+    #hybrid-engine-exercise-search .he-card-head{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+    #hybrid-engine-exercise-search .he-name{margin:0;color:#79a0f4;font-size:19px}
+    #hybrid-engine-exercise-search .he-meta{margin-top:5px;color:var(--muted);font-size:13px}
+    #hybrid-engine-exercise-search .he-actions{display:flex;gap:7px;align-items:center}
+    #hybrid-engine-exercise-search .he-btn{min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:11px;background:#1b1c19;color:var(--ink);font:inherit;font-weight:800;cursor:pointer}
+    #hybrid-engine-exercise-search .he-btn.primary{border-color:#5d8bf1;background:#315bb4;color:#fff}
+    #hybrid-engine-exercise-search .he-btn.danger{border-color:#b96767;color:#ecaaaa}
+    #hybrid-engine-exercise-search .he-menu{width:40px;padding:0;border-radius:50%;font-size:18px;letter-spacing:1px}
+    #hybrid-engine-exercise-search .he-list{display:grid;gap:8px}
+    #hybrid-engine-exercise-search .he-exercise{padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:#101010;cursor:pointer}
+    #hybrid-engine-exercise-search .he-count{margin:-12px 0 12px;color:var(--muted);font-size:12px}
+    #hybrid-engine-exercise-search .he-empty{padding:28px 10px;color:var(--muted);text-align:center}
+    #hybrid-engine-exercise-search .he-modal{position:fixed;inset:0;z-index:5;display:grid;align-items:end;background:#000b}
+    #hybrid-engine-exercise-search .he-modal[hidden]{display:none}
+    #hybrid-engine-exercise-search .he-sheet{padding:20px;border:1px solid var(--line);border-radius:22px 22px 0 0;background:#151515;box-shadow:0 -18px 45px #0008}
+    #hybrid-engine-exercise-search .he-sheet h3{margin:0;font-size:22px}
+    #hybrid-engine-exercise-search .he-sheet p{margin:7px 0 15px;color:var(--muted)}
+    #hybrid-engine-exercise-search .he-date-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    #hybrid-engine-exercise-search .he-date{min-height:72px;padding:8px 4px;border:1px solid var(--line);border-radius:12px;background:#1e1f1c;color:var(--ink);cursor:pointer}
+    #hybrid-engine-exercise-search .he-date.today{border-color:var(--accent);background:#d5a85a1f}
+    #hybrid-engine-exercise-search .he-date span,#hybrid-engine-exercise-search .he-date small{display:block;color:var(--muted);font-size:10px}
+    #hybrid-engine-exercise-search .he-date b{display:block;margin:3px 0;color:var(--accent);font-size:22px}
+    #hybrid-engine-exercise-search .he-sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
+    @media(max-width:560px){#hybrid-engine-exercise-search .he-panel{padding-right:17px;padding-left:17px}#hybrid-engine-exercise-search .he-tabs{padding-right:17px;padding-left:17px}#hybrid-engine-exercise-search .he-card-head{grid-template-columns:1fr}#hybrid-engine-exercise-search .he-actions{justify-content:stretch}#hybrid-engine-exercise-search .he-actions .he-btn:first-child{flex:1}}
+    @media(max-width:360px){#hybrid-engine-exercise-search .he-date-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+
+  <div class="he-shell">
+    <header class="he-header"><div class="he-brand"><i aria-hidden="true"></i>THE HYBRID ENGINE</div><h2 class="he-title">LIBRARY</h2><p class="he-subtitle">Programs and exercises, ready when you are.</p></header>
+    <div class="he-tabs" role="tablist"><button class="he-tab active" data-tab="programs">Programs</button><button class="he-tab" data-tab="library">Library</button></div>
+    <section class="he-panel" data-panel="programs">
+      <div class="he-search"><input data-program-search type="search" autocomplete="off" placeholder="Search programs"></div>
+      <h3 class="he-heading">My Programs</h3>
+      <button class="he-create" type="button"><span class="he-plus">+</span><span>Create Session Template</span></button>
+      <div data-program-list></div><div class="he-empty" data-program-empty hidden>No matching program.</div>
+    </section>
+    <section class="he-panel" data-panel="library" hidden>
+      <div class="he-search"><input data-exercise-search type="search" autocomplete="off" placeholder="Search exercises"></div>
+      <h3 class="he-heading">Exercise Library</h3><div class="he-count" data-exercise-count></div>
+      <div class="he-list" data-exercise-list></div><div class="he-empty" data-exercise-empty hidden>No matching exercise.</div>
+    </section>
+  </div>
+  <div class="he-modal" data-modal hidden></div>
+
+  <script>
+    const root = document.getElementById('hybrid-engine-exercise-search');
+    const modal = root.querySelector('[data-modal]');
+    const programs = [
+      {name:'Strength A', meta:'4 blocks · 6 exercises · 1 conditioning block'},
+      {name:'Strength B', meta:'4 blocks · 6 exercises · 1 conditioning block'},
+      {name:'Mono Conditioning', meta:'2 blocks · aerobic conditioning'},
+      {name:'Mixed Conditioning', meta:'3 blocks · aerobic and trunk work'}
+    ];
+    const exercises = ['Ab-Wheel Rollout','Back Squat','Bench Press','Barbell Row','Bulgarian Split Squat','Dumbbell Bench Press','Farmer Carry','Front Squat','Incline Bench Press','Kettlebell Swing','Landmine Press','Lat Pulldown','Overhead Press','Pull-Up','Romanian Deadlift','Ring Push-Up','Seated Cable Row','Side Plank','Suitcase Carry','Trap Bar Deadlift','Z-Press'];
+    const normalize = value => String(value || '').toLowerCase().trim();
+    const tokens = value => normalize(value).split(/\s+/).filter(Boolean);
+    const matches = (name, query) => tokens(query).every(token => normalize(name).includes(token));
+    const dateValues = Array.from({length:7}, (_, index) => { const d = new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+index); return d; });
+    const dateLabel = date => date.toLocaleDateString(undefined, {weekday:'short', day:'numeric', month:'short'});
+
+    function renderPrograms() {
+      const query = root.querySelector('[data-program-search]').value;
+      const found = programs.filter(item => matches(`${item.name} ${item.meta}`, query));
+      root.querySelector('[data-program-list]').innerHTML = found.map(item => `<article class="he-card"><div class="he-card-head"><div><h4 class="he-name">${item.name}</h4><div class="he-meta">${item.meta}</div></div><div class="he-actions"><button class="he-btn primary" data-add="${item.name}">＋ Add</button><button class="he-btn he-menu" data-menu="${item.name}" aria-label="More options">•••</button></div></div></article>`).join('');
+      root.querySelector('[data-program-empty]').hidden = found.length !== 0;
+    }
+    function renderExercises() {
+      const query = root.querySelector('[data-exercise-search]').value;
+      const found = exercises.filter(name => matches(name, query)).sort((a,b) => a.localeCompare(b));
+      root.querySelector('[data-exercise-count]').textContent = `${found.length} exercises`;
+      root.querySelector('[data-exercise-list]').innerHTML = found.map(name => `<div class="he-exercise" data-exercise="${name}">${name}</div>`).join('');
+      root.querySelector('[data-exercise-empty]').hidden = found.length !== 0;
+    }
+    function showModal(content) { modal.innerHTML = `<div class="he-sheet">${content}</div>`; modal.hidden = false; }
+    function hideModal() { modal.hidden = true; modal.innerHTML = ''; }
+    function showDates(name) { showModal(`<h3>Add ${name}</h3><p>Choose a day from today through the next six days.</p><div class="he-date-grid">${dateValues.map((date,index) => `<button class="he-date ${index === 0 ? 'today' : ''}" data-date="${date.toISOString()}"><span>${index === 0 ? 'Today' : date.toLocaleDateString(undefined,{weekday:'short'})}</span><b>${date.getDate()}</b><small>${date.toLocaleDateString(undefined,{month:'short'})}</small></button>`).join('')}</div><button class="he-btn" data-close style="width:100%;margin-top:15px">Cancel</button>`); }
+    function showMenu(name) { showModal(`<h3>${name}</h3><div class="he-sheet-actions"><button class="he-btn" data-edit="${name}">Edit</button><button class="he-btn danger" data-delete="${name}">Delete</button></div><button class="he-btn" data-close style="width:100%;margin-top:9px">Cancel</button>`); }
+    function showDelete(name) { showModal(`<h3>Delete ${name}?</h3><p>This removes the program from your Library.</p><div class="he-sheet-actions"><button class="he-btn" data-close>No</button><button class="he-btn danger" data-delete-yes="${name}">Yes</button></div>`); }
+    root.querySelectorAll('[data-tab]').forEach(tab => tab.addEventListener('click', () => { root.querySelectorAll('[data-tab]').forEach(item => item.classList.toggle('active', item === tab)); root.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = panel.dataset.panel !== tab.dataset.tab; }); }));
+    root.querySelector('[data-program-search]').addEventListener('input', renderPrograms);
+    root.querySelector('[data-exercise-search]').addEventListener('input', renderExercises);
+    root.addEventListener('click', event => { const add = event.target.closest('[data-add]'); if (add) return showDates(add.dataset.add); const menu = event.target.closest('[data-menu]'); if (menu) return showMenu(menu.dataset.menu); const date = event.target.closest('[data-date]'); if (date) { hideModal(); return; } const edit = event.target.closest('[data-edit]'); if (edit) { showModal(`<h3>Builder</h3><p>${edit.dataset.edit} would open in the Builder here.</p><button class="he-btn primary" data-close style="width:100%">Continue</button>`); return; } const del = event.target.closest('[data-delete]'); if (del) return showDelete(del.dataset.delete); const yes = event.target.closest('[data-delete-yes]'); if (yes) { programs.splice(programs.findIndex(item => item.name === yes.dataset.deleteYes), 1); hideModal(); renderPrograms(); return; } if (event.target.closest('[data-close]')) hideModal(); });
+    renderPrograms(); renderExercises();
+  </script>
+</div>

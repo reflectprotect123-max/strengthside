@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.example/schemas/observation.schema.json",
+  "title": "Observation",
+  "description": "A source-bound numerical or categorical observation; null means undocumented.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observation_id",
+    "metric_id",
+    "value",
+    "unit",
+    "provenance",
+    "review_status"
+  ],
+  "properties": {
+    "observation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metric_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_metric_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "value": {
+      "type": [
+        "number",
+        "string",
+        "null"
+      ]
+    },
+    "unit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "numerator": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "denominator": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "time_basis": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "population_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sample_size": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "age": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sex": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "training_status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "intervention": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "comparator": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "duration": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "measurement_method": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "uncertainty": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "relative_path",
+        "line_start",
+        "line_end"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relative_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line_start": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "line_end": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "page": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "section": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "table": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "row": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "column": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quote_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "transformation_history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review_status": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

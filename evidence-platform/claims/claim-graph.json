@@ -1,0 +1,523 @@
+{
+  "graph_version": "0.1.0",
+  "nodes": [
+    {
+      "id": "S-001",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-002",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-003",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-004",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-005",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-006",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-007",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-008",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-009",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-010",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-011",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-012",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-013",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-014",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-015",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-016",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-017",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-018",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-019",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-020",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-021",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-022",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-023",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-024",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-025",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-026",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-027",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-028",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-029",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-030",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-031",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-032",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-033",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-034",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-035",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-036",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-037",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-038",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-039",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-040",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-041",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-042",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-043",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-044",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-045",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-046",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-047",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-048",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-049",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-050",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-051",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-052",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-053",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-054",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-055",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-056",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-057",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-058",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-059",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-060",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-061",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-062",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-063",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-064",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-065",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "S-066",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-E8E038DAF199956C"
+    },
+    {
+      "id": "CR-001",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-002",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-003",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-004",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-005",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-006",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-007",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-008",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-009",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-010",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-011",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-012",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-013",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-014",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-015",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-016",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-017",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-018",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-019",
+      "type": "claim",
+      "status": "unsupported_or_rejected_claim",
+      "source_id": "SRC-3F70904EC639D58D"
+    },
+    {
+      "id": "CR-020",
+      "type": "claim",
+      "status": "scientific_or_product_claim_unverified",
+      "source_id": "SRC-3F70904EC639D58D"
+    }
+  ],
+  "edges": [],
+  "note": "Only explicit source-document claims were loaded. Relationships require human adjudication; curated relationships are in contradictions/contradiction-registry.csv."
+}

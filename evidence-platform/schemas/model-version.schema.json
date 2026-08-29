@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.example/schemas/model-version.schema.json",
+  "title": "Model Version",
+  "description": "Immutable deterministic/statistical non-LLM model version metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "model_id",
+    "version",
+    "model_type",
+    "status",
+    "artifact_hash"
+    ,"owner"
+    ,"approval_event_ids"
+    ,"rollback_model_id"
+  ],
+  "properties": {
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_type": {
+      "enum": ["deterministic_rule_set", "state_space", "bayesian", "regression", "ensemble", "constrained_optimizer"]
+    },
+    "system": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "parameter_set_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "training_data_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "validation_report_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "artifact_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "status": {
+      "enum": ["draft", "validated_offline", "shadow", "limited_release", "active", "suspended", "deprecated", "retired"]
+    },
+    "owner": {"type":"string","minLength":1},
+    "approval_event_ids": {"type":"array","minItems":1,"items":{"type":"string","minLength":1},"uniqueItems":true},
+    "rollback_model_id": {"type":["string","null"]},
+    "created_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

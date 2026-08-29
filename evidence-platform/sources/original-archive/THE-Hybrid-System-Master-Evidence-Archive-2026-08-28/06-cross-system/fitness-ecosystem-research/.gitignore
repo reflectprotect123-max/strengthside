@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+.expo/
+.next/
+coverage/
+__pycache__/
+*.pyc
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Claude Code local state and local worktrees
+.claude/settings.local.json
+.claude/worktrees/
+
+# OS/editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Research scratch and generated archives
+*.zip
+*.tar.gz

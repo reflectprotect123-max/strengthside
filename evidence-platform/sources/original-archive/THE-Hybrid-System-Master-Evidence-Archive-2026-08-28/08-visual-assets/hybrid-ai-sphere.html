@@ -1,0 +1,610 @@
+<div id="hybrid-ai-sphere">
+  <div class="viz-controls" aria-label="AI autonomy mode">
+    <span class="text-muted">Autonomy</span>
+    <button type="button" class="btn btn-primary" data-mode="shadow" aria-pressed="true">Shadow</button>
+    <button type="button" class="btn" data-mode="approved" aria-pressed="false">Coach-approved</button>
+    <button type="button" class="btn" data-mode="bounded" aria-pressed="false">Bounded auto</button>
+    <label class="form-label" for="hybrid-node-select">
+      Inspect layer
+      <select class="form-select" id="hybrid-node-select"></select>
+    </label>
+  </div>
+
+  <div class="sphere-mode-line text-muted" id="hybrid-mode-line" aria-live="polite"></div>
+
+  <div class="sphere-stage" id="hybrid-sphere-stage">
+    <svg id="hybrid-sphere-svg" role="img" aria-labelledby="hybrid-sphere-title hybrid-sphere-desc">
+      <title id="hybrid-sphere-title">Interactive model of the Coach PWA hybrid AI engine</title>
+      <desc id="hybrid-sphere-desc">Drag to rotate the system. Select a component to inspect how athlete data, AI reasoning, deterministic safety rules, human approval, HybridEmit, receipts, and outcomes interact.</desc>
+      <defs>
+        <marker id="hybrid-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted-foreground)"></path>
+        </marker>
+      </defs>
+      <g class="sphere-wire" id="hybrid-wire"></g>
+      <g class="sphere-links" id="hybrid-links"></g>
+      <g class="sphere-core" id="hybrid-core"></g>
+      <g class="sphere-nodes" id="hybrid-nodes"></g>
+    </svg>
+    <span class="sphere-drag-hint text-small text-muted">Drag or swipe to rotate</span>
+  </div>
+
+  <div class="card sphere-selection" aria-live="polite">
+    <div class="viz-row">
+      <span class="viz-badge" id="hybrid-selection-layer"></span>
+      <strong id="hybrid-selection-title"></strong>
+      <span class="text-muted" id="hybrid-selection-detail"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  #hybrid-ai-sphere {
+    width: 100%;
+    color: var(--foreground);
+  }
+
+  #hybrid-ai-sphere .sphere-mode-line {
+    margin-block: 0.5rem 0.25rem;
+  }
+
+  #hybrid-ai-sphere .sphere-stage {
+    position: relative;
+    height: clamp(420px, 70vw, 540px);
+    min-height: 420px;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+
+  #hybrid-ai-sphere .sphere-stage.is-dragging {
+    cursor: grabbing;
+  }
+
+  #hybrid-ai-sphere #hybrid-sphere-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  #hybrid-ai-sphere .wire-line {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  #hybrid-ai-sphere .sphere-boundary {
+    fill: color-mix(in srgb, var(--viz-series-3) 5%, transparent);
+    stroke: color-mix(in srgb, var(--viz-series-3) 42%, var(--border));
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  #hybrid-ai-sphere .flow-link {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 1;
+    opacity: 0.34;
+    vector-effect: non-scaling-stroke;
+    marker-end: url(#hybrid-arrow);
+  }
+
+  #hybrid-ai-sphere .flow-link.is-active {
+    stroke: var(--viz-series-2);
+    stroke-width: 2;
+    opacity: 0.88;
+  }
+
+  #hybrid-ai-sphere .sphere-node {
+    cursor: pointer;
+  }
+
+  #hybrid-ai-sphere .sphere-node-dot {
+    fill: color-mix(in srgb, var(--node-color) 24%, var(--background));
+    stroke: var(--node-color);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+
+  #hybrid-ai-sphere .sphere-node.is-selected .sphere-node-dot {
+    fill: var(--primary);
+    stroke: var(--primary-foreground);
+    stroke-width: 3;
+  }
+
+  #hybrid-ai-sphere .sphere-node-label {
+    fill: var(--foreground);
+    font-size: calc(var(--font-size-base) * 0.82);
+    font-weight: 500;
+    paint-order: stroke;
+    stroke: var(--background);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-sphere .core-shell-outer {
+    fill: color-mix(in srgb, var(--viz-series-3) 9%, var(--background));
+    stroke: color-mix(in srgb, var(--viz-series-3) 58%, var(--border));
+    stroke-width: 2;
+  }
+
+  #hybrid-ai-sphere .core-shell-inner {
+    fill: color-mix(in srgb, var(--viz-series-3) 20%, var(--background));
+    stroke: var(--viz-series-3);
+    stroke-width: 2;
+  }
+
+  #hybrid-ai-sphere .core-title,
+  #hybrid-ai-sphere .core-subtitle {
+    fill: var(--foreground);
+    text-anchor: middle;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-sphere .core-title {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+  }
+
+  #hybrid-ai-sphere .core-subtitle {
+    font-size: calc(var(--font-size-base) * 0.72);
+    fill: var(--muted-foreground);
+  }
+
+  #hybrid-ai-sphere .sphere-core-hit {
+    fill: transparent;
+    cursor: pointer;
+  }
+
+  #hybrid-ai-sphere .sphere-drag-hint {
+    position: absolute;
+    inset-inline-start: 50%;
+    inset-block-end: 0.25rem;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-sphere .sphere-selection {
+    margin-block-start: 0.5rem;
+  }
+
+  @media (max-width: 520px) {
+    #hybrid-ai-sphere .sphere-stage {
+      height: 450px;
+    }
+
+    #hybrid-ai-sphere .sphere-node-label {
+      font-size: calc(var(--font-size-base) * 0.72);
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const root = document.getElementById("hybrid-ai-sphere");
+    const stage = document.getElementById("hybrid-sphere-stage");
+    const svg = document.getElementById("hybrid-sphere-svg");
+    const wireLayer = document.getElementById("hybrid-wire");
+    const linkLayer = document.getElementById("hybrid-links");
+    const coreLayer = document.getElementById("hybrid-core");
+    const nodeLayer = document.getElementById("hybrid-nodes");
+    const select = document.getElementById("hybrid-node-select");
+    const modeLine = document.getElementById("hybrid-mode-line");
+    const selectionLayer = document.getElementById("hybrid-selection-layer");
+    const selectionTitle = document.getElementById("hybrid-selection-title");
+    const selectionDetail = document.getElementById("hybrid-selection-detail");
+    const svgNs = "http://www.w3.org/2000/svg";
+
+    const nodes = [
+      {
+        id: "coach-intent",
+        label: "Coach intent",
+        layer: "Input",
+        color: "var(--viz-series-1)",
+        point: [-0.82, -0.22, 0.52],
+        detail: "Versioned goals, session purpose, hard constraints and approved flex paths."
+      },
+      {
+        id: "athlete-context",
+        label: "Athlete context",
+        layer: "Input",
+        color: "var(--viz-series-1)",
+        point: [-0.42, 0.76, 0.46],
+        detail: "Check-ins, actual performance, notes, consent and current capacity signals."
+      },
+      {
+        id: "training-history",
+        label: "History",
+        layer: "Evidence",
+        color: "var(--viz-series-1)",
+        point: [0.28, 0.86, -0.38],
+        detail: "Planned-versus-actual sessions, prior decisions, outcomes and data-quality labels."
+      },
+      {
+        id: "ai-reasoner",
+        label: "AI reasoner",
+        layer: "AI",
+        color: "var(--viz-series-2)",
+        point: [0.82, 0.34, 0.45],
+        detail: "Detects patterns, interprets notes and drafts typed recommendations with cited evidence."
+      },
+      {
+        id: "human-approval",
+        label: "Human approval",
+        layer: "Authority",
+        color: "var(--viz-series-4)",
+        point: [0.8, -0.34, -0.48],
+        detail: "Coach approves progressions, resolves ambiguity and can reject, correct or override proposals."
+      },
+      {
+        id: "hybrid-emit",
+        label: "HybridEmit",
+        layer: "Boundary",
+        color: "var(--viz-series-5)",
+        point: [0.36, -0.84, 0.38],
+        detail: "Publishes only validated changes while preserving coach intent and athlete actuals separately."
+      },
+      {
+        id: "receipt-undo",
+        label: "Receipt + undo",
+        layer: "Trust",
+        color: "var(--viz-series-5)",
+        point: [-0.34, -0.84, -0.4],
+        detail: "Records trigger, evidence, before-and-after state, authority, expiry and reversal path."
+      },
+      {
+        id: "outcome-ledger",
+        label: "Outcome ledger",
+        layer: "Learning",
+        color: "var(--viz-series-6)",
+        point: [-0.88, 0.32, -0.34],
+        detail: "Captures acceptance, rejection and athlete outcomes so personalisation can improve safely."
+      },
+      {
+        id: "deterministic-core",
+        label: "Deterministic core",
+        layer: "Safety",
+        color: "var(--viz-series-3)",
+        point: [0, 0, 0],
+        fixed: true,
+        detail: "Enforces safety precedence, policy scope, action bounds, abstention and replayability."
+      }
+    ];
+
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const links = [
+      { id: "intent-ai", from: "coach-intent", to: "ai-reasoner" },
+      { id: "context-ai", from: "athlete-context", to: "ai-reasoner" },
+      { id: "history-ai", from: "training-history", to: "ai-reasoner" },
+      { id: "context-core", from: "athlete-context", to: "deterministic-core" },
+      { id: "intent-core", from: "coach-intent", to: "deterministic-core" },
+      { id: "ai-core", from: "ai-reasoner", to: "deterministic-core" },
+      { id: "core-human", from: "deterministic-core", to: "human-approval" },
+      { id: "core-emit", from: "deterministic-core", to: "hybrid-emit" },
+      { id: "human-emit", from: "human-approval", to: "hybrid-emit" },
+      { id: "emit-receipt", from: "hybrid-emit", to: "receipt-undo" },
+      { id: "receipt-outcome", from: "receipt-undo", to: "outcome-ledger" },
+      { id: "outcome-history", from: "outcome-ledger", to: "training-history" }
+    ];
+
+    const modes = {
+      shadow: {
+        line: "AI observes and proposes. No training prescription changes.",
+        activeLinks: new Set(["intent-ai", "context-ai", "history-ai", "ai-core", "core-human"]),
+        dimNodes: new Set(["hybrid-emit", "receipt-undo"])
+      },
+      approved: {
+        line: "AI proposes; coach approval unlocks HybridEmit.",
+        activeLinks: new Set(["intent-ai", "context-ai", "history-ai", "context-core", "intent-core", "ai-core", "core-human", "human-emit", "emit-receipt", "receipt-outcome", "outcome-history"]),
+        dimNodes: new Set()
+      },
+      bounded: {
+        line: "Validated holds, trims and effort caps may emit automatically; progressions still require approval.",
+        activeLinks: new Set(["intent-ai", "context-ai", "history-ai", "context-core", "intent-core", "ai-core", "core-emit", "core-human", "human-emit", "emit-receipt", "receipt-outcome", "outcome-history"]),
+        dimNodes: new Set()
+      }
+    };
+
+    let mode = "shadow";
+    let selectedId = "deterministic-core";
+    let rotationX = -0.2;
+    let rotationY = 0.42;
+    let dragging = false;
+    let dragMoved = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+    let dimensions = { width: 736, height: 500, cx: 368, cy: 250, radius: 178 };
+
+    function createSvgElement(name, attributes = {}) {
+      const element = document.createElementNS(svgNs, name);
+      Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+      return element;
+    }
+
+    function rotate(point) {
+      const [x, y, z] = point;
+      const cosY = Math.cos(rotationY);
+      const sinY = Math.sin(rotationY);
+      const xY = x * cosY + z * sinY;
+      const zY = -x * sinY + z * cosY;
+      const cosX = Math.cos(rotationX);
+      const sinX = Math.sin(rotationX);
+      return {
+        x: xY,
+        y: y * cosX - zY * sinX,
+        z: y * sinX + zY * cosX
+      };
+    }
+
+    function project(point, fixed = false) {
+      const rotated = fixed ? { x: point[0], y: point[1], z: point[2] } : rotate(point);
+      const perspective = fixed ? 1 : 1 + rotated.z * 0.12;
+      return {
+        x: dimensions.cx + rotated.x * dimensions.radius * perspective,
+        y: dimensions.cy + rotated.y * dimensions.radius * perspective,
+        z: rotated.z,
+        scale: 0.82 + (rotated.z + 1) * 0.16
+      };
+    }
+
+    function pathFromPoints(points) {
+      return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
+    }
+
+    function drawWire() {
+      wireLayer.replaceChildren();
+      const boundary = createSvgElement("circle", {
+        class: "sphere-boundary",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: dimensions.radius
+      });
+      wireLayer.appendChild(boundary);
+
+      const curves = [];
+      [-0.55, 0, 0.55].forEach((latitude) => {
+        const ringRadius = Math.sqrt(1 - latitude * latitude);
+        const points = [];
+        for (let step = 0; step <= 72; step += 1) {
+          const angle = (step / 72) * Math.PI * 2;
+          points.push(project([Math.cos(angle) * ringRadius, latitude, Math.sin(angle) * ringRadius]));
+        }
+        curves.push(points);
+      });
+
+      [0, Math.PI / 3, (Math.PI * 2) / 3].forEach((offset) => {
+        const points = [];
+        for (let step = 0; step <= 72; step += 1) {
+          const angle = (step / 72) * Math.PI * 2;
+          points.push(project([
+            Math.cos(angle) * Math.cos(offset),
+            Math.sin(angle),
+            Math.cos(angle) * Math.sin(offset)
+          ]));
+        }
+        curves.push(points);
+      });
+
+      curves.forEach((points) => {
+        wireLayer.appendChild(createSvgElement("path", {
+          class: "wire-line",
+          d: pathFromPoints(points)
+        }));
+      });
+    }
+
+    function projectedNode(node) {
+      return project(node.point, node.fixed);
+    }
+
+    function drawLinks() {
+      linkLayer.replaceChildren();
+      const activeLinks = modes[mode].activeLinks;
+      links.forEach((link) => {
+        const from = projectedNode(nodeById.get(link.from));
+        const to = projectedNode(nodeById.get(link.to));
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2 - Math.min(22, Math.abs(from.x - to.x) * 0.08);
+        const path = createSvgElement("path", {
+          class: `flow-link${activeLinks.has(link.id) ? " is-active" : ""}`,
+          d: `M ${from.x.toFixed(2)} ${from.y.toFixed(2)} Q ${midX.toFixed(2)} ${midY.toFixed(2)} ${to.x.toFixed(2)} ${to.y.toFixed(2)}`
+        });
+        const depthOpacity = Math.max(0.2, Math.min(1, 0.55 + ((from.z + to.z) / 2) * 0.28));
+        path.style.opacity = String(activeLinks.has(link.id) ? Math.max(0.68, depthOpacity) : depthOpacity * 0.38);
+        linkLayer.appendChild(path);
+      });
+    }
+
+    function drawCore() {
+      coreLayer.replaceChildren();
+      const isSelected = selectedId === "deterministic-core";
+      const outer = createSvgElement("circle", {
+        class: "core-shell-outer",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: isSelected ? 66 : 62
+      });
+      const inner = createSvgElement("circle", {
+        class: "core-shell-inner",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: 45
+      });
+      const title = createSvgElement("text", {
+        class: "core-title",
+        x: dimensions.cx,
+        y: dimensions.cy - 4
+      });
+      title.textContent = "Coordinator";
+      const subtitle = createSvgElement("text", {
+        class: "core-subtitle",
+        x: dimensions.cx,
+        y: dimensions.cy + 17
+      });
+      subtitle.textContent = "rules + safety";
+      const hit = createSvgElement("circle", {
+        class: "sphere-core-hit",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: 68,
+        "aria-label": "Inspect deterministic core"
+      });
+      hit.addEventListener("click", () => selectNode("deterministic-core"));
+      coreLayer.append(outer, inner, title, subtitle, hit);
+    }
+
+    function drawNodes() {
+      nodeLayer.replaceChildren();
+      const projected = nodes
+        .filter((node) => !node.fixed)
+        .map((node) => ({ node, projection: projectedNode(node) }))
+        .sort((a, b) => a.projection.z - b.projection.z);
+
+      projected.forEach(({ node, projection }) => {
+        const group = createSvgElement("g", {
+          class: `sphere-node${node.id === selectedId ? " is-selected" : ""}`,
+          transform: `translate(${projection.x.toFixed(2)} ${projection.y.toFixed(2)})`,
+          "data-node-id": node.id,
+          "aria-label": `Inspect ${node.label}`
+        });
+        group.style.setProperty("--node-color", node.color);
+        const isDimmed = modes[mode].dimNodes.has(node.id);
+        const baseOpacity = 0.46 + ((projection.z + 1) / 2) * 0.54;
+        group.style.opacity = String(isDimmed ? baseOpacity * 0.28 : baseOpacity);
+
+        const dot = createSvgElement("circle", {
+          class: "sphere-node-dot",
+          r: node.id === selectedId ? 9 : Math.max(5.5, 7 * projection.scale)
+        });
+        group.appendChild(dot);
+
+        const showLabel = projection.z > -0.22 || node.id === selectedId || dimensions.width > 620;
+        if (showLabel) {
+          const label = createSvgElement("text", {
+            class: "sphere-node-label",
+            x: projection.x >= dimensions.cx ? 13 : -13,
+            y: 4,
+            "text-anchor": projection.x >= dimensions.cx ? "start" : "end"
+          });
+          label.textContent = node.label;
+          group.appendChild(label);
+        }
+
+        group.addEventListener("click", () => {
+          if (!dragMoved) selectNode(node.id);
+        });
+        nodeLayer.appendChild(group);
+      });
+    }
+
+    function updateSelection() {
+      const selected = nodeById.get(selectedId);
+      selectionLayer.textContent = selected.layer;
+      selectionTitle.textContent = selected.label;
+      selectionDetail.textContent = selected.detail;
+      select.value = selectedId;
+    }
+
+    function render() {
+      drawWire();
+      drawLinks();
+      drawCore();
+      drawNodes();
+      updateSelection();
+    }
+
+    function selectNode(id) {
+      if (!nodeById.has(id)) return;
+      selectedId = id;
+      render();
+    }
+
+    function setMode(nextMode) {
+      if (!modes[nextMode]) return;
+      mode = nextMode;
+      root.querySelectorAll("[data-mode]").forEach((button) => {
+        const active = button.dataset.mode === mode;
+        button.setAttribute("aria-pressed", String(active));
+        button.classList.toggle("btn-primary", active);
+      });
+      modeLine.textContent = modes[mode].line;
+      render();
+    }
+
+    function resize() {
+      const bounds = stage.getBoundingClientRect();
+      const width = Math.max(300, Math.round(bounds.width));
+      const height = Math.max(420, Math.round(bounds.height));
+      dimensions = {
+        width,
+        height,
+        cx: width / 2,
+        cy: height / 2 - 4,
+        radius: Math.min(width * 0.35, height * 0.36, 190)
+      };
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      render();
+    }
+
+    nodes.forEach((node) => {
+      const option = document.createElement("option");
+      option.value = node.id;
+      option.textContent = `${node.layer} — ${node.label}`;
+      select.appendChild(option);
+    });
+
+    root.querySelectorAll("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => setMode(button.dataset.mode));
+    });
+
+    select.addEventListener("change", () => selectNode(select.value));
+
+    stage.addEventListener("pointerdown", (event) => {
+      dragging = true;
+      dragMoved = false;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      stage.classList.add("is-dragging");
+      stage.setPointerCapture(event.pointerId);
+    });
+
+    stage.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+      const deltaX = event.clientX - lastPointerX;
+      const deltaY = event.clientY - lastPointerY;
+      if (Math.abs(deltaX) + Math.abs(deltaY) > 2) dragMoved = true;
+      rotationY += deltaX * 0.008;
+      rotationX = Math.max(-1.25, Math.min(1.25, rotationX - deltaY * 0.007));
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      render();
+    });
+
+    function endDrag(event) {
+      if (!dragging) return;
+      dragging = false;
+      stage.classList.remove("is-dragging");
+      if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+      window.setTimeout(() => {
+        dragMoved = false;
+      }, 0);
+    }
+
+    stage.addEventListener("pointerup", endDrag);
+    stage.addEventListener("pointercancel", endDrag);
+
+    if (typeof ResizeObserver === "function") {
+      const observer = new ResizeObserver(resize);
+      observer.observe(stage);
+    } else {
+      window.addEventListener("resize", resize);
+    }
+
+    setMode("shadow");
+    resize();
+  })();
+</script>

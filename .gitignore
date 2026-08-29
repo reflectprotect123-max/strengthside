@@ -32,3 +32,11 @@ training_data.csv
 tmp/
 supabase/.temp/
 .capgo
+
+# evidence-platform (Python) build/runtime cruft
+evidence-platform/**/__pycache__/
+evidence-platform/**/*.pyc
+evidence-platform/**/*.egg-info/
+evidence-platform/.pytest_cache/
+evidence-platform/runtime/*.db-shm
+evidence-platform/runtime/*.db-wal

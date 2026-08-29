@@ -1,0 +1,16 @@
+ruleId: strength.example
+packVersion: strength-0.1.0
+status: candidate
+priority: 0
+when:
+  all: []
+then:
+  decision: maintain
+trace:
+  policyId: policy_example_0001
+  claimIds: []
+validation:
+  requiredProductLocks: []
+tests:
+  goldenScenarioIds: []
+

@@ -1,0 +1,7 @@
+policy_id,statement,system,owner,status,evidence_claim_ids,review_due
+POL-GOV-001,Preserve original source material unchanged.,governance,platform-owner,active,,
+POL-GOV-002,LLM extraction and summarisation remain untrusted until source and schema validation.,governance,platform-owner,active,,
+POL-GOV-003,"Runtime athlete decisions use deterministic, versioned, testable non-LLM models.",coordinator,model-risk-owner,active,,
+POL-GOV-004,No application repository is modified or wired by this evidence-platform release.,governance,platform-owner,active,,
+POL-SAFE-001,Safety hard stops and insufficient-data states take precedence over optimisation scores.,coordinator,clinical-safety-owner-unassigned,draft_requires_owner,,
+POL-TRACE-001,Every decision receipt retains complete source-to-decision lineage and immutable model versions.,coordinator,model-risk-owner,active,,

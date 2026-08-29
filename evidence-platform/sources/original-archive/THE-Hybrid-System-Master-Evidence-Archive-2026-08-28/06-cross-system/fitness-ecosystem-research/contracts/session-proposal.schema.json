@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fitness-ecosystem.invalid/contracts/session-proposal.schema.json",
+  "title": "Specialist Session Proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["proposal_id", "subject_id", "engine", "engine_version", "contract_version", "priority", "duration_minutes", "target_window", "tags", "reasons", "safe_modifications"],
+  "properties": {
+    "proposal_id": {"type": "string", "format": "uuid"},
+    "subject_id": {"type": "string", "format": "uuid"},
+    "engine": {"enum": ["strength", "conditioning"]},
+    "engine_version": {"type": "string", "minLength": 1},
+    "contract_version": {"type": "string", "minLength": 1},
+    "priority": {"enum": ["mandatory", "preferred", "optional"]},
+    "goal_weight": {"type": "number", "minimum": 0, "maximum": 1},
+    "staleness_days": {"type": "number", "minimum": 0},
+    "duration_minutes": {"type": "integer", "minimum": 1},
+    "target_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["earliest_date", "latest_date"],
+      "properties": {
+        "earliest_date": {"type": "string", "format": "date"},
+        "latest_date": {"type": "string", "format": "date"},
+        "preferred_time": {"type": ["string", "null"]}
+      }
+    },
+    "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "prerequisites": {"type": "array", "items": {"type": "string"}},
+    "safe_modifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["modification_id", "description"],
+        "properties": {
+          "modification_id": {"type": "string"},
+          "description": {"type": "string"},
+          "duration_minutes": {"type": ["integer", "null"], "minimum": 1},
+          "preserves_goal": {"type": "boolean"}
+        }
+      }
+    },
+    "observed_input_ids": {"type": "array", "items": {"type": "string"}}
+  }
+}

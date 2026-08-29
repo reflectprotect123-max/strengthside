@@ -1,0 +1,181 @@
+{
+  "generated_at": "2026-08-28T21:29:31.759835+00:00",
+  "method": "exact SHA-256 match from preserved nested ZIP; originals unchanged",
+  "recovered_count": 23,
+  "unresolved_count": 10,
+  "recovered": [
+    {
+      "relative_path": "01-strength/strengthside-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120-README.md",
+      "sha256": "BE41997EA2BA2978651160C85E733B4A5B79ADE4AB17FFE64B3C5C21CB603995",
+      "bytes": 1872,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120-README.md"
+    },
+    {
+      "relative_path": "01-strength/strengthside-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120.json",
+      "sha256": "3E775BE7D550908B804EC0159ED3CAF31E3593E898A59D8BF970E9354889E4B3",
+      "bytes": 142633,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120.json"
+    },
+    {
+      "relative_path": "02-conditioning/hybrid-engine-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120-README.md",
+      "sha256": "BE41997EA2BA2978651160C85E733B4A5B79ADE4AB17FFE64B3C5C21CB603995",
+      "bytes": 1872,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120-README.md"
+    },
+    {
+      "relative_path": "02-conditioning/hybrid-engine-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120.json",
+      "sha256": "3E775BE7D550908B804EC0159ED3CAF31E3593E898A59D8BF970E9354889E4B3",
+      "bytes": 142633,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120.json"
+    },
+    {
+      "relative_path": "06-cross-system/fitness-ecosystem-research/worktree/06-coordinator-simulation/README.md",
+      "sha256": "789053BD3EA52701E0710289D92076B9D88F6E016FB9EECEFAE59F5FB3286719",
+      "bytes": 694,
+      "archive": "09-original-archives/fitness-ecosystem-research-claude-code.zip",
+      "member": "fitness-ecosystem-research/worktree/06-coordinator-simulation/README.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/build_final_dossier.py",
+      "sha256": "9C841846E05426945B1D77C96C869487D3EB5957B6216564021E2A20FC7E23D7",
+      "bytes": 188290,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/build_final_dossier.py"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/hybrid-engine-final-evidence-dossier.md",
+      "sha256": "AF973C950A634F90BBA822C03D4074B4E6624F5CFA63E29109A3902B33C4D0E2",
+      "bytes": 821366,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/hybrid-engine-final-evidence-dossier.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/THE_Hybrid_Engine_Final_Evidence_Dossier.docx",
+      "sha256": "A31B7712B5D07FA80824CCBAB745A1D700F7B2DC0C08C924D065BE9DB5FEDFE4",
+      "bytes": 158232,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/THE_Hybrid_Engine_Final_Evidence_Dossier.docx"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/THE_Hybrid_Engine_Final_Evidence_Dossier.pdf",
+      "sha256": "B6B6EB5624228A932BCBF92DE5A1C1AE588ABD3CE2EB84E83C5D7576B019D2F4",
+      "bytes": 2174580,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/01_FINAL_DOSSIER/THE_Hybrid_Engine_Final_Evidence_Dossier.pdf"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/AUDIT.md",
+      "sha256": "EEC2356F589DD92064BCA3069FCF8DC6DA8A475BBF05457DAE947D4AE0F1E6DA",
+      "bytes": 14592,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/AUDIT.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/design.md",
+      "sha256": "0A76F115A9F45F32D0510EFA1CBD42EDC131788634912298AD069274CF12782B",
+      "bytes": 24282,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/design.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/FILE_TREE.md",
+      "sha256": "E18BBE992B5DA528C05973F327B83868DE6B3E9C3F7BD0F9ABAD593351797E48",
+      "bytes": 4392,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/FILE_TREE.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/hybrid_adaptive_evidence_bundle_2026-08-01.md",
+      "sha256": "6A1A2F7361651F296087CC69F18C3ACA39D1E6D968061D61EF22AB7420C81FD5",
+      "bytes": 60245,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/hybrid_adaptive_evidence_bundle_2026-08-01.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/HybridTraining_Audit.md",
+      "sha256": "3389AC6011FF09F40056B82AC8B5BA44E126C28D961D0B81B68F6BA596A119CB",
+      "bytes": 13676,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/HybridTraining_Audit.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/JARVIS_TAKEOVER_AUDIT.md",
+      "sha256": "C620183976940ACC919AD03BA06E063BCDBCFBA13F7FE24DEB04B762E9865905",
+      "bytes": 3161,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/JARVIS_TAKEOVER_AUDIT.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/THE-Coach-Brain-v0-AI-Model-Spec.md",
+      "sha256": "691DF167A1704B95E848AAC2B952837D1BE8636FE115480F65F8C7091031FCE8",
+      "bytes": 12793,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/02_EVIDENCE_AND_DESIGN/THE-Coach-Brain-v0-AI-Model-Spec.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120-README.md",
+      "sha256": "BE41997EA2BA2978651160C85E733B4A5B79ADE4AB17FFE64B3C5C21CB603995",
+      "bytes": 1872,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120-README.md"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120.csv",
+      "sha256": "8B2F5281B7B0E5D245901F3F5C2BA8DE0F16243057665A6CEDD997DF3C292093",
+      "bytes": 55710,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120.csv"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120.json",
+      "sha256": "3E775BE7D550908B804EC0159ED3CAF31E3593E898A59D8BF970E9354889E4B3",
+      "bytes": 142633,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-library-120.json"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-search.html",
+      "sha256": "9358A10FA0A624E764A339AF8706DFF049444D8E94C801A45F281611C44DA010",
+      "bytes": 12907,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/hybrid-engine-exercise-search.html"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/THE-HYBRID-ENGINE-120-exercise-library.html",
+      "sha256": "1B6946C65A23DD67FFCA658335CA3B801393D92FA5BFBA1239B79F677B388B75",
+      "bytes": 250640,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/03_EXERCISE_LIBRARY/THE-HYBRID-ENGINE-120-exercise-library.html"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/04_APP_PROTOTYPES/THE-Hybrid-Engine-polished-sendable.html",
+      "sha256": "71E5A1B351BFCA696CEEF3EB20BBB866570236C5024AD92F95136D52B1F9807C",
+      "bytes": 63544,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/04_APP_PROTOTYPES/THE-Hybrid-Engine-polished-sendable.html"
+    },
+    {
+      "relative_path": "06-cross-system/THE_Hybrid_Engine_Project_Handoff_2026-08-16/04_APP_PROTOTYPES/THE-Hybrid-Engine-pro-dashboard.html",
+      "sha256": "FEBA463254ED1D97AF706328D2C818B2674063BA46F234714C994587264543B9",
+      "bytes": 72849,
+      "archive": "09-original-archives/THE_Hybrid_Engine_Project_Handoff_2026-08-16.zip",
+      "member": "THE_Hybrid_Engine_Project_Handoff_2026-08-16/04_APP_PROTOTYPES/THE-Hybrid-Engine-pro-dashboard.html"
+    }
+  ],
+  "unresolved": [
+    "01-strength/strengthside-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120.csv",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/NOTICE.md",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/python/echo_v3_ftms.py",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/python/README.md",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/python/test_echo_v3_ftms.py",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/sample_payloads.json",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/typescript/echo-v3-ftms.test.ts",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/typescript/echo-v3-ftms.ts",
+    "02-conditioning/hybrid-engine-research/echo-v3-connectivity-bundle/code/starter/typescript/README.md",
+    "02-conditioning/hybrid-engine-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120.csv"
+  ]
+}
