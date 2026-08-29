@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 28 August 2026 (owner away).**
+> **AUTHORITATIVE CHECKPOINT — 30 August 2026.**
 > **Chat may be cleared after this write — treat §0–§4 as the full memory.**
 > **Product:** Hybrid HTML athlete app + Capgo/dogfood + Netlify. Coach = prototype only.
 > **Companion `THE-HYBRID-ENGINE1`:** shared-Supabase schema stub only — no apps.
@@ -13,31 +13,30 @@
 
 | | |
 | --- | --- |
-| **Owner** | **Away** — **Decision locked 29 Aug:** easiest path in **§2 Decision Hub (approved)**. |
-| **Edit** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`7642cdb`** (PR #92 + smoke **`a1801e1`**) |
-| **Handoff branch** | `cursor/capgo-1-0-13-upload-84a0` @ **`895653d`** — Capgo 1.0.13 upload, secrets vault, Decision Hub briefing (**PR #93**) |
+| **Owner** | Five-engine **research** handed to **Claude** (branch below). ChatGPT dropped for research. App AI wiring **paused**. |
+| **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
+| **`main` tip** | **`a1801e1`** (smoke on **`7642cdb`** = PR #92 merge) |
+| **Ops / vault PR** | `cursor/capgo-1-0-13-upload-84a0` @ **`c21277a`** — **PR #93** (handoff, secrets, briefing, WIP AI stubs) |
+| **Five-engine research** | `claude/big-mac-q7xyqo` @ **`ac3dbae`** — **`evidence-platform/`** — **not merged** · read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v94`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.13`** (uploaded 28 Aug) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html (prototype) |
 | **APK** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
 | **Lost a token?** | **§0.5 Secrets vault** |
-| **Decision Hub design chat** | `docs/decision-hub-chatgpt-briefing/START-HERE.md` · zip: `decision-hub-chatgpt-briefing.zip` |
+| **Decision Hub context** | `docs/decision-hub-chatgpt-briefing/START-HERE.md` |
 
 **Five engines are wired on `main`.** Do not re-run “finish five-systems” or Phase 2 merge plans.
 
-**Ship ritual:** `pnpm run verify` → sync HTML → bump cache → Capgo upload if dogfood moves → refresh this handoff (`git rev-parse --short HEAD`).
+**Ship ritual:** `pnpm run verify` → sync HTML → bump cache → Capgo upload if dogfood moves → refresh this handoff.
 
-**Parked (do not start unless owner says):** Coordinator rename · pain/illness **stop** consumer · Expo / second athlete shell · Play Store / iOS store.
-
-**Decision Hub:** **approved path = shadow-only, strength-only, offline** — full spec in **§2**. Do **not** merge `claude/big-mac-q7xyqo` evidence-platform to `main` unless owner reopens.
+**Do not merge `claude/big-mac-q7xyqo` to `main`** until owner approves. **Do not wire LLM runtime to athlete app** until owner approves post-research.
 
 ---
 
 ## 0.5 Secrets vault (agent recovery)
 
-> **Private repo only.** Values recovered from agent chats + CI (28 Aug). **Netlify UI only** = value never pasted in chat — read from dashboard.
+> **Private repo only.** **Netlify UI only** = value never pasted in chat.
 
 ### Capgo OTA
 
@@ -50,14 +49,14 @@
 
 Also store `CAPGO_TOKEN` in **Cursor Cloud environment secrets**.
 
-### OpenRouter (LLM API — evidence-platform / offline research only)
+### OpenRouter
 
 | Key | Value |
 | --- | --- |
 | `OPENROUTER_API_KEY` | `84ac523e-aae5-49cd-ab45-aa4711736312` |
 | Dashboard | https://openrouter.ai/keys |
 
-Also store `OPENROUTER_API_KEY` in **Cursor Cloud environment secrets**. **Not wired in athlete app or `main` CI** — for `evidence-platform` research tooling on branch `claude/big-mac-q7xyqo` when/if connected.
+Research / offline only until owner approves app wiring. Add to Netlify env if using `ai-strength-progression` function on PR #93 branch.
 
 ### Supabase (shared hosted)
 
@@ -68,9 +67,7 @@ Also store `OPENROUTER_API_KEY` in **Cursor Cloud environment secrets**. **Not w
 | Region | `ap-southeast-2` |
 | `SUPABASE_ANON_KEY` (public — in git) | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeXNqbmNya3NtZGZhYnB1ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MTE4NzksImV4cCI6MjA5OTk4Nzg3OX0.GTMBfFtH5O6SikzHo75sXGIZoEhmuJ7TvXiACd7T078` |
 
-**Dashboard only:** `SUPABASE_SERVICE_ROLE_KEY` · `SUPABASE_ACCESS_TOKEN` (`sbp_…`) · `SUPABASE_DB_PASSWORD` · `VOYAGE_API_KEY` · `EMBED_WEBHOOK_SECRET`
-
-GitHub secrets: https://github.com/reflectprotect123-max/strengthside/settings/secrets/actions
+**Dashboard only:** `SUPABASE_SERVICE_ROLE_KEY` · `SUPABASE_ACCESS_TOKEN` · `SUPABASE_DB_PASSWORD` · `VOYAGE_API_KEY` · `EMBED_WEBHOOK_SECRET`
 
 ### WHOOP
 
@@ -79,136 +76,65 @@ GitHub secrets: https://github.com/reflectprotect123-max/strengthside/settings/s
 | `WHOOP_CLIENT_ID` | `bbce411c-cbd1-446d-8663-709acf923cd8` |
 | `WHOOP_CLIENT_SECRET` | Netlify UI only |
 | Callback | `https://thehybridsystem.netlify.app/.netlify/functions/whoop-callback` |
-| Webhook | `https://thehybridsystem.netlify.app/.netlify/functions/whoop-webhook` |
-| Native return | `com.hybrid.athlete://whoop` |
-
-### Concept2
-
-| Key | Value |
-| --- | --- |
-| `CONCEPT2_CLIENT_ID` / `CONCEPT2_CLIENT_SECRET` | Netlify UI only |
-| Callback | `https://thehybridsystem.netlify.app/.netlify/functions/concept2-callback` |
 
 ### Netlify
 
 | Item | Value |
 | --- | --- |
-| Athlete site | `thehybridsystem` → https://thehybridsystem.netlify.app/ |
-| Site ID (`thehybridsystem`) | `68423862-b052-43af-b482-162b711c8214` |
-| Site ID (`thehybridengine1`, env clone source) | `31f93df6-ea71-440f-a6af-55bb5367a237` |
-| `NETLIFY_AUTH_TOKEN` | GitHub secret — https://app.netlify.com/user/applications#personal-access-tokens |
-| Site env UI | https://app.netlify.com/sites/thehybridsystem/configuration/env |
+| Athlete site | `thehybridsystem` → `68423862-b052-43af-b482-162b711c8214` |
+| Env UI | https://app.netlify.com/sites/thehybridsystem/configuration/env |
 
-Production env keys present (27 Aug clone): `APP_BASE_URL`, `APP_SESSION_SECRET`, `WHOOP_*`, `CONCEPT2_*`, `SUPABASE_URL` (+ legacy `HYBRID_SITE`, `VITE_COACH_*`). Re-clone: `.github/workflows/copy-netlify-env-from-hybrid1.yml`
-
-### GitHub Actions secret names
-
-`NETLIFY_AUTH_TOKEN` · `NETLIFY_SITE_ID` · `HYBRID1_NETLIFY_SITE_ID` · `SUPABASE_ACCESS_TOKEN` · `SUPABASE_DB_PASSWORD` · `SUPABASE_DB_REGION` · `SUPABASE_SERVICE_ROLE_KEY` · `OPENROUTER_API_KEY` (optional — evidence-platform research)
-
-### Coach demo (prototype — not prod auth)
+### Coach demo (prototype)
 
 | Email | Password |
 | --- | --- |
 | `dan@thehybrid.local` | `demo` |
-| `veldman@`, `alex@`, `jordan@` `@thehybrid.local` | `demo` |
 
 ---
 
-## 1. What's shipped (done — do not redo)
+## 1. What's shipped on `main` (do not redo)
 
-### Product surface
-
-- **One athlete app:** Hybrid HTML (`index.html` + adapters). Nav: **Home · Library · Calendar · Settings**.
-- **Five engines wired:** Strength · Conditioning · Nutrition · Recovery (debt row on Home) · Coordinator (silent only).
-- **Strength cloud sync v3:** calendar + templates + progression; merge by `_meta.updatedAt`; same Supabase account syncs web ↔ phone. Spec: `docs/superpowers/specs/2026-08-24-strength-cloud-sync-design.md`.
-- **Recovery:** delivery ledger, debt/repay, recovery sessions in cond logger, WHOOP strain background, gate overlay copy.
-- **Integrations:** WHOOP + Concept2 Netlify functions on athlete site; native BLE HR/Echo on dogfood APK; Capgo OTA on `dogfood`.
-- **Coach:** `coach.html` prototype — Supabase sign-in + offline demo; LogColumns builder twin (#92).
-- **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` in CI.
-
-### Key merges on `main`
-
-| PR | What |
-| --- | --- |
-| #59 | Full athlete shell UI polish |
-| #58 | Bidirectional web↔phone sync (snapshot v3) |
-| #92 | Recovery debt/repay, engine audit, coach LogColumns |
-| #87–#90 | WHOOP pipeline hardening, settings scroll, coach sign-in, Netlify deploy |
-| Earlier | Five-systems wiring, TrainHeroic import, builder/logger alignment, Capgo wiring, hybrid repo split |
-
-### Deploy artifacts (28 Aug)
-
-| Artifact | State |
-| --- | --- |
-| Netlify | Deploys from `main` (`.github/workflows/deploy-athlete-netlify.yml`) |
-| Dogfood APK | **v94** @ `7642cdb` via CI |
-| Capgo | **`1.0.13`** uploaded to `dogfood` |
-| Cache stamp | **`the-hybrid-athlete-engine-v94`** |
+- **One athlete app:** Hybrid HTML — **Home · Library · Calendar · Settings**
+- **Five engines wired:** Strength · Conditioning · Nutrition · Recovery (debt row) · Coordinator (silent only)
+- **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.13`**
+- **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` in CI
+- Key merge: **#92** recovery + engine audit
 
 ---
 
-## 2. What's open (do this next)
+## 2. What's open
 
-### Priority order (owner decision 29 Aug — **easiest path**)
+### A — Product on `main` (ship the app)
 
-1. **Ship the app you have** — dogfood proof, hybrid week, logger friction (checklist below).  
-2. **Do not build** five-engine Decision Hub, million-line packs, or merge evidence-platform.  
-3. **Optional later:** one offline shadow script (strength only) — see §2 Decision Hub.
+- [ ] Phone dogfood proof — Capgo 1.0.13 → strapless cond → recovery session → debt row moves
+- [ ] Hybrid week in Library + Calendar + web↔phone sync proof
+- [ ] Logger friction pass
+- [ ] Merge **PR #93** (handoff + vault onto `main`)
 
-### Checklist (product)
+### B — Five-engine research (Claude owns)
 
-- [ ] **Phone dogfood proof** — Settings → Update (Capgo 1.0.13); strapless cond → recovery session → **debt row moves** on Home
-- [ ] **Hybrid week in Library + Calendar** — encode concurrent strength + conditioning templates; place on calendar; prove web↔phone sync
-- [ ] **Logger friction** — fewer taps, clearer rest/next, sane mid-block exit after a real phone session
-- [ ] **Merge PR #93** — handoff + secrets vault onto `main`
-- [ ] **Handoff stamp** — refresh §0 tip/cache/PRs after each ship
+**Branch:** `claude/big-mac-q7xyqo` @ **`ac3dbae`**
 
-### Optional / lower priority
+**Read first:** `evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`
 
-- **PR #91** — coach UI polish (draft, CI red) — finish or close
-- **Pain/illness stop** — flags exist; nothing consumes them unless product decides
-- **Shadow labeler script** — only after checklist above; strength-only; no app wiring required for v0
-
-### Decision Hub (**approved — easiest path only**)
-
-Owner delegated product decision **29 Aug 2026**. This replaces the big five-brain / million-line / evidence-platform plan.
-
-#### The decision (ELI5)
-
-- **Phone:** unchanged — same silent `decideProgression`, no AI UI, no new screens.  
-- **Brain on phone:** still **deterministic rules** you already shipped.  
-- **LLM:** **teacher in the back room only** — looks at a small “flash card” after a lift, writes a suggestion to a log, **never changes weights**.  
-- **Learning:** you (or a future agent) read the log occasionally; maybe add a rule by hand. No RL, no five packs, no 131k-line platform merge.
-
-#### Do now
-
-| Do | Don't |
+| Item | State |
 | --- | --- |
-| Finish §2 checklist on `main` | Merge `claude/big-mac-q7xyqo` evidence-platform |
-| Keep silent apply as today | LLM runtime on athlete app |
-| Park Decision Hub code | Million-line static packs per engine |
-| OpenRouter key in §0.5 for **offline scripts only** | Athlete chat / weekly AI brief |
+| `evidence-platform/` | Phases 1–7 built (five shells, receipts, shadow gate) — **not athlete-facing** |
+| Research corpus | **2,814** acquired sources (~596/599/587/545/637 per engine) — **all untrusted until human review** |
+| Promoted rules / models | **0** — bottleneck = two independent human reviewers (`gates.py`) |
+| Coordinator focus | Corrected to **return-to-play** (not abstract arbitration) |
+| Tests | 182 pass · `validate_platform.py` → `PASS_PRE_RESEARCH_ONLY` |
+| PR to `main` | **None opened** — do not merge without owner |
 
-#### Do later (optional — one small script)
+**ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** on PR #93 branch only (`strength-ai.js`, partial adapter) — **paused, not wired**.
 
-When checklist is boring-green and owner wants it:
+### C — Decision Hub (product direction — parked for implementation)
 
-1. After strength session complete → export **one JSON flash card** (lift, last 3 exposures, debt, pain).  
-2. **Nightly** local/CI script → OpenRouter → `{ action, reason_codes }` JSON.  
-3. Append row: `{ flash_card, deterministic_decision, llm_suggestion, date }` to a log file or table.  
-4. **Never apply** LLM output. Compare in spreadsheet when curious.
+Owner intent (from design chats): five engines → rich data → deterministic or LLM-assisted **automation** (not explanation UI), silent apply, no training blocks. Full context: `docs/decision-hub-chatgpt-briefing/START-HERE.md`.
 
-No new npm package. No Supabase migration required for v0 (file log is fine).
+**Nothing on `main` implements Decision Hub yet.** Implementation waits until Claude research + owner sign-off.
 
-#### Explicitly rejected for now
-
-- Five-engine AI brains · MMACS · SystemDecision merge · situation libraries at scale  
-- LLM silent apply · reinforcement learning · promoting Claude evidence-platform rules  
-- Any change to product locks in §3
-
-**Design archive (reference only):** `docs/decision-hub-chatgpt-briefing/` · branch `claude/big-mac-q7xyqo` (not merged).
-
-### Dogfood proof commands
+### Dogfood smoke
 
 ```bash
 node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs
@@ -219,67 +145,43 @@ pnpm run verify
 
 ## 3. Rules (do not silently reverse)
 
-### Naming
-
 | Engine | Athlete name | Visible? |
 | --- | --- | --- |
-| Strength | Hybrid Strength | Yes — Library / log / Progress |
-| Conditioning | The Engine | Yes — Home / HR log |
-| Nutrition | Nutrition | Yes — Home daily log |
-| Recovery | — | Debt row on Home only |
+| Strength | Hybrid Strength | Yes |
+| Conditioning | The Engine | Yes |
+| Nutrition | Nutrition | Yes |
+| Recovery | — | Debt row only |
 | Coordinator | — | Invisible (no weekly peek) |
 
-- **The Engine** = conditioning (never “Morpheus” in athlete UI).
-- CSS `mph-*` = legacy; do not reintroduce two-dial-only framing.
-
-### Product locks
-
-- Everyday Readiness / SZN lifts **retired** · Guide / block-help **off**
-- Coach / ARC / Expo as parallel products **cancelled**
-- **Silent apply** for progression + Coordinator — no accept/decline UI
-- **Soft volume** — never block save
-- Training never blocked; pain Yes holds **strength bumps** only
-- Illness = record-only (no auto-stop)
-- Do not use HRV as pain/injury/illness gate
-- `@hybrid/strength-engine` stays **pure** (zero I/O)
-- Pain/illness flags raised; **nothing stops training** (inherited gap)
-
-### Easy traps
-
-- `NutritionUI.openWeeklyReview` = nutrition check-in (keep). Coordinator weekly peek stays **gone**.
-- `coordinator.smoke.mjs` pins `completedAt` — do not revert to `Date.now()`.
-- Stamp `_meta.updatedAt` on `makeSession` / `saveTemplate` for sync merge.
-- Recovery **debt row** is the only Recovery dial — no second recovery product surface.
-- iOS Safari: no Web Bluetooth — typed Avg HR or native BLE on APK.
-- Local migrations check needs OS pgvector — known gap, not a defect.
-
-### Conditioning logger (unchanged)
-
-- HR: Web Bluetooth (Chrome Android/desktop) or native BLE on APK
-- Start/Pause → Complete → zone summary; Back → Home pauses BLE, 120s watch
+- **Silent apply** · **never block training** · pain Yes → **strength holds only**
+- Illness record-only · no HRV as pain gate · `@hybrid/strength-engine` **pure** (zero I/O)
+- Coach / ARC / Expo **cancelled**
 
 ---
 
-## 4. Paths & PRs
+## 4. Branches & PRs
+
+| Branch | Tip | Purpose |
+| --- | --- | --- |
+| `main` | `a1801e1` | Shipped athlete product |
+| `cursor/capgo-1-0-13-upload-84a0` | `c21277a` | **PR #93** — handoff, vault, briefing, WIP AI stubs |
+| `claude/big-mac-q7xyqo` | `ac3dbae` | Five-engine evidence platform + research corpus |
 
 ```
 apps/mobile/prototype/hybrid-app/index.html
-apps/mobile/prototype/hybrid-app/strength-sync.js
-apps/mobile/prototype/hybrid-app/recovery-engine.js
-apps/mobile/prototype/hybrid-app/whoop.js
-apps/mobile/prototype/hybrid-app/service-worker.js
 apps/mobile/sync-hybrid-html.sh
-apps/mobile/capacitor/scripts/upload-capgo-bundle.sh
 packages/strength-engine/
+evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md
+evidence-platform/README.md
 docs/decision-hub-chatgpt-briefing/START-HERE.md
 CLAUDE.md
 ```
 
 | PR | Status |
 | --- | --- |
-| **#93** | Handoff + secrets vault + Capgo 1.0.13 proof + Decision Hub briefing — merge when owner back |
+| **#93** | Handoff + vault + briefing + WIP AI stubs — merge when owner ready |
 | **#91** | Coach UI polish — draft, CI red |
 
-Closed draft PRs (#2–#14, #32, #41, #56, …) are obsolete vs tip unless `git log main..branch` shows unique salvage.
+**Next agent on research:** `git fetch origin claude/big-mac-q7xyqo && git checkout claude/big-mac-q7xyqo` → read session handoff → human review / promotion gate work only if owner asks.
 
-**Storage:** `localStorage` `THE-builder-clean-v1` + nutrition DB · cloud via StrengthSync snapshot v3 · Postgres: twelve owned tables per `CLAUDE.md`.
+**Next agent on product:** checkout `main` or PR #93 branch → §2 checklist.
