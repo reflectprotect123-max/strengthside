@@ -1,4 +1,4 @@
-import hashlib,json,re,shutil,sqlite3,tempfile,unittest
+import hashlib,json,re,sqlite3,tempfile,unittest
 from pathlib import Path
 from platform_core.db import connect,migrate
 from platform_core.decision import decide,replay
@@ -44,7 +44,7 @@ class OperationalPlatformTests(unittest.TestCase):
     def test_source_bytes_are_verified_or_quarantined(self):
         verified=self.connection.execute("SELECT COUNT(*) n FROM records WHERE record_type='source' AND payload_json LIKE '%verified_bytes%'").fetchone()["n"]
         missing=self.connection.execute("SELECT COUNT(*) n FROM quarantine WHERE reason_code='source_bytes_missing'").fetchone()["n"]
-        self.assertEqual(verified,318); self.assertEqual(missing,10)
+        self.assertEqual(verified,3132); self.assertEqual(missing,10)
     def test_fake_active_record_model_has_no_runtime_authority(self):
         payload=json.dumps({"model_id":"FAKE","status":"active","hash_valid":True})
         self.connection.execute("INSERT INTO records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",("model","FAKE","coordinator","active","fake","fake",None,"","","",None,payload,hashlib.sha256(payload.encode()).hexdigest(),"now")); self.connection.commit()
@@ -148,12 +148,25 @@ class OperationalPlatformTests(unittest.TestCase):
         recovery=json.loads(json.dumps(outputs["recovery"])); recovery["proposed_actions"][0]["source_system"]="nutrition"
         bad_source["recovery"]=recovery
         with self.assertRaises(ValueError): decide(self.connection,snapshot,bad_source)
-    def test_packaged_pre_migration_db_bootstraps_v2_tables_without_data_loss(self):
-        packaged=ROOT/"runtime/evidence.db"
-        packaged_hash_before=hashlib.sha256(packaged.read_bytes()).hexdigest()
+    def test_pre_migration_db_bootstraps_v2_tables_without_data_loss(self):
+        # Was built around runtime/evidence.db happening to still be
+        # pre-v2 - that stopped being true once a real ingest (CLI-driven,
+        # which always migrates first) ran against the packaged db for
+        # real corpus growth. A synthetic v1-only fixture tests the same
+        # migrate()-preserves-data property without depending on the
+        # packaged db's incidental, and now permanently changed, schema
+        # state.
         with tempfile.TemporaryDirectory() as tmp:
-            copy=Path(tmp)/"evidence.db"; shutil.copy(packaged,copy)
+            copy=Path(tmp)/"evidence.db"
             before=sqlite3.connect(copy); before.row_factory=sqlite3.Row
+            migration_001=(ROOT/"platform_core/migrations/001_initial.sql").read_text(encoding="utf-8")
+            before.executescript(migration_001)
+            before.execute(
+                "INSERT INTO records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                ("source","SRC-FIXTURE-001",None,"verified","fixture","fixture text",None,None,None,None,None,"{}",
+                 hashlib.sha256(b"{}").hexdigest(),"2026-01-01T00:00:00Z"),
+            )
+            before.commit()
             record_count_before=before.execute("SELECT COUNT(*) n FROM records").fetchone()["n"]
             tables_before={r["name"] for r in before.execute("SELECT name FROM sqlite_master WHERE type='table'")}
             self.assertNotIn("decision_receipts_v2",tables_before)
@@ -165,7 +178,6 @@ class OperationalPlatformTests(unittest.TestCase):
             self.assertEqual(connection.execute("SELECT COUNT(*) n FROM replay_attempts_v2").fetchone()["n"],0)
             self.assertEqual(connection.execute("SELECT COUNT(*) n FROM records").fetchone()["n"],record_count_before)
             connection.close()
-        self.assertEqual(hashlib.sha256(packaged.read_bytes()).hexdigest(),packaged_hash_before,"test must migrate a copy, never the packaged runtime DB in place")
     def test_migrate_is_safe_to_call_more_than_once_against_the_same_database(self):
         # cli.py's main() calls migrate(db) on every single invocation, not
         # just the first - a migration file whose SQL isn't idempotent on

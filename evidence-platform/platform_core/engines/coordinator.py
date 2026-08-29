@@ -13,6 +13,26 @@ Coordinator is one peer system among five here, same as the ratified System
 Constitution requires (section 2: "Coordinator is not the final brain").
 Cross-system arbitration is BIG MAC's job (`platform_core.decision`), not
 this module's.
+
+Real corpus content vs. original design intent (30 August 2026): this
+engine was designed around abstract multi-objective arbitration and
+uncertainty calibration (see platform_core/arbitration.py, whose mechanics
+stay valid and domain-agnostic regardless of what follows). But the actual
+acquired evidence for "coordinator" (sources/acquired/*/coordinator/,
+600+ sources) turned out to be dominated by something narrower and more
+concrete: return-to-play / return-to-sport readiness after injury or
+illness (titles matching "return to play"/"return to sport": ~80;
+"injury prevention": ~105 - both dwarfing "uncertainty"/"calibration"/
+"decision support", each in the single digits). That is a genuine
+cross-domain coordination question in its own right - it needs recovery's
+input (healed/not), strength's input (capacity restored/not), and pain/
+illness status (Constitution section 9: safety flag, never a readiness
+penalty) - so it fits this engine's actual role. It is just a narrower,
+more concrete first candidate than the original abstract framing assumed.
+Treat "when is an athlete ready to return to full training after injury
+or illness" as this engine's evidence-backed near-term direction; the
+original arbitration/calibration framing remains the longer-term shape of
+what a mature coordinator does, not a wrong turn to undo.
 """
 
 from __future__ import annotations

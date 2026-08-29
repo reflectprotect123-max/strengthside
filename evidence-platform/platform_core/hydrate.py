@@ -20,7 +20,10 @@ def hydrate_typed(db,root:Path):
 def source_base(root): return root/"sources/original-archive/THE-Hybrid-System-Master-Evidence-Archive-2026-08-28"
 def source_path(root,relative_path):
     path=source_base(root)/relative_path
-    return path if path.is_file() else root/"sources/recovered-nested"/relative_path
+    if path.is_file(): return path
+    path=root/"sources/recovered-nested"/relative_path
+    if path.is_file(): return path
+    return root/"sources/acquired"/relative_path
 
 def hydrate_chunks(db,root):
     base=source_base(root)

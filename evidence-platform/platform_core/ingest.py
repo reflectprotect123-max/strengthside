@@ -36,6 +36,7 @@ def source_integrity(root,row):
     base=root/"sources/original-archive/THE-Hybrid-System-Master-Evidence-Archive-2026-08-28"
     path=base/row.get("relative_path","")
     if not path.is_file(): path=root/"sources/recovered-nested"/row.get("relative_path","")
+    if not path.is_file(): path=root/"sources/acquired"/row.get("relative_path","")
     if not path.is_file(): return "source_bytes_missing",str(path)
     actual=hashlib.sha256(path.read_bytes()).hexdigest().upper()
     if actual!=row.get("sha256","").upper(): return "source_hash_mismatch",actual

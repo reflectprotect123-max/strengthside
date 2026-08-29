@@ -99,7 +99,15 @@ runtime_db=BASE/'runtime'/'evidence.db'
 if runtime_db.exists():
     db=sqlite3.connect(runtime_db)
     if db.execute("SELECT COUNT(*) FROM runtime_artifacts WHERE status='active'").fetchone()[0]: errors.append('Active runtime artifact exists in pre-research release')
-    expected={"records":526,"sources_typed":328,"claims_typed":86,"formulas_typed":33,"document_chunks":2625,"external_citations":1101,"citation_occurrences":3063}
+    # Bumped 30 August 2026 after wiring 2,814 acquired source records
+    # (sources/acquired/) into the corpus via a real ingest run - a
+    # deliberate, documented corpus growth, not drift. Previous baseline:
+    # records=526, sources_typed=328, document_chunks=2625,
+    # citation_occurrences=3063. See docs/research-acquisition-strategy.md
+    # and docs/research-plan-five-engines.md for what changed and why.
+    # claims_typed/formulas_typed/external_citations are unchanged - this
+    # pass added source records only, no new claims or formulas.
+    expected={"records":3340,"sources_typed":3142,"claims_typed":86,"formulas_typed":33,"document_chunks":5439,"external_citations":1101,"citation_occurrences":3080}
     for table,count in expected.items():
         actual=db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         if actual!=count: errors.append(f'Runtime database {table}: expected {count}, got {actual}')

@@ -1,5 +1,17 @@
 # Pre-research completion status
 
+**Addendum, 30 August 2026:** the "Measured import" numbers below are a
+26 August 2026 snapshot of the original frozen archive only. Since then,
+2,814 additional source records were acquired and wired into the same
+corpus (`sources/acquired/`, real Europe PMC open-access papers plus a
+handful of named practitioner/vendor sources) - see
+`docs/research-acquisition-strategy.md` and
+`docs/research-plan-five-engines.md` for what was acquired, why, and what
+still doesn't change: none of it is verified, reviewed, or promoted.
+Every number below is stale for total corpus size; nothing below is stale
+for what those numbers mean about promotion status - still 7 rule
+candidates, still 0 active models, still nothing runtime-eligible.
+
 ## Outcome
 
 The engineering foundation is operational up to the first scientific promotion gate. It does not activate athlete-facing intelligence.

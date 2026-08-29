@@ -126,6 +126,20 @@ reading before drafting a new one) and take it through `domain_review`,
 same as any other candidate, but the "evidence" behind it is a considered
 judgment call, not a citation.
 
+**Update, 30 August 2026, after acquiring 600+ real coordinator sources**
+(`sources/acquired/`): this conclusion was written when coordinator had
+only 3 source files and no acquired literature. With real evidence in
+hand, the picture sharpens rather than reverses - the corpus turned out to
+be dominated by return-to-play/return-to-sport readiness and injury
+prevention (~80 and ~105 matching titles respectively), not abstract
+arbitration methodology (uncertainty/calibration/decision-support terms
+each appear fewer than 10 times). Return-to-play readiness is still a
+policy-owner decision, not a pure literature lookup - but it is a *narrower,
+more concrete* one than "how should BIG MAC arbitrate any cross-domain
+conflict in general," and it is the direction this corpus actually
+supports. See `platform_core/engines/coordinator.py`'s docstring for the
+same correction applied to the code's own framing.
+
 ## Recommended sequencing
 
 Given the infrastructure that already exists (per-engine model seam,
