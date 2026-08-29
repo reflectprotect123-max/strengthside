@@ -11,6 +11,6 @@
   },
   "errors": [],
   "warnings": [],
-  "tests_passing": 83,
+  "tests_passing": 85,
   "note": "This validates the engineering package, not scientific truth. Source-file syntax/link defects are warnings because originals are immutable; generated-artifact defects are errors."
 }

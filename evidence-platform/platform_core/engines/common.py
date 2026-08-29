@@ -111,6 +111,28 @@ def validate_engine_output(output: Mapping[str, Any], expected_system: str) -> N
         raise EngineInputError(f"{expected_system} output must be an object")
     if output.get("system") != expected_system:
         raise EngineInputError(f"{expected_system} output has wrong system identity")
+    if not isinstance(output.get("engine_version"), str) or not output["engine_version"].strip():
+        raise EngineInputError(f"{expected_system} requires a non-empty engine_version")
+    if not isinstance(output.get("model_version"), str) or not output["model_version"].strip():
+        raise EngineInputError(f"{expected_system} requires a non-empty model_version")
+    if output.get("status") not in {"synthetic_test_only", "inactive_no_approved_model"}:
+        raise EngineInputError(f"{expected_system} has an invalid status")
+    if not isinstance(output.get("synthetic_test_only"), bool):
+        raise EngineInputError(f"{expected_system} requires a boolean synthetic_test_only")
+    if (output["status"] == "synthetic_test_only") != output["synthetic_test_only"]:
+        raise EngineInputError(f"{expected_system} status/synthetic_test_only disagree")
+    if not isinstance(output.get("state_estimate"), Mapping):
+        raise EngineInputError(f"{expected_system} requires a state_estimate object")
+    if not isinstance(output.get("evidence_ids"), list):
+        raise EngineInputError(f"{expected_system} requires an evidence_ids list")
+    if not isinstance(output.get("reason_codes"), list) or not all(
+        isinstance(code, str) and code.strip() for code in output["reason_codes"]
+    ):
+        raise EngineInputError(f"{expected_system} requires a list of non-empty reason_codes")
+    if not isinstance(output.get("constraints"), list) or not all(
+        isinstance(item, Mapping) for item in output["constraints"]
+    ):
+        raise EngineInputError(f"{expected_system} requires a list of constraint objects")
     actions = output.get("proposed_actions")
     if not isinstance(actions, list) or not actions:
         raise EngineInputError(f"{expected_system} requires proposed_actions")
@@ -120,5 +142,9 @@ def validate_engine_output(output: Mapping[str, Any], expected_system: str) -> N
         if candidate.get("source_system") != expected_system:
             raise EngineInputError(f"{expected_system} candidate has wrong source identity")
     confidence = output.get("confidence")
-    if not isinstance(confidence, (int, float)) or not 0 <= float(confidence) <= 1:
+    if (
+        not isinstance(confidence, (int, float))
+        or isinstance(confidence, bool)
+        or not 0 <= float(confidence) <= 1
+    ):
         raise EngineInputError(f"{expected_system} confidence is invalid")

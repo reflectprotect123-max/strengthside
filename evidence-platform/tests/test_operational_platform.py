@@ -125,7 +125,7 @@ class OperationalPlatformTests(unittest.TestCase):
     def test_decide_rejects_malformed_domain_output_content(self):
         snapshot=json.loads((ROOT/"fixtures/synthetic/athlete-snapshot.json").read_text())
         outputs=json.loads((ROOT/"fixtures/synthetic/five-system-outputs.json").read_text())
-        # Wrong shape entirely - still a ValueError, but not what this test is really about.
+        # Also covers a type mismatch as a sanity check, not just malformed content.
         wrong_type=dict(outputs); wrong_type["recovery"]=["hold"]
         with self.assertRaises(ValueError): decide(self.connection,snapshot,wrong_type)
         # Right shape, malformed content: out-of-range confidence.

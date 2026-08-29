@@ -19,11 +19,13 @@ from .receipt_replay import ReceiptValidationError, sha256_json
 def _domain_quality(engine_output: Mapping[str, Any]) -> str:
     """Map an engine output's status to the schema's quality enum.
 
-    synthetic_test_only -> synthetic_test (fixture-only, never real evidence).
-    inactive_no_approved_model -> low (a real snapshot with nothing backing
-    it yet is not "medium" or "high" confidence data - it is honestly weak).
+    status="synthetic_test_only" -> synthetic_test (fixture-only, never real
+    evidence). status="inactive_no_approved_model" -> low (a real snapshot
+    with nothing backing it yet is not "medium" or "high" confidence data -
+    it is honestly weak). validate_engine_output already guarantees status
+    is exactly one of those two values and agrees with synthetic_test_only.
     """
-    if engine_output.get("synthetic_test_only"):
+    if engine_output["status"] == "synthetic_test_only":
         return "synthetic_test"
     return "low"
 

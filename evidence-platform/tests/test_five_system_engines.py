@@ -68,6 +68,24 @@ class FiveSystemEngineTests(unittest.TestCase):
             for other in other_names:
                 self.assertNotIn(other, json.dumps(outputs[name]))
 
+    def test_incomplete_output_fails_shared_contract_instead_of_crashing_state_builder(self):
+        # A caller-built dict missing fields make_output always includes
+        # (engine_version, status, ...) must fail validate_engine_output
+        # cleanly, not reach build_whole_athlete_state and KeyError there.
+        incomplete = {
+            "system": "strength",
+            "proposed_actions": [{"action": "abstain", "source_system": "strength"}],
+            "confidence": 0.0,
+        }
+        with self.assertRaises(EngineInputError):
+            validate_engine_output(incomplete, "strength")
+
+    def test_status_and_synthetic_flag_must_agree(self):
+        mismatched = dict(run_all(REAL_SNAPSHOT)["strength"])
+        mismatched["synthetic_test_only"] = True  # status still says inactive_no_approved_model
+        with self.assertRaises(EngineInputError):
+            validate_engine_output(mismatched, "strength")
+
     def test_invalid_action_fails_shared_contract(self):
         bad = dict(run_all(REAL_SNAPSHOT)["strength"])
         bad["proposed_actions"] = [dict(bad["proposed_actions"][0], action="not_a_real_action")]
@@ -126,7 +144,7 @@ class WholeAthleteStateTests(unittest.TestCase):
         self.assertEqual(state["hard_constraints"][0]["reason_code"], "TEST_HARD_LIMIT")
 
 
-class EndToEndFivEngineToDecisionTests(unittest.TestCase):
+class EndToEndFiveEngineToDecisionTests(unittest.TestCase):
     """Phase 1 gate: end-to-end synthetic operation without internet or LLM;
     malformed inputs rejected; real inputs abstain (ROADMAP_TO_V1.md)."""
 
