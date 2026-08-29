@@ -5,9 +5,9 @@
     "json_schema": 15,
     "yaml": 4,
     "csv": 19,
-    "markdown_indexes": 37,
+    "markdown_indexes": 39,
     "source_files": 295,
-    "generated_files": 220
+    "generated_files": 432
   },
   "errors": [],
   "warnings": [],
