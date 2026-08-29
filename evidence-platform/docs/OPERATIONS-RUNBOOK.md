@@ -16,6 +16,10 @@ Automated or LLM extraction may create candidate records only. Human source veri
 
 The decision shell requires all five system outputs. With no approved active model it returns `abstain`. Persisted test decisions contain hashes that expose receipt tampering.
 
+## Athlete-facing contract (platform_core/athlete_facing_contract.py, added 29 August 2026)
+
+`to_athlete_facing_update(receipt)` is the one function a future athlete-app integration would call - never the raw receipt. It returns only `{"has_update": bool, "action": str|None}`; reason codes, the candidate ledger, model ids, and every other internal field stay inside BIG MAC's own hidden receipt, per the ratified Constitution's silent-execution design. Nothing outside evidence-platform calls this today - this package still does not import from, depend on, or get imported by anything under `apps/`, `packages/`, or `supabase/` (strengthside's own CLAUDE.md). This exists so that whenever real wiring is built, it has one narrow, already-tested seam instead of reaching into receipt internals directly.
+
 ## Shadow-stage promotion gate (added 29 August 2026)
 
 `promotion_gate` now also checks any rule or model record currently sitting in the `shadow` stage: it must carry a `shadow_report` in its payload (shaped like `platform_core/shadow.py::run_shadow_comparison`'s output) that actually passed - at least one case run, zero errored cases, fully deterministic, and (if golden cases were supplied) full agreement with them. These are hard correctness bars, not tunable science thresholds, so there is nothing here for a reviewer to negotiate down; a record that fails one of these has no business leaving shadow regardless of what it claims about athlete physiology. Blocker codes: `SHADOW_REPORT_MALFORMED`, `SHADOW_REPORT_NO_CASES`, `SHADOW_REPORT_HAD_ERRORS`, `SHADOW_REPORT_NONDETERMINISTIC`, `SHADOW_REPORT_GOLDEN_DISAGREEMENT`.
