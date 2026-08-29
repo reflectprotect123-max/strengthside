@@ -50,6 +50,15 @@
 
 Also store `CAPGO_TOKEN` in **Cursor Cloud environment secrets**.
 
+### OpenRouter (LLM API — evidence-platform / offline research only)
+
+| Key | Value |
+| --- | --- |
+| `OPENROUTER_API_KEY` | `84ac523e-aae5-49cd-ab45-aa4711736312` |
+| Dashboard | https://openrouter.ai/keys |
+
+Also store `OPENROUTER_API_KEY` in **Cursor Cloud environment secrets**. **Not wired in athlete app or `main` CI** — for `evidence-platform` research tooling on branch `claude/big-mac-q7xyqo` when/if connected.
+
 ### Supabase (shared hosted)
 
 | Key | Value |
@@ -94,7 +103,7 @@ Production env keys present (27 Aug clone): `APP_BASE_URL`, `APP_SESSION_SECRET`
 
 ### GitHub Actions secret names
 
-`NETLIFY_AUTH_TOKEN` · `NETLIFY_SITE_ID` · `HYBRID1_NETLIFY_SITE_ID` · `SUPABASE_ACCESS_TOKEN` · `SUPABASE_DB_PASSWORD` · `SUPABASE_DB_REGION` · `SUPABASE_SERVICE_ROLE_KEY`
+`NETLIFY_AUTH_TOKEN` · `NETLIFY_SITE_ID` · `HYBRID1_NETLIFY_SITE_ID` · `SUPABASE_ACCESS_TOKEN` · `SUPABASE_DB_PASSWORD` · `SUPABASE_DB_REGION` · `SUPABASE_SERVICE_ROLE_KEY` · `OPENROUTER_API_KEY` (optional — evidence-platform research)
 
 ### Coach demo (prototype — not prod auth)
 
