@@ -13,7 +13,7 @@
 
 | | |
 | --- | --- |
-| **Owner** | **Away for a while** — no product direction changes; do not start Decision Hub implementation until owner returns with a signed spec. |
+| **Owner** | **Away** — **Decision locked 29 Aug:** easiest path in **§2 Decision Hub (approved)**. |
 | **Edit** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **`main` tip** | **`7642cdb`** (PR #92 + smoke **`a1801e1`**) |
 | **Handoff branch** | `cursor/capgo-1-0-13-upload-84a0` @ **`895653d`** — Capgo 1.0.13 upload, secrets vault, Decision Hub briefing (**PR #93**) |
@@ -31,7 +31,7 @@
 
 **Parked (do not start unless owner says):** Coordinator rename · pain/illness **stop** consumer · Expo / second athlete shell · Play Store / iOS store.
 
-**Decision Hub:** unparked for **design only** — see **§2 Decision Hub**. Owner may refine externally (ChatGPT); **no code** until owner approves.
+**Decision Hub:** **approved path = shadow-only, strength-only, offline** — full spec in **§2**. Do **not** merge `claude/big-mac-q7xyqo` evidence-platform to `main` unless owner reopens.
 
 ---
 
@@ -149,41 +149,64 @@ Production env keys present (27 Aug clone): `APP_BASE_URL`, `APP_SESSION_SECRET`
 
 ## 2. What's open (do this next)
 
-> **Owner away:** prefer bugfixes, verify green, and §2 checklist items that need no product calls. Do **not** implement Decision Hub (§2 below) without owner sign-off.
+### Priority order (owner decision 29 Aug — **easiest path**)
 
-### Checklist (product — resume when owner returns)
+1. **Ship the app you have** — dogfood proof, hybrid week, logger friction (checklist below).  
+2. **Do not build** five-engine Decision Hub, million-line packs, or merge evidence-platform.  
+3. **Optional later:** one offline shadow script (strength only) — see §2 Decision Hub.
+
+### Checklist (product)
 
 - [ ] **Phone dogfood proof** — Settings → Update (Capgo 1.0.13); strapless cond → recovery session → **debt row moves** on Home
 - [ ] **Hybrid week in Library + Calendar** — encode concurrent strength + conditioning templates; place on calendar; prove web↔phone sync
 - [ ] **Logger friction** — fewer taps, clearer rest/next, sane mid-block exit after a real phone session
-- [ ] **Merge PR #93** — handoff + secrets vault + Decision Hub briefing onto `main`
+- [ ] **Merge PR #93** — handoff + secrets vault onto `main`
 - [ ] **Handoff stamp** — refresh §0 tip/cache/PRs after each ship
 
 ### Optional / lower priority
 
 - **PR #91** — coach UI polish (draft, CI red) — finish or close
 - **Pain/illness stop** — flags exist; nothing consumes them unless product decides
+- **Shadow labeler script** — only after checklist above; strength-only; no app wiring required for v0
 
-### Decision Hub (design track — **not approved for build**)
+### Decision Hub (**approved — easiest path only**)
 
-Owner unparked this for architecture discussion (28 Aug). **Design only until owner returns.**
+Owner delegated product decision **29 Aug 2026**. This replaces the big five-brain / million-line / evidence-platform plan.
 
-| Locked intent | Detail |
+#### The decision (ELI5)
+
+- **Phone:** unchanged — same silent `decideProgression`, no AI UI, no new screens.  
+- **Brain on phone:** still **deterministic rules** you already shipped.  
+- **LLM:** **teacher in the back room only** — looks at a small “flash card” after a lift, writes a suggestion to a log, **never changes weights**.  
+- **Learning:** you (or a future agent) read the log occasionally; maybe add a rule by hand. No RL, no five packs, no 131k-line platform merge.
+
+#### Do now
+
+| Do | Don't |
 | --- | --- |
-| **Purpose** | **Automation** — silent decisions applied through existing adapters. **Not** explanation, chat, or weekly AI brief. |
-| **No LLM** | No GPT/Claude/embeddings for decisions. Deterministic **rule engine / expert system**. |
-| **Five engines** | Strength · Conditioning · Nutrition · Recovery · Coordinator — each feeds a **rich athlete snapshot** (not today’s thin 7-day Coordinator receipts). |
-| **Static libraries** | Versioned playbooks per engine (rules, tables, examples) — built once, interpreted each run. |
-| **Five interpreters** | Per-engine pipeline: static lib + snapshot → typed **domain decision** (JSON). |
-| **System output** | Coordinator layer merges five domain decisions → **`SystemDecision`** → validators → silent apply. |
-| **Pure engine package** | `@hybrid/strength-engine` stays zero I/O; interpreters live in adapters / new modules. |
-| **Phase F** | `coaching_note` / embed infra exists; **optional** for v1 — notes may be compiled into static rules manually. |
+| Finish §2 checklist on `main` | Merge `claude/big-mac-q7xyqo` evidence-platform |
+| Keep silent apply as today | LLM runtime on athlete app |
+| Park Decision Hub code | Million-line static packs per engine |
+| OpenRouter key in §0.5 for **offline scripts only** | Athlete chat / weekly AI brief |
 
-**Suggested build order (when approved):** (1) snapshot schemas + exporters, (2) Strength interpreter + static lib, (3) Recovery → Cond → Nutrition, (4) Coordinator merge, (5) deepen static libs.
+#### Do later (optional — one small script)
 
-**Briefing for external design chat:** `docs/decision-hub-chatgpt-briefing/` (also `decision-hub-chatgpt-briefing.zip` on PR #93 branch).
+When checklist is boring-green and owner wants it:
 
-**Do not:** add LLM calls, athlete-facing AI UI, weekly Coordinator peek, training blocks, or re-litigate five-systems wiring.
+1. After strength session complete → export **one JSON flash card** (lift, last 3 exposures, debt, pain).  
+2. **Nightly** local/CI script → OpenRouter → `{ action, reason_codes }` JSON.  
+3. Append row: `{ flash_card, deterministic_decision, llm_suggestion, date }` to a log file or table.  
+4. **Never apply** LLM output. Compare in spreadsheet when curious.
+
+No new npm package. No Supabase migration required for v0 (file log is fine).
+
+#### Explicitly rejected for now
+
+- Five-engine AI brains · MMACS · SystemDecision merge · situation libraries at scale  
+- LLM silent apply · reinforcement learning · promoting Claude evidence-platform rules  
+- Any change to product locks in §3
+
+**Design archive (reference only):** `docs/decision-hub-chatgpt-briefing/` · branch `claude/big-mac-q7xyqo` (not merged).
 
 ### Dogfood proof commands
 
