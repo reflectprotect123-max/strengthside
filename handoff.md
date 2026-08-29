@@ -15,7 +15,7 @@
 | --- | --- |
 | **Owner** | Five-engine **research** merged to `main`. ChatGPT dropped for research. App AI wiring **paused**. |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`779ddb6`** (merge `1a249a4` + handoff sync — owner approved 30 Aug) |
+| **`main` tip** | **`a1452f2`** (Claude research + vault/briefing #93 + coach polish #91 — owner merged 30 Aug) |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v94`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.13`** (uploaded 28 Aug) |
@@ -97,8 +97,9 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 - **Five engines wired:** Strength · Conditioning · Nutrition · Recovery (debt row) · Coordinator (silent only)
 - **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.13`**
 - **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` in CI
-- Key merge: **#92** recovery + engine audit
+- Key merges: **#92** recovery + engine audit · **#93** vault + Decision Hub briefing · **#91** coach UI polish
 - **Evidence platform:** merged at **`1a249a4`** (2,814 acquired sources, 0 promoted)
+- **Coach prototype:** Dashboard-quality polish on **`coach.html`** (#91)
 
 ---
 
@@ -162,7 +163,7 @@ pnpm run verify
 
 | Branch | Tip | Purpose |
 | --- | --- | --- |
-| `main` | `779ddb6` | Shipped athlete product + merged evidence-platform + vault/briefing |
+| `main` | `a1452f2` | Athlete product + evidence-platform + vault/briefing + coach polish |
 | `claude/big-mac-q7xyqo` | `ac3dbae`→merged | Five-engine evidence platform — **merged to `main`, branch kept for history** |
 
 ```
