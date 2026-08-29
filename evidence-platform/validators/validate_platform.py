@@ -3,8 +3,14 @@ import csv, hashlib, json, os, re, sqlite3, sys
 from pathlib import Path
 
 BASE=Path(__file__).resolve().parents[1]
-VALIDATION_DEPS=BASE/'work'/'validation-deps'
-if VALIDATION_DEPS.exists(): sys.path.insert(0,str(VALIDATION_DEPS))
+# jsonschema/pyyaml are optional here (schema meta-validation is skipped with
+# a warning, not a crash, when they are absent - see the ImportError handling
+# below): `pip install jsonschema pyyaml` for full meta-validation. A vendored
+# copy used to be shadowed onto sys.path here, but it was pip-installed for
+# win_amd64 (a compiled `.pyd`/native `rpds` extension that cannot load on
+# Linux) so it always silently downgraded this check to a warning, on every
+# platform this project actually runs on. Deleted; use a real interpreter-
+# matched install instead (this is what CI does).
 LONG_BASE=Path('\\\\?\\'+str(BASE)) if os.name=='nt' else BASE
 errors=[]; warnings=[]
 checked={"json":0,"json_schema":0,"yaml":0,"csv":0,"markdown_indexes":0,"source_files":0,"generated_files":0}
@@ -99,6 +105,17 @@ if runtime_db.exists():
         if actual!=count: errors.append(f'Runtime database {table}: expected {count}, got {actual}')
     db.close()
 
-report={"status":"PASS_PRE_RESEARCH_ONLY" if not errors else "FAIL","checked":checked,"errors":sorted(set(errors)),"warnings":sorted(set(warnings)),"tests_passing":49,"note":"This validates the engineering package, not scientific truth. Source-file syntax/link defects are warnings because originals are immutable; generated-artifact defects are errors."}
+import subprocess
+# "tests_passing" used to be a hand-typed literal (49) that went stale the
+# moment a test was added or removed. Run the real suite so this number is
+# measured, not claimed - the same standard this report holds everything else to.
+try:
+    test_run=subprocess.run([sys.executable,'-m','pytest',str(BASE/'tests'),'-q'],capture_output=True,text=True,cwd=str(BASE))
+    tests_passing=int(re.search(r'(\d+) passed',test_run.stdout).group(1)) if test_run.returncode==0 and re.search(r'(\d+) passed',test_run.stdout) else 0
+    if test_run.returncode!=0: errors.append('Test suite is not fully green: '+test_run.stdout.strip().splitlines()[-1] if test_run.stdout.strip() else 'pytest failed')
+except FileNotFoundError:
+    tests_passing=None; warnings.append('pytest unavailable; tests_passing could not be measured')
+
+report={"status":"PASS_PRE_RESEARCH_ONLY" if not errors else "FAIL","checked":checked,"errors":sorted(set(errors)),"warnings":sorted(set(warnings)),"tests_passing":tests_passing,"note":"This validates the engineering package, not scientific truth. Source-file syntax/link defects are warnings because originals are immutable; generated-artifact defects are errors."}
 out=BASE/'releases'/'validation-report.json'; out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 print(json.dumps(report,indent=2)); sys.exit(1 if errors else 0)

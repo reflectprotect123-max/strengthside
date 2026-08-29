@@ -34,7 +34,7 @@ def main(argv=None):
     a=make_parser().parse_args(argv); db=connect(a.db); migrate(db)
     if a.command=="init-db": emit({"status":"ready","db":str(Path(a.db).resolve())})
     elif a.command=="stats":
-        tables=("records","record_versions","quarantine","evidence_edges","document_chunks","external_citations","citation_occurrences","reviews","promotion_events","runtime_artifacts","decision_receipts")
+        tables=("records","record_versions","quarantine","evidence_edges","document_chunks","external_citations","citation_occurrences","reviews","promotion_events","runtime_artifacts","decision_receipts","decision_receipts_v2","replay_attempts_v2")
         emit({name:db.execute(f"SELECT COUNT(*) n FROM {name}").fetchone()["n"] for name in tables})
     elif a.command=="ingest": emit(ingest(db,a.root))
     elif a.command=="search": emit(text_search(db,a.query,a.type,a.limit))

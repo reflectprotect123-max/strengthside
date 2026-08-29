@@ -1,4 +1,4 @@
-import hashlib,json,sqlite3,tempfile,unittest
+import hashlib,json,shutil,sqlite3,tempfile,unittest
 from pathlib import Path
 from platform_core.db import connect,migrate
 from platform_core.decision import decide,replay
@@ -94,7 +94,45 @@ class OperationalPlatformTests(unittest.TestCase):
         self.connection.rollback()
         self.assertTrue(replay(self.connection,receipt["receipt_id"])["ok"])
     def test_runtime_core_has_no_llm_or_network_client_imports(self):
-        text="\n".join(p.read_text(encoding="utf-8") for p in (ROOT/"platform_core").glob("*.py"))
+        text="\n".join(p.read_text(encoding="utf-8") for p in (ROOT/"platform_core").rglob("*.py"))
         for forbidden in ("import google.generativeai","import openai","import requests","import httpx","urllib.request"):
             self.assertNotIn(forbidden,text)
+    def test_decide_rejects_malformed_snapshot(self):
+        outputs=json.loads((ROOT/"fixtures/synthetic/five-system-outputs.json").read_text())
+        with self.assertRaises(ValueError): decide(self.connection,{"as_of":"2026-01-01T00:00:00Z"},outputs)
+        with self.assertRaises(ValueError): decide(self.connection,{"athlete_id":"A"},outputs)
+        with self.assertRaises(ValueError): decide(self.connection,{"athlete_id":"A","as_of":"not-a-timestamp"},outputs)
+    def test_decide_never_defaults_athlete_or_timestamp(self):
+        snapshot=json.loads((ROOT/"fixtures/synthetic/athlete-snapshot.json").read_text()); outputs=json.loads((ROOT/"fixtures/synthetic/five-system-outputs.json").read_text())
+        receipt=decide(self.connection,snapshot,outputs)
+        self.assertEqual(receipt["athlete_scope_id"],snapshot["athlete_id"])
+        self.assertNotEqual(receipt["athlete_scope_id"],"UNKNOWN-ATHLETE")
+        self.assertEqual(receipt["created_at"],snapshot["as_of"])
+    def test_decide_rejects_malformed_domain_output_content(self):
+        snapshot=json.loads((ROOT/"fixtures/synthetic/athlete-snapshot.json").read_text())
+        outputs=json.loads((ROOT/"fixtures/synthetic/five-system-outputs.json").read_text())
+        blank_proposal=dict(outputs); blank_proposal["strength"]={"proposal":"  ","confidence":0.5}
+        with self.assertRaises(ValueError): decide(self.connection,snapshot,blank_proposal)
+        bad_confidence=dict(outputs); bad_confidence["nutrition"]={"proposal":"hold","confidence":1.5}
+        with self.assertRaises(ValueError): decide(self.connection,snapshot,bad_confidence)
+        wrong_type=dict(outputs); wrong_type["recovery"]=["hold"]
+        with self.assertRaises(ValueError): decide(self.connection,snapshot,wrong_type)
+    def test_packaged_pre_migration_db_bootstraps_v2_tables_without_data_loss(self):
+        packaged=ROOT/"runtime/evidence.db"
+        packaged_hash_before=hashlib.sha256(packaged.read_bytes()).hexdigest()
+        with tempfile.TemporaryDirectory() as tmp:
+            copy=Path(tmp)/"evidence.db"; shutil.copy(packaged,copy)
+            before=sqlite3.connect(copy); before.row_factory=sqlite3.Row
+            record_count_before=before.execute("SELECT COUNT(*) n FROM records").fetchone()["n"]
+            tables_before={r["name"] for r in before.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            self.assertNotIn("decision_receipts_v2",tables_before)
+            before.close()
+            connection=connect(copy); migrate(connection)
+            tables_after={r["name"] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            self.assertIn("decision_receipts_v2",tables_after); self.assertIn("replay_attempts_v2",tables_after)
+            self.assertEqual(connection.execute("SELECT COUNT(*) n FROM decision_receipts_v2").fetchone()["n"],0)
+            self.assertEqual(connection.execute("SELECT COUNT(*) n FROM replay_attempts_v2").fetchone()["n"],0)
+            self.assertEqual(connection.execute("SELECT COUNT(*) n FROM records").fetchone()["n"],record_count_before)
+            connection.close()
+        self.assertEqual(hashlib.sha256(packaged.read_bytes()).hexdigest(),packaged_hash_before,"test must migrate a copy, never the packaged runtime DB in place")
 if __name__=="__main__": unittest.main()

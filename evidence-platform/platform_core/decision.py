@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+from .engines.common import EngineInputError, validate_snapshot
 from .receipt_replay import (
     build_receipt,
     canonical_json,
@@ -59,11 +59,31 @@ def load_runtime_models(db):
 
 
 def validate_domain_outputs(domain_outputs):
+    """Reject malformed five-system output shapes, not just missing keys.
+
+    This is the shared-contract enforcement point the gate relies on: a
+    domain output that is present but structurally wrong (missing/blank
+    proposal, out-of-range confidence, wrong types) must fail here rather
+    than reach a decision receipt.
+    """
+    if not isinstance(domain_outputs, Mapping):
+        return ["DOMAIN_OUTPUTS_NOT_AN_OBJECT"]
     problems = []
     for name in DOMAINS:
         value = domain_outputs.get(name)
-        if not isinstance(value, dict) or not value:
+        if not isinstance(value, Mapping) or not value:
             problems.append("EMPTY_OR_MISSING_DOMAIN:" + name.upper())
+            continue
+        proposal = value.get("proposal")
+        if not isinstance(proposal, str) or not proposal.strip():
+            problems.append("INVALID_PROPOSAL:" + name.upper())
+        confidence = value.get("confidence")
+        if confidence is not None and (
+            not isinstance(confidence, (int, float))
+            or isinstance(confidence, bool)
+            or not 0 <= float(confidence) <= 1
+        ):
+            problems.append("INVALID_CONFIDENCE:" + name.upper())
     return problems
 
 
@@ -197,6 +217,10 @@ def _decision_id(snapshot, domain_outputs, models, artifact_errors):
 
 
 def decide(db, snapshot, domain_outputs, models=None, persist=False):
+    try:
+        snapshot = validate_snapshot(snapshot)
+    except EngineInputError as exc:
+        raise ValueError(f"Invalid snapshot: {exc}") from exc
     domain_errors = validate_domain_outputs(domain_outputs)
     if domain_errors:
         raise ValueError("Invalid five-system outputs: " + ", ".join(domain_errors))
@@ -219,15 +243,11 @@ def decide(db, snapshot, domain_outputs, models=None, persist=False):
     }
     trace = _evaluate_replay_bundle(replay_bundle)
     decision_mode = "deterministic" if trace["action"] != "abstain" else "abstention"
-    created_at = str(
-        snapshot.get("as_of")
-        or snapshot.get("occurred_at")
-        or datetime.now(timezone.utc).isoformat()
-    )
+    # validate_snapshot already guaranteed one of each pair is a non-empty,
+    # ISO-8601-valid string; no silent defaulting to "now"/"UNKNOWN-ATHLETE".
+    created_at = str(snapshot.get("as_of") or snapshot.get("occurred_at"))
     athlete_scope_id = str(
-        snapshot.get("athlete_scope_id")
-        or snapshot.get("athlete_id")
-        or "UNKNOWN-ATHLETE"
+        snapshot.get("athlete_scope_id") or snapshot.get("athlete_id")
     )
     decision_id = _decision_id(snapshot, domain_outputs, models, artifact_errors)
 

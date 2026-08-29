@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 import sqlite3
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timezone
@@ -69,9 +70,32 @@ def _is_sha256(value: Any) -> bool:
     )
 
 
-def _require_identifier(value: Any, field: str) -> str:
+def _require_identifier(value: Any, field: str, max_length: int = 256) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ReceiptValidationError(f"{field} must be a non-empty string")
+    if len(value) > max_length:
+        raise ReceiptValidationError(f"{field} exceeds max length {max_length}")
+    return value
+
+
+def _require_timestamp(value: Any, field: str) -> str:
+    if not isinstance(value, str):
+        raise ReceiptValidationError(f"{field} must be a date-time string")
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ReceiptValidationError(f"{field} must be a valid ISO-8601 date-time") from exc
+    return value
+
+
+_RECEIPT_ID_PATTERN = re.compile(r"^REC-V2-[A-F0-9]{24}$")
+
+
+def _require_receipt_id_or_none(value: Any, field: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not _RECEIPT_ID_PATTERN.match(value):
+        raise ReceiptValidationError(f"{field} must be null or a REC-V2-<24 hex> id")
     return value
 
 
@@ -85,10 +109,16 @@ def _validate_artifact_manifest(
     if not isinstance(frozen_artifacts, dict):
         raise ReceiptValidationError("replay_bundle.frozen_artifacts must be an object")
 
+    allowed_artifact_keys = {"artifact_id", "artifact_type", "version", "artifact_hash"}
     for index, original in enumerate(manifest):
         if not isinstance(original, Mapping):
             raise ReceiptValidationError(f"artifact_manifest[{index}] must be an object")
         item = dict(original)
+        extra_keys = set(item) - allowed_artifact_keys
+        if extra_keys:
+            raise ReceiptValidationError(
+                f"artifact_manifest[{index}] has unexpected fields: {sorted(extra_keys)}"
+            )
         artifact_id = _require_identifier(item.get("artifact_id"), "artifact_id")
         if artifact_id in identifiers:
             raise ReceiptValidationError(f"duplicate artifact_id: {artifact_id}")
@@ -117,9 +147,29 @@ def _validate_llm_contribution(
         return None
 
     item = dict(contribution)
+    allowed_keys = {
+        "provider",
+        "model_id",
+        "model_version",
+        "mode",
+        "write_authority",
+        "silent_user_experience",
+        "complete_decision_packet_hash",
+        "prompt_hash",
+        "request_hash",
+        "response_hash",
+        "fallback_envelope_hash",
+    }
+    extra_keys = set(item) - allowed_keys
+    if extra_keys:
+        raise ReceiptValidationError(f"LLM contribution has unexpected fields: {sorted(extra_keys)}")
     provider = item.get("provider")
     if provider not in LLM_PROVIDERS:
         raise ReceiptValidationError("LLM provider must be gemini or gemma")
+    _require_identifier(item.get("model_id"), "LLM model_id")
+    model_version = item.get("model_version")
+    if not isinstance(model_version, str) or not model_version.strip():
+        raise ReceiptValidationError("LLM model_version must be a non-empty string")
     contribution_mode = item.get("mode")
     if contribution_mode not in {"advisory", "lead_fallback"}:
         raise ReceiptValidationError("invalid LLM contribution mode")
@@ -168,13 +218,17 @@ def build_receipt(
     """Build a complete content-addressed receipt without persisting it."""
     decision_id = _require_identifier(decision_id, "decision_id")
     athlete_scope_id = _require_identifier(athlete_scope_id, "athlete_scope_id")
-    created_at = _require_identifier(created_at, "created_at")
+    created_at = _require_timestamp(created_at, "created_at")
     evaluator_id = _require_identifier(evaluator_id, "evaluator_id")
-    evaluator_version = _require_identifier(evaluator_version, "evaluator_version")
+    evaluator_version = _require_identifier(evaluator_version, "evaluator_version", max_length=64)
     if decision_mode not in DECISION_MODES:
         raise ReceiptValidationError(f"invalid decision_mode: {decision_mode}")
     if not _is_sha256(previous_receipt_hash):
         raise ReceiptValidationError("previous_receipt_hash must be SHA-256")
+    prior_receipt_id = _require_receipt_id_or_none(prior_receipt_id, "prior_receipt_id")
+    rollback_target_receipt_id = _require_receipt_id_or_none(
+        rollback_target_receipt_id, "rollback_target_receipt_id"
+    )
     if prior_receipt_id is None and previous_receipt_hash != ZERO_HASH:
         raise ReceiptValidationError("first receipt must use the zero previous hash")
     if prior_receipt_id is not None and previous_receipt_hash == ZERO_HASH:
@@ -204,6 +258,34 @@ def build_receipt(
     if trace.get("user_facing_explanation_emitted") not in {None, False}:
         raise ReceiptValidationError("normal decision execution cannot emit an explanation")
 
+    action = trace["action"]
+    if not isinstance(action, str) or not 1 <= len(action) <= 128:
+        raise ReceiptValidationError("decision_trace.action must be a string of 1-128 chars")
+
+    reason_codes = trace["reason_codes"]
+    if not isinstance(reason_codes, list) or not all(
+        isinstance(code, str) and 1 <= len(code) <= 256 for code in reason_codes
+    ):
+        raise ReceiptValidationError("decision_trace.reason_codes must be a list of identifiers")
+    if len(set(reason_codes)) != len(reason_codes):
+        raise ReceiptValidationError("decision_trace.reason_codes must be unique")
+
+    rationale = trace.get("rationale", [])
+    if not isinstance(rationale, list) or not all(isinstance(item, str) for item in rationale):
+        raise ReceiptValidationError("decision_trace.rationale must be a list of strings")
+
+    validator_results = trace["validator_results"]
+    if not isinstance(validator_results, list) or not validator_results or not all(
+        isinstance(item, Mapping) for item in validator_results
+    ):
+        raise ReceiptValidationError(
+            "decision_trace.validator_results must be a non-empty list of objects"
+        )
+
+    final_decision = trace["final_decision"]
+    if not isinstance(final_decision, Mapping) or not final_decision:
+        raise ReceiptValidationError("decision_trace.final_decision must be a non-empty object")
+
     body = {
         "kind": "decision_receipt",
         "receipt_version": RECEIPT_VERSION,
@@ -221,11 +303,11 @@ def build_receipt(
         },
         "artifact_manifest": artifacts,
         "llm_contribution": llm,
-        "action": trace["action"],
-        "reason_codes": trace["reason_codes"],
-        "rationale": trace.get("rationale", []),
-        "validator_results": trace["validator_results"],
-        "final_decision": trace["final_decision"],
+        "action": action,
+        "reason_codes": reason_codes,
+        "rationale": rationale,
+        "validator_results": validator_results,
+        "final_decision": final_decision,
         "silent_apply_allowed": trace.get("silent_apply_allowed", True),
         "decision_trace": trace,
         "decision_trace_hash": sha256_json(trace),
@@ -370,9 +452,20 @@ def commit_receipt(
     llm_contribution: Mapping[str, Any] | None = None,
     rollback_target_receipt_id: str | None = None,
 ) -> dict[str, Any]:
-    """Atomically append one receipt to an athlete-scoped hash chain."""
+    """Atomically append one receipt to an athlete-scoped hash chain.
+
+    Idempotent: retrying with a decision_id that was already committed
+    returns the existing receipt unchanged when the requested content is
+    identical, instead of raising a bare unique-constraint error. A
+    decision_id reused with genuinely different content raises
+    ReceiptValidationError rather than a raw sqlite3.IntegrityError.
+    """
     db.execute("BEGIN IMMEDIATE")
     try:
+        existing_row = db.execute(
+            "SELECT receipt_json FROM decision_receipts_v2 WHERE decision_id=?",
+            (decision_id,),
+        ).fetchone()
         prior_receipt_id, previous_receipt_hash = _validate_chain_targets(
             db, athlete_scope_id, rollback_target_receipt_id
         )
@@ -391,6 +484,26 @@ def commit_receipt(
             previous_receipt_hash=previous_receipt_hash,
             rollback_target_receipt_id=rollback_target_receipt_id,
         )
+        if existing_row is not None:
+            stored = json.loads(existing_row["receipt_json"])
+            chain_position_fields = {
+                "receipt_id",
+                "receipt_hash",
+                "prior_receipt_id",
+                "previous_receipt_hash",
+            }
+            new_content = {
+                k: v for k, v in receipt.items() if k not in chain_position_fields
+            }
+            stored_content = {
+                k: v for k, v in stored.items() if k not in chain_position_fields
+            }
+            if canonical_json(new_content) != canonical_json(stored_content):
+                raise ReceiptValidationError(
+                    f"decision_id already committed with different content: {decision_id}"
+                )
+            db.rollback()
+            return stored
         db.execute(
             """
             INSERT INTO decision_receipts_v2(
@@ -491,6 +604,54 @@ def _record_replay_attempt(
     return {**body, "replay_id": replay_id, "attempt_hash": attempt_hash}
 
 
+def _record_replay_lookup_failure(
+    db: sqlite3.Connection,
+    *,
+    requested_receipt_id: str,
+    attempted_at: str,
+    failure_code: str,
+) -> dict[str, Any]:
+    """Record a replay attempt that could not even reach a receipt row.
+
+    Distinct from `_record_replay_attempt`: that function requires a real
+    row in decision_receipts_v2 (its table has a FOREIGN KEY on receipt_id).
+    A receipt_id that does not exist, or whose stored row cannot be
+    interpreted, cannot satisfy that constraint - this records the failed
+    lookup itself in a separate append-only, hash-chained ledger so no
+    replay attempt goes unrecorded.
+    """
+    previous = db.execute(
+        "SELECT failure_hash FROM replay_lookup_failures_v2 ORDER BY sequence DESC LIMIT 1"
+    ).fetchone()
+    previous_failure_hash = previous["failure_hash"] if previous else ZERO_HASH
+    body = {
+        "requested_receipt_id": requested_receipt_id,
+        "attempted_at": attempted_at,
+        "failure_code": failure_code,
+        "previous_failure_hash": previous_failure_hash,
+    }
+    failure_hash = sha256_json(body)
+    failure_id = "RLF-V2-" + failure_hash[:24].upper()
+    db.execute(
+        """
+        INSERT INTO replay_lookup_failures_v2(
+          failure_id,requested_receipt_id,attempted_at,failure_code,
+          previous_failure_hash,failure_hash
+        ) VALUES(?,?,?,?,?,?)
+        """,
+        (
+            failure_id,
+            requested_receipt_id,
+            attempted_at,
+            failure_code,
+            previous_failure_hash,
+            failure_hash,
+        ),
+    )
+    db.commit()
+    return {**body, "failure_id": failure_id, "failure_hash": failure_hash}
+
+
 def replay_receipt(
     db: sqlite3.Connection,
     receipt_id: str,
@@ -500,23 +661,52 @@ def replay_receipt(
     *,
     attempted_at: str | None = None,
 ) -> dict[str, Any]:
-    """Load, verify, re-execute, compare, and append a replay-attempt record."""
+    """Load, verify, re-execute, compare, and append a replay-attempt record.
+
+    Every call is recorded, including a receipt_id that cannot be found or
+    whose stored JSON cannot be parsed (defect 10): those go to
+    `replay_lookup_failures_v2` since they cannot satisfy the FOREIGN KEY
+    that `replay_attempts_v2` requires against a real receipt row.
+    """
+    attempted_at = attempted_at or datetime.now(timezone.utc).isoformat()
     row = db.execute(
         "SELECT * FROM decision_receipts_v2 WHERE receipt_id=?", (receipt_id,)
     ).fetchone()
     if not row:
+        _record_replay_lookup_failure(
+            db,
+            requested_receipt_id=receipt_id,
+            attempted_at=attempted_at,
+            failure_code="RECEIPT_NOT_FOUND",
+        )
         return {
             "ok": False,
             "receipt_id": receipt_id,
             "failure_codes": ["RECEIPT_NOT_FOUND"],
         }
 
-    attempted_at = attempted_at or datetime.now(timezone.utc).isoformat()
     failures: list[str] = []
     try:
         receipt = json.loads(row["receipt_json"])
         replay_bundle = json.loads(row["replay_bundle_json"])
     except Exception:
+        _record_replay_attempt(
+            db,
+            receipt_id=receipt_id,
+            attempted_at=attempted_at,
+            evaluator_id="unavailable",
+            evaluator_version="unavailable",
+            result={
+                "ok": False,
+                "failure_codes": ["STORED_JSON_INVALID"],
+                "expected_receipt_hash": row["receipt_hash"],
+                "actual_receipt_hash": None,
+                "expected_trace_hash": row["decision_trace_hash"],
+                "actual_trace_hash": None,
+                "expected_bundle_hash": row["replay_bundle_hash"],
+                "actual_bundle_hash": None,
+            },
+        )
         return {
             "ok": False,
             "receipt_id": receipt_id,

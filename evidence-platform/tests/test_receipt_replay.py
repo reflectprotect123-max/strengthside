@@ -159,13 +159,44 @@ class ReceiptReplayTests(unittest.TestCase):
             "artifact_manifest": [],
         }
         first = commit_receipt(self.connection, **arguments)
-        with self.assertRaises(sqlite3.IntegrityError):
-            commit_receipt(self.connection, **arguments)
+        # Idempotent: identical retry returns the already-committed receipt
+        # instead of raising a unique-constraint error or chaining a second row.
+        second = commit_receipt(self.connection, **arguments)
+        self.assertEqual(second["receipt_id"], first["receipt_id"])
+        self.assertEqual(second["receipt_hash"], first["receipt_hash"])
+        row_count = self.connection.execute(
+            "SELECT COUNT(*) n FROM decision_receipts_v2 WHERE decision_id=?",
+            ("decision:duplicate",),
+        ).fetchone()["n"]
+        self.assertEqual(row_count, 1)
         stored = self.connection.execute(
             "SELECT receipt_hash FROM decision_receipts_v2 WHERE decision_id=?",
             ("decision:duplicate",),
         ).fetchone()["receipt_hash"]
         self.assertEqual(stored, first["receipt_hash"])
+
+    def test_duplicate_decision_id_with_different_content_is_rejected(self):
+        arguments = {
+            "decision_id": "decision:duplicate-conflict",
+            "athlete_scope_id": "athlete:001",
+            "created_at": "2026-08-28T00:00:00Z",
+            "decision_mode": "deterministic",
+            "decision_trace": trace(),
+            "replay_bundle": bundle(),
+            "evaluator_id": "identity",
+            "evaluator_version": "1.0",
+            "artifact_manifest": [],
+        }
+        commit_receipt(self.connection, **arguments)
+        conflicting = dict(arguments, decision_trace=trace("proceed"))
+        conflicting["replay_bundle"] = bundle(expected_trace=conflicting["decision_trace"])
+        with self.assertRaises(ReceiptValidationError):
+            commit_receipt(self.connection, **conflicting)
+        row_count = self.connection.execute(
+            "SELECT COUNT(*) n FROM decision_receipts_v2 WHERE decision_id=?",
+            ("decision:duplicate-conflict",),
+        ).fetchone()["n"]
+        self.assertEqual(row_count, 1)
 
     def test_receipt_chain_and_rollback_reference(self):
         first = commit_receipt(
@@ -357,6 +388,190 @@ class ReceiptReplayTests(unittest.TestCase):
         ).fetchone()
         self.assertEqual(stored["ok"], 0)
         self.assertIn("EVALUATOR_NOT_AVAILABLE", stored["failure_codes_json"])
+
+    def test_replay_of_missing_receipt_is_itself_recorded(self):
+        result = replay_receipt(self.connection, "REC-V2-DOES-NOT-EXIST-000000", {})
+        self.assertFalse(result["ok"])
+        self.assertIn("RECEIPT_NOT_FOUND", result["failure_codes"])
+        stored = self.connection.execute(
+            "SELECT requested_receipt_id,failure_code FROM replay_lookup_failures_v2 WHERE requested_receipt_id=?",
+            ("REC-V2-DOES-NOT-EXIST-000000",),
+        ).fetchone()
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored["failure_code"], "RECEIPT_NOT_FOUND")
+
+    def test_replay_of_corrupt_stored_json_is_itself_recorded(self):
+        # decision_receipts_v2 is append-only (triggers block UPDATE/DELETE),
+        # so simulate on-disk corruption the only way it could actually occur:
+        # a row inserted with unparseable JSON, bypassing commit_receipt.
+        receipt_id = "REC-V2-CORRUPTJSONROWTEST"
+        placeholder_hash = sha256_json({"placeholder": True})
+        self.connection.execute(
+            """
+            INSERT INTO decision_receipts_v2(
+              receipt_id,decision_id,athlete_scope_id,created_at,receipt_version,
+              decision_mode,prior_receipt_id,previous_receipt_hash,
+              rollback_target_receipt_id,receipt_json,replay_bundle_json,
+              decision_trace_hash,replay_bundle_hash,receipt_hash,
+              silent_user_experience
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                receipt_id,
+                "decision:corrupt-json",
+                "athlete:001",
+                "2026-08-28T00:00:00Z",
+                "2.0",
+                "deterministic",
+                None,
+                "0" * 64,
+                None,
+                "not-json",
+                "{}",
+                placeholder_hash,
+                placeholder_hash,
+                placeholder_hash,
+                1,
+            ),
+        )
+        self.connection.commit()
+        result = replay_receipt(self.connection, receipt_id, {})
+        self.assertFalse(result["ok"])
+        self.assertIn("STORED_JSON_INVALID", result["failure_codes"])
+        stored = self.connection.execute(
+            "SELECT ok,failure_codes_json FROM replay_attempts_v2 WHERE receipt_id=?",
+            (receipt_id,),
+        ).fetchone()
+        self.assertIsNotNone(stored)
+        self.assertEqual(stored["ok"], 0)
+        self.assertIn("STORED_JSON_INVALID", stored["failure_codes_json"])
+
+    def test_build_receipt_rejects_invalid_created_at(self):
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:bad-timestamp",
+                athlete_scope_id="athlete:001",
+                created_at="not-a-timestamp",
+                decision_mode="deterministic",
+                decision_trace=trace(),
+                replay_bundle=bundle(),
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+            )
+
+    def test_build_receipt_rejects_malformed_prior_receipt_id(self):
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:bad-prior-id",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="deterministic",
+                decision_trace=trace(),
+                replay_bundle=bundle(),
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+                prior_receipt_id="not-a-real-receipt-id",
+                previous_receipt_hash=sha256_json({"whatever": True}),
+            )
+
+    def test_build_receipt_rejects_artifact_with_unexpected_field(self):
+        model = {"model_id": "M-1", "version": "1.0"}
+        manifest = [
+            {
+                "artifact_id": "M-1",
+                "artifact_type": "model",
+                "version": "1.0",
+                "artifact_hash": sha256_json(model),
+                "trust_origin": "human_promoted_verified",
+            }
+        ]
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:extra-artifact-field",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="deterministic",
+                decision_trace=trace(),
+                replay_bundle={
+                    "bundle_version": "2.0",
+                    "inputs": {"expected_trace": trace()},
+                    "frozen_artifacts": {"M-1": model},
+                    "frozen_llm_response": None,
+                },
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=manifest,
+            )
+
+    def test_build_receipt_rejects_llm_contribution_missing_model_id(self):
+        response = {"provider": "gemma", "mode": "lead_fallback", "proposed_action": "hold"}
+        bad_contribution = contribution(response)
+        del bad_contribution["model_id"]
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:llm-missing-model-id",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="lead_fallback",
+                decision_trace=trace(),
+                replay_bundle=bundle(llm_response=response),
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+                llm_contribution=bad_contribution,
+            )
+
+    def test_build_receipt_rejects_llm_contribution_unexpected_field(self):
+        response = {"provider": "gemma", "mode": "lead_fallback", "proposed_action": "hold"}
+        bad_contribution = contribution(response)
+        bad_contribution["extra_debug_field"] = "not allowed"
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:llm-extra-field",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="lead_fallback",
+                decision_trace=trace(),
+                replay_bundle=bundle(llm_response=response),
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+                llm_contribution=bad_contribution,
+            )
+
+    def test_build_receipt_rejects_duplicate_reason_codes(self):
+        bad_trace = trace()
+        bad_trace["reason_codes"] = ["SAME", "SAME"]
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:dup-reason-codes",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="deterministic",
+                decision_trace=bad_trace,
+                replay_bundle=bundle(expected_trace=bad_trace),
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+            )
+
+    def test_build_receipt_rejects_empty_final_decision(self):
+        bad_trace = trace()
+        bad_trace["final_decision"] = {}
+        with self.assertRaises(ReceiptValidationError):
+            build_receipt(
+                decision_id="decision:empty-final-decision",
+                athlete_scope_id="athlete:001",
+                created_at="2026-08-28T00:00:00Z",
+                decision_mode="deterministic",
+                decision_trace=bad_trace,
+                replay_bundle=bundle(expected_trace=bad_trace),
+                evaluator_id="identity",
+                evaluator_version="1.0",
+                artifact_manifest=[],
+            )
 
 
 if __name__ == "__main__":
