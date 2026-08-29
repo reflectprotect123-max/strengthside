@@ -41,6 +41,14 @@ class MalformedInputTests(unittest.TestCase):
         with self.assertRaises(AthleteConsumerContractError):
             to_athlete_facing_update({"action": "hold", "final_decision": {}})
 
+    def test_non_bool_committed_change_is_rejected_not_truthiness_tested(self):
+        # bool("false") is True in Python - a truthiness check here would
+        # silently misread this as "has an update".
+        for bad_value in ("false", "0", 0, 1, {}, [], None):
+            with self.subTest(committed_change=bad_value):
+                with self.assertRaises(AthleteConsumerContractError):
+                    to_athlete_facing_update({"action": "hold", "final_decision": {"committed_change": bad_value}})
+
 
 class MinimalFixtureTests(unittest.TestCase):
     def test_no_committed_change_yields_no_update(self):

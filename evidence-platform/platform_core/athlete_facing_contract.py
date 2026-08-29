@@ -51,7 +51,15 @@ def to_athlete_facing_update(receipt: Mapping[str, Any]) -> dict[str, Any]:
     final_decision = receipt["final_decision"]
     if not isinstance(final_decision, Mapping) or "committed_change" not in final_decision:
         raise AthleteConsumerContractError("receipt.final_decision must include committed_change")
+    committed_change = final_decision["committed_change"]
+    if not isinstance(committed_change, bool):
+        # bool("false") is True and bool(0) is False but bool("0") is also
+        # True - a truthiness check here would silently misread a tampered
+        # or hand-constructed non-bool value. This is exactly the boundary
+        # this module exists to be strict at, so reject it outright instead
+        # of guessing what a non-bool committed_change was supposed to mean.
+        raise AthleteConsumerContractError("receipt.final_decision.committed_change must be a boolean")
 
-    if not bool(final_decision["committed_change"]):
+    if not committed_change:
         return {"has_update": False, "action": None}
     return {"has_update": True, "action": receipt["action"]}
