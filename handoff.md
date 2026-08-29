@@ -15,9 +15,9 @@
 | --- | --- |
 | **Owner** | Five-engine **research** handed to **Claude** (branch below). ChatGPT dropped for research. App AI wiring **paused**. |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`a1801e1`** (smoke on **`7642cdb`** = PR #92 merge) |
+| **`main` tip** | **`1a249a4`** (merge of `claude/big-mac-q7xyqo` — owner approved 30 Aug) |
 | **Ops / vault PR** | `cursor/capgo-1-0-13-upload-84a0` @ **`c21277a`** — **PR #93** (handoff, secrets, briefing, WIP AI stubs) |
-| **Five-engine research** | `claude/big-mac-q7xyqo` @ **`ac3dbae`** — **`evidence-platform/`** — **not merged** · read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
+| **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v94`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.13`** (uploaded 28 Aug) |
 | **Web** | https://thehybridsystem.netlify.app/ |
@@ -30,7 +30,7 @@
 
 **Ship ritual:** `pnpm run verify` → sync HTML → bump cache → Capgo upload if dogfood moves → refresh this handoff.
 
-**Do not merge `claude/big-mac-q7xyqo` to `main`** until owner approves. **Do not wire LLM runtime to athlete app** until owner approves post-research.
+**`claude/big-mac-q7xyqo` merged to `main` at `1a249a4`, owner-approved 30 Aug** — clean merge, zero conflicts, `apps/`/`packages/`/`supabase/` untouched. **Do not wire LLM runtime to athlete app** until owner approves post-research — merging the research corpus is not that approval.
 
 ---
 
@@ -111,20 +111,20 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 - [ ] Logger friction pass
 - [ ] Merge **PR #93** (handoff + vault onto `main`)
 
-### B — Five-engine research (Claude owns)
+### B — Five-engine research (Claude owns) — **merged to `main`**
 
-**Branch:** `claude/big-mac-q7xyqo` @ **`ac3dbae`**
+**Merged** at `1a249a4` (was `claude/big-mac-q7xyqo` @ `ac3dbae`, direct merge, no PR — owner said "merge")
 
 **Read first:** `evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`
 
 | Item | State |
 | --- | --- |
-| `evidence-platform/` | Phases 1–7 built (five shells, receipts, shadow gate) — **not athlete-facing** |
+| `evidence-platform/` | Phases 1–7 built (five shells, receipts, shadow gate) — **not athlete-facing** — now on `main` |
 | Research corpus | **2,814** acquired sources (~596/599/587/545/637 per engine) — **all untrusted until human review** |
 | Promoted rules / models | **0** — bottleneck = two independent human reviewers (`gates.py`) |
 | Coordinator focus | Corrected to **return-to-play** (not abstract arbitration) |
 | Tests | 182 pass · `validate_platform.py` → `PASS_PRE_RESEARCH_ONLY` |
-| PR to `main` | **None opened** — do not merge without owner |
+| Merge to `main` | **Done, 30 Aug** — clean, no conflicts, `apps/`/`packages/`/`supabase/` untouched |
 
 **ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** on PR #93 branch only (`strength-ai.js`, partial adapter) — **paused, not wired**.
 
@@ -163,9 +163,9 @@ pnpm run verify
 
 | Branch | Tip | Purpose |
 | --- | --- | --- |
-| `main` | `a1801e1` | Shipped athlete product |
+| `main` | `1a249a4` | Shipped athlete product + merged evidence-platform |
 | `cursor/capgo-1-0-13-upload-84a0` | `c21277a` | **PR #93** — handoff, vault, briefing, WIP AI stubs |
-| `claude/big-mac-q7xyqo` | `ac3dbae` | Five-engine evidence platform + research corpus |
+| `claude/big-mac-q7xyqo` | `ac3dbae`→merged | Five-engine evidence platform + research corpus — **merged to `main`, branch kept for history** |
 
 ```
 apps/mobile/prototype/hybrid-app/index.html
@@ -182,6 +182,6 @@ CLAUDE.md
 | **#93** | Handoff + vault + briefing + WIP AI stubs — merge when owner ready |
 | **#91** | Coach UI polish — draft, CI red |
 
-**Next agent on research:** `git fetch origin claude/big-mac-q7xyqo && git checkout claude/big-mac-q7xyqo` → read session handoff → human review / promotion gate work only if owner asks.
+**Next agent on research:** already on `main` — read `evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md` → human review / promotion gate work only if owner asks. No branch checkout needed.
 
 **Next agent on product:** checkout `main` or PR #93 branch → §2 checklist.
