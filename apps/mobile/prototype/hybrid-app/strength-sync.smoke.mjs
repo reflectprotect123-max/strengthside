@@ -20,6 +20,7 @@ must(syncSrc.includes('upsert_athlete_domain_snapshot'), 'push via ecosystem RPC
 must(syncSrc.includes('Whoop.client'), 'reuse WHOOP supabase session');
 must(syncSrc.includes('schedulePush'), 'debounced push');
 must(syncSrc.includes('bootstrap'), 'pull on app load bootstrap');
+must(syncSrc.includes("S.tab === 'settings'"), 'bootstrap must not render() on settings tab');
 must(syncSrc.includes("save('strength-sync-pull')"), 'persist merged pull');
 must(syncSrc.includes("DOMAIN = 'strength'"), 'strength domain');
 must(html.includes('strength-sync.js'), 'index loads strength-sync.js');
