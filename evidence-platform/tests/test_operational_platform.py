@@ -52,7 +52,10 @@ class OperationalPlatformTests(unittest.TestCase):
         self.assertEqual(decide(self.connection,snapshot,outputs)["action"],"abstain")
     def test_llm_tainted_runtime_artifact_is_rejected(self):
         model=ROOT/"fixtures/synthetic/test-model.json"; h=hashlib.sha256(model.read_bytes()).hexdigest()
-        self.connection.execute("INSERT INTO runtime_artifacts VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",("LLM-FAKE","model","1",str(model),h,"machine_extracted",1,1,"active","FAKE-PROMO",None,"now")); self.connection.commit()
+        self.connection.execute(
+            "INSERT INTO runtime_artifacts(artifact_id,artifact_type,version,artifact_path,artifact_hash,trust_origin,llm_tainted,deterministic,status,approval_event_id,rollback_artifact_id,activated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            ("LLM-FAKE","model","1",str(model),h,"machine_extracted",1,1,"active","FAKE-PROMO",None,"now"),
+        ); self.connection.commit()
         snapshot=json.loads((ROOT/"fixtures/synthetic/athlete-snapshot.json").read_text()); outputs=json.loads((ROOT/"fixtures/synthetic/five-system-outputs.json").read_text())
         receipt=decide(self.connection,snapshot,outputs); self.assertEqual(receipt["action"],"abstain"); self.assertIn("UNTRUSTED_RUNTIME_ARTIFACT:LLM-FAKE",receipt["rationale"])
     def test_promotion_is_refused_and_audited(self):
@@ -83,7 +86,10 @@ class OperationalPlatformTests(unittest.TestCase):
         self.assertEqual(self.connection.execute("SELECT status FROM records WHERE record_type='claim' AND record_id='S-001'").fetchone()["status"],"suspended_dependency_revoked")
     def test_trusted_artifact_with_wrong_hash_is_rejected(self):
         model=ROOT/"fixtures/synthetic/test-model.json"
-        self.connection.execute("INSERT INTO runtime_artifacts VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",("BAD-HASH","model","1",str(model),"0"*64,"human_promoted_verified",0,1,"active","PROMO-TEST",None,"now")); self.connection.commit()
+        self.connection.execute(
+            "INSERT INTO runtime_artifacts(artifact_id,artifact_type,version,artifact_path,artifact_hash,trust_origin,llm_tainted,deterministic,status,approval_event_id,rollback_artifact_id,activated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+            ("BAD-HASH","model","1",str(model),"0"*64,"human_promoted_verified",0,1,"active","PROMO-TEST",None,"now"),
+        ); self.connection.commit()
         snapshot=json.loads((ROOT/"fixtures/synthetic/athlete-snapshot.json").read_text()); outputs=json.loads((ROOT/"fixtures/synthetic/five-system-outputs.json").read_text())
         self.assertIn("MODEL_ARTIFACT_HASH_MISMATCH:BAD-HASH",decide(self.connection,snapshot,outputs)["rationale"])
     def test_receipt_storage_rejects_overwrite(self):

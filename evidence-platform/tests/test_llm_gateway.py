@@ -169,6 +169,23 @@ class EnvelopeEnforcementTests(unittest.TestCase):
         violations = envelope.validate_candidate_against_envelope({"not": "a candidate"}, _envelope())
         self.assertTrue(any(v.startswith("CANDIDATE_MALFORMED") for v in violations))
 
+    def test_forbidden_combination_is_actually_enforced(self):
+        # response_builder.py never populates support_tags/interference_tags
+        # today (see its comment), so this mechanism is currently only
+        # reachable by a candidate built directly with tags - proving the
+        # check itself works, independent of whether anything populates it yet.
+        combo_envelope = dict(_envelope())
+        combo_envelope["forbidden_combinations"] = [["CAND-1", "TAG-HIGH-FATIGUE"]]
+        candidate = self._candidate(support_tags=["TAG-HIGH-FATIGUE"])
+        violations = envelope.validate_candidate_against_envelope(candidate, combo_envelope)
+        self.assertIn("FORBIDDEN_COMBINATION:CAND-1,TAG-HIGH-FATIGUE", violations)
+
+    def test_forbidden_combination_does_not_fire_when_tags_absent(self):
+        combo_envelope = dict(_envelope())
+        combo_envelope["forbidden_combinations"] = [["CAND-1", "TAG-HIGH-FATIGUE"]]
+        violations = envelope.validate_candidate_against_envelope(self._candidate(), combo_envelope)
+        self.assertEqual([v for v in violations if v.startswith("FORBIDDEN_COMBINATION")], [])
+
 
 class GatewayFailoverTests(unittest.TestCase):
     def test_lead_success_never_touches_backup(self):

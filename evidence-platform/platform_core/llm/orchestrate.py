@@ -99,7 +99,11 @@ def attempt_lead_fallback(
             model_version=model_version,
         )
     except (ResponseMappingError, ReceiptValidationError) as exc:
-        return {"ok": False, "reason_codes": [f"LEAD_FALLBACK_RESPONSE_INVALID:{exc}"]}
+        # Exception TYPE only, never str(exc): validation messages here can
+        # echo raw fragments of the model's own output, and this code lands
+        # in a receipted, auditable trace - not the place for unreviewed
+        # free text (same reasoning as gateway.call_with_fallback).
+        return {"ok": False, "reason_codes": [f"LEAD_FALLBACK_RESPONSE_INVALID:{type(exc).__name__}"]}
 
     violations = validate_candidate_against_envelope(response["proposed_decision"], fallback_envelope)
     if violations:

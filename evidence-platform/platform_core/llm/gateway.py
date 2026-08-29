@@ -34,5 +34,9 @@ def call_with_fallback(
         try:
             return provider.generate(request), failures
         except Exception as exc:  # noqa: BLE001 - any provider failure is data here, never a crash
-            failures.append(f"{name.upper()}_PROVIDER_FAILED:{type(exc).__name__}:{exc}")
+            # Exception TYPE only, never str(exc): a provider's raw message
+            # could echo prompt fragments, partial credentials, or other
+            # provider-side detail, and this code lands in a receipted,
+            # auditable trace - not the place for unreviewed free text.
+            failures.append(f"{name.upper()}_PROVIDER_FAILED:{type(exc).__name__}")
     return None, failures

@@ -53,11 +53,18 @@ def _sanitize_model_id(raw: str) -> str:
     onto the shared contract's Identifier shape: ^[A-Za-z0-9][A-Za-z0-9._:-]*$,
     length 3-128. "/" is not a valid Identifier character - replaced with "."
     rather than dropped, so the original structure stays legible.
+
+    Different raw ids can sanitize to the same text (e.g. "a/b" and "a.b"
+    both become "a.b") - a short hash of the ORIGINAL raw string is
+    appended so two different real model ids never collide onto one
+    contract identifier, which would otherwise blur receipt auditability.
     """
     sanitized = re.sub(r"[^A-Za-z0-9._:-]", ".", raw).lstrip("._:-") or "model"
+    suffix = "-" + sha256_json(raw)[:8]
+    sanitized = sanitized[: 128 - len(suffix)] + suffix
     if len(sanitized) < 3:
         sanitized = (sanitized + "-unknown-model")[:128]
-    return sanitized[:128]
+    return sanitized
 
 
 def _extract_json(content: str) -> dict[str, Any]:
@@ -136,6 +143,15 @@ def build_llm_decision_response(
         "constraints_acknowledged": [],
         "expected_effects": [],
         "resource_demands": [],
+        # Deliberately empty: the minimal JSON this maps from (see
+        # PROMPT_INSTRUCTIONS) never asks the model for support/interference
+        # tags - populating them would mean asking the model to reason about
+        # its interaction with OTHER candidates, which is arbitration's job
+        # (Phase 5), not a single lead-fallback response's. Concretely, this
+        # means envelope.py's forbidden_combinations check can never fire
+        # against a real lead-fallback candidate today - it is exercised
+        # only by tests that build a candidate with tags directly
+        # (tests/test_llm_gateway.py::EnvelopeEnforcementTests).
         "support_tags": [],
         "interference_tags": [],
         "uncertainty": uncertainty,
