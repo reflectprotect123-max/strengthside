@@ -1,9 +1,9 @@
 # Session handoff — 30 August 2026
 
-For whoever (Cursor or otherwise) picks this up next. Branch:
-`claude/big-mac-q7xyqo`, pushed to origin, **not merged to `main`** - no
-PR has been opened for it. Everything below is real and verified; nothing
-described here is athlete-facing or claims to be.
+For whoever (Cursor or otherwise) picks this up next. **Merged to `main`
+at `1a249a4` (30 Aug 2026, owner-approved direct merge).** Branch
+`claude/big-mac-q7xyqo` kept for history. Everything below is real and
+verified; nothing described here is athlete-facing or claims to be.
 
 ## What this session built, in order
 

@@ -13,10 +13,9 @@
 
 | | |
 | --- | --- |
-| **Owner** | Five-engine **research** handed to **Claude** (branch below). ChatGPT dropped for research. App AI wiring **paused**. |
+| **Owner** | Five-engine **research** merged to `main`. ChatGPT dropped for research. App AI wiring **paused**. |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`1a249a4`** (merge of `claude/big-mac-q7xyqo` — owner approved 30 Aug) |
-| **Ops / vault PR** | `cursor/capgo-1-0-13-upload-84a0` @ **`c21277a`** — **PR #93** (handoff, secrets, briefing, WIP AI stubs) |
+| **`main` tip** | **`779ddb6`** (merge `1a249a4` + handoff sync — owner approved 30 Aug) |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v94`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.13`** (uploaded 28 Aug) |
@@ -56,7 +55,7 @@ Also store `CAPGO_TOKEN` in **Cursor Cloud environment secrets**.
 | `OPENROUTER_API_KEY` | `84ac523e-aae5-49cd-ab45-aa4711736312` |
 | Dashboard | https://openrouter.ai/keys |
 
-Research / offline only until owner approves app wiring. Add to Netlify env if using `ai-strength-progression` function on PR #93 branch.
+Research / offline only until owner approves app wiring. Add to Netlify env if using `ai-strength-progression` function.
 
 ### Supabase (shared hosted)
 
@@ -75,7 +74,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 | --- | --- |
 | `WHOOP_CLIENT_ID` | `bbce411c-cbd1-446d-8663-709acf923cd8` |
 | `WHOOP_CLIENT_SECRET` | Netlify UI only |
-| Callback | `https://thehybridsystem.netlify.app/.netlify/functions/whoop-callback` |
+| Callback | https://thehybridsystem.netlify.app/.netlify/functions/whoop-callback |
 
 ### Netlify
 
@@ -99,6 +98,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 - **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.13`**
 - **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` in CI
 - Key merge: **#92** recovery + engine audit
+- **Evidence platform:** merged at **`1a249a4`** (2,814 acquired sources, 0 promoted)
 
 ---
 
@@ -109,9 +109,8 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 - [ ] Phone dogfood proof — Capgo 1.0.13 → strapless cond → recovery session → debt row moves
 - [ ] Hybrid week in Library + Calendar + web↔phone sync proof
 - [ ] Logger friction pass
-- [ ] Merge **PR #93** (handoff + vault onto `main`)
 
-### B — Five-engine research (Claude owns) — **merged to `main`**
+### B — Five-engine research — **merged to `main`**
 
 **Merged** at `1a249a4` (was `claude/big-mac-q7xyqo` @ `ac3dbae`, direct merge, no PR — owner said "merge")
 
@@ -126,13 +125,13 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 | Tests | 182 pass · `validate_platform.py` → `PASS_PRE_RESEARCH_ONLY` |
 | Merge to `main` | **Done, 30 Aug** — clean, no conflicts, `apps/`/`packages/`/`supabase/` untouched |
 
-**ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** on PR #93 branch only (`strength-ai.js`, partial adapter) — **paused, not wired**.
+**ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** (`strength-ai.js`, partial adapter, `ai-strength-progression.mjs`) — **paused, not wired**.
 
 ### C — Decision Hub (product direction — parked for implementation)
 
 Owner intent (from design chats): five engines → rich data → deterministic or LLM-assisted **automation** (not explanation UI), silent apply, no training blocks. Full context: `docs/decision-hub-chatgpt-briefing/START-HERE.md`.
 
-**Nothing on `main` implements Decision Hub yet.** Implementation waits until Claude research + owner sign-off.
+**Nothing on `main` implements Decision Hub yet.** Implementation waits until owner sign-off post-research.
 
 ### Dogfood smoke
 
@@ -163,9 +162,8 @@ pnpm run verify
 
 | Branch | Tip | Purpose |
 | --- | --- | --- |
-| `main` | `1a249a4` | Shipped athlete product + merged evidence-platform |
-| `cursor/capgo-1-0-13-upload-84a0` | `c21277a` | **PR #93** — handoff, vault, briefing, WIP AI stubs |
-| `claude/big-mac-q7xyqo` | `ac3dbae`→merged | Five-engine evidence platform + research corpus — **merged to `main`, branch kept for history** |
+| `main` | `779ddb6` | Shipped athlete product + merged evidence-platform + vault/briefing |
+| `claude/big-mac-q7xyqo` | `ac3dbae`→merged | Five-engine evidence platform — **merged to `main`, branch kept for history** |
 
 ```
 apps/mobile/prototype/hybrid-app/index.html
@@ -177,11 +175,6 @@ docs/decision-hub-chatgpt-briefing/START-HERE.md
 CLAUDE.md
 ```
 
-| PR | Status |
-| --- | --- |
-| **#93** | Handoff + vault + briefing + WIP AI stubs — merge when owner ready |
-| **#91** | Coach UI polish — draft, CI red |
+**Next agent on research:** already on `main` — read `evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md` → human review / promotion gate work only if owner asks.
 
-**Next agent on research:** already on `main` — read `evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md` → human review / promotion gate work only if owner asks. No branch checkout needed.
-
-**Next agent on product:** checkout `main` or PR #93 branch → §2 checklist.
+**Next agent on product:** checkout `main` → §2 checklist.
