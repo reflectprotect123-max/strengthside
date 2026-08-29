@@ -1,0 +1,28 @@
+{
+  "proposal_id": "77777777-7777-4777-8777-777777777777",
+  "subject_id": "00000000-0000-4000-8000-000000000001",
+  "engine": "conditioning",
+  "engine_version": "conditioning-v1-draft",
+  "contract_version": "shared-core-1.0.0-draft",
+  "priority": "preferred",
+  "goal_weight": 0.7,
+  "staleness_days": 4,
+  "duration_minutes": 32,
+  "target_window": {
+    "earliest_date": "2026-08-05",
+    "latest_date": "2026-08-07",
+    "preferred_time": "morning"
+  },
+  "tags": ["low_intensity_aerobic", "local_lower_limb_low", "cardio_base"],
+  "reasons": ["aerobic_exposure_due", "low_interference_option"],
+  "prerequisites": [],
+  "safe_modifications": [
+    {
+      "modification_id": "conditioning-minimum-20",
+      "description": "Reduce duration to a 20-minute easy aerobic exposure.",
+      "duration_minutes": 20,
+      "preserves_goal": true
+    }
+  ],
+  "observed_input_ids": ["conditioning_exposure_7d", "state_snapshot_66666666"]
+}

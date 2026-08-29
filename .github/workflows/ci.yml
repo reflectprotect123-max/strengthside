@@ -67,3 +67,13 @@ jobs:
             echo "::error::A KNOWN ENVIRONMENT GAP appeared in CI. The extension IS installed here, so the install broke."
             exit 1
           fi
+
+  evidence-platform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install -e evidence-platform pytest jsonschema pyyaml
+      - run: python -m pytest evidence-platform/tests/ -q
+      - run: python evidence-platform/validators/validate_platform.py

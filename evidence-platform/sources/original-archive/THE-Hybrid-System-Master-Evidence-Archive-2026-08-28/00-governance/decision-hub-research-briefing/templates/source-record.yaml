@@ -1,0 +1,26 @@
+sourceId: src_example_0001
+engine: strength
+decisionQuestions: []
+title: ""
+authorsOrBody: ""
+publishedAt: ""
+retrievedAt: ""
+url: ""
+sourceType: systematic_review
+qualityTier: A
+population:
+  description: ""
+  trainingStatus: ""
+  ageRange: ""
+access:
+  status: accessible
+  license: unknown
+  archivedLocation: ""
+integrity:
+  sha256: ""
+  correctionChecked: false
+  retractionChecked: false
+keyContribution: ""
+limitations: []
+reviewStatus: discovered
+

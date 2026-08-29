@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.example/schemas/study.schema.json",
+  "title": "Study",
+  "description": "Scientific study metadata separate from claims and product policy.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "study_id",
+    "source_ids",
+    "design",
+    "review_status"
+  ],
+  "properties": {
+    "study_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "design": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registration": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "population_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "interventions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "comparators": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "duration": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "risk_of_bias": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "review_status": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

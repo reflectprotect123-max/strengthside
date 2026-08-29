@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fitness-ecosystem.invalid/contracts/state-snapshot.schema.json",
+  "title": "Whole-Athlete State Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["snapshot_id", "subject_id", "as_of", "generated_at", "algorithm_version", "state", "constraints", "data_quality", "confidence", "observed_inputs", "missing_inputs", "reason_codes"],
+  "properties": {
+    "snapshot_id": {"type": "string", "format": "uuid"},
+    "subject_id": {"type": "string", "format": "uuid"},
+    "as_of": {"type": "string", "format": "date-time"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "algorithm_version": {"type": "string", "minLength": 1},
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overall_capacity", "strength_capacity", "conditioning_capacity", "recovery_debt", "life_load", "illness_status", "pain_status"],
+      "properties": {
+        "overall_capacity": {"enum": ["high", "moderate", "low", "unknown"]},
+        "strength_capacity": {"enum": ["high", "moderate", "low", "unknown"]},
+        "conditioning_capacity": {"enum": ["high", "moderate", "low", "unknown"]},
+        "recovery_debt": {"enum": ["none", "low", "moderate", "high", "unknown"]},
+        "life_load": {"enum": ["low", "moderate", "high", "unknown"]},
+        "sleep_context": {"enum": ["adequate", "reduced", "disrupted", "unknown"]},
+        "illness_status": {"enum": ["clear", "self_reported", "return_to_training", "clinical_review", "unknown"]},
+        "pain_status": {"enum": ["clear", "reported", "hold", "clinical_review"]},
+        "time_available_minutes": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["constraint_id", "severity", "action", "reason_code"],
+        "properties": {
+          "constraint_id": {"type": "string"},
+          "severity": {"enum": ["hard", "soft"]},
+          "action": {"enum": ["approved", "held", "reduced", "blocked", "needs_input", "needs_clinical_review"]},
+          "reason_code": {"type": "string"},
+          "applies_to": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "data_quality": {"enum": ["complete", "partial", "sparse", "conflicting", "stale", "unknown"]},
+    "confidence": {"enum": ["high", "medium", "low", "none"]},
+    "observed_inputs": {"type": "array", "items": {"type": "string"}},
+    "missing_inputs": {"type": "array", "items": {"type": "string"}},
+    "reason_codes": {"type": "array", "items": {"type": "string"}},
+    "supersedes_snapshot_id": {"type": ["string", "null"], "format": "uuid"}
+  }
+}

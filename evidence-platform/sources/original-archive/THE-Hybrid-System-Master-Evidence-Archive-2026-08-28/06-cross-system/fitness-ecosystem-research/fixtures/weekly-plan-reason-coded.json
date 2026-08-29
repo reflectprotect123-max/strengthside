@@ -1,0 +1,33 @@
+{
+  "plan_id": "88888888-8888-4888-8888-888888888888",
+  "subject_id": "00000000-0000-4000-8000-000000000001",
+  "week_start": "2026-08-03",
+  "generated_at": "2026-08-04T07:05:00+10:00",
+  "algorithm_version": "coordinator-v1-draft",
+  "source_state_snapshot_id": "66666666-6666-4666-8666-666666666666",
+  "source_proposal_ids": ["77777777-7777-4777-8777-777777777777"],
+  "sessions": [
+    {
+      "plan_session_id": "plan-session-01",
+      "proposal_id": "77777777-7777-4777-8777-777777777777",
+      "engine": "conditioning",
+      "date": "2026-08-05",
+      "duration_minutes": 32,
+      "status": "scheduled",
+      "modification_id": null
+    }
+  ],
+  "decisions": [
+    {
+      "proposal_id": "77777777-7777-4777-8777-777777777777",
+      "outcome": "accepted",
+      "scheduled_date": "2026-08-05",
+      "modification_id": null,
+      "reason_codes": ["available_window", "low_interference", "preferred_exposure_due"],
+      "explanation": "Placed in the first available window that meets the proposal and state constraints."
+    }
+  ],
+  "unresolved_conflicts": [],
+  "data_quality": "partial",
+  "user_override_state": "none"
+}

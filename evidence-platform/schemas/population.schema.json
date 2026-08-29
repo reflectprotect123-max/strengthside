@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.example/schemas/population.schema.json",
+  "title": "Population",
+  "description": "Population applicability and comparison metadata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "population_id",
+    "description"
+  ],
+  "properties": {
+    "population_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sample_size": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "age": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sex": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "training_status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "health_status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sport": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "inclusion": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "exclusion": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  }
+}

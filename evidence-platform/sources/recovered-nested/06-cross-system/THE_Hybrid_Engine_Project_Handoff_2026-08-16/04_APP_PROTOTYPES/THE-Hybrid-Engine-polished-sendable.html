@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07080b">
+<title>THE Hybrid Engine — Polished</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#050609;
+  --bg2:#0a0d12;
+  --panel:#10141c;
+  --panel2:#151b25;
+  --panel3:#0b0e14;
+  --line:rgba(255,255,255,.09);
+  --line2:rgba(255,255,255,.14);
+  --text:#f4f6fb;
+  --muted:#a8b0bf;
+  --soft:#727c8d;
+  --blue:#73a7ff;
+  --blue2:#4f7cff;
+  --green:#27e49a;
+  --green2:#13b977;
+  --amber:#f6b75a;
+  --red:#ff6865;
+  --ink:#07090d;
+  --shadow:0 24px 80px rgba(0,0,0,.52);
+  --radius:24px;
+  --radius2:17px;
+  --pad:16px;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text)}
+body{overflow:hidden;display:flex;justify-content:center;background:
+  radial-gradient(circle at 50% -20%,rgba(115,167,255,.24),transparent 36%),
+  radial-gradient(circle at 12% 10%,rgba(39,228,154,.13),transparent 26%),
+  linear-gradient(180deg,#0b0e14 0%,#050609 64%);
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{
+  width:min(100vw,430px);height:100dvh;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(14,18,26,.95),#06080c 44%,#050609);
+  border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08);
+  box-shadow:0 0 90px rgba(0,0,0,.6);
+}
+.app:before{content:"";position:absolute;inset:0;background:
+  radial-gradient(circle at 50% 0,rgba(255,255,255,.08),transparent 24%),
+  linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px),
+  linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:auto,34px 34px,34px 34px;opacity:.65;pointer-events:none}
+.main{height:100%;overflow:auto;padding:18px 15px 104px;scroll-behavior:smooth;position:relative;z-index:1;scrollbar-width:none}
+.main::-webkit-scrollbar{display:none}
+.screen{animation:lift .18s ease both}@keyframes lift{from{opacity:.7;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.top{display:flex;align-items:center;gap:12px;min-height:58px;margin-bottom:12px}
+.logo{width:42px;height:42px;border-radius:16px;display:grid;place-items:center;flex-shrink:0;background:
+  radial-gradient(circle at 40% 30%,rgba(255,255,255,.18),transparent 34%),
+  linear-gradient(145deg,#1c2430,#0b0e13);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 30px rgba(0,0,0,.32)}
+.logo svg{width:25px;height:25px}.logo path{fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brand{font-size:10px;letter-spacing:.17em;text-transform:uppercase;font-weight:950;color:var(--green);margin-bottom:3px}
+.top h1{font-size:27px;line-height:.98;letter-spacing:-.055em;margin:0;font-weight:950}
+.top .sub{font-size:12px;color:var(--muted);font-weight:780;margin-top:3px}.spacer{flex:1}
+.iconbtn{height:42px;min-width:42px;border:1px solid var(--line2);border-radius:15px;background:rgba(16,20,28,.72);color:var(--text);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.card{position:relative;background:linear-gradient(180deg,rgba(23,29,40,.88),rgba(12,15,22,.92));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card:before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 44%);pointer-events:none}.card>*{position:relative}
+.pad{padding:var(--pad)}
+.stack{display:flex;flex-direction:column;gap:12px}.gap{height:12px}.row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}.wrap{flex-wrap:wrap}.grow{flex:1}.right{text-align:right}.center{text-align:center}
+.cap{font-size:10px;text-transform:uppercase;letter-spacing:.16em;font-weight:950;color:var(--soft)}
+.title{font-size:20px;font-weight:950;letter-spacing:-.035em;margin:3px 0 0}.h2{font-size:18px;font-weight:950;letter-spacing:-.035em;margin:0}.muted{font-size:13px;line-height:1.45;color:var(--muted)}
+.tiny{font-size:11px;color:var(--soft);line-height:1.35;font-weight:780}.micro{font-size:10px;color:var(--soft);font-weight:850;text-transform:uppercase;letter-spacing:.09em}.strong{font-weight:950;color:var(--text)}
+.hero{padding:18px;background:
+  radial-gradient(circle at 85% 10%,rgba(39,228,154,.22),transparent 32%),
+  radial-gradient(circle at 10% 20%,rgba(115,167,255,.22),transparent 38%),
+  linear-gradient(155deg,rgba(29,39,55,.95),rgba(11,14,20,.96));}
+.heroKicker{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(39,228,154,.24);background:rgba(39,228,154,.08);color:#dfffee;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:950;letter-spacing:.12em;text-transform:uppercase}.heroKicker:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 14px rgba(39,228,154,.8)}
+.heroTitle{font-size:32px;line-height:.95;font-weight:950;letter-spacing:-.07em;margin:14px 0 8px;max-width:310px}.heroSub{color:#c4cad6;font-size:13px;line-height:1.45;max-width:330px}
+.btn{width:100%;border:0;border-radius:17px;padding:14px 14px;min-height:48px;font-weight:950;color:var(--text);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.11);display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.btn.primary{background:linear-gradient(135deg,#f7f9ff,#b9caff);color:#071020;border-color:rgba(255,255,255,.36)}
+.btn.green{background:linear-gradient(135deg,var(--green),#9fffd4);color:#06130d;border-color:rgba(255,255,255,.28)}
+.btn.dark{background:rgba(12,15,22,.88);border-color:rgba(255,255,255,.11);color:#edf2fb}.btn.red{background:rgba(255,104,101,.13);border-color:rgba(255,104,101,.28);color:#ffc4c1}
+.btn.small{width:auto;min-height:34px;padding:8px 10px;border-radius:12px;font-size:12px}.btn.ghost{background:transparent;border-color:rgba(255,255,255,.12)}
+.btn:active,.menu:active,.chip:active,.dday:active,.sectionTab:active{transform:scale(.99)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat{background:rgba(4,6,10,.45);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:12px;min-height:75px}.stat b{display:block;font-size:21px;letter-spacing:-.04em}.stat span{font-size:10px;color:var(--soft);font-weight:900;text-transform:uppercase;letter-spacing:.08em}.stat.green b{color:var(--green)}.stat.blue b{color:var(--blue)}.stat.amber b{color:var(--amber)}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 9px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:950;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.06);color:#dce3ee}.pill.green{background:rgba(39,228,154,.1);border-color:rgba(39,228,154,.25);color:var(--green)}.pill.blue{background:rgba(115,167,255,.1);border-color:rgba(115,167,255,.24);color:var(--blue)}.pill.amber{background:rgba(246,183,90,.1);border-color:rgba(246,183,90,.25);color:var(--amber)}.pill.red{background:rgba(255,104,101,.1);border-color:rgba(255,104,101,.25);color:var(--red)}.pill.gray{color:#8790a1}
+.nav{position:absolute;z-index:5;left:0;right:0;bottom:0;height:86px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:rgba(6,8,12,.92);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.09);display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.nav button{border:0;background:transparent;color:#7f8898;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:900}.nav .ico{font-size:20px;line-height:1}.nav button.active{background:rgba(255,255,255,.08);color:#fff}.nav button.active .ico{color:var(--green);filter:drop-shadow(0 0 10px rgba(39,228,154,.45))}
+.fab{position:absolute;z-index:6;right:18px;bottom:96px;width:58px;height:58px;border-radius:22px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(135deg,var(--green),#8cffcc);color:#06130d;font-size:28px;font-weight:900;box-shadow:0 22px 55px rgba(0,0,0,.55),0 0 30px rgba(39,228,154,.18);display:grid;place-items:center}.fab.open{transform:rotate(45deg)}.fab.hidden{display:none}.speed{position:absolute;z-index:5;right:18px;bottom:166px;display:flex;flex-direction:column;gap:10px;align-items:flex-end;opacity:0;pointer-events:none;transform:translateY(10px);transition:.18s ease}.speed.show{opacity:1;pointer-events:auto;transform:translateY(0)}.speedItem{display:flex;align-items:center;gap:9px}.speedLabel{background:#f4f7fb;color:#111722;padding:9px 12px;border-radius:13px;font-size:12px;font-weight:950;box-shadow:0 12px 30px rgba(0,0,0,.28)}.speedIcon{width:46px;height:46px;border-radius:16px;background:#f4f7fb;color:#111722;display:grid;place-items:center;font-weight:950}
+.dstrip{display:flex;gap:8px;overflow:auto;margin:10px -15px 13px;padding:0 15px;scrollbar-width:none}.dstrip::-webkit-scrollbar{display:none}.dday{min-width:56px;height:70px;border-radius:18px;border:1px solid rgba(255,255,255,.09);background:rgba(9,12,18,.74);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#8992a3}.dday .did{font-size:14px;font-weight:950}.dday .dlabel{font-size:9px;text-align:center;line-height:1.15;padding:0 4px}.dday.strength{color:var(--blue);border-color:rgba(115,167,255,.25);background:rgba(115,167,255,.07)}.dday.conditioning{color:var(--green);border-color:rgba(39,228,154,.24);background:rgba(39,228,154,.07)}.dday.flex{color:#6e7787}.dday.current{background:#f4f7fb;color:#0a0d12;border-color:#fff;box-shadow:0 18px 45px rgba(0,0,0,.28)}.dday.done .did:after{content:" ✓";color:var(--green)}
+.menu{padding:14px;display:flex;align-items:center;gap:12px}.menu .circle{width:43px;height:43px;border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.11);display:grid;place-items:center;font-size:20px;flex-shrink:0}.menu h3{font-size:15px;margin:0;font-weight:950}.menu p{margin:2px 0 0;color:var(--muted);font-size:12px;line-height:1.35}.chev{margin-left:auto;color:#778193;font-size:24px}.menu.compact{padding:12px}.menu.compact .circle{width:36px;height:36px;border-radius:13px;font-size:17px}
+.chips{display:flex;gap:8px;overflow:auto;margin:8px -15px 12px;padding:0 15px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chip{white-space:nowrap;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:#d7dce6;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900}.chip.active{background:#f4f7fb;color:#0b1018;border-color:#fff}
+.field{margin:0 0 11px}.field label{display:block;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.12em;color:#929caf;margin:0 0 6px}.field input,.field textarea,.field select{width:100%;background:rgba(5,7,11,.74);border:1px solid rgba(255,255,255,.12);border-radius:15px;color:#fff;padding:12px;font-size:14px;outline:none}.field textarea{min-height:86px;resize:vertical}.field input:focus,.field textarea:focus,.field select:focus{border-color:rgba(115,167,255,.55);box-shadow:0 0 0 4px rgba(115,167,255,.08)}
+.tableWrap{overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.08)}table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}th{font-size:10px;color:#9ca6b7;text-transform:uppercase;letter-spacing:.1em;background:rgba(255,255,255,.035)}td:first-child,th:first-child{text-align:left}tr:last-child td{border-bottom:0}td input{width:70px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:11px;color:#fff;padding:8px;text-align:center}
+.sectionTabs{display:flex;gap:8px;overflow:auto;margin:0 -15px 12px;padding:0 15px;scrollbar-width:none}.sectionTab{min-width:44px;height:44px;border-radius:15px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:#b8c0ce;font-weight:950}.sectionTab.done{background:rgba(39,228,154,.1);border-color:rgba(39,228,154,.3);color:var(--green)}.sectionTab.active{background:#f4f7fb;color:#0b1018;border-color:#fff}
+.progress{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.progress b{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:999px;transition:width .25s ease}.barLabel{display:flex;justify-content:space-between;margin:0 0 6px;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.1em;color:#8993a3}
+.checkGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:8px 0 14px}.rbtn{height:42px;border-radius:15px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:#9aa4b5;font-weight:950}.rbtn.sel{background:#f4f7fb;color:#071020;border-color:#fff}.rbtn.good.sel{background:var(--green);color:#06130d}.rbtn.bad.sel{background:var(--red);color:#250606}
+.toggle-row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}.toggle-row:last-child{border-bottom:0}.tname{font-size:14px;font-weight:900}.tsub{font-size:12px;color:var(--muted);margin-top:2px}.tgl{width:50px;height:30px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);position:relative;flex-shrink:0}.tgl:after{content:"";width:24px;height:24px;border-radius:50%;position:absolute;top:2px;left:2px;background:#fff;transition:.18s ease}.tgl.on{background:var(--green);border-color:var(--green)}.tgl.on:after{transform:translateX(20px)}
+.std-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06)}.std-row:last-child{border-bottom:0}.std-name{font-size:13px;font-weight:900}.std-target{font-size:11px;color:var(--muted);text-align:right}.std-input{width:78px;background:rgba(5,7,11,.74);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#fff;padding:8px;text-align:center}.status{grid-column:1/-1;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;width:max-content;border-radius:999px;padding:5px 8px;background:rgba(255,255,255,.06);color:#8993a3}.status.below{background:rgba(255,104,101,.12);color:var(--red)}.status.approaching{background:rgba(246,183,90,.12);color:var(--amber)}.status.at,.status.above{background:rgba(39,228,154,.12);color:var(--green)}
+.ctype{border-radius:21px;padding:15px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.045)}.ctype.easy{border-color:rgba(39,228,154,.22);background:rgba(39,228,154,.06)}.ctype.pacing{border-color:rgba(115,167,255,.23);background:rgba(115,167,255,.06)}.ctype.hard{border-color:rgba(246,183,90,.23);background:rgba(246,183,90,.06)}.ctype h3{margin:0 0 4px;font-size:16px}.protocol{padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}.protocol:first-of-type{margin-top:10px}.pname{font-size:13px;font-weight:950}.pdetail{font-size:12px;color:var(--muted);line-height:1.45;margin-top:3px}
+.empty{padding:24px;text-align:center;color:var(--muted)}.quote{padding:22px;text-align:center}.quoteMark{font-size:46px;color:var(--green);line-height:.6;font-weight:950}.quote p{font-size:15px;line-height:1.45;font-style:italic;margin:10px 0 8px;color:#dce1eb}.quote b{font-size:12px;color:var(--muted)}
+.stars{display:flex;gap:8px;justify-content:center;margin:12px 0}.star{font-size:31px;color:rgba(255,255,255,.12)}.star.lit{color:var(--amber)}
+.toast{position:absolute;left:16px;right:16px;bottom:102px;background:#f5f7fb;color:#10151f;border-radius:18px;padding:13px 14px;font-weight:900;text-align:center;box-shadow:0 18px 55px rgba(0,0,0,.38);z-index:10;transform:translateY(14px);opacity:0;pointer-events:none;transition:.2s ease}.toast.show{transform:translateY(0);opacity:1}
+.safeBottom{height:10px}@media(max-width:360px){.heroTitle{font-size:28px}.grid3{gap:6px}.stat{padding:10px}.std-row{grid-template-columns:1fr 70px}.std-target{text-align:left}.std-input{width:70px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+[data-action]:focus-visible,.nav button:focus-visible,.fab:focus-visible,.chip:focus-visible,.rbtn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="app" id="appShell">
+  <main class="main" id="main"></main>
+  <div class="speed" id="speed" role="menu">
+    <div class="speedItem" data-action="goto" data-target="readiness-check" role="menuitem"><span class="speedLabel">Start workout</span><span class="speedIcon">▶</span></div>
+    <div class="speedItem" data-action="goto" data-target="manual-log" role="menuitem"><span class="speedLabel">Manual log</span><span class="speedIcon">＋</span></div>
+    <div class="speedItem" data-action="goto" data-target="library" role="menuitem"><span class="speedLabel">Library</span><span class="speedIcon">▦</span></div>
+  </div>
+  <button class="fab hidden" type="button" id="fab" aria-label="Quick actions" aria-expanded="false">+</button>
+  <nav class="nav" id="nav" aria-label="Main navigation">
+    <button type="button" data-tab="home"><span class="ico">⌂</span><span>Home</span></button>
+    <button type="button" data-tab="training"><span class="ico">△</span><span>Training</span></button>
+    <button type="button" data-tab="library"><span class="ico">▦</span><span>Library</span></button>
+    <button type="button" data-tab="settings"><span class="ico">⚙</span><span>Settings</span></button>
+  </nav>
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+(function(){
+'use strict';
+const STORE='the-hybrid-engine-polished-v2';
+const MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const mainEl=document.getElementById('main');
+const navEl=document.getElementById('nav');
+const fabEl=document.getElementById('fab');
+const speedEl=document.getElementById('speed');
+const toastEl=document.getElementById('toast');
+
+const dayPlan=[
+  {id:'D1',type:'strength',label:'Explosive + Strength + Hard Conditioning'},
+  {id:'D2',type:'conditioning',label:'Easy Conditioning'},
+  {id:'D3',type:'flex',label:'Flex / Off'},
+  {id:'D4',type:'strength',label:'Strength + Work Capacity'},
+  {id:'D5',type:'conditioning',label:'Strength + Pacing Conditioning'},
+  {id:'D6',type:'flex',label:'Rest / Flex'},
+  {id:'D7',type:'flex',label:'Rest / Flex'}
+];
+const sessionTemplates={
+  D1:{name:'D1 — Explosive + Strength + Hard Conditioning',intent:'Power first. Heavy work second. Hard engine last.',sections:[
+    {id:'A',name:'Explosive prep',type:'Power',exercise:'Vertical jump + rotational med ball throw',reps:'3 x 5 each',notes:'CNS primer. Move with intent. Full reset between reps.',sets:[]},
+    {id:'B',name:'Secondary explosive',type:'Power',exercise:'Pogo hops or plyo push-up',reps:'2 x 10',notes:'Light and fast. Quality over quantity. Stop if form breaks.',sets:[]},
+    {id:'C',name:'Hinge pattern',type:'Strength',exercise:'Trap bar deadlift',reps:'3 x 3-6',notes:'2 RIR — do not grind. Build weight across sets.',sets:[{r:'3-6',w:100},{r:'3-6',w:110},{r:'3-6',w:120}]},
+    {id:'D',name:'Push pattern',type:'Strength',exercise:'Bench press',reps:'3 x 3-6',notes:'2 RIR. Tuck elbows, control the descent. Full range.',sets:[{r:'3-6',w:80},{r:'3-6',w:85},{r:'3-6',w:87.5}]},
+    {id:'E',name:'Support work',type:'Support',exercise:'Face pull 2x15 + Pallof press 2x12/side',reps:'2 sets each',notes:'These earn their place. No junk reps.',sets:[]},
+    {id:'F',name:'Hard conditioning',type:'Conditioning',exercise:'5 min easy run → 6 x 400m hard / 90 sec rest → 5 min easy',reps:'~30 min total',notes:'Speed work. Consistent splits. Progress to 800s over weeks.',sets:[]},
+    {id:'G',name:'Cool down',type:'Recovery',exercise:'Dead hang 2xmax + hip / hamstring stretch',reps:'10 min',notes:'Down-regulate. Leave calmer than you arrived.',sets:[]}
+  ]},
+  D2:{name:'D2 — Easy Conditioning',intent:'Build the base without adding fatigue.',sections:[
+    {id:'F',name:'Easy conditioning',type:'Conditioning',exercise:'Run / bike / rower / ski erg / incline walk',reps:'25-45 min',notes:'HR 125-150. Conversational. Intermittent nasal breathing check-in. Add 5 min as you adapt.',sets:[]},
+    {id:'G',name:'Optional mobility',type:'Recovery',exercise:'Hips, ankles, T-spine',reps:'8-12 min',notes:'Keep it easy. This is tissue quality, not another workout.',sets:[]}
+  ]},
+  D3:{name:'D3 — Flex / Off',intent:'Recover or do the minimum useful move.',sections:[
+    {id:'G',name:'Minimum work',type:'Recovery',exercise:'Walk 20-30 min + easy mobility',reps:'Optional',notes:'No guilt. Protect the streak without adding stress.',sets:[]}
+  ]},
+  D4:{name:'D4 — Strength + Work Capacity',intent:'Get strong, then prove you can carry it.',sections:[
+    {id:'A',name:'Prep / bodywork',type:'Prep',exercise:'Dead hangs 3xmax + leg curls 3x12',reps:'~10 min',notes:'Target structural weaknesses. Warm the joints before loading.',sets:[]},
+    {id:'B',name:'Pogo circuit',type:'Power',exercise:'Pogo hops 3x20 + quick foot switches 3x15 sec',reps:'2 rounds',notes:'Light, fast, rhythmic. Not a workout — a warm-up.',sets:[]},
+    {id:'C',name:'Squat pattern',type:'Strength',exercise:'Front squat',reps:'3 x 3-6',notes:'2 RIR. Elbows high, brace hard, sit into it.',sets:[{r:'3-6',w:80},{r:'3-6',w:87.5},{r:'3-6',w:95}]},
+    {id:'D',name:'Pull pattern',type:'Strength',exercise:'Weighted pull-up',reps:'3 x 3-6 or bodyweight max',notes:'Own bodyweight before adding load.',sets:[{r:'3-6',w:10},{r:'3-6',w:12.5},{r:'3-6',w:15}]},
+    {id:'E',name:'Work capacity finisher',type:'Conditioning',exercise:'Farmer carry 3x40m + deficit push-ups 2xmax',reps:'3 rounds',notes:'Strong enough to lift it — conditioned enough to carry it.',sets:[]},
+    {id:'G',name:'Cool down',type:'Recovery',exercise:'Banded lat stretch + hip flexor / hamstring flow + 10 slow breaths',reps:'10 min',notes:'Mandatory. The system only works if you recover.',sets:[]}
+  ]},
+  D5:{name:'D5 — Strength + Pacing Conditioning',intent:'Controlled strength, then honest pacing under fatigue.',sections:[
+    {id:'A',name:'Pogo circuit',type:'Power',exercise:'Pogo hops 3x20 + rotational jumps 2x5/side',reps:'~8 min',notes:'Prime the CNS and warm the joints. Do not fatigue yourself here.',sets:[]},
+    {id:'C',name:'Squat / leg bias',type:'Strength',exercise:'Front squat or Bulgarian split squat',reps:'3 x 5-8',notes:'Higher rep range. Leave fuel in the tank.',sets:[{r:'5-8',w:75},{r:'5-8',w:80},{r:'5-8',w:82.5}]},
+    {id:'D',name:'Supplemental',type:'Support',exercise:'Chest-supported row 3x10 + lateral raise 2x15',reps:'2-3 sets',notes:'Support work. Moderate intensity. Not the focus today.',sets:[]},
+    {id:'F',name:'Pacing conditioning',type:'Conditioning',exercise:'10-15 min run at target 2-mile or 5-mile pace',reps:'~20 min with warm-up',notes:'Practice the internal monitor. Even or negative splits. This is where runtime PRs are built.',sets:[]},
+    {id:'G',name:'Cool down',type:'Recovery',exercise:'Hip mobility flow + spine stretch + slow breathing',reps:'10 min',notes:'Lower body focus after squat work.',sets:[]}
+  ]},
+  D6:{name:'D6 — Rest / Flex',intent:'Recover, walk, or handle life.',sections:[{id:'G',name:'Recovery option',type:'Recovery',exercise:'Easy walk + breathing',reps:'20-30 min optional',notes:'Only add work if it helps you feel better.',sets:[]}]},
+  D7:{name:'D7 — Rest / Flex',intent:'Reset before the next cycle.',sections:[{id:'G',name:'Reset option',type:'Recovery',exercise:'Mobility flow + plan tomorrow',reps:'10-20 min optional',notes:'Get ready. Do not chase fatigue.',sets:[]}]}
+};
+const exerciseGroups=[
+  {cat:'Squat',primary:'Front squat',why:'Knee-dominant strength and positional discipline.',exercises:['Front squat','Back squat','Trap bar squat','Bulgarian split squat','Goblet squat','Split squat','Heel-elevated goblet squat']},
+  {cat:'Hinge',primary:'Trap bar deadlift',why:'Posterior-chain strength with strong carryover and lower technical cost.',exercises:['Trap bar deadlift','Conventional deadlift','Romanian deadlift','Single-leg RDL','KB swing','Good morning']},
+  {cat:'Push',primary:'Bench press',why:'Upper-body output, armour, and pressing capacity.',exercises:['Bench press','Weighted dip','Overhead press','Incline DB press','Deficit push-up','Landmine press']},
+  {cat:'Pull',primary:'Weighted pull-up',why:'Grip, lats, posture, and bodyweight competence.',exercises:['Weighted pull-up','Pull-up','Chest-supported row','Lat pulldown','Single-arm DB row','Face pull','Band pull-apart']},
+  {cat:'Explosive',primary:'Standing vertical jump',why:'Power exposure without trashing recovery.',exercises:['Standing vertical jump','Seated box jump','Rotational med ball slam','Med ball chest press','Pogo hops','Plyo push-up','Broad jump','Quick foot switches']},
+  {cat:'Carry',primary:'Farmer carry',why:'Real-world strength, grip, trunk, and work capacity.',exercises:['Farmer carry','Sandbag carry','Zercher carry','Sled drag','Weighted vest walk','Ruck','Overhead carry']},
+  {cat:'Bodyweight',primary:'Pull-up',why:'Simple readiness checks you cannot fake.',exercises:['Pull-up max','Push-up max','Dead hang','Dip','Deficit push-up','Pike push-up']}
+];
+const conditioningTypes=[
+  {cls:'easy',label:'Easy — base building',feel:'HR 125-150 · conversational · intermittent nasal breathing',purpose:'Widens the aerobic base. A wider base means a higher ceiling for strength, recovery, and harder intervals.',protocols:[
+    {name:'Easy run',detail:'20-45 min. No pace target. If you cannot talk, slow down.'},
+    {name:'Bike / rower / ski erg',detail:'Same HR target. Use when legs are beat up from strength work.'},
+    {name:'Incline walk / ruck',detail:'Low-impact base builder. Add load gradually. Keep it easy.'}
+  ]},
+  {cls:'pacing',label:'Pacing — threshold',feel:'Sustainable hard effort · controlled · even splits',purpose:'Builds the internal monitor. This is where runtime PRs are built — not from panic, but from control.',protocols:[
+    {name:'2-mile prep intervals',detail:'3 min at goal pace / 2 min easy x 4-5. Add a rep over time.'},
+    {name:'5-mile tempo block',detail:'10-15 min continuous at target effort. Progress duration first.'},
+    {name:'Row threshold',detail:'4 x 500m with 2 min rest. Keep splits consistent.'},
+    {name:'Heavy legs run',detail:'D5 post-strength. Sustained output under fatigue, not chaos.'}
+  ]},
+  {cls:'hard',label:'Hard — speed work',feel:'Full output · short · powerful · not every day',purpose:'Keeps top-end speed alive so easy work does not make you slow or fragile.',protocols:[
+    {name:'Running intervals',detail:'5 min easy → 6 x 400m hard / 90 sec easy → 5 min easy.'},
+    {name:'Air bike sprints',detail:'10 x 30 sec hard / 90 sec easy, or 6 x 10 sec max / 50 sec off.'},
+    {name:'Row sprints',detail:'8 x 250m / 60 sec rest, or 4 x 500m / 2 min rest.'},
+    {name:'Ski erg intervals',detail:'Same structure as rower when knees or hips need a break.'}
+  ]}
+];
+const mobilityFlows=[
+  {name:'Ankles & Wrists',dur:'15 min',tags:['Full Body'],summary:'Ankles, toes, wrists, basic joint prep',detail:'Ankle circles · Weighted ankle stretch · Heel sit · Toe sit · Wrist circles · Wrist extension/flexion · Wrist isometrics',url:'https://www.youtube.com/watch?v=i8oj2LQRo5Y'},
+  {name:'Hip Mobility Sequence',dur:'20 min',tags:['Hips'],summary:'Shinbox, cossack, middle split, squat hold',detail:'Shinbox · Low switch cossack · Middle split · Squat hold · Slow bodyweight squat',url:'https://www.youtube.com/watch?v=Z8DeklCdkEo'},
+  {name:'Shoulder Mobility',dur:'14 min',tags:['Shoulders'],summary:'Shoulders, extension, prone raises, hang',detail:'Shoulder circles · Shoulder extension · Prone raises · Prayer stretch · Passive hang',url:'https://www.youtube.com/watch?v=Sb83Ylx3wFc'},
+  {name:'Thoracic Spine',dur:'12 min',tags:['Spine'],summary:'Cat cow, rotations, lats, T-spine opener',detail:'Segmented cat cow · Childs pose lat stretch · Side lying thoracic rotation · T-spine opener · Yoga pushup',url:'https://www.youtube.com/watch?v=o1XBfaDz9Mw'},
+  {name:'Spine & Posterior Chain',dur:'15 min',tags:['Spine','Hips'],summary:'Back line, hamstrings, glutes, spine',detail:'Jefferson curl pattern · Hamstring floss · Glute bridge · Low lunge · Breathing reset',url:'https://www.youtube.com/results?search_query=posterior+chain+mobility+flow'},
+  {name:'Upper Body Mobility',dur:'18 min',tags:['Shoulders','Spine'],summary:'Upper body, shoulders, T-spine, lats',detail:'Wall slides · Band dislocates · Lat stretch · T-spine rotation · Passive hang',url:'https://www.youtube.com/watch?v=d54qf9SIScI'}
+];
+const strengthStandards=[
+  {name:'Trap bar deadlift',key:'tbdl',type:'relative',multiplier:1.75},
+  {name:'Front squat',key:'fsq',type:'relative',multiplier:1.50},
+  {name:'Bench press',key:'bench',type:'relative',multiplier:1.25},
+  {name:'Dead hang',key:'hang',type:'time',target:60,unit:'sec'},
+  {name:'Pull-ups',key:'pullups',type:'max',target:10,unit:'reps'},
+  {name:'Push-ups',key:'pushups',type:'max',target:50,unit:'reps'},
+  {name:'Broad jump',key:'broad',type:'max',target:220,unit:'cm'}
+];
+const condStandards=[
+  {name:'2-mile run',key:'run2',target:'6:00-7:00 / mile'},
+  {name:'5-mile run',key:'run5',target:'8:00 / mile'},
+  {name:'500m row',key:'row500',target:'1:30 M / 1:45 F'},
+  {name:'2k row',key:'row2k',target:'7:00 M / 8:00 F'},
+  {name:'Half-mile bike',key:'bike',target:'Sub 60 sec'}
+];
+const dailyCheckItems=[
+  {key:'sleep',label:'Sleep 7+ hours',sub:'Foundation of recovery'},
+  {key:'steps',label:'Steps 7,500+',sub:'Movement baseline'},
+  {key:'nutrition',label:'Nutrition compliance',sub:'80-90% is the target'},
+  {key:'taskList',label:'Task list completed',sub:'Top 3 priorities scheduled'},
+  {key:'amRoutine',label:'AM routine done',sub:'Anchor habit before the day starts'},
+  {key:'pmRoutine',label:'PM routine done',sub:'Wind down, prepare, reflect'},
+  {key:'techDown',label:'Tech down by 8pm',sub:'Protect sleep and recovery'},
+  {key:'stressOutlet',label:'Stress outlet used',sub:'2-3 active outlets per week'},
+  {key:'training',label:'Training compliance',sub:'Did the work today'}
+];
+const quotes=[
+  {q:'Get built, not burnt.',a:'THE Hybrid Engine'},
+  {q:'Pray your worst day does not happen. Train like it will.',a:'THE Hybrid Engine'},
+  {q:'Gym strong and uniform strong are not the same thing. Build the right one.',a:'THE Hybrid Engine'},
+  {q:'Every promise kept builds certainty. Every one broken builds self-doubt.',a:'THE Hybrid Engine'},
+  {q:'If you needed to be saved, would you want you saving you?',a:'THE Hybrid Engine'}
+];
+const mentalTools=[
+  {n:'OODA reset',d:'Observe what is happening. Orient to what matters. Decide the next useful move. Act without drama.'},
+  {n:'Minimum viable session',d:'When life is heavy: prep, one strength block, easy cooldown. Protect the habit.'},
+  {n:'No punishment rule',d:'Missed sessions do not get paid back with stupidity. Resume the next useful day.'},
+  {n:'Readiness honesty',d:'The check-in is not a vibe score. It tells the system how much throttle to use.'}
+];
+const nutritionPriorities=[
+  {n:'Total calories',d:'If this is wrong, nothing else matters. Use the smallest effective surplus or deficit.'},
+  {n:'Protein anchor',d:'Aim roughly 1.6-2.2 g/kg/day unless a qualified professional tells you otherwise.'},
+  {n:'Carbs around training',d:'Fuel hard sessions. Carbs are not the enemy when performance is the goal.'},
+  {n:'Low friction meals',d:'Repeat boring wins. Meat, dairy, eggs, potatoes, rice, wraps, yogurt, fruit.'},
+  {n:'Compliance first',d:'The best plan is the one you can actually run while working and living.'}
+];
+const libItems=[
+  ['builder','▤','Session Builder','Build from today’s D-day template.'],
+  ['saved-sessions','◷','Saved Sessions','Workout history and recent logs.'],
+  ['chassis-library','▥','Chassis Library','Prep → strength → conditioning → cooldown.'],
+  ['manual-log','＋','Manual Log','Log strength, conditioning, or recovery.'],
+  ['uniform-strong','◎','Uniform Strong','Standards for strength and engine.'],
+  ['exercise-library','◫','Exercise Library','Strength patterns and swaps.'],
+  ['mobility','◇','Mobility','Clickable flows and recovery work.'],
+  ['conditioning-library','≈','Conditioning Library','Easy, pacing, and hard protocols.'],
+  ['prep-cooldown-library','↧','Prep / Cooldown','Warm-ups, primers, and downshifts.'],
+  ['nutrition-guide','◌','Nutrition Guide','Simple priorities that support training.'],
+  ['mental-performance','◉','Mental Performance','Rules for rough days and pressure.'],
+  ['daily-standards','✓','Daily Standards','9 non-negotiables.']
+];
+const defaultState={tab:'home',currentDayIndex:0,completedDays:{},readiness:{sleep:0,energy:0,soreness:0},lastReadiness:null,loggerIndex:0,loggerDone:{},builderIndex:0,builderDone:{},secData:{},workoutLogs:[],dailyToggles:{},bodyweightKg:89,currentStandards:{},condCurrents:{},sessionRating:0,sessionNote:'',exFilter:'All',mobFilter:'All',selectedMobility:0,fabOpen:false,manualDraft:{date:today(),type:'Strength',title:'',notes:''}};
+let S=loadState();
+ensureSecData(dayPlan[S.currentDayIndex]?.id||'D1');
+
+function today(){return new Date().toISOString().slice(0,10)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+function attr(v){return esc(v).replace(/`/g,'&#96;')}
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function loadState(){try{return {...clone(defaultState),...(JSON.parse(localStorage.getItem(STORE)||'{}'))}}catch{return clone(defaultState)}}
+function saveState(){try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){console.warn(e)}}
+function notify(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(notify.t);notify.t=setTimeout(()=>toastEl.classList.remove('show'),1800)}
+function safeUrl(value){try{const u=new URL(String(value||''));return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return''}}
+function currentDay(){return dayPlan[S.currentDayIndex]||dayPlan[0]}
+function currentTemplate(){return sessionTemplates[currentDay().id]||sessionTemplates.D1}
+function ensureSecData(dayId){const tmpl=sessionTemplates[dayId]||sessionTemplates.D1;if(!S.secData||S.secData.dayId!==dayId){S.secData={dayId,sections:{}};tmpl.sections.forEach(sec=>{S.secData.sections[sec.id]={exercise:sec.exercise,reps:sec.reps,notes:sec.notes,sets:(sec.sets||[]).map(x=>({...x,done:false,rpe:''}))}});S.loggerIndex=0;S.loggerDone={};S.builderIndex=0;S.builderDone={}}}
+function readinessScore(){const r=S.readiness||{};const sum=(+r.sleep||0)+(+r.energy||0)+(+r.soreness||0);let lane='red',label='Minimum',desc='Protect the streak. Warm-up, easy work, or recover.';if(sum>=12){lane='green';label='Build';desc='Run the plan. Allow small progression if the work earns it.'}else if(sum>=8){lane='amber';label='Control';desc='Train smart. Keep the plan but trim optional stress.'}return{sum,lane,label,desc}}
+function typePill(type){const c=type==='strength'?'blue':type==='conditioning'?'green':'gray';return `<span class="pill ${c}">${esc(type)}</span>`}
+function logo(){return `<div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M6 23L16 5l10 18M11 16h10M9 23h14"/></svg></div>`}
+function topBar(title,sub='',right=''){return `<div class="top">${logo()}<div><div class="brand">THE HYBRID ENGINE</div><h1>${esc(title)}</h1>${sub?`<div class="sub">${esc(sub)}</div>`:''}</div><div class="spacer"></div>${right}</div>`}
+function backTo(target,label='Back',sub=''){return `<button class="btn dark" type="button" data-action="goto" data-target="${target}">← ${esc(label)}${sub?` · ${esc(sub)}`:''}</button>`}
+function dayStrip(){return `<div class="dstrip">${dayPlan.map((d,i)=>`<button type="button" class="dday ${d.type} ${i===S.currentDayIndex?'current':''} ${S.completedDays[d.id]?'done':''}" data-action="set-day" data-index="${i}"><span class="did">${d.id}</span><span class="dlabel">${esc(d.label.split(' + ')[0])}</span></button>`).join('')}</div>`}
+function progressHtml(done,total){const pct=total?Math.round(done/total*100):0;return `<div class="barLabel"><span>Progress</span><span>${done}/${total}</span></div><div class="progress"><b style="width:${pct}%"></b></div>`}
+function sectionTabs(mode){const tmpl=currentTemplate();const active=mode==='builder'?S.builderIndex:S.loggerIndex;const done=mode==='builder'?S.builderDone:S.loggerDone;return `<div class="sectionTabs">${tmpl.sections.map((s,i)=>`<button type="button" class="sectionTab ${done[s.id]?'done':''} ${i===active?'active':''}" data-action="${mode}-jump" data-index="${i}">${s.id}</button>`).join('')}</div>`}
+function render(){ensureSecData(currentDay().id);S.fabOpen=!!S.fabOpen;const views={home,training,library,settings,'readiness-check':readinessCheck,logger,summary:sessionSummary,builder,savedSessions,chassisLibrary,manualLog,workoutHistory,uniformStrong,exerciseLibrary,mobility,'mobility-detail':mobilityDetail,conditioningLibrary,prepCooldownLibrary,nutritionGuide,mentalPerformance,dailyStandards};const fn=views[S.tab]||home;mainEl.innerHTML=`<div class="screen">${fn()}</div><div class="safeBottom"></div>`;navEl.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',parentTab(S.tab)===b.dataset.tab));const showFab=['home','training','library'].includes(parentTab(S.tab));fabEl.classList.toggle('hidden',!showFab);fabEl.classList.toggle('open',S.fabOpen);fabEl.setAttribute('aria-expanded',String(S.fabOpen));speedEl.classList.toggle('show',S.fabOpen)}
+function parentTab(v){if(['home','daily-standards'].includes(v))return'home';if(['training','readiness-check','logger','summary'].includes(v))return'training';if(['library','builder','saved-sessions','chassis-library','manual-log','workout-history','uniform-strong','exercise-library','mobility','mobility-detail','conditioning-library','prep-cooldown-library','nutrition-guide','mental-performance'].includes(v))return'library';return'settings'}
+function home(){const d=currentDay(),tmpl=currentTemplate(),r=S.lastReadiness||readinessScore();const q=quotes[new Date().getDate()%quotes.length];const done7=dayPlan.filter(x=>S.completedDays[x.id]).length;return `${topBar('Today','Built, not burnt','<button class="iconbtn" data-action="goto" data-target="settings">⚙</button>')}
+  <section class="card hero"><span class="heroKicker">${esc(d.id)} · ${esc(d.type)}</span><div class="heroTitle">${esc(d.label)}</div><div class="heroSub">${esc(tmpl.intent)} Keep it clean, readable, and repeatable.</div><div class="grid3" style="margin-top:16px"><div class="stat ${r.lane}"><span>Lane</span><b>${esc(r.label)}</b></div><div class="stat blue"><span>Week</span><b>${done7}/7</b></div><div class="stat green"><span>Next</span><b>${esc(d.id)}</b></div></div><button class="btn green" data-action="goto" data-target="readiness-check">Start today’s session</button></section>
+  ${dayStrip()}
+  <div class="grid2"><div class="card menu compact" data-action="goto" data-target="daily-standards"><div class="circle">✓</div><div><h3>Daily Standards</h3><p>9 checks.</p></div></div><div class="card menu compact" data-action="goto" data-target="uniform-strong"><div class="circle">◎</div><div><h3>Uniform Strong</h3><p>Standards.</p></div></div></div>
+  <div class="gap"></div><section class="card quote"><div class="quoteMark">“</div><p>${esc(q.q)}</p><b>${esc(q.a)}</b></section>`}
+function training(){const d=currentDay(),tmpl=currentTemplate();const done=Object.keys(S.loggerDone||{}).filter(k=>S.loggerDone[k]).length;return `${topBar('Training',`${d.id} · ${d.label}`)}${dayStrip()}
+<section class="card pad stack"><div class="row between"><div>${typePill(d.type)}<div class="title">${esc(tmpl.name)}</div><div class="muted">${esc(tmpl.intent)}</div></div></div>${progressHtml(done,tmpl.sections.length)}<button class="btn green" data-action="goto" data-target="readiness-check">Run readiness → start</button><button class="btn dark" data-action="goto" data-target="builder">Open session builder</button></section>
+<div class="gap"></div><section class="card pad"><div class="cap">Session skeleton</div><div class="stack" style="margin-top:10px">${tmpl.sections.map(s=>`<div class="row between" style="align-items:flex-start"><div><div class="h2" style="font-size:15px">${s.id}. ${esc(s.name)}</div><div class="muted">${esc(s.exercise)}</div></div><span class="pill">${esc(s.type)}</span></div>`).join('')}</div></section>
+<div class="gap"></div>${recentLogsCard()}`}
+function readinessCheck(){const rows=[['sleep','Sleep','1 = wrecked, 5 = excellent'],['energy','Energy','1 = flat, 5 = switched on'],['soreness','Body','1 = sore/beat up, 5 = fresh']];const r=readinessScore();return `${topBar('Readiness','Throttle before ego')}
+<section class="card pad stack"><div class="score-card ${r.lane==='green'?'full':r.lane==='amber'?'monitor':'dial'}"><div class="cap">Today’s lane</div><div class="title" style="font-size:31px;color:${r.lane==='green'?'var(--green)':r.lane==='amber'?'var(--amber)':'var(--red)'}">${esc(r.label)} · ${r.sum}/15</div><div class="muted">${esc(r.desc)}</div></div>${rows.map(([key,label,sub])=>`<div><div class="row between"><div><div class="h2" style="font-size:15px">${label}</div><div class="tiny">${sub}</div></div><span class="pill ${(+S.readiness[key]||0)>=4?'green':(+S.readiness[key]||0)>=3?'amber':'gray'}">${+S.readiness[key]||'-'}</span></div><div class="checkGrid">${[1,2,3,4,5].map(v=>`<button type="button" class="rbtn ${(+S.readiness[key]===v)?'sel':''} ${v>=4?'good':v<=2?'bad':''}" data-action="set-readiness" data-key="${key}" data-val="${v}">${v}</button>`).join('')}</div></div>`).join('')}<button class="btn green" data-action="start-session">Start guided session</button>${backTo('training','Back to Training')}</section>`}
+function logger(){const tmpl=currentTemplate();const idx=Math.min(S.loggerIndex,tmpl.sections.length-1);const sec=tmpl.sections[idx];const done=Object.keys(S.loggerDone||{}).filter(k=>S.loggerDone[k]).length;return `${topBar('Guided Session',tmpl.name)}${sectionTabs('logger')}<section class="card pad stack">${progressHtml(done,tmpl.sections.length)}${sectionEditor(sec,'logger')}<button class="btn green" data-action="done-section">Complete section → next</button><button class="btn dark" data-action="goto" data-target="summary">Finish session</button>${backTo('training','Exit session')}</section>`}
+function sectionEditor(sec,mode){const data=S.secData.sections[sec.id]||sec;const sets=(data.sets&&data.sets.length?data.sets:[]);return `<div class="row between"><div><div class="cap">Section ${esc(sec.id)} · ${esc(sec.type)}</div><div class="title">${esc(sec.name)}</div></div><span class="pill ${sec.type==='Conditioning'?'green':sec.type==='Strength'?'blue':'gray'}">${esc(sec.type)}</span></div><div class="field"><label>Exercise / work</label><input data-field="exercise" data-section="${sec.id}" value="${attr(data.exercise)}"></div><div class="field"><label>Prescription</label><input data-field="reps" data-section="${sec.id}" value="${attr(data.reps)}"></div>${sets.length?`<div class="tableWrap"><table><thead><tr><th>Set</th><th>Target</th><th>Load</th><th>RPE</th><th>Done</th></tr></thead><tbody>${sets.map((set,i)=>`<tr><td>Set ${i+1}</td><td><input data-set-field="r" data-section="${sec.id}" data-set="${i}" value="${attr(set.r)}"></td><td><input data-set-field="w" data-section="${sec.id}" data-set="${i}" value="${attr(set.w)}"></td><td><input data-set-field="rpe" data-section="${sec.id}" data-set="${i}" value="${attr(set.rpe||'')}"></td><td><button type="button" class="btn small ${set.done?'green':'ghost'}" data-action="toggle-set" data-section="${sec.id}" data-set="${i}">${set.done?'✓':'—'}</button></td></tr>`).join('')}</tbody></table></div>`:''}<div class="field"><label>Coach note</label><textarea data-field="notes" data-section="${sec.id}">${esc(data.notes)}</textarea></div>${mode==='builder'?'<button class="btn dark" data-action="add-set">+ Add set row</button>':''}`}
+function sessionSummary(){const d=currentDay();const stars=[1,2,3,4,5].map(v=>`<button type="button" class="star ${S.sessionRating>=v?'lit':''}" data-action="rate-session" data-val="${v}" aria-label="Rate ${v}">★</button>`).join('');return `${topBar('Complete','Save the work')}
+<section class="card hero center"><span class="heroKicker">${esc(d.id)} complete</span><div class="heroTitle" style="margin-inline:auto">Good. Bank it.</div><div class="heroSub" style="margin-inline:auto">Save the session and the app will advance to the next D-day.</div></section><div class="gap"></div>
+<section class="card pad stack"><div><div class="cap">Rate the session</div><div class="stars">${stars}</div></div><div class="field"><label>Notes</label><textarea id="session-note" data-session-note placeholder="What went well? What needs adjusting?">${esc(S.sessionNote||'')}</textarea></div><button class="btn green" data-action="save-session">Save & advance</button>${backTo('training','Back to Training')}</section>`}
+function library(){return `${topBar('Library','Everything built into the HTML')}
+<section class="card pad"><div class="cap">Built-in tools</div><div class="title">Strength, conditioning, standards, recovery.</div><div class="muted">No dead text. Every card opens something.</div></section><div class="gap"></div><div class="stack">${libItems.map(([target,ico,title,sub])=>`<section class="card menu" data-action="goto" data-target="${target}"><div class="circle">${ico}</div><div><h3>${esc(title)}</h3><p>${esc(sub)}</p></div><div class="chev">›</div></section>`).join('')}</div>`}
+function builder(){const tmpl=currentTemplate();const idx=Math.min(S.builderIndex,tmpl.sections.length-1);const sec=tmpl.sections[idx];const done=Object.keys(S.builderDone||{}).filter(k=>S.builderDone[k]).length;return `${topBar('Builder',`Build from ${currentDay().id}`)}${sectionTabs('builder')}<section class="card pad stack">${progressHtml(done,tmpl.sections.length)}${sectionEditor(sec,'builder')}<button class="btn green" data-action="builder-done">Save section → next</button><button class="btn dark" data-action="builder-reset">Reset this day template</button>${backTo('library','Back to Library')}</section>`}
+function savedSessions(){return `${topBar('Saved Sessions','Local history')}${recentLogsCard(true)}<div class="gap"></div>${backTo('library','Back to Library')}`}
+function workoutHistory(){return savedSessions()}
+function recentLogsCard(full=false){const logs=S.workoutLogs||[];return `<section class="card pad"><div class="row between"><div><div class="cap">Workout history</div><div class="title">${logs.length?`${logs.length} sessions saved`:'No sessions yet'}</div></div><button class="btn small dark" data-action="goto" data-target="manual-log">+ Log</button></div><div class="stack" style="margin-top:12px">${logs.length?logs.slice(0,full?50:3).map(l=>`<div class="card menu compact" style="box-shadow:none"><div class="circle">${l.type==='Manual'?'＋':'✓'}</div><div><h3>${esc(l.name||l.title||l.day)}</h3><p>${new Date(l.date).toLocaleDateString()} · ${esc(l.rating?`${l.rating}/5`:l.type||'Guided')}</p>${l.note?`<p>${esc(l.note)}</p>`:''}</div></div>`).join(''):'<div class="empty">Sessions you save will show here.</div>'}</div></section>`}
+function chassisLibrary(){return `${topBar('Chassis','The wiring underneath')}
+<section class="card pad stack"><div><div class="cap">Fixed order</div><div class="title">Prep → Power → Strength → Support → Conditioning → Cooldown</div><div class="muted">The app can flex, but the order stays logical so sessions feel professional and safe.</div></div>${['A. Prep / Explosive','B. Secondary explosive','C. Primary strength pattern 1','D. Primary strength pattern 2','E. Support work','F. Conditioning','G. Cool down'].map(x=>`<div class="card menu compact" style="box-shadow:none"><div class="circle">${x[0]}</div><div><h3>${esc(x.slice(3))}</h3><p>Built into guided sessions and the builder.</p></div></div>`).join('')}</section><div class="gap"></div>${backTo('library','Back to Library')}`}
+function manualLog(){const d=S.manualDraft||defaultState.manualDraft;return `${topBar('Manual Log','Fast entry')}
+<section class="card pad stack"><div class="grid2"><div class="field"><label>Date</label><input type="date" data-manual="date" value="${attr(d.date||today())}"></div><div class="field"><label>Type</label><select data-manual="type">${['Strength','Conditioning','Recovery','Mobility'].map(t=>`<option ${d.type===t?'selected':''}>${t}</option>`).join('')}</select></div></div><div class="field"><label>Title</label><input data-manual="title" placeholder="e.g. Easy bike 35 min" value="${attr(d.title||'')}"></div><div class="field"><label>Notes</label><textarea data-manual="notes" placeholder="Loads, pace, HR, RPE, how it felt">${esc(d.notes||'')}</textarea></div><button class="btn green" data-action="save-manual">Save manual log</button>${backTo('library','Back to Library')}</section>`}
+function uniformStrong(){function target(s){if(s.type==='relative')return `${Math.round((+S.bodyweightKg||89)*s.multiplier)}kg (${s.multiplier}x BW)`;if(s.type==='time')return `${s.target}${s.unit}`;return `${s.target}${s.unit?' '+s.unit:''}`}function status(s,val){const n=parseFloat(val);if(!n)return'<span class="status">Not logged</span>';let t=s.type==='relative'?Math.round((+S.bodyweightKg||89)*s.multiplier):s.target;const ratio=n/t;if(ratio>=1.05)return'<span class="status above">Above</span>';if(ratio>=1)return'<span class="status at">At standard</span>';if(ratio>=.8)return'<span class="status approaching">Getting there</span>';return'<span class="status below">Below</span>'}return `${topBar('Uniform Strong','Readiness standards')}
+<section class="card pad"><div class="field"><label>Bodyweight kg</label><input type="number" data-action="set-bw" value="${attr(S.bodyweightKg)}"></div><div class="muted">Relative strength standards scale automatically.</div></section><div class="gap"></div>
+<section class="card pad"><div class="cap">Strength standards</div>${strengthStandards.map(s=>`<div class="std-row"><div><div class="std-name">${esc(s.name)}</div><div class="std-target">Target ${target(s)}</div></div><input class="std-input" data-std="${s.key}" value="${attr(S.currentStandards[s.key]||'')}" placeholder="-"><div>${status(s,S.currentStandards[s.key])}</div></div>`).join('')}</section><div class="gap"></div>
+<section class="card pad"><div class="cap">Conditioning standards</div>${condStandards.map(s=>`<div class="std-row"><div><div class="std-name">${esc(s.name)}</div><div class="std-target">${esc(s.target)}</div></div><input class="std-input" data-cond="${s.key}" value="${attr(S.condCurrents[s.key]||'')}" placeholder="result"><div><span class="status ${S.condCurrents[s.key]?'at':''}">${S.condCurrents[s.key]?'Logged':'Not logged'}</span></div></div>`).join('')}</section><div class="gap"></div>${backTo('library','Back to Library')}`}
+function exerciseLibrary(){const filters=['All',...exerciseGroups.map(g=>g.cat)];const groups=exerciseGroups.filter(g=>S.exFilter==='All'||g.cat===S.exFilter);return `${topBar('Exercise Library','Patterns and swaps')}<div class="chips">${filters.map(f=>`<button class="chip ${S.exFilter===f?'active':''}" data-action="ex-filter" data-val="${f}">${f}</button>`).join('')}</div><div class="stack">${groups.map(g=>`<section class="card pad"><div class="row between"><div><div class="cap">${esc(g.cat)}</div><div class="title">${esc(g.primary)}</div></div><span class="pill blue">Primary</span></div><div class="muted" style="margin-top:5px">${esc(g.why)}</div><div class="chips" style="margin-top:12px">${g.exercises.map(e=>`<span class="chip">${esc(e)}</span>`).join('')}</div></section>`).join('')}</div><div class="gap"></div>${backTo('library','Back to Library')}`}
+function conditioningLibrary(){return `${topBar('Conditioning','Easy, pacing, hard')}<div class="stack">${conditioningTypes.map(c=>`<section class="ctype ${c.cls}"><h3>${esc(c.label)}</h3><div class="tiny">${esc(c.feel)}</div><p class="muted">${esc(c.purpose)}</p>${c.protocols.map(p=>`<div class="protocol"><div class="pname">${esc(p.name)}</div><div class="pdetail">${esc(p.detail)}</div></div>`).join('')}</section>`).join('')}</div><div class="gap"></div>${backTo('library','Back to Library')}`}
+function mobility(){const filters=['All','Hips','Shoulders','Spine','Full Body'];const flows=mobilityFlows.filter(m=>S.mobFilter==='All'||m.tags.includes(S.mobFilter));return `${topBar('Mobility','Clickable recovery flows')}<div class="chips">${filters.map(f=>`<button class="chip ${S.mobFilter===f?'active':''}" data-action="mob-filter" data-val="${f}">${f}</button>`).join('')}</div><div class="stack">${flows.map((m,i)=>{const real=mobilityFlows.indexOf(m);return `<section class="card menu" data-action="open-mobility" data-index="${real}"><div class="circle">◇</div><div><h3>${esc(m.name)}</h3><p>${esc(m.dur)} · ${esc(m.summary)}</p></div><div class="chev">›</div></section>`}).join('')}</div><div class="gap"></div>${backTo('library','Back to Library')}`}
+function mobilityDetail(){const m=mobilityFlows[S.selectedMobility]||mobilityFlows[0];return `${topBar(m.name,m.dur)}<section class="card pad stack"><div><div class="cap">Flow</div><div class="title">${esc(m.summary)}</div><p class="muted">${esc(m.detail)}</p></div><div class="chips">${m.tags.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div><button class="btn green" data-action="open-url" data-url="${attr(m.url)}">Open video/search</button>${backTo('mobility','Back to Mobility')}</section>`}
+function prepCooldownLibrary(){const prep=['KB RDL 3-5','Hamburger squat 3-5','Supported row 3-5 each','KB press 3 each','Turkish get-up 1 each','Pogo hops 2-3 x 10','Med ball throw 3 x 3'];const cooldown=['Dead hang 30-60 sec','Banded lat stretch 30 sec/side','Hip flexor + hamstring flow 60 sec','Slow nasal breathing 10-15 breaths','Easy walk 5-10 min'];return `${topBar('Prep / Cooldown','Start clean. Finish calmer.')}<section class="card pad"><div class="cap">Prep menu</div>${prep.map(x=>`<div class="protocol"><div class="pname">${esc(x)}</div></div>`).join('')}</section><div class="gap"></div><section class="card pad"><div class="cap">Cooldown menu</div>${cooldown.map(x=>`<div class="protocol"><div class="pname">${esc(x)}</div></div>`).join('')}</section><div class="gap"></div>${backTo('library','Back to Library')}`}
+function nutritionGuide(){return `${topBar('Nutrition','Simple support rules')}<section class="card pad"><div class="cap">Priorities</div><div class="title">Do the basics hard.</div><div class="muted">No magic. Support the work, recover, and stay consistent.</div>${nutritionPriorities.map((p,i)=>`<div class="protocol"><div class="pname">${i+1}. ${esc(p.n)}</div><div class="pdetail">${esc(p.d)}</div></div>`).join('')}</section><div class="gap"></div>${backTo('library','Back to Library')}`}
+function mentalPerformance(){return `${topBar('Mental Performance','Rules for rough days')}<div class="stack">${mentalTools.map(t=>`<section class="card pad"><div class="cap">Tool</div><div class="title">${esc(t.n)}</div><p class="muted">${esc(t.d)}</p></section>`).join('')}</div><div class="gap"></div>${backTo('library','Back to Library')}`}
+function dailyStandards(){const date=today();S.dailyToggles[date]=S.dailyToggles[date]||{};const score=dailyCheckItems.reduce((a,x)=>a+(S.dailyToggles[date][x.key]?1:0),0);const pct=Math.round(score/dailyCheckItems.length*100);return `${topBar('Daily Standards','9 non-negotiables')}<section class="card hero"><span class="heroKicker">Today</span><div class="heroTitle">${score}/9 kept</div><div class="heroSub">Score ${pct}%. Keep the promises small enough to repeat.</div><div class="progress" style="margin-top:14px"><b style="width:${pct}%"></b></div></section><div class="gap"></div><section class="card pad">${dailyCheckItems.map(item=>{const on=!!S.dailyToggles[date][item.key];return `<div class="toggle-row"><div class="grow"><div class="tname">${esc(item.label)}</div><div class="tsub">${esc(item.sub)}</div></div><button type="button" class="tgl ${on?'on':''}" data-action="toggle-standard" data-key="${item.key}" aria-label="Toggle ${attr(item.label)}"></button></div>`}).join('')}</section><div class="gap"></div>${backTo('home','Back Home')}`}
+function settings(){return `${topBar('Settings','Local HTML app')}<section class="card pad stack"><div><div class="cap">Backup</div><div class="title">Export / import local data</div><div class="muted">Everything saves in this browser. Export before sharing or resetting.</div></div><button class="btn green" data-action="export-data">Export backup JSON</button><label class="btn dark" style="display:flex"><input type="file" accept="application/json" data-action="import-file" style="display:none">Import backup JSON</label></section><div class="gap"></div><section class="card pad stack"><div><div class="cap">Reset</div><div class="title">Danger zone</div><div class="muted">Clears this browser’s saved app data only.</div></div><button class="btn red" data-action="clear-data">Clear local data</button></section>`}
+
+function saveSession(){const d=currentDay();const tmpl=currentTemplate();const completed=Object.keys(S.loggerDone||{}).filter(k=>S.loggerDone[k]).length;S.completedDays[d.id]=true;S.workoutLogs.unshift({date:new Date().toISOString(),day:d.id,name:tmpl.name,type:'Guided',rating:S.sessionRating||'',note:S.sessionNote||'',completedSections:completed,totalSections:tmpl.sections.length});S.currentDayIndex=(S.currentDayIndex+1)%dayPlan.length;S.sessionRating=0;S.sessionNote='';ensureSecData(currentDay().id);S.tab='training';saveState();notify('Session saved');render()}
+function saveManual(){const d=S.manualDraft||{};if(!String(d.title||'').trim()){notify('Add a title first');return}S.workoutLogs.unshift({date:new Date(d.date||today()).toISOString(),name:d.title,type:'Manual',rating:'',note:d.notes||''});S.manualDraft={date:today(),type:'Strength',title:'',notes:''};S.tab='saved-sessions';saveState();notify('Manual log saved');render()}
+function exportData(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`THE-Hybrid-Engine-backup-${today()}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);notify('Backup exported')}
+function importData(file){const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(String(reader.result||'{}'));S={...clone(defaultState),...obj};ensureSecData(currentDay().id);saveState();notify('Backup imported');render()}catch{notify('Import failed')}};reader.readAsText(file)}
+function resetDay(){S.secData=null;ensureSecData(currentDay().id);saveState();notify('Template reset');render()}
+
+navEl.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(!b)return;S.tab=b.dataset.tab;S.fabOpen=false;saveState();render()});
+fabEl.addEventListener('click',()=>{S.fabOpen=!S.fabOpen;render()});
+mainEl.addEventListener('input',e=>{const el=e.target;if(el.matches('[data-field]')){const sec=el.dataset.section;S.secData.sections[sec][el.dataset.field]=el.value;saveState()}else if(el.matches('[data-set-field]')){const sec=el.dataset.section,i=+el.dataset.set;S.secData.sections[sec].sets[i][el.dataset.setField]=el.value;saveState()}else if(el.matches('[data-session-note]')){S.sessionNote=el.value;saveState()}else if(el.matches('[data-std]')){S.currentStandards[el.dataset.std]=el.value;saveState();render()}else if(el.matches('[data-cond]')){S.condCurrents[el.dataset.cond]=el.value;saveState();render()}else if(el.matches('[data-manual]')){S.manualDraft=S.manualDraft||clone(defaultState.manualDraft);S.manualDraft[el.dataset.manual]=el.value;saveState()}});
+mainEl.addEventListener('change',e=>{const el=e.target;if(el.matches('[data-manual]')){S.manualDraft=S.manualDraft||clone(defaultState.manualDraft);S.manualDraft[el.dataset.manual]=el.value;saveState()}else if(el.matches('input[type="file"][data-action="import-file"]')&&el.files&&el.files[0]){importData(el.files[0])}});
+document.addEventListener('click',e=>{const el=e.target.closest('[data-action]');if(!el)return;const action=el.dataset.action;switch(action){
+  case 'goto':S.tab=el.dataset.target;S.fabOpen=false;saveState();render();break;
+  case 'set-day':S.currentDayIndex=+el.dataset.index;ensureSecData(currentDay().id);S.tab=parentTab(S.tab)==='training'?'training':S.tab;saveState();render();break;
+  case 'set-readiness':S.readiness[el.dataset.key]=+el.dataset.val;saveState();render();break;
+  case 'start-session':S.lastReadiness=readinessScore();S.tab='logger';S.loggerIndex=0;S.loggerDone={};saveState();render();break;
+  case 'logger-jump':S.loggerIndex=+el.dataset.index;saveState();render();break;
+  case 'builder-jump':S.builderIndex=+el.dataset.index;saveState();render();break;
+  case 'done-section':{const tmpl=currentTemplate(),sec=tmpl.sections[S.loggerIndex];if(sec)S.loggerDone[sec.id]=true;if(S.loggerIndex<tmpl.sections.length-1)S.loggerIndex++;else S.tab='summary';saveState();render();break;}
+  case 'builder-done':{const tmpl=currentTemplate(),sec=tmpl.sections[S.builderIndex];if(sec)S.builderDone[sec.id]=true;if(S.builderIndex<tmpl.sections.length-1)S.builderIndex++;saveState();render();break;}
+  case 'builder-reset':resetDay();break;
+  case 'toggle-set':{const sec=el.dataset.section,i=+el.dataset.set;const set=S.secData.sections[sec].sets[i];set.done=!set.done;saveState();render();break;}
+  case 'add-set':{const tmpl=currentTemplate(),sec=tmpl.sections[S.builderIndex];const d=S.secData.sections[sec.id];d.sets=d.sets||[];d.sets.push({r:d.reps||'',w:'',rpe:'',done:false});saveState();render();break;}
+  case 'rate-session':S.sessionRating=+el.dataset.val;saveState();render();break;
+  case 'save-session':saveSession();break;
+  case 'save-manual':saveManual();break;
+  case 'set-bw':S.bodyweightKg=+el.value||89;saveState();render();break;
+  case 'ex-filter':S.exFilter=el.dataset.val;saveState();render();break;
+  case 'mob-filter':S.mobFilter=el.dataset.val;saveState();render();break;
+  case 'open-mobility':S.selectedMobility=+el.dataset.index;S.tab='mobility-detail';saveState();render();break;
+  case 'open-url':{const url=safeUrl(el.dataset.url);if(url)window.open(url,'_blank','noopener,noreferrer');else notify('Blocked unsafe URL');break;}
+  case 'toggle-standard':{const date=today();S.dailyToggles[date]=S.dailyToggles[date]||{};S.dailyToggles[date][el.dataset.key]=!S.dailyToggles[date][el.dataset.key];saveState();render();break;}
+  case 'export-data':exportData();break;
+  case 'clear-data':if(confirm('Clear local app data on this device?')){localStorage.removeItem(STORE);S=clone(defaultState);ensureSecData(currentDay().id);notify('Local data cleared');render()}break;
+}});
+render();
+})();
+</script>
+</body>
+</html>

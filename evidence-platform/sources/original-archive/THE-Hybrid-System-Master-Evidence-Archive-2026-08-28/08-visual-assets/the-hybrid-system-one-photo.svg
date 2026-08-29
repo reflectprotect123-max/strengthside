@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2500" viewBox="0 0 1600 2500">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="34%" r="78%">
+      <stop offset="0" stop-color="#172945"/>
+      <stop offset="0.58" stop-color="#0a111e"/>
+      <stop offset="1" stop-color="#05080e"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#18243a"/>
+      <stop offset="1" stop-color="#101827"/>
+    </linearGradient>
+    <linearGradient id="ai" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#132a42"/>
+      <stop offset="1" stop-color="#0d1b2c"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="12" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#78e6e2" stroke-width="1.5"/></marker>
+  </defs>
+
+  <rect width="1600" height="2500" fill="url(#bg)"/>
+  <circle cx="800" cy="920" r="610" fill="none" stroke="#263c5a" stroke-width="2" opacity=".28"/>
+  <circle cx="800" cy="920" r="470" fill="none" stroke="#263c5a" stroke-width="1" opacity=".22"/>
+
+  <text x="110" y="105" fill="#eaf1fd" font-family="Arial, sans-serif" font-size="36" font-weight="500">THE Hybrid System</text>
+  <text x="110" y="150" fill="#9eacc1" font-family="Arial, sans-serif" font-size="22">Multi-model adaptive control architecture</text>
+
+  <rect x="90" y="205" width="1420" height="415" fill="none" stroke="#73839e" stroke-width="2"/>
+  <rect x="125" y="188" width="340" height="40" fill="#08101c"/>
+  <text x="145" y="218" fill="#b8c5d9" font-family="Arial, sans-serif" font-size="21">Everything the system sees</text>
+
+  <g font-family="Arial, sans-serif" font-size="22" text-anchor="middle">
+    <g fill="url(#panel)" stroke="#667795" stroke-width="2">
+      <rect x="145" y="275" width="585" height="120"/>
+      <rect x="870" y="275" width="585" height="120"/>
+      <rect x="145" y="440" width="585" height="120"/>
+      <rect x="870" y="440" width="585" height="120"/>
+    </g>
+    <g fill="#e3ebf8">
+      <text x="437" y="326"><tspan x="437" dy="0">Research &amp; reference</tspan><tspan x="437" dy="32">libraries</tspan></text>
+      <text x="1162" y="326"><tspan x="1162" dy="0">Sessions · check-ins ·</tspan><tspan x="1162" dy="32">WHOOP</tspan></text>
+      <text x="437" y="491"><tspan x="437" dy="0">Engine outputs as</tspan><tspan x="437" dy="32">facts</tspan></text>
+      <text x="1162" y="491"><tspan x="1162" dy="0">Web research ·</tspan><tspan x="1162" dy="32">optional</tspan></text>
+    </g>
+  </g>
+
+  <path d="M800 620 L800 700" stroke="#71809a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="90" y="700" width="1420" height="650" fill="none" stroke="#73839e" stroke-width="2"/>
+  <rect x="125" y="683" width="260" height="40" fill="#08101c"/>
+  <text x="145" y="713" fill="#b8c5d9" font-family="Arial, sans-serif" font-size="21">Five system feeds</text>
+
+  <g font-family="Arial, sans-serif" font-size="24" text-anchor="middle">
+    <rect x="145" y="770" width="585" height="135" fill="url(#panel)" stroke="#78a7ff" stroke-width="3"/>
+    <rect x="870" y="770" width="585" height="135" fill="url(#panel)" stroke="#7de6a7" stroke-width="3"/>
+    <rect x="145" y="950" width="585" height="135" fill="url(#panel)" stroke="#f5c96a" stroke-width="3"/>
+    <rect x="870" y="950" width="585" height="135" fill="url(#panel)" stroke="#c28cff" stroke-width="3"/>
+    <rect x="145" y="1130" width="1310" height="135" fill="url(#panel)" stroke="#6be5e2" stroke-width="3"/>
+    <g fill="#edf3fd">
+      <text x="437" y="848">Strength system</text>
+      <text x="1162" y="848">Conditioning system</text>
+      <text x="437" y="1028">Nutrition system</text>
+      <text x="1162" y="1028">Recovery system</text>
+      <text x="800" y="1208">Coordinator system</text>
+    </g>
+  </g>
+
+  <path d="M437 905 L437 1400 M1162 905 L1162 1400 M437 1085 L437 1400 M1162 1085 L1162 1400 M800 1265 L800 1400" fill="none" stroke="#65748e" stroke-width="2"/>
+  <path d="M437 1400 L1162 1400" fill="none" stroke="#65748e" stroke-width="2"/>
+  <path d="M800 1400 L800 1465" fill="none" stroke="#78e6e2" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="205" y="1465" width="1190" height="600" fill="url(#ai)" stroke="#6be5e2" stroke-width="3" filter="url(#glow)"/>
+  <text x="800" y="1545" fill="#edf7ff" font-family="Arial, sans-serif" font-size="34" font-weight="500" text-anchor="middle">Multi-model adaptive control system</text>
+  <text x="800" y="1587" fill="#96a7bd" font-family="Arial, sans-serif" font-size="21" text-anchor="middle">Non-LLM learning and decision layer</text>
+
+  <g font-family="Arial, sans-serif" font-size="23" text-anchor="middle">
+    <rect x="285" y="1640" width="1030" height="105" fill="url(#panel)" stroke="#586a87" stroke-width="2"/>
+    <rect x="285" y="1775" width="1030" height="105" fill="url(#panel)" stroke="#586a87" stroke-width="2"/>
+    <rect x="285" y="1910" width="1030" height="105" fill="url(#panel)" stroke="#586a87" stroke-width="2"/>
+    <g fill="#e9f0fb">
+      <text x="800" y="1703">State estimation</text>
+      <text x="800" y="1838">Personal adaptation</text>
+      <text x="800" y="1973">Constrained decision optimisation</text>
+    </g>
+  </g>
+
+  <path d="M800 2070 L800 2150" stroke="#78e6e2" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="205" y="2150" width="1190" height="245" fill="none" stroke="#73839e" stroke-width="2"/>
+  <rect x="240" y="2133" width="350" height="40" fill="#08101c"/>
+  <text x="260" y="2163" fill="#b8c5d9" font-family="Arial, sans-serif" font-size="21">Validated system output</text>
+  <rect x="285" y="2210" width="1030" height="90" fill="url(#panel)" stroke="#586a87" stroke-width="2"/>
+  <text x="800" y="2265" fill="#e9f0fb" font-family="Arial, sans-serif" font-size="23" text-anchor="middle">Hard validators · audit · silent apply</text>
+  <path d="M800 2300 L800 2340" stroke="#78e6e2" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="285" y="2340" width="1030" height="90" fill="url(#panel)" stroke="#586a87" stroke-width="2"/>
+  <text x="800" y="2395" fill="#e9f0fb" font-family="Arial, sans-serif" font-size="23" text-anchor="middle">One validated decision → athlete app</text>
+
+  <text x="800" y="2470" fill="#7f90a8" font-family="Arial, sans-serif" font-size="17" text-anchor="middle">The five systems inform the model; the model chooses one validated action.</text>
+</svg>

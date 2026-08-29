@@ -1,0 +1,33 @@
+{
+  "snapshot_id": "66666666-6666-4666-8666-666666666666",
+  "subject_id": "00000000-0000-4000-8000-000000000001",
+  "as_of": "2026-08-04T07:00:00+10:00",
+  "generated_at": "2026-08-04T07:02:00+10:00",
+  "algorithm_version": "state-v1-draft",
+  "state": {
+    "overall_capacity": "moderate",
+    "strength_capacity": "moderate",
+    "conditioning_capacity": "unknown",
+    "recovery_debt": "unknown",
+    "life_load": "high",
+    "sleep_context": "unknown",
+    "illness_status": "clear",
+    "pain_status": "clear",
+    "time_available_minutes": 35
+  },
+  "constraints": [
+    {
+      "constraint_id": "life-load-volume-caution",
+      "severity": "soft",
+      "action": "reduced",
+      "reason_code": "high_life_load_self_report",
+      "applies_to": ["optional_volume"]
+    }
+  ],
+  "data_quality": "partial",
+  "confidence": "low",
+  "observed_inputs": ["subjective_stress_2026-08-04", "time_available_2026-08-04"],
+  "missing_inputs": ["sleep", "hrv", "resting_hr", "conditioning_load_7d"],
+  "reason_codes": ["missing_sleep", "missing_wearable_history", "high_life_load"],
+  "supersedes_snapshot_id": null
+}

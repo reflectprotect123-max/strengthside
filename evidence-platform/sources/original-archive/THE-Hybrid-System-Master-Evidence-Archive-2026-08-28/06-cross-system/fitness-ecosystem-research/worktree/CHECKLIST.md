@@ -1,0 +1,22 @@
+# Cross-phase checklist
+
+- [ ] Real source checkout located and branch recorded.
+- [ ] Baseline facts are labeled verified/provided/inferred/unknown.
+- [ ] Domain ownership matrix approved.
+- [ ] Contract versions and migration IDs exist.
+- [ ] Old/new client compatibility fixtures pass.
+- [ ] Idempotency/replay/stale-write behavior is tested.
+- [ ] RLS positive and negative tests pass.
+- [ ] WHOOP/provider observations retain provenance and stale/missing state.
+- [ ] HRV cannot clear pain or illness.
+- [ ] Pain and illness have explicit hard routes.
+- [ ] Prescription targets and logged results remain separate.
+- [ ] Historical records are immutable or corrected by version.
+- [ ] Coordinator is the only combined-plan writer.
+- [ ] Every plan decision has an explanation/reason code.
+- [ ] Conditioning native integrations have device evidence.
+- [ ] Offline/reinstall/account-switch/deletion scenarios pass.
+- [ ] No secrets or health data appear in logs/artifacts.
+- [ ] Privacy and regulatory review owners are assigned.
+- [ ] Exact test commands and failures are recorded.
+- [ ] Rollback is rehearsed before public release.

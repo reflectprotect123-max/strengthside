@@ -1,0 +1,1897 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.local/schemas/shared-data-contract/v1.0",
+  "title": "THE Hybrid System Shared Data Contract v1.0",
+  "description": "Canonical machine-readable contract for the five specialist systems, BIG MAC, and Gemini/Gemma advisory and lead-fallback inputs. This schema defines structure and authority boundaries only; it contains no scientific thresholds or coaching rules.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/EventEnvelope"
+    },
+    {
+      "$ref": "#/$defs/DomainOutputSet"
+    },
+    {
+      "$ref": "#/$defs/CompleteDecisionPacket"
+    },
+    {
+      "$ref": "#/$defs/LLMDecisionRequest"
+    },
+    {
+      "$ref": "#/$defs/LLMDecisionResponse"
+    },
+    {
+      "$ref": "#/$defs/ActionCandidate"
+    }
+  ],
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "Version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[0-9]+\\.[0-9]+(?:\\.[0-9]+)?(?:[-+][A-Za-z0-9.-]+)?$"
+    },
+    "Sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "SystemName": {
+      "type": "string",
+      "enum": [
+        "strength",
+        "conditioning",
+        "nutrition",
+        "recovery",
+        "coordinator"
+      ]
+    },
+    "ProducerName": {
+      "type": "string",
+      "enum": [
+        "strength",
+        "conditioning",
+        "nutrition",
+        "recovery",
+        "coordinator",
+        "big_mac",
+        "gemini",
+        "gemma",
+        "adapter",
+        "human"
+      ]
+    },
+    "ObservationStatus": {
+      "type": "string",
+      "enum": [
+        "observed",
+        "derived",
+        "estimated",
+        "missing",
+        "stale",
+        "synthetic_test"
+      ]
+    },
+    "DataQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "completeness",
+        "freshness"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/ObservationStatus"
+        },
+        "completeness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "freshness": {
+          "type": "string",
+          "enum": [
+            "current",
+            "aging",
+            "stale",
+            "unknown"
+          ]
+        },
+        "measurement_method": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 256
+        },
+        "protocol_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valid_from": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valid_until": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quality_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        }
+      }
+    },
+    "Uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "representation"
+      ],
+      "properties": {
+        "representation": {
+          "type": "string",
+          "enum": [
+            "none_declared",
+            "point_with_error",
+            "interval",
+            "distribution",
+            "categorical",
+            "unknown"
+          ]
+        },
+        "standard_error": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "lower": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "upper": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "level": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "distribution_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "sources": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "measurement",
+              "missingness",
+              "state",
+              "parameter",
+              "model",
+              "applicability",
+              "distribution_shift",
+              "decision_ambiguity"
+            ]
+          }
+        }
+      }
+    },
+    "ProvenanceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provenance_id",
+        "record_type",
+        "record_hash"
+      ],
+      "properties": {
+        "provenance_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "record_type": {
+          "type": "string",
+          "enum": [
+            "source_event",
+            "transformation",
+            "rule",
+            "model",
+            "parameter_set",
+            "policy",
+            "evidence_summary",
+            "human_input",
+            "llm_input",
+            "llm_output"
+          ]
+        },
+        "record_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "version": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Version"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ScalarOrRange": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string",
+          "maxLength": 512
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lower",
+            "upper"
+          ],
+          "properties": {
+            "lower": {
+              "type": "number"
+            },
+            "upper": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    },
+    "Measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measurement_id",
+        "metric_key",
+        "unit",
+        "time_basis",
+        "observed_at",
+        "quality",
+        "uncertainty",
+        "provenance"
+      ],
+      "properties": {
+        "measurement_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "metric_key": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "value": {
+          "$ref": "#/$defs/ScalarOrRange"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "denominator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "time_basis": {
+          "type": "string",
+          "enum": [
+            "instant",
+            "set",
+            "session",
+            "day",
+            "rolling_window",
+            "week",
+            "phase",
+            "plan"
+          ]
+        },
+        "observed_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "quality": {
+          "$ref": "#/$defs/DataQuality"
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty"
+        },
+        "method_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ProvenanceRef"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "quality": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "observed",
+                      "derived",
+                      "estimated",
+                      "synthetic_test"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "value"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "quality": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "missing",
+                      "stale"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "value"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "Constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraint_id",
+        "source_system",
+        "level",
+        "action_scopes",
+        "reason_code",
+        "expires_at",
+        "provenance"
+      ],
+      "properties": {
+        "constraint_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "source_system": {
+          "$ref": "#/$defs/SystemName"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "hard",
+            "soft",
+            "advisory"
+          ]
+        },
+        "action_scopes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "reason_code": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "rule_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "expires_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ProvenanceRef"
+          }
+        }
+      }
+    },
+    "ActionTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "target_type",
+        "target_id"
+      ],
+      "properties": {
+        "domain": {
+          "$ref": "#/$defs/SystemName"
+        },
+        "target_type": {
+          "type": "string",
+          "enum": [
+            "exercise",
+            "strength_session",
+            "conditioning_session",
+            "nutrition_target",
+            "meal_fuel_target",
+            "calendar_slot",
+            "plan",
+            "context_record"
+          ]
+        },
+        "target_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "effective_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "MetricChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_key",
+        "operation",
+        "unit"
+      ],
+      "properties": {
+        "metric_key": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "set",
+            "increase_by",
+            "decrease_by",
+            "multiply_by",
+            "move_to",
+            "replace_with",
+            "no_change"
+          ]
+        },
+        "value": {
+          "$ref": "#/$defs/ScalarOrRange"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "bound_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ExpectedEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_key",
+        "direction",
+        "time_horizon",
+        "uncertainty"
+      ],
+      "properties": {
+        "effect_key": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "increase",
+            "decrease",
+            "maintain",
+            "unknown"
+          ]
+        },
+        "time_horizon": {
+          "type": "string",
+          "enum": [
+            "set",
+            "session",
+            "day",
+            "week",
+            "phase",
+            "long_term"
+          ]
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty"
+        }
+      }
+    },
+    "ResourceDemand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_key",
+        "direction",
+        "magnitude_class"
+      ],
+      "properties": {
+        "resource_key": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "consumes",
+            "preserves",
+            "restores",
+            "unknown"
+          ]
+        },
+        "magnitude_class": {
+          "type": "string",
+          "enum": [
+            "none",
+            "low",
+            "moderate",
+            "high",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "ActionCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "candidate_id",
+        "source",
+        "authority_mode",
+        "action_type",
+        "target",
+        "changes",
+        "preconditions",
+        "constraints_acknowledged",
+        "expected_effects",
+        "resource_demands",
+        "support_tags",
+        "interference_tags",
+        "uncertainty",
+        "provenance",
+        "expires_at"
+      ],
+      "properties": {
+        "kind": {
+          "const": "action_candidate"
+        },
+        "candidate_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "source": {
+          "$ref": "#/$defs/ProducerName"
+        },
+        "authority_mode": {
+          "type": "string",
+          "enum": [
+            "deterministic",
+            "advisory",
+            "lead_fallback",
+            "human_authored"
+          ]
+        },
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "keep",
+            "hold_progression",
+            "bounded_increase",
+            "bounded_decrease",
+            "change_volume",
+            "change_intensity",
+            "change_duration",
+            "change_density",
+            "change_timing",
+            "substitute",
+            "reschedule",
+            "record_missing_information",
+            "record_context_only",
+            "abstain"
+          ]
+        },
+        "target": {
+          "$ref": "#/$defs/ActionTarget"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MetricChange"
+          }
+        },
+        "preconditions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "constraints_acknowledged": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "expected_effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExpectedEffect"
+          }
+        },
+        "resource_demands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResourceDemand"
+          }
+        },
+        "support_tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "interference_tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "rule_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "model_version_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "parameter_set_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "fallback_envelope_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision_basis_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty"
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ProvenanceRef"
+          }
+        },
+        "expires_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authority_mode": {
+                "const": "lead_fallback"
+              }
+            },
+            "required": [
+              "authority_mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "fallback_envelope_id"
+            ],
+            "properties": {
+              "source": {
+                "enum": [
+                  "gemini",
+                  "gemma"
+                ]
+              },
+              "fallback_envelope_id": {
+                "$ref": "#/$defs/Identifier"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DomainOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "output_id",
+        "athlete_scope_id",
+        "system",
+        "as_of",
+        "schema_version",
+        "producer_version",
+        "producer_artifact_hash",
+        "observations",
+        "state_features",
+        "proposals",
+        "constraints",
+        "data_quality",
+        "uncertainty",
+        "provenance",
+        "payload_hash"
+      ],
+      "properties": {
+        "kind": {
+          "const": "domain_output"
+        },
+        "output_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "athlete_scope_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "system": {
+          "$ref": "#/$defs/SystemName"
+        },
+        "as_of": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/Version"
+        },
+        "producer_version": {
+          "$ref": "#/$defs/Version"
+        },
+        "producer_artifact_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Measurement"
+          }
+        },
+        "state_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Measurement"
+          }
+        },
+        "proposals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActionCandidate"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Constraint"
+          }
+        },
+        "data_quality": {
+          "$ref": "#/$defs/DataQuality"
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty"
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ProvenanceRef"
+          }
+        },
+        "source_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "supersedes_output_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payload_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "StrengthDomainOutput": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/DomainOutput"
+        },
+        {
+          "properties": {
+            "system": {
+              "const": "strength"
+            }
+          }
+        }
+      ]
+    },
+    "ConditioningDomainOutput": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/DomainOutput"
+        },
+        {
+          "properties": {
+            "system": {
+              "const": "conditioning"
+            }
+          }
+        }
+      ]
+    },
+    "NutritionDomainOutput": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/DomainOutput"
+        },
+        {
+          "properties": {
+            "system": {
+              "const": "nutrition"
+            }
+          }
+        }
+      ]
+    },
+    "RecoveryDomainOutput": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/DomainOutput"
+        },
+        {
+          "properties": {
+            "system": {
+              "const": "recovery"
+            }
+          }
+        }
+      ]
+    },
+    "CoordinatorDomainOutput": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/DomainOutput"
+        },
+        {
+          "properties": {
+            "system": {
+              "const": "coordinator"
+            }
+          }
+        }
+      ]
+    },
+    "DomainOutputSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "set_id",
+        "athlete_scope_id",
+        "as_of",
+        "strength",
+        "conditioning",
+        "nutrition",
+        "recovery",
+        "coordinator",
+        "set_hash"
+      ],
+      "properties": {
+        "kind": {
+          "const": "domain_output_set"
+        },
+        "set_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "athlete_scope_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "as_of": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "strength": {
+          "$ref": "#/$defs/StrengthDomainOutput"
+        },
+        "conditioning": {
+          "$ref": "#/$defs/ConditioningDomainOutput"
+        },
+        "nutrition": {
+          "$ref": "#/$defs/NutritionDomainOutput"
+        },
+        "recovery": {
+          "$ref": "#/$defs/RecoveryDomainOutput"
+        },
+        "coordinator": {
+          "$ref": "#/$defs/CoordinatorDomainOutput"
+        },
+        "set_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "WholeAthleteState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_id",
+        "athlete_scope_id",
+        "as_of",
+        "features",
+        "constraints",
+        "data_quality",
+        "uncertainty",
+        "state_hash"
+      ],
+      "properties": {
+        "state_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "athlete_scope_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "as_of": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Measurement"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Constraint"
+          }
+        },
+        "data_quality": {
+          "$ref": "#/$defs/DataQuality"
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty"
+        },
+        "state_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "PlanRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "plan_version",
+        "plan_hash"
+      ],
+      "properties": {
+        "plan_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "plan_version": {
+          "$ref": "#/$defs/Version"
+        },
+        "plan_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "GoalPriority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal_id",
+        "rank",
+        "locked"
+      ],
+      "properties": {
+        "goal_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "locked": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ScheduleContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timezone",
+        "available_windows",
+        "equipment_ids",
+        "location_ids"
+      ],
+      "properties": {
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "available_windows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "start",
+              "end"
+            ],
+            "properties": {
+              "start": {
+                "$ref": "#/$defs/Timestamp"
+              },
+              "end": {
+                "$ref": "#/$defs/Timestamp"
+              }
+            }
+          }
+        },
+        "equipment_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "location_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        }
+      }
+    },
+    "EvidenceSummaryRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "version",
+        "summary_hash",
+        "applicability_status"
+      ],
+      "properties": {
+        "summary_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "summary_hash": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "applicability_status": {
+          "type": "string",
+          "enum": [
+            "applicable",
+            "partially_applicable",
+            "not_applicable",
+            "uncertain"
+          ]
+        }
+      }
+    },
+    "PolicyRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "version",
+        "policy_hash"
+      ],
+      "properties": {
+        "policy_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "policy_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "PrivacyProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection_id",
+        "provider_scope",
+        "identifiable_data_allowed",
+        "sensitive_data_allowed",
+        "excluded_field_paths",
+        "projection_hash"
+      ],
+      "properties": {
+        "projection_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "provider_scope": {
+          "type": "string",
+          "enum": [
+            "local_gemma",
+            "cloud_gemini",
+            "no_llm"
+          ]
+        },
+        "identifiable_data_allowed": {
+          "type": "boolean"
+        },
+        "sensitive_data_allowed": {
+          "type": "boolean"
+        },
+        "excluded_field_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "consent_record_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "projection_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "FallbackMetricBound": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_key",
+        "unit",
+        "minimum",
+        "maximum"
+      ],
+      "properties": {
+        "metric_key": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        }
+      }
+    },
+    "FallbackActionEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "envelope_id",
+        "version",
+        "allowed_action_types",
+        "allowed_target_types",
+        "metric_bounds",
+        "forbidden_combinations",
+        "required_validator_ids",
+        "rollback_policy_id",
+        "envelope_hash"
+      ],
+      "properties": {
+        "envelope_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "allowed_action_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "keep",
+              "hold_progression",
+              "bounded_increase",
+              "bounded_decrease",
+              "change_volume",
+              "change_intensity",
+              "change_duration",
+              "change_density",
+              "change_timing",
+              "substitute",
+              "reschedule",
+              "record_missing_information",
+              "record_context_only",
+              "abstain"
+            ]
+          }
+        },
+        "allowed_target_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "exercise",
+              "strength_session",
+              "conditioning_session",
+              "nutrition_target",
+              "meal_fuel_target",
+              "calendar_slot",
+              "plan",
+              "context_record"
+            ]
+          }
+        },
+        "metric_bounds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FallbackMetricBound"
+          }
+        },
+        "forbidden_combinations": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/$defs/Identifier"
+            }
+          }
+        },
+        "required_validator_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "rollback_policy_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "envelope_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "CompleteDecisionPacket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "packet_id",
+        "decision_id",
+        "athlete_scope_id",
+        "created_at",
+        "trigger",
+        "all_information_declaration",
+        "domain_outputs",
+        "whole_athlete_state",
+        "current_plan",
+        "prior_plan_refs",
+        "goal_priorities",
+        "schedule_context",
+        "candidate_ledger",
+        "evidence_summaries",
+        "policy_refs",
+        "privacy_projection",
+        "packet_hash"
+      ],
+      "properties": {
+        "kind": {
+          "const": "complete_decision_packet"
+        },
+        "packet_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "decision_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "athlete_scope_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "created_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "scheduled_review",
+            "domain_event",
+            "post_session",
+            "plan_change",
+            "manual_recompute",
+            "no_deterministic_answer"
+          ]
+        },
+        "all_information_declaration": {
+          "const": "all_decision_relevant_structured_information"
+        },
+        "domain_outputs": {
+          "$ref": "#/$defs/DomainOutputSet"
+        },
+        "whole_athlete_state": {
+          "$ref": "#/$defs/WholeAthleteState"
+        },
+        "current_plan": {
+          "$ref": "#/$defs/PlanRef"
+        },
+        "prior_plan_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlanRef"
+          }
+        },
+        "goal_priorities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GoalPriority"
+          }
+        },
+        "schedule_context": {
+          "$ref": "#/$defs/ScheduleContext"
+        },
+        "candidate_ledger": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActionCandidate"
+          }
+        },
+        "evidence_summaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceSummaryRef"
+          }
+        },
+        "policy_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/PolicyRef"
+          }
+        },
+        "privacy_projection": {
+          "$ref": "#/$defs/PrivacyProjection"
+        },
+        "relevant_history_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "recent_outcome_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "data_cutoff_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "packet_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      }
+    },
+    "LLMDecisionRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "request_id",
+        "mode",
+        "lead_provider",
+        "routing_policy_id",
+        "routing_policy_version",
+        "decision_packet",
+        "fallback_action_envelope",
+        "requested_at",
+        "request_hash"
+      ],
+      "properties": {
+        "kind": {
+          "const": "llm_decision_request"
+        },
+        "request_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "advisory",
+            "lead_fallback"
+          ]
+        },
+        "trigger_code": {
+          "type": "string",
+          "enum": [
+            "OPTIONAL_ADVISORY",
+            "NO_DETERMINISTIC_ANSWER"
+          ]
+        },
+        "lead_provider": {
+          "type": "string",
+          "enum": [
+            "gemini",
+            "gemma"
+          ]
+        },
+        "backup_provider": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "gemini",
+            "gemma",
+            null
+          ]
+        },
+        "routing_policy_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "routing_policy_version": {
+          "$ref": "#/$defs/Version"
+        },
+        "decision_packet": {
+          "$ref": "#/$defs/CompleteDecisionPacket"
+        },
+        "fallback_action_envelope": {
+          "$ref": "#/$defs/FallbackActionEnvelope"
+        },
+        "requested_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "request_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "lead_fallback"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "trigger_code"
+            ],
+            "properties": {
+              "trigger_code": {
+                "const": "NO_DETERMINISTIC_ANSWER"
+              },
+              "decision_packet": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/CompleteDecisionPacket"
+                  },
+                  {
+                    "properties": {
+                      "trigger": {
+                        "const": "no_deterministic_answer"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "LLMDecisionResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "response_id",
+        "request_id",
+        "provider",
+        "model_id",
+        "model_version",
+        "mode",
+        "write_authority",
+        "silent_user_experience",
+        "proposed_decision",
+        "decision_basis_codes",
+        "rationale_summary",
+        "uncertainty",
+        "alternatives",
+        "responded_at",
+        "response_hash"
+      ],
+      "properties": {
+        "kind": {
+          "const": "llm_decision_response"
+        },
+        "response_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "request_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "gemini",
+            "gemma"
+          ]
+        },
+        "model_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "model_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "advisory",
+            "lead_fallback"
+          ]
+        },
+        "write_authority": {
+          "const": "none"
+        },
+        "silent_user_experience": {
+          "const": true
+        },
+        "proposed_decision": {
+          "$ref": "#/$defs/ActionCandidate"
+        },
+        "decision_basis_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "rationale_summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Hidden concise decision basis for audit. This is not a request for private chain-of-thought and is never shown during normal use."
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty"
+        },
+        "alternatives": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/ActionCandidate"
+          }
+        },
+        "responded_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "response_hash": {
+          "$ref": "#/$defs/Sha256"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "lead_fallback"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "proposed_decision": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/ActionCandidate"
+                  },
+                  {
+                    "properties": {
+                      "authority_mode": {
+                        "const": "lead_fallback"
+                      },
+                      "source": {
+                        "enum": [
+                          "gemini",
+                          "gemma"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "EventEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "event_id",
+        "athlete_scope_id",
+        "producer",
+        "event_type",
+        "occurred_at",
+        "produced_at",
+        "schema_version",
+        "producer_version",
+        "payload",
+        "payload_hash",
+        "quality",
+        "uncertainty",
+        "provenance",
+        "source_event_ids"
+      ],
+      "properties": {
+        "kind": {
+          "const": "event_envelope"
+        },
+        "event_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "athlete_scope_id": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "producer": {
+          "$ref": "#/$defs/ProducerName"
+        },
+        "event_type": {
+          "$ref": "#/$defs/Identifier"
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "produced_at": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/Version"
+        },
+        "producer_version": {
+          "$ref": "#/$defs/Version"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "payload_hash": {
+          "$ref": "#/$defs/Sha256",
+          "description": "Must be recomputed from canonical payload bytes by the receiving validator; caller assertions are not trusted."
+        },
+        "quality": {
+          "$ref": "#/$defs/DataQuality"
+        },
+        "uncertainty": {
+          "$ref": "#/$defs/Uncertainty"
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/ProvenanceRef"
+          }
+        },
+        "source_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Identifier"
+          }
+        },
+        "supersedes_event_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Identifier"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

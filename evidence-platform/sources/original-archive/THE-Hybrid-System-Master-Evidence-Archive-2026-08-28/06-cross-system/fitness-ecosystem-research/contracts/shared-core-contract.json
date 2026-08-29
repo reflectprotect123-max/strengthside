@@ -1,0 +1,47 @@
+{
+  "contract_name": "fitness-ecosystem-shared-core",
+  "contract_version": "1.0.0-draft",
+  "status": "proposal",
+  "owner": "shared-core",
+  "supported_domains": ["core", "strength", "conditioning", "state", "plan", "nutrition-integration"],
+  "resource_ownership": {
+    "core_profile": ["shared-core"],
+    "core_preferences": ["shared-core"],
+    "core_safety_flags": ["shared-core", "approved-user-acknowledgement"],
+    "integration_events": ["event-writer-for-owned-domain"],
+    "strength_sessions": ["strength"],
+    "conditioning_sessions": ["conditioning"],
+    "athlete_state_snapshots": ["state"],
+    "weekly_plans": ["coordinator"],
+    "nutrition_events": ["nutrition"]
+  },
+  "canonical_writers": {
+    "facts": "owning-domain",
+    "derived_state": "whole-athlete-state",
+    "weekly_plan": "coordinator",
+    "user_override": "authenticated-user-through-server"
+  },
+  "compatibility_policy": {
+    "read_unknown_fields": "preserve-or-reject-explicitly",
+    "write_unknown_fields": "never-broad-replace",
+    "historical_records": "immutable-with-correction-version",
+    "migration": "explicit-id-and-rehearsal-required",
+    "minimum_supported_client_matrix": "must-be-published-before-public-split"
+  },
+  "event_types": [
+    "strength.session_completed.v1",
+    "conditioning.session_completed.v1",
+    "body_weight.recorded.v1",
+    "nutrition.target_updated.v1",
+    "athlete.safety_flag_changed.v1",
+    "weekly_plan.published.v1"
+  ],
+  "non_negotiable_invariants": [
+    "missing-is-not-zero",
+    "provider-observation-is-not-app-derived-state",
+    "hrv-never-clears-pain-or-illness-hold",
+    "only-coordinator-publishes-combined-plan",
+    "prescription-target-is-separate-from-logged-result",
+    "every-derived-output-has-reasons-and-data-quality"
+  ]
+}

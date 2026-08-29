@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-08-29T00:00:00+10:00",
+  "draft": "2020-12",
+  "schemas": [
+    {
+      "name": "athlete-state.schema.json",
+      "sha256": "ed8273278c20ae04e1e81f834ca4fa4d48dfdac6af0444bccb7292b6919754c0"
+    },
+    {
+      "name": "claim.schema.json",
+      "sha256": "96ec5821920279b5015e6e4cc59535d66924c7f0a14bfe3b3b07d2d7b77310c5"
+    },
+    {
+      "name": "contradiction.schema.json",
+      "sha256": "cc9cd4cae0a4c988f27a19d82982f5d5d5ebbc2360f0803699c4628c43325ceb"
+    },
+    {
+      "name": "decision-receipt.schema.json",
+      "sha256": "7fd71b2d9f1c57713497261997561f5c69811cbac2b99cc1c8646622ea0f7be2"
+    },
+    {
+      "name": "formula.schema.json",
+      "sha256": "46faeeda0f289ca195f00365715cc3834f2977f3647a7d55e238c25b6fcb608b"
+    },
+    {
+      "name": "metric.schema.json",
+      "sha256": "265364315068357b4895a9056cc61d7aaddd1ced84d6f2e4248c963e900119c1"
+    },
+    {
+      "name": "model-version.schema.json",
+      "sha256": "e50ef6912db96818ec65c2e3face16622f2677f100d564a539c9702910635f5f"
+    },
+    {
+      "name": "observation.schema.json",
+      "sha256": "1635cf83691a955f795bbcd6da61de973e6d10b5f52497116d609aae7f52bd26"
+    },
+    {
+      "name": "policy.schema.json",
+      "sha256": "e2749e3aa73864684a52bb22b845d07791f5cccb2d062f1cccc9853318dea761"
+    },
+    {
+      "name": "population.schema.json",
+      "sha256": "b1a1a3b84d50a05c1353dcc93a5e5b5dba83828a23178df821eab30a48b9a541"
+    },
+    {
+      "name": "rule.schema.json",
+      "sha256": "b34e3929a2ec29a247c6a0029d3103ac3fb1348779031d55fb1036ff433db6a6"
+    },
+    {
+      "name": "source-record.schema.json",
+      "sha256": "1a4769a03ace230a1d13247e1081a2343f5899f6b4a8f2a0fc20d9e3510e6d19"
+    },
+    {
+      "name": "study.schema.json",
+      "sha256": "f61a87aed0426f0879f035ba37f183afe6bf429bcb3cac2a96878d6c18841632"
+    },
+    {
+      "name": "table-cell.schema.json",
+      "sha256": "b00456af86ceb17081eca6af78fdebce0d688beeef6fcc7827dbe46fa476147c"
+    }
+  ]
+}

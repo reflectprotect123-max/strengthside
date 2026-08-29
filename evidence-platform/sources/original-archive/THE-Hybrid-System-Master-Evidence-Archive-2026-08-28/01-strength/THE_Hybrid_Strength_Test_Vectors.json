@@ -1,0 +1,544 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryVersion": "1.1.0",
+  "researchDate": "2026-08-25",
+  "numericTolerance": {
+    "absolute": 0.01,
+    "relative": 0.0001
+  },
+  "cases": [
+    {
+      "id": "rir-target-midpoint",
+      "kind": "formula",
+      "formulaId": "rir.expectedFailure.v1",
+      "inputs": {
+        "repMin": 7,
+        "repMax": 9,
+        "targetRir": 2
+      },
+      "expected": {
+        "expectedFailureReps": 10
+      },
+      "assert": "matches MacroFactor public example: midpoint 8 plus 2 RIR"
+    },
+    {
+      "id": "rir-above-target",
+      "kind": "formula",
+      "formulaId": "progression.signal.v1",
+      "inputs": {
+        "repMin": 7,
+        "repMax": 9,
+        "targetRir": 2,
+        "completedReps": 9,
+        "actualRir": 2
+      },
+      "expected": {
+        "expectedFailureReps": 10,
+        "observedFailureReps": 11,
+        "performanceSignal": 1,
+        "action": "increase_or_test_next_load"
+      },
+      "assert": "performance above expected supports progression"
+    },
+    {
+      "id": "rir-on-target",
+      "kind": "formula",
+      "formulaId": "progression.signal.v1",
+      "inputs": {
+        "repMin": 7,
+        "repMax": 9,
+        "targetRir": 2,
+        "completedReps": 8,
+        "actualRir": 2
+      },
+      "expected": {
+        "performanceSignal": 0,
+        "action": "hold"
+      },
+      "assert": "on-target performance does not require a jump"
+    },
+    {
+      "id": "rir-below-target",
+      "kind": "formula",
+      "formulaId": "progression.signal.v1",
+      "inputs": {
+        "repMin": 7,
+        "repMax": 9,
+        "targetRir": 2,
+        "completedReps": 8,
+        "actualRir": 1
+      },
+      "expected": {
+        "performanceSignal": -1,
+        "action": "hold_or_reduce_after_history"
+      },
+      "assert": "one below-target set does not automatically trigger a program-wide reduction"
+    },
+    {
+      "id": "failure-set-progress",
+      "kind": "progression",
+      "inputs": {
+        "previousLoad": 150,
+        "previousReps": 10,
+        "currentLoad": 150,
+        "currentReps": 11,
+        "targetRir": 0,
+        "actualRir": 0
+      },
+      "expected": {
+        "action": "increase_or_test_next_load"
+      },
+      "assert": "exceeding prior failure-set performance supports progression"
+    },
+    {
+      "id": "default-load-progression",
+      "kind": "formula",
+      "formulaId": "load.progressionDefault.v1",
+      "inputs": {
+        "stableOpeningLoad": 100,
+        "equipmentIncrement": 2.5
+      },
+      "expected": {
+        "candidateLoad": 102.5,
+        "roundedLoad": 102.5
+      },
+      "assert": "inherited Hybrid +2.5% policy with equipment-aware rounding"
+    },
+    {
+      "id": "large-equipment-jump",
+      "kind": "constraint",
+      "inputs": {
+        "currentLoad": 100,
+        "candidateLoad": 102.5,
+        "availableIncrements": [5],
+        "repRange": [8, 10],
+        "expandRepRange": true
+      },
+      "expected": {
+        "action": "hold_load_add_rep_or_expand_range",
+        "recommendedLoad": 100
+      },
+      "assert": "do not force an unsuitable 105 load when the smaller jump cannot meet the target"
+    },
+    {
+      "id": "reactive-reduction-after-repeated-decline",
+      "kind": "formula",
+      "formulaId": "load.reactiveReduction.v1",
+      "inputs": {
+        "stableOpeningLoad": 100,
+        "repeatedComparableUnderperformance": true,
+        "painFlag": false
+      },
+      "expected": {
+        "candidateLoad": 95
+      },
+      "assert": "inherited Hybrid -5% policy; not triggered by one noisy set"
+    },
+    {
+      "id": "epley-analytics",
+      "kind": "formula",
+      "formulaId": "e1rm.epley.v1",
+      "inputs": {
+        "load": 100,
+        "reps": 10
+      },
+      "expected": {
+        "estimatedOneRepMax": 133.3333
+      },
+      "assert": "analytics only; not a universal cross-exercise strength score"
+    },
+    {
+      "id": "warmup-excluded",
+      "kind": "volume",
+      "inputs": {
+        "sets": [
+          {"setType": "warmup", "reps": 8},
+          {"setType": "working", "reps": 8},
+          {"setType": "working", "reps": 8}
+        ]
+      },
+      "expected": {
+        "directWorkingSets": 2,
+        "storedTotalSets": 3
+      },
+      "assert": "warm-up is preserved but excluded from working-set volume by default"
+    },
+    {
+      "id": "emphasize-add-set",
+      "kind": "volume",
+      "inputs": {
+        "priority": "emphasize",
+        "pump": "poor",
+        "soreness": "resolved",
+        "workload": "easy",
+        "performance": "on_target",
+        "painFlag": false
+      },
+      "expected": {
+        "action": "add_set"
+      },
+      "assert": "stimulus appears low and recovery is acceptable"
+    },
+    {
+      "id": "grow-hold-volume",
+      "kind": "volume",
+      "inputs": {
+        "priority": "grow",
+        "pump": "adequate",
+        "soreness": "resolved",
+        "workload": "manageable",
+        "performance": "on_target",
+        "painFlag": false
+      },
+      "expected": {
+        "action": "hold"
+      },
+      "assert": "adequate stimulus does not require more volume"
+    },
+    {
+      "id": "persistent-recovery-problem",
+      "kind": "volume",
+      "inputs": {
+        "priority": "emphasize",
+        "pump": "excellent",
+        "soreness": "persistent",
+        "workload": "overwhelming",
+        "performance": "below",
+        "painFlag": false
+      },
+      "expected": {
+        "action": "reduce_set_or_deload_review"
+      },
+      "assert": "recovery and performance decline override the emphasis request"
+    },
+    {
+      "id": "scheduled-six-week-deload",
+      "kind": "cycle",
+      "formulaId": "deload.weekLast.v1",
+      "inputs": {
+        "cycleLengthWeeks": 6,
+        "cycleWeek": 6,
+        "deloadPlacement": "last"
+      },
+      "expected": {
+        "isDeload": true
+      },
+      "assert": "scheduled product-policy deload, not universal physiology"
+    },
+    {
+      "id": "session-only-edit",
+      "kind": "program-state",
+      "inputs": {
+        "programVersion": 3,
+        "updateProgram": false,
+        "structuralEdit": true
+      },
+      "expected": {
+        "programVersionAfter": 3,
+        "sessionOverrideStored": true
+      },
+      "assert": "temporary change does not mutate the active program"
+    },
+    {
+      "id": "accepted-program-edit",
+      "kind": "program-state",
+      "inputs": {
+        "programVersion": 3,
+        "updateProgram": true,
+        "structuralEdit": true
+      },
+      "expected": {
+        "programVersionAfter": 4,
+        "newSnapshotCreated": true
+      },
+      "assert": "accepted structural change creates a new version"
+    },
+    {
+      "id": "missed-workout-no-punishment",
+      "kind": "program-state",
+      "inputs": {
+        "programVersion": 3,
+        "missedWorkout": true,
+        "timeOffDays": 10
+      },
+      "expected": {
+        "programVersionAfter": 3,
+        "action": "resume_and_relearn_from_new_sets"
+      },
+      "assert": "missed workouts do not automatically rewrite the program"
+    },
+    {
+      "id": "pain-blocks-escalation",
+      "kind": "safety",
+      "inputs": {
+        "painFlag": true,
+        "performance": "above",
+        "proposedAction": "increase_load"
+      },
+      "expected": {
+        "action": "pain_or_medical_review",
+        "loadEscalation": false
+      },
+      "assert": "pain is not treated as ordinary fatigue"
+    },
+    {
+      "id": "strength-priority-role",
+      "kind": "mode",
+      "inputs": {
+        "priority": "strength",
+        "exerciseRole": "primary_strength"
+      },
+      "expected": {
+        "metric": "lift_specific_strength_trend",
+        "failureDefault": false,
+        "volumeController": "secondary_to_key_lift_quality"
+      },
+      "assert": "RP Hypertrophy is not silently treated as a maximal-strength mode"
+    },
+    {
+      "id": "nutrition-boundary",
+      "kind": "integration",
+      "inputs": {
+        "nutritionConstraint": "aggressive_deficit_blocked",
+        "trainingRecommendation": "add_accessory_volume"
+      },
+      "expected": {
+        "action": "review_fueling_and_recovery_before_adding_volume",
+        "historicalTrainingResultsMutated": false
+      },
+      "assert": "nutrition and training controllers communicate explicit constraints"
+    },
+    {
+      "id": "missing-rir-lowers-confidence",
+      "kind": "data-quality",
+      "inputs": {
+        "targetRir": 2,
+        "actualRir": null,
+        "completedReps": 8
+      },
+      "expected": {
+        "confidence": "lower",
+        "automaticJumpAllowed": false
+      },
+      "assert": "missing subjective effort data does not become a perfect inferred value"
+    },
+    {
+      "id": "macrofactor-cycle-bounds",
+      "kind": "program-structure",
+      "inputs": {
+        "defaultCustomCycles": 7,
+        "requestedCycles": 12,
+        "uniqueTrainingDays": 6
+      },
+      "expected": {
+        "accepted": true,
+        "allowedCycleRange": [1, 52],
+        "maxUniqueTrainingDays": 14,
+        "cyclesAreCalendarIndependent": true
+      },
+      "assert": "cycle template constraints are explicit and dated sessions do not define program identity"
+    },
+    {
+      "id": "cold-start-requires-user-load",
+      "kind": "cold-start",
+      "inputs": {
+        "comparableExerciseHistory": 0,
+        "userProvidedLoad": null
+      },
+      "expected": {
+        "action": "request_user_selected_starting_load",
+        "highConfidenceAutomaticLoad": false
+      },
+      "assert": "the engine does not invent a precise initial load without history"
+    },
+    {
+      "id": "execution-defaults-are-not-volume",
+      "kind": "execution",
+      "inputs": {
+        "exerciseRole": "lower_body_compound",
+        "workingLoad": 100
+      },
+      "expected": {
+        "defaultRestSeconds": 180,
+        "warmupLoadExamples": [40, 60, 80],
+        "warmupRepsEach": 3,
+        "warmupsCountAsWorkingSets": false
+      },
+      "assert": "warm-up and rest defaults are configurable execution aids, not working-set stimulus"
+    },
+    {
+      "id": "strength-history-is-exercise-specific",
+      "kind": "validation",
+      "inputs": {
+        "trainedExercise": "barbell_bench_press",
+        "testedExercise": "machine_chest_press"
+      },
+      "expected": {
+        "strengthSeries": "separate",
+        "automaticTransfer": false
+      },
+      "assert": "non-equivalent exercises are not silently merged into one strength score"
+    },
+    {
+      "id": "fractional-indirect-volume",
+      "kind": "volume-accounting",
+      "inputs": {
+        "directSets": 3,
+        "indirectSets": 4,
+        "projection": "fractional_indirect"
+      },
+      "expected": {
+        "equivalentSets": 5,
+        "rawDirectSets": 3,
+        "rawIndirectSets": 4,
+        "policyIsReplaceable": true
+      },
+      "assert": "fractional indirect volume is transparent and does not erase raw exposure"
+    },
+    {
+      "id": "concurrent-lower-body-order",
+      "kind": "concurrent-training",
+      "inputs": {
+        "priority": "strength",
+        "lowerBodyDemand": "high",
+        "sameSession": true,
+        "availableOrder": ["resistance_first", "endurance_first"]
+      },
+      "expected": {
+        "preferredOrder": "resistance_first",
+        "cardioBlocked": false,
+        "reviewAfterPersistentDecline": true
+      },
+      "assert": "cardio is a context input, not a blanket prohibition"
+    },
+    {
+      "id": "velocity-missing-is-not-zero",
+      "kind": "measurement",
+      "inputs": {
+        "velocityDevice": false,
+        "velocityLossPercent": null,
+        "reportedRir": 2
+      },
+      "expected": {
+        "velocityStatus": "missing",
+        "inferredVelocityLoss": false,
+        "rirRemainsUsableWithConfidence": true
+      },
+      "assert": "the engine does not fabricate velocity from repetitions"
+    },
+    {
+      "id": "bfr-uses-separate-rir-controller",
+      "kind": "special-method",
+      "inputs": {
+        "method": "BFR",
+        "loadPercent1RM": 20,
+        "reportedRir": 2
+      },
+      "expected": {
+        "controller": "BFR_specific",
+        "normalRirTableAllowed": false,
+        "confidence": "lower"
+      },
+      "assert": "very-low-load BFR effort estimates are not treated like ordinary sets"
+    },
+    {
+      "id": "emergency-stop-dominates-performance",
+      "kind": "safety",
+      "inputs": {
+        "chestPain": true,
+        "performance": "above_target",
+        "wearableRecovery": "green"
+      },
+      "expected": {
+        "safetyState": "emergency_stop",
+        "recommendation": "none",
+        "wearableCanOverride": false
+      },
+      "assert": "red-flag symptoms override performance and wearable readiness"
+    },
+    {
+      "id": "fever-pauses-training",
+      "kind": "safety",
+      "inputs": {
+        "fever": true,
+        "chestPain": false,
+        "collapse": false
+      },
+      "expected": {
+        "safetyState": "training_pause",
+        "automaticProgression": false
+      },
+      "assert": "systemic illness pauses training automation"
+    },
+    {
+      "id": "missing-health-data-is-not-normal",
+      "kind": "safety",
+      "inputs": {
+        "healthFieldsPresent": false,
+        "redFlagsReported": null
+      },
+      "expected": {
+        "safetyState": "insufficient_data",
+        "assumeNormal": false
+      },
+      "assert": "unknown health status is not silently treated as normal"
+    },
+    {
+      "id": "illness-gap-needs-reentry",
+      "kind": "return-to-training",
+      "inputs": {
+        "gapReason": "illness",
+        "gapDays": 7,
+        "symptomsResolved": null,
+        "clinicianClearance": null
+      },
+      "expected": {
+        "safetyState": "reentry_required",
+        "automaticFullLoadReturn": false
+      },
+      "assert": "elapsed days alone cannot clear an illness return"
+    },
+    {
+      "id": "mdc-below-threshold",
+      "kind": "validation",
+      "inputs": {
+        "observedChange": 2,
+        "MDC95": 4
+      },
+      "expected": {
+        "responseStatus": "within_measurement_error",
+        "confirmedImprovement": false
+      },
+      "assert": "small changes below exercise-specific MDC are not declared confirmed improvements"
+    },
+    {
+      "id": "rir-exercise-specific-calibration",
+      "kind": "calibration",
+      "inputs": {
+        "benchPressRirConfidence": "high",
+        "machineRowRirConfidence": "unknown",
+        "reportedRir": 2
+      },
+      "expected": {
+        "benchPressCanUseNarrowerBand": true,
+        "machineRowCanUseNarrowerBand": false,
+        "globalRirConfidence": false
+      },
+      "assert": "RIR calibration is not silently transferred between exercise families"
+    },
+    {
+      "id": "decision-trace-replay",
+      "kind": "audit",
+      "inputs": {
+        "sameSourceEvents": true,
+        "sameEngineVersion": true,
+        "samePolicyVersion": true
+      },
+      "expected": {
+        "sameOutputHash": true,
+        "historicalOutputMutated": false
+      },
+      "assert": "the same versioned inputs reproduce the same recommendation without rewriting history"
+    }
+  ]
+}

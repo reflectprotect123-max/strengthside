@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph F[Raw facts]
+    L[Performed sets\nload reps RIR/RPE pain status]
+    P[Program facts\ntargets mode exercise]
+    C[Context\nsleep illness sport cardio nutrition]
+    E[Constraints\nequipment time season travel work]
+  end
+  N[Normalise + provenance\nunits laterality load semantics\nmissingness confidence source]
+  X[Derived features\nperformance capacity volume fatigue\nsafety context confidence]
+  M[Strength controller\nRIR expectation\nload/reps candidates\nworking max + equipment]
+  R[Hypertrophy controller\nvolume ledgers\npriority + feedback\nadd/hold/reduce/deload]
+  S[Safety controller\nred flags pain illness re-entry\nstop/pause/review/hold]
+  T[Context controller\ncardio seasonal heat\ntime sport nutrition context]
+  A[Candidate set]
+  Q[Arbitration\nsafety > constraints > goal mode\nstrength/hypertrophy/hybrid]
+  O[Recommendation\ntarget + reason codes + warnings]
+  Z[Immutable decision trace\ninputs candidates rejects selected\nversions overrides replay hash]
+  F --> N --> X
+  X --> M --> A
+  X --> R --> A
+  X --> S --> A
+  X --> T --> A
+  A --> Q --> O --> Z
+  Z -. replay .-> Q
