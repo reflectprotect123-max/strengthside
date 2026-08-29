@@ -1,4 +1,4 @@
-import hashlib,json,shutil,sqlite3,tempfile,unittest
+import hashlib,json,re,shutil,sqlite3,tempfile,unittest
 from pathlib import Path
 from platform_core.db import connect,migrate
 from platform_core.decision import decide,replay
@@ -99,10 +99,14 @@ class OperationalPlatformTests(unittest.TestCase):
         # decision_receipts_v2 (migration 004). No mechanical migration of
         # old rows is planned - the v1 schema can't losslessly populate v2's
         # required fields (receipt_version, decision_mode, hash chain, ...).
+        # Tolerates whitespace/newlines and quoted identifiers between the
+        # table name and its opening paren; `decision_receipts_v2(` never
+        # matches since `_v2` sits directly after the name, before any of that.
+        legacy_write_pattern=re.compile(r"INTO\s+[`\"\[]?decision_receipts[`\"\]]?\s*\(",re.IGNORECASE)
         for path in (ROOT/"platform_core").rglob("*.py"):
             text=path.read_text(encoding="utf-8")
-            for statement in ("INTO decision_receipts(","INTO decision_receipts ("):
-                self.assertNotIn(statement,text,f"{path} writes to the frozen legacy decision_receipts table")
+            match=legacy_write_pattern.search(text)
+            self.assertIsNone(match,f"{path} writes to the frozen legacy decision_receipts table: {match.group(0) if match else ''}")
     def test_runtime_core_has_no_llm_or_network_client_imports(self):
         text="\n".join(p.read_text(encoding="utf-8") for p in (ROOT/"platform_core").rglob("*.py"))
         for forbidden in ("import google.generativeai","import openai","import requests","import httpx","urllib.request"):

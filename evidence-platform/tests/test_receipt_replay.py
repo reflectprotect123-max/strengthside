@@ -635,6 +635,21 @@ class ReceiptReplayTests(unittest.TestCase):
                 llm_contribution=contribution(response),
             )
 
+    def test_register_evaluator_artifact_rejects_oversized_module(self):
+        from platform_core.receipt_replay import MAX_EVALUATOR_ARTIFACT_BYTES
+        module_path = Path(self.temp.name) / "huge_evaluator.py"
+        with open(module_path, "wb") as f:
+            f.seek(MAX_EVALUATOR_ARTIFACT_BYTES)
+            f.write(b"\0")
+        with self.assertRaises(ReceiptValidationError):
+            register_evaluator_artifact(
+                self.connection,
+                evaluator_id="huge",
+                evaluator_version="1.0",
+                module_path=module_path,
+                approval_event_id="PROMO-TEST",
+            )
+
     def test_evaluator_artifact_registration_is_idempotent_but_locks_content(self):
         module_path = Path(self.temp.name) / "fake_evaluator.py"
         module_path.write_text("VERSION = 1\n")

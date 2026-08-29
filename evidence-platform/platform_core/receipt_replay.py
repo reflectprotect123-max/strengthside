@@ -679,6 +679,18 @@ def _evaluator_artifact_id(evaluator_id: str, evaluator_version: str) -> str:
     return f"EVALUATOR-{evaluator_id}-{evaluator_version}"
 
 
+MAX_EVALUATOR_ARTIFACT_BYTES = 10 * 1024 * 1024  # a hand-written evaluator module is KB-sized
+
+
+def _read_evaluator_artifact_bytes(path: Path) -> bytes:
+    size = path.stat().st_size
+    if size > MAX_EVALUATOR_ARTIFACT_BYTES:
+        raise ReceiptValidationError(
+            f"evaluator artifact {path} is {size} bytes, exceeds {MAX_EVALUATOR_ARTIFACT_BYTES}"
+        )
+    return path.read_bytes()
+
+
 def register_evaluator_artifact(
     db: sqlite3.Connection,
     *,
@@ -699,8 +711,8 @@ def register_evaluator_artifact(
     an already-registered (id, version) is a hard error - a version is
     immutable, a real code change needs a new evaluator_version.
     """
-    module_path = Path(module_path)
-    artifact_hash = hashlib.sha256(module_path.read_bytes()).hexdigest()
+    module_path = Path(module_path).resolve()
+    artifact_hash = hashlib.sha256(_read_evaluator_artifact_bytes(module_path)).hexdigest()
     artifact_id = _evaluator_artifact_id(evaluator_id, evaluator_version)
     existing = db.execute(
         "SELECT artifact_hash FROM runtime_artifacts WHERE artifact_id=?", (artifact_id,)
@@ -750,9 +762,13 @@ def _check_evaluator_artifact(db: sqlite3.Connection, evaluator_id: str, evaluat
     if row is None:
         return []
     try:
-        actual_hash = hashlib.sha256(Path(row["artifact_path"]).read_bytes()).hexdigest()
+        actual_hash = hashlib.sha256(
+            _read_evaluator_artifact_bytes(Path(row["artifact_path"]))
+        ).hexdigest()
     except OSError:
         return ["EVALUATOR_ARTIFACT_MISSING"]
+    except ReceiptValidationError:
+        return ["EVALUATOR_ARTIFACT_OVERSIZED"]
     if actual_hash != row["artifact_hash"]:
         return ["EVALUATOR_ARTIFACT_TAMPERED"]
     return []
