@@ -16,6 +16,10 @@ Automated or LLM extraction may create candidate records only. Human source veri
 
 The decision shell requires all five system outputs. With no approved active model it returns `abstain`. Persisted test decisions contain hashes that expose receipt tampering.
 
+## Shadow-stage promotion gate (added 29 August 2026)
+
+`promotion_gate` now also checks any rule or model record currently sitting in the `shadow` stage: it must carry a `shadow_report` in its payload (shaped like `platform_core/shadow.py::run_shadow_comparison`'s output) that actually passed - at least one case run, zero errored cases, fully deterministic, and (if golden cases were supplied) full agreement with them. These are hard correctness bars, not tunable science thresholds, so there is nothing here for a reviewer to negotiate down; a record that fails one of these has no business leaving shadow regardless of what it claims about athlete physiology. Blocker codes: `SHADOW_REPORT_MALFORMED`, `SHADOW_REPORT_NO_CASES`, `SHADOW_REPORT_HAD_ERRORS`, `SHADOW_REPORT_NONDETERMINISTIC`, `SHADOW_REPORT_GOLDEN_DISAGREEMENT`.
+
 ## Cross-system arbitration (platform_core/arbitration.py, added 29 August 2026)
 
 `decide()` now also looks at what the five engines themselves proposed (`domain_outputs[system]["proposed_actions"][0]`), separately from BIG MAC's own model pool. Three outcomes: no engine proposed anything real (today's universal case for real athlete input - unchanged behavior); every engine that proposed something agrees on the same action (`ENGINE_CANDIDATE_APPLIED`, applied only when BIG MAC's own model pool had nothing); or two or more engines propose *different* actions (`MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY` - always abstains and requests lead-fallback, never silently picks a side, because doing so needs a reviewed policy that does not exist). `decision_trace.candidate_ledger` now records every domain's own proposal, not only the winning candidate, with `rejection_reason_codes` explaining why each one that did not win was rejected.

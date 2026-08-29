@@ -127,6 +127,12 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
     domain_candidates = collect_engine_candidates(domain_outputs)
     candidate_arbitration = arbitrate(domain_candidates)
     if candidate_arbitration["conflict"]:
+        # Deliberately unconditional, unlike the unanimous branch below: the
+        # models pool has no visibility into what the five engines proposed
+        # and never reasoned about a cross-domain conflict, so it can never
+        # be trusted to have "already resolved" one it never saw - a real
+        # disagreement between domains overrides even a models-pool "hold",
+        # synthetic or not (see test_conflict_overrides_a_synthetic_hold).
         action = "abstain"
         reasons = [
             "MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY",

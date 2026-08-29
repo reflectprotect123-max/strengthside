@@ -97,6 +97,46 @@ def run_shadow_comparison(
     }
 
 
+REQUIRED_REPORT_FIELDS = (
+    "total_cases", "errored_cases", "determinism_rate", "golden_case_count", "golden_agreement_rate",
+)
+
+
+def shadow_report_blockers(report: Mapping[str, Any]) -> list[str]:
+    """Phase 6: what platform_core/gates.py::promotion_gate checks before a
+    record is allowed to leave the "shadow" stage.
+
+    Deliberately hard, binary correctness bars, not tunable science
+    thresholds - the same kind of judgment call as "CI must be green before
+    merge," never a claim about athlete physiology (compare
+    docs/phase3-strength-session-gate-research-brief.md, where an actual
+    numeric threshold on athlete data is exactly the kind of thing this
+    project refuses to invent without review). A rule or model that cannot
+    even satisfy these has no business leaving shadow regardless of what
+    its own science claims to be:
+    - it must actually have been run through shadow (at least one case);
+    - it must be a pure function of its input (determinism_rate == 1.0);
+    - it must not crash on any case it was given (errored_cases == 0);
+    - if golden cases were supplied, it must match every one of them
+      (golden_agreement_rate == 1.0) - disagreeing with a hand-authored
+      golden case is a candidate telling on itself, not something a
+      partial-credit threshold should paper over.
+    """
+    if not isinstance(report, Mapping) or any(field not in report for field in REQUIRED_REPORT_FIELDS):
+        return ["SHADOW_REPORT_MALFORMED"]
+    blockers: list[str] = []
+    if not report["total_cases"]:
+        blockers.append("SHADOW_REPORT_NO_CASES")
+        return blockers  # every other field is meaningless with zero cases run
+    if report["errored_cases"]:
+        blockers.append("SHADOW_REPORT_HAD_ERRORS")
+    if report["determinism_rate"] != 1.0:
+        blockers.append("SHADOW_REPORT_NONDETERMINISTIC")
+    if report["golden_case_count"] and report["golden_agreement_rate"] != 1.0:
+        blockers.append("SHADOW_REPORT_GOLDEN_DISAGREEMENT")
+    return blockers
+
+
 def _extract_action(output: Mapping[str, Any]) -> Any:
     """Engine outputs carry the action inside proposed_actions[0]; a plain
     {"action": ...} dict (e.g. a simpler baseline) is accepted directly."""

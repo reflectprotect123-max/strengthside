@@ -2,6 +2,7 @@ from __future__ import annotations
 import json
 import hashlib
 from datetime import datetime,timezone
+from .shadow import shadow_report_blockers
 
 APPROVED={"approved","verified"}
 
@@ -27,6 +28,12 @@ def promotion_gate(db,record_type,record_id):
     if record_type=="model":
         if not payload.get("version"): blockers.append("version_missing")
         if not payload.get("artifact_hash"): blockers.append("artifact_hash_missing")
+    if record_type in {"rule","model"} and row["status"]=="shadow":
+        # Phase 6: leaving shadow needs a shadow-mode comparison report
+        # (platform_core/shadow.py::run_shadow_comparison) that actually
+        # passed - see shadow_report_blockers's own docstring for why these
+        # are hard correctness bars, not tunable thresholds.
+        blockers.extend(shadow_report_blockers(payload.get("shadow_report")))
     return {"record_type":record_type,"record_id":record_id,"eligible":not blockers,"blockers":blockers}
 
 def research_gate(db):

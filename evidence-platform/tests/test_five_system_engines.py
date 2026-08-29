@@ -237,6 +237,25 @@ class EndToEndFiveEngineToDecisionTests(unittest.TestCase):
         self.assertEqual(receipt["action"], "hold")
         self.assertNotIn("MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY", receipt["reason_codes"])
 
+    def test_conflict_overrides_a_synthetic_hold(self):
+        # A domain conflict must never be papered over even when BIG MAC's
+        # own separate model pool already produced an answer - that pool
+        # never saw the conflict, so it cannot have already resolved it.
+        snapshot = {
+            "fixture": "synthetic_test_only",
+            "athlete_id": "PHASE5-CONFLICT-VS-MODEL",
+            "as_of": "2026-01-01T00:00:00Z",
+            "synthetic_directives": {
+                "strength": {"action": "trim"},
+                "nutrition": {"action": "hold"},
+            },
+        }
+        outputs = run_all(snapshot)
+        model = {"model_id": "SYNTH-MODEL", "version": "0.0.1", "synthetic_test_only": True}
+        receipt = decide(self.connection, snapshot, outputs, [model])
+        self.assertEqual(receipt["action"], "abstain")
+        self.assertIn("MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY", receipt["reason_codes"])
+
     def test_candidate_ledger_records_every_domain_proposal_not_just_the_winner(self):
         snapshot = {
             "fixture": "synthetic_test_only",
