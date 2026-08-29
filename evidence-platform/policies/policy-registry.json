@@ -1,0 +1,59 @@
+{
+  "registry_version": "0.1.0",
+  "policies": [
+    {
+      "policy_id": "POL-GOV-001",
+      "statement": "Preserve original source material unchanged.",
+      "system": "governance",
+      "owner": "platform-owner",
+      "status": "active",
+      "evidence_claim_ids": "",
+      "review_due": ""
+    },
+    {
+      "policy_id": "POL-GOV-002",
+      "statement": "LLM extraction and summarisation remain untrusted until source and schema validation.",
+      "system": "governance",
+      "owner": "platform-owner",
+      "status": "active",
+      "evidence_claim_ids": "",
+      "review_due": ""
+    },
+    {
+      "policy_id": "POL-GOV-003",
+      "statement": "Runtime athlete decisions use deterministic, versioned, testable non-LLM models.",
+      "system": "coordinator",
+      "owner": "model-risk-owner",
+      "status": "active",
+      "evidence_claim_ids": "",
+      "review_due": ""
+    },
+    {
+      "policy_id": "POL-GOV-004",
+      "statement": "No application repository is modified or wired by this evidence-platform release.",
+      "system": "governance",
+      "owner": "platform-owner",
+      "status": "active",
+      "evidence_claim_ids": "",
+      "review_due": ""
+    },
+    {
+      "policy_id": "POL-SAFE-001",
+      "statement": "Safety hard stops and insufficient-data states take precedence over optimisation scores.",
+      "system": "coordinator",
+      "owner": "clinical-safety-owner-unassigned",
+      "status": "draft_requires_owner",
+      "evidence_claim_ids": "",
+      "review_due": ""
+    },
+    {
+      "policy_id": "POL-TRACE-001",
+      "statement": "Every decision receipt retains complete source-to-decision lineage and immutable model versions.",
+      "system": "coordinator",
+      "owner": "model-risk-owner",
+      "status": "active",
+      "evidence_claim_ids": "",
+      "review_due": ""
+    }
+  ]
+}

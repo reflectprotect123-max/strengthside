@@ -1,0 +1,17 @@
+policyId: policy_example_0001
+engine: strength
+decisionQuestion: ""
+evidenceClaimIds: []
+productLocks: []
+policyStatement: ""
+thresholds:
+  evidenceDefined: []
+  productChosen: []
+applicability: []
+exclusions: []
+missingDataBehavior: maintain
+ownerApproval:
+  status: proposed
+  approvedBy: ""
+  approvedAt: ""
+

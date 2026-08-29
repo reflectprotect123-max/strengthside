@@ -1,0 +1,155 @@
+{
+  "registry_version": "0.1.0",
+  "records": [
+    {
+      "contradiction_id": "CON-001",
+      "left": "The product is named THE Hybrid System.",
+      "right": "Many archived artifacts call it Hybrid Engine.",
+      "relationship": "terminology_conflict",
+      "analysis_or_resolution": "Resolve only in new platform material; preserve source filenames and quoted titles unchanged.",
+      "status": "resolved_for_new_outputs",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-002",
+      "left": "Some documents label their material validated, final, or high confidence.",
+      "right": "No independent corpus-wide source verification or schema validation accompanied those labels.",
+      "relationship": "qualifies",
+      "analysis_or_resolution": "Treat labels as document assertions, not review results.",
+      "status": "open_validation",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-003",
+      "left": "Inherited +2.5% progression and -5% reduction are described as project defaults.",
+      "right": "The strength claim matrix explicitly says they are project facts, not science.",
+      "relationship": "qualifies",
+      "analysis_or_resolution": "Keep as inactive policy candidates until owned, tested, and validated.",
+      "status": "open_policy",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-004",
+      "left": "A single readiness score is attractive for coordination.",
+      "right": "Corpus safety claims say pain, illness, missingness, fatigue and performance must not collapse into one override scalar.",
+      "relationship": "contradicts",
+      "analysis_or_resolution": "Use a vector state plus hard-constraint precedence; optional score cannot clear safety states.",
+      "status": "architecture_resolution",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-005",
+      "left": "Fixed readiness threshold can block heavy lifting.",
+      "right": "Cross-system claim CR-018 rejects a universal threshold as unsupported.",
+      "relationship": "contradicts",
+      "analysis_or_resolution": "No universal threshold in executable rules.",
+      "status": "rejected",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-006",
+      "left": "Two missed sessions implies deload.",
+      "right": "Cross-system claim CR-017 rejects this as a validated universal rule.",
+      "relationship": "contradicts",
+      "analysis_or_resolution": "Treat missed sessions as context only.",
+      "status": "rejected",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-007",
+      "left": "7700 kcal/kg can provide transparent target arithmetic.",
+      "right": "Nutrition registry labels symmetric 7700 conversion as HYBRID_INFERENCE/prototype rather than validated physiology for all contexts.",
+      "relationship": "qualifies",
+      "analysis_or_resolution": "Retain only as an explicitly versioned approximation; not active clinical logic.",
+      "status": "open_validation",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-008",
+      "left": "ACWR can be represented from acute/chronic load.",
+      "right": "Strength claim S-043 says universal ACWR injury-risk thresholds are unreliable.",
+      "relationship": "qualifies",
+      "analysis_or_resolution": "Retain contextual histories; do not create a danger threshold.",
+      "status": "architecture_resolution",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-009",
+      "left": "Product pages document observable competitor behavior.",
+      "right": "They do not scientifically validate THE Hybrid System or reveal private coefficients.",
+      "relationship": "qualifies",
+      "analysis_or_resolution": "Classify as product precedent only.",
+      "status": "architecture_resolution",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-010",
+      "left": "Exact duplicate files appear in different system folders and historical packs.",
+      "right": "Path context differs even when bytes are identical.",
+      "relationship": "duplicates",
+      "analysis_or_resolution": "Use one canonical content hash while preserving every occurrence.",
+      "status": "resolved_by_hash_registry",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-011",
+      "left": "Nutrition formula registry documents an update gate of at least 4 valid nutrition days and 1 valid weight day in 7.",
+      "right": "The archived adaptive_engine.py applies a 6-of-7 adherence condition across two weeks for a different adjustment path.",
+      "relationship": "contradicts",
+      "analysis_or_resolution": "Do not merge these into one rule; specify purpose, horizon and evidence before implementation.",
+      "status": "open_rule_conflict",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-012",
+      "left": "Nutrition protein targets are expressed on a fat-free-mass basis in the formula registry.",
+      "right": "Other nutrition material and prototype code use body-mass bases in places.",
+      "relationship": "contradicts",
+      "analysis_or_resolution": "Require explicit metric basis and population policy; no silent conversion.",
+      "status": "open_metric_semantics",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-013",
+      "left": "The archived governance decision-receipt schema requires an `engine` property.",
+      "right": "Its defined properties use `system`, so conforming instances cannot satisfy the required field under additionalProperties=false.",
+      "relationship": "contradicts",
+      "analysis_or_resolution": "New canonical schema uses explicit model/system lineage; archived schema remains preserved and flagged invalid for adoption.",
+      "status": "resolved_in_new_schema",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-014",
+      "left": "The target architecture has five domain systems feeding control.",
+      "right": "Existing cross-system proposal contracts cover Strength and Conditioning but not complete Nutrition, Recovery and Coordinator proposal payloads.",
+      "relationship": "qualifies",
+      "analysis_or_resolution": "Treat current contracts as partial and use the new five-system interface design as a schema-design starting point only.",
+      "status": "open_interface_gap",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    },
+    {
+      "contradiction_id": "CON-015",
+      "left": "Archived Coach Brain material proposes LLM-style runtime coaching behavior.",
+      "right": "The governing requirement restricts LLMs to untrusted offline assistance and requires deterministic non-LLM runtime decisions.",
+      "relationship": "contradicts",
+      "analysis_or_resolution": "Exclude LLM Coach Brain behavior from runtime model registry and executable rules.",
+      "status": "rejected_for_runtime",
+      "source_ids": "",
+      "owner": "UNASSIGNED"
+    }
+  ]
+}

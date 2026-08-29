@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.example/schemas/table-cell.schema.json",
+  "title": "Table Cell",
+  "description": "Cell-level provenance for extracted tables.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cell_id",
+    "source_id",
+    "table",
+    "row",
+    "column",
+    "raw_value"
+  ],
+  "properties": {
+    "cell_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "table": {
+      "type": "string",
+      "minLength": 1
+    },
+    "row": {
+      "type": "string",
+      "minLength": 1
+    },
+    "column": {
+      "type": "string",
+      "minLength": 1
+    },
+    "raw_value": {
+      "type": [
+        "string",
+        "number",
+        "null"
+      ]
+    },
+    "parsed_value": {
+      "type": [
+        "string",
+        "number",
+        "null"
+      ]
+    },
+    "unit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "observation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "line": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "review_status": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

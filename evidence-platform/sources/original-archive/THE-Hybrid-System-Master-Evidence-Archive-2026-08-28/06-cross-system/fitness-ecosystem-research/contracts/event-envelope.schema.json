@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fitness-ecosystem.invalid/contracts/event-envelope.schema.json",
+  "title": "Fitness Ecosystem Integration Event Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "event_version", "subject_id", "aggregate", "mutation_id", "actor", "source", "observed_at", "recorded_at", "payload"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "event_type": {"type": "string", "pattern": "^[a-z_]+\\.[a-z_]+\\.v[0-9]+$"},
+    "event_version": {"type": "string", "pattern": "^v[0-9]+$"},
+    "subject_id": {"type": "string", "format": "uuid"},
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "domain"],
+      "properties": {
+        "type": {"type": "string", "minLength": 1},
+        "id": {"type": "string", "minLength": 1},
+        "domain": {"enum": ["core", "strength", "conditioning", "state", "plan", "nutrition"]}
+      }
+    },
+    "mutation_id": {"type": "string", "format": "uuid"},
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["user_id", "role"],
+      "properties": {
+        "user_id": {"type": "string", "format": "uuid"},
+        "role": {"enum": ["athlete", "coach", "system", "provider"]}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app", "build", "client_schema_version"],
+      "properties": {
+        "app": {"enum": ["strength", "conditioning", "shared-core", "coordinator", "nutrition", "provider"]},
+        "build": {"type": "string", "minLength": 1},
+        "client_schema_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "observed_at": {"type": "string", "format": "date-time"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "causation_id": {"type": ["string", "null"], "format": "uuid"},
+    "correlation_id": {"type": ["string", "null"], "format": "uuid"},
+    "payload": {"type": "object"},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {"type": ["string", "null"]},
+        "provider_record_id": {"type": ["string", "null"]},
+        "raw_payload_hash": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.example/schemas/contradiction.schema.json",
+  "title": "Contradiction",
+  "description": "Tracked contradiction, qualification, duplication, extension, or terminology conflict.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contradiction_id",
+    "left",
+    "right",
+    "status"
+  ],
+  "properties": {
+    "contradiction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "left": {
+      "type": "string",
+      "minLength": 1
+    },
+    "right": {
+      "type": "string",
+      "minLength": 1
+    },
+    "relationship": {
+      "enum": [
+        "contradicts",
+        "qualifies",
+        "duplicates",
+        "extends",
+        "terminology_conflict"
+      ]
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "analysis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resolution": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

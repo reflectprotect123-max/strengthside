@@ -1,0 +1,594 @@
+<div id="strength-galaxy-visual">
+  <style>
+    #strength-galaxy-visual {
+      --sgv-space: var(--background);
+      --sgv-ink: var(--foreground);
+      --sgv-soft: var(--muted-foreground);
+      --sgv-line: var(--border);
+      --sgv-strength: var(--viz-series-1);
+      --sgv-volume: var(--viz-series-2);
+      --sgv-safety: var(--viz-series-3);
+      --sgv-context: var(--viz-series-4);
+      --sgv-output: var(--viz-series-5);
+      width: 100%;
+      color: var(--sgv-ink);
+      font-family: inherit;
+    }
+
+    #strength-galaxy-visual .sgv-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    #strength-galaxy-visual .sgv-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #strength-galaxy-visual .sgv-title strong {
+      letter-spacing: 0.12em;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    #strength-galaxy-visual .sgv-title span,
+    #strength-galaxy-visual .sgv-detail {
+      color: var(--sgv-soft);
+      font-size: 0.78rem;
+    }
+
+    #strength-galaxy-visual .sgv-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #strength-galaxy-visual .sgv-control-label {
+      color: var(--sgv-soft);
+      font-size: 0.78rem;
+    }
+
+    #strength-galaxy-visual select,
+    #strength-galaxy-visual button {
+      font: inherit;
+    }
+
+    #strength-galaxy-visual select {
+      min-height: 34px;
+      border: 1px solid var(--sgv-line);
+      border-radius: 999px;
+      background: var(--sgv-space);
+      color: var(--sgv-ink);
+      padding: 0 12px;
+    }
+
+    #strength-galaxy-visual .sgv-btn {
+      min-height: 34px;
+      border: 1px solid var(--sgv-line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--sgv-ink);
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    #strength-galaxy-visual .sgv-btn:hover,
+    #strength-galaxy-visual .sgv-btn:focus-visible {
+      border-color: var(--sgv-ink);
+      outline: 2px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    #strength-galaxy-visual .sgv-stage {
+      position: relative;
+      width: 100%;
+      height: clamp(390px, 68vw, 560px);
+      min-height: 390px;
+      overflow: hidden;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--sgv-output) 13%, transparent), transparent 22%),
+        radial-gradient(ellipse at 17% 22%, color-mix(in srgb, var(--sgv-context) 15%, transparent), transparent 34%),
+        radial-gradient(ellipse at 84% 70%, color-mix(in srgb, var(--sgv-volume) 13%, transparent), transparent 37%),
+        var(--sgv-space);
+    }
+
+    #strength-galaxy-visual canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    #strength-galaxy-visual .sgv-selected {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+      pointer-events: none;
+      color: var(--sgv-ink);
+      font-size: 0.82rem;
+      text-shadow: 0 1px 10px var(--sgv-space);
+    }
+
+    #strength-galaxy-visual .sgv-selected span {
+      color: var(--sgv-soft);
+    }
+
+    #strength-galaxy-visual .sgv-legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    #strength-galaxy-visual .sgv-legend button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 0;
+      background: transparent;
+      color: var(--sgv-soft);
+      padding: 3px 0;
+      cursor: pointer;
+      font-size: 0.76rem;
+    }
+
+    #strength-galaxy-visual .sgv-legend button:hover,
+    #strength-galaxy-visual .sgv-legend button:focus-visible {
+      color: var(--sgv-ink);
+      outline: 2px solid var(--ring);
+      outline-offset: 3px;
+    }
+
+    #strength-galaxy-visual .sgv-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--dot-color);
+      box-shadow: 0 0 10px var(--dot-color);
+    }
+
+    #strength-galaxy-visual .sgv-sr {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 520px) {
+      #strength-galaxy-visual .sgv-stage {
+        height: 470px;
+      }
+      #strength-galaxy-visual .sgv-title {
+        gap: 4px;
+      }
+      #strength-galaxy-visual .sgv-controls {
+        width: 100%;
+      }
+      #strength-galaxy-visual select {
+        flex: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #strength-galaxy-visual canvas {
+        cursor: pointer;
+      }
+    }
+  </style>
+
+  <div class="sgv-head">
+    <div class="sgv-title">
+      <strong>THE STRENGTH GALAXY</strong>
+      <span>facts become candidates, candidates orbit arbitration</span>
+    </div>
+    <div class="sgv-controls">
+      <label class="sgv-control-label" for="sgv-focus">Focus</label>
+      <select id="sgv-focus" aria-label="Focus a system layer">
+        <option value="all">Whole system</option>
+        <option value="strength">Strength capacity</option>
+        <option value="volume">Hypertrophy volume</option>
+        <option value="safety">Safety gate</option>
+        <option value="context">Recovery + context</option>
+      </select>
+      <button class="sgv-btn" id="sgv-motion" type="button" aria-pressed="false">Pause orbit</button>
+    </div>
+  </div>
+
+  <div class="sgv-stage">
+    <canvas id="sgv-canvas" role="img" aria-label="Interactive galaxy showing how strength data, hypertrophy volume, safety and context combine into an arbitration core"></canvas>
+    <div class="sgv-selected" id="sgv-selected" aria-live="polite">Click a star or planet to isolate its connections.</div>
+    <div class="sgv-sr" id="sgv-description">Outer stars are raw inputs. Coloured planets are independent controllers. The central arbitration star selects the allowed recommendation. Gas clouds represent recovery and environmental context, not a single readiness score.</div>
+  </div>
+
+  <div class="sgv-legend" aria-label="Galaxy layers">
+    <button type="button" data-focus="strength"><i class="sgv-dot" style="--dot-color: var(--sgv-strength)"></i>Strength capacity</button>
+    <button type="button" data-focus="volume"><i class="sgv-dot" style="--dot-color: var(--sgv-volume)"></i>Hypertrophy volume</button>
+    <button type="button" data-focus="safety"><i class="sgv-dot" style="--dot-color: var(--sgv-safety)"></i>Safety gate</button>
+    <button type="button" data-focus="context"><i class="sgv-dot" style="--dot-color: var(--sgv-context)"></i>Recovery + context</button>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('strength-galaxy-visual');
+      const canvas = document.getElementById('sgv-canvas');
+      const focusSelect = document.getElementById('sgv-focus');
+      const motionButton = document.getElementById('sgv-motion');
+      const selectedLine = document.getElementById('sgv-selected');
+      if (!root || !canvas || !focusSelect || !motionButton || !selectedLine) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const descriptions = {
+        all: 'Whole system: independent controllers submit candidates to one arbitration core.',
+        strength: 'Strength capacity: RIR, reps, exercise history, working max and equipment feasibility produce load/reps candidates.',
+        volume: 'Hypertrophy volume: direct and indirect exposure, emphasis and recovery feedback allocate muscle work.',
+        safety: 'Safety gate: red flags, pain, illness and re-entry states can veto progression.',
+        context: 'Recovery + context: cardio, sleep, nutrition context, work, season, heat and equipment constrain feasibility.'
+      };
+
+      const palette = () => {
+        const styles = getComputedStyle(root);
+        return {
+          background: styles.getPropertyValue('--sgv-space').trim() || '#111',
+          ink: styles.getPropertyValue('--sgv-ink').trim() || '#eee',
+          soft: styles.getPropertyValue('--sgv-soft').trim() || '#999',
+          line: styles.getPropertyValue('--sgv-line').trim() || '#777',
+          strength: styles.getPropertyValue('--sgv-strength').trim() || '#d9a441',
+          volume: styles.getPropertyValue('--sgv-volume').trim() || '#d9789d',
+          safety: styles.getPropertyValue('--sgv-safety').trim() || '#65c7ba',
+          context: styles.getPropertyValue('--sgv-context').trim() || '#8c9cf4',
+          output: styles.getPropertyValue('--sgv-output').trim() || '#f0c867',
+          highlight: styles.getPropertyValue('--sgv-ink').trim() || '#eee'
+        };
+      };
+
+      const rgba = (color, alpha) => {
+        const value = color.trim();
+        if (value.startsWith('#')) {
+          const hex = value.length === 4
+            ? value.slice(1).split('').map((x) => x + x).join('')
+            : value.slice(1);
+          const number = Number.parseInt(hex, 16);
+          return `rgba(${number >> 16}, ${(number >> 8) & 255}, ${number & 255}, ${alpha})`;
+        }
+        const match = value.match(/rgba?\(([^)]+)\)/);
+        if (match) {
+          const parts = match[1].split(',').map((part) => Number.parseFloat(part.trim()));
+          return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+        }
+        return value;
+      };
+
+      const nodes = [
+        { id: 'strength', label: 'Strength capacity', group: 'strength', kind: 'planet', angle: -Math.PI / 2, orbit: 0.24, size: 17 },
+        { id: 'volume', label: 'Hypertrophy volume', group: 'volume', kind: 'planet', angle: 0, orbit: 0.24, size: 17 },
+        { id: 'safety', label: 'Safety gate', group: 'safety', kind: 'planet', angle: Math.PI / 2, orbit: 0.24, size: 17 },
+        { id: 'context', label: 'Recovery + context', group: 'context', kind: 'planet', angle: Math.PI, orbit: 0.24, size: 17 },
+        { id: 'logs', label: 'Training logs', group: 'strength', kind: 'star', angle: -2.65, orbit: 0.43, size: 7 },
+        { id: 'rir', label: 'RIR + reps', group: 'strength', kind: 'star', angle: -2.05, orbit: 0.48, size: 6 },
+        { id: 'history', label: 'Exercise history', group: 'strength', kind: 'star', angle: -1.42, orbit: 0.45, size: 6 },
+        { id: 'muscles', label: 'Muscle exposure', group: 'volume', kind: 'star', angle: -0.72, orbit: 0.46, size: 7 },
+        { id: 'feedback', label: 'Pump + soreness', group: 'volume', kind: 'star', angle: -0.12, orbit: 0.49, size: 6 },
+        { id: 'pain', label: 'Pain + illness', group: 'safety', kind: 'star', angle: 0.55, orbit: 0.45, size: 7 },
+        { id: 'redflags', label: 'Red flags', group: 'safety', kind: 'star', angle: 1.15, orbit: 0.49, size: 6 },
+        { id: 'cardio', label: 'Cardio + sport', group: 'context', kind: 'star', angle: 1.75, orbit: 0.45, size: 7 },
+        { id: 'season', label: 'Season + heat', group: 'context', kind: 'star', angle: 2.35, orbit: 0.49, size: 6 },
+        { id: 'nutrition', label: 'Fuel context', group: 'context', kind: 'star', angle: 2.92, orbit: 0.45, size: 6 },
+        { id: 'equipment', label: 'Equipment + time', group: 'context', kind: 'star', angle: -2.95, orbit: 0.53, size: 6 },
+        { id: 'recommendation', label: 'Recommendation', group: 'output', kind: 'output', angle: Math.PI / 4, orbit: 0.36, size: 12 }
+      ];
+
+      const stars = Array.from({ length: 150 }, (_, index) => {
+        const seed = (index * 9301 + 49297) % 233280;
+        const next = (seed * 49297 + 233280) % 233280;
+        return {
+          x: (seed / 233280),
+          y: (next / 233280),
+          size: 0.35 + ((index * 17) % 9) / 10,
+          alpha: 0.15 + ((index * 13) % 7) / 14,
+          drift: 0.2 + ((index * 7) % 9) / 20
+        };
+      });
+
+      let width = 0;
+      let height = 0;
+      let dpr = 1;
+      let phase = 0;
+      let running = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let selected = 'all';
+      let hitTargets = [];
+      let frameId = 0;
+
+      const groupColor = (group, colors) => colors[group] || colors.output;
+      const activeFor = (node) => selected === 'all' || node.group === selected || node.group === 'output';
+      const pointFor = (node) => {
+        const cx = width / 2;
+        const cy = height / 2;
+        const base = Math.min(width, height);
+        const drift = running ? Math.sin(phase * 0.0004 + node.angle * 2.1) * (node.kind === 'star' ? 0.008 : 0.004) : 0;
+        const radius = base * (node.orbit + drift);
+        const angle = node.angle + (node.kind === 'planet' ? phase * 0.000025 * (node.id === 'context' ? -1 : 1) : phase * 0.000008);
+        return { x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius };
+      };
+
+      const drawNebula = (colors) => {
+        const cx = width / 2;
+        const cy = height / 2;
+        const base = Math.min(width, height);
+        const clouds = [
+          { x: cx - base * 0.28, y: cy - base * 0.19, rx: base * 0.32, ry: base * 0.16, color: colors.context },
+          { x: cx + base * 0.28, y: cy + base * 0.16, rx: base * 0.34, ry: base * 0.18, color: colors.volume },
+          { x: cx - base * 0.11, y: cy + base * 0.3, rx: base * 0.22, ry: base * 0.13, color: colors.safety }
+        ];
+        clouds.forEach((cloud, index) => {
+          ctx.save();
+          ctx.translate(cloud.x + Math.sin(phase * 0.00025 + index) * 8, cloud.y);
+          ctx.rotate(index * 0.35 - 0.2);
+          ctx.scale(1, cloud.ry / cloud.rx);
+          const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, cloud.rx);
+          gradient.addColorStop(0, rgba(cloud.color, 0.12));
+          gradient.addColorStop(0.56, rgba(cloud.color, 0.035));
+          gradient.addColorStop(1, rgba(cloud.color, 0));
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(0, 0, cloud.rx, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      };
+
+      const drawStars = (colors) => {
+        stars.forEach((star, index) => {
+          const x = star.x * width;
+          const y = star.y * height;
+          const twinkle = running ? Math.sin(phase * 0.002 * star.drift + index) * 0.16 : 0;
+          ctx.globalAlpha = Math.max(0.05, star.alpha + twinkle);
+          ctx.fillStyle = colors.ink;
+          ctx.beginPath();
+          ctx.arc(x, y, star.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      };
+
+      const drawOrbit = (radius, colors, opacity) => {
+        ctx.strokeStyle = rgba(colors.line, opacity);
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 8]);
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      };
+
+      const drawLinks = (positions, colors) => {
+        const center = { x: width / 2, y: height / 2 };
+        const coreLinks = ['strength', 'volume', 'safety', 'context'];
+        coreLinks.forEach((id) => {
+          const node = nodes.find((item) => item.id === id);
+          const point = positions.get(id);
+          const active = selected === 'all' || selected === node.group;
+          ctx.strokeStyle = rgba(groupColor(node.group, colors), active ? 0.52 : 0.08);
+          ctx.lineWidth = active ? 1.8 : 1;
+          ctx.beginPath();
+          ctx.moveTo(point.x, point.y);
+          ctx.quadraticCurveTo(center.x, center.y, center.x, center.y);
+          ctx.stroke();
+        });
+
+        nodes.filter((node) => node.kind === 'star').forEach((node) => {
+          const target = positions.get(node.group);
+          const point = positions.get(node.id);
+          const active = selected === 'all' || selected === node.group;
+          ctx.strokeStyle = rgba(groupColor(node.group, colors), active ? 0.3 : 0.045);
+          ctx.lineWidth = active ? 1.1 : 0.7;
+          ctx.beginPath();
+          ctx.moveTo(point.x, point.y);
+          ctx.quadraticCurveTo((point.x + target.x) / 2, (point.y + target.y) / 2 - 18, target.x, target.y);
+          ctx.stroke();
+        });
+
+        const output = positions.get('recommendation');
+        ctx.strokeStyle = rgba(colors.output, selected === 'all' ? 0.65 : 0.2);
+        ctx.lineWidth = selected === 'all' ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(center.x, center.y);
+        ctx.quadraticCurveTo(center.x + 35, center.y - 20, output.x, output.y);
+        ctx.stroke();
+      };
+
+      const drawStar = (point, node, color, alpha) => {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = node.size * 3;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (let i = 0; i < 10; i += 1) {
+          const radius = i % 2 === 0 ? node.size : node.size * 0.36;
+          const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+          const x = point.x + Math.cos(angle) * radius;
+          const y = point.y + Math.sin(angle) * radius;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      };
+
+      const drawPlanet = (point, node, color, alpha) => {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 20;
+        const gradient = ctx.createRadialGradient(point.x - node.size * 0.35, point.y - node.size * 0.45, 1, point.x, point.y, node.size * 1.4);
+        gradient.addColorStop(0, colorsForDraw.highlight);
+        gradient.addColorStop(0.4, color);
+        gradient.addColorStop(1, rgba(color, 0.2));
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, node.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = rgba(color, 0.72);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(point.x, point.y, node.size * 1.65, node.size * 0.46, -0.25, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      let colorsForDraw = null;
+      const drawLabel = (point, node, color, alpha) => {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = colorsForDraw.ink;
+        ctx.font = `${node.kind === 'planet' ? 500 : 400} ${node.kind === 'planet' ? 12 : 10}px inherit`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const labelY = point.y + (node.kind === 'planet' ? 25 : 11);
+        ctx.fillText(node.label, point.x, labelY);
+        ctx.restore();
+      };
+
+      const drawCore = (colors) => {
+        const center = { x: width / 2, y: height / 2 };
+        const radius = Math.min(width, height) * 0.065;
+        const halo = ctx.createRadialGradient(center.x, center.y, 0, center.x, center.y, radius * 4.8);
+        halo.addColorStop(0, rgba(colors.output, 0.3));
+        halo.addColorStop(0.35, rgba(colors.output, 0.1));
+        halo.addColorStop(1, rgba(colors.output, 0));
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius * 4.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.save();
+        ctx.shadowColor = colors.output;
+        ctx.shadowBlur = 30;
+        const starGradient = ctx.createRadialGradient(center.x - radius * 0.3, center.y - radius * 0.4, 1, center.x, center.y, radius);
+        starGradient.addColorStop(0, colors.ink);
+        starGradient.addColorStop(0.34, colors.output);
+        starGradient.addColorStop(1, rgba(colors.strength, 0.4));
+        ctx.fillStyle = starGradient;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = colors.ink;
+        ctx.font = '500 11px inherit';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('ARBITRATION CORE', center.x, center.y + radius + 13);
+        ctx.fillStyle = colors.soft;
+        ctx.font = '400 10px inherit';
+        ctx.fillText('allowed recommendation', center.x, center.y + radius + 28);
+      };
+
+      const draw = (timestamp) => {
+        phase = timestamp;
+        const colors = palette();
+        colorsForDraw = colors;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = colors.background;
+        ctx.fillRect(0, 0, width, height);
+        drawStars(colors);
+        drawNebula(colors);
+        drawOrbit(Math.min(width, height) * 0.24, colors, selected === 'all' ? 0.22 : 0.08);
+        drawOrbit(Math.min(width, height) * 0.48, colors, selected === 'all' ? 0.15 : 0.05);
+
+        const positions = new Map();
+        nodes.forEach((node) => positions.set(node.id, pointFor(node)));
+        drawLinks(positions, colors);
+        drawCore(colors);
+
+        hitTargets = [];
+        nodes.forEach((node) => {
+          const point = positions.get(node.id);
+          const alpha = activeFor(node) ? 1 : 0.16;
+          const color = groupColor(node.group, colors);
+          if (node.kind === 'star') drawStar(point, node, color, alpha);
+          if (node.kind === 'planet' || node.kind === 'output') drawPlanet(point, node, color, alpha);
+          drawLabel(point, node, color, alpha);
+          hitTargets.push({ node, point });
+        });
+
+        if (running) frameId = requestAnimationFrame(draw);
+      };
+
+      const resize = () => {
+        const rect = canvas.getBoundingClientRect();
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = Math.max(320, rect.width);
+        height = Math.max(390, rect.height);
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        cancelAnimationFrame(frameId);
+        draw(phase);
+      };
+
+      const selectFocus = (value) => {
+        selected = value;
+        focusSelect.value = value;
+        selectedLine.innerHTML = `<strong>${value === 'all' ? 'Whole system' : value[0].toUpperCase() + value.slice(1)}</strong> <span>— ${descriptions[value]}</span>`;
+        cancelAnimationFrame(frameId);
+        draw(phase);
+      };
+
+      focusSelect.addEventListener('change', (event) => selectFocus(event.target.value));
+      motionButton.addEventListener('click', () => {
+        running = !running;
+        motionButton.textContent = running ? 'Pause orbit' : 'Resume orbit';
+        motionButton.setAttribute('aria-pressed', String(!running));
+        cancelAnimationFrame(frameId);
+        draw(phase);
+      });
+
+      root.querySelectorAll('[data-focus]').forEach((button) => {
+        button.addEventListener('click', () => selectFocus(button.getAttribute('data-focus')));
+      });
+
+      canvas.addEventListener('click', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        let closest = null;
+        let distance = Infinity;
+        hitTargets.forEach((target) => {
+          const dx = x - target.point.x;
+          const dy = y - target.point.y;
+          const nextDistance = Math.sqrt(dx * dx + dy * dy);
+          if (nextDistance < distance) {
+            distance = nextDistance;
+            closest = target.node;
+          }
+        });
+        if (closest && distance < 32) {
+          selectFocus(closest.group === 'output' ? 'all' : closest.group);
+          selectedLine.innerHTML = `<strong>${closest.label}</strong> <span>— ${descriptions[closest.group] || descriptions.all}</span>`;
+        }
+      });
+
+      if ('ResizeObserver' in window) new ResizeObserver(resize).observe(canvas);
+      else window.addEventListener('resize', resize);
+      resize();
+    })();
+  </script>
+</div>

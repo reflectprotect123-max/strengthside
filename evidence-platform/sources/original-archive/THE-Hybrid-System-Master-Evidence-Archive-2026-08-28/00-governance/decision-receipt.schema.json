@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hybridsystem.local/schemas/decision-receipt.schema.json",
+  "title": "THE Hybrid System Decision Receipt",
+  "description": "An immutable, replayable explanation of one multi-model control decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receiptId", "createdAt", "inputSnapshotId", "systemDecision", "trace", "validators", "adapterAction"],
+  "properties": {
+    "receiptId": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "inputSnapshotId": { "type": "string" },
+    "systemDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "scope", "reasonCodes"],
+      "properties": {
+        "action": { "type": "string", "enum": ["proceed", "maintain", "progress", "trim", "modify", "hold", "record_only"] },
+        "scope": { "type": "string" },
+        "changedFields": { "type": "array", "items": { "type": "string" } },
+        "unchangedFields": { "type": "array", "items": { "type": "string" } },
+        "reasonCodes": { "type": "array", "items": { "type": "string" } },
+        "nextRecheck": { "type": "string", "format": "date-time" }
+      }
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domainDecisions", "modelVersions", "ruleIds", "policyIds", "claimIds", "sourceIds"],
+      "properties": {
+        "domainDecisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["engine", "decisionId", "status"],
+            "properties": {
+              "system": { "type": "string", "enum": ["strength", "conditioning", "nutrition", "recovery", "coordinator"] },
+              "decisionId": { "type": "string" },
+              "status": { "type": "string", "enum": ["supports", "conflicts", "neutral", "not_run", "blocked"] },
+              "sourceSnapshotId": { "type": "string" }
+            }
+          }
+        },
+        "modelVersions": { "type": "array", "items": { "type": "string" } },
+        "ruleIds": { "type": "array", "items": { "type": "string" } },
+        "policyIds": { "type": "array", "items": { "type": "string" } },
+        "claimIds": { "type": "array", "items": { "type": "string" } },
+        "sourceIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["validatorId", "status"],
+        "properties": {
+          "validatorId": { "type": "string" },
+          "status": { "type": "string", "enum": ["passed", "failed", "not_run", "not_applicable"] },
+          "message": { "type": "string" }
+        }
+      }
+    },
+    "adapterAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "type": "string", "enum": ["not_applied", "shadowed", "applied", "rejected", "undone"] },
+        "adapterId": { "type": "string" },
+        "targetFields": { "type": "array", "items": { "type": "string" } },
+        "reversalReceiptId": { "type": "string" }
+      }
+    }
+  }
+}
