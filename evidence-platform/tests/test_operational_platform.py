@@ -166,4 +166,16 @@ class OperationalPlatformTests(unittest.TestCase):
             self.assertEqual(connection.execute("SELECT COUNT(*) n FROM records").fetchone()["n"],record_count_before)
             connection.close()
         self.assertEqual(hashlib.sha256(packaged.read_bytes()).hexdigest(),packaged_hash_before,"test must migrate a copy, never the packaged runtime DB in place")
+    def test_migrate_is_safe_to_call_more_than_once_against_the_same_database(self):
+        # cli.py's main() calls migrate(db) on every single invocation, not
+        # just the first - a migration file whose SQL isn't idempotent on
+        # its own (a bare ALTER TABLE ADD COLUMN, which SQLite has no IF NOT
+        # EXISTS form for) broke this until migrate() started tracking which
+        # files already ran instead of blindly re-executing every file.
+        with tempfile.TemporaryDirectory() as tmp:
+            copy=Path(tmp)/"fresh.db"
+            connection=connect(copy)
+            migrate(connection); migrate(connection); migrate(connection)
+            self.assertIn("system",[r["name"] for r in connection.execute("PRAGMA table_info(runtime_artifacts)")])
+            connection.close()
 if __name__=="__main__": unittest.main()
