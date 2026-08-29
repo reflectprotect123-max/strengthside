@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from .arbitration import arbitrate, collect_engine_candidates
 from .engines.common import EngineInputError, validate_engine_output, validate_snapshot
 from .llm.orchestrate import attempt_lead_fallback
 from .receipt_replay import (
@@ -116,6 +117,37 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
         ]
         requires_llm_fallback = True
 
+    # Phase 5: what did the five systems themselves propose? Entirely
+    # separate from the models pool above (BIG MAC's own artifact pool,
+    # runtime_artifacts.system IS NULL) - this looks at each engine's own
+    # proposed_actions[0] (runtime_artifacts.system=<name>, Phase 3/4's
+    # per-engine seam). A real cross-domain conflict is never silently
+    # resolved here - see platform_core/arbitration.py's own docstring for
+    # why picking a side needs a reviewed policy this gate does not have.
+    domain_candidates = collect_engine_candidates(domain_outputs)
+    candidate_arbitration = arbitrate(domain_candidates)
+    if candidate_arbitration["conflict"]:
+        action = "abstain"
+        reasons = [
+            "MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY",
+            "NO_DETERMINISTIC_ANSWER",
+            "LEAD_FALLBACK_NOT_CONNECTED",
+        ]
+        requires_llm_fallback = True
+    elif candidate_arbitration["unanimous_action"] is not None and action == "abstain":
+        # The models pool alone had nothing (or nothing approved), but every
+        # engine that proposed anything agreed on the same action - apply it
+        # rather than abstain when there is nothing left to disagree about.
+        action = candidate_arbitration["unanimous_action"]
+        reasons = ["ENGINE_CANDIDATE_APPLIED"] + sorted(
+            {
+                code
+                for candidate in candidate_arbitration["candidates"]
+                for code in candidate.get("reason_codes", [])
+            }
+        )
+        requires_llm_fallback = False
+
     # Phase 2: a frozen, already-validated lead-fallback response overrides
     # a deterministic abstain. This block reads only what is already frozen
     # in the bundle - no network call happens here, ever, so replay
@@ -159,6 +191,33 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
             "eligible": action != "abstain",
             "rejection_reason_codes": reasons if action == "abstain" else [],
         }
+    # Phase 5: record every domain's own proposal in the ledger, not just the
+    # winning candidate - eligible=True/rejection_reason_codes=[] only for
+    # the ones that agree with the final action; the rest are marked
+    # rejected, distinctly, for why (a real conflict, or simply superseded
+    # by a stronger BIG MAC-level answer that did not need engine consensus).
+    domain_ledger_entries = []
+    for domain_candidate in candidate_arbitration["candidates"]:
+        matches_final = domain_candidate["action"] == action
+        domain_ledger_entries.append(
+            {
+                "candidate_id": domain_candidate.get("candidate_id", f"CAND-{domain_candidate['domain'].upper()}"),
+                "action": domain_candidate["action"],
+                "source": f"engine:{domain_candidate['domain']}",
+                "authority_mode": "engine_proposed",
+                "eligible": matches_final,
+                "rejection_reason_codes": (
+                    []
+                    if matches_final
+                    else (
+                        ["MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY"]
+                        if candidate_arbitration["conflict"]
+                        else ["SUPERSEDED_BY_BIG_MAC_MODEL"]
+                    )
+                ),
+            }
+        )
+
     validators = [
         {"validator": "five_domain_presence", "passed": True, "reason_codes": []},
         {
@@ -190,7 +249,7 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
             domain: sha256_json(domain_outputs[domain]) for domain in DOMAINS
         },
         "model_ids": model_ids,
-        "candidate_ledger": [candidate],
+        "candidate_ledger": domain_ledger_entries + [candidate],
         "validator_results": validators,
         "final_decision": {
             "action": action,

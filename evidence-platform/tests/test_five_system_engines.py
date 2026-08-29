@@ -189,6 +189,69 @@ class EndToEndFiveEngineToDecisionTests(unittest.TestCase):
         receipt = json.loads(out.getvalue())
         self.assertEqual(receipt["action"], "abstain")
 
+    def test_a_single_engine_candidate_drives_the_decision_when_no_big_mac_model_exists(self):
+        # Phase 5: previously decide() never looked at what the five engines
+        # themselves proposed - only at BIG MAC's own separate model pool.
+        snapshot = {
+            "fixture": "synthetic_test_only",
+            "athlete_id": "PHASE5-SINGLE",
+            "as_of": "2026-01-01T00:00:00Z",
+            "synthetic_directives": {"strength": {"action": "trim"}},
+        }
+        outputs = run_all(snapshot)
+        self.assertEqual(outputs["strength"]["proposed_actions"][0]["action"], "trim")
+        for other in DOMAIN_NAMES - {"strength"}:
+            self.assertEqual(outputs[other]["proposed_actions"][0]["action"], "abstain")
+        receipt = decide(self.connection, snapshot, outputs)
+        self.assertEqual(receipt["action"], "trim")
+        self.assertIn("ENGINE_CANDIDATE_APPLIED", receipt["reason_codes"])
+
+    def test_two_domains_proposing_different_actions_abstains_rather_than_pick_a_side(self):
+        snapshot = {
+            "fixture": "synthetic_test_only",
+            "athlete_id": "PHASE5-CONFLICT",
+            "as_of": "2026-01-01T00:00:00Z",
+            "synthetic_directives": {
+                "strength": {"action": "trim"},
+                "nutrition": {"action": "hold"},
+            },
+        }
+        outputs = run_all(snapshot)
+        receipt = decide(self.connection, snapshot, outputs)
+        self.assertEqual(receipt["action"], "abstain")
+        self.assertIn("MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY", receipt["reason_codes"])
+        self.assertTrue(receipt["decision_trace"]["requires_llm_fallback"])
+
+    def test_two_domains_proposing_the_same_action_is_not_treated_as_a_conflict(self):
+        snapshot = {
+            "fixture": "synthetic_test_only",
+            "athlete_id": "PHASE5-AGREE",
+            "as_of": "2026-01-01T00:00:00Z",
+            "synthetic_directives": {
+                "strength": {"action": "hold"},
+                "nutrition": {"action": "hold"},
+            },
+        }
+        outputs = run_all(snapshot)
+        receipt = decide(self.connection, snapshot, outputs)
+        self.assertEqual(receipt["action"], "hold")
+        self.assertNotIn("MULTI_DOMAIN_CANDIDATE_NO_ARBITRATION_POLICY", receipt["reason_codes"])
+
+    def test_candidate_ledger_records_every_domain_proposal_not_just_the_winner(self):
+        snapshot = {
+            "fixture": "synthetic_test_only",
+            "athlete_id": "PHASE5-LEDGER",
+            "as_of": "2026-01-01T00:00:00Z",
+            "synthetic_directives": {"strength": {"action": "trim"}},
+        }
+        outputs = run_all(snapshot)
+        receipt = decide(self.connection, snapshot, outputs)
+        ledger = receipt["decision_trace"]["candidate_ledger"]
+        engine_entries = [c for c in ledger if c["source"] == "engine:strength"]
+        self.assertEqual(len(engine_entries), 1)
+        self.assertTrue(engine_entries[0]["eligible"])
+        self.assertEqual(engine_entries[0]["rejection_reason_codes"], [])
+
 
 class EngineScopedModelTests(unittest.TestCase):
     """Phase 3/4: every engine can load its OWN active, hash-verified model,
