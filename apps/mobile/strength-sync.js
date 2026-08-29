@@ -449,6 +449,8 @@
       await reconcile(global.S);
       if (typeof global.save === 'function') global.save('strength-sync-pull');
       if (typeof global.render === 'function' && !(global.S && global.S.active)) {
+        // Settings: reconcile must not rebuild the page (shell scroll reset).
+        if (global.S && global.S.tab === 'settings') return;
         try { global.render(); } catch (_) {}
       }
     } catch (_) {}

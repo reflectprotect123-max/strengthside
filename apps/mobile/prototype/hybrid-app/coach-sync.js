@@ -121,7 +121,7 @@
       pullCloud(state).then(function (cr) {
         if (cr && cr.ok && cr.merged && typeof global.save === 'function') {
           global.save('coach-sync-pull');
-          if (typeof global.render === 'function') global.render();
+          if (typeof global.render === 'function' && !(global.S && global.S.tab === 'settings')) global.render();
         }
       });
     }

@@ -42,7 +42,8 @@ if (!html.includes('ATH_CHECKIN_STEPS')) throw new Error('ATH_CHECKIN_STEPS miss
 if (!html.includes('function athCheckinAnswer')) throw new Error('athCheckinAnswer missing');
 if (!html.includes('checkin-choice')) throw new Error('checkin-choice UI missing');
 if (html.includes("athSleepSlider('sleepQuality'")) throw new Error('old sleepQuality slider still in check-in card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v94'")) throw new Error('expected cache v90');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v95'")) throw new Error('expected cache v95');
+if (!html.includes("keepScroll=S&&S.tab==='settings'")) throw new Error('shell() must preserve settings scroll');
 if (html.includes("loadStarter('Full Body B')")) throw new Error('Full Body B starter button still present');
 if (html.includes("loadStarter('Full Body C')")) throw new Error('Full Body C starter button still present');
 if (!html.includes("loadStarter('Full Body A')")) throw new Error('Full Body A starter missing');
@@ -57,6 +58,11 @@ if (/tab === 'settings'[\s\S]{0,160}global\.settings\(\)/.test(concept2)) {
 }
 if (!whoop.includes("if (tab === 'settings') return")) {
   throw new Error('whoop refreshVisibleUi must early-return on settings tab');
+}
+
+const coachSync = readFileSync(join(dir, 'coach-sync.js'), 'utf8');
+if (!coachSync.includes("global.S.tab === 'settings'")) {
+  throw new Error('coach-sync must not render() on settings tab');
 }
 
 console.log('account-sync-checkin.smoke: ok');
