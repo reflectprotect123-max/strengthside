@@ -1,0 +1,33 @@
+metric_id,canonical_name,canonical_unit,system,definition,numerator,denominator,time_basis,review_status
+MET-UNMAPPED,Unmapped formula parameter,[source-defined],cross-system,Temporary quarantine metric for extracted formula constants whose canonical metric mapping requires human review.,,,,provisional_dictionary_entry
+MET-BODY-MASS,Body mass,kg,"nutrition,recovery",Measured body mass at a timestamp; raw and trend values are separate metrics.,,,,provisional_dictionary_entry
+MET-BODY-MASS-TREND,Body mass trend,kg,nutrition,Filtered body mass estimate; filter and parameters must be versioned.,,,,provisional_dictionary_entry
+MET-WEEKLY-MASS-CHANGE,Weekly body mass change,kg/week,nutrition,Change in trend body mass per seven days.,,,,provisional_dictionary_entry
+MET-WEEKLY-MASS-CHANGE-PCT,Weekly body mass change rate,%/week,nutrition,Weekly change divided by an explicit reference mass.,,,,provisional_dictionary_entry
+MET-ENERGY-INTAKE,Energy intake,kcal/day,nutrition,"Documented food-energy intake; missing, partial, and confirmed zero are distinct.",,,,provisional_dictionary_entry
+MET-ENERGY-EXPENDITURE,Estimated energy expenditure,kcal/day,nutrition,"Model estimate, not direct calorimetry unless method says so.",,,,provisional_dictionary_entry
+MET-BMR,Basal metabolic rate estimate,kcal/day,nutrition,Equation-derived BMR with equation ID and inputs.,,,,provisional_dictionary_entry
+MET-PROTEIN-INTAKE,Protein intake,g/day,nutrition,Daily protein intake with source and completeness.,,,,provisional_dictionary_entry
+MET-ENERGY-AVAILABILITY,Energy availability proxy,kcal/kg FFM/day,"nutrition,recovery","Proxy requiring intake, exercise expenditure and fat-free mass; not a diagnosis.",,,,provisional_dictionary_entry
+MET-LOAD,External load,kg,strength,Exercise load with equipment and unilateral/bilateral semantics.,,,,provisional_dictionary_entry
+MET-REPETITIONS,Repetitions,count/set,strength,Completed or prescribed repetitions per set.,,,,provisional_dictionary_entry
+MET-RIR,Repetitions in reserve,repetitions,strength,Subjective effort estimate with confidence/calibration.,,,,provisional_dictionary_entry
+MET-RPE,Rating of perceived exertion,score,"strength,conditioning",Scale-specific perceived exertion; scale must be recorded.,,,,provisional_dictionary_entry
+MET-VOLUME-LOAD,Volume load,kg-repetitions,strength,Document-specific load x repetitions aggregation; limitations retained.,,,,provisional_dictionary_entry
+MET-SETS-PER-MUSCLE-WEEK,Weekly sets per muscle,sets/week,strength,Direct and indirect set accounting must be separate/versioned.,,,,provisional_dictionary_entry
+MET-E1RM,Estimated one-repetition maximum,kg,strength,Equation-derived estimate with exercise and formula ID.,,,,provisional_dictionary_entry
+MET-DURATION,Session duration,seconds,"conditioning,strength",Elapsed or active duration; basis must be explicit.,,,,provisional_dictionary_entry
+MET-DISTANCE,Distance,metres,conditioning,Measured or device-estimated distance with modality and device.,,,,provisional_dictionary_entry
+MET-PACE,Pace,seconds/metre,conditioning,Time per distance; display units are transformations.,,,,provisional_dictionary_entry
+MET-SPEED,Speed,metres/second,conditioning,Distance per time.,,,,provisional_dictionary_entry
+MET-POWER,Power,watts,conditioning,Device-reported or estimated power with device/calibration.,,,,provisional_dictionary_entry
+MET-HEART-RATE,Heart rate,beats/minute,"conditioning,recovery",Heart rate with sampling and device metadata.,,,,provisional_dictionary_entry
+MET-HRV,Heart-rate variability,milliseconds,recovery,Protocol-specific HRV metric; statistic and acquisition conditions required.,,,,provisional_dictionary_entry
+MET-RHR,Resting heart rate,beats/minute,recovery,Resting heart rate under recorded protocol.,,,,provisional_dictionary_entry
+MET-SLEEP-DURATION,Sleep duration,hours/night,recovery,Device or self-report sleep duration with measurement method.,,,,provisional_dictionary_entry
+MET-SORENESS,Soreness rating,score,recovery,Scale-specific self-report soreness; body region required when relevant.,,,,provisional_dictionary_entry
+MET-PAIN,Pain event,categorical,"recovery,coordinator","Structured event, not a single readiness scalar or diagnosis.",,,,provisional_dictionary_entry
+MET-READINESS,Readiness construct,score,"recovery,coordinator","Model output only; components, uncertainty, version and missingness required.",,,,provisional_dictionary_entry
+MET-ACUTE-LOAD,Acute training load,arbitrary-unit,coordinator,Window and load definition required; not an injury-risk threshold by itself.,,,,provisional_dictionary_entry
+MET-CHRONIC-LOAD,Chronic training load,arbitrary-unit,coordinator,Window and load definition required.,,,,provisional_dictionary_entry
+MET-DATA-QUALITY,Data quality score,score,coordinator,Versioned completeness/reliability score with explicit components.,,,,provisional_dictionary_entry

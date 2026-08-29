@@ -1,0 +1,12 @@
+[project]
+name = "the-hybrid-system-evidence-platform"
+version = "0.3.0"
+description = "Local evidence operations and hidden decision receipt/replay core for THE Hybrid System"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+hybrid-evidence = "platform_core.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["platform_core*"]

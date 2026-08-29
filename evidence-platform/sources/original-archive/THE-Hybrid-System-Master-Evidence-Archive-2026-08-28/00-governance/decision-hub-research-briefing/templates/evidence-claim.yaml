@@ -1,0 +1,28 @@
+claimId: claim_example_0001
+engine: strength
+decisionQuestion: ""
+sourceId: src_example_0001
+sourceLocation: ""
+claim: ""
+population:
+  description: ""
+conditions: []
+exposureOrIntervention: ""
+comparator: ""
+outcome:
+  measure: ""
+  direction: ""
+  magnitude: ""
+timeHorizon: ""
+evidence:
+  sourceType: systematic_review
+  qualityTier: A
+  confidence: ungraded
+limitations: []
+contradictions: []
+review:
+  status: drafted
+  verifiedAgainstSource: false
+  reviewer: ""
+  reviewedAt: ""
+

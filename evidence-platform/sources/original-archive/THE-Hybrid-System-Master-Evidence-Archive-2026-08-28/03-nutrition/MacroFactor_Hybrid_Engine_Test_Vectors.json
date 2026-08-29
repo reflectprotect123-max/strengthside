@@ -1,0 +1,267 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryVersion": "1.0.0",
+  "researchDate": "2026-08-24",
+  "purpose": "Framework-neutral deterministic fixtures for formula, state, safety, and conservation tests.",
+  "numericTolerance": {
+    "absolute": 0.01,
+    "relative": 0.0001
+  },
+  "cases": [
+    {
+      "id": "bmr-general-male-30",
+      "kind": "formula",
+      "formulaId": "bmr.general.v1",
+      "inputs": {
+        "weightKg": 80,
+        "heightCm": 180,
+        "ageYears": 30,
+        "sexCode": 0
+      },
+      "expected": {
+        "ageAdjustmentKcal": 58.8,
+        "bmrKcalPerDay": 1740.7268
+      },
+      "assert": "bmrKcalPerDay is within numericTolerance of expected"
+    },
+    {
+      "id": "bmr-ffm-age-65",
+      "kind": "formula",
+      "formulaId": "bmr.ffm.v1",
+      "inputs": {
+        "ffmKg": 65,
+        "fatMassKg": 15,
+        "ageYears": 65
+      },
+      "expected": {
+        "ageAdjustmentKcal": 79.75,
+        "bmrKcalPerDay": 1752.6910
+      },
+      "assert": "bmrKcalPerDay is within numericTolerance of expected"
+    },
+    {
+      "id": "athlete-bmr-ffm-70",
+      "kind": "formula",
+      "formulaId": "bmr.athlete.v1",
+      "inputs": {
+        "ffmKg": 70
+      },
+      "expected": {
+        "bmrKcalPerDay": 2118.4233
+      },
+      "assert": "bmrKcalPerDay is within numericTolerance of expected"
+    },
+    {
+      "id": "initial-expenditure-published-example",
+      "kind": "formula",
+      "formulaId": "expenditure.initial.v1",
+      "inputs": {
+        "adjustedBmrKcal": 1938,
+        "generalActivityFactor": 1.4,
+        "exerciseCorrection": 0.1
+      },
+      "expected": {
+        "initialExpenditureKcalPerDay": 2907
+      },
+      "assert": "exact equality"
+    },
+    {
+      "id": "balance-loss-and-gain-signs",
+      "kind": "formula",
+      "formulaId": "target.signedRate.v1",
+      "inputs": {
+        "expenditureKcalPerDay": 2800,
+        "signedRateKgPerWeek": -0.4
+      },
+      "expected": {
+        "targetKcalPerDay": 2360
+      },
+      "assert": "negative signed rate lowers target"
+    },
+    {
+      "id": "balance-gain-sign",
+      "kind": "formula",
+      "formulaId": "target.signedRate.v1",
+      "inputs": {
+        "expenditureKcalPerDay": 2800,
+        "signedRateKgPerWeek": 0.4
+      },
+      "expected": {
+        "targetKcalPerDay": 3240
+      },
+      "assert": "positive signed rate raises target"
+    },
+    {
+      "id": "change-rate-20-day-loss",
+      "kind": "formula",
+      "formulaId": "changeRate.20day.v1",
+      "inputs": {
+        "trendTodayKg": 80,
+        "trend20DaysAgoKg": 81,
+        "referenceWeightKg": 80
+      },
+      "expected": {
+        "weeklyChangeKg": -0.35,
+        "weeklyChangePercent": -0.4375
+      },
+      "assert": "trend, not raw scale weight, is used"
+    },
+    {
+      "id": "fat-floor-177cm",
+      "kind": "formula",
+      "formulaId": "fat.floor.v1",
+      "inputs": {
+        "heightCm": 177
+      },
+      "expected": {
+        "fatFloorGPerDay": 43.5
+      },
+      "assert": "exact equality"
+    },
+    {
+      "id": "weekly-budget-conservation",
+      "kind": "invariant",
+      "formulaId": "budget.weekly.v1",
+      "inputs": {
+        "dailyTargetsKcal": [2400, 2400, 2600, 2400, 2400, 2800, 2400]
+      },
+      "expected": {
+        "weeklyBudgetKcal": 17400
+      },
+      "assert": "redistribution cannot change the weekly sum unless the program is explicitly updated"
+    },
+    {
+      "id": "goal-prior-loss",
+      "kind": "formula",
+      "formulaId": "goalPrior.multiplier.v1",
+      "inputs": {
+        "intendedRateFractionPerWeek": -0.01
+      },
+      "expected": {
+        "goalPriorMultiplier": 0.96
+      },
+      "assert": "feature-flagged creator-reported heuristic"
+    },
+    {
+      "id": "goal-prior-gain",
+      "kind": "formula",
+      "formulaId": "goalPrior.multiplier.v1",
+      "inputs": {
+        "intendedRateFractionPerWeek": 0.005
+      },
+      "expected": {
+        "goalPriorMultiplier": 1.02
+      },
+      "assert": "feature-flagged creator-reported heuristic"
+    },
+    {
+      "id": "update-gate-passes",
+      "kind": "state",
+      "ruleId": "gate.v3.4of7.1of7",
+      "inputs": {
+        "validNutritionDaysLast7": 4,
+        "validWeightDaysLast7": 1
+      },
+      "expected": {
+        "state": "updating"
+      },
+      "assert": "minimum current operating gate passes"
+    },
+    {
+      "id": "update-gate-holds",
+      "kind": "state",
+      "ruleId": "gate.v3.4of7.1of7",
+      "inputs": {
+        "validNutritionDaysLast7": 3,
+        "validWeightDaysLast7": 1,
+        "previousExpenditureKcal": 2800
+      },
+      "expected": {
+        "state": "holding",
+        "expenditureKcal": 2800
+      },
+      "assert": "failed gate holds previous estimate and does not reset to onboarding"
+    },
+    {
+      "id": "blank-is-not-zero",
+      "kind": "data-state",
+      "inputs": {
+        "status": "blank",
+        "caloriesKcal": null
+      },
+      "expected": {
+        "usableForIntakeMean": false,
+        "interpretedCaloriesKcal": null
+      },
+      "assert": "blank intake must not become zero"
+    },
+    {
+      "id": "confirmed-fast-is-zero",
+      "kind": "data-state",
+      "inputs": {
+        "status": "fasting",
+        "userConfirmed": true
+      },
+      "expected": {
+        "usableForIntakeMean": true,
+        "interpretedCaloriesKcal": 0
+      },
+      "assert": "only explicit confirmation creates zero-calorie semantic"
+    },
+    {
+      "id": "balance-energy-example",
+      "kind": "formula",
+      "formulaId": "expenditure.balance.v1",
+      "inputs": {
+        "caloriesInKcalPerDay": 3000,
+        "storedEnergyChangeKcalPerDay": 200
+      },
+      "expected": {
+        "caloriesOutKcalPerDay": 2800
+      },
+      "assert": "positive stored-energy change lowers inferred expenditure at fixed intake"
+    },
+    {
+      "id": "athlete-safety-urgent-guard",
+      "kind": "safety-state",
+      "inputs": {
+        "athleteSafetyState": "urgent_referral",
+        "controllerProposal": "increase_deficit"
+      },
+      "expected": {
+        "appliedAction": "do_not_increase_deficit"
+      },
+      "assert": "safety state can override normal expenditure response"
+    },
+    {
+      "id": "operational-range-not-confidence",
+      "kind": "uncertainty",
+      "inputs": {
+        "fluxRange": {
+          "lowKcal": 2500,
+          "highKcal": 2900,
+          "selectedKcal": 2700
+        }
+      },
+      "expected": {
+        "isCalibratedInterval": false,
+        "displayLabel": "operational decision range"
+      },
+      "assert": "do not display probability or confidence percentage before calibration"
+    },
+    {
+      "id": "season-is-context-only",
+      "kind": "context",
+      "inputs": {
+        "country": "Australia",
+        "season": "summer",
+        "climateEvent": "heatwave"
+      },
+      "expected": {
+        "automaticCalorieMultiplier": null,
+        "storedAsContext": true
+      },
+      "assert": "season and heat can support analysis but do not create an unvalidated fixed calorie correction"
+    }
+  ]
+}

@@ -179,6 +179,16 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .set-table th,.set-table td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
 .set-table td{color:var(--text);font-size:13px;text-transform:none;font-weight:500;letter-spacing:0}
 .set-table input{padding:6px 8px;font-size:13px}
+.setrow{display:grid;grid-template-columns:34px repeat(4,minmax(0,1fr)) auto;gap:7px;align-items:end;padding:10px 0;border-bottom:1px solid var(--line)}
+.setrow .setnum{font-weight:700;font-size:13px;color:var(--muted)}
+.setrow .setnum .target{display:block;font-size:10px;color:var(--dim);font-weight:500;margin-top:2px}
+.setrow .mini{display:block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.builder-setrow input,.builder-setrow select,.logcol-kind{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:13px}
+.setrow.last-set{border-left:2px solid var(--copper);padding-left:8px;margin-left:-4px}
+.setrow.last-set .mini{color:var(--copper2)}
+.guardrail{font-size:12px;color:var(--muted);padding:8px 10px;border-radius:8px;background:rgba(212,165,116,.08);border:1px solid rgba(212,165,116,.15)}
+.divider{height:1px;background:var(--line);margin:10px 0}
+.rx-summary{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
 .add-block-bar{margin-top:20px}
 .kebab-btn{min-height:32px;min-width:32px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);transition:border-color var(--ease),color var(--ease)}
 .kebab-btn:hover{border-color:rgba(212,165,116,.35);color:var(--text)}
@@ -307,6 +317,7 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
 <script src="./whoop.js"></script>
 <script src="./coach-loop.js"></script>
+<script src="./log-columns.js"></script>
 <script src="./coach-nutrition.js"></script>
 <script src="./coach-bridge.js"></script>
 <script src="./coach-cloud.js"></script>
@@ -317,7 +328,7 @@ const N = window.CoachNutrition;
 let S = L.loadState();
 const ui = {
   view:'home', lib:'sessions', athleteId:null, teamId:null, programId:null, templateId:null, sessionId:null,
-  expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'',
+  expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'', exEdit:null,
   cellMenu:null, cellPick:null, progSearch:'',
   calMonth:null, calDay:null, chipMenu:null, libPick:null,
   assignTeamId:null, assignStart:null, nutAthleteId:null,
@@ -941,6 +952,61 @@ function programHtml(){
 
 function tplBlocks(){ return tpl(ui.templateId)?.blocks || []; }
 
+function coachExerciseSummary(ex){
+  if (window.LogColumns && ex.logColumns && ex.logColumns.length) {
+    const meta = LogColumns.columnsMeta(ex);
+    if (meta) return meta;
+  }
+  return L.prescriptionLine(ex);
+}
+
+function syncCoachExFromColumns(bi, ei){
+  if (!window.LogColumns) return;
+  const ex = tpl(ui.templateId).blocks[bi].exercises[ei];
+  LogColumns.syncLegacyFromColumns(ex, LogColumns.getSheetColumns(), LogColumns.getSetCount());
+  ex.restSec = LogColumns.getRestSec();
+  L.ensureRows(ex);
+  persist();
+}
+
+function openCoachExEdit(bi, ei){
+  ui.exEdit = { bi, ei };
+  const ex = tplBlocks()[bi].exercises[ei];
+  if (window.LogColumns) {
+    LogColumns.beginSheet(ex);
+    LogColumns.setChangeHandler(() => syncCoachExFromColumns(bi, ei));
+  }
+  render();
+}
+
+function closeCoachExEdit(){
+  if (ui.exEdit && window.LogColumns) {
+    syncCoachExFromColumns(ui.exEdit.bi, ui.exEdit.ei);
+    LogColumns.setChangeHandler(null);
+  }
+  ui.exEdit = null;
+  render();
+}
+
+function coachExerciseRxHtml(bi, ei){
+  const ex = tplBlocks()[bi].exercises[ei];
+  const editing = ui.exEdit && ui.exEdit.bi === bi && ui.exEdit.ei === ei;
+  if (!window.LogColumns) return setRowsTable(bi, ei);
+  if (!editing) {
+    return `<p class="rx-summary">${esc(coachExerciseSummary(ex))}</p>
+      <p class="rx-summary muted">Leave load blank for autopilot · add % WM column only when you want a fixed percentage.</p>
+      <button type="button" class="btn small" style="margin-top:8px" onclick="openCoachExEdit(${bi},${ei})">Edit prescription</button>`;
+  }
+  LogColumns.beginSheet(ex);
+  return `<div class="field" style="margin-top:8px"><label>Rest seconds</label>
+    <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
+    <input type="hidden" id="exSets" value="${LogColumns.getSetCount()}">
+    ${LogColumns.builderLoggerTwinHtml()}
+    <div class="btns" style="margin-top:8px;justify-content:flex-start">
+      <button type="button" class="btn small primary" onclick="closeCoachExEdit()">Done</button>
+    </div>`;
+}
+
 function parseSets(tid, bi, ei, raw){
   const t = tpl(tid); const e = t.blocks[bi].exercises[ei];
   const m = String(raw).match(/(\d+)\s*[x×]\s*(.+)/i);
@@ -951,7 +1017,7 @@ function parseSets(tid, bi, ei, raw){
 function addEx(bi){
   const t = tpl(ui.templateId);
   t.blocks[bi].exercises = t.blocks[bi].exercises || [];
-  t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8-10', load:'', metric:'Weight' }));
+  t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8', load:'', metric:'Weight', restSec:90 }));
   persist(); render();
 }
 
@@ -1139,12 +1205,7 @@ function blockExerciseHtml(b, bi){
     <div class="row" style="align-items:flex-start"><span class="letter-badge" style="width:26px;height:26px;font-size:11px">${esc(b.letter||'?')}</span>
       <button type="button" class="exercise-pick grow" onclick="openExPicker(${bi},${ei})">${esc(e.name||'Choose exercise')}</button>
       <button type="button" class="kebab-btn" title="Remove exercise" onclick="removeEx(${bi},${ei})">×</button></div>
-    <div class="rx-grid">
-      <div class="field"><label>Sets × reps</label><input value="${esc(e.sets+' × '+e.reps)}" onchange="parseSets(ui.templateId,${bi},${ei},this.value.replace('×','x'))"></div>
-      <div class="field"><label>Load</label><input value="${esc(e.load)}" oninput="tpl(ui.templateId).blocks[${bi}].exercises[${ei}].load=this.value;persist()"></div>
-      <div class="field"><label>Metric</label><select onchange="tpl(ui.templateId).blocks[${bi}].exercises[${ei}].metric=this.value;persist()">${L.METRICS.map(m=>`<option ${e.metric===m?'selected':''}>${m}</option>`).join('')}</select></div>
-    </div>
-    ${setRowsTable(bi, ei)}
+    ${coachExerciseRxHtml(bi, ei)}
     <div class="field"><label>Exercise instructions</label><textarea oninput="tpl(ui.templateId).blocks[${bi}].exercises[${ei}].coachNote=this.value;persist()">${esc(e.coachNote||'')}</textarea></div>
   </div>`).join('');
   return `${exHtml}<button type="button" class="btn small" style="margin-top:10px" onclick="addEx(${bi})">Add exercise</button>`;

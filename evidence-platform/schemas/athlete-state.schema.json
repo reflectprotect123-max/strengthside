@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thehybridsystem.example/schemas/athlete-state.schema.json",
+  "title": "Athlete State",
+  "description": "Single time-stamped athlete-state snapshot assembled from five systems.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "timestamp",
+    "domains",
+    "data_quality",
+    "state_hash"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 1
+    },
+    "athlete_id_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domains": {
+      "type": "object",
+      "required": [
+        "strength",
+        "conditioning",
+        "nutrition",
+        "recovery",
+        "coordinator"
+      ],
+      "properties": {
+        "strength": {
+          "$ref": "#/$defs/domain_state"
+        },
+        "conditioning": {
+          "$ref": "#/$defs/domain_state"
+        },
+        "nutrition": {
+          "$ref": "#/$defs/domain_state"
+        },
+        "recovery": {
+          "$ref": "#/$defs/domain_state"
+        },
+        "coordinator": {
+          "$ref": "#/$defs/domain_state"
+        }
+      },
+      "additionalProperties": false
+    },
+    "data_quality": {
+      "type": "object"
+    },
+    "hard_constraints": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "state_hash": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "domain_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producer_version", "observed_at", "quality", "payload_hash", "payload"],
+      "properties": {
+        "producer_version": {"type": "string", "minLength": 1},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "quality": {"enum": ["low", "medium", "high", "synthetic_test"]},
+        "payload_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "payload": {"type": "object", "minProperties": 1}
+      }
+    }
+  }
+}

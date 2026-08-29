@@ -94,6 +94,14 @@ if (!cc.includes('applyConAdapt')) throw new Error('completeConditioning missing
 if (!html.includes('settings:S.settings')) throw new Error('index.html missing settings pass-through');
 if (!html.includes('zoneKeyForBpm')) throw new Error('index.html missing zoneKeyForBpm');
 
+const rpeLoad = Adapter.condLoad({ minutes: 30, rpe: 6, effort: 'medium' });
+if (!rpeLoad.scored || rpeLoad.load <= 0) throw new Error(`condLoad RPE fallback expected load, got ${JSON.stringify(rpeLoad)}`);
+const zoneLoad = Adapter.condLoad({
+  minutes: 30,
+  zoneSeconds: { recovery: 0, aerobic: 1800, anaerobic: 0, peak: 0 },
+});
+if (!zoneLoad.scored || zoneLoad.load <= 0) throw new Error(`condLoad zone fallback expected load, got ${JSON.stringify(zoneLoad)}`);
+
 console.log('engine-adapt.smoke: ok', {
   levelAfter,
   mins0: p0.targetDurationMin,

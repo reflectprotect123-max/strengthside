@@ -1,0 +1,145 @@
+<div id="strength-system-galaxy">
+<style>
+#strength-system-galaxy{--ssg-ink:var(--foreground);--ssg-muted:var(--muted-foreground);--ssg-line:var(--border);--ssg-bg:var(--background);--ssg-blue:var(--viz-series-1);--ssg-orange:var(--viz-series-2);--ssg-green:var(--viz-series-3);--ssg-purple:var(--viz-series-4);--ssg-yellow:var(--viz-series-5);color:var(--ssg-ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;width:100%;max-width:1120px;margin:0 auto;box-sizing:border-box}
+#strength-system-galaxy *{box-sizing:border-box}
+.ssg-shell{border:1px solid var(--ssg-line);border-radius:22px;overflow:hidden;background:var(--ssg-bg);box-shadow:0 18px 70px color-mix(in srgb,var(--ssg-bg) 72%,transparent)}
+.ssg-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding:24px 26px 18px;border-bottom:1px solid var(--ssg-line)}
+.ssg-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ssg-muted);margin-bottom:8px}
+.ssg-title{font-size:clamp(24px,4vw,42px);line-height:1.02;letter-spacing:-.045em;margin:0;font-weight:650}
+.ssg-subtitle{max-width:600px;color:var(--ssg-muted);font-size:14px;line-height:1.5;margin:10px 0 0}
+.ssg-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ssg-select,.ssg-button{font:inherit;font-size:12px;color:var(--ssg-ink);background:color-mix(in srgb,var(--ssg-bg) 72%,var(--ssg-ink) 8%);border:1px solid var(--ssg-line);border-radius:999px;padding:9px 12px}
+.ssg-button{cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.ssg-button:hover,.ssg-button:focus-visible,.ssg-select:focus-visible{outline:none;border-color:var(--ssg-ink);background:color-mix(in srgb,var(--ssg-bg) 56%,var(--ssg-ink) 14%)}
+.ssg-button:active{transform:translateY(1px)}
+.ssg-stage{position:relative;min-height:420px;padding:10px;background:radial-gradient(ellipse at 50% 49%,color-mix(in srgb,var(--ssg-purple) 9%,transparent),transparent 47%),radial-gradient(ellipse at 18% 30%,color-mix(in srgb,var(--ssg-blue) 10%,transparent),transparent 32%),var(--ssg-bg)}
+.ssg-svg{display:block;width:100%;height:auto;min-height:400px}
+.ssg-svg text{font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:var(--ssg-ink);paint-order:stroke;stroke:var(--ssg-bg);stroke-width:5px;stroke-linejoin:round}
+.ssg-svg .ssg-small{font-size:15px;letter-spacing:.03em}
+.ssg-svg .ssg-label{font-size:19px;font-weight:650;letter-spacing:-.02em}
+.ssg-svg .ssg-caption{font-size:14px;fill:var(--ssg-muted);stroke-width:4px}
+.ssg-star{fill:var(--ssg-ink);opacity:.56}
+.ssg-star:nth-child(3n){fill:var(--ssg-blue);opacity:.78}.ssg-star:nth-child(5n){fill:var(--ssg-yellow);opacity:.7}.ssg-star:nth-child(7n){fill:var(--ssg-purple);opacity:.7}
+.ssg-gas{opacity:.18;transform-box:fill-box;transform-origin:center;animation:ssg-drift 20s ease-in-out infinite alternate}
+.ssg-gas:nth-child(2){animation-delay:-7s;animation-duration:25s}.ssg-gas:nth-child(3){animation-delay:-13s;animation-duration:28s}
+.ssg-orbit{fill:none;stroke:var(--ssg-line);stroke-width:1.5;stroke-dasharray:4 10;opacity:.8}
+.ssg-orbit-layer{transform-box:view-box;transform-origin:50% 50%;animation:ssg-spin 46s linear infinite}
+.ssg-orbit-layer:nth-child(2){animation-duration:70s;animation-direction:reverse}.ssg-orbit-layer:nth-child(3){animation-duration:94s}
+.ssg-link{stroke:var(--ssg-line);stroke-width:2;stroke-dasharray:5 8;opacity:.74;transition:opacity .2s ease,stroke .2s ease}
+.ssg-body{cursor:pointer;transition:opacity .2s ease,filter .2s ease}.ssg-body:hover{filter:brightness(1.18)}
+.ssg-body circle{stroke:var(--ssg-bg);stroke-width:4px}.ssg-planet circle{stroke-width:3px}
+.ssg-core{animation:ssg-pulse 4.2s ease-in-out infinite}.ssg-core-halo{fill:var(--ssg-yellow);opacity:.11;animation:ssg-pulse 4.2s ease-in-out infinite}
+.is-paused .ssg-orbit-layer,.is-paused .ssg-gas,.is-paused .ssg-core,.is-paused .ssg-core-halo{animation-play-state:paused}
+.ssg-body[data-dimmed="true"],.ssg-link[data-dimmed="true"],.ssg-gas[data-dimmed="true"]{opacity:.12}
+.ssg-body[data-selected="true"] circle{stroke:var(--ssg-ink);stroke-width:5px}.ssg-body[data-selected="true"] .ssg-label{fill:var(--ssg-yellow)}
+.ssg-detail{position:absolute;left:26px;bottom:24px;max-width:340px;padding:12px 14px;border:1px solid var(--ssg-line);border-radius:12px;background:color-mix(in srgb,var(--ssg-bg) 88%,transparent);backdrop-filter:blur(8px)}
+.ssg-detail-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ssg-muted);margin-bottom:4px}.ssg-detail-text{font-size:13px;line-height:1.45}
+.ssg-foot{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:16px 26px;border-top:1px solid var(--ssg-line)}
+.ssg-legend{display:flex;flex-wrap:wrap;gap:8px}.ssg-legend .ssg-button{display:inline-flex;align-items:center;gap:7px;padding:7px 10px}.ssg-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--dot)}
+.ssg-note{font-size:11px;color:var(--ssg-muted);text-align:right;line-height:1.35}
+@keyframes ssg-spin{to{transform:rotate(360deg)}}@keyframes ssg-drift{to{transform:translate(16px,-10px) scale(1.05)}}@keyframes ssg-pulse{50%{opacity:.82;transform:scale(1.035);transform-origin:center}}
+@media (max-width:700px){.ssg-head{align-items:flex-start;flex-direction:column;padding:20px}.ssg-controls{justify-content:flex-start}.ssg-stage{min-height:350px;padding:4px}.ssg-svg{min-height:330px}.ssg-detail{left:16px;bottom:16px;right:16px;max-width:none}.ssg-foot{grid-template-columns:1fr;padding:14px 20px}.ssg-note{text-align:left}}
+@media (prefers-reduced-motion:reduce){.ssg-orbit-layer,.ssg-gas,.ssg-core,.ssg-core-halo{animation:none}}
+</style>
+<div class="ssg-shell">
+  <div class="ssg-head">
+    <div>
+      <div class="ssg-kicker">Strength-side systems map</div>
+      <h2 class="ssg-title">The strength galaxy</h2>
+      <p class="ssg-subtitle">Every recommendation is an arbitration between strength capacity, hypertrophy dose, safety constraints and the athlete’s current context.</p>
+    </div>
+    <div class="ssg-controls">
+      <label for="ssg-focus">Focus</label>
+      <select id="ssg-focus" class="ssg-select" aria-label="Focus a system layer">
+        <option value="all">All systems</option><option value="strength">Strength</option><option value="volume">Hypertrophy</option><option value="safety">Safety</option><option value="context">Context</option>
+      </select>
+      <button id="ssg-pause" class="ssg-button" type="button" aria-pressed="false">Pause orbit</button>
+    </div>
+  </div>
+  <div class="ssg-stage">
+    <svg class="ssg-svg" viewBox="0 0 1000 620" role="img" aria-labelledby="ssg-title ssg-desc" preserveAspectRatio="xMidYMid meet">
+      <title id="ssg-title">Interactive strength system galaxy</title>
+      <desc id="ssg-desc">A central arbitration core receives signals from strength, hypertrophy, safety, and context planets. Stars represent measured training inputs.</desc>
+      <defs>
+        <radialGradient id="ssg-core-gradient"><stop offset="0" stop-color="var(--ssg-yellow)"/><stop offset=".5" stop-color="var(--ssg-orange)"/><stop offset="1" stop-color="var(--ssg-purple)"/></radialGradient>
+        <radialGradient id="ssg-strength-gradient"><stop offset="0" stop-color="var(--ssg-blue)"/><stop offset="1" stop-color="var(--ssg-purple)"/></radialGradient>
+        <radialGradient id="ssg-volume-gradient"><stop offset="0" stop-color="var(--ssg-orange)"/><stop offset="1" stop-color="var(--ssg-yellow)"/></radialGradient>
+        <radialGradient id="ssg-safety-gradient"><stop offset="0" stop-color="var(--ssg-green)"/><stop offset="1" stop-color="var(--ssg-blue)"/></radialGradient>
+        <radialGradient id="ssg-context-gradient"><stop offset="0" stop-color="var(--ssg-purple)"/><stop offset="1" stop-color="var(--ssg-blue)"/></radialGradient>
+      </defs>
+      <rect width="1000" height="620" fill="var(--ssg-bg)"/>
+      <g aria-hidden="true">
+        <circle class="ssg-star" cx="76" cy="92" r="2"/><circle class="ssg-star" cx="138" cy="178" r="1.5"/><circle class="ssg-star" cx="218" cy="58" r="2"/><circle class="ssg-star" cx="314" cy="118" r="1.5"/><circle class="ssg-star" cx="402" cy="42" r="2"/><circle class="ssg-star" cx="518" cy="78" r="1.5"/><circle class="ssg-star" cx="642" cy="48" r="2"/><circle class="ssg-star" cx="758" cy="106" r="1.4"/><circle class="ssg-star" cx="882" cy="64" r="2"/><circle class="ssg-star" cx="934" cy="176" r="1.5"/>
+        <circle class="ssg-star" cx="62" cy="308" r="1.5"/><circle class="ssg-star" cx="164" cy="388" r="2"/><circle class="ssg-star" cx="248" cy="486" r="1.5"/><circle class="ssg-star" cx="346" cy="566" r="2"/><circle class="ssg-star" cx="486" cy="538" r="1.5"/><circle class="ssg-star" cx="612" cy="576" r="2"/><circle class="ssg-star" cx="746" cy="512" r="1.5"/><circle class="ssg-star" cx="866" cy="556" r="2"/><circle class="ssg-star" cx="948" cy="402" r="1.5"/>
+      </g>
+      <g class="ssg-gas" data-group="context" fill="var(--ssg-purple)"><ellipse cx="168" cy="258" rx="135" ry="72" transform="rotate(-21 168 258)"/></g>
+      <g class="ssg-gas" data-group="volume" fill="var(--ssg-orange)"><ellipse cx="822" cy="235" rx="160" ry="78" transform="rotate(22 822 235)"/></g>
+      <g class="ssg-gas" data-group="safety" fill="var(--ssg-green)"><ellipse cx="796" cy="462" rx="145" ry="66" transform="rotate(-18 796 462)"/></g>
+      <g class="ssg-orbit-layer" aria-hidden="true">
+        <circle class="ssg-orbit" cx="500" cy="310" r="205"/><circle class="ssg-orbit" cx="500" cy="310" r="278"/><circle class="ssg-orbit" cx="500" cy="310" r="350"/>
+      </g>
+      <g aria-hidden="true">
+        <line class="ssg-link" data-group="strength" x1="500" y1="310" x2="274" y2="167"/><line class="ssg-link" data-group="volume" x1="500" y1="310" x2="734" y2="180"/><line class="ssg-link" data-group="safety" x1="500" y1="310" x2="742" y2="458"/><line class="ssg-link" data-group="context" x1="500" y1="310" x2="261" y2="455"/>
+      </g>
+      <g class="ssg-body ssg-planet" data-focus="strength" data-group="strength" data-selected="false">
+        <circle cx="274" cy="167" r="63" fill="url(#ssg-strength-gradient)"/><circle cx="249" cy="145" r="9" fill="var(--ssg-blue)" opacity=".45"/><text class="ssg-label" x="274" y="173" text-anchor="middle">Strength</text><text class="ssg-caption" x="274" y="198" text-anchor="middle">capacity</text>
+      </g>
+      <g class="ssg-body ssg-planet" data-focus="volume" data-group="volume" data-selected="false">
+        <circle cx="734" cy="180" r="63" fill="url(#ssg-volume-gradient)"/><circle cx="704" cy="154" r="10" fill="var(--ssg-yellow)" opacity=".5"/><text class="ssg-label" x="734" y="186" text-anchor="middle">Hypertrophy</text><text class="ssg-caption" x="734" y="211" text-anchor="middle">volume</text>
+      </g>
+      <g class="ssg-body ssg-planet" data-focus="safety" data-group="safety" data-selected="false">
+        <circle cx="742" cy="458" r="63" fill="url(#ssg-safety-gradient)"/><circle cx="714" cy="431" r="9" fill="var(--ssg-green)" opacity=".5"/><text class="ssg-label" x="742" y="464" text-anchor="middle">Safety</text><text class="ssg-caption" x="742" y="489" text-anchor="middle">gate</text>
+      </g>
+      <g class="ssg-body ssg-planet" data-focus="context" data-group="context" data-selected="false">
+        <circle cx="261" cy="455" r="63" fill="url(#ssg-context-gradient)"/><circle cx="235" cy="430" r="9" fill="var(--ssg-purple)" opacity=".5"/><text class="ssg-label" x="261" y="461" text-anchor="middle">Context</text><text class="ssg-caption" x="261" y="486" text-anchor="middle">recovery + life</text>
+      </g>
+      <g class="ssg-body" data-focus="all" data-group="all" data-selected="true">
+        <circle class="ssg-core-halo" cx="500" cy="310" r="113"/><circle class="ssg-core" cx="500" cy="310" r="83" fill="url(#ssg-core-gradient)"/><circle cx="478" cy="284" r="15" fill="var(--ssg-yellow)" opacity=".55"/><text class="ssg-label" x="500" y="306" text-anchor="middle">Arbitration</text><text class="ssg-label" x="500" y="330" text-anchor="middle">core</text><text class="ssg-caption" x="500" y="357" text-anchor="middle">recommendation output</text>
+      </g>
+    </svg>
+    <div class="ssg-detail" aria-live="polite"><div class="ssg-detail-label">Selected layer</div><div id="ssg-detail-text" class="ssg-detail-text">All signals converge here: the system chooses the safest useful next action, then records the result for the next update.</div></div>
+  </div>
+  <div class="ssg-foot">
+    <div class="ssg-legend" aria-label="System layers">
+      <button class="ssg-button" type="button" data-focus="strength"><span class="ssg-dot" style="--dot:var(--ssg-blue)"></span>Strength inputs</button>
+      <button class="ssg-button" type="button" data-focus="volume"><span class="ssg-dot" style="--dot:var(--ssg-orange)"></span>Hypertrophy dose</button>
+      <button class="ssg-button" type="button" data-focus="safety"><span class="ssg-dot" style="--dot:var(--ssg-green)"></span>Safety gate</button>
+      <button class="ssg-button" type="button" data-focus="context"><span class="ssg-dot" style="--dot:var(--ssg-purple)"></span>Context signals</button>
+    </div>
+    <div class="ssg-note">Stars = logged evidence<br>Planets = interpreters · Core = next action</div>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('strength-system-galaxy');
+  if (!root) return;
+  const focusSelect = root.querySelector('#ssg-focus');
+  const pauseButton = root.querySelector('#ssg-pause');
+  const detail = root.querySelector('#ssg-detail-text');
+  const bodies = Array.from(root.querySelectorAll('.ssg-body[data-focus]'));
+  const grouped = Array.from(root.querySelectorAll('[data-group]'));
+  const descriptions = {
+    all: 'All signals converge here: the system chooses the safest useful next action, then records the result for the next update.',
+    strength: 'Strength capacity turns recent performance, e1RM, working max, fatigue and exercise history into a calibrated loading signal.',
+    volume: 'Hypertrophy dose watches hard-set exposure, proximity to failure, muscle coverage, pump and soreness to keep volume productive.',
+    safety: 'The safety gate can constrain, substitute, hold or stop a session when pain, red flags, illness or excessive fatigue dominate.',
+    context: 'Context adjusts the plan around sleep, stress, heat, season, sport, equipment, time and available recovery.'
+  };
+  function applyFocus(value) {
+    const selected = value === 'all' ? 'all' : value;
+    grouped.forEach((item) => {
+      const group = item.getAttribute('data-group');
+      item.setAttribute('data-dimmed', selected !== 'all' && group !== selected && group !== 'all' ? 'true' : 'false');
+    });
+    bodies.forEach((body) => body.setAttribute('data-selected', body.getAttribute('data-focus') === selected || (selected === 'all' && body.getAttribute('data-focus') === 'all') ? 'true' : 'false'));
+    if (detail) detail.textContent = descriptions[selected] || descriptions.all;
+  }
+  root.querySelectorAll('.ssg-legend [data-focus]').forEach((button) => {
+    button.addEventListener('click', () => { const value = button.getAttribute('data-focus'); if (focusSelect) focusSelect.value = value; applyFocus(value); });
+  });
+  bodies.forEach((body) => body.addEventListener('click', () => { const value = body.getAttribute('data-focus'); if (focusSelect) focusSelect.value = value; applyFocus(value); }));
+  if (focusSelect) focusSelect.addEventListener('change', () => applyFocus(focusSelect.value));
+  if (pauseButton) pauseButton.addEventListener('click', () => { const paused = root.classList.toggle('is-paused'); pauseButton.setAttribute('aria-pressed', paused ? 'true' : 'false'); pauseButton.textContent = paused ? 'Resume orbit' : 'Pause orbit'; });
+  applyFocus('all');
+})();
+</script>

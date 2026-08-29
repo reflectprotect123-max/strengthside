@@ -1,0 +1,834 @@
+<div id="hybrid-ai-solar-system">
+  <div class="viz-controls" aria-label="AI autonomy mode">
+    <span class="text-muted">Autonomy</span>
+    <button type="button" class="btn btn-primary" data-mode="shadow" aria-pressed="true">Shadow</button>
+    <button type="button" class="btn" data-mode="approved" aria-pressed="false">Coach-approved</button>
+    <button type="button" class="btn" data-mode="bounded" aria-pressed="false">Bounded auto</button>
+    <button type="button" class="btn btn-ghost" id="hybrid-orbit-toggle" aria-pressed="false">
+      <span>Start orbit</span>
+    </button>
+    <label class="form-label" for="hybrid-orbit-select">
+      Inspect
+      <select class="form-select" id="hybrid-orbit-select"></select>
+    </label>
+  </div>
+
+  <div class="orbit-mode-line text-muted" id="hybrid-orbit-mode-line" aria-live="polite"></div>
+
+  <div class="orbit-stage" id="hybrid-orbit-stage">
+    <svg id="hybrid-orbit-svg" role="img" aria-labelledby="hybrid-orbit-title hybrid-orbit-desc">
+      <title id="hybrid-orbit-title">Hybrid AI coaching engine shown as an interactive solar system</title>
+      <desc id="hybrid-orbit-desc">The deterministic Coordinator is the sun. Coach intent, athlete context, training history, AI reasoning, human approval, HybridEmit, receipts, and outcomes orbit it. Drag to rotate the system and select a planet for details.</desc>
+      <defs>
+        <radialGradient id="hybrid-sun-gradient" cx="34%" cy="28%" r="72%">
+          <stop offset="0%" class="sun-stop-bright"></stop>
+          <stop offset="58%" class="sun-stop-mid"></stop>
+          <stop offset="100%" class="sun-stop-edge"></stop>
+        </radialGradient>
+        <marker id="hybrid-orbit-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted-foreground)"></path>
+        </marker>
+      </defs>
+      <g id="hybrid-stars"></g>
+      <g id="hybrid-orbit-rings"></g>
+      <g id="hybrid-decision-paths"></g>
+      <g id="hybrid-back-planets"></g>
+      <g id="hybrid-sun"></g>
+      <g id="hybrid-front-planets"></g>
+    </svg>
+    <span class="orbit-drag-hint text-small text-muted">Drag to orbit · select a planet</span>
+  </div>
+
+  <div class="card orbit-selection" aria-live="polite">
+    <div class="viz-row">
+      <span class="viz-badge" id="hybrid-orbit-layer"></span>
+      <strong id="hybrid-orbit-selection-title"></strong>
+      <span id="hybrid-orbit-selection-detail"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  #hybrid-ai-solar-system {
+    width: 100%;
+    color: var(--foreground);
+  }
+
+  #hybrid-ai-solar-system .orbit-mode-line {
+    margin-block: 0.5rem 0.2rem;
+  }
+
+  #hybrid-ai-solar-system .orbit-stage {
+    position: relative;
+    height: clamp(430px, 64vw, 500px);
+    min-height: 430px;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+
+  #hybrid-ai-solar-system .orbit-stage.is-dragging {
+    cursor: grabbing;
+  }
+
+  #hybrid-ai-solar-system #hybrid-orbit-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  #hybrid-ai-solar-system .star {
+    fill: var(--muted-foreground);
+  }
+
+  #hybrid-ai-solar-system .orbit-ring {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  #hybrid-ai-solar-system .decision-path {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 1;
+    opacity: 0.16;
+    vector-effect: non-scaling-stroke;
+    marker-end: url(#hybrid-orbit-arrow);
+  }
+
+  #hybrid-ai-solar-system .decision-path.is-active {
+    stroke: var(--viz-series-2);
+    stroke-width: 2;
+    opacity: 0.88;
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--viz-series-2) 50%, transparent));
+  }
+
+  #hybrid-ai-solar-system .sun-corona-wide {
+    fill: color-mix(in srgb, var(--viz-series-3) 7%, transparent);
+    stroke: color-mix(in srgb, var(--viz-series-3) 24%, transparent);
+    stroke-width: 1;
+  }
+
+  #hybrid-ai-solar-system .sun-corona {
+    fill: color-mix(in srgb, var(--viz-series-3) 12%, transparent);
+    stroke: color-mix(in srgb, var(--viz-series-3) 38%, transparent);
+    stroke-width: 1.5;
+  }
+
+  #hybrid-ai-solar-system .sun-body {
+    fill: url(#hybrid-sun-gradient);
+    stroke: var(--viz-series-3);
+    stroke-width: 2;
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--viz-series-3) 55%, transparent));
+  }
+
+  #hybrid-ai-solar-system .sun-stop-bright {
+    stop-color: color-mix(in srgb, var(--viz-series-3) 48%, var(--background));
+  }
+
+  #hybrid-ai-solar-system .sun-stop-mid {
+    stop-color: var(--viz-series-3);
+  }
+
+  #hybrid-ai-solar-system .sun-stop-edge {
+    stop-color: color-mix(in srgb, var(--viz-series-3) 58%, var(--foreground));
+  }
+
+  #hybrid-ai-solar-system .sun-title,
+  #hybrid-ai-solar-system .sun-subtitle {
+    fill: var(--foreground);
+    text-anchor: middle;
+    pointer-events: none;
+    paint-order: stroke;
+    stroke: color-mix(in srgb, var(--background) 78%, transparent);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+
+  #hybrid-ai-solar-system .sun-title {
+    font-size: calc(var(--font-size-base) * 0.88);
+    font-weight: 500;
+  }
+
+  #hybrid-ai-solar-system .sun-subtitle {
+    font-size: calc(var(--font-size-base) * 0.68);
+  }
+
+  #hybrid-ai-solar-system .sun-hit {
+    fill: transparent;
+    cursor: pointer;
+  }
+
+  #hybrid-ai-solar-system .planet {
+    cursor: pointer;
+  }
+
+  #hybrid-ai-solar-system .planet-halo {
+    fill: color-mix(in srgb, var(--planet-color) 7%, transparent);
+    stroke: color-mix(in srgb, var(--planet-color) 32%, transparent);
+    stroke-width: 1;
+  }
+
+  #hybrid-ai-solar-system .planet-body {
+    fill: color-mix(in srgb, var(--planet-color) 58%, var(--background));
+    stroke: var(--planet-color);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--planet-color) 40%, transparent));
+  }
+
+  #hybrid-ai-solar-system .planet-shadow {
+    fill: color-mix(in srgb, var(--foreground) 16%, transparent);
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet-shine {
+    fill: color-mix(in srgb, var(--background) 70%, transparent);
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet-ring {
+    fill: none;
+    stroke: var(--planet-color);
+    stroke-width: 2;
+    opacity: 0.72;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet-moon-orbit {
+    fill: none;
+    stroke: color-mix(in srgb, var(--planet-color) 45%, var(--border));
+    stroke-width: 1;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet-moon {
+    fill: color-mix(in srgb, var(--planet-color) 66%, var(--background));
+    stroke: var(--planet-color);
+    stroke-width: 1;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet-ai-orbit {
+    fill: none;
+    stroke: var(--planet-color);
+    stroke-width: 1;
+    opacity: 0.62;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet-ai-spark {
+    fill: var(--planet-color);
+    stroke: var(--background);
+    stroke-width: 1;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet-comet-tail {
+    fill: none;
+    stroke: var(--planet-color);
+    stroke-width: 2;
+    opacity: 0.42;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .planet.is-selected .planet-body {
+    fill: var(--primary);
+    stroke: var(--primary-foreground);
+    stroke-width: 3;
+  }
+
+  #hybrid-ai-solar-system .planet-label {
+    fill: var(--foreground);
+    font-size: calc(var(--font-size-base) * 0.8);
+    font-weight: 500;
+    paint-order: stroke;
+    stroke: var(--background);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .orbit-drag-hint {
+    position: absolute;
+    inset-inline-start: 50%;
+    inset-block-end: 0.25rem;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  #hybrid-ai-solar-system .orbit-selection {
+    margin-block-start: 0.5rem;
+  }
+
+  @media (max-width: 520px) {
+    #hybrid-ai-solar-system .orbit-stage {
+      height: 460px;
+    }
+
+    #hybrid-ai-solar-system .planet-label {
+      font-size: calc(var(--font-size-base) * 0.72);
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const root = document.getElementById("hybrid-ai-solar-system");
+    const stage = document.getElementById("hybrid-orbit-stage");
+    const svg = document.getElementById("hybrid-orbit-svg");
+    const starLayer = document.getElementById("hybrid-stars");
+    const orbitLayer = document.getElementById("hybrid-orbit-rings");
+    const pathLayer = document.getElementById("hybrid-decision-paths");
+    const backPlanetLayer = document.getElementById("hybrid-back-planets");
+    const sunLayer = document.getElementById("hybrid-sun");
+    const frontPlanetLayer = document.getElementById("hybrid-front-planets");
+    const modeLine = document.getElementById("hybrid-orbit-mode-line");
+    const selectionLayer = document.getElementById("hybrid-orbit-layer");
+    const selectionTitle = document.getElementById("hybrid-orbit-selection-title");
+    const selectionDetail = document.getElementById("hybrid-orbit-selection-detail");
+    const select = document.getElementById("hybrid-orbit-select");
+    const orbitToggle = document.getElementById("hybrid-orbit-toggle");
+    const orbitToggleLabel = orbitToggle.querySelector("span");
+    const svgNs = "http://www.w3.org/2000/svg";
+
+    const planets = [
+      {
+        id: "athlete-context",
+        label: "Athlete context",
+        layer: "Input",
+        color: "var(--viz-series-1)",
+        orbit: 0.28,
+        angle: 2.62,
+        speed: 1.18,
+        size: 9,
+        detail: "Check-ins, actual performance, notes, consent and present capacity."
+      },
+      {
+        id: "coach-intent",
+        label: "Coach intent",
+        layer: "Input",
+        color: "var(--viz-series-1)",
+        orbit: 0.39,
+        angle: 4.35,
+        speed: 0.93,
+        size: 10,
+        detail: "Versioned goals, session purpose, hard constraints and approved flex paths."
+      },
+      {
+        id: "training-history",
+        label: "Training history",
+        layer: "Evidence",
+        color: "var(--viz-series-1)",
+        orbit: 0.51,
+        angle: 0.58,
+        speed: 0.76,
+        size: 10,
+        detail: "Planned-versus-actual sessions, prior decisions, outcomes and data quality."
+      },
+      {
+        id: "ai-reasoner",
+        label: "AI reasoner",
+        layer: "AI",
+        color: "var(--viz-series-2)",
+        orbit: 0.63,
+        angle: 5.52,
+        speed: 0.61,
+        size: 14,
+        kind: "luminous",
+        detail: "Finds patterns, interprets notes and drafts evidence-linked typed proposals."
+      },
+      {
+        id: "human-approval",
+        label: "Human authority",
+        layer: "Authority",
+        color: "var(--viz-series-4)",
+        orbit: 0.74,
+        angle: 2.04,
+        speed: 0.49,
+        size: 13,
+        kind: "ring",
+        detail: "Coach approves progressions, resolves ambiguity and can reject or override."
+      },
+      {
+        id: "hybrid-emit",
+        label: "HybridEmit",
+        layer: "Boundary",
+        color: "var(--viz-series-5)",
+        orbit: 0.84,
+        angle: 3.66,
+        speed: 0.4,
+        size: 12,
+        detail: "Publishes only validated changes without overwriting intent or athlete actuals."
+      },
+      {
+        id: "receipt-undo",
+        label: "Receipt + undo",
+        layer: "Trust",
+        color: "var(--viz-series-5)",
+        orbit: 0.93,
+        angle: 0.12,
+        speed: 0.32,
+        size: 11,
+        kind: "moon",
+        detail: "Records evidence, before-and-after state, authority, expiry and reversal."
+      },
+      {
+        id: "outcome-ledger",
+        label: "Outcome ledger",
+        layer: "Learning",
+        color: "var(--viz-series-6)",
+        orbit: 1,
+        angle: 1.28,
+        speed: 0.26,
+        size: 12,
+        kind: "comet",
+        detail: "Captures coach feedback and athlete outcomes so personalisation improves safely."
+      }
+    ];
+
+    const core = {
+      id: "deterministic-core",
+      label: "Deterministic Coordinator",
+      layer: "Safety core",
+      detail: "Enforces safety precedence, permissions, action bounds, abstention and replayability."
+    };
+
+    const allBodies = [core, ...planets];
+    const bodyById = new Map(allBodies.map((body) => [body.id, body]));
+    const flows = [
+      { id: "context-ai", from: "athlete-context", to: "ai-reasoner" },
+      { id: "intent-ai", from: "coach-intent", to: "ai-reasoner" },
+      { id: "history-ai", from: "training-history", to: "ai-reasoner" },
+      { id: "context-core", from: "athlete-context", to: "deterministic-core" },
+      { id: "intent-core", from: "coach-intent", to: "deterministic-core" },
+      { id: "ai-core", from: "ai-reasoner", to: "deterministic-core" },
+      { id: "core-human", from: "deterministic-core", to: "human-approval" },
+      { id: "core-emit", from: "deterministic-core", to: "hybrid-emit" },
+      { id: "human-emit", from: "human-approval", to: "hybrid-emit" },
+      { id: "emit-receipt", from: "hybrid-emit", to: "receipt-undo" },
+      { id: "receipt-outcome", from: "receipt-undo", to: "outcome-ledger" },
+      { id: "outcome-history", from: "outcome-ledger", to: "training-history" }
+    ];
+
+    const modes = {
+      shadow: {
+        line: "AI studies the system and proposes. Nothing reaches the athlete prescription.",
+        activeFlows: new Set(["context-ai", "intent-ai", "history-ai", "ai-core", "core-human"]),
+        dimBodies: new Set(["hybrid-emit", "receipt-undo", "outcome-ledger"])
+      },
+      approved: {
+        line: "AI proposes; the coach authorises the path through HybridEmit.",
+        activeFlows: new Set(["context-ai", "intent-ai", "history-ai", "context-core", "intent-core", "ai-core", "core-human", "human-emit", "emit-receipt", "receipt-outcome", "outcome-history"]),
+        dimBodies: new Set()
+      },
+      bounded: {
+        line: "Safe holds, trims and caps can emit after validation; progressions still orbit through the coach.",
+        activeFlows: new Set(["context-ai", "intent-ai", "history-ai", "context-core", "intent-core", "ai-core", "core-human", "core-emit", "human-emit", "emit-receipt", "receipt-outcome", "outcome-history"]),
+        dimBodies: new Set()
+      }
+    };
+
+    let mode = "shadow";
+    let selectedId = "deterministic-core";
+    let phaseOffset = 0;
+    let tilt = 0.58;
+    let planeRotation = -0.16;
+    let dimensions = { width: 736, height: 520, cx: 368, cy: 258, radius: 230 };
+    let projectedBodies = new Map();
+    let dragging = false;
+    let dragMoved = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+    let orbiting = false;
+    let animationFrame = null;
+    let lastFrameTime = 0;
+    const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function createSvgElement(name, attributes = {}) {
+      const element = document.createElementNS(svgNs, name);
+      Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+      return element;
+    }
+
+    function orbitPosition(planet) {
+      const angle = planet.angle + phaseOffset * planet.speed;
+      const radial = dimensions.radius * planet.orbit;
+      const rawX = Math.cos(angle) * radial;
+      const rawY = Math.sin(angle) * radial * tilt;
+      const cosPlane = Math.cos(planeRotation);
+      const sinPlane = Math.sin(planeRotation);
+      const x = rawX * cosPlane - rawY * sinPlane;
+      const y = rawX * sinPlane + rawY * cosPlane;
+      const z = Math.sin(angle);
+      return {
+        x: dimensions.cx + x,
+        y: dimensions.cy + y,
+        z,
+        scale: 0.78 + (z + 1) * 0.18
+      };
+    }
+
+    function updateProjectedBodies() {
+      projectedBodies = new Map();
+      projectedBodies.set(core.id, { x: dimensions.cx, y: dimensions.cy, z: 0, scale: 1 });
+      planets.forEach((planet) => projectedBodies.set(planet.id, orbitPosition(planet)));
+    }
+
+    function drawStars() {
+      starLayer.replaceChildren();
+      for (let index = 0; index < 54; index += 1) {
+        const x = ((index * 83 + 29) % 997) / 997 * dimensions.width;
+        const y = ((index * 47 + 71) % 991) / 991 * dimensions.height;
+        const distance = Math.hypot(x - dimensions.cx, y - dimensions.cy);
+        if (distance < 74) continue;
+        const star = createSvgElement("circle", {
+          class: "star",
+          cx: x.toFixed(2),
+          cy: y.toFixed(2),
+          r: index % 7 === 0 ? 1.4 : index % 3 === 0 ? 1 : 0.7
+        });
+        star.style.opacity = String(0.12 + (index % 5) * 0.06);
+        starLayer.appendChild(star);
+      }
+    }
+
+    function drawOrbitRings() {
+      orbitLayer.replaceChildren();
+      planets.forEach((planet) => {
+        const radial = dimensions.radius * planet.orbit;
+        const ring = createSvgElement("ellipse", {
+          class: "orbit-ring",
+          cx: dimensions.cx,
+          cy: dimensions.cy,
+          rx: radial,
+          ry: radial * tilt,
+          transform: `rotate(${(planeRotation * 180 / Math.PI).toFixed(2)} ${dimensions.cx} ${dimensions.cy})`
+        });
+        ring.style.opacity = String(0.2 + planet.orbit * 0.2);
+        orbitLayer.appendChild(ring);
+      });
+    }
+
+    function drawPaths() {
+      pathLayer.replaceChildren();
+      const activeFlows = modes[mode].activeFlows;
+      flows.forEach((flow) => {
+        const from = projectedBodies.get(flow.from);
+        const to = projectedBodies.get(flow.to);
+        const bend = flow.to === core.id || flow.from === core.id ? 0.12 : 0.18;
+        const midX = (from.x + to.x) / 2 + (from.y - to.y) * bend;
+        const midY = (from.y + to.y) / 2 + (to.x - from.x) * bend;
+        const path = createSvgElement("path", {
+          class: `decision-path${activeFlows.has(flow.id) ? " is-active" : ""}`,
+          d: `M ${from.x.toFixed(2)} ${from.y.toFixed(2)} Q ${midX.toFixed(2)} ${midY.toFixed(2)} ${to.x.toFixed(2)} ${to.y.toFixed(2)}`
+        });
+        pathLayer.appendChild(path);
+      });
+    }
+
+    function drawSun() {
+      sunLayer.replaceChildren();
+      const selected = selectedId === core.id;
+      const wide = createSvgElement("circle", {
+        class: "sun-corona-wide",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: selected ? 58 : 54
+      });
+      const corona = createSvgElement("circle", {
+        class: "sun-corona",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: selected ? 48 : 45
+      });
+      const body = createSvgElement("circle", {
+        class: "sun-body",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: 36
+      });
+      const title = createSvgElement("text", {
+        class: "sun-title",
+        x: dimensions.cx,
+        y: dimensions.cy - 3
+      });
+      title.textContent = "Coordinator";
+      const subtitle = createSvgElement("text", {
+        class: "sun-subtitle",
+        x: dimensions.cx,
+        y: dimensions.cy + 15
+      });
+      subtitle.textContent = "safety · policy";
+      const hit = createSvgElement("circle", {
+        class: "sun-hit",
+        cx: dimensions.cx,
+        cy: dimensions.cy,
+        r: 58,
+        "aria-label": "Inspect deterministic Coordinator"
+      });
+      hit.addEventListener("click", () => {
+        if (!dragMoved) selectBody(core.id);
+      });
+      sunLayer.append(wide, corona, body, title, subtitle, hit);
+    }
+
+    function createPlanetGroup(planet, position) {
+      const selected = selectedId === planet.id;
+      const dimmed = modes[mode].dimBodies.has(planet.id);
+      const group = createSvgElement("g", {
+        class: `planet${selected ? " is-selected" : ""}`,
+        transform: `translate(${position.x.toFixed(2)} ${position.y.toFixed(2)})`,
+        "data-body-id": planet.id,
+        "aria-label": `Inspect ${planet.label}`
+      });
+      group.style.setProperty("--planet-color", planet.color);
+      group.style.opacity = String(dimmed ? 0.24 : 0.62 + (position.z + 1) * 0.19);
+
+      const size = planet.size * position.scale;
+      if (planet.kind === "comet") {
+        group.appendChild(createSvgElement("path", {
+          class: "planet-comet-tail",
+          d: `M ${(-size * 3.4).toFixed(2)} ${(size * 0.5).toFixed(2)} Q ${(-size * 1.8).toFixed(2)} ${(-size * 0.2).toFixed(2)} 0 0`
+        }));
+      }
+
+      group.appendChild(createSvgElement("circle", {
+        class: "planet-halo",
+        r: (size + (selected ? 9 : 6)).toFixed(2)
+      }));
+      group.appendChild(createSvgElement("circle", {
+        class: "planet-body",
+        r: (selected ? size + 2 : size).toFixed(2)
+      }));
+      group.appendChild(createSvgElement("path", {
+        class: "planet-shadow",
+        d: `M 0 ${(-size).toFixed(2)} A ${size.toFixed(2)} ${size.toFixed(2)} 0 0 1 0 ${size.toFixed(2)} A ${(size * 0.7).toFixed(2)} ${size.toFixed(2)} 0 0 0 0 ${(-size).toFixed(2)}`
+      }));
+      group.appendChild(createSvgElement("circle", {
+        class: "planet-shine",
+        cx: (-size * 0.32).toFixed(2),
+        cy: (-size * 0.34).toFixed(2),
+        r: Math.max(1.4, size * 0.2).toFixed(2)
+      }));
+
+      if (planet.kind === "ring") {
+        group.appendChild(createSvgElement("ellipse", {
+          class: "planet-ring",
+          cx: 0,
+          cy: 0,
+          rx: (size * 1.75).toFixed(2),
+          ry: (size * 0.5).toFixed(2),
+          transform: "rotate(-14)"
+        }));
+      }
+
+      if (planet.kind === "luminous") {
+        group.appendChild(createSvgElement("ellipse", {
+          class: "planet-ai-orbit",
+          cx: 0,
+          cy: 0,
+          rx: (size * 1.7).toFixed(2),
+          ry: (size * 0.62).toFixed(2),
+          transform: "rotate(28)"
+        }));
+        group.appendChild(createSvgElement("circle", {
+          class: "planet-ai-spark",
+          cx: (size * 1.45).toFixed(2),
+          cy: (size * 0.48).toFixed(2),
+          r: Math.max(1.8, size * 0.2).toFixed(2)
+        }));
+      }
+
+      if (planet.kind === "moon") {
+        group.appendChild(createSvgElement("circle", {
+          class: "planet-moon-orbit",
+          r: (size * 1.8).toFixed(2)
+        }));
+        group.appendChild(createSvgElement("circle", {
+          class: "planet-moon",
+          cx: (size * 1.42).toFixed(2),
+          cy: (-size * 1.04).toFixed(2),
+          r: Math.max(2.2, size * 0.28).toFixed(2)
+        }));
+      }
+
+      const showLabel = dimensions.width > 620 || selected || position.z > 0.48;
+      if (showLabel) {
+        let onRight = position.x >= dimensions.cx;
+        if (position.x < 130) onRight = true;
+        if (position.x > dimensions.width - 130) onRight = false;
+        const label = createSvgElement("text", {
+          class: "planet-label",
+          x: onRight ? size + 12 : -size - 12,
+          y: 4,
+          "text-anchor": onRight ? "start" : "end"
+        });
+        label.textContent = planet.label;
+        group.appendChild(label);
+      }
+
+      group.addEventListener("click", () => {
+        if (!dragMoved) selectBody(planet.id);
+      });
+      return group;
+    }
+
+    function drawPlanets() {
+      backPlanetLayer.replaceChildren();
+      frontPlanetLayer.replaceChildren();
+      const ordered = planets
+        .map((planet) => ({ planet, position: projectedBodies.get(planet.id) }))
+        .sort((a, b) => a.position.z - b.position.z);
+      ordered.forEach(({ planet, position }) => {
+        const group = createPlanetGroup(planet, position);
+        if (position.z < 0) backPlanetLayer.appendChild(group);
+        else frontPlanetLayer.appendChild(group);
+      });
+    }
+
+    function updateSelection() {
+      const selected = bodyById.get(selectedId);
+      selectionLayer.textContent = selected.layer;
+      selectionTitle.textContent = selected.label;
+      selectionDetail.textContent = selected.detail;
+      select.value = selectedId;
+    }
+
+    function render() {
+      updateProjectedBodies();
+      drawStars();
+      drawOrbitRings();
+      drawPaths();
+      drawPlanets();
+      drawSun();
+      updateSelection();
+    }
+
+    function selectBody(id) {
+      if (!bodyById.has(id)) return;
+      selectedId = id;
+      render();
+    }
+
+    function setMode(nextMode) {
+      if (!modes[nextMode]) return;
+      mode = nextMode;
+      root.querySelectorAll("[data-mode]").forEach((button) => {
+        const active = button.dataset.mode === mode;
+        button.setAttribute("aria-pressed", String(active));
+        button.classList.toggle("btn-primary", active);
+      });
+      modeLine.textContent = modes[mode].line;
+      render();
+    }
+
+    function setOrbiting(next) {
+      orbiting = Boolean(next) && !reducedMotion;
+      orbitToggle.setAttribute("aria-pressed", String(orbiting));
+      orbitToggleLabel.textContent = reducedMotion ? "Motion reduced" : orbiting ? "Pause orbit" : "Start orbit";
+      if (orbiting && animationFrame === null) {
+        lastFrameTime = performance.now();
+        animationFrame = requestAnimationFrame(animate);
+      }
+      if (!orbiting && animationFrame !== null) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+      }
+    }
+
+    function animate(time) {
+      if (!orbiting) {
+        animationFrame = null;
+        return;
+      }
+      const elapsed = Math.min(40, time - lastFrameTime);
+      lastFrameTime = time;
+      phaseOffset += elapsed * 0.00018;
+      render();
+      animationFrame = requestAnimationFrame(animate);
+    }
+
+    function resize() {
+      const bounds = stage.getBoundingClientRect();
+      const width = Math.max(300, Math.round(bounds.width));
+      const height = Math.max(430, Math.round(bounds.height));
+      dimensions = {
+        width,
+        height,
+        cx: width / 2,
+        cy: height / 2 - 3,
+        radius: Math.min(width * 0.43, height * 0.44, 236)
+      };
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      render();
+    }
+
+    allBodies.forEach((body) => {
+      const option = document.createElement("option");
+      option.value = body.id;
+      option.textContent = `${body.layer} — ${body.label}`;
+      select.appendChild(option);
+    });
+
+    root.querySelectorAll("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => setMode(button.dataset.mode));
+    });
+    orbitToggle.addEventListener("click", () => setOrbiting(!orbiting));
+    select.addEventListener("change", () => selectBody(select.value));
+
+    stage.addEventListener("pointerdown", (event) => {
+      dragging = true;
+      dragMoved = false;
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      stage.classList.add("is-dragging");
+      stage.setPointerCapture(event.pointerId);
+    });
+
+    stage.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+      const deltaX = event.clientX - lastPointerX;
+      const deltaY = event.clientY - lastPointerY;
+      if (Math.abs(deltaX) + Math.abs(deltaY) > 2) dragMoved = true;
+      phaseOffset += deltaX * 0.009;
+      tilt = Math.max(0.28, Math.min(0.78, tilt - deltaY * 0.0025));
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+      render();
+    });
+
+    function endDrag(event) {
+      if (!dragging) return;
+      dragging = false;
+      stage.classList.remove("is-dragging");
+      if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+      window.setTimeout(() => {
+        dragMoved = false;
+      }, 0);
+    }
+
+    stage.addEventListener("pointerup", endDrag);
+    stage.addEventListener("pointercancel", endDrag);
+
+    if (reducedMotion) {
+      orbitToggle.disabled = true;
+      orbitToggleLabel.textContent = "Motion reduced";
+    }
+
+    if (typeof ResizeObserver === "function") {
+      const observer = new ResizeObserver(resize);
+      observer.observe(stage);
+    } else {
+      window.addEventListener("resize", resize);
+    }
+
+    setMode("shadow");
+    resize();
+  })();
+</script>

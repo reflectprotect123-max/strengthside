@@ -67,10 +67,55 @@
     return { sum: sum, avg: avg, days: vals.length, elevated: avg >= 3.5 };
   }
 
+  /** Steps tier load — shared with readinessScore in index.html. */
+  function stepsLoad(steps) {
+    steps = num(steps);
+    if (!steps) return 0;
+    if (steps < 8000) return 5;
+    if (steps < 13000) return 10;
+    if (steps < 18000) return 20;
+    if (steps < 25000) return 30;
+    return 40;
+  }
+
+  function fuelPenalty(v) {
+    return v === 'poor' ? 10 : v === 'good' ? -5 : 0;
+  }
+
+  function heatPenalty(v) {
+    v = num(v);
+    return v >= 5 ? 15 : v === 4 ? 10 : v === 3 ? 5 : 0;
+  }
+
+  /** Daily life-load from check-in — always recomputed (never reads stored backgroundLoad). */
   function checkinBackgroundLoad(c) {
     if (!c) return 0;
-    if (num(c.backgroundLoad) > 0) return num(c.backgroundLoad);
-    return num(c.heatLoad) * 2 + num(c.steps) / 2500 + num(c.workStress) * 2 + num(c.mentalStress) * 1.5;
+    var work = num(c.workStress) || num(c.workDifficulty);
+    return (
+      stepsLoad(c.steps) +
+      work * 3 +
+      num(c.mentalStress) * 3 +
+      fuelPenalty(c.fuel) +
+      heatPenalty(c.heatLoad)
+    );
+  }
+
+  /**
+   * WHOOP strain (0–21) as supplementary background load — captures unlogged
+   * cardiovascular day load without double-counting logged sessions.
+   * Light band tops ~9; moderate ~10–13; high 14+.
+   */
+  function whoopStrainBackgroundLoad(strain, dayTrainingLoad) {
+    strain = num(strain);
+    if (strain <= 0) return 0;
+    dayTrainingLoad = num(dayTrainingLoad);
+    var lightExcess = Math.max(0, strain - 8);
+    if (lightExcess <= 0) return 0;
+    if (dayTrainingLoad <= 0) {
+      return Math.round(lightExcess * 0.3 * 10) / 10;
+    }
+    var heavyExcess = Math.max(0, strain - 12);
+    return Math.round(heavyExcess * 0.15 * 10) / 10;
   }
 
   function sessionTrainingLoad(s) {
@@ -87,18 +132,24 @@
 
   function windowLoad(sessions, checkins, startMs, endMs) {
     var training = 0;
+    var trainingByDate = {};
     (sessions || []).forEach(function (s) {
       if (!s || s.status !== 'completed') return;
       var t = num(s.completedAt);
       if (t < startMs || t > endMs) return;
-      training += sessionTrainingLoad(s);
+      var load = sessionTrainingLoad(s);
+      training += load;
+      var day = s.date || new Date(t).toISOString().slice(0, 10);
+      trainingByDate[day] = (trainingByDate[day] || 0) + load;
     });
     var background = 0;
     (checkins || []).forEach(function (c) {
       if (!c || !c.date) return;
       var t = Date.parse(c.date + 'T12:00:00');
       if (t < startMs || t > endMs) return;
-      background += checkinBackgroundLoad(c);
+      var dayTrain = trainingByDate[c.date] || 0;
+      background +=
+        checkinBackgroundLoad(c) + whoopStrainBackgroundLoad(c.whoopStrain, dayTrain);
     });
     return { training: training, background: background, total: training + background };
   }
@@ -263,13 +314,132 @@
     return 'High session count this week — autopilot stays conservative.';
   }
 
+  /** Sum recovery repay credits in a time window (same units as delivery ledger). */
+  function sumRecoveryRepay(sessions, startMs, endMs) {
+    var repay = 0;
+    (sessions || []).forEach(function (s) {
+      if (!s || s.status !== 'completed') return;
+      var t = num(s.completedAt);
+      if (t < startMs || t > endMs) return;
+      repay += num(s.summary && s.summary.recoveryRepayLoad);
+    });
+    return Math.round(repay * 10) / 10;
+  }
+
+  /**
+   * Repay load from a completed recovery session — easy minutes pay down delivery debt.
+   * @param {{ duration?: number }} summary session summary
+   * @param {{ result?: { duration?: number, zoneSeconds?: object } }} task conditioning task
+   */
+  function recoveryRepayFromSession(summary, task) {
+    summary = summary || {};
+    task = task || {};
+    var r = task.result || {};
+    var mins = num(r.duration) / 60;
+    if (mins <= 0) mins = num(summary.duration) / 60;
+    if (mins <= 0) return 0;
+    var zones = r.zoneSeconds || {};
+    var easyMin = (num(zones.recovery) + num(zones.aerobic) * 0.5) / 60;
+    var base = Math.max(mins, easyMin);
+    // ~0.6 delivery units per easy minute; 15 min → ~9 repay (net paydown vs cond load).
+    return Math.round(base * 0.6 * 10) / 10;
+  }
+
+  function recoveryRepayEstimateMinutes(minutes) {
+    minutes = Math.max(0, num(minutes));
+    return Math.round(minutes * 0.6 * 10) / 10;
+  }
+
+  /**
+   * Recovery debt score 0–100 (0 = fresh, 100 = deep debt) from ledger minus repay credits.
+   */
+  function recoveryDebtScore(ledger, repayTotal) {
+    ledger = ledger || {};
+    repayTotal = num(repayTotal);
+    var delivered = num(ledger.delivered);
+    var budget = num(ledger.budget);
+    var netDelivered = Math.max(0, delivered - repayTotal);
+    var grossRatio = num(ledger.ratio);
+    if (budget <= 0 && !grossRatio) {
+      grossRatio = ledger.elevated ? 1.25 : 0.95;
+    }
+    var netRatio = budget > 0 ? netDelivered / budget : Math.max(0, grossRatio - repayTotal / Math.max(delivered, 1));
+    var score;
+    if (budget > 0) {
+      score = Math.round(Math.max(0, Math.min(100, ((netRatio - 0.85) / 0.75) * 100)));
+    } else if (netDelivered <= 0 && !ledger.elevated) {
+      score = 0;
+    } else if (ledger.elevated) {
+      score = Math.max(40, 72 - Math.round(repayTotal * 3));
+    } else {
+      score = Math.max(0, Math.min(55, Math.round(netDelivered * 2.2) - Math.round(repayTotal * 2)));
+    }
+    var elevated = budget > 0 ? netRatio >= 1.2 : netDelivered >= 10 && num(ledger.sessionCount) >= 4;
+    return {
+      score: score,
+      grossRatio: Math.round(grossRatio * 100) / 100,
+      netRatio: Math.round(netRatio * 100) / 100,
+      repay: repayTotal,
+      netDelivered: Math.round(netDelivered * 10) / 10,
+      delivered: delivered,
+      budget: budget,
+      elevated: elevated,
+    };
+  }
+
+  function recoveryDebtCopy(debt, opts) {
+    opts = opts || {};
+    debt = debt || {};
+    if (debt.score <= 15) return 'Recovery debt low — full dose available when readiness allows.';
+    if (debt.score <= 40) return 'Recovery debt moderate — easy work still helps.';
+    if (opts.repayEstimate > 0) {
+      return (
+        'Recovery debt ' +
+        debt.score +
+        ' · ~' +
+        opts.repayEstimate +
+        ' repay from ' +
+        opts.minutes +
+        ' min easy'
+      );
+    }
+    return 'Recovery debt ' + debt.score + ' · easy sessions repay delivery load.';
+  }
+
+  /** Posture + ledger + rolling repay → debt score for Home and session copy. */
+  function recoveryDebtSnapshot(input) {
+    input = input || {};
+    var posture = recoveryPosture(input);
+    var ledger = posture.domains && posture.domains.deliveryLedger;
+    if (!ledger) {
+      return { posture: posture, debt: { score: 0, repay: 0, netRatio: 0, grossRatio: 0, elevated: false } };
+    }
+    var days = ledger.days || 7;
+    var endMs = Date.parse((input.endDate || new Date().toISOString().slice(0, 10)) + 'T23:59:59');
+    var startMs = endMs - (days - 1) * 86400000;
+    var repay = sumRecoveryRepay(input.allSessions || input.recentSessions || [], startMs, endMs);
+    var debt = recoveryDebtScore(ledger, repay);
+    return { posture: posture, ledger: ledger, debt: debt, repay: repay };
+  }
+
   global.RecoveryEngine = {
     recoveryPosture: recoveryPosture,
     recoverySignal: recoverySignal,
     blocksProgressionBumps: blocksProgressionBumps,
     postureCopy: postureCopy,
     heatLedger: heatLedger,
+    stepsLoad: stepsLoad,
+    fuelPenalty: fuelPenalty,
+    heatPenalty: heatPenalty,
+    checkinBackgroundLoad: checkinBackgroundLoad,
     deliveryLoadLedger: deliveryLoadLedger,
     deliveryLoadCopy: deliveryLoadCopy,
+    whoopStrainBackgroundLoad: whoopStrainBackgroundLoad,
+    sumRecoveryRepay: sumRecoveryRepay,
+    recoveryRepayFromSession: recoveryRepayFromSession,
+    recoveryRepayEstimateMinutes: recoveryRepayEstimateMinutes,
+    recoveryDebtScore: recoveryDebtScore,
+    recoveryDebtCopy: recoveryDebtCopy,
+    recoveryDebtSnapshot: recoveryDebtSnapshot,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

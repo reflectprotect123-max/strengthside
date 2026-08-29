@@ -1,0 +1,16 @@
+{
+  "status": "PASS_PRE_RESEARCH_ONLY",
+  "checked": {
+    "json": 62,
+    "json_schema": 15,
+    "yaml": 4,
+    "csv": 19,
+    "markdown_indexes": 41,
+    "source_files": 295,
+    "generated_files": 3039
+  },
+  "errors": [],
+  "warnings": [],
+  "tests_passing": 182,
+  "note": "This validates the engineering package, not scientific truth. Source-file syntax/link defects are warnings because originals are immutable; generated-artifact defects are errors."
+}

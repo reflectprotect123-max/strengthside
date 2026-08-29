@@ -1,0 +1,426 @@
+# The RPE progression system
+
+**Date:** 16 August 2026
+**Status:** design, approved in conversation, not yet implemented
+**Evidence base:** `docs/research/2026-08-16-progression-evidence-answer.md`
+**Supersedes nothing.** Extends the fold, the banking layer and
+`decideStrengthProgression`, all of which already exist.
+
+---
+
+## 1. Why this exists
+
+The engine already autoregulates on RPE twice — once inside a session and once
+between them — and both are live. What it cannot do is survive a change of rep
+scheme, which is the ordinary case for anyone following a programme.
+
+The owner put the problem in one line: *"what if one week its 10,8,6 then the
+next its 9,7,5 or 8,6,4 an or 3 x 5 or 5/3/1"*.
+
+Run against the real engine functions, the same athlete should open at:
+
+| Scheme | Correct opener | What the app offers today |
+|---|---|---|
+| 10, 8, 6 | 100.0 kg | 100.0 |
+| 9, 7, 5 | 102.5 kg | 100.0 |
+| 8, 6, 4 | 105.0 kg | 100.0 |
+| 3 × 5 | 112.5 kg | 100.0 |
+| 5/3/1, the single | 132.5 kg | 100.0 |
+
+*(Corrected after Stage 1 shipped: the right column originally read 102.4 /
+113.5 / 131.3 — the RAW `plannedKg` division, e.g. 102.4390243902439 kg,
+truncated to one decimal as if it were already rack-rounded. It reached the
+athlete's actual weight field the same way, unrounded, until an audit of this
+stage found it and `nextWorkingWeight` gained the `increment` parameter that
+rounds it — see Stage 1's note below and `lift.test.ts`'s golden test for the
+real, verified numbers.)*
+
+**The engine computes the correct column and then throws it away.**
+`anchorFor(100, {reps: 10, rpe: 8})` returns a 140 kg e1RM, and `plannedKg`
+prices every later set off it — that is how 10 → 8 → 6 gets heavier within one
+session. At the final whistle `liftMoves` banks `{kg: 100}` and the anchor is
+gone. `LiftState` even carries a `reps` field whose comment reads *"reps it was
+earned at, so a changed rep target is visible in the record"* — and
+`nextWorkingWeight` reads `st.kg` and nothing else.
+
+CLAUDE.md has carried this as an open gap since the lab was deleted: *"a
+`10,8,6` → `9,7,5` wave moves no weight at all. That gap is still open."*
+
+## 2. What "perfect" means here, and what it cannot mean
+
+The commissioned review's central result is negative and governs everything
+below:
+
+> "No convincing experiment was located that randomised comparable trainees to
+> approximately 2.5%, 5%, and 10% progression increments while holding
+> exercise, target repetitions, progression trigger, volume, frequency, and
+> context constant."
+
+So there is no optimum to implement. What is achievable is a **controller**:
+one that knows what it is looking at before it acts, moves one lever at a
+time, treats holding as a real answer, and can always say why. Every number in
+this design is a labelled heuristic. None is presented as a finding.
+
+## 3. The design in one page
+
+**The system stores a score, not a weight.** One number per movement — the
+e1RM anchor — from which today's load is derived against today's rep target.
+
+**The weight is pushed, not proposed.** It arrives prefilled in the athlete's
+weight field with a one-line reason. There is no approval card and no second
+number, because the fold's own rule stands: *a suggestion that disagrees with
+the prefill is not a suggestion, it is two numbers contradicting each other on
+the same card.*
+
+**The athlete has the last word**, because the athlete is the one who knows
+how today feels. Overriding the number is expected, not exceptional — and when
+they do, they may leave one line saying why.
+
+**Asymmetry is where the coaching lives.** Down is fast and needs no
+confirmation; up is slow and needs two. That is the whole difference between a
+coach and a calculator, and it is already how the fold behaves.
+
+## 4. Stages
+
+Ordered so that each is shippable on its own. Stage 1 and Stage 2 together fix
+the owner's reported problem; the rest harden it.
+
+### Stage 1 — bank the anchor, not the kilo
+
+The single change everything else depends on.
+
+**Store.** `LiftState` gains `e1rm?: number`. `kg` stays exactly as it is —
+every session already logged keeps behaving identically, because a record with
+no `e1rm` takes the existing path.
+
+**Write.** `liftMoves` already computes `next.kg` (the next opener at this
+session's scheme) and already reads the opening working set. It gains one
+line: `anchorFor(next.kg, set1PlannedTarget)`, where the target is
+`{reps: targetRepsOf(sets[0].t), rpe: rpeCenterOf(sets[0])}` — the same pair
+`readExercise` builds. Warm-up sets are already excluded upstream.
+
+**Read.** `openingLoadFor`'s *earned* rung prices
+`plannedKg(e1rm, todaysSet1Target)` when an `e1rm` is banked and today's set 1
+carries a numeric rep target. Otherwise it falls through to `kg`, unchanged.
+**Rounded to the exercise's own increment before it reaches the athlete** —
+`plannedKg` is a bare division and was reaching the weight field raw
+(102.4390243902439 kg for the 9,7,5 scheme in the table below) until
+`nextWorkingWeight` gained an `increment` parameter, found and fixed auditing
+this stage after it shipped.
+
+**Why it composes.** The anchor is derived from the weight the session
+*earned*, so a session that went well raises the anchor and a scheme change
+re-prices it — both at once, with no interaction rule:
+
+```
+week 1  10,8,6 @100, on target   → earned 100 @10 reps → anchor 140
+week 2  plan says 9,7,5          → plannedKg(140, 9) → 102.5, rack-rounded
+week 3  plan says 3×5            → plannedKg(140, 5) → 112.5, rack-rounded
+crushed week 1 instead           → earned 102.5 → anchor 143.5 → week 2 ≈ 105, rack-rounded
+```
+
+*(These are rack-rounded — `nextWorkingWeight` rounds `plannedKg`'s output to
+the exercise's own increment, `AUTOREG.plateIncrement` by default. That
+rounding step was missing when this walkthrough was first written and reached
+the athlete's actual field as a raw division; see §1's table note.)*
+
+**Boundaries.** The anchor is never shown as a 1RM and never called one — it
+is an internal reference. A bodyweight movement has no anchor. `max` sets have
+no rep target to price against and take the existing path.
+
+### Stage 2 — the reps rule: read the coach's syntax as intent
+
+Ten lines, and it stops the engine overriding a coach.
+
+- A single written number is an **instruction**. The engine prices load only
+  and never suggests reps.
+- A written **range** (`8-12`) is an **invitation**. Double progression is
+  what the coach asked for, and the engine may climb inside it.
+
+The two are already distinguishable from the existing parsers, but only
+carefully: `repFloorOf` returns a NUMBER and `repTopOf` returns a STRING, so the
+test is `repTopOf(t) === String(repFloorOf(t))` and never a bare `===`. Both run
+the target through `withoutLoad` first, so `5 @80%` is still a single number.
+`max` and an empty target give `repTopOf(t) === ''`, which is neither an
+instruction nor an invitation — those take the existing path and are not touched
+by this stage.
+
+`decideStrengthProgression` already branches on `lastReps < repTop`; it does
+not yet know that `repTop === repFloor` means *do not*. A wave — 10,8,6 —
+is a sequence of instructions, so the engine must never propose an eleventh
+rep on the 10.
+
+### Stage 3 — validity before progression
+
+The review is explicit that a success boolean is not enough: *"A set can be
+completed because the athlete overshot the intended RPE, because the target
+was too easy, because the exercise was changed, or because the user entered a
+value without actually performing the set."*
+
+An exposure is classified before it counts, from what is **already stored** —
+no new capture on the logger. **Shipped** (16 August 2026):
+
+| Class | Condition | Effect |
+|---|---|---|
+| `successful` | met the rep floor, rated | counted, as before |
+| `successful_but_uncertain` | met the floor, no rating logged | counts, but the fallback path now says so by name (`exposure_not_rated`, confidence `low`) instead of being absorbed into the generic `mixed_recent_results` hold |
+| `missed` | below the rep floor | counted, as before |
+| `incomplete` | no completed working set | needs no code — a session with no working set never produces a `StrengthExposure` at all, so it was already "ignored entirely" |
+
+`ExposureClass` is computed and stored on every `StrengthExposure`, additive
+metadata that the progression and deload gates do not yet read — only the
+final fallback branch does, narrowly, to replace one generic hold reason with
+an honest one. The two-in-a-row promotion gate (`last.onTarget && prev.onTarget`)
+is unchanged: this stage makes the classification visible and improves one
+hold message, it does not let an uncertain exposure promote at reduced
+confidence. That is a larger, riskier change to a safety-relevant decision
+tree with 199 existing pinned tests, and it is deferred rather than guessed
+at — see below.
+
+**Two classes did not ship, both for the same reason: no stored fact to
+classify against.**
+
+- **`pain_blocked`** — nothing in `LoggedSet` records a pain flag per set for
+  a strength exercise. Conditioning has `mechanicalCompletion: 'pain_stop'`;
+  strength has no counterpart. Reading `whole-athlete-state`'s
+  `pain_hold_active` would answer a different question — whether pain is
+  flagged *today*, not what a *past* exposure was — and would also mean
+  `@hybrid/engine` depending on `@hybrid/whole-athlete-state`, which nothing
+  in this repository does today (dependencies run the other way, both
+  packages sit on `@hybrid/shared-core`). CLAUDE.md already records that
+  nothing consumes `pain_hold_active` yet; this is that gap staying open, not
+  a new one.
+- **The "column pair changed" half of `successful_but_uncertain`** — no
+  exposure field tracks which set-entry columns (`setColumns.ts`) a past
+  session logged against, so there is nothing to compare today's pair to.
+
+**Explicitly not built:** the review's full thirteen-field exposure record —
+technique flags, rest interval, approved substitutions. Nobody answers those
+mid-set. Recorded here as a declared gap rather than a silent one.
+
+### Stage 4 — three load fields, never collapsed
+
+> "The engine should retain `session_opening_load`, `effective_load`, and
+> `last_successful_anchor_load` separately. Otherwise a failed session can
+> cause an invisible compound reduction."
+
+**Shipped as documentation and a pinning test, not a storage migration.**
+Written before this stage as three DIFFERENT ideas below, they turned out to
+already be three different reads over `sessions`, not one number wearing
+three names:
+
+- `lastSuccessfulAnchor` — `anchorKgFor(exposures)`, the most recent exposure
+  that was actually on target.
+- `openingLoad` — `exposure.kg`, what the set was actually loaded at.
+- `effectiveLoad` — `earnedKgFrom(name, exposure)`, what `lift.ts`'s
+  within-session fold walked the movement to by the end of that session.
+
+Earlier language here proposed replacing `anchorKgFor`'s scan with a read of
+a persisted fact. That would have been a regression, not a hardening:
+`decideStrengthProgression` recomputes from `sessions` on every call, with no
+persisted streak counter and no settings read — see the "is stateless" test
+group — and a stored anchor is exactly the kind of state a bad session could
+silently drift out of sync with. The re-derive-fresh design already IS the
+protection Stage 4 asks for, proven by Example C passing before this stage
+existed. What this stage adds is a comment naming the invariant explicitly at
+`anchorKgFor`'s call site, and a test — `STAGE 4 — the three load fields stay
+three different numbers` — that pins all three by name in the exact
+100 → 94 → 94 scenario the review's Example C is a defect report about, rather
+than only checking the final `deload` action gets the right number.
+
+### Stage 5 — calibration after a layoff
+
+The hole the owner found: *"a good day the 100kg is RPE 6 an then we come back
+4 months later an theres stress/sleep issues an that 100kg is RPE9"*.
+
+Two different causes needing two different answers:
+
+**A bad patch while still training is already handled.** The fold catches it on
+set one — a set rated 9 against a target of 8 is `dev = −1`, a full correction
+and a lock, so set two is lighter immediately. The anchor re-banks lower at the
+end of the session. **That drop is correct**: the athlete genuinely is
+temporarily weaker. The system must not defend the old number. What it should
+do is record *why* it fell, which is Stage 6.
+
+**A layoff is not handled at all.** Nothing marks an anchor stale; four months
+and four days are identical. Set one of the comeback is priced off a
+four-month-old good day, and the athlete discovers it is too heavy by lifting
+it — precisely the *"unnecessary failure exposure"* calibration exists to
+prevent.
+
+So a movement whose last exposure is older than the configured gap enters
+**calibration**:
+
+- it is not offered the full anchor-priced weight
+- the session's purpose is to observe, not to progress
+- its result is **recorded as a calibration exposure** and can never silently
+  become the new anchor
+- it leaves calibration on **two stable comparable exposures, not on a date** —
+  the review is explicit: *"The calibration state should expire based on
+  successful comparable exposures, not merely time."*
+
+The gap threshold and the calibration reduction are both configured heuristics
+and labelled as such.
+
+**Shipped** (16 August 2026), against `AUTOREG.calibrationGapDays: 21` and
+`AUTOREG.calibrationReductionPct: 0.1`, both spelled out as `product_heuristic`
+in the constant's own doc, exactly as `deloadPct` was before the review priced
+it. `calibrationStateFor(name, sessions, now?)` implements both halves of the
+design in one function, in `packages/engine/src/adaptive/exposures.ts`:
+
+- **Entry** — nothing logged since the gap opened: the trailing distance from
+  `now` to the last exposure exceeds the threshold. The NEXT session is the
+  comeback.
+- **Exit** — walks every exposure for the most recent gap that crossed the
+  threshold, then counts on-target exposures logged after it. Below two,
+  still calibrating — explicitly NOT "is the gap still open", which would exit
+  after one comeback session purely because that session's own timestamp
+  reset the clock. That was the first version of this function and it failed
+  its own test the moment the test asked for it by name.
+
+**Both places that name a load are wired**, so the Library preview and the
+Logger's own field cannot disagree during a comeback — the same invariant
+`sessionOpeners`'s header already claimed for the recovery-ease case:
+
+- `nextWorkingWeight` takes an additive 5th parameter, `sessions`, and returns
+  early with a 10%-reduced weight and the note *"back after a break — offering
+  less so today can find where you actually are"* when calibrating — ahead of
+  the recovery-ease gate, not stacked with it, because one honest reduction
+  with one honest reason beats a compounded cut across two sentences.
+- `decideStrengthProgression` checks `calibrationStateFor` before
+  `MIN_EXPOSURES`, not after — a movement can clear three exposures in raw
+  count while still being one comeback session into a real layoff — and
+  returns `hold` / `calibration_active` / `safetyState: 'reduced'` rather than
+  letting a calibration exposure win the two-in-a-row promotion gate.
+
+**One structural move this stage required**: `strengthExposuresFor` and the
+new `calibrationStateFor` moved out of `adaptive/strength.ts` into a new
+`adaptive/exposures.ts`. `strength.ts` imports `liftMoves` from `lift.ts`;
+`lift.ts` now needs `calibrationStateFor` too, for the reason above. A module
+that imports FROM `lift.ts` cannot also be imported BY it without a cycle, so
+the shared primitive moved to a file that imports from neither. `strength.ts`
+re-exports everything from it, so nothing at the package boundary changed.
+
+**A note on how this was tested.** `calibrationStateFor`'s entry gate reads
+real elapsed time against a session's `completedAt`, and the existing test
+suites in `lift.test.ts` and `strength.test.ts` use small synthetic
+timestamps (`1000`, `2000`, …) for ordering, not real dates — against the
+actual wall clock every one of them is decades old, which made every
+history-bearing test a false "back after a break" the first time this landed.
+Both files now pin `vi.useFakeTimers` to a fixed point just above their
+largest synthetic timestamp, which keeps `Date.now()` real-shaped without
+requiring dozens of fixtures to be rewritten with realistic dates.
+
+### Stage 6 — the override note
+
+When the athlete changes the offered number, the app records what was offered,
+what was taken, and offers **one optional line**: *"shoulder felt off"*,
+*"slept 4 hours"*, *"felt great"*. Skippable. Never a form.
+
+Two things this buys:
+
+1. The coach stops seeing `95kg` and starts seeing *"we offered 102.5, he took
+   95, his shoulder felt off."* One is data; the other is coaching.
+2. The engine is told the miss was not about strength, so a bad week does not
+   read as decline — the `successful_but_uncertain` path with a human reason
+   attached.
+
+**Shipped in two halves** (16 August 2026), and they are genuinely two halves
+rather than one feature, because the second one has no screen to land on yet.
+
+**The capture half is shipped, end to end.** `Draft` (`@hybrid/session-
+authoring`) gains `offered` — the kg the engine offered, stamped once by
+`openDraft` and never patched again — and `note`, the optional line. `applyDraft`
+writes `LoggedSet.offeredKg`/`overrideNote` ONLY when `draft.kg !== draft.offered`;
+an ordinary set that matched the offer records nothing extra, exactly as an
+un-rated exposure records nothing extra elsewhere in this design. Both fields
+join `FORBIDDEN_SET_KEYS` — logger-owned, same as `aVal`/`felt`/`done`, and a
+coach's plan can never carry one. On the phone, `HotCard` reveals the note
+field the moment the weight the athlete is holding differs from the weight
+that was offered, labelled by name — *"you took 95kg, not the 102.5kg
+offered — why? (optional)"* — never a validation error, never required by the
+log gate. Both mobile parity gates (behaviour and visual, driven through the
+real exported harness) pass unchanged, because neither scripted flow ever
+edits the weight field away from the offer.
+
+**The "coach sees" half is a declared gap, not a silent one.** Point 1 above —
+*"the coach stops seeing 95kg and starts seeing…"* — has nowhere to land: no
+screen on the coach bench shows a coach any athlete's individual logged sets
+today. That is `#167`, `request_session_detail and the draft editor`, already
+tracked and already pending before this design existed. Building a session-
+detail viewer to give the override note its first reader is that task's scope,
+not this stage's — recorded here so the gap is legible rather than discovered
+later.
+
+**Point 2 — the engine reading the note back — is also not wired**, for the
+same honest reason `successful_but_uncertain` itself does not yet influence
+promotion (see Stage 3): a human-typed reason attached to a miss is exactly
+the kind of signal that should raise confidence rather than just being
+displayed, and doing that properly means deciding how a free-text reason
+maps to `dataLimitations`/`confidence` — a real design question, not a
+follow-on of storage existing. `overrideNote` is captured and stored now
+specifically so that decision has real data to be made against later, rather
+than being made blind.
+
+## 5. What the athlete sees
+
+Unchanged in shape. The weight field, prefilled, with one line under it:
+
+```
+102.5 kg     what you earned last time, at nine
+ 95.0 kg     backed off — harder than asked
+100.0 kg     coming back — let's see where you are      (calibration)
+102.5 kg     on target twice — this is the step up
+```
+
+The line is not decoration. The fold already states the rule: *a number with no
+reason attached is what athletes override.*
+
+## 6. What the coach sees
+
+Nothing new to approve — the athlete owns the number under the bar. The bench
+gains what it currently lacks: the override record, and the reason attached to
+it.
+
+## 7. Boundaries this design does not cross
+
+- **The anchor is not a 1RM** and is never labelled one.
+- **Pain is not fatigue.** It routes to the safety pathway, not to a heavier
+  penalty in the same formula. Note that nothing currently consumes
+  `pain_hold_active` — Stage 3's `pain_blocked` class is the first consumer,
+  and it blocks progression only. It does not reinstate the deleted session
+  stop, which was removed deliberately on 14 August.
+- **HRV stays advisory.** The existing recovery ease at the point of
+  prescribing is unchanged; nothing here reads a wearable as a strength signal.
+- **Nutrition never enters this.** Unchanged.
+- **Every constant declares itself a heuristic.** The product may not claim
+  2.5%, 5% or two misses are validated.
+
+## 8. Testing
+
+- **Stage 1 is golden-testable against the table in §1** — five schemes, one
+  anchor, five expected openers, computed by the real functions.
+- **Round trip:** a session with no `e1rm` behaves exactly as it does today.
+  This is the compatibility assertion and it must be explicit.
+- **Stage 2:** a wave (`10`, then `8`) never produces a rep suggestion; a range
+  (`8-12`) does.
+- **Stage 4:** the review's Example C — open 100, miss, corrected to 94, deload
+  produces 95 and not 89.3 — already passes and must keep passing.
+- **Stage 5:** calibration is entered on a gap, exited on two stable exposures
+  and never on elapsed time alone; a calibration exposure never becomes an
+  anchor.
+- **The golden constants pin** covers `progressPct`, `maxJumpPct` and
+  `deloadPct` already, and gains the calibration constants.
+
+## 9. Open questions, stated rather than hidden
+
+1. **The calibration gap threshold** has no evidence behind it. The review
+   declines to give one — *"Detraining evidence does not provide a universal
+   time-off-to-load-reduction equation."* It will be a configured guess,
+   labelled, and it should be revisited against real data.
+2. **RPE calibration per athlete** — the review suggests tracking whether a
+   given athlete's "8" tends to precede an overshoot. Not in this design.
+   Worth doing once there is enough logged history to estimate it, and it must
+   surface as *evidence quality*, never as a label attached to a person.
+3. **The coach cannot yet see per-section actual-vs-planned time**, which is
+   a separate gap noted on 16 August and not addressed here.

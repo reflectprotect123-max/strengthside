@@ -339,6 +339,8 @@
       coachNote: partial.coachNote || '',
       athleteNote: partial.athleteNote || '',
       swappedFrom: partial.swappedFrom || null,
+      logColumns: partial.logColumns || null,
+      loadExpr: partial.loadExpr || null,
     };
     ensureRows(ex);
     return ex;
@@ -941,14 +943,23 @@
     const recovery = makeTemplate({
       id: IDS.tplRecovery,
       name: 'Recovery Session',
+      templateKind: 'conditioning',
       coachInstructions: 'Optional movement. Skip any drill that aggravates something.',
       blocks: [
         makeBlock({
-          type: 'text',
-          heading: 'Recovery circuit',
+          type: 'conditioning',
+          heading: 'Recovery movement',
           category: 'Recovery',
           scoring: 'completion',
-          notes: '20–30 min: walk, easy bike, or mobility. Box breathing 4-4-4-4 × 5. Log how you felt, not output.',
+          recoverySession: true,
+          condFmt: 'steady',
+          effort: 'easy',
+          modality: 'Mixed',
+          baselineDurationMin: 30,
+          targetDurationMin: 30,
+          timeCapMin: 30,
+          notes:
+            'Mixed modal — your choice: walk, easy bike, row, mobility. Box breathing 4-4-4-4 × 5. Log time and feel, not output.',
         }),
       ],
     });
@@ -1141,10 +1152,19 @@
   }
 
   function prescriptionLine(ex) {
+    if (ex.loadExpr && ex.loadExpr.exprKind === 'pct_of_max') {
+      const pct = Math.round(Number(ex.loadExpr.exprArg) * 100);
+      const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
+      return `${ex.sets} × ${ex.reps} · ${pct}% WM${rest}`;
+    }
+    if (ex.loadExpr && ex.loadExpr.exprKind === 'lwp_delta') {
+      const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
+      return `${ex.sets} × ${ex.reps} · LWP ${ex.loadExpr.exprArg}${rest}`;
+    }
     const load = String(ex.load || '').trim();
     const metric = ex.metric || 'Weight';
     const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
-    const loadBit = load ? ` @ ${load}${metric === 'Weight' ? 'kg' : ''}` : '';
+    const loadBit = load ? ` @ ${load}${metric === 'Weight' ? 'kg' : ''}` : ' · autopilot load';
     return `${ex.sets} × ${ex.reps}${loadBit}${rest}`;
   }
 

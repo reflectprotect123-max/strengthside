@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hybridsystem.local/schemas/evidence-record.schema.json",
+  "title": "THE Hybrid System Evidence Record",
+  "description": "A normalized, traceable structured finding or numeric observation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recordId", "system", "recordType", "source", "metric", "value", "provenance", "evidenceTier", "review"],
+  "properties": {
+    "recordId": { "type": "string", "pattern": "^[A-Za-z0-9._:-]+$" },
+    "system": { "type": "string", "enum": ["strength", "conditioning", "nutrition", "recovery", "coordinator"] },
+    "recordType": { "type": "string", "enum": ["finding", "observation", "table_cell", "range", "formula", "time_series", "threshold", "measurement"] },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "title", "sourceType", "contentHash"],
+      "properties": {
+        "sourceId": { "type": "string" },
+        "title": { "type": "string" },
+        "sourceType": { "type": "string", "enum": ["peer_reviewed", "guideline", "official_product", "book", "patent", "dataset", "expert_content", "internal_test", "other"] },
+        "identifier": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "publishedAt": { "type": "string", "format": "date" },
+        "version": { "type": "string" },
+        "contentHash": { "type": "string" }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metricId", "canonicalName", "valueType", "unit", "timeBasis"],
+      "properties": {
+        "metricId": { "type": "string" },
+        "canonicalName": { "type": "string" },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "valueType": { "type": "string", "enum": ["scalar", "percentage", "ratio", "count", "duration", "range", "category", "formula", "time_series"] },
+        "unit": { "type": "string" },
+        "numerator": { "type": "string" },
+        "denominator": { "type": "string" },
+        "timeBasis": { "type": "string" },
+        "measurementMethod": { "type": "string" }
+      }
+    },
+    "value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "reported": {},
+        "normalized": {},
+        "reportedUnit": { "type": "string" },
+        "normalizedUnit": { "type": "string" },
+        "lower": { "type": "number" },
+        "upper": { "type": "number" },
+        "uncertaintyType": { "type": "string", "enum": ["none", "sd", "se", "ci", "credible_interval", "measurement_error", "author_not_stated"] },
+        "uncertaintyLower": { "type": "number" },
+        "uncertaintyUpper": { "type": "number" },
+        "status": { "type": "string", "enum": ["exact", "approximate", "estimated", "not_reported", "not_applicable"] }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "population": { "type": "string" },
+        "sampleSize": { "type": "number", "minimum": 0 },
+        "ageRange": { "type": "string" },
+        "sex": { "type": "string" },
+        "trainingStatus": { "type": "string" },
+        "intervention": { "type": "string" },
+        "comparator": { "type": "string" },
+        "duration": { "type": "string" },
+        "outcome": { "type": "string" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["location", "extractionMethod", "extractorVersion"],
+      "properties": {
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "page": { "type": "integer", "minimum": 1 },
+            "section": { "type": "string" },
+            "paragraph": { "type": "integer", "minimum": 1 },
+            "table": { "type": "string" },
+            "row": { "type": "string" },
+            "column": { "type": "string" },
+            "figure": { "type": "string" },
+            "lineStart": { "type": "integer", "minimum": 1 },
+            "lineEnd": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "rawText": { "type": "string" },
+        "extractionMethod": { "type": "string", "enum": ["manual", "parser", "ocr", "llm_assisted", "api", "calculation"] },
+        "extractorVersion": { "type": "string" },
+        "transformations": { "type": "array", "items": { "type": "string" } },
+        "inputRecordIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "evidenceTier": { "type": "string", "enum": ["A", "B", "C", "D"] },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "confidence"],
+      "properties": {
+        "state": { "type": "string", "enum": ["candidate", "captured", "extracted", "normalized", "verified", "rejected", "superseded"] },
+        "reviewer": { "type": "string" },
+        "reviewedAt": { "type": "string", "format": "date-time" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

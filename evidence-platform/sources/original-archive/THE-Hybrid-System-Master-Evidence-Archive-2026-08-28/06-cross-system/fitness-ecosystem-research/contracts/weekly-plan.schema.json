@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fitness-ecosystem.invalid/contracts/weekly-plan.schema.json",
+  "title": "Coordinator Weekly Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["plan_id", "subject_id", "week_start", "generated_at", "algorithm_version", "source_state_snapshot_id", "sessions", "decisions", "data_quality"],
+  "properties": {
+    "plan_id": {"type": "string", "format": "uuid"},
+    "subject_id": {"type": "string", "format": "uuid"},
+    "week_start": {"type": "string", "format": "date"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "algorithm_version": {"type": "string", "minLength": 1},
+    "source_state_snapshot_id": {"type": "string", "format": "uuid"},
+    "source_proposal_ids": {"type": "array", "items": {"type": "string", "format": "uuid"}},
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["plan_session_id", "proposal_id", "engine", "date", "duration_minutes", "status"],
+        "properties": {
+          "plan_session_id": {"type": "string"},
+          "proposal_id": {"type": "string", "format": "uuid"},
+          "engine": {"enum": ["strength", "conditioning"]},
+          "date": {"type": "string", "format": "date"},
+          "duration_minutes": {"type": "integer", "minimum": 1},
+          "status": {"enum": ["scheduled", "locked", "modified", "completed", "missed", "cancelled"]},
+          "modification_id": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["proposal_id", "outcome", "reason_codes", "explanation"],
+        "properties": {
+          "proposal_id": {"type": "string", "format": "uuid"},
+          "outcome": {"enum": ["accepted", "modified", "deferred", "dropped", "blocked", "needs_input"]},
+          "scheduled_date": {"type": ["string", "null"], "format": "date"},
+          "modification_id": {"type": ["string", "null"]},
+          "reason_codes": {"type": "array", "items": {"type": "string"}},
+          "explanation": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "unresolved_conflicts": {"type": "array", "items": {"type": "string"}},
+    "data_quality": {"enum": ["complete", "partial", "sparse", "conflicting", "stale", "unknown"]},
+    "user_override_state": {"enum": ["none", "present", "conflicting", "needs_confirmation"]}
+  }
+}
