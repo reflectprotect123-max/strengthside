@@ -20,24 +20,7 @@ SYSTEM = "conditioning"
 
 
 def evaluate(snapshot: Mapping[str, Any], db: Any = None) -> dict[str, Any]:
-    # `db` accepted for signature parity with the shared run_all(snapshot, db)
-    # contract - unused here until this engine gets its own Phase 4 model seam
-    # (see platform_core/engines/strength.py for the pattern once it exists).
-    del db
-    snapshot = common.validate_snapshot(snapshot)
-    directive = common.synthetic_directive(snapshot, SYSTEM)
-    if directive is not None:
-        return common.make_output(
-            system=SYSTEM,
-            action=directive["action"],
-            reason_codes=["SYNTHETIC_TEST_ONLY"],
-            synthetic=True,
-            confidence=float(directive.get("confidence", 0.0)),
-        )
-    return common.make_output(
-        system=SYSTEM,
-        action="abstain",
-        reason_codes=["NO_APPROVED_MODEL"],
-        synthetic=False,
-        confidence=0.0,
-    )
+    # Phase 4: can now load its own active, hash-verified model
+    # (runtime_artifacts.system='conditioning') via common.run_generic_engine
+    # - same as every other engine with no reviewed rule module yet.
+    return common.run_generic_engine(snapshot, SYSTEM, db)

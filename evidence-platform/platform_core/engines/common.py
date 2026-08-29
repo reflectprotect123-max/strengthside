@@ -107,6 +107,76 @@ def make_output(
     }
 
 
+def run_generic_engine(snapshot: Mapping[str, Any], system: str, db: Any = None) -> dict[str, Any]:
+    """Shared evaluate() body for every engine with no reviewed rule module yet.
+
+    Order: honor a synthetic snapshot directive first (fixture plumbing, never
+    real interpretation); then, if `db` is given, check for THIS engine's own
+    active, hash-verified model (Phase 3/4's per-system seam); otherwise
+    abstain. Identical for all five systems today because none of them has a
+    reviewed rule module to apply real content with yet - the moment one
+    does, that system's evaluate() stops calling this and gets its own body,
+    the way platform_core/engines/strength.py will once strength has a
+    promoted rule (see docs/phase3-strength-session-gate-research-brief.md).
+    """
+    snapshot = validate_snapshot(snapshot)
+    directive = synthetic_directive(snapshot, system)
+    if directive is not None:
+        return make_output(
+            system=system,
+            action=directive["action"],
+            reason_codes=["SYNTHETIC_TEST_ONLY"],
+            synthetic=True,
+            confidence=float(directive.get("confidence", 0.0)),
+        )
+
+    if db is not None:
+        model, artifact_errors = load_active_engine_model(db, system)
+        if artifact_errors:
+            return make_output(
+                system=system,
+                action="abstain",
+                reason_codes=["NO_APPROVED_MODEL", *artifact_errors],
+                synthetic=False,
+                confidence=0.0,
+            )
+        if model is not None:
+            if model.get("synthetic_test_only"):
+                # Proves the seam works mechanically, end to end, using only
+                # synthetic content - the same "synthetic fixtures may
+                # exercise action plumbing only" allowance synthetic_directive
+                # already relies on.
+                model_directive = model.get("synthetic_directive", {})
+                action = model_directive.get("action", "abstain")
+                if action not in ALLOWED_ACTIONS:
+                    action = "abstain"
+                return make_output(
+                    system=system,
+                    action=action,
+                    reason_codes=["SYNTHETIC_TEST_ONLY", "ENGINE_SCOPED_MODEL_APPLIED"],
+                    synthetic=True,
+                    confidence=float(model.get("confidence", 0.0)),
+                )
+            # A real (non-synthetic) model is registered, but this engine has
+            # no reviewed rule module to interpret it with yet - abstain
+            # honestly rather than guessing what an unreviewed model means.
+            return make_output(
+                system=system,
+                action="abstain",
+                reason_codes=["ACTIVE_MODEL_APPLICATION_NOT_YET_IMPLEMENTED"],
+                synthetic=False,
+                confidence=0.0,
+            )
+
+    return make_output(
+        system=system,
+        action="abstain",
+        reason_codes=["NO_APPROVED_MODEL"],
+        synthetic=False,
+        confidence=0.0,
+    )
+
+
 def load_active_engine_model(db: Any, system: str) -> tuple[dict[str, Any] | None, list[str]]:
     """Load this one engine's own active, hash-verified model, if any.
 

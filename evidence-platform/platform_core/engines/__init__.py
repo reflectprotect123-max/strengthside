@@ -26,8 +26,9 @@ def run_all(snapshot: Mapping[str, Any], db: Any = None) -> dict[str, dict[str, 
     Cross-system arbitration happens later, in BIG MAC (`platform_core.decision`),
     never here. `db`, when given, lets each engine check for its OWN
     active, hash-verified model (runtime_artifacts.system=<name>) - as of
-    Phase 3 only platform_core/engines/strength.py's evaluate() actually
-    uses it; the other four accept and ignore it until their own turn.
+    Phase 4 all five engines use this seam (common.run_generic_engine), each
+    scoped strictly to its own system; none has a reviewed rule module to
+    apply real content with yet, so all five still abstain for real input.
     """
     return {name: module.evaluate(snapshot, db) for name, module in _MODULES.items()}
 
