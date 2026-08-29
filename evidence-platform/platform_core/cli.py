@@ -1,6 +1,7 @@
 from __future__ import annotations
 import argparse,json
 from pathlib import Path
+from . import engines
 from .db import connect,migrate
 from .decision import decide,replay
 from .gates import promotion_gate,research_gate,research_queue,attempt_promotion
@@ -26,7 +27,7 @@ def make_parser():
     x=sub.add_parser("revoke"); x.add_argument("record_type"); x.add_argument("record_id"); x.add_argument("--actor",required=True); x.add_argument("--reason",required=True)
     sub.add_parser("research-gate")
     x=sub.add_parser("research-queue"); x.add_argument("--limit",type=int,default=200)
-    x=sub.add_parser("simulate"); x.add_argument("--snapshot",required=True); x.add_argument("--outputs",required=True); x.add_argument("--synthetic-model"); x.add_argument("--persist",action="store_true")
+    x=sub.add_parser("simulate"); x.add_argument("--snapshot",required=True); x.add_argument("--outputs"); x.add_argument("--synthetic-model"); x.add_argument("--persist",action="store_true")
     x=sub.add_parser("replay"); x.add_argument("receipt_id")
     return p
 
@@ -50,7 +51,8 @@ def main(argv=None):
     elif a.command=="research-gate": emit(research_gate(db))
     elif a.command=="research-queue": emit(research_queue(db,a.limit))
     elif a.command=="simulate":
-        snapshot=json.loads(Path(a.snapshot).read_text()); outputs=json.loads(Path(a.outputs).read_text())
+        snapshot=json.loads(Path(a.snapshot).read_text())
+        outputs=json.loads(Path(a.outputs).read_text()) if a.outputs else engines.run_all(snapshot)
         models=[json.loads(Path(a.synthetic_model).read_text())] if a.synthetic_model else None
         emit(decide(db,snapshot,outputs,models,a.persist))
     elif a.command=="replay": emit(replay(db,a.receipt_id))

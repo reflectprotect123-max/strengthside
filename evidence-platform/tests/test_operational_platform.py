@@ -125,12 +125,23 @@ class OperationalPlatformTests(unittest.TestCase):
     def test_decide_rejects_malformed_domain_output_content(self):
         snapshot=json.loads((ROOT/"fixtures/synthetic/athlete-snapshot.json").read_text())
         outputs=json.loads((ROOT/"fixtures/synthetic/five-system-outputs.json").read_text())
-        blank_proposal=dict(outputs); blank_proposal["strength"]={"proposal":"  ","confidence":0.5}
-        with self.assertRaises(ValueError): decide(self.connection,snapshot,blank_proposal)
-        bad_confidence=dict(outputs); bad_confidence["nutrition"]={"proposal":"hold","confidence":1.5}
-        with self.assertRaises(ValueError): decide(self.connection,snapshot,bad_confidence)
+        # Wrong shape entirely - still a ValueError, but not what this test is really about.
         wrong_type=dict(outputs); wrong_type["recovery"]=["hold"]
         with self.assertRaises(ValueError): decide(self.connection,snapshot,wrong_type)
+        # Right shape, malformed content: out-of-range confidence.
+        bad_confidence=dict(outputs)
+        bad_confidence["nutrition"]=dict(outputs["nutrition"]); bad_confidence["nutrition"]["confidence"]=1.5
+        with self.assertRaises(ValueError): decide(self.connection,snapshot,bad_confidence)
+        # Right shape, malformed content: candidate action outside ALLOWED_ACTIONS.
+        bad_action=dict(outputs)
+        strength=json.loads(json.dumps(outputs["strength"])); strength["proposed_actions"][0]["action"]="deadlift_more"
+        bad_action["strength"]=strength
+        with self.assertRaises(ValueError): decide(self.connection,snapshot,bad_action)
+        # Right shape, malformed content: candidate claims the wrong source_system.
+        bad_source=dict(outputs)
+        recovery=json.loads(json.dumps(outputs["recovery"])); recovery["proposed_actions"][0]["source_system"]="nutrition"
+        bad_source["recovery"]=recovery
+        with self.assertRaises(ValueError): decide(self.connection,snapshot,bad_source)
     def test_packaged_pre_migration_db_bootstraps_v2_tables_without_data_loss(self):
         packaged=ROOT/"runtime/evidence.db"
         packaged_hash_before=hashlib.sha256(packaged.read_bytes()).hexdigest()

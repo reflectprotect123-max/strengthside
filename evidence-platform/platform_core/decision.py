@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-from .engines.common import EngineInputError, validate_snapshot
+from .engines.common import EngineInputError, validate_engine_output, validate_snapshot
 from .receipt_replay import (
     build_receipt,
     canonical_json,
@@ -61,29 +61,22 @@ def load_runtime_models(db):
 def validate_domain_outputs(domain_outputs):
     """Reject malformed five-system output shapes, not just missing keys.
 
-    This is the shared-contract enforcement point the gate relies on: a
-    domain output that is present but structurally wrong (missing/blank
-    proposal, out-of-range confidence, wrong types) must fail here rather
-    than reach a decision receipt.
+    This is the shared-contract enforcement point the gate relies on: each
+    domain output must satisfy the same contract
+    platform_core/engines/<system>.py produces
+    (engines.common.validate_engine_output) - the one shared output shape
+    for all five systems (Phase 1). A domain output that is present but
+    structurally wrong must fail here rather than reach a decision receipt.
     """
     if not isinstance(domain_outputs, Mapping):
         return ["DOMAIN_OUTPUTS_NOT_AN_OBJECT"]
     problems = []
     for name in DOMAINS:
         value = domain_outputs.get(name)
-        if not isinstance(value, Mapping) or not value:
-            problems.append("EMPTY_OR_MISSING_DOMAIN:" + name.upper())
-            continue
-        proposal = value.get("proposal")
-        if not isinstance(proposal, str) or not proposal.strip():
-            problems.append("INVALID_PROPOSAL:" + name.upper())
-        confidence = value.get("confidence")
-        if confidence is not None and (
-            not isinstance(confidence, (int, float))
-            or isinstance(confidence, bool)
-            or not 0 <= float(confidence) <= 1
-        ):
-            problems.append("INVALID_CONFIDENCE:" + name.upper())
+        try:
+            validate_engine_output(value, name)
+        except EngineInputError as exc:
+            problems.append(f"INVALID_DOMAIN_OUTPUT:{name.upper()}:{exc}")
     return problems
 
 
