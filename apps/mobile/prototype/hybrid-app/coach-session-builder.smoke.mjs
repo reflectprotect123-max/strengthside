@@ -12,7 +12,8 @@ const src = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 
 for (const needle of [
   'Coach instructions',
-  'Add Block',
+  'Add a block type',
+  '+ Strength',
   'For Weight',
   'For Completion',
   'Choose exercise',
