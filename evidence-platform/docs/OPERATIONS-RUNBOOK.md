@@ -34,3 +34,29 @@ understands the v2 shape.
 ## LLM boundary
 
 Gemini or another LLM may search, classify, summarize and propose structured rows offline. It cannot change active rules, model parameters, safety policy or athlete decisions.
+
+## LLM-assisted candidate extraction (research/, added 29 August 2026)
+
+`research/` is a separate package OUTSIDE `platform_core` - it makes real network
+calls and must never be imported by the runtime core (`platform_core` has its own
+test proving it imports no network/LLM library; `research/`'s own tests prove the
+reverse - that `platform_core` never imports `research`). Run it with:
+
+```
+OPENROUTER_API_KEY=... python3 -m research.extract_candidates_cli \
+  --question "..." --system strength --source-id SRC-XXXX \
+  --excerpt-file path.txt --out research/candidates/strength.json
+```
+
+Only `google/gemini-*` and `google/gemma-*` model IDs are accepted
+(`research/llm_client.py::ALLOWED_MODEL_PREFIXES`) - enforced in code, not just
+documented, per the ratified Constitution's Gemini/Gemma-only provider list. Output
+lands in `research/candidates/` (gitignored, untrusted scratch) - never written to
+`claims/claim-registry.csv` or any other trusted registry directly. A human reviews
+the staged JSON and manually promotes anything real via the existing
+`register-reviewer` / `add-review` / `promote` CLI commands, exactly like any other
+machine-extracted candidate.
+
+Known limitation: OpenRouter's free-tier (`:free`) models share a rate-limited pool
+across all free users; a 429 there is expected friction, not a bug - the client
+raises a clear `LLMClientError`, never a crash or a silent empty result.

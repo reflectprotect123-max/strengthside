@@ -33,6 +33,14 @@ tmp/
 supabase/.temp/
 .capgo
 
+# evidence-platform: never commit local credentials
+evidence-platform/.env
+evidence-platform/.env.*
+
+# evidence-platform: LLM-drafted research candidates are untrusted scratch
+# output until a human reviews and manually merges them into a real registry
+evidence-platform/research/candidates/
+
 # evidence-platform (Python) build/runtime cruft
 evidence-platform/**/__pycache__/
 evidence-platform/**/*.pyc
