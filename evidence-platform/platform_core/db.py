@@ -19,6 +19,23 @@ def migrate(db: sqlite3.Connection) -> None:
     without this tracking, cli.py's main() - which calls migrate() on every
     single invocation - would crash on the second-ever run against any real
     database file.
+
+    Known limitations, both low-probability for this project's actual usage
+    (a local file, one CLI invocation or test process at a time) but real:
+    Python's sqlite3.executescript() always issues an implicit COMMIT before
+    running, so it cannot be wrapped in this function's own explicit
+    transaction - two migrate() calls racing concurrently against the same
+    file could both pass the "already applied" check for the same migration
+    before either records it, and a migration that fails partway through
+    leaves whatever DDL already ran permanently committed even though the
+    file is not marked applied (a retry re-runs the whole file, which is
+    only safe today because every current migration's statements are each
+    independently idempotent except migration 006's, which only fails this
+    way if it fails AFTER its ALTER TABLE already succeeded once - possible
+    in principle, never observed). Fully closing either gap means executing
+    each migration statement-by-statement inside a real explicit
+    transaction instead of executescript(), which nothing about this
+    project's actual single-operator usage has ever required.
     """
     db.execute(
         "CREATE TABLE IF NOT EXISTS schema_migrations("
