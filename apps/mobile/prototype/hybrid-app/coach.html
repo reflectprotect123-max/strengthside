@@ -120,6 +120,7 @@ a{color:var(--coach-link)}
 input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);transition:border-color var(--ease)}
 input:hover,select:hover,textarea:hover{border-color:rgba(255,255,255,.14)}
 textarea{min-height:88px;resize:vertical}
+.prep-textarea,.block-card.block-text textarea{min-height:200px;resize:vertical;line-height:1.45}
 label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .field{margin-top:12px}
 .stack{display:grid;gap:12px}
@@ -1162,6 +1163,8 @@ function setBlockType(bi, type){
   const t = tpl(ui.templateId);
   const b = t.blocks[bi];
   if (!b) return;
+  if (b.supersetPartner && bi > 0) t.blocks[bi - 1].superset = false;
+  if (b.superset && t.blocks[bi + 1]?.supersetPartner) delete t.blocks[bi + 1].supersetPartner;
   if (type === 'strength') {
     b.type = 'strength';
     b.scoring = b.scoring === 'completion' ? 'completion' : 'weight';
@@ -1216,16 +1219,37 @@ function blockTypeSelectHtml(i, b){
 }
 
 function removeBlk(bi){
+  if (!confirm('Delete this block?')) return;
   if (ui.exEdit && ui.exEdit.bi === bi) closeCoachExEdit();
   const t = tpl(ui.templateId);
+  const b = t.blocks[bi];
+  if (b?.supersetPartner && bi > 0) t.blocks[bi - 1].superset = false;
+  if (b?.superset && t.blocks[bi + 1]?.supersetPartner) delete t.blocks[bi + 1].supersetPartner;
   t.blocks.splice(bi, 1);
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }
 
+function isSupersetPartnerBlock(blocks, bi){
+  const b = blocks[bi];
+  if (!b || blockTypeValue(b) !== 'strength') return false;
+  if (b.supersetPartner) return true;
+  const prev = blocks[bi - 1];
+  return !!(prev && prev.superset && blockTypeValue(prev) === 'strength');
+}
+
 function toggleSuperset(bi, on){
   const t = tpl(ui.templateId);
+  t.blocks.forEach((b) => {
+    delete b.supersetPartner;
+  });
   t.blocks[bi].superset = on;
+  if (on) {
+    const next = t.blocks[bi + 1];
+    if (!next || blockTypeValue(next) !== 'strength') {
+      showCoachToast('Add a strength block after this one to complete the superset pair.', 'warn');
+    }
+  }
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }
@@ -1378,8 +1402,8 @@ function blockExerciseHtml(b, bi){
   const kind = blockTypeValue(b);
   if (kind === 'conditioning' || kind === 'recovery') return condEngineHtml(b, bi);
   if (kind === 'text') {
-    return `<div class="field"><label>Block notes</label>
-      <textarea oninput="tpl(ui.templateId).blocks[${bi}].notes=this.value;persist()">${esc(b.notes||'')}</textarea></div>`;
+    return `<div class="field prep-field"><label>Block notes</label>
+      <textarea class="prep-textarea" rows="8" oninput="tpl(ui.templateId).blocks[${bi}].notes=this.value;persist();growTextAreas()">${esc(b.notes||'')}</textarea></div>`;
   }
   const exHtml = (b.exercises||[]).map((e, ei) => `<div class="exercise-card">
     <div class="row" style="align-items:flex-start"><span class="letter-badge" style="width:26px;height:26px;font-size:11px">${esc(b.letter||'?')}</span>
@@ -1397,11 +1421,13 @@ function sessionHtml(){
   ui.lib = 'sessions';
   const blocks = tplBlocks().map((b, i) => {
     const kind = blockTypeValue(b);
+    const blocksRef = tpl(ui.templateId).blocks;
+    const isPartner = isSupersetPartnerBlock(blocksRef, i);
     const scoring = `<select title="How the athlete logs this strength block" onchange="tpl(ui.templateId).blocks[${i}].scoring=this.value;persist()"><option value="weight" ${b.scoring==='weight'?'selected':''}>Track load</option><option value="completion" ${b.scoring==='completion'?'selected':''}>Completion only</option></select>`;
-    const superset = kind === 'strength'
+    const superset = kind === 'strength' && !isPartner
       ? `<label class="row" style="gap:6px;margin:0;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500">
           <input type="checkbox" style="width:auto" ${b.superset?'checked':''} onchange="toggleSuperset(${i},this.checked)"> Superset</label>`
-      : '';
+      : (isPartner ? `<span class="pill" style="font-size:10px">Superset pair</span>` : '');
     return `<section class="block-card block-${kind}">
       <div class="block-head">
         <span class="letter-badge">${esc(b.letter||'?')}</span>
@@ -1515,6 +1541,15 @@ function gateHtml(){
     </div></div>`;
 }
 
+function growTextAreas(){
+  try {
+    document.querySelectorAll('.prep-textarea, .instructions-box textarea').forEach(function(el){
+      el.style.height = 'auto';
+      el.style.height = Math.max(el.scrollHeight, 200) + 'px';
+    });
+  } catch (e) {}
+}
+
 function render(){
   const acc = account();
   $('gate').classList.add('hidden');
@@ -1536,6 +1571,7 @@ function render(){
   else if (ui.view==='nutrition') body = nutritionHtml();
   else body = feedHtml();
   $('coachApp').innerHTML = coachChrome(body);
+  if (ui.view === 'session') growTextAreas();
   scheduleRefreshCloudStates();
 }
 
@@ -1552,7 +1588,7 @@ window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogi
 window.saveComment=saveComment; window.toggleCard=toggleCard;
 window.openSession=openSession; window.openProgram=openProgram;
 window.newTemplate=newTemplate; window.newProgram=newProgram; window.parseSets=parseSets; window.addEx=addEx; window.addBlk=addBlk;
-window.removeBlk=removeBlk; window.removeEx=removeEx; window.toggleSuperset=toggleSuperset;
+window.removeBlk=removeBlk; window.removeEx=removeEx; window.toggleSuperset=toggleSuperset; window.growTextAreas=growTextAreas;
 window.openExPicker=openExPicker; window.closeExPicker=closeExPicker; window.pickExercise=pickExercise;
 window.setRowRep=setRowRep; window.setRowLoad=setRowLoad;
 window.patchCond=patchCond; window.setCondFmt=setCondFmt; window.nudgeCondMin=nudgeCondMin;

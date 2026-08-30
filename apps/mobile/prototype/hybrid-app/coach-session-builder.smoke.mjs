@@ -24,6 +24,9 @@ for (const needle of [
   'Steady-state',
   'Edit prescription',
   'log-columns.js',
+  'removeBlk',
+  'prep-textarea',
+  'Delete block',
 ]) {
   if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);
 }
@@ -59,6 +62,29 @@ if (t.blocks[0].letter !== 'A') throw new Error('expected block letter A');
 if (t.blocks[0].scoring !== 'weight') throw new Error('scoring weight');
 const line = L.prescriptionLine(t.blocks[0].exercises[0]);
 if (!line.includes('3')) throw new Error('prescription line: ' + line);
+
+const cross = L.decorateBlocks([
+  L.makeBlock({
+    type: 'strength',
+    category: 'Strength/Power',
+    exercises: [L.makeExercise({ name: 'Squat A', sets: 3, reps: '5' })],
+  }),
+  L.makeBlock({
+    type: 'strength',
+    category: 'Strength/Power',
+    superset: true,
+    exercises: [L.makeExercise({ name: 'Press B', sets: 3, reps: '8' })],
+  }),
+  L.makeBlock({
+    type: 'strength',
+    category: 'Strength/Power',
+    exercises: [L.makeExercise({ name: 'Row C', sets: 3, reps: '10' })],
+  }),
+]);
+if (cross[0].letter !== 'A') throw new Error('cross block A letter');
+if (cross[1].letter !== 'B1') throw new Error('cross superset leader expected B1 got ' + cross[1].letter);
+if (cross[2].letter !== 'B2') throw new Error('cross superset partner expected B2 got ' + cross[2].letter);
+if (!cross[2].supersetPartner) throw new Error('cross superset partner flag');
 
 const session = L.instantiateSession(t, { athleteId: 'ath-1', date: '2026-08-27', name: t.name });
 if (!session.blocks.length) throw new Error('instantiateSession empty');
