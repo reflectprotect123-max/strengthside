@@ -135,7 +135,7 @@
   }
 
   /** Sheet draft while Edit lift is open */
-  let sheet = { sets: 3, restSec: 120, targetRir: null, columns: [] };
+  let sheet = { sets: 3, restSec: 120, targetRir: null, showOverrides: false, columns: [] };
   let changeHandler = null;
 
   function setChangeHandler(fn) {
@@ -155,15 +155,44 @@
       sets,
       restSec,
       targetRir,
+      showOverrides: !!(ex && ex.logColumns && ex.logColumns.some((c) => perSetOverrideActive(c.values, sets))),
       columns: normalizeColumns({ ...(ex || {}), sets }),
     };
     return sheet;
   }
 
+  /** True when any set after 1 differs from set 1 (coach authored per-set overrides). */
+  function perSetOverrideActive(values, setCount) {
+    const vals = values || [];
+    const first = String(vals[0] == null ? '' : vals[0]).trim();
+    for (let i = 1; i < setCount; i++) {
+      const v = String(vals[i] == null ? '' : vals[i]).trim();
+      if (v !== first && v !== '') return true;
+    }
+    return false;
+  }
+
+  function toggleOverrides(on) {
+    sheet.showOverrides = !!on;
+    if (!sheet.showOverrides) {
+      sheet.columns.forEach((c) => {
+        const base = (c.values || [])[0] == null ? '' : c.values[0];
+        if (shouldForwardFillColumn(c.kind)) {
+          c.values = splitValues(base, sheet.sets);
+        } else {
+          c.values = [base, ...Array.from({ length: Math.max(0, sheet.sets - 1) }, () => '')];
+        }
+        c.value = joinValues(c.values);
+      });
+    }
+    refreshPrescription();
+    notifyChange();
+  }
+
   function setTargetRir(v) {
     const n = String(v == null ? '' : v).trim();
     sheet.targetRir = n === '' || !Number.isFinite(Number(n)) ? null : Math.max(0, Math.min(10, Math.round(Number(n))));
-    refreshTwin();
+    refreshPrescription();
   }
 
   function getSheetColumns() {
@@ -187,13 +216,14 @@
     sheet.restSec = Math.max(0, Number(v) || 0);
     const btn = global.document && global.document.getElementById('builderRestBtn');
     if (btn) btn.textContent = 'Rest ' + fmtRest(sheet.restSec);
+    refreshPrescription();
     notifyChange();
   }
 
   function onKindChange(colIdx, kind) {
     if (!sheet.columns[colIdx]) return;
     sheet.columns[colIdx].kind = KIND_MAP[kind] ? kind : 'reps';
-    refreshTwin();
+    refreshPrescription();
     notifyChange();
   }
 
@@ -201,12 +231,27 @@
     return kind === 'reps' || kind === 'reps_range';
   }
 
+  function onPrescriptionChange(colIdx, value) {
+    const col = sheet.columns[colIdx];
+    if (!col) return;
+    if (!Array.isArray(col.values)) col.values = splitValues(col.value, sheet.sets);
+    col.values[0] = value;
+    if (shouldForwardFillColumn(col.kind)) {
+      for (let i = 1; i < sheet.sets; i++) col.values[i] = value;
+    } else if (!sheet.showOverrides) {
+      for (let i = 1; i < sheet.sets; i++) col.values[i] = '';
+    }
+    col.value = joinValues(col.values);
+    refreshPrescription();
+    notifyChange();
+  }
+
   function onCellChange(colIdx, setIdx, value) {
     const col = sheet.columns[colIdx];
     if (!col) return;
     if (!Array.isArray(col.values)) col.values = splitValues(col.value, sheet.sets);
     col.values[setIdx] = value;
-    if (shouldForwardFillColumn(col.kind)) {
+    if (shouldForwardFillColumn(col.kind) && !sheet.showOverrides) {
       // Forward-fill reps column only — never backfill earlier sets.
       for (let i = setIdx + 1; i < sheet.sets; i++) col.values[i] = value;
       syncForwardColumnInputs(colIdx, setIdx, value);
@@ -222,6 +267,7 @@
       }
     }
     col.value = joinValues(col.values);
+    refreshPrescription();
     notifyChange();
   }
 
@@ -241,11 +287,15 @@
     sheet.sets = next;
     sheet.columns.forEach((c) => {
       c.values = splitValues(joinValues(c.values || splitValues(c.value, next)), next);
+      if (!sheet.showOverrides && !shouldForwardFillColumn(c.kind)) {
+        const base = c.values[0] == null ? '' : c.values[0];
+        c.values = [base, ...Array.from({ length: Math.max(0, next - 1) }, () => '')];
+      }
       c.value = joinValues(c.values);
     });
     const setsInput = global.document && global.document.getElementById('exSets');
     if (setsInput) setsInput.value = String(next);
-    refreshTwin();
+    refreshPrescription();
   }
 
   function addSet() {
@@ -270,14 +320,14 @@
       value: '',
       values: splitValues('', sheet.sets),
     });
-    refreshTwin();
+    refreshPrescription();
     notifyChange();
   }
 
   function removeColumn(idx) {
     if (sheet.columns.length <= 1) return;
     sheet.columns.splice(idx, 1);
-    refreshTwin();
+    refreshPrescription();
     notifyChange();
   }
 
@@ -288,24 +338,81 @@
     return String(v == null || v === '' ? '—' : v);
   }
 
+  function metricKindsLabel() {
+    return KINDS.map((k) => k.label).join(', ');
+  }
+
+  function builderPrescriptionGridHtml() {
+    const cols = sheet.columns;
+    const metricCards = cols
+      .map((c, ci) => {
+        const meta = kindMeta(c.kind);
+        const val = (c.values || [])[0] == null ? '' : c.values[0];
+        const ph = meta.placeholder || '';
+        const removeBtn =
+          cols.length > 1
+            ? `<button type="button" class="btn ghost small rx-metric-remove" aria-label="Remove metric" onclick="LogColumns.removeColumn(${ci})">×</button>`
+            : '';
+        return `<div class="rx-metric-col">
+          <div class="row" style="align-items:center;gap:6px;margin-bottom:6px">
+            <select class="logcol-kind" aria-label="Metric ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>
+            ${removeBtn}
+          </div>
+          <input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph || 'Set 1'}" aria-label="${meta.label} set 1" onchange="LogColumns.onPrescriptionChange(${ci},this.value)" oninput="LogColumns.onPrescriptionChange(${ci},this.value)">
+          <p class="rx-metric-hint">${shouldForwardFillColumn(c.kind) ? 'Applies to all sets' : 'Set 1 · later sets autoreg unless overridden'}</p>
+        </div>`;
+      })
+      .join('');
+    const addBtn =
+      cols.length < 3
+        ? `<button type="button" class="btn small" onclick="LogColumns.addColumn()">+ Add metric</button>`
+        : `<span class="muted" style="font-size:11px">Max 3 metrics</span>`;
+    return `<div class="card rx-prescription-card" id="builderPrescriptionCard" style="margin-top:10px">
+      <div class="row" style="align-items:flex-start">
+        <div>
+          <div class="title">Prescription</div>
+          <div class="meta">${sheet.sets} sets · set 1 below · sets 2+ autoreg in-session</div>
+        </div>
+        ${addBtn}
+      </div>
+      <div class="rx-metric-grid cols-${Math.min(3, cols.length)}">${metricCards}</div>
+      <p class="muted" style="margin:10px 0 0;font-size:11px;line-height:1.45">Loggable metrics: ${metricKindsLabel()}.</p>
+      <details class="rx-overrides" ${sheet.showOverrides ? 'open' : ''} ontoggle="LogColumns.toggleOverrides(this.open)">
+        <summary>Per-set overrides (optional)</summary>
+        ${builderOverridesTableHtml()}
+      </details>
+    </div>`;
+  }
+
+  function builderOverridesTableHtml() {
+    const cols = sheet.columns;
+    const head = `<tr><th>Set</th>${cols.map((c) => `<th>${kindMeta(c.kind).loggerLabel}</th>`).join('')}</tr>`;
+    const body = Array.from({ length: sheet.sets }, (_, i) => {
+      const cells = cols
+        .map((c, ci) => {
+          const val = (c.values || [])[i] == null ? '' : c.values[i];
+          const ph = i === 0 ? kindMeta(c.kind).placeholder || '' : shouldForwardFillColumn(c.kind) ? 'same as set 1' : 'autoreg';
+          return `<td><input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></td>`;
+        })
+        .join('');
+      return `<tr><td>${i + 1}</td>${cells}</tr>`;
+    }).join('');
+    return `<table class="set-table rx-override-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  }
+
   function builderLoggerTwinHtml() {
     const cols = sheet.columns;
     const targetRirLabel =
       sheet.targetRir != null ? `Target ${sheet.targetRir} RIR` : 'Target 2 RIR (default)';
 
     const rows = Array.from({ length: sheet.sets }, (_, i) => {
-      const isLast = i === last;
       const active = i === 0;
       const cells = cols
-        .map((c, ci) => {
+        .map((c) => {
           const meta = kindMeta(c.kind);
           const val = (c.values || [])[i] == null ? '' : c.values[i];
-          const ph = meta.placeholder || '';
-          const head =
-            i === 0
-              ? `<select class="logcol-kind mini-select" aria-label="Column ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>`
-              : `<span class="mini">${meta.loggerLabel}</span>`;
-          return `<div>${head}<input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></div>`;
+          const display = String(val || '').trim() || (active ? '—' : 'autoreg');
+          return `<div><span class="mini">${meta.loggerLabel}</span><input disabled value="${display.replace(/"/g, '&quot;')}"></div>`;
         })
         .join('');
       return `<div class="setrow builder-setrow ${active ? 'last-set' : ''} ${active ? '' : 'done'}" data-set="${i}">
@@ -324,20 +431,29 @@
         </div>
         <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
       </div>
-      <div class="guardrail" style="margin-top:10px">Athlete rates <b>difficulty after each set</b> — the engine adjusts load for the next set. Set 1 uses your prescription; later sets autoreg in-session.</div>
+      <div class="guardrail" style="margin-top:10px">Athlete logs <b>${cols.map((c) => kindMeta(c.kind).loggerLabel).join(' + ')}</b> each set, then rates difficulty — engine adjusts the next set.</div>
       <div class="divider"></div>
       ${rows}
-      <div class="btns">
-        <button type="button" class="btn small" onclick="LogColumns.addSet()">Add set</button>
-        <button type="button" class="btn small" onclick="LogColumns.removeSet()">Remove set</button>
-        <button type="button" class="btn small" onclick="LogColumns.addColumn()">Add column</button>
-      </div>
       <button type="button" class="btn primary block" style="margin-top:12px" disabled>Complete exercise</button>
     </div>`;
   }
 
+  function builderPrescriptionHtml() {
+    return `${builderPrescriptionGridHtml()}${builderLoggerTwinHtml()}`;
+  }
+
   function builderColumnsHtml() {
-    return builderLoggerTwinHtml();
+    return builderPrescriptionHtml();
+  }
+
+  function refreshPrescription() {
+    const presc = global.document && global.document.getElementById('builderPrescriptionCard');
+    if (presc) {
+      const wrap = global.document.createElement('div');
+      wrap.innerHTML = builderPrescriptionGridHtml();
+      presc.replaceWith(wrap.firstChild);
+    }
+    refreshTwin();
   }
 
   function refreshTwin() {
@@ -381,6 +497,8 @@
     syncLegacyFromColumns,
     columnsMeta,
     builderColumnsHtml,
+    builderPrescriptionHtml,
+    builderPrescriptionGridHtml,
     builderLoggerTwinHtml,
     beginSheet,
     getSheetColumns,
@@ -389,6 +507,7 @@
     onRestChange,
     setTargetRir,
     onKindChange,
+    onPrescriptionChange,
     onCellChange,
     onValueChange: onCellChange,
     setChangeHandler,
@@ -397,6 +516,7 @@
     addSet,
     removeSet,
     resizeSets,
+    toggleOverrides,
     loggerCellsHtml,
     applyColumnTargetKinds,
     fmtRest,

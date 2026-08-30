@@ -24,6 +24,7 @@ for (const needle of [
   'Steady-state',
   'Edit prescription',
   'Target RIR',
+  'builderPrescriptionHtml',
   'log-columns.js',
   'removeBlk',
   'prep-textarea',

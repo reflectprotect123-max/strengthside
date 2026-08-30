@@ -10,8 +10,8 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const logSrc = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 
-if (!html.includes('LogColumns.builderLoggerTwinHtml')) {
-  throw new Error('exerciseSheet missing logger-twin builder UI');
+if (!html.includes('LogColumns.builderPrescriptionHtml')) {
+  throw new Error('exerciseSheet missing prescription builder UI');
 }
 if (!html.includes('LogColumns.syncLegacyFromColumns')) {
   throw new Error('saveExercise missing LogColumns.syncLegacyFromColumns');

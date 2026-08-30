@@ -203,6 +203,18 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .guardrail{font-size:12px;color:var(--muted);padding:8px 10px;border-radius:8px;background:rgba(212,165,116,.08);border:1px solid rgba(212,165,116,.15)}
 .divider{height:1px;background:var(--line);margin:10px 0}
 .rx-summary{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.rx-metric-grid{display:grid;gap:10px;margin-top:12px}
+.rx-metric-grid.cols-1{grid-template-columns:1fr}
+.rx-metric-grid.cols-2{grid-template-columns:repeat(2,1fr)}
+.rx-metric-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.rx-metric-col{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.rx-metric-col input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel3);color:var(--text);font-size:13px}
+.rx-metric-hint{margin:6px 0 0;font-size:10px;color:var(--dim);line-height:1.35}
+.rx-metric-remove{min-width:28px;padding:4px 8px}
+.rx-overrides{margin-top:12px}
+.rx-overrides summary{cursor:pointer;font-size:12px;font-weight:650;color:var(--muted);padding:6px 0}
+.rx-overrides[open] summary{color:var(--copper2);margin-bottom:8px}
+.rx-override-table{margin-top:4px}
 .add-block-bar{margin-top:20px}
 .kebab-btn{min-height:32px;min-width:32px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);transition:border-color var(--ease),color var(--ease)}
 .kebab-btn:hover{border-color:rgba(212,165,116,.35);color:var(--text)}
@@ -1122,10 +1134,13 @@ function coachExerciseRxHtml(bi, ei){
   }
   LogColumns.beginSheet(ex);
   return `${coachTargetRirField(bi, ei)}
-    <div class="field" style="margin-top:8px"><label>Rest seconds</label>
-    <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
-    <input type="hidden" id="exSets" value="${LogColumns.getSetCount()}">
-    ${LogColumns.builderLoggerTwinHtml()}
+    <div class="rx-grid cols-4" style="margin-top:8px">
+      <div class="field"><label>Sets</label>
+        <input type="number" min="1" max="12" id="exSets" value="${LogColumns.getSetCount()}" onchange="LogColumns.resizeSets(Number(this.value))"></div>
+      <div class="field"><label>Rest (seconds)</label>
+        <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
+    </div>
+    ${LogColumns.builderPrescriptionHtml()}
     <div class="btns" style="margin-top:8px;justify-content:flex-start">
       <button type="button" class="btn small primary" onclick="closeCoachExEdit()">Done</button>
     </div>`;

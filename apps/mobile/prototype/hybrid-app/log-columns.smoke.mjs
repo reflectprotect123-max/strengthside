@@ -11,7 +11,7 @@ const src = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
-if (!html.includes('LogColumns.builderLoggerTwinHtml')) throw new Error('builder logger twin not wired');
+if (!html.includes('LogColumns.builderPrescriptionHtml')) throw new Error('builder prescription grid not wired');
 if (!html.includes('LogColumns.loggerCellsHtml')) throw new Error('logger columns UI not wired');
 if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v99'")) throw new Error('expected cache v90');
 if (!html.includes('Rest seconds')) throw new Error('builder missing Rest seconds above twin');
@@ -36,18 +36,29 @@ for (const k of ['reps', 'reps_range', 'weight_kg', 'weight_pct_wm', 'weight_lwp
 LC.beginSheet({ sets: 4, reps: '10, 10, 10, MAX', restSec: 150 });
 if (LC.getSetCount() !== 4) throw new Error('set count');
 if (LC.getRestSec() !== 150) throw new Error('rest');
-const twin = LC.builderLoggerTwinHtml();
-if (!twin.includes('builderLoggerCard')) throw new Error('twin card missing');
-if (!twin.includes('mini-select') && !twin.includes('logcol-kind')) throw new Error('column dropdowns missing');
-if (!twin.includes('builder-setrow')) throw new Error('set rows missing');
-if (!twin.includes('Rest 02:30')) throw new Error('rest chip missing');
-if (!twin.includes('Progress')) throw new Error('Progress header missing');
-
 const cols = LC.getSheetColumns();
 if (cols.length !== 2) throw new Error('default columns');
 if (cols[1].values.length !== 4) throw new Error('per-set values');
 
 const out = { sets: 3, reps: 'x' };
+const twin = LC.builderPrescriptionHtml();
+if (!twin.includes('builderPrescriptionCard')) throw new Error('prescription card missing');
+if (!twin.includes('builderLoggerCard')) throw new Error('twin card missing');
+if (!twin.includes('logcol-kind')) throw new Error('column dropdowns missing');
+if (!twin.includes('Per-set overrides')) throw new Error('overrides section missing');
+if (!twin.includes('Athlete logger preview')) throw new Error('preview header missing');
+if (!twin.includes('Rest 02:30')) throw new Error('rest chip missing');
+if (!twin.includes('Reps (min–max)')) throw new Error('metric kinds label missing');
+
+LC.beginSheet({ sets: 3, reps: '8', restSec: 120 });
+LC.onPrescriptionChange(1, '5-7');
+const presc = LC.getSheetColumns()[1].values;
+if (presc.join('|') !== '5-7|5-7|5-7') throw new Error('prescription forward fill reps: ' + presc.join('|'));
+LC.onPrescriptionChange(0, '100');
+const loadPresc = LC.getSheetColumns()[0].values;
+if (loadPresc[1] !== '' || loadPresc[2] !== '') throw new Error('load set 1 only: ' + loadPresc.join('|'));
+
+LC.beginSheet({ sets: 4, reps: '10, 10, 10, MAX', restSec: 150 });
 LC.syncLegacyFromColumns(
   out,
   [
