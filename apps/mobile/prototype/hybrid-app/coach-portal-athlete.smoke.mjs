@@ -37,4 +37,9 @@ if (!state.sessions[0].coachWithdrawn) throw new Error('coachWithdrawn flag');
 
 if (typeof Sync.formatStatusLine() !== 'string') throw new Error('formatStatusLine string');
 
+const html = readFileSync(join(dir, 'index.html'), 'utf8');
+if (!html.includes('function coachControlsStrength(')) throw new Error('coachControlsStrength missing');
+if (!html.includes('coach-strength-hidden')) throw new Error('coach-strength-hidden CSS missing');
+if (!html.includes('ath-strength-build')) throw new Error('ath-strength-build markers missing');
+
 console.log('coach-portal-athlete: ok');
