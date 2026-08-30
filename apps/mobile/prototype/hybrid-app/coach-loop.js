@@ -1339,6 +1339,28 @@
     return hasLoad ? `${reps} @ ${loads}kg` : reps;
   }
 
+  /** Superset leader + partner move as one chunk. */
+  function blockMoveSpan(blocks, from) {
+    const list = blocks || [];
+    const b = list[from];
+    if (!b) return { start: from, len: 0 };
+    if (b.supersetPartner && from > 0) return { start: from - 1, len: 2 };
+    if (b.superset && list[from + 1]?.supersetPartner) return { start: from, len: 2 };
+    return { start: from, len: 1 };
+  }
+
+  function reorderBlocks(blocks, from, to) {
+    const list = clone(blocks || []);
+    if (from === to || from < 0 || to < 0) return list;
+    const { start, len } = blockMoveSpan(list, from);
+    if (!len || (to >= start && to < start + len)) return list;
+    const chunk = list.splice(start, len);
+    let insertAt = to > start ? to - len : to;
+    insertAt = Math.max(0, Math.min(insertAt, list.length));
+    list.splice(insertAt, 0, ...chunk);
+    return list;
+  }
+
   return {
     STORAGE,
     DAY_NAMES,
@@ -1367,6 +1389,8 @@
     isWorkBlock,
     letterBlocks,
     decorateBlocks,
+    blockMoveSpan,
+    reorderBlocks,
     normalizeBlockType,
     formatMmSs,
     parseMmSs,

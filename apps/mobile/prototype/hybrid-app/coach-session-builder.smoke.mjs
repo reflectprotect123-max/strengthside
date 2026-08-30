@@ -27,6 +27,9 @@ for (const needle of [
   'removeBlk',
   'prep-textarea',
   'Delete block',
+  'block-drag-handle',
+  'coachBlockList',
+  'moveBlock',
 ]) {
   if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);
 }
@@ -85,6 +88,19 @@ if (cross[0].letter !== 'A') throw new Error('cross block A letter');
 if (cross[1].letter !== 'B1') throw new Error('cross superset leader expected B1 got ' + cross[1].letter);
 if (cross[2].letter !== 'B2') throw new Error('cross superset partner expected B2 got ' + cross[2].letter);
 if (!cross[2].supersetPartner) throw new Error('cross superset partner flag');
+
+const reorder = L.reorderBlocks(
+  [
+    L.makeBlock({ type: 'strength', heading: 'A', exercises: [L.makeExercise({ name: 'A' })] }),
+    L.makeBlock({ type: 'strength', heading: 'B', exercises: [L.makeExercise({ name: 'B' })] }),
+    L.makeBlock({ type: 'text', heading: 'Prep', notes: 'warm' }),
+  ],
+  0,
+  2,
+);
+if (reorder[0].heading !== 'B' || reorder[1].heading !== 'A' || reorder[2].heading !== 'Prep') {
+  throw new Error('reorderBlocks failed: ' + reorder.map((b) => b.heading).join(','));
+}
 
 const session = L.instantiateSession(t, { athleteId: 'ath-1', date: '2026-08-27', name: t.name });
 if (!session.blocks.length) throw new Error('instantiateSession empty');
