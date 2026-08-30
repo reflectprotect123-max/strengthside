@@ -1,10 +1,26 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 import path from 'node:path';
 import { preflight, json, method, safeError } from './_lib/http.mjs';
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../../../');
-const EVIDENCE_DIR = path.join(REPO_ROOT, 'evidence-platform');
+function resolveEvidenceDir() {
+  const fromEnv = process.env.BIG_MAC_EVIDENCE_DIR;
+  if (fromEnv && fs.existsSync(path.join(fromEnv, 'platform_core'))) {
+    return fromEnv;
+  }
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.url) {
+      const here = path.dirname(fileURLToPath(import.meta.url));
+      const root = path.resolve(here, '../../../../../../');
+      const evidence = path.join(root, 'evidence-platform');
+      if (fs.existsSync(path.join(evidence, 'platform_core'))) return evidence;
+    }
+  } catch {
+    // Bundled Netlify functions have no repo tree — fall back to JS shim.
+  }
+  return null;
+}
 
 function abstainOutput(system) {
   return {
@@ -95,10 +111,12 @@ function toAthleteFacingUpdate(receipt) {
 }
 
 function decidePython(snapshot) {
+  const evidenceDir = resolveEvidenceDir();
+  if (!evidenceDir) return null;
   const script = `
 import json, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(${JSON.stringify(EVIDENCE_DIR)})))
+sys.path.insert(0, str(Path(${JSON.stringify(evidenceDir)})))
 from platform_core.db import connect, migrate
 from platform_core.decision import decide
 from platform_core.engines import run_all
@@ -121,7 +139,7 @@ print(json.dumps({
 }))
 `;
   const proc = spawnSync('python3', ['-c', script], {
-    cwd: EVIDENCE_DIR,
+    cwd: evidenceDir,
     input: JSON.stringify(snapshot),
     encoding: 'utf8',
     timeout: 15000,

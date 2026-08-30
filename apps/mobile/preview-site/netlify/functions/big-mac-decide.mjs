@@ -1,11 +1,26 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 import path from 'node:path';
 import { preflight, json, method, safeError } from './_lib/http.mjs';
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../../../');
-const EVIDENCE_DIR = path.join(REPO_ROOT, 'evidence-platform');
-const HYBRID_APP = path.join(REPO_ROOT, 'apps/mobile/prototype/hybrid-app');
+function resolveEvidenceDir() {
+  const fromEnv = process.env.BIG_MAC_EVIDENCE_DIR;
+  if (fromEnv && fs.existsSync(path.join(fromEnv, 'platform_core'))) {
+    return fromEnv;
+  }
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.url) {
+      const here = path.dirname(fileURLToPath(import.meta.url));
+      const root = path.resolve(here, '../../../../../../');
+      const evidence = path.join(root, 'evidence-platform');
+      if (fs.existsSync(path.join(evidence, 'platform_core'))) return evidence;
+    }
+  } catch {
+    // Bundled Netlify functions have no repo tree — fall back to JS shim.
+  }
+  return null;
+}
 
 const DOMAINS = ['strength', 'conditioning', 'nutrition', 'recovery', 'coordinator'];
 
@@ -174,14 +189,19 @@ function toAthleteFacingUpdate(receipt) {
   if (!receipt.final_decision.committed_change) {
     return { has_update: false, action: null };
   }
+  if (receipt.action === 'record_only') {
+    return { has_update: false, action: null };
+  }
   return { has_update: true, action: receipt.action };
 }
 
 function decidePython(snapshot) {
+  const evidenceDir = resolveEvidenceDir();
+  if (!evidenceDir) return null;
   const script = `
 import json, sys
 from pathlib import Path
-root = Path(${JSON.stringify(EVIDENCE_DIR)})
+root = Path(${JSON.stringify(evidenceDir)})
 sys.path.insert(0, str(root))
 from platform_core.db import connect, migrate
 from platform_core.auto_promote import ensure_auto_promoted
@@ -210,7 +230,7 @@ print(json.dumps({
 }))
 `;
   const proc = spawnSync('python3', ['-c', script], {
-    cwd: EVIDENCE_DIR,
+    cwd: evidenceDir,
     input: JSON.stringify(snapshot),
     encoding: 'utf8',
     timeout: 15000,
