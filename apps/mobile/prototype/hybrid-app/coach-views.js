@@ -118,14 +118,47 @@
 
   /* ---------- Roster ---------- */
 
+  function saveAthleteCloudId(athleteId, cloudUserId) {
+    var a = ctx.athleteBy(athleteId);
+    if (!a) return;
+    var id = String(cloudUserId || '').trim();
+    if (!id) return alert('Paste the athlete Supabase user id (UUID).');
+    a.cloudUserId = id;
+    persist();
+    ctx.render();
+  }
+
+  function notifyPublishResult(result, athleteName) {
+    if (!result) return;
+    if (typeof root.coachPortalToast === 'function') {
+      root.coachPortalToast(result, athleteName);
+      return;
+    }
+    if (result.ok) {
+      alert('Published to ' + (athleteName || 'athlete') + '. Phone syncs on next open.');
+    } else if (result.errors && result.errors.length) {
+      alert('Cloud push: ' + result.errors.map(function (e) { return e.error; }).join('; '));
+    }
+  }
+
+
   function athleteListHtml() {
     var rows = (S().athletes || [])
       .map(function (a) {
         var cloud = a.cloudUserId
-          ? '<span class="pill">Cloud linked</span>'
-          : '<button type="button" class="btn small" onclick="bindMyCloudIdToAthlete(\'' +
-            a.id +
-            '\')">Link my account</button>';
+          ? '<span class="pill ok">Cloud linked</span>'
+          : '<span class="pill warn">Needs link</span>';
+        var linkBtn =
+          '<button type="button" class="btn small" onclick="bindMyCloudIdToAthlete(\'' +
+          a.id +
+          '\')">Link my account</button>';
+        var pasteRow =
+          '<div class="field" style="margin-top:6px;min-width:200px"><label>Supabase user id</label>' +
+          '<input type="text" value="' +
+          esc(a.cloudUserId || '') +
+          '" placeholder="auth.users uuid" onchange="CoachViews.saveAthleteCloudId(\'' +
+          a.id +
+          '\',this.value)"></div>';
         return (
           '<tr><td><button type="button" class="linkish" onclick="go(\'athlete\',{athleteId:\'' +
           a.id +
@@ -133,7 +166,9 @@
           esc(a.name) +
           '</button><div class="muted" style="font-size:11px">' +
           esc(a.cloudUserId || 'No cloud user id') +
-          '</div></td><td><span class="pill">Coach Plan</span></td><td class="muted">' +
+          '</div>' +
+          pasteRow +
+          '</td><td><span class="pill">Coach Plan</span></td><td class="muted">' +
           esc((function () {
             var tm = (S().teams || []).find(function (t) {
               return (t.athleteIds || []).indexOf(a.id) >= 0;
@@ -144,6 +179,8 @@
           a.id +
           '\'})">Calendar</button> ' +
           cloud +
+          ' ' +
+          linkBtn +
           '</td></tr>'
         );
       })
@@ -225,8 +262,17 @@
 
   function sessionChip(s) {
     var pub = s.published ? 'published' : 'unpublished';
+    if (s.status === 'completed') pub = 'published';
     var title = s.sessionTitle || s.name;
-    var menuOpen = ui().chipMenu && ui().chipMenu.id === s.id;
+    var statusPill =
+      s.status === 'completed'
+        ? '<span class="pill ok">Completed</span>'
+        : '<span class="pill ' +
+          (s.published ? 'ok' : 'warn') +
+          '">' +
+          (s.published ? 'Published' : 'Unpublished') +
+          '</span>';
+    var macroPill = s.hasNutritionBundle ? ' · <span class="pill">Macros</span>' : '';
     return (
       '<div class="cal-chip ' +
       pub +
@@ -240,11 +286,10 @@
       '\',event)">⋯</button></div>' +
       '<div class="cal-chip-meta">' +
       esc(s.name) +
-      ' · <span class="pill ' +
-      (s.published ? 'ok' : 'warn') +
-      '">' +
-      (s.published ? 'Published' : 'Unpublished') +
-      '</span></div>' +
+      ' · ' +
+      statusPill +
+      macroPill +
+      '</div>' +
       chipMenu(s.id) +
       '</div>'
     );
@@ -259,12 +304,20 @@
 
   function publishChip(id) {
     var s = ctx.ses(id);
-    if (s) L().publishSession(s);
+    var athlete = s ? ctx.athleteBy(s.athleteId) : null;
+    if (s) {
+      L().publishSession(s);
+      s.hasNutritionBundle = !!(root.CoachCloud && CoachCloud.nutritionSnapshot && CoachCloud.nutritionSnapshot(S(), s.athleteId, s.date));
+    }
     ui().chipMenu = null;
     persist();
     ctx.render();
     if (root.CoachCloud && CoachCloud.pushPublished) {
-      CoachCloud.pushPublished(S(), { sessionIds: [id] }).catch(function () {});
+      CoachCloud.pushPublished(S(), { sessionIds: [id] })
+        .then(function (r) {
+          notifyPublishResult(r, athlete && athlete.name);
+        })
+        .catch(function () {});
     }
   }
 
@@ -290,13 +343,21 @@
 
   function publishAllForSessions(list) {
     L().publishAllSessions(list);
+    (list || []).forEach(function (s) {
+      s.hasNutritionBundle = !!(root.CoachCloud && CoachCloud.nutritionSnapshot && CoachCloud.nutritionSnapshot(S(), s.athleteId, s.date));
+    });
     persist();
     ctx.render();
     if (root.CoachCloud && CoachCloud.pushPublished) {
       var ids = (list || []).map(function (s) {
         return s.id;
       });
-      CoachCloud.pushPublished(S(), { sessionIds: ids }).catch(function () {});
+      var athlete = list && list[0] ? ctx.athleteBy(list[0].athleteId) : null;
+      CoachCloud.pushPublished(S(), { sessionIds: ids })
+        .then(function (r) {
+          notifyPublishResult(r, athlete && athlete.name);
+        })
+        .catch(function () {});
     }
   }
 
@@ -610,5 +671,6 @@
     clearNutOverride: clearNutOverride,
     addMealDay: addMealDay,
     pushBridge: pushBridge,
+    saveAthleteCloudId: saveAthleteCloudId,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

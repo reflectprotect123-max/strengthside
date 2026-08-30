@@ -24,9 +24,13 @@ const html = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('coach-cloud.js')) throw new Error('coach.html missing coach-cloud.js');
 if (!html.includes('Push cloud now')) throw new Error('coach.html missing Push cloud now');
 if (!html.includes('bindMyCloudIdToAthlete')) throw new Error('coach.html missing cloud link');
+if (!html.includes('rx-delivery-strip')) throw new Error('coach.html missing delivery strip');
+if (!html.includes('Open athlete app')) throw new Error('coach.html missing athlete app link');
 
 const indexHtml = readFileSync(join(dir, 'index.html'), 'utf8');
 if (!indexHtml.includes('coach-cloud.js')) throw new Error('index.html missing coach-cloud.js');
+if (!indexHtml.includes('Coach prescriptions')) throw new Error('index.html missing coach prescriptions card');
+if (!indexHtml.includes('isCoachPrescription')) throw new Error('index.html missing isCoachPrescription');
 
 const src = readFileSync(join(dir, 'coach-cloud.js'), 'utf8');
 const sandbox = { console, module: { exports: {} }, globalThis: {}, Whoop: null };
@@ -34,6 +38,9 @@ sandbox.globalThis = sandbox;
 vm.runInNewContext(src, sandbox);
 const Cloud = sandbox.CoachCloud || sandbox.module.exports;
 if (!Cloud.pushPublished || !Cloud.pullForAthlete) throw new Error('CoachCloud API incomplete');
+if (!Cloud.markCompleted || !Cloud.deliverySummary || !Cloud.refreshPublishedStates) {
+  throw new Error('CoachCloud portal API incomplete');
+}
 if (!Cloud.athleteCloudId({ cloudUserId: 'abc' })) throw new Error('athleteCloudId');
 if (Cloud.athleteCloudId({})) throw new Error('athleteCloudId empty');
 
