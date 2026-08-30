@@ -240,10 +240,15 @@
       }
       delete block.exercises;
       applyCondBuilderToBlock(block);
+      if (isRecovery) {
+        block.recoverySession = true;
+        block.category = 'Recovery';
+      }
       return block;
     }
 
     if (hasEx || block.type === 'strength') {
+      delete block.recoverySession;
       block.type = 'strength';
       block.scoring = block.scoring || 'weight';
       return block;
@@ -482,9 +487,11 @@
     if (interval && !workSec) workSec = fmt.workSec || 240;
     if (interval && restSec == null) restSec = fmt.restSec || 180;
     if (interval) minutes = condIntervalTotalMin({ rounds, workSec, restSec });
+    const keepRecovery = !!block.recoverySession;
     block.type = 'conditioning';
-    block.category = 'Conditioning';
+    block.category = keepRecovery ? 'Recovery' : 'Conditioning';
     block.scoring = 'completion';
+    if (keepRecovery) block.recoverySession = true;
     block.heading = patch.heading != null ? patch.heading : block.heading || fmt.name;
     block.condFmt = fmt.key;
     block.conditioningType = fmt.type;
