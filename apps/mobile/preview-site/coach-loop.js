@@ -37,12 +37,13 @@
     { key: 'hard', name: 'Hard', zoneKey: 'anaerobic', rpe: '8–9.5', cue: 'a few words at a time' },
   ];
 
+  const REMOVED_DEMO_ATHLETE_IDS = ['ath-alex-chen', 'ath-jordan-hale'];
+  const REMOVED_DEMO_ACCOUNT_IDS = ['acct-alex', 'acct-jordan'];
+
   const IDS = {
     coachAccount: 'acct-dan',
     coach: 'coach-dan',
     athleteDan: 'ath-dan-veldman',
-    athleteAlex: 'ath-alex-chen',
-    athleteJordan: 'ath-jordan-hale',
     team: 'team-hybrid-sc',
     program: 'prog-hybrid-base',
     tplStrength: 'tpl-full-body-strength',
@@ -206,12 +207,63 @@
     return block.type === 'strength' ? 'weight' : 'completion';
   }
 
+  /** Keep strength / conditioning / recovery / prep text distinct for athlete flatten. */
+  function normalizeBlockType(block) {
+    if (!block) return block;
+    const cat = String(block.category || '').toLowerCase();
+    const heading = String(block.heading || '').toLowerCase();
+    const hasEx = (block.exercises || []).length > 0;
+    const isRecovery =
+      !!block.recoverySession || cat === 'recovery' || /recover|debt repay|easy flush/.test(heading);
+    const hasCond =
+      block.type === 'conditioning' ||
+      !!block.condFmt ||
+      !!block.conditioningType ||
+      !!block.effort ||
+      (!!block.modality && !hasEx);
+
+    if (block.type === 'text' && !hasEx && !hasCond) return block;
+
+    if (isRecovery || (hasCond && !hasEx)) {
+      block.type = 'conditioning';
+      block.scoring = 'completion';
+      if (isRecovery) {
+        block.recoverySession = true;
+        block.category = block.category || 'Recovery';
+        block.effort = block.effort || 'easy';
+        block.condFmt = block.condFmt || 'steady';
+        block.modality = block.modality || 'Mixed';
+        if (!block.baselineDurationMin) {
+          block.baselineDurationMin = num(block.targetDurationMin) || 30;
+        }
+        if (!block.targetDurationMin) block.targetDurationMin = block.baselineDurationMin;
+      }
+      delete block.exercises;
+      applyCondBuilderToBlock(block);
+      return block;
+    }
+
+    if (hasEx || block.type === 'strength') {
+      block.type = 'strength';
+      block.scoring = block.scoring || 'weight';
+      return block;
+    }
+
+    if (block.modality || block.targetDurationMin) {
+      block.type = 'conditioning';
+      block.scoring = 'completion';
+      applyCondBuilderToBlock(block);
+    }
+    return block;
+  }
+
   function decorateBlocks(blocks) {
     return letterBlocks(blocks).map((b) => {
+      normalizeBlockType(b);
       b.category = categoryForBlock(b);
       b.scoring = scoringForBlock(b);
       b.complete = !!b.complete;
-      (b.exercises || []).forEach(ensureRows);
+      if (b.type === 'strength') (b.exercises || []).forEach(ensureRows);
       return b;
     });
   }
@@ -471,9 +523,11 @@
       restSec: partial.restSec || 0,
       targetWatts: partial.targetWatts == null ? '' : partial.targetWatts,
       planLine: partial.planLine || '',
+      recoverySession: !!partial.recoverySession,
+      baselineDurationMin: partial.baselineDurationMin == null ? 0 : num(partial.baselineDurationMin),
     };
     if (block.type === 'conditioning') applyCondBuilderToBlock(block);
-    return block;
+    return normalizeBlockType(block);
   }
 
   function makeTemplate(partial) {
@@ -996,11 +1050,7 @@
     opts = opts || {};
     const startMonday = opts.startMonday || '2026-08-24';
     const templates = seedTemplates();
-    const athletes = [
-      { id: IDS.athleteDan, name: 'Dan Veldman', initials: 'DV' },
-      { id: IDS.athleteAlex, name: 'Alex Chen', initials: 'AC' },
-      { id: IDS.athleteJordan, name: 'Jordan Hale', initials: 'JH' },
-    ];
+    const athletes = [{ id: IDS.athleteDan, name: 'Dan Veldman', initials: 'DV' }];
     const state = {
       version: 1,
       currentUserId: null,
@@ -1021,22 +1071,6 @@
           name: 'Dan Veldman',
           athleteId: IDS.athleteDan,
         },
-        {
-          id: 'acct-alex',
-          email: 'alex@thehybrid.local',
-          password: 'demo',
-          role: 'athlete',
-          name: 'Alex Chen',
-          athleteId: IDS.athleteAlex,
-        },
-        {
-          id: 'acct-jordan',
-          email: 'jordan@thehybrid.local',
-          password: 'demo',
-          role: 'athlete',
-          name: 'Jordan Hale',
-          athleteId: IDS.athleteJordan,
-        },
       ],
       coach: { id: IDS.coach, name: 'Dan' },
       athletes,
@@ -1044,7 +1078,7 @@
         {
           id: IDS.team,
           name: 'hybrid S&C',
-          athleteIds: [IDS.athleteDan, IDS.athleteAlex, IDS.athleteJordan],
+          athleteIds: [IDS.athleteDan],
         },
       ],
       exercises: coreExercises(),
@@ -1106,6 +1140,17 @@
     };
   }
 
+  function pruneRemovedDemoAthletes(state) {
+    if (!state) return state;
+    state.athletes = (state.athletes || []).filter((a) => !REMOVED_DEMO_ATHLETE_IDS.includes(a.id));
+    state.accounts = (state.accounts || []).filter((a) => !REMOVED_DEMO_ACCOUNT_IDS.includes(a.id));
+    for (const team of state.teams || []) {
+      team.athleteIds = (team.athleteIds || []).filter((id) => !REMOVED_DEMO_ATHLETE_IDS.includes(id));
+    }
+    state.sessions = (state.sessions || []).filter((s) => !REMOVED_DEMO_ATHLETE_IDS.includes(s.athleteId));
+    return state;
+  }
+
   function loadState(storage, opts) {
     storage = storage || defaultStorage();
     try {
@@ -1118,7 +1163,7 @@
             mealDays: [],
             checkInReviews: [],
           };
-          return parsed;
+          return pruneRemovedDemoAthletes(parsed);
         }
       }
     } catch (e) {
@@ -1206,6 +1251,7 @@
     isWorkBlock,
     letterBlocks,
     decorateBlocks,
+    normalizeBlockType,
     formatMmSs,
     parseMmSs,
     condFormatMeta,

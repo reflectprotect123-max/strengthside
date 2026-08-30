@@ -57,7 +57,7 @@ const store = L.memoryStorage();
 let S = L.buildSeed({ startMonday: '2026-08-24' });
 L.saveState(store, S);
 
-if (S.athletes.length < 3) throw new Error('need 2–3 athletes');
+if (S.athletes.length !== 1) throw new Error('seed should have Dan Veldman only');
 if (S.athletes[0].name !== 'Dan Veldman') throw new Error('Dan Veldman must be a test athlete');
 if (S.teams[0].name !== 'hybrid S&C') throw new Error('team name');
 if (S.programs[0].cells['1-1'] !== L.IDS.tplStrength) throw new Error('week×day cell');
@@ -92,9 +92,9 @@ L.completeBlock(today, condBlock.id, true);
 if (!L.blockIsComplete(condBlock)) throw new Error('completeBlock');
 
 const strengthDay = S.sessions.find(
-  (s) => s.athleteId === L.IDS.athleteAlex && s.date === '2026-08-24' && s.templateId === L.IDS.tplStrength,
+  (s) => s.athleteId === L.IDS.athleteDan && s.date === '2026-08-28' && s.templateId === L.IDS.tplStrength,
 );
-if (!strengthDay) throw new Error('Alex should have assigned Mon session');
+if (!strengthDay) throw new Error('Dan should have assigned Fri strength session');
 const squat = strengthDay.blocks.find((b) => (b.exercises || []).some((e) => e.exerciseId === 'core-back-squat'));
 const squatEx = squat.exercises.find((e) => e.exerciseId === 'core-back-squat');
 L.logSetArrays(strengthDay, squat.id, squatEx.id, '5,5,4', '100,105,110');
@@ -124,7 +124,7 @@ S.programs.push(prog);
 const before = S.sessions.length;
 L.assignProgram(S, {
   programId: prog.id,
-  athleteIds: [L.IDS.athleteJordan],
+  athleteIds: [L.IDS.athleteDan],
   startDate: '2026-08-24',
 });
 if (S.sessions.length <= before) throw new Error('individual assign created nothing');

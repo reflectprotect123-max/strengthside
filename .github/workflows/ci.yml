@@ -61,6 +61,7 @@ jobs:
       - run: pnpm run check:coach-v1-e2e
       - run: pnpm run check:coach-cloud
       - run: pnpm run check:coach-portal-athlete
+      - run: pnpm run check:coach-block-types
       - name: Migrations apply (no environment gaps permitted here)
         run: |
           node checks/migrations-apply.mjs | tee /tmp/migrations.log

@@ -21,11 +21,13 @@
 
   /** Strip coach logging state; athlete rebuilds rows/tasks on start. */
   function blocksForAthlete(blocks) {
+    const L = typeof globalThis !== 'undefined' ? globalThis.CoachLoop : null;
     return clone(blocks || []).map((b) => {
       const out = { ...b };
       delete out.complete;
-      if (b.type === 'strength' || (b.exercises && b.exercises.length)) {
-        out.exercises = (b.exercises || []).map((e) => {
+      if (L && L.normalizeBlockType) L.normalizeBlockType(out);
+      if (out.type === 'strength' || (out.exercises && out.exercises.length)) {
+        out.exercises = (out.exercises || []).map((e) => {
           const ex = { ...e };
           delete ex.rows;
           delete ex.athleteNote;
