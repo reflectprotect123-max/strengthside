@@ -467,13 +467,25 @@ function go(view, extra){
   Object.assign(ui, extra||{}, { view });
   if (view === 'library' && !ui.lib) ui.lib = 'programs';
   if (view !== 'session') ui.exPicker = null;
-  if (view !== 'program') { ui.cellMenu = null; ui.cellPick = null; }
+  if (view !== 'program') {
+    ui.cellMenu = null;
+    if (!ui.cellPick || (ui.cellPick.mode !== 'copyTarget' && ui.cellPick.mode !== 'moveTarget')) {
+      ui.cellPick = null;
+    }
+  }
+  if (view !== 'athlete' && view !== 'team') {
+    ui.chipMenu = null;
+    ui.libPick = null;
+    ui.calDay = null;
+  }
+  if (view !== 'home') ui.commentDrawer = null;
   if (view === 'assign' && !ui.assignTeamId && S.teams && S.teams[0]) ui.assignTeamId = S.teams[0].id;
   if ((view === 'athlete' || view === 'team') && !ui.calMonth) ui.calMonth = L.today().slice(0, 7);
   render();
 }
 function openSession(templateId){
   closeCoachExEdit();
+  ui.cellMenu = null;
   ui.templateId = templateId;
   ui.lib = 'sessions';
   ui.exPicker = null;
@@ -1057,6 +1069,7 @@ function syncCoachExFromColumns(bi, ei){
 }
 
 function openCoachExEdit(bi, ei){
+  closeCoachExEdit();
   ui.exEdit = { bi, ei };
   const ex = tplBlocks()[bi].exercises[ei];
   if (window.LogColumns) {
@@ -1131,6 +1144,24 @@ function addBlk(type){
   persist(); render();
 }
 
+function clearCondFields(b){
+  delete b.recoverySession;
+  delete b.baselineDurationMin;
+  delete b.condFmt;
+  delete b.modality;
+  delete b.targetDurationMin;
+  delete b.conditioningType;
+  delete b.effort;
+  delete b.timeCapMin;
+  delete b.rounds;
+  delete b.workSec;
+  delete b.restSec;
+  delete b.targetHrZone;
+  delete b.targetPace;
+  delete b.targetWatts;
+  delete b.targetDistance;
+}
+
 function setBlockType(bi, type){
   closeCoachExEdit();
   const t = tpl(ui.templateId);
@@ -1140,11 +1171,7 @@ function setBlockType(bi, type){
     b.type = 'strength';
     b.scoring = b.scoring === 'completion' ? 'completion' : 'weight';
     b.category = 'Strength/Power';
-    delete b.recoverySession;
-    delete b.baselineDurationMin;
-    delete b.condFmt;
-    delete b.modality;
-    delete b.targetDurationMin;
+    clearCondFields(b);
     if (!(b.exercises || []).length) {
       b.exercises = [L.makeExercise({ name:'Back Squat', exerciseId:'core-back-squat', sets:3, reps:'8', load:'', metric:'Weight' })];
     }
@@ -1159,7 +1186,7 @@ function setBlockType(bi, type){
     b.superset = false;
     delete b.exercises;
     b.recoverySession = true;
-    b.baselineDurationMin = num(b.baselineDurationMin) || num(b.targetDurationMin) || 30;
+    b.baselineDurationMin = L.num(b.baselineDurationMin) || L.num(b.targetDurationMin) || 30;
     L.applyCondBuilderToBlock(b, { condFmt:'steady', effort:'easy', modality:'Mixed', targetDurationMin:b.baselineDurationMin, heading:b.heading || 'Recovery movement' });
     b.category = 'Recovery';
     b.type = 'conditioning';
@@ -1169,21 +1196,7 @@ function setBlockType(bi, type){
     b.scoring = 'completion';
     b.superset = false;
     delete b.exercises;
-    delete b.recoverySession;
-    delete b.baselineDurationMin;
-    delete b.condFmt;
-    delete b.modality;
-    delete b.targetDurationMin;
-    delete b.conditioningType;
-    delete b.effort;
-    delete b.timeCapMin;
-    delete b.rounds;
-    delete b.workSec;
-    delete b.restSec;
-    delete b.targetHrZone;
-    delete b.targetPace;
-    delete b.targetWatts;
-    delete b.targetDistance;
+    clearCondFields(b);
   }
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
@@ -1223,6 +1236,7 @@ function toggleSuperset(bi, on){
 }
 
 function openExPicker(bi, ei){
+  closeCoachExEdit();
   ui.exPicker = { bi, ei };
   ui.exSearch = '';
   render();

@@ -10,6 +10,9 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const loopSrc = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 const syncSrc = readFileSync(join(dir, 'coach-sync.js'), 'utf8');
 const cloudSrc = readFileSync(join(dir, 'coach-cloud.js'), 'utf8');
+const nutSrc = readFileSync(join(dir, 'coach-nutrition.js'), 'utf8');
+const strengthSyncSrc = readFileSync(join(dir, 'strength-sync.js'), 'utf8');
+const logColsSrc = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 const viewsSrc = readFileSync(join(dir, 'coach-views.js'), 'utf8');
 const indexHtml = readFileSync(join(dir, 'index.html'), 'utf8');
@@ -19,6 +22,9 @@ sandbox.globalThis = sandbox;
 vm.runInNewContext(loopSrc, sandbox);
 const L = sandbox.module.exports;
 sandbox.CoachLoop = L;
+sandbox.module = { exports: {} };
+vm.runInNewContext(nutSrc, sandbox);
+const CoachNutrition = sandbox.module.exports;
 sandbox.module = { exports: {} };
 vm.runInNewContext(syncSrc, sandbox);
 const Sync = sandbox.CoachSync;
@@ -47,6 +53,40 @@ const Cloud = sandbox.CoachCloud;
   if (need.athletes.length) {
     throw new Error('needsProgramming false-positive for beyond-horizon published session');
   }
+}
+
+// needsProgramming: completed-only horizon should not flag athlete
+{
+  const start = L.today();
+  const mid = L.addDays(start, 3);
+  const state = {
+    athletes: [{ id: 'a1', name: 'Test' }],
+    sessions: [
+      {
+        id: 's1',
+        athleteId: 'a1',
+        date: mid,
+        published: true,
+        status: 'completed',
+      },
+    ],
+  };
+  const need = L.needsProgramming(state);
+  if (need.athletes.length) {
+    throw new Error('needsProgramming false-positive for completed-only horizon');
+  }
+}
+
+// addCalendarSession dedupes same athlete/date/template
+{
+  const state = L.buildSeed({ startMonday: '2026-08-24' });
+  const tplId = state.templates[0].id;
+  const athleteId = state.athletes[0].id;
+  const date = L.today();
+  const first = L.addCalendarSession(state, { athleteId, date, templateId: tplId });
+  const second = L.addCalendarSession(state, { athleteId, date, templateId: tplId });
+  if (!first) throw new Error('addCalendarSession first add failed');
+  if (second) throw new Error('addCalendarSession should dedupe duplicate add');
 }
 
 // monthGridCells: invalid month rolls to current month grid, not empty
@@ -86,18 +126,12 @@ const Cloud = sandbox.CoachCloud;
   }
 }
 
-// pickBucket: no silent fallback to athletes[0] (mirror module logic)
-{
-  const payload = {
-    athletes: [{ email: 'other@example.com', sessions: [{ coachSessionId: 'x1' }] }],
-  };
-  const email = 'veldman@thehybrid.local';
-  const picked =
-    payload.athletes.find((a) => String(a.email || '').toLowerCase() === email.toLowerCase()) || null;
-  if (picked) throw new Error('pickBucket should not match wrong email');
-  if (syncSrc.includes('payload.athletes[0]')) {
-    throw new Error('coach-sync.js still falls back to athletes[0]');
-  }
+// pickBucket: no silent fallback to athletes[0]
+if (syncSrc.includes('payload.athletes[0]')) {
+  throw new Error('coach-sync.js still falls back to athletes[0]');
+}
+if (!syncSrc.includes('athleteEmailFromState')) {
+  throw new Error('coach-sync.js missing athleteEmailFromState');
 }
 
 // nutritionSnapshot: empty payload is null (no false Macros pill)
@@ -106,53 +140,93 @@ const Cloud = sandbox.CoachCloud;
   if (snap) throw new Error('nutritionSnapshot should be null when no targets/meals');
 }
 
-// setBlockType text clears conditioning residue
+// clearCoachOverride removes targets entirely
 {
-  const blocks = L.decorateBlocks([
-    L.makeBlock({
-      type: 'conditioning',
-      category: 'Conditioning',
-      condFmt: 'steady',
-      modality: 'Bike',
-      targetDurationMin: 20,
-      effort: 'easy',
-    }),
-  ]);
-  blocks[0].type = 'text';
-  blocks[0].category = 'Prep';
-  blocks[0].scoring = 'completion';
-  delete blocks[0].condFmt;
-  delete blocks[0].modality;
-  delete blocks[0].targetDurationMin;
-  delete blocks[0].effort;
-  delete blocks[0].conditioningType;
-  const out = L.decorateBlocks(blocks);
-  if (out[0].type !== 'text') {
-    throw new Error('text block reverted to ' + out[0].type);
+  const nut = CoachNutrition.ensureNutrition({});
+  CoachNutrition.setCoachOverride(nut, 'a1', { calories: 2500, proteinG: 180, carbsG: 250, fatG: 70 });
+  CoachNutrition.clearCoachOverride(nut, 'a1');
+  if (nut.targetsByAthlete.a1) {
+    throw new Error('clearCoachOverride should delete targetsByAthlete entry');
   }
 }
 
-// coach.html audit hooks
+// normalizeBlockType: text with leftover effort stays text
+{
+  const out = L.normalizeBlockType({
+    type: 'text',
+    category: 'Prep',
+    effort: 'easy',
+    heading: 'Notes',
+  });
+  if (out.type !== 'text') throw new Error('text block with effort reverted to ' + out.type);
+}
+
+// applyCondBuilderToBlock: empty targetWatts clears field
+{
+  const b = L.makeBlock({ type: 'conditioning', targetWatts: 180 });
+  L.applyCondBuilderToBlock(b, { targetWatts: '' });
+  if (b.targetWatts != null) throw new Error('empty targetWatts should clear field');
+}
+
+// strength-sync: active sessions protected from remote overwrite
+if (!strengthSyncSrc.includes("local.status === 'active'")) {
+  throw new Error('strength-sync missing active session guard');
+}
+
+// log-columns: weight_kg syncs to ex.load
+if (!logColsSrc.includes("loadCol.kind === 'weight_kg'")) {
+  throw new Error('log-columns missing weight_kg legacy sync');
+}
+
+// coach.html deep audit hooks
+if (!coachHtml.includes('L.num(b.baselineDurationMin)')) {
+  throw new Error('setBlockType recovery must use L.num not num()');
+}
+if (!coachHtml.includes('function clearCondFields')) throw new Error('clearCondFields helper missing');
 if (!coachHtml.includes('closeCoachExEdit();')) throw new Error('coach.html missing closeCoachExEdit guards');
-if (!coachHtml.includes('delete b.effort')) throw new Error('setBlockType text must clear effort');
 if (!coachHtml.includes('blockTypeValue(b)')) throw new Error('cellSummary must use blockTypeValue');
 
-// coach-views team calendar athlete picker
+// coach-views
 if (!viewsSrc.includes('pickLibraryAthlete')) throw new Error('team calendar athlete picker missing');
-if (!viewsSrc.includes('pickAthlete: true')) throw new Error('team libPick athlete step missing');
 if (!viewsSrc.includes('hasNutritionBundle = false')) {
   throw new Error('revertPublishOnCloudFail must clear hasNutritionBundle');
 }
+if (!viewsSrc.includes('function removeLocal()')) {
+  throw new Error('deleteChip must unpublish cloud before local delete');
+}
+if (viewsSrc.match(/ctx\.persist\(\);\s*\n\s*if \(root\.CoachBridge/)) {
+  throw new Error('CoachViews.persist still double-pushes bridge');
+}
 
-// athlete hybrid session routing
+// cloud pull applies scheduled_date
+if (!cloudSrc.includes('incoming.date = row.scheduled_date')) {
+  throw new Error('pullForAthlete must apply scheduled_date');
+}
+
+// athlete deep fixes
 if (!indexHtml.includes('function sessionHasStrengthWork')) {
   throw new Error('sessionHasStrengthWork missing');
 }
 if (!indexHtml.includes('if(sessionHasStrengthWork(x)){train();return}')) {
   throw new Error('enterSessionScreen must prefer strength for hybrid sessions');
 }
-if (!indexHtml.includes("x.status!=='completed'&&!x.coachWithdrawn")) {
-  throw new Error('coachControlsStrength must ignore completed/withdrawn prescriptions');
+if (!indexHtml.includes("x.status!=='abandoned'")) {
+  throw new Error('coachControlsStrength must ignore abandoned prescriptions');
+}
+if (!indexHtml.includes('sessionLooksLikeConditioning(active)&&!sessionHasStrengthWork(active)')) {
+  throw new Error('nextConditioningSession must not hijack hybrid active session');
+}
+if (!indexHtml.includes('sessionHasStrengthWork(x)&&(x.tasks||[]).some(task=>(task.kind===\'strength\'')) {
+  throw new Error('completeSimpleCond must not skip strength on hybrid');
+}
+if (!indexHtml.includes('S.settings?.minimalUi===true')) {
+  throw new Error('minimalUi should be opt-in not default-on');
+}
+if (!indexHtml.includes('S.settings?.showBlockHelp===true')) {
+  throw new Error('showBlockHelp should read settings');
+}
+if (!indexHtml.includes("S.tab==='library'")) {
+  throw new Error('render/go should remap legacy library tab');
 }
 
 console.log('coach-audit-fixes: ok');

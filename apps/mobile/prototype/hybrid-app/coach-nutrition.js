@@ -88,12 +88,9 @@
   }
 
   function clearCoachOverride(nutritionState, athleteId) {
-    const t = nutritionState.targetsByAthlete[athleteId];
-    if (!t) return null;
-    t.override = false;
-    t.source = 'cleared';
-    t.updatedAt = new Date().toISOString();
-    return t;
+    if (!nutritionState.targetsByAthlete) return null;
+    delete nutritionState.targetsByAthlete[athleteId];
+    return null;
   }
 
   function acceptEngineProposal(nutritionState, athleteId, proposal) {

@@ -279,6 +279,7 @@
       incoming.cloudAssignedId = row.id;
       incoming.source = incoming.source || 'coach-bridge';
       incoming.coachWithdrawn = false;
+      if (row.scheduled_date) incoming.date = row.scheduled_date;
       if (snap.nutrition && Sync && Sync.mergeNutritionFromSnapshot) {
         Sync.mergeNutritionFromSnapshot(snap.nutrition);
         nutritionApplied = true;

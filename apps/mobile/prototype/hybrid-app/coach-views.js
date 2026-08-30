@@ -17,9 +17,6 @@
 
   function persist() {
     ctx.persist();
-    if (root.CoachBridge && root.CoachBridge.push) {
-      root.CoachBridge.push(ctx.S);
-    }
   }
 
   function pushBridge() {
@@ -268,14 +265,15 @@
   function sessionChip(s, opts) {
     opts = opts || {};
     var pub = s.published ? 'published' : 'unpublished';
-    if (s.status === 'completed') pub = 'published';
+    var completed = s.status === 'completed';
+    if (completed) pub = s.published ? 'published completed' : 'unpublished completed';
     var title = s.sessionTitle || s.name;
     var athleteName =
       opts.showAthlete && s.athleteId
         ? (ctx.athleteBy(s.athleteId) || {}).name
         : '';
     var statusPill =
-      s.status === 'completed'
+      completed
         ? '<span class="pill ok">Completed</span>'
         : '<span class="pill ' +
           (s.published ? 'ok' : 'warn') +
@@ -339,13 +337,13 @@
     if (root.CoachCloud && CoachCloud.pushPublished) {
       CoachCloud.pushPublished(S(), { sessionIds: [id] })
         .then(function (r) {
-          if (!r.ok && athlete && athlete.cloudUserId && !wasPublished) {
+          if (!r.ok && s && !wasPublished) {
             revertPublishOnCloudFail([s], [wasPublished]);
           }
           notifyPublishResult(r, athlete && athlete.name);
         })
         .catch(function (e) {
-          if (athlete && athlete.cloudUserId && !wasPublished) {
+          if (s && !wasPublished) {
             revertPublishOnCloudFail([s], [wasPublished]);
           }
           notifyPublishResult(
@@ -368,6 +366,7 @@
         .then(function (r) {
           if (r && !r.ok && wasPublished && s) {
             L().publishSession(s);
+            s.hasNutritionBundle = !!(root.CoachCloud && CoachCloud.nutritionSnapshot && CoachCloud.nutritionSnapshot(S(), s.athleteId, s.date));
             persist();
             ctx.render();
             notifyPublishResult(
@@ -379,6 +378,7 @@
         .catch(function (e) {
           if (wasPublished && s) {
             L().publishSession(s);
+            s.hasNutritionBundle = !!(root.CoachCloud && CoachCloud.nutritionSnapshot && CoachCloud.nutritionSnapshot(S(), s.athleteId, s.date));
             persist();
             ctx.render();
           }
@@ -391,12 +391,22 @@
   }
 
   function deleteChip(id) {
-    S().sessions = (S().sessions || []).filter(function (x) {
-      return x.id !== id;
-    });
+    var s = ctx.ses(id);
     ui().chipMenu = null;
-    persist();
-    ctx.render();
+    function removeLocal() {
+      S().sessions = (S().sessions || []).filter(function (x) {
+        return x.id !== id;
+      });
+      persist();
+      ctx.render();
+    }
+    if (s && s.cloudAssignedId && root.CoachCloud && CoachCloud.unpublishSession) {
+      CoachCloud.unpublishSession(S(), s)
+        .catch(function () {})
+        .finally(removeLocal);
+      return;
+    }
+    removeLocal();
   }
 
   function publishAllForSessions(list) {
@@ -425,8 +435,7 @@
             var revertList = [];
             var revertWas = [];
             list.forEach(function (s, i) {
-              var a = ctx.athleteBy(s.athleteId);
-              if (a && a.cloudUserId && !wasPublished[i] && (failed.size === 0 || failed.has(s.id))) {
+              if (!wasPublished[i] && (failed.size === 0 || failed.has(s.id))) {
                 revertList.push(s);
                 revertWas.push(wasPublished[i]);
               }
@@ -439,8 +448,7 @@
           var revertList = [];
           var revertWas = [];
           (list || []).forEach(function (s, i) {
-            var a = ctx.athleteBy(s.athleteId);
-            if (a && a.cloudUserId && !wasPublished[i]) {
+            if (!wasPublished[i]) {
               revertList.push(s);
               revertWas.push(wasPublished[i]);
             }
