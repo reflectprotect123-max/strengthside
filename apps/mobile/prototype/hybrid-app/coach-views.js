@@ -248,7 +248,7 @@
     var m = ui().chipMenu;
     if (!m || m.id !== sessionId) return '';
     return (
-      '<div class="kebab-menu" role="menu">' +
+      '<div class="kebab-menu" role="menu" onclick="event.stopPropagation()">' +
       '<button type="button" onclick="CoachViews.publishChip(\'' +
       sessionId +
       '\')">Publish</button>' +
@@ -310,6 +310,7 @@
     if (ev) ev.stopPropagation();
     var cur = ui().chipMenu;
     ui().chipMenu = cur && cur.id === id ? null : { id: id };
+    ui().cellMenu = null;
     ctx.render();
   }
 

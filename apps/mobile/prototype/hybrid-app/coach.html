@@ -861,6 +861,7 @@ function toggleCellMenu(week, day, ev){
   const cur = ui.cellMenu;
   if (cur && cur.week === week && cur.day === day) ui.cellMenu = null;
   else ui.cellMenu = { week, day };
+  ui.chipMenu = null;
   if (!ui.cellPick || (ui.cellPick.mode !== 'copyTarget' && ui.cellPick.mode !== 'moveTarget')) {
     ui.cellPick = null;
   }
@@ -913,25 +914,33 @@ function startMoveCell(week, day){
   render();
 }
 
-function onEmptyCell(week, day){
+function onProgCellClick(week, day){
+  const p = prog(ui.programId); if (!p) return;
+  const key = L.cellKey(week, day);
+  const tid = (p.cells||{})[key];
   const pick = ui.cellPick;
   if (pick && (pick.mode === 'copyTarget' || pick.mode === 'moveTarget')) {
-    const p = prog(ui.programId); if (!p) return;
-    const key = L.cellKey(week, day);
-    const occupied = !!(p.cells || {})[key];
-    if (occupied && pick.mode === 'copyTarget') {
+    if (pick.mode === 'moveTarget' && pick.fromWeek === week && pick.fromDay === day) {
+      ui.cellPick = null;
+      render();
+      return;
+    }
+    if (tid && pick.mode === 'copyTarget') {
       if (!confirm('This cell already has a session. Replace it with the copy?')) return;
+      L.setProgramCell(p, week, day, pick.templateId);
+    } else if (pick.mode === 'moveTarget') {
+      if (tid && tid !== pick.templateId) {
+        if (!confirm('Swap sessions between these cells?')) return;
+      }
+      L.moveProgramCell(p, pick.fromWeek, pick.fromDay, week, day);
+    } else {
+      L.setProgramCell(p, week, day, pick.templateId);
     }
-    if (occupied && pick.mode === 'moveTarget') {
-      if (!confirm('This cell already has a session. Swap/move anyway?')) return;
-    }
-    L.setProgramCell(p, week, day, pick.templateId);
-    if (pick.mode === 'moveTarget') L.setProgramCell(p, pick.fromWeek, pick.fromDay, null);
     ui.cellPick = null;
     persist(); render();
     return;
   }
-  openCellPick(week, day, 'set');
+  if (!tid) openCellPick(week, day, 'set');
 }
 
 function saveCellAsTemplate(week, day){
@@ -989,26 +998,28 @@ function programCellHtml(p, week, day){
   const key = L.cellKey(week, day);
   const tid = (p.cells||{})[key];
   const menuOn = ui.cellMenu && ui.cellMenu.week === week && ui.cellMenu.day === day;
+  const pasteMode = ui.cellPick && (ui.cellPick.mode === 'copyTarget' || ui.cellPick.mode === 'moveTarget');
   if (!tid) {
-    const hint = ui.cellPick && (ui.cellPick.mode === 'copyTarget' || ui.cellPick.mode === 'moveTarget')
-      ? `<span class="muted" style="padding:12px;display:block;font-size:11px">${ui.cellPick.mode==='moveTarget'?'Drop here to move':'Drop here to copy'}</span>`
+    const hint = pasteMode
+      ? `<span class="muted" style="padding:12px;display:block;font-size:11px">${ui.cellPick.mode==='moveTarget'?'Drop here to move/swap':'Drop here to copy'}</span>`
       : '';
-    return `<button type="button" class="prog-cell empty" aria-label="Week ${week} Day ${day} empty" onclick="onEmptyCell(${week},${day})">${hint}</button>`;
+    return `<button type="button" class="prog-cell empty" aria-label="Week ${week} Day ${day} empty" onclick="onProgCellClick(${week},${day})">${hint}</button>`;
   }
   const sum = cellSummary(tid) || { title:'Session', letter:'A', line:'—', sets:'' };
-  const menu = menuOn ? `<div class="kebab-menu" role="menu">
+  const menu = menuOn ? `<div class="kebab-menu" role="menu" onclick="event.stopPropagation()">
       <button type="button" onclick="openSession('${tid}')">Edit session</button>
       <button type="button" onclick="startCopyCell(${week},${day})">Copy</button>
       <button type="button" onclick="startMoveCell(${week},${day})">Move</button>
       <button type="button" onclick="saveCellAsTemplate(${week},${day})">Save as template</button>
       <button type="button" class="danger" onclick="clearCell(${week},${day})">Delete</button>
     </div>` : '';
-  return `<div class="prog-cell">
+  const pasteClick = pasteMode ? ` onclick="onProgCellClick(${week},${day})" style="cursor:pointer"` : '';
+  return `<div class="prog-cell"${pasteClick}>
     <div class="prog-card">
       <div class="prog-card-top">
         <span class="prog-card-mark">TH</span>
-        <button type="button" class="prog-card-title" style="background:transparent;border:0;padding:0;text-align:left;color:inherit;cursor:pointer" onclick="openSession('${tid}')">${esc(sum.title)}</button>
-        <button type="button" class="kebab-btn" aria-label="Cell menu" onclick="toggleCellMenu(${week},${day},event)">⋯</button>
+        <button type="button" class="prog-card-title" style="background:transparent;border:0;padding:0;text-align:left;color:inherit;cursor:pointer" onclick="event.stopPropagation();openSession('${tid}')">${esc(sum.title)}</button>
+        <button type="button" class="kebab-btn" aria-label="Cell menu" onclick="event.stopPropagation();toggleCellMenu(${week},${day},event)">⋯</button>
       </div>
       <div class="prog-card-body">
         <span class="letter-badge">${esc(sum.letter)}</span>
@@ -1030,7 +1041,7 @@ function programHtml(){
       <div class="prog-days">${dayHeads}${cells}</div></div>`;
   }).join('');
   const pasteHint = ui.cellPick && (ui.cellPick.mode === 'copyTarget' || ui.cellPick.mode === 'moveTarget')
-    ? `<p class="prog-hint">${ui.cellPick.mode==='moveTarget'?'Click an empty cell to move the session.':'Click an empty cell to paste the copy.'} <button type="button" class="btn ghost small" onclick="closeCellPick()">Cancel</button></p>`
+    ? `<p class="prog-hint">${ui.cellPick.mode==='moveTarget'?'Click a cell to move (occupied cells swap). Click source again to cancel.':'Click a cell to paste the copy (replaces occupied cells).'} <button type="button" class="btn ghost small" onclick="closeCellPick()">Cancel</button></p>`
     : '';
   return `<button type="button" class="btn ghost small" onclick="go('library',{lib:'programs'})">← Back to programs</button>
     <div class="prog-toolbar" style="margin-top:12px">
@@ -1643,6 +1654,14 @@ document.addEventListener('click', function coachKebabDismiss(ev) {
   if (changed) render();
 });
 
+document.addEventListener('keydown', function coachKebabEscape(ev) {
+  if (ev.key !== 'Escape') return;
+  if (!ui.cellMenu && !ui.chipMenu) return;
+  ui.cellMenu = null;
+  ui.chipMenu = null;
+  render();
+});
+
 window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
 window.saveComment=saveComment; window.toggleCard=toggleCard;
 window.openSession=openSession; window.openProgram=openProgram;
@@ -1653,7 +1672,7 @@ window.setRowRep=setRowRep; window.setRowLoad=setRowLoad;
 window.patchCond=patchCond; window.setCondFmt=setCondFmt; window.nudgeCondMin=nudgeCondMin;
 window.toggleCellMenu=toggleCellMenu; window.openCellPick=openCellPick; window.closeCellPick=closeCellPick;
 window.placeCellTemplate=placeCellTemplate; window.clearCell=clearCell;
-window.startCopyCell=startCopyCell; window.startMoveCell=startMoveCell; window.onEmptyCell=onEmptyCell;
+window.startCopyCell=startCopyCell; window.startMoveCell=startMoveCell; window.onProgCellClick=onProgCellClick;
 window.saveCellAsTemplate=saveCellAsTemplate; window.addWeek=addWeek;
 window.addCustomExercise=addCustomExercise;
 window.openCommentDrawer=openCommentDrawer; window.closeCommentDrawer=closeCommentDrawer;
