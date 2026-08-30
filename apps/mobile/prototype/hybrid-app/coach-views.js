@@ -122,10 +122,15 @@
     var a = ctx.athleteBy(athleteId);
     if (!a) return;
     var id = String(cloudUserId || '').trim();
-    if (!id) return alert('Paste the athlete Supabase user id (UUID).');
+    if (!id) {
+      if (typeof root.showCoachToast === 'function') root.showCoachToast('Paste the athlete Supabase user id (UUID).', 'warn');
+      else alert('Paste the athlete Supabase user id (UUID).');
+      return;
+    }
     a.cloudUserId = id;
     persist();
     ctx.render();
+    if (typeof root.showCoachToast === 'function') root.showCoachToast('Linked ' + a.name + ' for cloud publish.', 'ok');
   }
 
   function notifyPublishResult(result, athleteName) {
@@ -260,10 +265,15 @@
     );
   }
 
-  function sessionChip(s) {
+  function sessionChip(s, opts) {
+    opts = opts || {};
     var pub = s.published ? 'published' : 'unpublished';
     if (s.status === 'completed') pub = 'published';
     var title = s.sessionTitle || s.name;
+    var athleteName =
+      opts.showAthlete && s.athleteId
+        ? (ctx.athleteBy(s.athleteId) || {}).name
+        : '';
     var statusPill =
       s.status === 'completed'
         ? '<span class="pill ok">Completed</span>'
@@ -277,6 +287,9 @@
       '<div class="cal-chip ' +
       pub +
       '">' +
+      (athleteName
+        ? '<div class="cal-chip-ath">' + esc(athleteName) + '</div>'
+        : '') +
       '<div class="cal-chip-top">' +
       '<span class="cal-chip-title">' +
       esc(title) +
@@ -302,9 +315,19 @@
     ctx.render();
   }
 
+  function revertPublishOnCloudFail(sessions, wasPublished) {
+    (sessions || []).forEach(function (s, i) {
+      if (wasPublished[i]) return;
+      L().unpublishSession(s);
+    });
+    persist();
+    ctx.render();
+  }
+
   function publishChip(id) {
     var s = ctx.ses(id);
     var athlete = s ? ctx.athleteBy(s.athleteId) : null;
+    var wasPublished = s ? !!s.published : true;
     if (s) {
       L().publishSession(s);
       s.hasNutritionBundle = !!(root.CoachCloud && CoachCloud.nutritionSnapshot && CoachCloud.nutritionSnapshot(S(), s.athleteId, s.date));
@@ -315,9 +338,20 @@
     if (root.CoachCloud && CoachCloud.pushPublished) {
       CoachCloud.pushPublished(S(), { sessionIds: [id] })
         .then(function (r) {
+          if (!r.ok && athlete && athlete.cloudUserId && !wasPublished) {
+            revertPublishOnCloudFail([s], [wasPublished]);
+          }
           notifyPublishResult(r, athlete && athlete.name);
         })
-        .catch(function () {});
+        .catch(function (e) {
+          if (athlete && athlete.cloudUserId && !wasPublished) {
+            revertPublishOnCloudFail([s], [wasPublished]);
+          }
+          notifyPublishResult(
+            { ok: false, errors: [{ error: String((e && e.message) || e) }] },
+            athlete && athlete.name,
+          );
+        });
     }
   }
 
@@ -328,7 +362,12 @@
     persist();
     ctx.render();
     if (root.CoachCloud && CoachCloud.unpublishSession) {
-      CoachCloud.unpublishSession(S(), s).catch(function () {});
+      CoachCloud.unpublishSession(S(), s).catch(function (e) {
+        notifyPublishResult(
+          { ok: false, errors: [{ error: String((e && e.message) || e) }] },
+          s && ctx.athleteBy(s.athleteId) && ctx.athleteBy(s.athleteId).name,
+        );
+      });
     }
   }
 
@@ -342,6 +381,9 @@
   }
 
   function publishAllForSessions(list) {
+    var wasPublished = (list || []).map(function (s) {
+      return !!s.published;
+    });
     L().publishAllSessions(list);
     (list || []).forEach(function (s) {
       s.hasNutritionBundle = !!(root.CoachCloud && CoachCloud.nutritionSnapshot && CoachCloud.nutritionSnapshot(S(), s.athleteId, s.date));
@@ -355,16 +397,52 @@
       var athlete = list && list[0] ? ctx.athleteBy(list[0].athleteId) : null;
       CoachCloud.pushPublished(S(), { sessionIds: ids })
         .then(function (r) {
+          if (!r.ok && list && list.length) {
+            var failed = new Set(
+              (r.errors || []).map(function (e) {
+                return e.sessionId;
+              }),
+            );
+            var revertList = [];
+            var revertWas = [];
+            list.forEach(function (s, i) {
+              var a = ctx.athleteBy(s.athleteId);
+              if (a && a.cloudUserId && !wasPublished[i] && (failed.size === 0 || failed.has(s.id))) {
+                revertList.push(s);
+                revertWas.push(wasPublished[i]);
+              }
+            });
+            if (revertList.length) revertPublishOnCloudFail(revertList, revertWas);
+          }
           notifyPublishResult(r, athlete && athlete.name);
         })
-        .catch(function () {});
+        .catch(function (e) {
+          var revertList = [];
+          var revertWas = [];
+          (list || []).forEach(function (s, i) {
+            var a = ctx.athleteBy(s.athleteId);
+            if (a && a.cloudUserId && !wasPublished[i]) {
+              revertList.push(s);
+              revertWas.push(wasPublished[i]);
+            }
+          });
+          if (revertList.length) revertPublishOnCloudFail(revertList, revertWas);
+          notifyPublishResult(
+            { ok: false, errors: [{ error: String((e && e.message) || e) }] },
+            athlete && athlete.name,
+          );
+        });
     }
   }
 
-  function calDayCell(date, sessions, athleteId) {
+  function calDayCell(date, sessions, athleteId, teamMode) {
     var expanded = ui().calDay === date;
     var visible = expanded ? sessions : sessions.slice(0, 2);
-    var chips = visible.map(sessionChip).join('');
+    var chips = visible
+      .map(function (s) {
+        return sessionChip(s, { showAthlete: !!teamMode });
+      })
+      .join('');
     var more =
       !expanded && sessions.length > 2
         ? '<div class="cal-chip-meta">+' + (sessions.length - 2) + ' more</div>'
@@ -444,16 +522,17 @@
     );
   }
 
-  function calendarShell(title, backView, backExtra, sessions, athleteId) {
+  function calendarShell(title, backView, backExtra, sessions, athleteId, teamMode) {
     var mk = monthKey();
-    var days = L().monthDays(mk);
+    var grid = L().monthGridCells ? L().monthGridCells(mk) : L().monthDays(mk);
     var canPublish = L().hasUnpublished(sessions);
-    var cells = days
+    var cells = grid
       .map(function (d) {
+        if (!d) return '<div class="cal-day cal-pad" aria-hidden="true"></div>';
         var daySessions = sessions.filter(function (s) {
           return s.date === d;
         });
-        return calDayCell(d, daySessions, athleteId);
+        return calDayCell(d, daySessions, athleteId, teamMode);
       })
       .join('');
     var dow = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -513,7 +592,7 @@
     var t = ctx.team(ui().teamId);
     if (!t) return teamListHtml();
     var sessions = L().teamCalendar(S(), t.id, monthKey());
-    return calendarShell(t.name, 'teams', '', sessions, (t.athleteIds || [])[0] || '');
+    return calendarShell(t.name, 'teams', '', sessions, (t.athleteIds || [])[0] || '', true);
   }
 
   /* ---------- Nutrition N1–N3 ---------- */
@@ -612,6 +691,7 @@
     });
     persist();
     ctx.render();
+    if (typeof root.showCoachToast === 'function') root.showCoachToast('Macro override saved.', 'ok');
   }
 
   function clearNutOverride() {
@@ -645,6 +725,7 @@
     N.upsertMealDay(N.ensureNutrition(S()), day);
     persist();
     ctx.render();
+    if (typeof root.showCoachToast === 'function') root.showCoachToast('Meal day saved and published.', 'ok');
   }
 
   function init(context) {

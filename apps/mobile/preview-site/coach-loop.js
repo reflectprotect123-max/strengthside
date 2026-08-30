@@ -772,6 +772,22 @@
     return days;
   }
 
+  /** Mon–Sun grid cells; null = padding before/after month. */
+  function monthGridCells(monthKey) {
+    const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
+    const y = parts[0];
+    const m = parts[1];
+    const pad = (n) => String(n).padStart(2, '0');
+    const first = new Date(y, m - 1, 1);
+    const startOffset = (first.getDay() + 6) % 7;
+    const last = new Date(y, m, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < startOffset; i++) cells.push(null);
+    for (let d = 1; d <= last; d++) cells.push(`${y}-${pad(m)}-${pad(d)}`);
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }
+
   function shiftMonth(monthKey, delta) {
     const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
     const d = new Date(parts[0], parts[1] - 1 + num(delta), 1);
@@ -796,15 +812,21 @@
   }
 
   function needsProgramming(state) {
-    const assigned = new Set();
-    for (const a of state.assignments || []) {
-      (a.athleteIds || []).forEach((id) => assigned.add(id));
-    }
-    const missingAthletes = (state.athletes || []).filter((a) => !assigned.has(a.id));
-    const missingTeams = (state.teams || []).filter((t) =>
-      (t.athleteIds || []).some((id) => !assigned.has(id)),
-    );
-    return { athletes: missingAthletes, teams: missingTeams };
+    const start = today();
+    const horizon = addDays(start, 21);
+    const athletes = state.athletes || [];
+    const needAthletes = athletes.filter((a) => {
+      const upcoming = (state.sessions || []).filter(
+        (s) =>
+          s.athleteId === a.id &&
+          s.date >= start &&
+          s.date <= horizon &&
+          s.status !== 'completed',
+      );
+      if (!upcoming.length) return true;
+      return upcoming.some((s) => !s.published);
+    });
+    return { athletes: needAthletes, teams: [] };
   }
 
   function calendarFor(state, athleteId, monthKey) {
@@ -1291,6 +1313,7 @@
     athleteAccountEmail,
     addCalendarSession,
     monthDays,
+    monthGridCells,
     shiftMonth,
     monthLabel,
     sessionsOnDate,
