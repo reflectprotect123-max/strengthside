@@ -94,12 +94,17 @@
       t.targetWatts != null && t.targetWatts !== ''
         ? 'Next interval target: ' + t.targetWatts + ' W'
         : 'Engine adjusts next interval from feel + HR zones';
+    var cue =
+      global.CoachAI && global.CoachAI.athleteCueHtml && typeof global.activeSession === 'function'
+        ? global.CoachAI.athleteCueHtml(global.activeSession())
+        : '';
     return (
       '<div class="card" style="margin-top:10px;padding:12px">' +
       '<div class=title>Rest · how did that interval feel?</div>' +
       '<div class=meta>' +
       hint +
       ' · pick before the next work phase</div>' +
+      cue +
       '<div class=btns style="flex-wrap:wrap;justify-content:flex-start;margin-top:8px">' +
       btns +
       '</div></div>'

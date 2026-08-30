@@ -12,8 +12,10 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('coach-ai.js')) throw new Error('index.html missing coach-ai.js');
 if (!html.includes('llmCoachIntent')) throw new Error('settings missing llmCoachIntent toggle');
+if (!html.includes('llmProgression')) throw new Error('settings missing llmProgression toggle');
 
 const sandbox = { window: {}, console, fetch: () => Promise.reject(new Error('no network')) };
+sandbox.esc = (s) => String(s);
 sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox);
@@ -46,5 +48,11 @@ const t = { tasks: [{ kind: 'conditioning', effort: 'medium', notes: '' }] };
 sandbox.CoachAI.applyCoachIntentToSession(t, intent);
 if (t.tasks[0].effort !== 'easy') throw new Error('cond effort not applied');
 if (t.sessionPain !== 'yes') throw new Error('pain flag should set sessionPain');
+
+const cueHtml = sandbox.CoachAI.athleteCueHtml({
+  llmIntent: { athleteCue: 'Smooth reps — no grinders.' },
+});
+if (!cueHtml.includes('Smooth reps')) throw new Error('athleteCueHtml failed');
+if (sandbox.CoachAI.athleteCueForSession(null)) throw new Error('empty session cue should be blank');
 
 console.log('coach-ai.smoke: ok');

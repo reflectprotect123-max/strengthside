@@ -311,97 +311,234 @@
     return { ok: true, prs: prs, workingMaxes: workingMaxes, recentAudit: recentAudit };
   }
 
+  var PROGRESSION_CONSERVATIVE_RANK = { progress: 0, retest: 1, hold: 2, deload: 3 };
+
+  function mergeAiProgressionAction(engineAction, aiDecision) {
+    if (!aiDecision || !aiDecision.action) return { action: engineAction, aiInfluenced: false };
+    var engineRank = PROGRESSION_CONSERVATIVE_RANK[engineAction] != null
+      ? PROGRESSION_CONSERVATIVE_RANK[engineAction]
+      : 2;
+    var aiRank = PROGRESSION_CONSERVATIVE_RANK[aiDecision.action] != null
+      ? PROGRESSION_CONSERVATIVE_RANK[aiDecision.action]
+      : 2;
+    if (aiRank > engineRank) {
+      return { action: aiDecision.action, aiInfluenced: true };
+    }
+    return { action: engineAction, aiInfluenced: false };
+  }
+
+  function resolveProgressionAction(state, session, exerciseId, opts) {
+    opts = opts || {};
+    var performed = opts.performed || performedFromState(state);
+    var prEvents = opts.prEvents || state.strengthState.prEvents.slice();
+    var recovery = opts.recovery;
+    var exposures = global.HybridStrength.Exposure.strengthExposuresFor(exerciseId, performed);
+    var decision = global.HybridStrength.Progression.decideProgression(exposures, { exerciseId: exerciseId });
+    var action = decision.action;
+    var reasonCodes = decision.reasonCodes.slice();
+    if (opts.bigMacOverride) {
+      action = opts.bigMacOverride;
+      reasonCodes.push('big_mac_override');
+    }
+    var performanceOverride = false;
+
+    if (session.sessionPain === 'yes') {
+      action = 'hold';
+      reasonCodes.push('session_pain_yes');
+    } else if (
+      action === 'progress' &&
+      global.RecoverySignals.blocksProgressionBumps(recovery) &&
+      sessionHadPerformanceOverride(session, exerciseId, performed, prEvents)
+    ) {
+      performanceOverride = true;
+      reasonCodes.push('performance_overrides_subjective_gate');
+    } else if (
+      action === 'progress' &&
+      global.RecoverySignals.blocksProgressionBumps(recovery)
+    ) {
+      action = 'hold';
+      reasonCodes = reasonCodes.concat(['recovery_gate_' + recovery.gate]).concat(recovery.reasonCodes);
+    }
+
+    return {
+      action: action,
+      reasonCodes: reasonCodes,
+      performanceOverride: performanceOverride,
+      decision: decision,
+    };
+  }
+
+  function applyResolvedProgression(state, session, exerciseId, resolved, recovery, performed) {
+    var action = resolved.action;
+    var reasonCodes = resolved.reasonCodes.slice();
+    var decision = resolved.decision;
+    var anchor = currentAnchorLoad(state, exerciseId, performed);
+    var deltaKg = decision.deltaKg;
+    var deltaPct = decision.deltaPct;
+
+    if (resolved.aiDeltaPct != null && Number.isFinite(resolved.aiDeltaPct)) {
+      deltaPct = resolved.aiDeltaPct;
+    }
+
+    if (action === 'progress' && anchor != null) {
+      var progressed = roundLoad(anchor * (1 + (deltaPct != null ? deltaPct : 0.025)));
+      if (progressed > anchor) {
+        applyLoadChange(state, exerciseId, progressed, 'auto_estimate', session.id, null);
+        deltaKg = progressed - anchor;
+      } else {
+        action = 'hold';
+        reasonCodes.push('progress_rounded_no_change');
+      }
+    } else if (action === 'deload' && anchor != null) {
+      var deloaded = roundLoad(anchor * (1 + (deltaPct != null ? deltaPct : -0.05)));
+      if (deloaded < anchor) {
+        applyLoadChange(state, exerciseId, deloaded, 'auto_estimate', session.id, null);
+        deltaKg = deloaded - anchor;
+      } else {
+        action = 'hold';
+        reasonCodes.push('deload_rounded_no_change');
+      }
+    }
+
+    appendAudit(state, {
+      at: isoNow(),
+      sessionId: session.id,
+      exerciseId: exerciseId,
+      action: action,
+      deltaKg: deltaKg,
+      reasonCodes: reasonCodes,
+      recoveryGate: recovery.gate,
+      sessionPain: session.sessionPain || 'none',
+      performanceOverride: resolved.performanceOverride,
+      engineVersion: ENGINE_VERSION,
+      aiAdvised: !!resolved.aiInfluenced,
+    });
+
+    return action === 'progress' || action === 'deload';
+  }
+
+  function buildAiFlashContext(state, session, exerciseId, resolved, recovery) {
+    var performed = performedFromState(state);
+    var exposures = global.HybridStrength.Exposure.strengthExposuresFor(exerciseId, performed);
+    var cal = calibrationForExercise(state, exerciseId);
+    return {
+      exposures: exposures,
+      exerciseName: exerciseNameFor(state, exerciseId),
+      calibration: cal ? cal.state : 'unknown',
+      sessionPain: session.sessionPain || 'none',
+      recoveryGate: recovery.gate,
+      recoveryReasonCodes: recovery.reasonCodes || [],
+      performanceOverride: resolved.performanceOverride,
+      deterministic: { action: resolved.action, reasonCodes: resolved.reasonCodes.slice() },
+    };
+  }
+
+  function progressionPrecheck(state, session, opts) {
+    opts = opts || {};
+    if (!hasStrength()) {
+      if (!opts.quiet) console.warn('StrengthAdapter: HybridStrength bundle missing — skip silent apply');
+      return { ok: false, result: { applied: 0, skipped: 'no_bundle' } };
+    }
+    if (!global.RecoverySignals) {
+      if (!opts.quiet) console.warn('StrengthAdapter: RecoverySignals missing — skip silent apply');
+      return { ok: false, result: { applied: 0, skipped: 'no_recovery' } };
+    }
+    ensureStrengthState(state);
+    var recovery = opts.recoverySignal || global.RecoverySignals.recoverySignal(opts.recoveryInput || {});
+    var performed = performedFromState(state);
+    var prEvents = state.strengthState.prEvents.slice();
+    var exerciseIds = trainedExerciseIds(session);
+    return {
+      ok: true,
+      recovery: recovery,
+      performed: performed,
+      prEvents: prEvents,
+      exerciseIds: exerciseIds,
+    };
+  }
+
   /**
    * Apply silent progression for a just-completed session.
    * Mutates state.strengthState and state.meta.progressionAudit; caller saves.
    */
   function applySilentProgression(state, session, opts) {
     opts = opts || {};
-    if (!hasStrength()) {
-      if (!opts.quiet) console.warn('StrengthAdapter: HybridStrength bundle missing — skip silent apply');
-      return { applied: 0, skipped: 'no_bundle' };
-    }
-    if (!global.RecoverySignals) {
-      if (!opts.quiet) console.warn('StrengthAdapter: RecoverySignals missing — skip silent apply');
-      return { applied: 0, skipped: 'no_recovery' };
-    }
+    var pre = progressionPrecheck(state, session, opts);
+    if (!pre.ok) return pre.result;
 
-    ensureStrengthState(state);
-    var recovery = opts.recoverySignal || global.RecoverySignals.recoverySignal(opts.recoveryInput || {});
-    var performed = performedFromState(state);
-    var prEvents = state.strengthState.prEvents.slice();
-    var exerciseIds = trainedExerciseIds(session);
     var applied = 0;
-
-    exerciseIds.forEach(function (exerciseId) {
-      var exposures = global.HybridStrength.Exposure.strengthExposuresFor(exerciseId, performed);
-      var decision = global.HybridStrength.Progression.decideProgression(exposures, { exerciseId: exerciseId });
-      var action = decision.action;
-      var reasonCodes = decision.reasonCodes.slice();
-      if (opts.bigMacOverride) {
-        action = opts.bigMacOverride;
-        reasonCodes.push('big_mac_override');
-      }
-      var performanceOverride = false;
-
-      if (session.sessionPain === 'yes') {
-        action = 'hold';
-        reasonCodes.push('session_pain_yes');
-      } else if (
-        action === 'progress' &&
-        global.RecoverySignals.blocksProgressionBumps(recovery) &&
-        sessionHadPerformanceOverride(session, exerciseId, performed, prEvents)
-      ) {
-        performanceOverride = true;
-        reasonCodes.push('performance_overrides_subjective_gate');
-      } else if (
-        action === 'progress' &&
-        global.RecoverySignals.blocksProgressionBumps(recovery)
-      ) {
-        action = 'hold';
-        reasonCodes = reasonCodes.concat(['recovery_gate_' + recovery.gate]).concat(recovery.reasonCodes);
-      }
-
-      var anchor = currentAnchorLoad(state, exerciseId, performed);
-      var deltaKg = decision.deltaKg;
-
-      if (action === 'progress' && anchor != null) {
-        var progressed = roundLoad(anchor * (1 + (decision.deltaPct || 0.025)));
-        if (progressed > anchor) {
-          applyLoadChange(state, exerciseId, progressed, 'auto_estimate', session.id, null);
-          deltaKg = progressed - anchor;
-        } else {
-          action = 'hold';
-          reasonCodes.push('progress_rounded_no_change');
-        }
-      } else if (action === 'deload' && anchor != null) {
-        var deloaded = roundLoad(anchor * (1 + (decision.deltaPct || -0.05)));
-        if (deloaded < anchor) {
-          applyLoadChange(state, exerciseId, deloaded, 'auto_estimate', session.id, null);
-          deltaKg = deloaded - anchor;
-        } else {
-          action = 'hold';
-          reasonCodes.push('deload_rounded_no_change');
-        }
-      }
-
-      appendAudit(state, {
-        at: isoNow(),
-        sessionId: session.id,
-        exerciseId: exerciseId,
-        action: action,
-        deltaKg: deltaKg,
-        reasonCodes: reasonCodes,
-        recoveryGate: recovery.gate,
-        sessionPain: session.sessionPain || 'none',
-        performanceOverride: performanceOverride,
-        engineVersion: ENGINE_VERSION,
+    pre.exerciseIds.forEach(function (exerciseId) {
+      var resolved = resolveProgressionAction(state, session, exerciseId, {
+        recovery: pre.recovery,
+        performed: pre.performed,
+        prEvents: pre.prEvents,
+        bigMacOverride: opts.bigMacOverride,
       });
-
-      if (action === 'progress' || action === 'deload') applied++;
+      if (applyResolvedProgression(state, session, exerciseId, resolved, pre.recovery, pre.performed)) applied++;
     });
 
-    return { applied: applied, recoveryGate: recovery.gate };
+    return { applied: applied, recoveryGate: pre.recovery.gate };
+  }
+
+  /**
+   * Post-session progression with optional LLM advisory (conservative merge only).
+   */
+  function applySilentProgressionAsync(state, session, opts) {
+    opts = opts || {};
+    var pre = progressionPrecheck(state, session, opts);
+    if (!pre.ok) return Promise.resolve(pre.result);
+
+    var useAi = !opts.bigMacOverride &&
+      global.StrengthAI &&
+      global.StrengthAI.llmEnabled &&
+      global.StrengthAI.llmEnabled(state) &&
+      global.StrengthAI.fetchProgressionDecision;
+
+    if (!useAi) {
+      return Promise.resolve(applySilentProgression(state, session, opts));
+    }
+
+    var jobs = pre.exerciseIds.map(function (exerciseId) {
+      var resolved = resolveProgressionAction(state, session, exerciseId, {
+        recovery: pre.recovery,
+        performed: pre.performed,
+        prEvents: pre.prEvents,
+        bigMacOverride: opts.bigMacOverride,
+      });
+      var ctx = buildAiFlashContext(state, session, exerciseId, resolved, pre.recovery);
+      var flash = global.StrengthAI.buildFlashCard(state, exerciseId, ctx);
+      return global.StrengthAI.fetchProgressionDecision(flash).then(function (ai) {
+        var merged = mergeAiProgressionAction(resolved.action, ai);
+        if (merged.aiInfluenced) {
+          resolved.action = merged.action;
+          resolved.aiInfluenced = true;
+          resolved.reasonCodes.push('llm_progression_advisory');
+          (ai.reasonCodes || []).forEach(function (r) {
+            var code = String(r || '').trim();
+            if (!code) return;
+            var tagged = code.indexOf('llm_') === 0 ? code : 'llm_' + code;
+            if (resolved.reasonCodes.indexOf(tagged) < 0) resolved.reasonCodes.push(tagged);
+          });
+          if (ai.deltaPct != null && (merged.action === 'deload' || merged.action === 'progress')) {
+            resolved.aiDeltaPct = ai.deltaPct;
+          }
+        }
+        return { exerciseId: exerciseId, resolved: resolved };
+      }).catch(function (err) {
+        if (state.settings && state.settings.llmDebug) console.warn('StrengthAI:', err);
+        return { exerciseId: exerciseId, resolved: resolved };
+      });
+    });
+
+    return Promise.all(jobs).then(function (rows) {
+      var applied = 0;
+      rows.forEach(function (row) {
+        if (applyResolvedProgression(state, session, row.exerciseId, row.resolved, pre.recovery, pre.performed)) {
+          applied++;
+        }
+      });
+      return { applied: applied, recoveryGate: pre.recovery.gate, aiAdvised: true };
+    });
   }
 
   function exerciseExposureHistory(state, exerciseId, limit) {
@@ -792,6 +929,8 @@
     sessionLoadFromRows: sessionLoadFromRows,
     performedFromSession: performedFromSession,
     applySilentProgression: applySilentProgression,
+    applySilentProgressionAsync: applySilentProgressionAsync,
+    mergeAiProgressionAction: mergeAiProgressionAction,
     applyLoadHintsToTasks: applyLoadHintsToTasks,
     applyAutopilotToTasks: applyAutopilotToTasks,
     applyAutopilotVolumeToExercise: applyAutopilotVolumeToExercise,

@@ -84,7 +84,15 @@
     });
   }
 
+  function llmEnabled(state) {
+    state = state || {};
+    var s = state.settings || {};
+    if (s.llmProgression === false) return false;
+    return s.llmProgression !== false && (s.llmProgression === true || s.llmCoachIntent !== false || s.llmEnabled === true);
+  }
+
   global.StrengthAI = {
+    llmEnabled: llmEnabled,
     validateProgressionDecision: validateProgressionDecision,
     buildFlashCard: buildFlashCard,
     fetchProgressionDecision: fetchProgressionDecision,
