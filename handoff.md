@@ -18,8 +18,8 @@
 | **`main` tip** | **`9f2ca43`** (#98 calendar + block types + demo roster — 30 Aug) |
 | **Open PR** | **None** — #97 portal + #98 calendar merged 30 Aug |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
-| **Cache** | **`the-hybrid-athlete-engine-v97`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.16`** on channel — **upload `1.0.17`** after merge to ship v97 bundle |
+| **Cache** | **`the-hybrid-athlete-engine-v98`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.16`** on channel — **upload `1.0.17`** after merge to ship v98 bundle |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html — **real:** Supabase sign-in → roster link athlete UUID → Publish; **demo:** `dan@thehybrid.local` / `demo` (offline only) |
 | **APK** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
