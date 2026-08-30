@@ -20,9 +20,12 @@ var HybridStrength = (() => {
   // strength-entry.ts
   var strength_entry_exports = {};
   __export(strength_entry_exports, {
+    Calibration: () => calibration_exports,
     Coordinator: () => coordinator_exports,
+    DecideNextSet: () => decideNextSet_exports,
     E1rm: () => e1rm_exports,
     Exposure: () => exposure_exports,
+    InitialPrescription: () => decideInitialPrescription_exports,
     Load: () => load_exports,
     Performed: () => performed_exports,
     Pr: () => pr_exports,
@@ -268,6 +271,10 @@ var HybridStrength = (() => {
   });
 
   // ../../../../packages/strength-engine/src/calibration.ts
+  var calibration_exports = {};
+  __export(calibration_exports, {
+    calibrationStateFor: () => calibrationStateFor
+  });
   var MIN_EXPOSURES = 3;
   function calibrationStateFor(exposures) {
     const usable = exposures.filter((e) => e.exposureClass !== "pain_blocked");
@@ -572,6 +579,135 @@ var HybridStrength = (() => {
       items,
       reasonCodes
     };
+  }
+
+  // ../../../../packages/strength-engine/src/decideNextSet.ts
+  var decideNextSet_exports = {};
+  __export(decideNextSet_exports, {
+    IN_SESSION_STRENGTH: () => IN_SESSION_STRENGTH,
+    decideNextSet: () => decideNextSet
+  });
+  var IN_SESSION_STRENGTH = {
+    cutSoftPct: 0.025,
+    cutHardPct: 0.05,
+    bumpVeryEasyPct: 0.025,
+    defaultTargetRir: 2
+  };
+  function bumpLoad(loadKg, pct, equipment) {
+    const raw = loadKg * (1 + pct);
+    const rounded = roundLoadToEquipment(raw, equipment);
+    return { kg: rounded, bumped: rounded > loadKg };
+  }
+  function cutLoad(loadKg, pct, equipment) {
+    return roundLoadToEquipment(loadKg * (1 - pct), equipment);
+  }
+  function decideNextSet(input) {
+    const targetRir = input.targetRir ?? IN_SESSION_STRENGTH.defaultTargetRir;
+    const reasons = [];
+    let loadKg = input.performedLoadKg;
+    let reps = input.prescribedReps;
+    switch (input.difficulty) {
+      case "did_not_complete": {
+        const proven = Math.max(0, input.performedReps);
+        reps = Math.min(input.prescribedReps, proven);
+        const cutPct = proven <= 0 ? IN_SESSION_STRENGTH.cutHardPct : IN_SESSION_STRENGTH.cutSoftPct;
+        loadKg = cutLoad(loadKg, cutPct, input.equipment);
+        reasons.push(proven <= 0 ? "did_not_complete_zero_reps" : "did_not_complete_partial");
+        reasons.push("reps_capped_to_proven", "load_cut");
+        break;
+      }
+      case "very_easy": {
+        const { kg, bumped } = bumpLoad(loadKg, IN_SESSION_STRENGTH.bumpVeryEasyPct, input.equipment);
+        if (bumped) {
+          loadKg = kg;
+          reasons.push("very_easy_bump_load");
+        } else if (input.repRangeHi != null && reps < input.repRangeHi) {
+          reps += 1;
+          reasons.push("very_easy_bump_reps");
+        } else {
+          reasons.push("very_easy_hold");
+        }
+        break;
+      }
+      case "easy":
+        reasons.push("easy_hold");
+        break;
+      case "hard":
+        loadKg = cutLoad(loadKg, IN_SESSION_STRENGTH.cutSoftPct, input.equipment);
+        reasons.push("hard_cut_load");
+        break;
+      case "max":
+        reasons.push("max_hold");
+        break;
+      case "medium":
+      default:
+        reasons.push("on_target_hold");
+        break;
+    }
+    return { loadKg, reps, targetRir, reasonCodes: reasons };
+  }
+
+  // ../../../../packages/strength-engine/src/decideInitialPrescription.ts
+  var decideInitialPrescription_exports = {};
+  __export(decideInitialPrescription_exports, {
+    decideInitialPrescription: () => decideInitialPrescription
+  });
+  var BASELINE = { sets: 3, reps: "8" };
+  function coachSetsPinned(v) {
+    return v != null && Number.isFinite(Number(v)) && Number(v) > 0;
+  }
+  function coachRepsPinned(v) {
+    return v != null && String(v).trim().length > 0;
+  }
+  function decideInitialPrescription(input) {
+    const reasons = [];
+    const pinnedSets = coachSetsPinned(input.coachSets);
+    const pinnedReps = coachRepsPinned(input.coachReps);
+    if (pinnedSets && pinnedReps) {
+      return {
+        sets: Math.max(1, Math.min(12, Math.round(Number(input.coachSets)))),
+        reps: String(input.coachReps).trim(),
+        autopilotVolume: false,
+        reasonCodes: ["coach_pinned_volume"]
+      };
+    }
+    reasons.push("autopilot_volume");
+    let sets = BASELINE.sets;
+    let reps = BASELINE.reps;
+    if (input.lastSession && input.lastSession.setCount > 0) {
+      sets = Math.max(1, Math.min(12, Math.round(input.lastSession.setCount)));
+      reps = String(Math.max(1, Math.round(input.lastSession.reps)) || BASELINE.reps);
+      reasons.push("history_last_session");
+    } else if (input.calibration === "uncalibrated") {
+      reasons.push("baseline_uncalibrated");
+    } else if (input.calibration === "building") {
+      reasons.push("baseline_building");
+    } else {
+      reasons.push("baseline_calibrated");
+    }
+    if (input.recoveryGate === "hold") {
+      sets = Math.max(2, sets - 1);
+      reasons.push("recovery_hold_reduce_sets");
+    } else if (input.recoveryGate === "caution" && sets > 3) {
+      sets -= 1;
+      reasons.push("recovery_caution_reduce_sets");
+    }
+    if (input.maxSetsForExercise != null && Number.isFinite(Number(input.maxSetsForExercise))) {
+      const cap = Math.max(1, Math.floor(Number(input.maxSetsForExercise)));
+      if (sets > cap) {
+        sets = cap;
+        reasons.push("volume_cap");
+      }
+    }
+    if (pinnedSets) {
+      sets = Math.max(1, Math.min(12, Math.round(Number(input.coachSets))));
+      reasons.push("coach_pinned_sets");
+    }
+    if (pinnedReps) {
+      reps = String(input.coachReps).trim();
+      reasons.push("coach_pinned_reps");
+    }
+    return { sets, reps, autopilotVolume: true, reasonCodes: reasons };
   }
   return __toCommonJS(strength_entry_exports);
 })();

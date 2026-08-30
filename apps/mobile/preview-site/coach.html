@@ -203,6 +203,22 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .guardrail{font-size:12px;color:var(--muted);padding:8px 10px;border-radius:8px;background:rgba(212,165,116,.08);border:1px solid rgba(212,165,116,.15)}
 .divider{height:1px;background:var(--line);margin:10px 0}
 .rx-summary{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.rx-metric-grid{display:grid;gap:10px;margin-top:12px}
+.rx-metric-grid.cols-1{grid-template-columns:1fr}
+.rx-metric-grid.cols-2{grid-template-columns:repeat(2,1fr)}
+.rx-metric-grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.rx-metric-col{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.rx-metric-col input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel3);color:var(--text);font-size:13px}
+.rx-metric-hint{margin:6px 0 0;font-size:10px;color:var(--dim);line-height:1.35}
+.rx-metric-remove{min-width:28px;padding:4px 8px}
+.autopilot-strip{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px;padding:10px 12px;border-radius:10px;border:1px solid rgba(212,165,116,.2);background:rgba(212,165,116,.06)}
+.autopilot-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.autopilot-value{font-size:14px;font-weight:700;color:var(--copper2)}
+.autopilot-note{font-size:11px;color:var(--dim);flex:1;min-width:180px}
+.rx-advanced{margin-top:8px}
+.rx-overrides summary{cursor:pointer;font-size:12px;font-weight:650;color:var(--muted);padding:6px 0}
+.rx-overrides[open] summary{color:var(--copper2);margin-bottom:8px}
+.rx-override-table{margin-top:4px}
 .add-block-bar{margin-top:20px}
 .kebab-btn{min-height:32px;min-width:32px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);transition:border-color var(--ease),color var(--ease)}
 .kebab-btn:hover{border-color:rgba(212,165,116,.35);color:var(--text)}
@@ -1054,10 +1070,6 @@ function programHtml(){
 function tplBlocks(){ return tpl(ui.templateId)?.blocks || []; }
 
 function coachExerciseSummary(ex){
-  if (window.LogColumns && ex.logColumns && ex.logColumns.length) {
-    const meta = LogColumns.columnsMeta(ex);
-    if (meta) return meta;
-  }
   return L.prescriptionLine(ex);
 }
 
@@ -1090,20 +1102,43 @@ function closeCoachExEdit(){
   render();
 }
 
+function patchCoachExTargetRir(bi, ei, raw){
+  const ex = tplBlocks()[bi].exercises[ei];
+  const v = String(raw == null ? '' : raw).trim();
+  if (!v) delete ex.targetRir;
+  else {
+    const n = Math.max(0, Math.min(10, Math.round(Number(v))));
+    if (Number.isFinite(n)) ex.targetRir = n;
+  }
+  if (ui.exEdit && window.LogColumns) LogColumns.setTargetRir(ex.targetRir);
+  persist();
+}
+
+function coachTargetRirField(bi, ei){
+  const ex = tplBlocks()[bi].exercises[ei];
+  const val = ex.targetRir != null ? ex.targetRir : '';
+  return `<div class="field" style="margin-top:8px"><label>Target RIR</label>
+    <input type="number" min="0" max="10" step="1" placeholder="2 (default)" value="${val}" aria-label="Target reps in reserve" onchange="patchCoachExTargetRir(${bi},${ei},this.value)">
+    <p class="muted" style="margin:4px 0 0;font-size:11px">In-session autoreg aims for this many reps in reserve. Blank uses engine default (2).</p></div>`;
+}
+
 function coachExerciseRxHtml(bi, ei){
   const ex = tplBlocks()[bi].exercises[ei];
   const editing = ui.exEdit && ui.exEdit.bi === bi && ui.exEdit.ei === ei;
   if (!window.LogColumns) return setRowsTable(bi, ei);
   if (!editing) {
     return `<p class="rx-summary">${esc(coachExerciseSummary(ex))}</p>
-      <p class="rx-summary muted">Leave load blank for autopilot · add % WM column only when you want a fixed percentage.</p>
+      <p class="rx-summary muted">Autopilot — engine handles sets, reps, and load · in-session autoreg after set 1.</p>
+      ${coachTargetRirField(bi, ei)}
       <button type="button" class="btn small" style="margin-top:8px" onclick="openCoachExEdit(${bi},${ei})">Edit prescription</button>`;
   }
   LogColumns.beginSheet(ex);
-  return `<div class="field" style="margin-top:8px"><label>Rest seconds</label>
-    <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
-    <input type="hidden" id="exSets" value="${LogColumns.getSetCount()}">
-    ${LogColumns.builderLoggerTwinHtml()}
+  return `${coachTargetRirField(bi, ei)}
+    <div class="rx-grid cols-2" style="margin-top:8px">
+      <div class="field"><label>Rest (seconds)</label>
+        <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
+    </div>
+    ${LogColumns.builderPrescriptionHtml()}
     <div class="btns" style="margin-top:8px;justify-content:flex-start">
       <button type="button" class="btn small primary" onclick="closeCoachExEdit()">Done</button>
     </div>`;
@@ -1119,7 +1154,7 @@ function parseSets(tid, bi, ei, raw){
 function addEx(bi){
   const t = tpl(ui.templateId);
   t.blocks[bi].exercises = t.blocks[bi].exercises || [];
-  t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8', load:'', metric:'Weight', restSec:90 }));
+  t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', autopilotVolume:true, load:'', metric:'Weight', restSec:90 }));
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }
@@ -1367,8 +1402,10 @@ function setRowRep(bi, ei, ri, val){
   const parts = L.targetList(e);
   while (parts.length < (e.sets || 1)) parts.push(String(e.reps || ''));
   parts[ri] = val;
+  for (let i = ri + 1; i < parts.length; i++) parts[i] = val;
   e.reps = parts.length === 1 ? parts[0] : parts.join(',');
   persist();
+  render();
 }
 
 function setRowLoad(bi, ei, ri, val){

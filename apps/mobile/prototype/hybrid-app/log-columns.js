@@ -24,6 +24,113 @@
     return KIND_MAP[key] || KIND_MAP.reps;
   }
 
+  function isLoadKind(kind) {
+    return kind === 'weight_kg' || kind === 'weight_pct_wm' || kind === 'weight_lwp';
+  }
+
+  function isEffortKind(kind) {
+    return kind === 'reps' || kind === 'reps_range' || kind === 'time_sec' || kind === 'distance_m';
+  }
+
+  function effortKindsOptionsHtml(selected) {
+    return KINDS.filter((k) => isEffortKind(k.key))
+      .map((k) => `<option value="${k.key}" ${k.key === selected ? 'selected' : ''}>${k.label}</option>`)
+      .join('');
+  }
+
+  function loadKindsOptionsHtml(selected) {
+    return KINDS.filter((k) => isLoadKind(k.key))
+      .map((k) => `<option value="${k.key}" ${k.key === selected ? 'selected' : ''}>${k.label}</option>`)
+      .join('');
+  }
+
+  function effortColumn(cols) {
+    return (cols || sheet.columns).find((c) => isEffortKind(c.kind));
+  }
+
+  function loadColumn(cols) {
+    return (cols || sheet.columns).find((c) => isLoadKind(c.kind));
+  }
+
+  function hasPinnedLoad(cols) {
+    const col = loadColumn(cols);
+    if (!col) return false;
+    const v = String((col.values || [])[0] ?? col.value ?? '').trim();
+    if (!v) return false;
+    if (col.kind === 'weight_pct_wm') return Number(v) >= 1 && Number(v) <= 100;
+    if (col.kind === 'weight_lwp') return !Number.isNaN(Number(v));
+    return true;
+  }
+
+  function hasPinnedVolume(ex) {
+    if (ex && ex.autopilotVolume === false) return true;
+    if (sheet.autopilotVolume === false) return true;
+    const effort = effortColumn();
+    const repsVal = effort ? String((effort.values || [])[0] ?? '').trim() : '';
+    return sheet.sets > 0 && repsVal.length > 0 && sheet.autopilotVolume === false;
+  }
+
+  function isAutopilotVolume(ex) {
+    if (ex && ex.autopilotVolume === true) return true;
+    if (ex && ex.autopilotVolume === false) return false;
+    const noSets = ex && (ex.sets == null || ex.sets === '');
+    const noReps = ex && (ex.reps == null || String(ex.reps).trim() === '');
+    return !!(noSets && noReps);
+  }
+
+  function coachDefaultColumns(ex) {
+    const setCount = Math.max(1, Number(ex && ex.sets) || 3);
+    const reps = String((ex && ex.reps) || '8');
+    const looksTime = /s(ec(onds?)?)?$/i.test(reps.split(',')[0].trim()) || (ex && ex.targetKind === 'seconds');
+    const effortRaw = reps.replace(/s(ec(onds?)?)?$/i, '').trim() || reps;
+    let effortKind = 'reps';
+    if (looksTime) effortKind = 'time_sec';
+    else if (/^\d+\s*[-–]\s*\d+$/.test(effortRaw.trim())) effortKind = 'reps_range';
+    else if (ex && ex.logColumns) {
+      const saved = ex.logColumns.find((c) => isEffortKind(c.kind));
+      if (saved) effortKind = saved.kind;
+    }
+    const cols = [
+      {
+        id: newId(),
+        kind: effortKind,
+        value: effortRaw,
+        values: splitValues(effortRaw, setCount),
+      },
+    ];
+    if (ex && ex.loadExpr && ex.loadExpr.exprKind === 'pct_of_max') {
+      const pct = String(Math.round(Number(ex.loadExpr.exprArg) * 100) || '');
+      cols.unshift({ id: newId(), kind: 'weight_pct_wm', value: pct, values: splitValues(pct, setCount) });
+    } else if (ex && ex.loadExpr && ex.loadExpr.exprKind === 'lwp_delta') {
+      const d = String(ex.loadExpr.exprArg ?? '');
+      cols.unshift({ id: newId(), kind: 'weight_lwp', value: d, values: splitValues(d, setCount) });
+    } else if (ex && String(ex.load || '').trim()) {
+      cols.unshift({
+        id: newId(),
+        kind: 'weight_kg',
+        value: String(ex.load),
+        values: splitValues(ex.load, setCount),
+      });
+    }
+    return cols;
+  }
+
+  function coachNormalizeColumns(ex) {
+    const setCount = Math.max(1, Number(ex && ex.sets) || 3);
+    if (ex && Array.isArray(ex.logColumns) && ex.logColumns.length) {
+      return ex.logColumns.map((c) => {
+        const kind = KIND_MAP[c.kind] ? c.kind : 'reps';
+        const value = c.value == null ? '' : String(c.value);
+        const values =
+          Array.isArray(c.values) && c.values.length
+            ? splitValues(c.values.join(','), setCount)
+            : splitValues(value, setCount);
+        return { id: c.id || newId(), kind, value: joinValues(values), values };
+      });
+    }
+    return coachDefaultColumns(ex || {});
+  }
+
   function splitValues(raw, setCount) {
     const n = Math.max(1, setCount | 0);
     let parts = String(raw == null ? '' : raw)
@@ -87,17 +194,28 @@
   }
 
   function syncLegacyFromColumns(ex, columns, setCount) {
-    const cols = (columns || normalizeColumns(ex)).map((c) => {
+    let cols = (columns || coachNormalizeColumns(ex)).map((c) => {
       const values = Array.isArray(c.values) ? c.values : splitValues(c.value, setCount || ex.sets || 1);
       return { id: c.id || newId(), kind: c.kind, value: joinValues(values), values };
     });
+    cols = cols.filter((c) => !isLoadKind(c.kind) || hasPinnedLoad([c]));
     ex.logColumns = cols;
     if (setCount) ex.sets = Math.max(1, setCount);
-    const effort = cols.find((c) => c.kind === 'reps' || c.kind === 'reps_range' || c.kind === 'time_sec' || c.kind === 'distance_m');
-    const loadCol = cols.find((c) => c.kind === 'weight_kg' || c.kind === 'weight_pct_wm' || c.kind === 'weight_lwp');
-    if (effort) ex.reps = String(effort.value || '').trim() || ex.reps || '1';
+    const effort = effortColumn(cols);
+    const loadCol = loadColumn(cols);
+    if (effort) ex.reps = String(effort.value || '').trim() || ex.reps || '8';
+    if (sheet.autopilotVolume) {
+      ex.autopilotVolume = true;
+      ex.sets = null;
+      ex.reps = null;
+    } else {
+      ex.autopilotVolume = false;
+      if (setCount) ex.sets = Math.max(1, setCount);
+      if (effort) ex.reps = String(effort.value || '').trim() || '8';
+    }
     delete ex.loadExpr;
-    if (loadCol) {
+    delete ex.load;
+    if (loadCol && hasPinnedLoad(cols)) {
       if (loadCol.kind === 'weight_pct_wm') {
         const pct = Number(String(loadCol.values?.[0] ?? loadCol.value).split(',')[0]);
         if (pct >= 1 && pct <= 100) ex.loadExpr = { exprKind: 'pct_of_max', exprArg: pct / 100 };
@@ -135,7 +253,7 @@
   }
 
   /** Sheet draft while Edit lift is open */
-  let sheet = { sets: 3, restSec: 120, columns: [] };
+  let sheet = { sets: 3, restSec: 120, targetRir: null, autopilotVolume: true, showOverrides: false, columns: [] };
   let changeHandler = null;
 
   function setChangeHandler(fn) {
@@ -147,14 +265,131 @@
   }
 
   function beginSheet(ex) {
-    const sets = Math.max(1, Number(ex && ex.sets) || 3);
+    const autopilotVolume = isAutopilotVolume(ex);
+    const sets = autopilotVolume ? 3 : Math.max(1, Number(ex && ex.sets) || 3);
     const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
+    const targetRir =
+      ex && ex.targetRir != null && Number.isFinite(Number(ex.targetRir)) ? Math.round(Number(ex.targetRir)) : null;
     sheet = {
       sets,
       restSec,
-      columns: normalizeColumns({ ...(ex || {}), sets }),
+      targetRir,
+      autopilotVolume,
+      showOverrides: !!(ex && ex.logColumns && ex.logColumns.some((c) => perSetOverrideActive(c.values, sets))),
+      columns: coachNormalizeColumns({ ...(ex || {}), sets }),
     };
     return sheet;
+  }
+
+  function setAutopilotVolume(on) {
+    sheet.autopilotVolume = !!on;
+    if (sheet.autopilotVolume) {
+      sheet.showOverrides = false;
+    }
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function pinVolume(sets, reps) {
+    sheet.autopilotVolume = false;
+    sheet.sets = Math.max(1, Math.min(12, Number(sets) || 3));
+    onSimpleReps(reps || '8');
+    resizeSets(sheet.sets);
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function clearPinnedVolume() {
+    sheet.autopilotVolume = true;
+    onSimpleReps('8');
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function effortColumnIndex() {
+    return sheet.columns.findIndex((c) => isEffortKind(c.kind));
+  }
+
+  function loadColumnIndex() {
+    return sheet.columns.findIndex((c) => isLoadKind(c.kind));
+  }
+
+  function onSimpleEffortKind(kind) {
+    const idx = effortColumnIndex();
+    if (idx < 0) return;
+    onKindChange(idx, kind);
+  }
+
+  function onSimpleReps(value) {
+    const idx = effortColumnIndex();
+    if (idx < 0) return;
+    onPrescriptionChange(idx, value);
+  }
+
+  function ensureLoadColumn(kind) {
+    let idx = loadColumnIndex();
+    if (idx < 0) {
+      sheet.columns.unshift({
+        id: newId(),
+        kind: isLoadKind(kind) ? kind : 'weight_kg',
+        value: '',
+        values: splitValues('', sheet.sets),
+      });
+      idx = 0;
+    }
+    return idx;
+  }
+
+  function onPinLoadKind(kind) {
+    const idx = ensureLoadColumn(kind);
+    sheet.columns[idx].kind = isLoadKind(kind) ? kind : 'weight_kg';
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function onPinLoadValue(value) {
+    const idx = ensureLoadColumn(loadColumn()?.kind || 'weight_kg');
+    onPrescriptionChange(idx, value);
+  }
+
+  function clearPinnedLoad() {
+    sheet.columns = sheet.columns.filter((c) => !isLoadKind(c.kind));
+    refreshPrescription();
+    notifyChange();
+  }
+
+  /** True when any set after 1 differs from set 1 (coach authored per-set overrides). */
+  function perSetOverrideActive(values, setCount) {
+    const vals = values || [];
+    const first = String(vals[0] == null ? '' : vals[0]).trim();
+    for (let i = 1; i < setCount; i++) {
+      const v = String(vals[i] == null ? '' : vals[i]).trim();
+      if (v !== first && v !== '') return true;
+    }
+    return false;
+  }
+
+  function toggleOverrides(on) {
+    sheet.showOverrides = !!on;
+    if (!sheet.showOverrides) {
+      sheet.columns.forEach((c) => {
+        const base = (c.values || [])[0] == null ? '' : c.values[0];
+        if (shouldForwardFillColumn(c.kind)) {
+          c.values = splitValues(base, sheet.sets);
+        } else {
+          c.values = [base, ...Array.from({ length: Math.max(0, sheet.sets - 1) }, () => '')];
+        }
+        c.value = joinValues(c.values);
+      });
+    }
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function setTargetRir(v) {
+    const n = String(v == null ? '' : v).trim();
+    sheet.targetRir = n === '' || !Number.isFinite(Number(n)) ? null : Math.max(0, Math.min(10, Math.round(Number(n))));
+    refreshPrescription();
   }
 
   function getSheetColumns() {
@@ -178,13 +413,14 @@
     sheet.restSec = Math.max(0, Number(v) || 0);
     const btn = global.document && global.document.getElementById('builderRestBtn');
     if (btn) btn.textContent = 'Rest ' + fmtRest(sheet.restSec);
+    refreshPrescription();
     notifyChange();
   }
 
   function onKindChange(colIdx, kind) {
     if (!sheet.columns[colIdx]) return;
     sheet.columns[colIdx].kind = KIND_MAP[kind] ? kind : 'reps';
-    refreshTwin();
+    refreshPrescription();
     notifyChange();
   }
 
@@ -192,12 +428,27 @@
     return kind === 'reps' || kind === 'reps_range';
   }
 
+  function onPrescriptionChange(colIdx, value) {
+    const col = sheet.columns[colIdx];
+    if (!col) return;
+    if (!Array.isArray(col.values)) col.values = splitValues(col.value, sheet.sets);
+    col.values[0] = value;
+    if (shouldForwardFillColumn(col.kind)) {
+      for (let i = 1; i < sheet.sets; i++) col.values[i] = value;
+    } else if (!sheet.showOverrides) {
+      for (let i = 1; i < sheet.sets; i++) col.values[i] = '';
+    }
+    col.value = joinValues(col.values);
+    refreshPrescription();
+    notifyChange();
+  }
+
   function onCellChange(colIdx, setIdx, value) {
     const col = sheet.columns[colIdx];
     if (!col) return;
     if (!Array.isArray(col.values)) col.values = splitValues(col.value, sheet.sets);
     col.values[setIdx] = value;
-    if (shouldForwardFillColumn(col.kind)) {
+    if (shouldForwardFillColumn(col.kind) && !sheet.showOverrides) {
       // Forward-fill reps column only — never backfill earlier sets.
       for (let i = setIdx + 1; i < sheet.sets; i++) col.values[i] = value;
       syncForwardColumnInputs(colIdx, setIdx, value);
@@ -213,6 +464,7 @@
       }
     }
     col.value = joinValues(col.values);
+    refreshPrescription();
     notifyChange();
   }
 
@@ -232,11 +484,15 @@
     sheet.sets = next;
     sheet.columns.forEach((c) => {
       c.values = splitValues(joinValues(c.values || splitValues(c.value, next)), next);
+      if (!sheet.showOverrides && !shouldForwardFillColumn(c.kind)) {
+        const base = c.values[0] == null ? '' : c.values[0];
+        c.values = [base, ...Array.from({ length: Math.max(0, next - 1) }, () => '')];
+      }
       c.value = joinValues(c.values);
     });
     const setsInput = global.document && global.document.getElementById('exSets');
     if (setsInput) setsInput.value = String(next);
-    refreshTwin();
+    refreshPrescription();
   }
 
   function addSet() {
@@ -261,14 +517,14 @@
       value: '',
       values: splitValues('', sheet.sets),
     });
-    refreshTwin();
+    refreshPrescription();
     notifyChange();
   }
 
   function removeColumn(idx) {
     if (sheet.columns.length <= 1) return;
     sheet.columns.splice(idx, 1);
-    refreshTwin();
+    refreshPrescription();
     notifyChange();
   }
 
@@ -279,57 +535,155 @@
     return String(v == null || v === '' ? '—' : v);
   }
 
-  function builderLoggerTwinHtml() {
-    const cols = sheet.columns;
-    const last = sheet.sets - 1;
-    const planned = sheet.sets + ' sets';
+  function builderPinLoadHtml() {
+    const pinned = hasPinnedLoad();
+    const load = loadColumn();
+    const loadKind = load ? load.kind : 'weight_kg';
+    const loadVal = load ? (load.values || [])[0] == null ? '' : load.values[0] : '';
+    if (!pinned) {
+      return `<details class="rx-overrides rx-advanced"><summary>Pin opening load (optional)</summary>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave blank — the engine sets load from working max, progression, and in-session autoreg. Only pin if you need a fixed kg, % WM, or LWP delta on set 1.</p>
+        <div class="rx-grid cols-2" style="margin-top:8px">
+          <div class="field"><label>Load type</label>
+            <select class="logcol-kind" onchange="LogColumns.onPinLoadKind(this.value)">${loadKindsOptionsHtml(loadKind)}</select></div>
+          <div class="field"><label>Set 1 value</label>
+            <input value="${String(loadVal).replace(/"/g, '&quot;')}" placeholder="e.g. 100 or 70" onchange="LogColumns.onPinLoadValue(this.value)" oninput="LogColumns.onPinLoadValue(this.value)"></div>
+        </div>
+      </details>`;
+    }
+    return `<details class="rx-overrides rx-advanced" open><summary>Pin opening load (optional)</summary>
+      <div class="rx-grid cols-2" style="margin-top:8px">
+        <div class="field"><label>Load type</label>
+          <select class="logcol-kind" onchange="LogColumns.onPinLoadKind(this.value)">${loadKindsOptionsHtml(loadKind)}</select></div>
+        <div class="field"><label>Set 1 value</label>
+          <input value="${String(loadVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onPinLoadValue(this.value)" oninput="LogColumns.onPinLoadValue(this.value)"></div>
+      </div>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedLoad()">Clear — use autopilot load</button>
+    </details>`;
+  }
 
-    const rows = Array.from({ length: sheet.sets }, (_, i) => {
-      const isLast = i === last;
-      const cells = cols
-        .map((c, ci) => {
-          const meta = kindMeta(c.kind);
-          const val = (c.values || [])[i] == null ? '' : c.values[i];
-          const ph = meta.placeholder || '';
-          // First set: dropdown headers (look like logger mini labels). Later sets: hard labels.
-          const head =
-            i === 0
-              ? `<select class="logcol-kind mini-select" aria-label="Column ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>`
-              : `<span class="mini">${meta.loggerLabel}</span>`;
-          return `<div>${head}<input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></div>`;
-        })
-        .join('');
-      const rirMini = isLast ? 'RIR · counts' : 'RIR';
-      return `<div class="setrow builder-setrow ${isLast ? 'last-set' : ''}" data-set="${i}">
-        <div class="setnum">${i + 1}<span class="target">${effortTarget(i)}</span></div>
-        ${cells}
-        <div><span class="mini">${rirMini}</span><input disabled placeholder="—" aria-label="RIR logger only"></div>
-        <div class="btns" style="margin:0;gap:5px"><button type="button" class="btn small primary" disabled>Log</button></div>
+  function builderPinVolumeHtml() {
+    if (sheet.autopilotVolume) {
+      return `<details class="rx-overrides rx-advanced"><summary>Pin sets &amp; reps (optional)</summary>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave on autopilot — engine picks sets × reps from history, calibration, and recovery. Pin only when you need a fixed prescription.</p>
+        <div class="rx-grid cols-2" style="margin-top:8px">
+          <div class="field"><label>Sets</label>
+            <input type="number" min="1" max="12" placeholder="3" onchange="LogColumns.pinVolume(Number(this.value), document.getElementById('pinRepsVal').value)"></div>
+          <div class="field"><label>Reps</label>
+            <input id="pinRepsVal" placeholder="8 or 6-8" onchange="LogColumns.pinVolume(document.querySelector('#builderPrescriptionCard input[type=number]')?.value || 3, this.value)"></div>
+        </div>
+      </details>`;
+    }
+    const effort = effortColumn() || { kind: 'reps', values: ['8'] };
+    const meta = kindMeta(effort.kind);
+    const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
+    return `<details class="rx-overrides rx-advanced" open><summary>Pin sets &amp; reps (optional)</summary>
+      <div class="rx-grid cols-2" style="margin-top:8px">
+        <div class="field"><label>Sets</label>
+          <input type="number" min="1" max="12" value="${sheet.sets}" onchange="LogColumns.resizeSets(Number(this.value)); LogColumns.setAutopilotVolume(false)"></div>
+        <div class="field"><label>${meta.loggerLabel}</label>
+          <input value="${String(repsVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onSimpleReps(this.value); LogColumns.setAutopilotVolume(false)"></div>
+      </div>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedVolume()">Clear — use autopilot volume</button>
+    </details>`;
+  }
+
+  function builderPrescriptionGridHtml() {
+    const effort = effortColumn() || { kind: 'reps', values: ['8'] };
+    const meta = kindMeta(effort.kind);
+    const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
+    const ph = meta.placeholder || '8 or 6-8';
+    const pinnedLoad = hasPinnedLoad();
+    const loadLabel = pinnedLoad ? kindMeta(loadColumn().kind).label : 'Autopilot';
+    const volumeLabel = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${repsVal || '—'}`;
+    const effortFields = sheet.autopilotVolume
+      ? ''
+      : `<div class="rx-grid cols-2" style="margin-top:12px">
+        <div class="field"><label>Target</label>
+          <select class="logcol-kind" aria-label="Target type" onchange="LogColumns.onSimpleEffortKind(this.value)">${effortKindsOptionsHtml(effort.kind)}</select></div>
+        <div class="field"><label>${meta.loggerLabel}</label>
+          <input value="${String(repsVal).replace(/"/g, '&quot;')}" placeholder="${ph}" aria-label="Target reps or effort" onchange="LogColumns.onSimpleReps(this.value)" oninput="LogColumns.onSimpleReps(this.value)"></div>
       </div>`;
+    const overrideSection = sheet.autopilotVolume
+      ? ''
+      : `<details class="rx-overrides" ${sheet.showOverrides ? 'open' : ''} ontoggle="LogColumns.toggleOverrides(this.open)">
+        <summary>Per-set rep overrides (optional)</summary>
+        ${builderOverridesTableHtml()}
+      </details>`;
+    return `<div class="card rx-prescription-card" id="builderPrescriptionCard" style="margin-top:10px">
+      <div class="title">Prescription</div>
+      <div class="meta">Engine handles volume + load · in-session autoreg after set 1</div>
+      <div class="autopilot-strip"><span class="autopilot-label">Volume</span><span class="autopilot-value">${volumeLabel}</span><span class="autopilot-note">History, calibration, recovery — you do not enter sets × reps here</span></div>
+      ${effortFields}
+      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span><span class="autopilot-note">Working max + progression — you do not enter kg here</span></div>
+      ${builderPinVolumeHtml()}
+      ${builderPinLoadHtml()}
+      ${overrideSection}
+    </div>`;
+  }
+
+  function builderOverridesTableHtml() {
+    const effort = effortColumn();
+    if (!effort) return '';
+    const ci = sheet.columns.indexOf(effort);
+    const meta = kindMeta(effort.kind);
+    const head = `<tr><th>Set</th><th>${meta.loggerLabel}</th></tr>`;
+    const body = Array.from({ length: sheet.sets }, (_, i) => {
+      const val = (effort.values || [])[i] == null ? '' : effort.values[i];
+      const ph = i === 0 ? meta.placeholder || '' : 'same as set 1';
+      return `<tr><td>${i + 1}</td><td><input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></td></tr>`;
     }).join('');
+    return `<table class="set-table rx-override-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  }
+
+  function builderLoggerTwinHtml() {
+    const effort = effortColumn();
+    const meta = effort ? kindMeta(effort.kind) : kindMeta('reps');
+    const effortVal = effort ? String((effort.values || [])[0] || '').trim() || '—' : '—';
+    const targetRirLabel =
+      sheet.targetRir != null ? `Target ${sheet.targetRir} RIR` : 'Target 2 RIR (default)';
+    const loadDisplay = hasPinnedLoad()
+      ? String((loadColumn().values || [])[0] || '').trim()
+      : 'Autopilot';
+    const volumeDisplay = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${effortVal}`;
+    const effortPreview = sheet.autopilotVolume ? 'Autopilot' : effortVal;
 
     return `<div class="card" style="margin-top:14px" id="builderLoggerCard">
       <div class="row">
         <div>
-          <div class="title">Progress</div>
-          <div class="meta">Planned: ${planned} · Rest ${fmtRest(sheet.restSec)} after Log</div>
+          <div class="title">Athlete logger preview</div>
+          <div class="meta">Set 1 · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
         </div>
         <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
       </div>
-      <div class="guardrail" style="margin-top:10px">Log <b>RIR on your last set</b> (set ${sheet.sets}) — it drives the next session load.</div>
+      <div class="guardrail" style="margin-top:10px">Athlete sees <b>${volumeDisplay}</b> volume · <b>${loadDisplay}</b> load — rates difficulty after each set; engine adjusts the next.</div>
       <div class="divider"></div>
-      ${rows}
-      <div class="btns">
-        <button type="button" class="btn small" onclick="LogColumns.addSet()">Add set</button>
-        <button type="button" class="btn small" onclick="LogColumns.removeSet()">Remove set</button>
-        <button type="button" class="btn small" onclick="LogColumns.addColumn()">Add column</button>
+      <div class="setrow builder-setrow last-set" data-set="0">
+        <div class="setnum">1<span class="target">${effortPreview}</span></div>
+        <div><span class="mini">Weight</span><input disabled value="${loadDisplay.replace(/"/g, '&quot;')}"></div>
+        <div><span class="mini">${meta.loggerLabel}</span><input disabled value="${effortPreview.replace(/"/g, '&quot;')}"></div>
+        <div><span class="mini">Difficulty</span><input disabled placeholder="picker"></div>
+        <div class="btns" style="margin:0"><button type="button" class="btn small primary" disabled>Next</button></div>
       </div>
-      <button type="button" class="btn primary block" style="margin-top:12px" disabled>Complete exercise</button>
     </div>`;
   }
 
+  function builderPrescriptionHtml() {
+    return `${builderPrescriptionGridHtml()}${builderLoggerTwinHtml()}`;
+  }
+
   function builderColumnsHtml() {
-    return builderLoggerTwinHtml();
+    return builderPrescriptionHtml();
+  }
+
+  function refreshPrescription() {
+    const presc = global.document && global.document.getElementById('builderPrescriptionCard');
+    if (presc) {
+      const wrap = global.document.createElement('div');
+      wrap.innerHTML = builderPrescriptionGridHtml();
+      presc.replaceWith(wrap.firstChild);
+    }
+    refreshTwin();
   }
 
   function refreshTwin() {
@@ -369,25 +723,41 @@
     KINDS,
     kindMeta,
     normalizeColumns,
+    coachNormalizeColumns,
     defaultColumns,
     syncLegacyFromColumns,
     columnsMeta,
+    hasPinnedLoad,
     builderColumnsHtml,
+    builderPrescriptionHtml,
+    builderPrescriptionGridHtml,
     builderLoggerTwinHtml,
     beginSheet,
     getSheetColumns,
     getSetCount,
     getRestSec,
     onRestChange,
+    setTargetRir,
     onKindChange,
+    onPrescriptionChange,
     onCellChange,
     onValueChange: onCellChange,
+    onSimpleReps,
+    onSimpleEffortKind,
+    onPinLoadKind,
+    onPinLoadValue,
+    clearPinnedLoad,
+    setAutopilotVolume,
+    pinVolume,
+    clearPinnedVolume,
+    isAutopilotVolume,
     setChangeHandler,
     addColumn,
     removeColumn,
     addSet,
     removeSet,
     resizeSets,
+    toggleOverrides,
     loggerCellsHtml,
     applyColumnTargetKinds,
     fmtRest,
