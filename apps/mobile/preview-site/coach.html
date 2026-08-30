@@ -285,6 +285,15 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .ex-cat-row:last-child{border-bottom:0}
 .feed-card h2{font-family:var(--font-display);font-weight:600}
 .feed-card{animation:coachFade .4s var(--ease) both}
+.rx-delivery-strip{margin:0 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+.rx-delivery-strip.ok{border-color:rgba(125,186,154,.45);background:rgba(125,186,154,.06)}
+.rx-delivery-strip.warn{border-color:rgba(212,165,116,.35);background:rgba(212,165,116,.06)}
+.rx-delivery-strip.bad{border-color:rgba(208,137,125,.45);background:rgba(208,137,125,.08)}
+.rx-delivery-strip .eyebrow{margin-bottom:4px}
+.rx-delivery-title{font-family:var(--font-display);font-size:18px;font-weight:600;line-height:1.25}
+.coach-side-foot a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:8px}
+.gate-demo{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
+.gate-demo .muted{font-size:12px}
 
 @media(max-width:1100px){
   .metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -374,7 +383,46 @@ async function pushCloudNow(){
   if (!window.CoachCloud) return alert('Cloud module missing');
   if (!(await CoachCloud.isSignedIn())) return alert('Sign in with the athlete Supabase account (WHOOP sign-in) so publish can write assigned_session.');
   const r = await CoachCloud.pushPublished(S);
-  alert(r.ok ? `Pushed ${r.pushed} session(s) to cloud.` : `Cloud push issues: ${(r.errors||[]).map(e=>e.error).join('; ')||r.reason}`);
+  coachPortalToast(r, '');
+  render();
+}
+
+function coachPortalToast(result, athleteName){
+  if (!result) return;
+  if (result.ok) {
+    const n = result.pushed || 0;
+    const who = athleteName ? ' to ' + athleteName : '';
+    alert('Published ' + n + ' session(s)' + who + '. Phone syncs on next open.');
+    return;
+  }
+  const msg = (result.errors || []).map(e => e.error).join('; ') || result.reason || result.error || 'Push failed';
+  alert('Cloud push: ' + msg);
+}
+window.coachPortalToast = coachPortalToast;
+
+function deliveryStripHtml(){
+  const line = (window.CoachCloud && CoachCloud.deliverySummary) ? CoachCloud.deliverySummary() : 'Publish from calendar to send prescriptions.';
+  const st = (window.CoachCloud && CoachCloud.status) || {};
+  const cls = !st.lastPushAt ? 'warn' : (st.lastOk ? 'ok' : 'bad');
+  return `<div class="rx-delivery-strip ${cls}"><div class="eyebrow">Delivery</div><div class="rx-delivery-title">${esc(line)}</div></div>`;
+}
+
+let refreshStatesTimer = null;
+function scheduleRefreshCloudStates(){
+  clearTimeout(refreshStatesTimer);
+  refreshStatesTimer = setTimeout(async () => {
+    if (ui._cloudRefresh || !window.CoachCloud || !CoachCloud.refreshPublishedStates) return;
+    try {
+      if (!(await CoachCloud.isSignedIn())) return;
+      ui._cloudRefresh = true;
+      const r = await CoachCloud.refreshPublishedStates(S);
+      if (r.ok && r.updated) { L.saveState(null, S); render(); }
+    } catch (e) {
+      console.warn('coach cloud refresh', e);
+    } finally {
+      ui._cloudRefresh = false;
+    }
+  }, 900);
 }
 function account(){ return L.currentAccount(S); }
 function athleteBy(id){ return (S.athletes||[]).find(a => a.id === id); }
@@ -1278,6 +1326,7 @@ function coachChrome(body){
     <nav>${navHtml}</nav>
     <div class="coach-side-foot">
       <span class="nav-soon" title="Coming soon">${icon('support')}Support</span>
+      <a class="btn small block" href="https://thehybridsystem.netlify.app/" target="_blank" rel="noopener noreferrer">Open athlete app</a>
       <button type="button" onclick="pushCloudNow()">Push cloud now</button>
       <button type="button" onclick="exportBridgeFile()">Export bridge file</button>
       <button type="button" onclick="resetDemo()">Reset demo data</button>
@@ -1295,6 +1344,7 @@ function coachChrome(body){
       </div>
     </header>
     <div class="coach-body ${hasRail?'has-rail':''}">
+      ${deliveryStripHtml()}
       <main class="coach-main">${body}</main>
       ${hasRail?`<aside class="coach-rail" aria-label="Programming status">${needsHtml()}</aside>`:''}
     </div>
@@ -1324,10 +1374,10 @@ function gateHtml(){
       <div class="field"><label>Password</label><input id="pw" type="password" autocomplete="current-password" value="" required></div>
       <button type="submit" class="btn primary block" style="margin-top:16px">Sign in</button>
     </form>
-    <div class="acct">
-      <button type="button" class="btn" onclick="tryLogin('dan@thehybrid.local','demo')">Demo coach (offline)</button>
-    </div>
-    <p class="muted" style="margin-top:24px">Demo is local-only and cannot publish to the APK. Athletes keep using the Hybrid athlete app.</p></div>`;
+    <div class="gate-demo">
+      <p class="muted">Offline demo only — cannot publish to the athlete app.</p>
+      <button type="button" class="btn small" onclick="tryLogin('dan@thehybrid.local','demo')">Demo coach (offline)</button>
+    </div></div>`;
 }
 
 function render(){
@@ -1351,6 +1401,7 @@ function render(){
   else if (ui.view==='nutrition') body = nutritionHtml();
   else body = feedHtml();
   $('coachApp').innerHTML = coachChrome(body);
+  scheduleRefreshCloudStates();
 }
 
 window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
