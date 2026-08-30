@@ -231,6 +231,7 @@
         return;
       }
       var local = state[key][idx];
+      if (key === 'sessions' && local && local.status === 'active') return;
       if (entityUpdatedAt(remote) > entityUpdatedAt(local)) {
         state[key][idx] = remote;
       }
@@ -413,7 +414,14 @@
       return state;
     }
     if (!remote || !remote.snapshot) {
-      try { await pushStrength(state); } catch (_) {}
+      try {
+        var pushResult = await pushStrength(state);
+        if (!pushResult || !pushResult.ok) {
+          setStatus({ busy: false, lastOk: false, lastError: (pushResult && pushResult.reason) || 'push failed' });
+        }
+      } catch (e) {
+        setStatus({ busy: false, lastOk: false, lastError: (e && e.message) || 'push failed' });
+      }
       return state;
     }
     var localSnap = snapshotFromState(state);
@@ -427,7 +435,16 @@
     }
     var mergedSnap = mergeSnapshots(localSnap, remoteSnap);
     applySnapshot(state, mergedSnap);
-    try { await pushStrength(state); } catch (_) {}
+    try {
+      var pushResult = await pushStrength(state);
+      if (!pushResult || !pushResult.ok) {
+        setStatus({ busy: false, lastOk: false, lastError: (pushResult && pushResult.reason) || 'push failed' });
+        return state;
+      }
+    } catch (e) {
+      setStatus({ busy: false, lastOk: false, lastError: (e && e.message) || 'push failed' });
+      return state;
+    }
     setStatus({ busy: false, lastOk: true, lastSyncAt: new Date().toISOString() });
     return state;
   }

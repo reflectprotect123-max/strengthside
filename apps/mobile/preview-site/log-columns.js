@@ -104,6 +104,9 @@
       } else if (loadCol.kind === 'weight_lwp') {
         const delta = Number(String(loadCol.values?.[0] ?? loadCol.value).split(',')[0]);
         if (!Number.isNaN(delta)) ex.loadExpr = { exprKind: 'lwp_delta', exprArg: delta };
+      } else if (loadCol.kind === 'weight_kg') {
+        const vals = loadCol.values || splitValues(loadCol.value, setCount || ex.sets || 1);
+        ex.load = joinValues(vals);
       }
     }
     return ex;

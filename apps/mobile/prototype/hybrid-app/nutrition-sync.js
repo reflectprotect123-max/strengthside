@@ -321,9 +321,8 @@
         try {
           await pushNutrition(localDb);
         } catch (_) {}
-      } else {
-        setStatus({ busy: false });
       }
+      setStatus({ busy: false });
       return localDb;
     }
     let remoteDb;

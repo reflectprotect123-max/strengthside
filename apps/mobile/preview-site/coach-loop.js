@@ -222,7 +222,7 @@
       !!block.effort ||
       (!!block.modality && !hasEx);
 
-    if (block.type === 'text' && !hasEx && !hasCond) return block;
+    if (block.type === 'text' && !hasEx) return block;
 
     if (isRecovery || (hasCond && !hasEx)) {
       block.type = 'conditioning';
@@ -502,7 +502,10 @@
     block.rounds = Math.max(1, rounds || 1);
     block.workSec = Math.max(0, workSec || 0);
     block.restSec = Math.max(0, restSec || 0);
-    if (patch.targetWatts != null) block.targetWatts = patch.targetWatts;
+    if (patch.targetWatts != null) {
+      if (patch.targetWatts === '' || num(patch.targetWatts) === 0) delete block.targetWatts;
+      else block.targetWatts = patch.targetWatts;
+    }
     if (patch.notes != null) block.notes = patch.notes;
     block.planLine = condPlanLineBlock(block);
     return block;
@@ -756,6 +759,14 @@
   function addCalendarSession(state, opts) {
     const template = (state.templates || []).find((t) => t.id === opts.templateId);
     if (!template) throw new Error('template not found');
+    const exists = (state.sessions || []).some(
+      (s) =>
+        s.athleteId === opts.athleteId &&
+        s.date === opts.date &&
+        s.templateId === opts.templateId &&
+        s.status !== 'completed',
+    );
+    if (exists) return null;
     const session = instantiateSession(template, {
       athleteId: opts.athleteId,
       date: opts.date,
@@ -782,8 +793,13 @@
   /** Mon–Sun grid cells; null = padding before/after month. */
   function monthGridCells(monthKey) {
     const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
-    const y = parts[0];
-    const m = parts[1];
+    let y = parts[0];
+    let m = parts[1];
+    if (!y || !m || m < 1 || m > 12) {
+      const fb = today().slice(0, 7).split('-').map(Number);
+      y = fb[0];
+      m = fb[1];
+    }
     const pad = (n) => String(n).padStart(2, '0');
     const first = new Date(y, m - 1, 1);
     const startOffset = (first.getDay() + 6) % 7;
@@ -823,15 +839,33 @@
     const horizon = addDays(start, 21);
     const athletes = state.athletes || [];
     const needAthletes = athletes.filter((a) => {
-      const upcoming = (state.sessions || []).filter(
+      const inHorizon = (state.sessions || []).filter(
         (s) =>
           s.athleteId === a.id &&
           s.date >= start &&
           s.date <= horizon &&
           s.status !== 'completed',
       );
-      if (!upcoming.length) return true;
-      return upcoming.some((s) => !s.published);
+      if (!inHorizon.length) {
+        const hasFuturePublished = (state.sessions || []).some(
+          (s) =>
+            s.athleteId === a.id &&
+            s.date >= start &&
+            s.published &&
+            s.status !== 'completed',
+        );
+        if (hasFuturePublished) return false;
+        const hasCompletedInHorizon = (state.sessions || []).some(
+          (s) =>
+            s.athleteId === a.id &&
+            s.date >= start &&
+            s.date <= horizon &&
+            s.status === 'completed',
+        );
+        if (hasCompletedInHorizon) return false;
+        return true;
+      }
+      return inHorizon.some((s) => !s.published);
     });
     return { athletes: needAthletes, teams: [] };
   }

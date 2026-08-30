@@ -463,15 +463,29 @@ function prog(id){ return (S.programs||[]).find(p => p.id === id); }
 function team(id){ return (S.teams||[]).find(t => t.id === id); }
 
 function go(view, extra){
+  if (view !== 'session') closeCoachExEdit();
   Object.assign(ui, extra||{}, { view });
   if (view === 'library' && !ui.lib) ui.lib = 'programs';
   if (view !== 'session') ui.exPicker = null;
-  if (view !== 'program') { ui.cellMenu = null; ui.cellPick = null; }
+  if (view !== 'program') {
+    ui.cellMenu = null;
+    if (!ui.cellPick || (ui.cellPick.mode !== 'copyTarget' && ui.cellPick.mode !== 'moveTarget')) {
+      ui.cellPick = null;
+    }
+  }
+  if (view !== 'athlete' && view !== 'team') {
+    ui.chipMenu = null;
+    ui.libPick = null;
+    ui.calDay = null;
+  }
+  if (view !== 'home') ui.commentDrawer = null;
   if (view === 'assign' && !ui.assignTeamId && S.teams && S.teams[0]) ui.assignTeamId = S.teams[0].id;
   if ((view === 'athlete' || view === 'team') && !ui.calMonth) ui.calMonth = L.today().slice(0, 7);
   render();
 }
 function openSession(templateId){
+  closeCoachExEdit();
+  ui.cellMenu = null;
   ui.templateId = templateId;
   ui.lib = 'sessions';
   ui.exPicker = null;
@@ -832,12 +846,16 @@ function newProgram(){
 function cellSummary(templateId){
   const t = tpl(templateId);
   if (!t) return null;
-  const work = (t.blocks||[]).find(b => b.type === 'strength' || b.type === 'conditioning') || (t.blocks||[])[0];
+  const work = (t.blocks||[]).find(b => {
+    const v = blockTypeValue(b);
+    return v === 'strength' || v === 'conditioning' || v === 'recovery';
+  }) || (t.blocks||[])[0];
   if (!work) return { title:t.name, letter:'A', line:'Empty session', sets:'' };
-  if (work.type === 'conditioning') {
-    return { title:t.name, letter:work.letter||'A', line:L.condPlanLineBlock(work)||work.heading||'Conditioning', sets:work.targetDurationMin?`${work.targetDurationMin} min`:'' };
+  const kind = blockTypeValue(work);
+  if (kind === 'conditioning' || kind === 'recovery') {
+    return { title:t.name, letter:work.letter||'A', line:L.condPlanLineBlock(work)||work.heading||(kind==='recovery'?'Recovery':'Conditioning'), sets:work.targetDurationMin?`${work.targetDurationMin} min`:'' };
   }
-  if (work.type === 'text') {
+  if (kind === 'text') {
     return { title:t.name, letter:work.letter||'A', line:work.heading||'Notes', sets:'' };
   }
   const e = (work.exercises||[])[0];
@@ -849,7 +867,9 @@ function toggleCellMenu(week, day, ev){
   const cur = ui.cellMenu;
   if (cur && cur.week === week && cur.day === day) ui.cellMenu = null;
   else ui.cellMenu = { week, day };
-  ui.cellPick = null;
+  if (!ui.cellPick || (ui.cellPick.mode !== 'copyTarget' && ui.cellPick.mode !== 'moveTarget')) {
+    ui.cellPick = null;
+  }
   render();
 }
 
@@ -1049,6 +1069,7 @@ function syncCoachExFromColumns(bi, ei){
 }
 
 function openCoachExEdit(bi, ei){
+  closeCoachExEdit();
   ui.exEdit = { bi, ei };
   const ex = tplBlocks()[bi].exercises[ei];
   if (window.LogColumns) {
@@ -1097,12 +1118,15 @@ function addEx(bi){
   const t = tpl(ui.templateId);
   t.blocks[bi].exercises = t.blocks[bi].exercises || [];
   t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8', load:'', metric:'Weight', restSec:90 }));
+  t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }
 
 function removeEx(bi, ei){
+  if (ui.exEdit && ui.exEdit.bi === bi && ui.exEdit.ei === ei) closeCoachExEdit();
   const t = tpl(ui.templateId);
   t.blocks[bi].exercises.splice(ei, 1);
+  t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }
 
@@ -1120,7 +1144,26 @@ function addBlk(type){
   persist(); render();
 }
 
+function clearCondFields(b){
+  delete b.recoverySession;
+  delete b.baselineDurationMin;
+  delete b.condFmt;
+  delete b.modality;
+  delete b.targetDurationMin;
+  delete b.conditioningType;
+  delete b.effort;
+  delete b.timeCapMin;
+  delete b.rounds;
+  delete b.workSec;
+  delete b.restSec;
+  delete b.targetHrZone;
+  delete b.targetPace;
+  delete b.targetWatts;
+  delete b.targetDistance;
+}
+
 function setBlockType(bi, type){
+  closeCoachExEdit();
   const t = tpl(ui.templateId);
   const b = t.blocks[bi];
   if (!b) return;
@@ -1128,11 +1171,7 @@ function setBlockType(bi, type){
     b.type = 'strength';
     b.scoring = b.scoring === 'completion' ? 'completion' : 'weight';
     b.category = 'Strength/Power';
-    delete b.recoverySession;
-    delete b.baselineDurationMin;
-    delete b.condFmt;
-    delete b.modality;
-    delete b.targetDurationMin;
+    clearCondFields(b);
     if (!(b.exercises || []).length) {
       b.exercises = [L.makeExercise({ name:'Back Squat', exerciseId:'core-back-squat', sets:3, reps:'8', load:'', metric:'Weight' })];
     }
@@ -1147,7 +1186,7 @@ function setBlockType(bi, type){
     b.superset = false;
     delete b.exercises;
     b.recoverySession = true;
-    b.baselineDurationMin = num(b.baselineDurationMin) || num(b.targetDurationMin) || 30;
+    b.baselineDurationMin = L.num(b.baselineDurationMin) || L.num(b.targetDurationMin) || 30;
     L.applyCondBuilderToBlock(b, { condFmt:'steady', effort:'easy', modality:'Mixed', targetDurationMin:b.baselineDurationMin, heading:b.heading || 'Recovery movement' });
     b.category = 'Recovery';
     b.type = 'conditioning';
@@ -1157,11 +1196,7 @@ function setBlockType(bi, type){
     b.scoring = 'completion';
     b.superset = false;
     delete b.exercises;
-    delete b.recoverySession;
-    delete b.baselineDurationMin;
-    delete b.condFmt;
-    delete b.modality;
-    delete b.targetDurationMin;
+    clearCondFields(b);
   }
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
@@ -1186,6 +1221,7 @@ function blockTypeSelectHtml(i, b){
 }
 
 function removeBlk(bi){
+  if (ui.exEdit && ui.exEdit.bi === bi) closeCoachExEdit();
   const t = tpl(ui.templateId);
   t.blocks.splice(bi, 1);
   t.blocks = L.decorateBlocks(t.blocks);
@@ -1200,6 +1236,7 @@ function toggleSuperset(bi, on){
 }
 
 function openExPicker(bi, ei){
+  closeCoachExEdit();
   ui.exPicker = { bi, ei };
   ui.exSearch = '';
   render();
@@ -1218,6 +1255,7 @@ function pickExercise(exId){
   ex.category = cat.category || ex.category;
   ui.exPicker = null;
   ui.exSearch = '';
+  t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }
 

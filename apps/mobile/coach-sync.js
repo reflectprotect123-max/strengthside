@@ -56,7 +56,7 @@
     return (
       payload.athletes.find(function (a) {
         return String(a.email || '').toLowerCase() === email;
-      }) || payload.athletes[0] || null
+      }) || null
     );
   }
 
@@ -70,10 +70,7 @@
       return (
         s.coachSessionId === incoming.coachSessionId ||
         s.id === incoming.id ||
-        (s.cloudAssignedId && incoming.cloudAssignedId && s.cloudAssignedId === incoming.cloudAssignedId) ||
-        (s.date === incoming.date &&
-          s.templateId === incoming.templateId &&
-          s.source === 'coach-bridge')
+        (s.cloudAssignedId && incoming.cloudAssignedId && s.cloudAssignedId === incoming.cloudAssignedId)
       );
     });
     if (idx >= 0) {
@@ -135,11 +132,24 @@
     mergeNutrition(nutrition);
   }
 
+  function athleteEmailFromState(state, opts) {
+    opts = opts || {};
+    if (opts.email) return String(opts.email).toLowerCase();
+    var settings = state && state.settings;
+    if (settings && settings.whoop && settings.whoop.email) {
+      return String(settings.whoop.email).toLowerCase();
+    }
+    if (state && state.profile && state.profile.email) {
+      return String(state.profile.email).toLowerCase();
+    }
+    return defaultAthleteEmail();
+  }
+
   function pullLocal(state, opts) {
     opts = opts || {};
     var payload = readBridge();
     if (!payload) return { ok: true, merged: 0 };
-    var bucket = pickBucket(payload, opts.email || defaultAthleteEmail());
+    var bucket = pickBucket(payload, athleteEmailFromState(state, opts));
     if (!bucket) return { ok: true, merged: 0 };
     var merged = 0;
     (bucket.sessions || []).forEach(function (s) {
