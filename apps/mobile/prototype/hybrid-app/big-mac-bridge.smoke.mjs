@@ -150,8 +150,10 @@ const session = {
   }],
 };
 
-must(typeof win.BigMacBridge.afterStrengthSessionSync === 'function', 'afterStrengthSessionSync missing');
-const strengthResult = win.BigMacBridge.afterStrengthSessionSync(state, session, { apply: true });
+must(typeof win.BigMacBridge.normalizeBigMacAction === 'function', 'normalizeBigMacAction missing');
+must(win.BigMacBridge.normalizeBigMacAction('bounded_increase') === 'proceed', 'LLM action normalize');
+
+const strengthResult = await win.BigMacBridge.afterStrengthSessionSync(state, session, { apply: true, localOnly: true });
 must(strengthResult.ok === true, 'strength BIG MAC sync should succeed');
 must((state.meta.bigMacReceipts || []).length >= 1, 'strength receipt recorded');
 must(state.meta.bigMacReceipts.at(-1).trigger === 'strength', 'strength receipt trigger');
@@ -165,7 +167,7 @@ const condTask = {
   result: { duration: 1200, zoneSeconds: { recovery: 600, aerobic: 400, anaerobic: 200 } },
 };
 state.meta.lastConAdapt = { delta: 1, at: '2026-08-30T12:00:00Z' };
-const condResult = win.BigMacBridge.afterConditioningSessionSync(state, condTask, { apply: true });
+const condResult = await win.BigMacBridge.afterConditioningSessionSync(state, condTask, { apply: true, localOnly: true });
 must(condResult.ok === true, 'conditioning BIG MAC sync should succeed');
 
 const checkinResult = await win.BigMacBridge.afterCheckin(state, { apply: true, localOnly: true });

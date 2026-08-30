@@ -1009,7 +1009,7 @@
   function notifyBigMacNutrition(date) {
     if (!global.S || !global.BigMacBridge || !global.BigMacBridge.afterNutritionLog) return;
     try {
-      global.BigMacBridge.afterNutritionLog(global.S, date || nutDate || todayStr(), { apply: false, localOnly: true });
+      global.BigMacBridge.afterNutritionLog(global.S, date || nutDate || todayStr(), { apply: true });
     } catch (_) {}
   }
 

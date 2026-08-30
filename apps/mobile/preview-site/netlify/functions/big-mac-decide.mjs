@@ -188,13 +188,15 @@ from platform_core.auto_promote import ensure_auto_promoted
 from platform_core.decision import decide
 from platform_core.engines import run_all
 from platform_core.athlete_facing_contract import to_athlete_facing_update
+from llm_adapters.runtime_bootstrap import build_lead_fallback_kwargs
 
 snapshot = json.loads(sys.stdin.read())
 db = connect(':memory:')
 migrate(db)
 ensure_auto_promoted(db, root / 'runtime')
 outputs = run_all(snapshot, db)
-receipt = decide(db, snapshot, outputs)
+lead_kwargs = build_lead_fallback_kwargs(snapshot, outputs, runtime_root=root / 'runtime')
+receipt = decide(db, snapshot, outputs, lead_fallback=lead_kwargs)
 print(json.dumps({
   'receipt': {
     'action': receipt['action'],
@@ -204,6 +206,7 @@ print(json.dumps({
   },
   'athlete_facing': to_athlete_facing_update(receipt),
   'source': 'python_auto_promoted_decide',
+  'lead_fallback_connected': lead_kwargs is not None,
 }))
 `;
   const proc = spawnSync('python3', ['-c', script], {

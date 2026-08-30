@@ -1,0 +1,39 @@
+{
+  "envelope_id": "ENVELOPE-MULTI-DOMAIN-1",
+  "version": "1.0",
+  "allowed_action_types": [
+    "abstain",
+    "bounded_decrease",
+    "bounded_increase",
+    "change_density",
+    "change_duration",
+    "change_intensity",
+    "change_timing",
+    "change_volume",
+    "hold_progression",
+    "keep",
+    "record_context_only",
+    "record_missing_information",
+    "reschedule",
+    "substitute"
+  ],
+  "allowed_target_types": [
+    "calendar_slot",
+    "conditioning_session",
+    "context_record",
+    "exercise",
+    "meal_fuel_target",
+    "nutrition_target",
+    "plan",
+    "strength_session"
+  ],
+  "metric_bounds": [
+    {"metric_key": "load_kg", "unit": "kg", "minimum": -10, "maximum": 10},
+    {"metric_key": "volume_sets", "unit": "sets", "minimum": -5, "maximum": 5},
+    {"metric_key": "intensity_pct", "unit": "percent", "minimum": -15, "maximum": 15},
+    {"metric_key": "duration_min", "unit": "min", "minimum": -30, "maximum": 30}
+  ],
+  "forbidden_combinations": [],
+  "required_validator_ids": ["VALIDATOR-BASELINE"],
+  "rollback_policy_id": "ROLLBACK-DEFAULT"
+}

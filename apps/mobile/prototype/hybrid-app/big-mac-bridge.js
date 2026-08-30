@@ -215,7 +215,28 @@
     return state;
   }
 
+  function normalizeBigMacAction(action) {
+    if (!action) return action;
+    var map = {
+      bounded_increase: 'proceed',
+      bounded_decrease: 'trim',
+      hold_progression: 'hold',
+      keep: 'maintain',
+      change_volume: 'modify',
+      change_intensity: 'modify',
+      change_duration: 'modify',
+      change_density: 'modify',
+      change_timing: 'modify',
+      substitute: 'modify',
+      reschedule: 'modify',
+      record_missing_information: 'record_only',
+      record_context_only: 'record_only',
+    };
+    return map[action] || action;
+  }
+
   function mapBigMacActionToStrength(action) {
+    action = normalizeBigMacAction(action);
     if (action === 'proceed' || action === 'modify') return 'progress';
     if (action === 'trim') return 'deload';
     if (action === 'maintain' || action === 'hold' || action === 'record_only') return 'hold';
@@ -299,6 +320,13 @@
     var domain = context.trigger_domain;
     var athleteFacing = payload.athlete_facing;
     var receipt = payload.receipt;
+    if (athleteFacing && athleteFacing.action) {
+      athleteFacing = {
+        has_update: athleteFacing.has_update,
+        action: normalizeBigMacAction(athleteFacing.action),
+      };
+      if (receipt) receipt.action = athleteFacing.action;
+    }
     var applyResult = null;
 
     if (domain === 'strength' && context.session) {
@@ -380,50 +408,49 @@
   function afterStrengthSessionSync(state, session, opts) {
     if (!state || !session) return { skipped: 'no_session' };
     opts = Object.assign({ apply: true }, opts || {});
-    try {
-      var snapshot = buildSnapshot(state, {
-        trigger_domain: 'strength',
-        session: session,
-        product_engines: true,
-      });
-      var payload = decideLocal(snapshot);
-      applyDomain(state, { trigger_domain: 'strength', session: session }, payload, opts);
-      return { ok: true, receipt: payload.receipt, athlete_facing: payload.athlete_facing };
-    } catch (err) {
+    return decide(state, {
+      trigger_domain: 'strength',
+      session: session,
+      product_engines: true,
+    }, opts).then(function (result) {
+      return result.skipped ? result : {
+        ok: true,
+        receipt: result.receipt,
+        athlete_facing: result.athlete_facing,
+        source: result.source,
+      };
+    }).catch(function (err) {
       if (opts.apply !== false && global.StrengthAdapter && global.StrengthAdapter.applySilentProgression) {
         global.StrengthAdapter.applySilentProgression(state, session, {
           recoveryInput: recoveryInputFromState(state, { sessionPain: session.sessionPain || 'none' }),
         });
       }
       return { skipped: 'error', message: String(err && err.message || err) };
-    }
+    });
   }
 
   function afterStrengthSession(state, session, opts) {
     if (!state || !session) return Promise.resolve({ skipped: 'no_session' });
-    return Promise.resolve(afterStrengthSessionSync(state, session, opts));
+    return afterStrengthSessionSync(state, session, opts);
   }
 
   function afterConditioningSessionSync(state, task, opts) {
-    if (!state) return { skipped: 'no_state' };
+    if (!state) return Promise.resolve({ skipped: 'no_state' });
     opts = Object.assign({ apply: true }, opts || {});
-    try {
-      var snapshot = buildSnapshot(state, {
-        trigger_domain: 'conditioning',
-        task: task,
-        product_engines: true,
-      });
-      var payload = decideLocal(snapshot);
-      applyDomain(state, { trigger_domain: 'conditioning', task: task }, payload, opts);
-      return { ok: true, receipt: payload.receipt };
-    } catch (err) {
+    return decide(state, {
+      trigger_domain: 'conditioning',
+      task: task,
+      product_engines: true,
+    }, opts).then(function (payload) {
+      return payload.skipped ? payload : { ok: true, receipt: payload.receipt, source: payload.source };
+    }).catch(function (err) {
       return { skipped: 'error', message: String(err && err.message || err) };
-    }
+    });
   }
 
   function afterConditioningSession(state, task, opts) {
     if (!state) return Promise.resolve({ skipped: 'no_state' });
-    return Promise.resolve(afterConditioningSessionSync(state, task, opts));
+    return afterConditioningSessionSync(state, task, opts);
   }
 
   function afterCheckin(state, opts) {
@@ -432,7 +459,7 @@
       trigger_domain: 'recovery',
       endDate: todayFromState(state),
       product_engines: true,
-    }, Object.assign({ localOnly: true, apply: true }, opts)).catch(function (err) {
+    }, Object.assign({ apply: true }, opts)).catch(function (err) {
       return { skipped: 'error', message: String(err && err.message || err) };
     });
   }
@@ -444,7 +471,7 @@
       logDate: logDate || todayFromState(state),
       endDate: logDate || todayFromState(state),
       product_engines: true,
-    }, Object.assign({ localOnly: true, apply: false }, opts)).catch(function (err) {
+    }, Object.assign({ apply: true }, opts)).catch(function (err) {
       return { skipped: 'error', message: String(err && err.message || err) };
     });
   }
@@ -457,7 +484,7 @@
       endDate: endDate || todayFromState(state),
       days: days || 7,
       product_engines: true,
-    }, Object.assign({ localOnly: true, apply: true }, opts));
+    }, Object.assign({ apply: true }, opts));
     if (result && typeof result.then === 'function') {
       return result.then(function (payload) {
         return payload.state || state;
@@ -515,6 +542,7 @@
     afterCheckin: afterCheckin,
     afterNutritionLog: afterNutritionLog,
     bootstrapCoordinator: bootstrapCoordinatorSync,
+    normalizeBigMacAction: normalizeBigMacAction,
     toAthleteFacingUpdate: global.BigMacContract && global.BigMacContract.toAthleteFacingUpdate,
     recordReceipt: recordReceipt,
     applyStrengthDomain: applyStrengthDomain,
