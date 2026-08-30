@@ -1072,14 +1072,18 @@ function coachExerciseSummary(ex){
   return L.prescriptionLine(ex);
 }
 
-function syncCoachExFromColumns(bi, ei){
+function syncCoachExFromColumns(bi, ei, opts){
   if (!window.LogColumns) return;
   const ex = tpl(ui.templateId).blocks[bi].exercises[ei];
   LogColumns.syncLegacyFromColumns(ex, LogColumns.getSheetColumns(), LogColumns.getSetCount());
   ex.restSec = LogColumns.getRestSec();
   L.ensureRows(ex);
-  persist();
+  if (opts && opts.skipPersist) return;
+  clearTimeout(coachExPersistTimer);
+  if (opts && opts.flush) { persist(); return; }
+  coachExPersistTimer = setTimeout(persist, 400);
 }
+let coachExPersistTimer = null;
 
 function openCoachExEdit(bi, ei){
   closeCoachExEdit();
@@ -1094,7 +1098,8 @@ function openCoachExEdit(bi, ei){
 
 function closeCoachExEdit(){
   if (ui.exEdit && window.LogColumns) {
-    syncCoachExFromColumns(ui.exEdit.bi, ui.exEdit.ei);
+    clearTimeout(coachExPersistTimer);
+    syncCoachExFromColumns(ui.exEdit.bi, ui.exEdit.ei, { flush: true });
     LogColumns.setChangeHandler(null);
   }
   ui.exEdit = null;
@@ -1112,7 +1117,7 @@ function coachExerciseRxHtml(bi, ei){
   }
   LogColumns.beginSheet(ex);
   return `<div class="field" style="margin-top:8px"><label>Rest seconds</label>
-    <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
+    <input type="number" min="0" value="${LogColumns.getRestSec()}" oninput="LogColumns.onRestChange(this.value)" onchange="LogColumns.onRestChange(this.value)"></div>
     <input type="hidden" id="exSets" value="${LogColumns.getSetCount()}">
     ${LogColumns.builderLoggerTwinHtml()}
     <div class="btns" style="margin-top:8px;justify-content:flex-start">

@@ -134,6 +134,21 @@
     return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
   }
 
+  function syncRestLabels(sec) {
+    const label = fmtRest(sec);
+    const btn = global.document && global.document.getElementById('builderRestBtn');
+    if (btn) btn.textContent = 'Rest ' + label;
+    const card = global.document && global.document.getElementById('builderLoggerCard');
+    if (card) {
+      const metaEl = card.querySelector('.meta');
+      if (metaEl) {
+        metaEl.textContent = metaEl.textContent.replace(/Rest [\d:]+ after Log/, 'Rest ' + label + ' after Log');
+      }
+    }
+    const exRest = global.document && global.document.getElementById('exRest');
+    if (exRest && global.document.activeElement !== exRest) exRest.value = String(Math.max(0, Number(sec) || 0));
+  }
+
   /** Sheet draft while Edit lift is open */
   let sheet = { sets: 3, restSec: 120, columns: [] };
   let changeHandler = null;
@@ -176,8 +191,7 @@
 
   function onRestChange(v) {
     sheet.restSec = Math.max(0, Number(v) || 0);
-    const btn = global.document && global.document.getElementById('builderRestBtn');
-    if (btn) btn.textContent = 'Rest ' + fmtRest(sheet.restSec);
+    syncRestLabels(sheet.restSec);
     notifyChange();
   }
 
@@ -340,18 +354,29 @@
     card.replaceWith(wrap.firstChild);
   }
 
-  function loggerCellsHtml(row, rowIndex, columns, isLast) {
+  function loggerInputAttrs(kind) {
+    if (kind === 'time_sec' || kind === 'distance_m' || kind === 'weight_kg' || kind === 'weight_pct_wm') {
+      return 'type="number" inputmode="decimal"';
+    }
+    if (kind === 'weight_lwp') return 'type="text" inputmode="decimal"';
+    return 'type="text" inputmode="decimal"';
+  }
+
+  function loggerCellsHtml(row, rowIndex, columns, isLast, changeFn) {
+    const onChange = changeFn || 'updateSet';
     const cols = columns && columns.length ? columns : defaultColumns({});
     const cells = cols
       .map((c) => {
         const meta = kindMeta(c.kind);
         const field = meta.field;
         const val = row[field] == null ? '' : row[field];
-        return `<div><span class="mini">${meta.loggerLabel}</span><input type="number" value="${val}" onchange="updateSet(${rowIndex},'${field}',this.value)"></div>`;
+        const attrs = loggerInputAttrs(c.kind);
+        return `<div><span class="mini">${meta.loggerLabel}</span><input ${attrs} value="${String(val).replace(/"/g, '&quot;')}" oninput="${onChange}(${rowIndex},'${field}',this.value)" onchange="${onChange}(${rowIndex},'${field}',this.value)"></div>`;
       })
       .join('');
     const rirLabel = isLast ? 'RIR · counts' : 'RIR';
-    const rir = `<div><span class="mini">${rirLabel}</span><input type="number" min="0" max="10" value="${row.rir || ''}" onchange="updateSet(${rowIndex},'rir',this.value)" aria-label="${isLast ? 'RIR on last set for progression' : 'RIR set ' + row.n}"></div>`;
+    const rirOn = changeFn ? `${changeFn}(${rowIndex},'rir',this.value)` : `updateSet(${rowIndex},'rir',this.value)`;
+    const rir = `<div><span class="mini">${rirLabel}</span><input type="number" min="0" max="10" inputmode="numeric" value="${row.rir || ''}" oninput="${rirOn}" onchange="${rirOn}" aria-label="${isLast ? 'RIR on last set for progression' : 'RIR set ' + row.n}"></div>`;
     return cells + rir;
   }
 

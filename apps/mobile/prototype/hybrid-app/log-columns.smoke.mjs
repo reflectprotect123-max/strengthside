@@ -74,4 +74,16 @@ if (loadCol[1] !== '' || loadCol[2] !== '' || loadCol[3] !== '') {
   throw new Error('weight column must not forward fill: ' + loadCol.join('|'));
 }
 
+const loggerHtml = LC.loggerCellsHtml({ weight: '', reps: '', rir: '' }, 0, [{ kind: 'reps_range' }], false);
+if (loggerHtml.match(/Reps<\/span><input type="number"/)) throw new Error('reps_range logger should not use type=number on reps');
+if (!loggerHtml.includes('oninput=')) throw new Error('logger inputs should use oninput');
+
+if (!html.includes('function parseEffortValue')) throw new Error('parseEffortValue missing');
+if (!html.includes('function setSupersetField')) throw new Error('setSupersetField missing');
+if (!html.includes('if(n===0)return 0')) throw new Error('restSeconds(0) fix missing');
+if (!html.includes('onclick="restMenu()"')) throw new Error('rest menu button missing');
+
+const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
+if (!coachHtml.includes('coachExPersistTimer')) throw new Error('coach persist debounce missing');
+
 console.log('log-columns.smoke: ok');

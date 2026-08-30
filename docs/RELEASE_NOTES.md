@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.19 | pending | Logger friction: MAX targets, zero rest, rest menu, coach persist debounce, program grid swap |
 | 1.0.18 | 2026-08-30 | v99 cache + coach builder fixes (delete blocks, superset, drag-drop, reps forward-fill) |
 | 1.0.17 | 2026-08-30 | v99 cache bump (superseded by 1.0.18) |
 | 1.0.16 | 2026-08-29 | Calendar Mon–Sun grid, publish revert, athlete strength builder toggle |
