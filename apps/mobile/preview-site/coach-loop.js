@@ -171,23 +171,58 @@
   function letterBlocks(blocks) {
     let next = 0;
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-    return (blocks || []).map((b) => {
-      const block = clone(b);
+    const out = [];
+    let i = 0;
+    while (i < (blocks || []).length) {
+      const block = clone(blocks[i]);
+      delete block.supersetPartner;
+
       if (!isWorkBlock(block) && block.type === 'text') {
         block.letter = '';
-        return block;
+        out.push(block);
+        i += 1;
+        continue;
       }
+
       const ch = letters[next] || String(next + 1);
-      next += 1;
+
       if (block.superset && (block.exercises || []).length > 1) {
-        block.letters = (block.exercises || []).map((_, i) => ch + (i + 1));
+        block.letters = (block.exercises || []).map((_, j) => ch + (j + 1));
         block.letter = block.letters.join('/');
-      } else {
-        block.letter = ch;
-        block.letters = [ch];
+        out.push(block);
+        next += 1;
+        i += 1;
+        continue;
       }
-      return block;
-    });
+
+      const nextBlock = blocks[i + 1];
+      const nextIsStrength =
+        nextBlock &&
+        nextBlock.type === 'strength' &&
+        !nextBlock.recoverySession;
+
+      if (block.superset && block.type === 'strength' && nextIsStrength) {
+        block.letter = ch + '1';
+        block.letters = [ch + '1'];
+        out.push(block);
+
+        const partner = clone(nextBlock);
+        partner.letter = ch + '2';
+        partner.letters = [ch + '2'];
+        partner.supersetPartner = true;
+        out.push(partner);
+        next += 1;
+        i += 2;
+        continue;
+      }
+
+      block.letter = ch;
+      block.letters = [ch];
+      out.push(block);
+      next += 1;
+      i += 1;
+    }
+    return out;
   }
 
   function categoryForBlock(block) {
