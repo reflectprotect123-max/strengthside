@@ -41,6 +41,25 @@ if (p.cells['1-2'] !== L.IDS.tplCond) throw new Error('setProgramCell failed');
 L.setProgramCell(p, 1, 2, null);
 if (p.cells['1-2']) throw new Error('clear cell failed');
 
+// moveProgramCell: empty target moves template
+L.setProgramCell(p, 1, 1, L.IDS.tplStrength);
+L.setProgramCell(p, 1, 2, null);
+L.moveProgramCell(p, 1, 1, 1, 2);
+if (p.cells['1-1']) throw new Error('move to empty should clear source');
+if (p.cells['1-2'] !== L.IDS.tplStrength) throw new Error('move to empty should fill target');
+
+// moveProgramCell: occupied target swaps templates
+L.setProgramCell(p, 1, 1, L.IDS.tplStrength);
+L.setProgramCell(p, 1, 2, L.IDS.tplCond);
+L.moveProgramCell(p, 1, 1, 1, 2);
+if (p.cells['1-1'] !== L.IDS.tplCond) throw new Error('swap should move displaced to source');
+if (p.cells['1-2'] !== L.IDS.tplStrength) throw new Error('swap should move template to target');
+
+// coach.html: occupied cells accept paste during copy/move
+for (const needle of ['onProgCellClick', 'occupied cells swap']) {
+  if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);
+}
+
 const before = p.weeks;
 L.addProgramWeek(p);
 if (p.weeks !== before + 1) throw new Error('addProgramWeek');

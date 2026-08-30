@@ -139,7 +139,7 @@ print(json.dumps({
 }))
 `;
   const proc = spawnSync('python3', ['-c', script], {
-    cwd: EVIDENCE_DIR,
+    cwd: evidenceDir,
     input: JSON.stringify(snapshot),
     encoding: 'utf8',
     timeout: 15000,
