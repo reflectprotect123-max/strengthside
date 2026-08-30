@@ -59,4 +59,19 @@ LC.syncLegacyFromColumns(
 if (!out.loadExpr || out.loadExpr.exprKind !== 'pct_of_max') throw new Error('sync loadExpr');
 if (out.reps !== '8') throw new Error('sync reps ' + out.reps);
 
+LC.beginSheet({ sets: 4, reps: '', restSec: 120 });
+LC.onCellChange(1, 0, '5-7');
+const filled = LC.getSheetColumns()[1].values;
+if (filled.join('|') !== '5-7|5-7|5-7|5-7') throw new Error('forward fill reps: ' + filled.join('|'));
+LC.onCellChange(1, 2, '3');
+const partial = LC.getSheetColumns()[1].values;
+if (partial[0] !== '5-7' || partial[1] !== '5-7' || partial[2] !== '3' || partial[3] !== '3') {
+  throw new Error('forward fill must not backfill: ' + partial.join('|'));
+}
+LC.onCellChange(0, 0, '100');
+const loadCol = LC.getSheetColumns()[0].values;
+if (loadCol[1] !== '' || loadCol[2] !== '' || loadCol[3] !== '') {
+  throw new Error('weight column must not forward fill: ' + loadCol.join('|'));
+}
+
 console.log('log-columns.smoke: ok');

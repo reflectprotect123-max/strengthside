@@ -188,19 +188,43 @@
     notifyChange();
   }
 
+  function shouldForwardFillColumn(kind) {
+    return kind === 'reps' || kind === 'reps_range';
+  }
+
   function onCellChange(colIdx, setIdx, value) {
     const col = sheet.columns[colIdx];
     if (!col) return;
     if (!Array.isArray(col.values)) col.values = splitValues(col.value, sheet.sets);
     col.values[setIdx] = value;
-    col.value = joinValues(col.values);
-    // keep target chip in sync for effort columns
-    const effortIdx = sheet.columns.findIndex((c) => c.kind === 'reps' || c.kind === 'reps_range' || c.kind === 'time_sec' || c.kind === 'distance_m');
-    if (colIdx === effortIdx) {
-      const chip = global.document && global.document.querySelector(`.builder-setrow[data-set="${setIdx}"] .target`);
-      if (chip) chip.textContent = String(value || '').trim() || '—';
+    if (shouldForwardFillColumn(col.kind)) {
+      // Forward-fill reps column only — never backfill earlier sets.
+      for (let i = setIdx + 1; i < sheet.sets; i++) col.values[i] = value;
+      syncForwardColumnInputs(colIdx, setIdx, value);
+      for (let i = setIdx; i < sheet.sets; i++) {
+        const chip = global.document && global.document.querySelector(`.builder-setrow[data-set="${i}"] .target`);
+        if (chip) chip.textContent = String(value || '').trim() || '—';
+      }
+    } else {
+      const effortIdx = sheet.columns.findIndex((c) => shouldForwardFillColumn(c.kind));
+      if (colIdx === effortIdx) {
+        const chip = global.document && global.document.querySelector(`.builder-setrow[data-set="${setIdx}"] .target`);
+        if (chip) chip.textContent = String(value || '').trim() || '—';
+      }
     }
+    col.value = joinValues(col.values);
     notifyChange();
+  }
+
+  function syncForwardColumnInputs(colIdx, setIdx, value) {
+    const card = global.document && global.document.getElementById('builderLoggerCard');
+    if (!card) return;
+    card.querySelectorAll('.builder-setrow').forEach((row) => {
+      const rowSet = Number(row.dataset.set);
+      if (!Number.isFinite(rowSet) || rowSet <= setIdx) return;
+      const input = row.querySelectorAll('input:not([disabled])')[colIdx];
+      if (input) input.value = value;
+    });
   }
 
   function resizeSets(n) {
