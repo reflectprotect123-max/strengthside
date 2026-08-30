@@ -134,16 +134,16 @@
         var entries = (db && db.logEntries) || [];
         var dates = {};
         entries.forEach(function (e) {
-          if (e && !e.deletedAt && e.date && windowDates.indexOf(e.date) >= 0) dates[e.date] = true;
+          if (e && !e.deletedAt && e.logDate && windowDates.indexOf(e.logDate) >= 0) dates[e.logDate] = true;
         });
         daysLogged = Object.keys(dates).length;
         if (global.NutritionUI.Core || (global.NutritionCore)) {
           var C = global.NutritionCore || (global.NutritionUI.Core && global.NutritionUI.Core());
-          if (C && C.targetForDay && db.program) {
+          if (C && C.targetForDay && C.macroTotals && db.program) {
             var target = C.targetForDay(db.program, endDate);
-            var totals = C.dayTotals ? C.dayTotals(entries.filter(function (e) {
-              return e && !e.deletedAt && e.date === endDate;
-            })) : null;
+            var totals = C.macroTotals(entries.filter(function (e) {
+              return e && !e.deletedAt && e.logDate === endDate;
+            }));
             if (target && totals && target.calories > 0) {
               targetInfo = { calories: target.calories, eaten: totals.calories };
               offTarget = totals.calories > 0 && (totals.calories < target.calories * 0.7 || totals.calories > target.calories * 1.3);

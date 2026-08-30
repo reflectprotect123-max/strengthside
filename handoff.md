@@ -110,6 +110,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 
 ```bash
 pnpm run verify
+node apps/mobile/prototype/hybrid-app/dogfood-proof-prep.smoke.mjs
 node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs
 node apps/mobile/prototype/hybrid-app/coach-v1-e2e.smoke.mjs
 ```

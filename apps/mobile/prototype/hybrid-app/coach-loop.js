@@ -833,8 +833,7 @@
       (s) =>
         s.athleteId === opts.athleteId &&
         s.date === opts.date &&
-        s.templateId === opts.templateId &&
-        s.status !== 'completed',
+        s.templateId === opts.templateId,
     );
     if (exists) return null;
     const session = instantiateSession(template, {

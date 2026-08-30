@@ -390,19 +390,15 @@
     const checkInState = checkInUiState(db, date, true);
     const coachBridge = loadCoachBridgeNutrition();
     if (coachBridge && coachBridge.targets && coachBridge.targets.calories) {
-      if (!db.program) db.program = { id: uid(), targets: [] };
-      db.program.targets = db.program.targets || [];
-      const idx = db.program.targets.findIndex((t) => t.date === date);
-      const coachT = {
-        date,
+      const day = ensureTodayTargets(db, date);
+      Object.assign(day, {
         calories: coachBridge.targets.calories,
         proteinG: coachBridge.targets.proteinG,
         carbsG: coachBridge.targets.carbsG,
         fatG: coachBridge.targets.fatG,
         source: 'coach-bridge',
-      };
-      if (idx >= 0) db.program.targets[idx] = coachT;
-      else db.program.targets.push(coachT);
+      });
+      day.updatedAt = isoNow();
     }
     saveN(db);
     const target = C.targetForDay(db.program, date) || {
@@ -1007,9 +1003,9 @@
   }
 
   function notifyBigMacNutrition(date) {
-    if (!global.S || !global.BigMacBridge || !global.BigMacBridge.afterNutritionLog) return;
+    if (!window.S || !window.BigMacBridge || !window.BigMacBridge.afterNutritionLog) return;
     try {
-      global.BigMacBridge.afterNutritionLog(global.S, date || nutDate || todayStr(), { apply: true });
+      window.BigMacBridge.afterNutritionLog(window.S, date || nutDate || todayStr(), { apply: true });
     } catch (_) {}
   }
 

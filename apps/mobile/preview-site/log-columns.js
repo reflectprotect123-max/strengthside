@@ -101,6 +101,9 @@
       if (loadCol.kind === 'weight_pct_wm') {
         const pct = Number(String(loadCol.values?.[0] ?? loadCol.value).split(',')[0]);
         if (pct >= 1 && pct <= 100) ex.loadExpr = { exprKind: 'pct_of_max', exprArg: pct / 100 };
+        else if (String(loadCol.values?.[0] ?? loadCol.value).trim()) {
+          throw new Error('Weight % must be between 1 and 100.');
+        }
       } else if (loadCol.kind === 'weight_lwp') {
         const delta = Number(String(loadCol.values?.[0] ?? loadCol.value).split(',')[0]);
         if (!Number.isNaN(delta)) ex.loadExpr = { exprKind: 'lwp_delta', exprArg: delta };
@@ -195,9 +198,18 @@
     notifyChange();
   }
 
+  function isEffortKind(kind) {
+    return kind === 'reps' || kind === 'reps_range' || kind === 'time_sec' || kind === 'distance_m';
+  }
+
   function onKindChange(colIdx, kind) {
     if (!sheet.columns[colIdx]) return;
-    sheet.columns[colIdx].kind = KIND_MAP[kind] ? kind : 'reps';
+    const nextKind = KIND_MAP[kind] ? kind : 'reps';
+    if (isEffortKind(nextKind) && sheet.columns.some((c, i) => i !== colIdx && isEffortKind(c.kind))) {
+      if (global.alert) global.alert('Only one reps/time/distance column per exercise.');
+      return;
+    }
+    sheet.columns[colIdx].kind = nextKind;
     refreshTwin();
     notifyChange();
   }
@@ -269,9 +281,19 @@
       if (global.alert) global.alert('Max 3 log columns.');
       return;
     }
+    const kinds = sheet.columns.map((c) => c.kind);
+    const hasLoad = kinds.some((k) => k === 'weight_kg' || k === 'weight_pct_wm' || k === 'weight_lwp');
+    const hasEffort = kinds.some((c) => isEffortKind(c));
+    let kind = 'reps';
+    if (!hasLoad) kind = 'weight_kg';
+    else if (!hasEffort) kind = 'reps';
+    else {
+      if (global.alert) global.alert('Only one reps/time/distance column per exercise.');
+      return;
+    }
     sheet.columns.push({
       id: newId(),
-      kind: 'reps',
+      kind,
       value: '',
       values: splitValues('', sheet.sets),
     });

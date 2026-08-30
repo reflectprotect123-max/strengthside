@@ -891,6 +891,7 @@ function placeCellTemplate(templateId){
 
 function clearCell(week, day){
   const p = prog(ui.programId); if (!p) return;
+  if (!confirm('Clear this program cell?')) return;
   L.setProgramCell(p, week, day, null);
   ui.cellMenu = null;
   persist(); render();
@@ -1075,7 +1076,12 @@ function coachExerciseSummary(ex){
 function syncCoachExFromColumns(bi, ei, opts){
   if (!window.LogColumns) return;
   const ex = tpl(ui.templateId).blocks[bi].exercises[ei];
-  LogColumns.syncLegacyFromColumns(ex, LogColumns.getSheetColumns(), LogColumns.getSetCount());
+  try {
+    LogColumns.syncLegacyFromColumns(ex, LogColumns.getSheetColumns(), LogColumns.getSetCount());
+  } catch (e) {
+    showCoachToast(String(e.message || e), 'warn');
+    return;
+  }
   ex.restSec = LogColumns.getRestSec();
   L.ensureRows(ex);
   if (opts && opts.skipPersist) return;
@@ -1115,7 +1121,6 @@ function coachExerciseRxHtml(bi, ei){
       <p class="rx-summary muted">Leave load blank for autopilot · add % WM column only when you want a fixed percentage.</p>
       <button type="button" class="btn small" style="margin-top:8px" onclick="openCoachExEdit(${bi},${ei})">Edit prescription</button>`;
   }
-  LogColumns.beginSheet(ex);
   return `<div class="field" style="margin-top:8px"><label>Rest seconds</label>
     <input type="number" min="0" value="${LogColumns.getRestSec()}" oninput="LogColumns.onRestChange(this.value)" onchange="LogColumns.onRestChange(this.value)"></div>
     <input type="hidden" id="exSets" value="${LogColumns.getSetCount()}">
@@ -1262,9 +1267,6 @@ function isSupersetPartnerBlock(blocks, bi){
 
 function toggleSuperset(bi, on){
   const t = tpl(ui.templateId);
-  t.blocks.forEach((b) => {
-    delete b.supersetPartner;
-  });
   t.blocks[bi].superset = on;
   if (on) {
     const next = t.blocks[bi + 1];
@@ -1661,10 +1663,13 @@ document.addEventListener('click', function coachKebabDismiss(ev) {
 
 document.addEventListener('keydown', function coachKebabEscape(ev) {
   if (ev.key !== 'Escape') return;
-  if (!ui.cellMenu && !ui.chipMenu) return;
-  ui.cellMenu = null;
-  ui.chipMenu = null;
-  render();
+  let changed = false;
+  if (ui.cellMenu) { ui.cellMenu = null; changed = true; }
+  if (ui.chipMenu) { ui.chipMenu = null; changed = true; }
+  if (ui.cellPick) { ui.cellPick = null; changed = true; }
+  if (ui.libPick) { ui.libPick = null; changed = true; }
+  if (ui.exPicker) { ui.exPicker = null; changed = true; }
+  if (changed) render();
 });
 
 window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
