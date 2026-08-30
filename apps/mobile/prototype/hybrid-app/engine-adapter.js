@@ -113,14 +113,28 @@
   }
 
   function recoveryGateForAutopilot(state) {
-    if (!global.RecoverySignals) return 'ok';
+    var gate = 'ok';
+    if (state && state.active && state.sessions) {
+      for (var i = 0; i < state.sessions.length; i++) {
+        var sess = state.sessions[i];
+        if (sess && sess.id === state.active && sess.llmRecoveryGate) {
+          var rank = { hold: 3, caution: 2, ok: 1 };
+          var g = sess.llmRecoveryGate;
+          gate = (rank[g] || 1) >= (rank[gate] || 1) ? g : gate;
+          break;
+        }
+      }
+    }
+    if (!global.RecoverySignals) return gate;
     try {
       var recovery = global.RecoverySignals.recoverySignal(state, {
         date: new Date().toISOString().slice(0, 10),
       });
-      return recovery && recovery.gate ? recovery.gate : 'ok';
+      var rGate = recovery && recovery.gate ? recovery.gate : 'ok';
+      var rank2 = { hold: 3, caution: 2, ok: 1 };
+      return (rank2[rGate] || 1) >= (rank2[gate] || 1) ? rGate : gate;
     } catch (_e) {
-      return 'ok';
+      return gate;
     }
   }
 

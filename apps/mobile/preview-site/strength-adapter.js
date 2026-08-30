@@ -516,13 +516,32 @@
     });
   }
 
+  function mergeRecoveryGates(a, b) {
+    var rank = { hold: 3, caution: 2, ok: 1 };
+    var ra = rank[a] || 1;
+    var rb = rank[b] || 1;
+    return ra >= rb ? a : b;
+  }
+
+  function activeSessionFromState(state) {
+    if (!state || !state.active) return null;
+    var sessions = state.sessions || [];
+    for (var i = 0; i < sessions.length; i++) {
+      if (sessions[i] && sessions[i].id === state.active) return sessions[i];
+    }
+    return null;
+  }
+
   function recoveryGateForAutopilot(state) {
-    if (!global.RecoverySignals) return 'ok';
+    var gate = 'ok';
+    var sess = activeSessionFromState(state);
+    if (sess && sess.llmRecoveryGate) gate = mergeRecoveryGates(gate, sess.llmRecoveryGate);
+    if (!global.RecoverySignals) return gate;
     try {
       var recovery = global.RecoverySignals.recoverySignal(state, { date: isoNow().slice(0, 10) });
-      return recovery && recovery.gate ? recovery.gate : 'ok';
+      return mergeRecoveryGates(gate, recovery && recovery.gate ? recovery.gate : 'ok');
     } catch (_e) {
-      return 'ok';
+      return gate;
     }
   }
 
