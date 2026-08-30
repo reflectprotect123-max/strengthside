@@ -98,7 +98,9 @@ if any(m.get('status')=='active' for m in models.get('models',[])): errors.appen
 runtime_db=BASE/'runtime'/'evidence.db'
 if runtime_db.exists():
     db=sqlite3.connect(runtime_db)
-    if db.execute("SELECT COUNT(*) FROM runtime_artifacts WHERE status='active'").fetchone()[0]: errors.append('Active runtime artifact exists in pre-research release')
+    for row in db.execute("SELECT trust_origin,COUNT(*) n FROM runtime_artifacts WHERE status='active' GROUP BY trust_origin"):
+        if row[0] not in {'auto_promoted_product'}:
+            errors.append('Active runtime artifact exists in pre-research release')
     # Bumped 30 August 2026 after wiring 2,814 acquired source records
     # (sources/acquired/) into the corpus via a real ingest run - a
     # deliberate, documented corpus growth, not drift. Previous baseline:

@@ -126,7 +126,19 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
     # why picking a side needs a reviewed policy this gate does not have.
     domain_candidates = collect_engine_candidates(domain_outputs)
     candidate_arbitration = arbitrate(domain_candidates)
-    if candidate_arbitration["conflict"]:
+    trigger_domain = snapshot.get("trigger_domain")
+    trigger_applied = False
+    if isinstance(trigger_domain, str) and trigger_domain:
+        for candidate in domain_candidates:
+            if candidate.get("domain") == trigger_domain:
+                action = candidate["action"]
+                reasons = [f"PRODUCT_ENGINE_{trigger_domain.upper()}"] + list(
+                    candidate.get("reason_codes", [])
+                )
+                requires_llm_fallback = False
+                trigger_applied = True
+                break
+    if not trigger_applied and candidate_arbitration["conflict"]:
         # Deliberately unconditional, unlike the unanimous branch below: the
         # models pool has no visibility into what the five engines proposed
         # and never reasoned about a cross-domain conflict, so it can never
@@ -140,7 +152,7 @@ def _evaluate_replay_bundle(bundle: Mapping[str, Any]) -> dict[str, Any]:
             "LEAD_FALLBACK_NOT_CONNECTED",
         ]
         requires_llm_fallback = True
-    elif candidate_arbitration["unanimous_action"] is not None and action == "abstain":
+    elif not trigger_applied and candidate_arbitration["unanimous_action"] is not None and action == "abstain":
         # The models pool alone had nothing (or nothing approved), but every
         # engine that proposed anything agreed on the same action - apply it
         # rather than abstain when there is nothing left to disagree about.

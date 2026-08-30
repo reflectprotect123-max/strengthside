@@ -736,9 +736,10 @@
       '<div class="row" style="justify-content:flex-start;gap:8px;flex-wrap:wrap;margin-top:4px">' +
       '<button type="button" class="btn primary" onclick="CoachViews.saveNutOverride()">Save override</button>' +
       '<button type="button" class="btn ghost small" onclick="CoachViews.clearNutOverride()">Clear override</button></div></div>' +
-      '<div class="card stack" style="margin-top:16px"><div class="eyebrow">Meal day · ' +
+      '<div class="card stack" style="margin-top:16px"><div class="eyebrow">Meal day</div>' +
+      '<div class="field"><label>Date</label><input id="nutMealDate" type="date" value="' +
       esc(L().today()) +
-      '</div>' +
+      '"></div>' +
       '<div class="field"><label>Meal title</label><input id="nutMealTitle" value="Training day"></div>' +
       '<div class="field"><label>Food line</label><input id="nutFoodLine" placeholder="Chicken breast · 200g"></div>' +
       '<button type="button" class="btn primary" onclick="CoachViews.addMealDay()">Add meal & publish day</button></div></div>'
@@ -775,9 +776,11 @@
     var aid = ui().nutAthleteId || S().athletes[0].id;
     var titleEl = document.getElementById('nutMealTitle');
     var foodEl = document.getElementById('nutFoodLine');
+    var dateEl = document.getElementById('nutMealDate');
+    var mealDate = (dateEl && dateEl.value) || L().today();
     var day = N.makeMealDay({
       athleteId: aid,
-      date: L().today(),
+      date: mealDate,
       meals: [
         N.makeMeal({
           title: (titleEl && titleEl.value) || 'Meal',

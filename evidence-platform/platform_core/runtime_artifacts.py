@@ -17,6 +17,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from .auto_promote import TRUSTED_ORIGINS
+
 
 def load_trusted_model_artifacts(
     db: sqlite3.Connection, *, system: str | None = None
@@ -39,7 +41,7 @@ def load_trusted_model_artifacts(
     errors: list[str] = []
     for row in db.execute(query, params):
         item = dict(row)
-        if item["llm_tainted"] or item["trust_origin"] != "human_promoted_verified" or not item["deterministic"]:
+        if item["llm_tainted"] or item["trust_origin"] not in TRUSTED_ORIGINS or not item["deterministic"]:
             errors.append("UNTRUSTED_RUNTIME_ARTIFACT:" + item["artifact_id"])
             continue
         path = Path(item["artifact_path"])

@@ -923,6 +923,14 @@ function onEmptyCell(week, day){
   const pick = ui.cellPick;
   if (pick && (pick.mode === 'copyTarget' || pick.mode === 'moveTarget')) {
     const p = prog(ui.programId); if (!p) return;
+    const key = L.cellKey(week, day);
+    const occupied = !!(p.cells || {})[key];
+    if (occupied && pick.mode === 'copyTarget') {
+      if (!confirm('This cell already has a session. Replace it with the copy?')) return;
+    }
+    if (occupied && pick.mode === 'moveTarget') {
+      if (!confirm('This cell already has a session. Swap/move anyway?')) return;
+    }
     L.setProgramCell(p, week, day, pick.templateId);
     if (pick.mode === 'moveTarget') L.setProgramCell(p, pick.fromWeek, pick.fromDay, null);
     ui.cellPick = null;
@@ -1544,6 +1552,15 @@ function render(){
   $('coachApp').innerHTML = coachChrome(body);
   scheduleRefreshCloudStates();
 }
+
+document.addEventListener('click', function coachKebabDismiss(ev) {
+  if (!ui.cellMenu && !ui.chipMenu) return;
+  if (ev.target && ev.target.closest && ev.target.closest('.kebab-menu, .kebab-btn')) return;
+  let changed = false;
+  if (ui.cellMenu) { ui.cellMenu = null; changed = true; }
+  if (ui.chipMenu) { ui.chipMenu = null; changed = true; }
+  if (changed) render();
+});
 
 window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogin=tryLogin;
 window.saveComment=saveComment; window.toggleCard=toggleCard;

@@ -77,8 +77,19 @@
       let nutrition = null;
       if (N) {
         const nut = N.ensureNutrition(state);
-        const today = L.today();
-        nutrition = N.athleteNutritionPayload(nut, a.id, today);
+        const publishedSessions = (state.sessions || []).filter(
+          (s) => s.athleteId === a.id && s.published,
+        );
+        const mealDates = (nut.mealDays || [])
+          .filter((d) => d.athleteId === a.id && d.published)
+          .map((d) => d.date)
+          .filter(Boolean);
+        const sessionDates = publishedSessions.map((s) => s.date).filter(Boolean);
+        const nutritionDate =
+          mealDates.sort().slice(-1)[0] ||
+          sessionDates.sort().slice(-1)[0] ||
+          L.today();
+        nutrition = N.athleteNutritionPayload(nut, a.id, nutritionDate);
         nutrition.mealDays = (nut.mealDays || [])
           .filter((d) => d.athleteId === a.id && d.published)
           .map((d) => clone(d));

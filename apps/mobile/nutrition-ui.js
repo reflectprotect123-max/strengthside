@@ -730,6 +730,7 @@
     markDayComplete(db, date);
     pendingCatalogFood = null;
     if (!saveN(db)) return alert('Could not save.');
+    notifyBigMacNutrition(date);
     closeSheet();
     renderNutrition();
   }
@@ -762,6 +763,7 @@
     db.logEntries.push(entry);
     markDayComplete(db, date);
     if (!saveN(db)) return alert('Could not save.');
+    notifyBigMacNutrition(date);
     closeSheet();
     renderNutrition();
   }
@@ -1004,6 +1006,13 @@
     return scanLabel(meal || 'snack');
   }
 
+  function notifyBigMacNutrition(date) {
+    if (!global.S || !global.BigMacBridge || !global.BigMacBridge.afterNutritionLog) return;
+    try {
+      global.BigMacBridge.afterNutritionLog(global.S, date || nutDate || todayStr(), { apply: true });
+    } catch (_) {}
+  }
+
   function saveQuickAdd() {
     const C = Core();
     const db = loadN();
@@ -1026,6 +1035,7 @@
       alert('Could not save — storage may be full. Try Export backup in Settings, then retry.');
       return;
     }
+    notifyBigMacNutrition(date);
     closeSheet();
     renderNutrition();
   }

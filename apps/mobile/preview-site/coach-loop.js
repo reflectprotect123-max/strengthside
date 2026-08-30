@@ -699,10 +699,28 @@
       if (!template) continue;
       const date = addDays(start, (week - 1) * 7 + (day - 1));
       for (const athleteId of athleteIds) {
-        const exists = (state.sessions || []).some(
-          (s) => s.athleteId === athleteId && s.date === date && s.templateId === templateId,
+        const existsIdx = (state.sessions || []).findIndex(
+          (s) =>
+            s.athleteId === athleteId &&
+            s.date === date &&
+            s.templateId === templateId,
         );
-        if (exists) continue;
+        if (existsIdx >= 0) {
+          const cur = state.sessions[existsIdx];
+          if (cur.status === 'active' || cur.status === 'completed' || cur.published) continue;
+          const refreshed = instantiateSession(template, {
+            athleteId,
+            date,
+            programId: program.id,
+            week,
+            day,
+            name: week && day ? `Week ${week} Day ${day}` : template.name,
+          });
+          refreshed.sessionTitle = template.name;
+          refreshed.id = cur.id;
+          state.sessions[existsIdx] = refreshed;
+          continue;
+        }
         const session = instantiateSession(template, {
           athleteId,
           date,

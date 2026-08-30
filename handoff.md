@@ -15,8 +15,8 @@
 | --- | --- |
 | **Owner** | Five-engine **research** merged to `main`. ChatGPT dropped for research. App AI wiring **paused**. |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`e9746cc`** (#99 ecosystem polish + calendar UX — 30 Aug) |
-| **Open PR** | **None** — #99 merged 30 Aug |
+| **`main` tip** | **`ea08d4c`** (#102 full ecosystem bug audit — 30 Aug) |
+| **Open PR** | **None** — #102 merged 30 Aug |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v99`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.16`** on channel — **upload `1.0.17`** after merge to ship **v99** bundle |
@@ -30,7 +30,7 @@
 
 **Ship ritual:** `pnpm run verify` → sync HTML → bump cache → Capgo upload if dogfood moves → refresh this handoff.
 
-**`claude/big-mac-q7xyqo` merged to `main` at `1a249a4`, owner-approved 30 Aug** — clean merge, zero conflicts, `apps/`/`packages/`/`supabase/` untouched. **Do not wire LLM runtime to athlete app** until owner approves post-research — merging the research corpus is not that approval.
+**`claude/big-mac-q7xyqo` merged to `main` at `1a249a4`, owner-approved 30 Aug** — clean merge, zero conflicts, `apps/`/`packages/`/`supabase/` untouched. **BIG MAC strength vertical slice wired** (deterministic path only — `big-mac-bridge.js` + Netlify `big-mac-strength` function). **Do not wire LLM lead-fallback** until owner approves post-research.
 
 ---
 
@@ -99,11 +99,10 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 - **Five engines wired:** Strength · Conditioning · Nutrition · Recovery (debt row) · Coordinator (silent only)
 - **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.16`** on dogfood (upload **`1.0.17`** for v99)
 - **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` + **`coach-portal-athlete`** + **`coach-block-types`** in CI
-- Key merges: **#98** calendar + block types · **#97** coach → athlete portal · **#96** Settings scroll · **#93** vault · **#92** recovery · **#91** coach polish
-- **Evidence platform:** merged at **`1a249a4`** (2,814 acquired sources, 0 promoted)
-- **Coach → athlete portal (#97):** From-coach badges · Settings pull/auto-sync · delivery strip · completion write-back · nutrition in cloud snapshot · strength builder hidden when coach rx exists · **`coach-portal-athlete.smoke.mjs`**
-- **Coach calendar + blocks (#98):** strength / conditioning / recovery end-to-end · calendar UX polish · demo seed = **Dan Veldman only** (Alex/Jordan removed)
+- Key merges: **#102** full ecosystem bug audit · **#98** calendar + block types · **#97** coach → athlete portal · **#96** Settings scroll · **#93** vault · **#92** recovery · **#91** coach polish
 - **Ecosystem polish (#99):** coach Mon–Sun calendar grid · publish revert on cloud fail · coach toasts · athlete strength builder when signed in (Settings toggle) · import backup · portal toasts · friendly session status labels · cache **v99**
+- **Full ecosystem audit (#102):** coach builder/sync/hybrid session fixes · deep small-bug pass · `coach-audit-fixes.smoke.mjs`
+- **BIG MAC five-engine wiring (post-#102):** `big-mac-product-engines.js` maps shipped Hybrid JS engines → BIG MAC domain outputs. **`auto_promote_product_engines`** registers them as `runtime_artifacts` with `trust_origin=auto_promoted_product` (no human reviewer gate). `big-mac-bridge.js` hooks all five domains. Python `decide()` honors `trigger_domain` for per-hook decisions.
 
 ---
 
@@ -115,6 +114,8 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 - [ ] Phone dogfood proof — strapless cond → recovery session → debt row moves
 - [ ] Hybrid week in Library + Calendar + web↔phone sync proof
 - [ ] Logger friction pass
+
+**Audit leftovers (lower priority, not blocking ship):** kebab dismiss on coach chip menus (cell menus done) · some edge cases in program grid swap semantics
 
 ### B — Five-engine research — **merged to `main`**
 
@@ -131,7 +132,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 | Tests | 182 pass · `validate_platform.py` → `PASS_PRE_RESEARCH_ONLY` |
 | Merge to `main` | **Done, 30 Aug** — clean, no conflicts, `apps/`/`packages/`/`supabase/` untouched |
 
-**ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** (`strength-ai.js`, partial adapter, `ai-strength-progression.mjs`) — **paused, not wired**.
+**ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** (`strength-ai.js`, `ai-strength-progression.mjs`) — **paused, not wired**. **BIG MAC five-engine wiring + auto-promotion** — product engines auto-promoted to `runtime_artifacts` (`auto_promoted_product` trust origin). LLM lead-fallback **not wired** (Constitution step 5 — Later).
 
 ### C — Decision Hub (product direction — parked for implementation)
 
@@ -168,8 +169,8 @@ pnpm run verify
 
 | Branch | Tip | Purpose |
 | --- | --- | --- |
-| `main` | `9f2ca43` | Athlete product + evidence-platform + coach portal + calendar/blocks |
-| `claude/big-mac-q7xyqo` | merged | Five-engine evidence platform — history only |
+| `main` | `ea08d4c` | Athlete product + evidence-platform + coach portal |
+| `cursor/bigmac-strength-slice-84a0` | (this branch) | Post-#102 audit leftovers + BIG MAC five-engine wiring + handoff |
 
 ```
 apps/mobile/prototype/hybrid-app/index.html
