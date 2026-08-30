@@ -11,7 +11,7 @@
 1. **Decision tables** — document intrasession rules with evidence classes; coefficients marked PROVISIONAL until dogfood.  
 2. **Pure engines** — `decideNextSet` (strength-engine) and `decideNextPhase` (engine/conditioning); post-session `decideProgression` / `conAdapt` unchanged.  
 3. **Athlete logger** — one-set / one-phase state machine + rest overlay; adapters call engines on each Next.  
-4. **Strength coach builder** — defer heavy UX; optional default target RIR per exercise later. Conditioning/recovery builder **no change**.  
+4. **Strength coach builder** — target RIR per exercise + logger preview aligned with one-set autoreg. Conditioning/recovery builder **no change**.  
 5. **Verify** — colocated tests lock behaviour; `pnpm run verify` in CI.
 
 ---
@@ -53,15 +53,14 @@ Conditioning/recovery **coach builder unchanged** — effort chips + format alre
 
 ---
 
-## Phase 3 — Coach strength builder (optional)
+## Phase 3 — Coach strength builder (aligned)
 
-Only if dogfood asks for it:
-
-- Default **target RIR** (single field per exercise, e.g. 2) on publish — not per-set grid overhaul.
+- Default **target RIR** per exercise on publish — single field, blank = engine default 2.
+- Builder logger twin preview matches one-set in-session flow (difficulty slider, not last-set RIR for intersession).
 - Superset **rest edges** (`restPartnerSec` / `restRoundSec`) when superset graph lands in logger.
 - Keep sets × reps × kg grid; engine autoreg fills gap until coach pins absolute load on set 1.
 
-**Verdict:** conditioning/recovery builder is good. Strength builder is **not blocking** Phase 0–1.
+**Verdict:** conditioning/recovery builder unchanged. Strength builder aligned for target RIR + preview copy.
 
 ---
 

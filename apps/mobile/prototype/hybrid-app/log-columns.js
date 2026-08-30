@@ -135,7 +135,7 @@
   }
 
   /** Sheet draft while Edit lift is open */
-  let sheet = { sets: 3, restSec: 120, columns: [] };
+  let sheet = { sets: 3, restSec: 120, targetRir: null, columns: [] };
   let changeHandler = null;
 
   function setChangeHandler(fn) {
@@ -149,12 +149,21 @@
   function beginSheet(ex) {
     const sets = Math.max(1, Number(ex && ex.sets) || 3);
     const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
+    const targetRir =
+      ex && ex.targetRir != null && Number.isFinite(Number(ex.targetRir)) ? Math.round(Number(ex.targetRir)) : null;
     sheet = {
       sets,
       restSec,
+      targetRir,
       columns: normalizeColumns({ ...(ex || {}), sets }),
     };
     return sheet;
+  }
+
+  function setTargetRir(v) {
+    const n = String(v == null ? '' : v).trim();
+    sheet.targetRir = n === '' || !Number.isFinite(Number(n)) ? null : Math.max(0, Math.min(10, Math.round(Number(n))));
+    refreshTwin();
   }
 
   function getSheetColumns() {
@@ -281,17 +290,17 @@
 
   function builderLoggerTwinHtml() {
     const cols = sheet.columns;
-    const last = sheet.sets - 1;
-    const planned = sheet.sets + ' sets';
+    const targetRirLabel =
+      sheet.targetRir != null ? `Target ${sheet.targetRir} RIR` : 'Target 2 RIR (default)';
 
     const rows = Array.from({ length: sheet.sets }, (_, i) => {
       const isLast = i === last;
+      const active = i === 0;
       const cells = cols
         .map((c, ci) => {
           const meta = kindMeta(c.kind);
           const val = (c.values || [])[i] == null ? '' : c.values[i];
           const ph = meta.placeholder || '';
-          // First set: dropdown headers (look like logger mini labels). Later sets: hard labels.
           const head =
             i === 0
               ? `<select class="logcol-kind mini-select" aria-label="Column ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>`
@@ -299,24 +308,23 @@
           return `<div>${head}<input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></div>`;
         })
         .join('');
-      const rirMini = isLast ? 'RIR · counts' : 'RIR';
-      return `<div class="setrow builder-setrow ${isLast ? 'last-set' : ''}" data-set="${i}">
+      return `<div class="setrow builder-setrow ${active ? 'last-set' : ''} ${active ? '' : 'done'}" data-set="${i}">
         <div class="setnum">${i + 1}<span class="target">${effortTarget(i)}</span></div>
         ${cells}
-        <div><span class="mini">${rirMini}</span><input disabled placeholder="—" aria-label="RIR logger only"></div>
-        <div class="btns" style="margin:0;gap:5px"><button type="button" class="btn small primary" disabled>Log</button></div>
+        <div><span class="mini">Difficulty</span><input disabled placeholder="${active ? 'slider' : '—'}" aria-label="Difficulty slider preview"></div>
+        <div class="btns" style="margin:0;gap:5px"><button type="button" class="btn small primary" disabled>${active ? 'Next' : 'Done'}</button></div>
       </div>`;
     }).join('');
 
     return `<div class="card" style="margin-top:14px" id="builderLoggerCard">
       <div class="row">
         <div>
-          <div class="title">Progress</div>
-          <div class="meta">Planned: ${planned} · Rest ${fmtRest(sheet.restSec)} after Log</div>
+          <div class="title">Athlete logger preview</div>
+          <div class="meta">One set at a time · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
         </div>
         <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
       </div>
-      <div class="guardrail" style="margin-top:10px">Log <b>RIR on your last set</b> (set ${sheet.sets}) — it drives the next session load.</div>
+      <div class="guardrail" style="margin-top:10px">Athlete rates <b>difficulty after each set</b> — the engine adjusts load for the next set. Set 1 uses your prescription; later sets autoreg in-session.</div>
       <div class="divider"></div>
       ${rows}
       <div class="btns">
@@ -379,6 +387,7 @@
     getSetCount,
     getRestSec,
     onRestChange,
+    setTargetRir,
     onKindChange,
     onCellChange,
     onValueChange: onCellChange,

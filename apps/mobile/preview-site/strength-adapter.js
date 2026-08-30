@@ -625,6 +625,22 @@
     return null;
   }
 
+  function targetRirForExercise(exercise) {
+    var n = exercise && exercise.targetRir;
+    if (n != null && Number.isFinite(Number(n))) return Math.max(0, Math.min(10, Number(n)));
+    return 2;
+  }
+
+  function parseRepRange(reps) {
+    var s = String(reps || '').trim();
+    var m = s.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+    if (!m) return null;
+    var lo = Number(m[1]);
+    var hi = Number(m[2]);
+    if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo) return null;
+    return { lo: lo, hi: hi };
+  }
+
   global.StrengthAdapter = {
     hasStrength: hasStrength,
     ensureStrengthState: ensureStrengthState,
@@ -642,6 +658,8 @@
     resolveExerciseLoad: resolveExerciseLoad,
     sessionLoadContext: sessionLoadContext,
     calibrationForExercise: calibrationForExercise,
+    targetRirForExercise: targetRirForExercise,
+    parseRepRange: parseRepRange,
     ENGINE_VERSION: ENGINE_VERSION,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

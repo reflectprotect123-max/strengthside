@@ -434,8 +434,22 @@
       logColumns: partial.logColumns || null,
       loadExpr: partial.loadExpr || null,
     };
+    if (partial.targetRir != null && partial.targetRir !== '' && Number.isFinite(Number(partial.targetRir))) {
+      ex.targetRir = Math.max(0, Math.min(10, Math.round(Number(partial.targetRir))));
+    }
     ensureRows(ex);
     return ex;
+  }
+
+  /** Parse reps like "6-8" for in-session very_easy rep bumps. */
+  function parseRepRange(reps) {
+    const s = String(reps || '').trim();
+    const m = s.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+    if (!m) return null;
+    const lo = Number(m[1]);
+    const hi = Number(m[2]);
+    if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo) return null;
+    return { lo, hi };
   }
 
   function formatMmSs(sec) {
@@ -1313,20 +1327,24 @@
   }
 
   function prescriptionLine(ex) {
+    const rir =
+      ex.targetRir != null && Number.isFinite(Number(ex.targetRir))
+        ? ` · target ${Math.round(Number(ex.targetRir))} RIR`
+        : '';
     if (ex.loadExpr && ex.loadExpr.exprKind === 'pct_of_max') {
       const pct = Math.round(Number(ex.loadExpr.exprArg) * 100);
       const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
-      return `${ex.sets} × ${ex.reps} · ${pct}% WM${rest}`;
+      return `${ex.sets} × ${ex.reps} · ${pct}% WM${rest}${rir}`;
     }
     if (ex.loadExpr && ex.loadExpr.exprKind === 'lwp_delta') {
       const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
-      return `${ex.sets} × ${ex.reps} · LWP ${ex.loadExpr.exprArg}${rest}`;
+      return `${ex.sets} × ${ex.reps} · LWP ${ex.loadExpr.exprArg}${rest}${rir}`;
     }
     const load = String(ex.load || '').trim();
     const metric = ex.metric || 'Weight';
     const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
     const loadBit = load ? ` @ ${load}${metric === 'Weight' ? 'kg' : ''}` : ' · autopilot load';
-    return `${ex.sets} × ${ex.reps}${loadBit}${rest}`;
+    return `${ex.sets} × ${ex.reps}${loadBit}${rest}${rir}`;
   }
 
   function actualLine(ex) {
@@ -1450,6 +1468,7 @@
     saveState,
     resetState,
     prescriptionLine,
+    parseRepRange,
     actualLine,
     sessionRows,
   };

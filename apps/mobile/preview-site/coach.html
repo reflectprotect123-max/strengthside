@@ -1090,17 +1090,39 @@ function closeCoachExEdit(){
   render();
 }
 
+function patchCoachExTargetRir(bi, ei, raw){
+  const ex = tplBlocks()[bi].exercises[ei];
+  const v = String(raw == null ? '' : raw).trim();
+  if (!v) delete ex.targetRir;
+  else {
+    const n = Math.max(0, Math.min(10, Math.round(Number(v))));
+    if (Number.isFinite(n)) ex.targetRir = n;
+  }
+  if (ui.exEdit && window.LogColumns) LogColumns.setTargetRir(ex.targetRir);
+  persist();
+}
+
+function coachTargetRirField(bi, ei){
+  const ex = tplBlocks()[bi].exercises[ei];
+  const val = ex.targetRir != null ? ex.targetRir : '';
+  return `<div class="field" style="margin-top:8px"><label>Target RIR</label>
+    <input type="number" min="0" max="10" step="1" placeholder="2 (default)" value="${val}" aria-label="Target reps in reserve" onchange="patchCoachExTargetRir(${bi},${ei},this.value)">
+    <p class="muted" style="margin:4px 0 0;font-size:11px">In-session autoreg aims for this many reps in reserve. Blank uses engine default (2).</p></div>`;
+}
+
 function coachExerciseRxHtml(bi, ei){
   const ex = tplBlocks()[bi].exercises[ei];
   const editing = ui.exEdit && ui.exEdit.bi === bi && ui.exEdit.ei === ei;
   if (!window.LogColumns) return setRowsTable(bi, ei);
   if (!editing) {
     return `<p class="rx-summary">${esc(coachExerciseSummary(ex))}</p>
-      <p class="rx-summary muted">Leave load blank for autopilot · add % WM column only when you want a fixed percentage.</p>
+      <p class="rx-summary muted">Set 1 from prescription · later sets autoreg in-session from difficulty slider.</p>
+      ${coachTargetRirField(bi, ei)}
       <button type="button" class="btn small" style="margin-top:8px" onclick="openCoachExEdit(${bi},${ei})">Edit prescription</button>`;
   }
   LogColumns.beginSheet(ex);
-  return `<div class="field" style="margin-top:8px"><label>Rest seconds</label>
+  return `${coachTargetRirField(bi, ei)}
+    <div class="field" style="margin-top:8px"><label>Rest seconds</label>
     <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
     <input type="hidden" id="exSets" value="${LogColumns.getSetCount()}">
     ${LogColumns.builderLoggerTwinHtml()}
@@ -1367,8 +1389,10 @@ function setRowRep(bi, ei, ri, val){
   const parts = L.targetList(e);
   while (parts.length < (e.sets || 1)) parts.push(String(e.reps || ''));
   parts[ri] = val;
+  for (let i = ri + 1; i < parts.length; i++) parts[i] = val;
   e.reps = parts.length === 1 ? parts[0] : parts.join(',');
   persist();
+  render();
 }
 
 function setRowLoad(bi, ei, ri, val){

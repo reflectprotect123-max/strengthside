@@ -23,6 +23,7 @@ for (const needle of [
   'Effort',
   'Steady-state',
   'Edit prescription',
+  'Target RIR',
   'log-columns.js',
   'removeBlk',
   'prep-textarea',
@@ -42,10 +43,19 @@ if (!src.includes('COND_EFFORTS')) throw new Error('coach-loop.js missing COND_E
 if (!src.includes('applyCondBuilderToBlock')) throw new Error('coach-loop.js missing applyCondBuilderToBlock');
 if (!src.includes('condPlanLineBlock')) throw new Error('coach-loop.js missing condPlanLineBlock');
 
+if (!src.includes('parseRepRange')) throw new Error('coach-loop.js missing parseRepRange');
+
 const sandbox = { console, module: { exports: {} }, globalThis: {} };
 sandbox.globalThis = sandbox;
 vm.runInNewContext(src, sandbox);
 const L = sandbox.module.exports || sandbox.CoachLoop;
+
+const rirEx = L.makeExercise({ name: 'Squat', sets: 3, reps: '6-8', load: '', targetRir: 3 });
+if (rirEx.targetRir !== 3) throw new Error('targetRir on exercise');
+const rirLine = L.prescriptionLine(rirEx);
+if (!rirLine.includes('target 3 RIR')) throw new Error('prescription target RIR: ' + rirLine);
+const range = L.parseRepRange('6-8');
+if (!range || range.lo !== 6 || range.hi !== 8) throw new Error('parseRepRange');
 
 if (!L.BLOCK_CATEGORIES.includes('Uncategorized')) {
   throw new Error('BLOCK_CATEGORIES must include Uncategorized');
