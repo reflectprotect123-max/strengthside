@@ -1,7 +1,7 @@
 import { preflight, json, method, safeError } from './_lib/http.mjs';
 
 const ALLOWED = new Set(['hold', 'progress', 'deload', 'retest']);
-const MODEL = process.env.OPENROUTER_MODEL || 'google/gemma-2-9b-it:free';
+const MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash-lite';
 
 function validateDecision(raw) {
   if (!raw || typeof raw !== 'object') return null;
