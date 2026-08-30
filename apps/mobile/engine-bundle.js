@@ -23,6 +23,7 @@ var HybridEngine = (() => {
     Concept2: () => concept2_exports,
     Conditioning: () => conditioning_exports,
     Constants: () => Constants,
+    DecideNextPhase: () => decideNextPhase_exports,
     Hr: () => hr_exports
   });
 
@@ -694,6 +695,115 @@ var HybridEngine = (() => {
     }
     if (counts.standalone) db.settings.updatedAt = now;
     return counts;
+  }
+
+  // ../../../../packages/engine/src/decideNextPhase.ts
+  var decideNextPhase_exports = {};
+  __export(decideNextPhase_exports, {
+    IN_SESSION_CONDITIONING: () => IN_SESSION_CONDITIONING,
+    decideNextPhase: () => decideNextPhase,
+    isIntrasessionAutoregFormat: () => isIntrasessionAutoregFormat
+  });
+  var IN_SESSION_CONDITIONING = {
+    wattsPushPct: 0.03,
+    wattsEaseMetPct: 0.05,
+    wattsEaseMissPct: 0.08,
+    hrCeilBumpBpm: 2,
+    hrCeilTrimBpm: 4,
+    workDurationCutPct: 0.1,
+    minWatts: 40,
+    maxWatts: 600,
+    minHrBpm: 90,
+    maxHrBpm: 195
+  };
+  function clamp(n, lo, hi) {
+    return Math.max(lo, Math.min(hi, n));
+  }
+  function roundWatts(w) {
+    return Math.round(w / 5) * 5;
+  }
+  function isIntrasessionAutoregFormat(fmtKey) {
+    return fmtKey !== "steady" && fmtKey !== "free";
+  }
+  function decideNextPhase(input) {
+    const c = IN_SESSION_CONDITIONING;
+    if (!isIntrasessionAutoregFormat(input.formatKey)) {
+      return { action: "noop", reasonCodes: ["steady_or_free_no_intrsession"] };
+    }
+    if (input.incomplete) {
+      const reasons2 = ["incomplete_stop"];
+      let nextRounds = input.roundsRemaining;
+      let nextWorkDurationSec = input.workDurationSec;
+      if (nextRounds != null && nextRounds > 1) {
+        nextRounds -= 1;
+        reasons2.push("rounds_minus_one");
+      } else if (nextWorkDurationSec != null) {
+        nextWorkDurationSec = Math.round(nextWorkDurationSec * (1 - c.workDurationCutPct));
+        reasons2.push("work_duration_cut");
+      }
+      return {
+        action: "decrease",
+        reasonCodes: reasons2,
+        nextTargetWatts: input.targetWatts,
+        nextTargetHrCeilingBpm: input.targetHrCeilingBpm,
+        nextRounds,
+        nextWorkDurationSec
+      };
+    }
+    const gap = condEffortGap(input.effort, input.felt);
+    if (gap == null) {
+      return {
+        action: "hold",
+        reasonCodes: ["missing_felt_or_effort"],
+        nextTargetWatts: input.targetWatts,
+        nextTargetHrCeilingBpm: input.targetHrCeilingBpm
+      };
+    }
+    if (gap === 0) {
+      return {
+        action: "hold",
+        reasonCodes: ["on_target_hold"],
+        nextTargetWatts: input.targetWatts,
+        nextTargetHrCeilingBpm: input.targetHrCeilingBpm
+      };
+    }
+    if (gap < 0) {
+      const reasons2 = ["felt_easier_than_prescribed"];
+      let nextWatts2 = input.targetWatts;
+      let nextHr2 = input.targetHrCeilingBpm;
+      if (nextWatts2 != null) {
+        nextWatts2 = clamp(roundWatts(nextWatts2 * (1 + c.wattsPushPct)), c.minWatts, c.maxWatts);
+        reasons2.push("watts_push");
+      } else if (nextHr2 != null) {
+        nextHr2 = clamp(nextHr2 + c.hrCeilBumpBpm, c.minHrBpm, c.maxHrBpm);
+        reasons2.push("hr_ceiling_bump");
+      }
+      return {
+        action: "increase",
+        reasonCodes: reasons2,
+        nextTargetWatts: nextWatts2,
+        nextTargetHrCeilingBpm: nextHr2
+      };
+    }
+    const reasons = ["felt_harder_than_prescribed"];
+    const zoneMiss = input.zoneCompliance === "not_met";
+    const cutPct = zoneMiss ? c.wattsEaseMissPct : c.wattsEaseMetPct;
+    let nextWatts = input.targetWatts;
+    let nextHr = input.targetHrCeilingBpm;
+    if (nextWatts != null) {
+      nextWatts = clamp(roundWatts(nextWatts * (1 - cutPct)), c.minWatts, c.maxWatts);
+      reasons.push(zoneMiss ? "watts_ease_miss" : "watts_ease_met");
+    }
+    if (nextHr != null && (zoneMiss || nextWatts == null)) {
+      nextHr = clamp(nextHr - c.hrCeilTrimBpm, c.minHrBpm, c.maxHrBpm);
+      reasons.push("hr_ceiling_trim");
+    }
+    return {
+      action: "decrease",
+      reasonCodes: reasons,
+      nextTargetWatts: nextWatts,
+      nextTargetHrCeilingBpm: nextHr
+    };
   }
 
   // engine-entry.ts

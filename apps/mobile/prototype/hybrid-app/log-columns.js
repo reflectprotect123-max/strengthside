@@ -62,6 +62,22 @@
     return true;
   }
 
+  function hasPinnedVolume(ex) {
+    if (ex && ex.autopilotVolume === false) return true;
+    if (sheet.autopilotVolume === false) return true;
+    const effort = effortColumn();
+    const repsVal = effort ? String((effort.values || [])[0] ?? '').trim() : '';
+    return sheet.sets > 0 && repsVal.length > 0 && sheet.autopilotVolume === false;
+  }
+
+  function isAutopilotVolume(ex) {
+    if (ex && ex.autopilotVolume === true) return true;
+    if (ex && ex.autopilotVolume === false) return false;
+    const noSets = ex && (ex.sets == null || ex.sets === '');
+    const noReps = ex && (ex.reps == null || String(ex.reps).trim() === '');
+    return !!(noSets && noReps);
+  }
+
   function coachDefaultColumns(ex) {
     const setCount = Math.max(1, Number(ex && ex.sets) || 3);
     const reps = String((ex && ex.reps) || '8');
@@ -188,6 +204,15 @@
     const effort = effortColumn(cols);
     const loadCol = loadColumn(cols);
     if (effort) ex.reps = String(effort.value || '').trim() || ex.reps || '8';
+    if (sheet.autopilotVolume) {
+      ex.autopilotVolume = true;
+      ex.sets = null;
+      ex.reps = null;
+    } else {
+      ex.autopilotVolume = false;
+      if (setCount) ex.sets = Math.max(1, setCount);
+      if (effort) ex.reps = String(effort.value || '').trim() || '8';
+    }
     delete ex.loadExpr;
     delete ex.load;
     if (loadCol && hasPinnedLoad(cols)) {
@@ -228,7 +253,7 @@
   }
 
   /** Sheet draft while Edit lift is open */
-  let sheet = { sets: 3, restSec: 120, targetRir: null, showOverrides: false, columns: [] };
+  let sheet = { sets: 3, restSec: 120, targetRir: null, autopilotVolume: true, showOverrides: false, columns: [] };
   let changeHandler = null;
 
   function setChangeHandler(fn) {
@@ -240,7 +265,8 @@
   }
 
   function beginSheet(ex) {
-    const sets = Math.max(1, Number(ex && ex.sets) || 3);
+    const autopilotVolume = isAutopilotVolume(ex);
+    const sets = autopilotVolume ? 3 : Math.max(1, Number(ex && ex.sets) || 3);
     const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
     const targetRir =
       ex && ex.targetRir != null && Number.isFinite(Number(ex.targetRir)) ? Math.round(Number(ex.targetRir)) : null;
@@ -248,10 +274,36 @@
       sets,
       restSec,
       targetRir,
+      autopilotVolume,
       showOverrides: !!(ex && ex.logColumns && ex.logColumns.some((c) => perSetOverrideActive(c.values, sets))),
       columns: coachNormalizeColumns({ ...(ex || {}), sets }),
     };
     return sheet;
+  }
+
+  function setAutopilotVolume(on) {
+    sheet.autopilotVolume = !!on;
+    if (sheet.autopilotVolume) {
+      sheet.showOverrides = false;
+    }
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function pinVolume(sets, reps) {
+    sheet.autopilotVolume = false;
+    sheet.sets = Math.max(1, Math.min(12, Number(sets) || 3));
+    onSimpleReps(reps || '8');
+    resizeSets(sheet.sets);
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function clearPinnedVolume() {
+    sheet.autopilotVolume = true;
+    onSimpleReps('8');
+    refreshPrescription();
+    notifyChange();
   }
 
   function effortColumnIndex() {
@@ -510,28 +562,63 @@
     </details>`;
   }
 
+  function builderPinVolumeHtml() {
+    if (sheet.autopilotVolume) {
+      return `<details class="rx-overrides rx-advanced"><summary>Pin sets &amp; reps (optional)</summary>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave on autopilot — engine picks sets × reps from history, calibration, and recovery. Pin only when you need a fixed prescription.</p>
+        <div class="rx-grid cols-2" style="margin-top:8px">
+          <div class="field"><label>Sets</label>
+            <input type="number" min="1" max="12" placeholder="3" onchange="LogColumns.pinVolume(Number(this.value), document.getElementById('pinRepsVal').value)"></div>
+          <div class="field"><label>Reps</label>
+            <input id="pinRepsVal" placeholder="8 or 6-8" onchange="LogColumns.pinVolume(document.querySelector('#builderPrescriptionCard input[type=number]')?.value || 3, this.value)"></div>
+        </div>
+      </details>`;
+    }
+    const effort = effortColumn() || { kind: 'reps', values: ['8'] };
+    const meta = kindMeta(effort.kind);
+    const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
+    return `<details class="rx-overrides rx-advanced" open><summary>Pin sets &amp; reps (optional)</summary>
+      <div class="rx-grid cols-2" style="margin-top:8px">
+        <div class="field"><label>Sets</label>
+          <input type="number" min="1" max="12" value="${sheet.sets}" onchange="LogColumns.resizeSets(Number(this.value)); LogColumns.setAutopilotVolume(false)"></div>
+        <div class="field"><label>${meta.loggerLabel}</label>
+          <input value="${String(repsVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onSimpleReps(this.value); LogColumns.setAutopilotVolume(false)"></div>
+      </div>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedVolume()">Clear — use autopilot volume</button>
+    </details>`;
+  }
+
   function builderPrescriptionGridHtml() {
     const effort = effortColumn() || { kind: 'reps', values: ['8'] };
     const meta = kindMeta(effort.kind);
     const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
     const ph = meta.placeholder || '8 or 6-8';
-    const pinned = hasPinnedLoad();
-    const loadLabel = pinned ? kindMeta(loadColumn().kind).label : 'Autopilot';
-    return `<div class="card rx-prescription-card" id="builderPrescriptionCard" style="margin-top:10px">
-      <div class="title">Prescription</div>
-      <div class="meta">${sheet.sets} sets · engine handles load · in-session autoreg after set 1</div>
-      <div class="rx-grid cols-2" style="margin-top:12px">
+    const pinnedLoad = hasPinnedLoad();
+    const loadLabel = pinnedLoad ? kindMeta(loadColumn().kind).label : 'Autopilot';
+    const volumeLabel = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${repsVal || '—'}`;
+    const effortFields = sheet.autopilotVolume
+      ? ''
+      : `<div class="rx-grid cols-2" style="margin-top:12px">
         <div class="field"><label>Target</label>
           <select class="logcol-kind" aria-label="Target type" onchange="LogColumns.onSimpleEffortKind(this.value)">${effortKindsOptionsHtml(effort.kind)}</select></div>
         <div class="field"><label>${meta.loggerLabel}</label>
           <input value="${String(repsVal).replace(/"/g, '&quot;')}" placeholder="${ph}" aria-label="Target reps or effort" onchange="LogColumns.onSimpleReps(this.value)" oninput="LogColumns.onSimpleReps(this.value)"></div>
-      </div>
-      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span><span class="autopilot-note">Working max + progression — you do not enter kg here</span></div>
-      ${builderPinLoadHtml()}
-      <details class="rx-overrides" ${sheet.showOverrides ? 'open' : ''} ontoggle="LogColumns.toggleOverrides(this.open)">
+      </div>`;
+    const overrideSection = sheet.autopilotVolume
+      ? ''
+      : `<details class="rx-overrides" ${sheet.showOverrides ? 'open' : ''} ontoggle="LogColumns.toggleOverrides(this.open)">
         <summary>Per-set rep overrides (optional)</summary>
         ${builderOverridesTableHtml()}
-      </details>
+      </details>`;
+    return `<div class="card rx-prescription-card" id="builderPrescriptionCard" style="margin-top:10px">
+      <div class="title">Prescription</div>
+      <div class="meta">Engine handles volume + load · in-session autoreg after set 1</div>
+      <div class="autopilot-strip"><span class="autopilot-label">Volume</span><span class="autopilot-value">${volumeLabel}</span><span class="autopilot-note">History, calibration, recovery — you do not enter sets × reps here</span></div>
+      ${effortFields}
+      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span><span class="autopilot-note">Working max + progression — you do not enter kg here</span></div>
+      ${builderPinVolumeHtml()}
+      ${builderPinLoadHtml()}
+      ${overrideSection}
     </div>`;
   }
 
@@ -558,22 +645,24 @@
     const loadDisplay = hasPinnedLoad()
       ? String((loadColumn().values || [])[0] || '').trim()
       : 'Autopilot';
+    const volumeDisplay = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${effortVal}`;
+    const effortPreview = sheet.autopilotVolume ? 'Autopilot' : effortVal;
 
     return `<div class="card" style="margin-top:14px" id="builderLoggerCard">
       <div class="row">
         <div>
           <div class="title">Athlete logger preview</div>
-          <div class="meta">Set 1 of ${sheet.sets} · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
+          <div class="meta">Set 1 · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
         </div>
         <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
       </div>
-      <div class="guardrail" style="margin-top:10px">Athlete sees <b>${loadDisplay}</b> load × <b>${effortVal}</b> ${meta.loggerLabel.toLowerCase()}, then rates difficulty — engine adjusts set 2+.</div>
+      <div class="guardrail" style="margin-top:10px">Athlete sees <b>${volumeDisplay}</b> volume · <b>${loadDisplay}</b> load — rates difficulty after each set; engine adjusts the next.</div>
       <div class="divider"></div>
       <div class="setrow builder-setrow last-set" data-set="0">
-        <div class="setnum">1<span class="target">${effortVal}</span></div>
+        <div class="setnum">1<span class="target">${effortPreview}</span></div>
         <div><span class="mini">Weight</span><input disabled value="${loadDisplay.replace(/"/g, '&quot;')}"></div>
-        <div><span class="mini">${meta.loggerLabel}</span><input disabled value="${effortVal.replace(/"/g, '&quot;')}"></div>
-        <div><span class="mini">Difficulty</span><input disabled placeholder="slider"></div>
+        <div><span class="mini">${meta.loggerLabel}</span><input disabled value="${effortPreview.replace(/"/g, '&quot;')}"></div>
+        <div><span class="mini">Difficulty</span><input disabled placeholder="picker"></div>
         <div class="btns" style="margin:0"><button type="button" class="btn small primary" disabled>Next</button></div>
       </div>
     </div>`;
@@ -658,6 +747,10 @@
     onPinLoadKind,
     onPinLoadValue,
     clearPinnedLoad,
+    setAutopilotVolume,
+    pinVolume,
+    clearPinnedVolume,
+    isAutopilotVolume,
     setChangeHandler,
     addColumn,
     removeColumn,

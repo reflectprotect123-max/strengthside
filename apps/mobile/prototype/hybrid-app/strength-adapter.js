@@ -480,8 +480,134 @@
 
   function fillBlankRowWeights(ex, loadKg) {
     if (loadKg == null) return;
-    (ex.rows || []).forEach(function (row) {
-      if (!row.done && (row.weight === '' || row.weight == null)) row.weight = loadKg;
+    var first = (ex.rows || []).find(function (row) { return !row.done && !row.extra; });
+    if (first && (first.weight === '' || first.weight == null)) first.weight = loadKg;
+  }
+
+  function isVolumeDeferred(ex) {
+    if (!ex) return false;
+    if (ex.autopilotVolume === true) return true;
+    if (ex.autopilotVolume === false) return false;
+    var noSets = ex.sets == null || ex.sets === '';
+    var noReps = ex.reps == null || String(ex.reps).trim() === '';
+    return noSets && noReps;
+  }
+
+  function rebuildRowsFromPrescription(ex) {
+    var count = Math.max(1, num(ex.sets) || 1);
+    var raw = String(ex.reps == null ? '' : ex.reps);
+    var parts = raw.split(',').map(function (x) { return x.trim(); }).filter(function (x, i, a) { return a.length > 1 || x !== '' || i === 0; });
+    if (!parts.length) parts = [''];
+    if (parts.length === 1) parts = Array.from({ length: count }, function () { return parts[0]; });
+    while (parts.length < count) parts.push(parts[parts.length - 1] || '');
+    parts = parts.slice(0, count);
+    ex.rows = parts.map(function (target, i) {
+      return {
+        id: 'row_' + Math.random().toString(36).slice(2, 9),
+        n: i + 1,
+        target: target,
+        targetKind: /s(ec(onds?)?)?$/i.test(String(target)) ? 'seconds' : 'reps',
+        weight: '',
+        reps: '',
+        prescribedLoad: '',
+        done: false,
+        extra: false,
+      };
+    });
+  }
+
+  function recoveryGateForAutopilot(state) {
+    if (!global.RecoverySignals) return 'ok';
+    try {
+      var recovery = global.RecoverySignals.recoverySignal(state, { date: isoNow().slice(0, 10) });
+      return recovery && recovery.gate ? recovery.gate : 'ok';
+    } catch (_e) {
+      return 'ok';
+    }
+  }
+
+  function applyAutopilotVolumeToExercise(state, ex, sessionCtx) {
+    if (!ex || !isVolumeDeferred(ex)) return;
+    if (!hasStrength() || !global.HybridStrength.InitialPrescription) return;
+    sessionCtx = sessionCtx || {};
+    var exerciseId = ex.exerciseId || ex.id;
+    var history = exerciseId ? exerciseExposureHistory(state, exerciseId, 1) : [];
+    var last = history[0] || null;
+    var exposures = exerciseId
+      ? global.HybridStrength.Exposure.strengthExposuresFor(exerciseId, performedFromState(state))
+      : [];
+    var cal = global.HybridStrength.Calibration
+      ? global.HybridStrength.Calibration.calibrationStateFor(exposures)
+      : calibrationStateForExposures(exposures);
+    var decision = global.HybridStrength.InitialPrescription.decideInitialPrescription({
+      coachSets: ex.sets,
+      coachReps: ex.reps,
+      calibration: cal,
+      lastSession: last ? { setCount: last.setCount || num(ex.sets) || 3, reps: last.reps || 8 } : null,
+      recoveryGate: sessionCtx.recoveryGate || recoveryGateForAutopilot(state),
+      maxSetsForExercise: sessionCtx.maxSetsForExercise,
+    });
+    ex.sets = decision.sets;
+    ex.reps = decision.reps;
+    ex.autopilotVolume = decision.autopilotVolume;
+    ex.autopilotVolumeReasons = decision.reasonCodes;
+    rebuildRowsFromPrescription(ex);
+  }
+
+  function countSessionWorkingSets(tasks) {
+    var total = 0;
+    (tasks || []).forEach(function (t) {
+      if (t.kind === 'strength') total += (t.rows || []).filter(function (r) { return !r.extra; }).length;
+      if (t.kind === 'superset') {
+        (t.exercises || []).forEach(function (ex) {
+          total += (ex.rows || []).filter(function (r) { return !r.extra; }).length;
+        });
+      }
+    });
+    return total;
+  }
+
+  function applyAutopilotToExercise(state, ex, asOfDate, sessionCtx) {
+    applyAutopilotVolumeToExercise(state, ex, sessionCtx);
+    applyLoadHintsToExercise(state, ex, asOfDate);
+  }
+
+  function applyAutopilotToTasks(state, tasks, asOfDate) {
+    var recoveryGate = recoveryGateForAutopilot(state);
+    (tasks || []).forEach(function (t) {
+      if (t.kind === 'strength') {
+        applyAutopilotToExercise(state, t, asOfDate, {
+          recoveryGate: recoveryGate,
+          maxSetsForExercise: null,
+        });
+      }
+      if (t.kind === 'superset') {
+        (t.exercises || []).forEach(function (ex) {
+          applyAutopilotToExercise(state, ex, asOfDate, { recoveryGate: recoveryGate });
+        });
+      }
+    });
+  }
+
+  function suggestNextSet(state, task, input) {
+    if (!hasStrength() || !global.HybridStrength.DecideNextSet) return null;
+    input = input || {};
+    var equipment = equipmentForExercise(task);
+    var repRange = parseRepRange(task.reps || input.prescribedReps);
+    var planned = (task.rows || []).filter(function (r) { return !r.extra; });
+    return global.HybridStrength.DecideNextSet.decideNextSet({
+      performedLoadKg: num(input.performedLoadKg),
+      performedReps: num(input.performedReps),
+      prescribedReps: num(input.prescribedReps),
+      prescribedLoadKg: num(input.prescribedLoadKg),
+      difficulty: input.difficulty || 'medium',
+      equipment: equipment,
+      sessionAnchorKg: num(input.sessionAnchorKg),
+      targetRir: targetRirForExercise(task),
+      repRangeLo: repRange ? repRange.lo : undefined,
+      repRangeHi: repRange ? repRange.hi : undefined,
+      ordinal: num(input.ordinal),
+      totalOrdinals: planned.length || num(task.sets) || 1,
     });
   }
 
@@ -648,6 +774,11 @@
     performedFromSession: performedFromSession,
     applySilentProgression: applySilentProgression,
     applyLoadHintsToTasks: applyLoadHintsToTasks,
+    applyAutopilotToTasks: applyAutopilotToTasks,
+    applyAutopilotVolumeToExercise: applyAutopilotVolumeToExercise,
+    isVolumeDeferred: isVolumeDeferred,
+    suggestNextSet: suggestNextSet,
+    rebuildRowsFromPrescription: rebuildRowsFromPrescription,
     trainedExerciseIds: trainedExerciseIds,
     recordPrEvents: recordPrEvents,
     progressSummary: progressSummary,

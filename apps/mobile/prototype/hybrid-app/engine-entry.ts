@@ -7,6 +7,7 @@
 export * as Hr from '../../../../packages/engine/src/hr.ts';
 export * as Conditioning from '../../../../packages/engine/src/conditioning.ts';
 export * as Concept2 from '../../../../packages/engine/src/concept2.ts';
+export * as DecideNextPhase from '../../../../packages/engine/src/decideNextPhase.ts';
 
 import {
   CON_EFFORT_KEYS,

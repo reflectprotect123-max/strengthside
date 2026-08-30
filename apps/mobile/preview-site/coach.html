@@ -1128,15 +1128,13 @@ function coachExerciseRxHtml(bi, ei){
   if (!window.LogColumns) return setRowsTable(bi, ei);
   if (!editing) {
     return `<p class="rx-summary">${esc(coachExerciseSummary(ex))}</p>
-      <p class="rx-summary muted">Sets + reps only — engine handles load · in-session autoreg after set 1.</p>
+      <p class="rx-summary muted">Autopilot — engine handles sets, reps, and load · in-session autoreg after set 1.</p>
       ${coachTargetRirField(bi, ei)}
       <button type="button" class="btn small" style="margin-top:8px" onclick="openCoachExEdit(${bi},${ei})">Edit prescription</button>`;
   }
   LogColumns.beginSheet(ex);
   return `${coachTargetRirField(bi, ei)}
-    <div class="rx-grid cols-4" style="margin-top:8px">
-      <div class="field"><label>Sets</label>
-        <input type="number" min="1" max="12" id="exSets" value="${LogColumns.getSetCount()}" onchange="LogColumns.resizeSets(Number(this.value))"></div>
+    <div class="rx-grid cols-2" style="margin-top:8px">
       <div class="field"><label>Rest (seconds)</label>
         <input type="number" min="0" value="${LogColumns.getRestSec()}" onchange="LogColumns.onRestChange(this.value)"></div>
     </div>
@@ -1156,7 +1154,7 @@ function parseSets(tid, bi, ei, raw){
 function addEx(bi){
   const t = tpl(ui.templateId);
   t.blocks[bi].exercises = t.blocks[bi].exercises || [];
-  t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8', load:'', metric:'Weight', restSec:90 }));
+  t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', autopilotVolume:true, load:'', metric:'Weight', restSec:90 }));
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }

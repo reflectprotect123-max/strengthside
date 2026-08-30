@@ -685,6 +685,63 @@
     };
   }
 
+  function effortRpeBand(effortKey) {
+    if (!hasEngine()) return null;
+    var efforts = global.HybridEngine.Constants.CON_EFFORTS;
+    var e = efforts && efforts[effortKey || 'medium'];
+    if (!e || !e.rpe || e.rpe.length < 2) return null;
+    return { rpe: [Number(e.rpe[0]), Number(e.rpe[1])] };
+  }
+
+  function parseHrCeiling(raw) {
+    if (raw == null || raw === '') return undefined;
+    var s = String(raw);
+    var m = s.match(/(\d+)\s*[–-]\s*(\d+)/);
+    if (m) return Number(m[2]);
+    var n = Number(s.replace(/[^\d.]/g, ''));
+    return Number.isFinite(n) ? n : undefined;
+  }
+
+  /**
+   * Intrasession conditioning autoreg — rest-boundary target adjust via decideNextPhase.
+   */
+  function suggestNextPhase(task, input) {
+    input = input || {};
+    if (!hasEngine() || !global.HybridEngine.DecideNextPhase) return null;
+    var fmtKey = (task && (task.condFmt || task.fmt)) || 'intervals';
+    if (!global.HybridEngine.DecideNextPhase.isIntrasessionAutoregFormat(fmtKey)) {
+      return { action: 'noop', reasonCodes: ['steady_or_free_no_intrsession'] };
+    }
+    var rounds = Math.max(1, Number(task.rounds) || 1);
+    var round = task.interval && task.interval.round ? Number(task.interval.round) : 1;
+    return global.HybridEngine.DecideNextPhase.decideNextPhase({
+      formatKey: fmtKey,
+      effort: effortRpeBand(task.effort),
+      felt: input.felt,
+      zoneCompliance: input.zoneCompliance || 'borderline',
+      targetWatts: task.targetWatts != null && task.targetWatts !== '' ? Number(task.targetWatts) : undefined,
+      targetHrCeilingBpm: parseHrCeiling(task.targetHrZone),
+      roundsRemaining: Math.max(0, rounds - round + 1),
+      workDurationSec: Number(task.workSec) || undefined,
+      incomplete: !!input.incomplete,
+    });
+  }
+
+  function applyNextPhaseDecision(task, decision) {
+    if (!task || !decision) return task;
+    if (decision.nextTargetWatts != null) task.targetWatts = decision.nextTargetWatts;
+    if (decision.nextTargetHrCeilingBpm != null && task.targetHrZone !== undefined) {
+      var lo = parseHrCeiling(task.targetHrZone);
+      var bandLo = typeof task.targetHrZone === 'string' && task.targetHrZone.match(/(\d+)/);
+      var start = bandLo ? Number(bandLo[1]) : (lo ? lo - 15 : decision.nextTargetHrCeilingBpm - 15);
+      task.targetHrZone = start + '–' + decision.nextTargetHrCeilingBpm;
+    }
+    if (decision.nextRounds != null) task.rounds = Math.max(1, Number(decision.nextRounds));
+    if (decision.nextWorkDurationSec != null) task.workSec = Math.max(0, Number(decision.nextWorkDurationSec));
+    task.lastPhaseDecision = decision;
+    return task;
+  }
+
   var api = {
     hasEngine: hasEngine,
     zonesForProfile: zonesForProfile,
@@ -701,6 +758,9 @@
     zoneKeyForBpm: zoneKeyForBpm,
     applyConcept2Results: applyConcept2Results,
     tagEchoDeviceMetrics: tagEchoDeviceMetrics,
+    suggestNextPhase: suggestNextPhase,
+    applyNextPhaseDecision: applyNextPhaseDecision,
+    effortRpeBand: effortRpeBand,
   };
 
   global.EngineAdapter = api;

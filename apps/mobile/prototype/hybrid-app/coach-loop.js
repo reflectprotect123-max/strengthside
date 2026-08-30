@@ -417,14 +417,25 @@
     return sessionRows(session).some((r) => r.done || num(r.weight) || num(r.reps));
   }
 
+  function isAutopilotVolume(partial) {
+    if (partial && partial.autopilotVolume === true) return true;
+    if (partial && partial.autopilotVolume === false) return false;
+    const hasSets = partial && partial.sets != null && partial.sets !== '';
+    const hasReps = partial && partial.reps != null && String(partial.reps).trim() !== '';
+    return !hasSets && !hasReps;
+  }
+
   function makeExercise(partial) {
+    partial = partial || {};
+    const autopilotVol = isAutopilotVolume(partial);
     const ex = {
       id: partial.id || uid('ex'),
       name: partial.name,
       exerciseId: partial.exerciseId || '',
       category: partial.category || '',
-      sets: partial.sets == null ? 3 : partial.sets,
-      reps: partial.reps == null ? '8' : String(partial.reps),
+      autopilotVolume: autopilotVol,
+      sets: autopilotVol ? null : (partial.sets == null ? 3 : partial.sets),
+      reps: autopilotVol ? null : (partial.reps == null ? '8' : String(partial.reps)),
       load: partial.load == null ? '' : String(partial.load),
       metric: partial.metric || 'Weight',
       restSec: partial.restSec == null ? 90 : partial.restSec,
@@ -437,7 +448,7 @@
     if (partial.targetRir != null && partial.targetRir !== '' && Number.isFinite(Number(partial.targetRir))) {
       ex.targetRir = Math.max(0, Math.min(10, Math.round(Number(partial.targetRir))));
     }
-    ensureRows(ex);
+    if (!autopilotVol) ensureRows(ex);
     return ex;
   }
 
@@ -1331,18 +1342,19 @@
       ex.targetRir != null && Number.isFinite(Number(ex.targetRir))
         ? ` · target ${Math.round(Number(ex.targetRir))} RIR`
         : '';
+    const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
+    if (ex.autopilotVolume || (ex.sets == null && !String(ex.reps || '').trim())) {
+      return `autopilot${rest}${rir}`;
+    }
     if (ex.loadExpr && ex.loadExpr.exprKind === 'pct_of_max') {
       const pct = Math.round(Number(ex.loadExpr.exprArg) * 100);
-      const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
       return `${ex.sets} × ${ex.reps} · ${pct}% WM${rest}${rir}`;
     }
     if (ex.loadExpr && ex.loadExpr.exprKind === 'lwp_delta') {
-      const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
       return `${ex.sets} × ${ex.reps} · LWP ${ex.loadExpr.exprArg}${rest}${rir}`;
     }
     const load = String(ex.load || '').trim();
     const metric = ex.metric || 'Weight';
-    const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
     const loadBit = load ? ` @ ${load}${metric === 'Weight' ? 'kg' : ''}` : ' · autopilot load';
     return `${ex.sets} × ${ex.reps}${loadBit}${rest}${rir}`;
   }
