@@ -85,7 +85,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 | 8 | Code-sign coach `.exe` | **open** | Needs code-signing cert; SmartScreen warning until then. |
 | 9 | Coach logger friction pass | **open** | Use phone proofs #2–3 to note friction; fix iteratively. |
 | 10 | Coach chip kebab dismiss | **done** | Click-outside + Escape; chip/cell menus mutual close (#112). |
-| 11 | Program grid swap edge cases | **done** | Occupied cells accept paste; move swaps templates (#113). |
+| 11 | Program grid swap edge cases | **done** | Occupied cells accept paste; move swaps templates (#112). |
 | 12 | Athlete logger friction pass | **open** | During phone session logging (#3). |
 | 13 | BIG MAC five hooks on phone | **owner proof** | CI: `check:big-mac-bridge`; confirm receipts on device after sessions. |
 | 14 | Pain/illness flags — consume or document | **parked** | Flags classify; nothing stops training (inherited). Owner decision if stop wanted. |
