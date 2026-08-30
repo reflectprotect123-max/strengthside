@@ -1367,8 +1367,10 @@ function setRowRep(bi, ei, ri, val){
   const parts = L.targetList(e);
   while (parts.length < (e.sets || 1)) parts.push(String(e.reps || ''));
   parts[ri] = val;
+  for (let i = ri + 1; i < parts.length; i++) parts[i] = val;
   e.reps = parts.length === 1 ? parts[0] : parts.join(',');
   persist();
+  render();
 }
 
 function setRowLoad(bi, ei, ri, val){
