@@ -151,9 +151,26 @@
     });
   }
 
+  function athleteCueForSession(session) {
+    if (!session || !session.llmIntent) return '';
+    return session.llmIntent.athleteCue || '';
+  }
+
+  function athleteCueHtml(session) {
+    var cue = athleteCueForSession(session);
+    if (!cue || !global.esc) return '';
+    return (
+      '<div class="liftcue" style="margin-top:8px;font-size:12px;line-height:1.35">' +
+      global.esc(cue) +
+      '</div>'
+    );
+  }
+
   global.CoachAI = {
     ENDPOINT: ENDPOINT,
     llmEnabled: llmEnabled,
+    athleteCueForSession: athleteCueForSession,
+    athleteCueHtml: athleteCueHtml,
     validateCoachIntent: validateCoachIntent,
     buildIntentPayload: buildIntentPayload,
     fetchCoachIntent: fetchCoachIntent,

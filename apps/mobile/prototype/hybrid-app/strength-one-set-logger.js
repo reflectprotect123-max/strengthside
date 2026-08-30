@@ -49,8 +49,12 @@
     var ri = rowIndex(t, row);
     var last = typeof global.lastRows === 'function' ? global.lastRows(t.exerciseId, t.name) : [];
     var loadHead = typeof global.strengthLoadHeadlineHtml === 'function'
-      ? global.strengthLoadHeadlineHtml(t, global.activeSession && global.activeSession()?.date)
+      ? global.strengthLoadHeadlineHtml(t, global.activeSession && typeof global.activeSession === 'function' ? global.activeSession()?.date : undefined)
       : '';
+    var coachCue =
+      global.CoachAI && typeof global.activeSession === 'function' && global.CoachAI.athleteCueHtml
+        ? global.CoachAI.athleteCueHtml(global.activeSession())
+        : '';
     var rest = typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90;
     var targetRir = global.StrengthAdapter ? global.StrengthAdapter.targetRirForExercise(t) : 2;
     var prev = last[ordinal] || last[last.length - 1] || null;
@@ -76,6 +80,7 @@
       (typeof global.restBtn === 'function' ? global.restBtn(rest) : '') +
       '</div></div>' +
       loadHead +
+      coachCue +
       '<div class=guardrail>Rate difficulty after this set — engine adjusts the next one.</div>' +
       '<div class=divider></div>' +
       '<div class="setrow builder-setrow last-set">' +
