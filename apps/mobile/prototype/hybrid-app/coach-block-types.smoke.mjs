@@ -52,6 +52,34 @@ const strength = L.normalizeBlockType({
 });
 if (strength.type !== 'strength') throw new Error('strength block wrong');
 
+const switched = L.decorateBlocks([
+  L.makeBlock({
+    type: 'strength',
+    heading: 'Strength',
+    category: 'Strength/Power',
+    scoring: 'weight',
+    superset: true,
+    exercises: [L.makeExercise({ name: 'Squat', sets: 3, reps: '5' })],
+  }),
+]);
+switched[0].superset = true;
+delete switched[0].exercises;
+switched[0].recoverySession = true;
+L.applyCondBuilderToBlock(switched[0], {
+  condFmt: 'steady',
+  effort: 'easy',
+  modality: 'Mixed',
+  targetDurationMin: 30,
+  heading: 'Recovery movement',
+});
+switched[0].category = 'Recovery';
+switched[0].type = 'conditioning';
+[switched[0]] = L.decorateBlocks(switched);
+if (!switched[0].recoverySession || switched[0].type !== 'conditioning') {
+  throw new Error('strength→recovery conversion failed');
+}
+if (switched[0].category !== 'Recovery') throw new Error('recovery category lost');
+
 const bridged = Bridge.blocksForAthlete([
   {
     type: 'conditioning',

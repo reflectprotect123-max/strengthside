@@ -1126,32 +1126,42 @@ function setBlockType(bi, type){
   if (!b) return;
   if (type === 'strength') {
     b.type = 'strength';
-    b.scoring = 'weight';
+    b.scoring = b.scoring === 'completion' ? 'completion' : 'weight';
     b.category = 'Strength/Power';
     delete b.recoverySession;
     delete b.baselineDurationMin;
+    delete b.condFmt;
+    delete b.modality;
+    delete b.targetDurationMin;
     if (!(b.exercises || []).length) {
       b.exercises = [L.makeExercise({ name:'Back Squat', exerciseId:'core-back-squat', sets:3, reps:'8', load:'', metric:'Weight' })];
     }
   } else if (type === 'conditioning') {
+    b.superset = false;
     delete b.exercises;
     delete b.recoverySession;
     delete b.baselineDurationMin;
     L.applyCondBuilderToBlock(b, { condFmt:'steady', effort:'easy', modality:'Bike', targetDurationMin:20, heading:b.heading || 'Steady-state' });
     b.category = 'Conditioning';
   } else if (type === 'recovery') {
+    b.superset = false;
     delete b.exercises;
     b.recoverySession = true;
     b.baselineDurationMin = num(b.baselineDurationMin) || num(b.targetDurationMin) || 30;
     L.applyCondBuilderToBlock(b, { condFmt:'steady', effort:'easy', modality:'Mixed', targetDurationMin:b.baselineDurationMin, heading:b.heading || 'Recovery movement' });
     b.category = 'Recovery';
+    b.type = 'conditioning';
   } else {
     b.type = 'text';
     b.category = 'Prep';
     b.scoring = 'completion';
+    b.superset = false;
     delete b.exercises;
     delete b.recoverySession;
     delete b.baselineDurationMin;
+    delete b.condFmt;
+    delete b.modality;
+    delete b.targetDurationMin;
   }
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
@@ -1332,8 +1342,9 @@ function condEngineHtml(b, bi){
 }
 
 function blockExerciseHtml(b, bi){
-  if (b.type === 'conditioning') return condEngineHtml(b, bi);
-  if (b.type === 'text') {
+  const kind = blockTypeValue(b);
+  if (kind === 'conditioning' || kind === 'recovery') return condEngineHtml(b, bi);
+  if (kind === 'text') {
     return `<div class="field"><label>Block notes</label>
       <textarea oninput="tpl(ui.templateId).blocks[${bi}].notes=this.value;persist()">${esc(b.notes||'')}</textarea></div>`;
   }
@@ -1352,19 +1363,23 @@ function sessionHtml(){
   if (!t) return libraryHtml();
   ui.lib = 'sessions';
   const blocks = tplBlocks().map((b, i) => {
-    const scoring = `<select onchange="tpl(ui.templateId).blocks[${i}].scoring=this.value;persist()"><option value="completion" ${b.scoring==='completion'?'selected':''}>For Completion</option><option value="weight" ${b.scoring==='weight'?'selected':''}>For Weight</option></select>`;
-    return `<section class="block-card block-${blockTypeValue(b)}">
+    const kind = blockTypeValue(b);
+    const scoring = `<select title="How the athlete logs this strength block" onchange="tpl(ui.templateId).blocks[${i}].scoring=this.value;persist()"><option value="weight" ${b.scoring==='weight'?'selected':''}>Track load</option><option value="completion" ${b.scoring==='completion'?'selected':''}>Completion only</option></select>`;
+    const superset = kind === 'strength'
+      ? `<label class="row" style="gap:6px;margin:0;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500">
+          <input type="checkbox" style="width:auto" ${b.superset?'checked':''} onchange="toggleSuperset(${i},this.checked)"> Superset</label>`
+      : '';
+    return `<section class="block-card block-${kind}">
       <div class="block-head">
         <span class="letter-badge">${esc(b.letter||'?')}</span>
         ${blockTypeSelectHtml(i, b)}
-        ${blockTypeValue(b)==='strength'?scoring:''}
-        <label class="row" style="gap:6px;margin:0;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500">
-          <input type="checkbox" style="width:auto" ${b.superset?'checked':''} onchange="toggleSuperset(${i},this.checked)"> Superset</label>
+        ${kind==='strength'?scoring:''}
+        ${superset}
         <button type="button" class="kebab-btn danger" title="Delete block" aria-label="Delete block" onclick="removeBlk(${i})">Delete</button>
       </div>
       <div class="block-body">
         <div class="field"><label>Block title</label><input value="${esc(b.heading||'')}" oninput="tpl(ui.templateId).blocks[${i}].heading=this.value;persist()"></div>
-        ${blockTypeValue(b)==='strength'?`<div class="field"><label>Block notes</label><textarea oninput="tpl(ui.templateId).blocks[${i}].notes=this.value;persist()">${esc(b.notes||'')}</textarea></div>`:''}
+        ${kind==='strength'?`<div class="field"><label>Block notes</label><textarea oninput="tpl(ui.templateId).blocks[${i}].notes=this.value;persist()">${esc(b.notes||'')}</textarea></div>`:''}
         ${blockExerciseHtml(b, i)}
       </div>
     </section>`;
