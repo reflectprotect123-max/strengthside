@@ -1,10 +1,17 @@
-# Build THE Hybrid Coach Windows installer (.exe).
-# Additive only — does not deploy Netlify or change coach HTML.
-# Manual dispatch; artifact upload for download. OTA for coach UI stays on Netlify.
+# Build THE Hybrid Coach Windows installer (.exe) and publish for shell OTA.
+# Coach UI still updates via Netlify on load; this ships shell (.exe) updates.
 name: Build coach desktop
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/desktop/**'
+      - '.github/workflows/desktop-coach-build.yml'
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
@@ -27,13 +34,17 @@ jobs:
       - name: Coach desktop smoke (config + live URL)
         run: pnpm run check:coach-desktop
 
-      - name: Build Windows NSIS installer
+      - name: Build and publish Windows NSIS installer
         working-directory: apps/desktop
-        run: pnpm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm run dist:publish
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: THE-Hybrid-Coach-Windows
-          path: apps/desktop/dist/*.exe
+          path: |
+            apps/desktop/dist/*.exe
+            apps/desktop/dist/latest.yml
           if-no-files-found: error

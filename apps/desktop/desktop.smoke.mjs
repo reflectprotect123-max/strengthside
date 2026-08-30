@@ -10,20 +10,30 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(path.join(here, 'package.json'), 'utf8'));
 const mainPath = path.join(here, pkg.main);
+const updaterPath = path.join(here, 'src/updater.cjs');
 
 function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
 must(fs.existsSync(mainPath), 'main process missing: ' + pkg.main);
+must(fs.existsSync(updaterPath), 'updater process missing: src/updater.cjs');
 must(pkg.build?.appId === 'com.hybrid.coach', 'appId must be com.hybrid.coach');
 must(String(pkg.main).endsWith('.cjs'), 'electron main must be CommonJS .cjs');
+must(pkg.dependencies?.['electron-updater'], 'electron-updater dependency required for shell OTA');
+must(pkg.build?.publish?.provider === 'github', 'publish.provider must be github for shell OTA');
+must(pkg.build?.publish?.repo === 'strengthside', 'publish.repo must be strengthside');
 
 const mainSrc = fs.readFileSync(mainPath, 'utf8');
+const updaterSrc = fs.readFileSync(updaterPath, 'utf8');
 must(mainSrc.includes('thehybridsystem.netlify.app/coach.html'), 'default coach URL missing');
 must(mainSrc.includes('contextIsolation: true'), 'contextIsolation must stay enabled');
 must(mainSrc.includes('nodeIntegration: false'), 'nodeIntegration must stay disabled');
+must(mainSrc.includes('./updater.cjs'), 'main must wire shell OTA updater');
+must(mainSrc.includes('Check for app updates'), 'menu must expose shell update check');
 must(!mainSrc.includes('preview-site'), 'desktop must not bundle local preview-site');
+must(updaterSrc.includes('autoUpdater'), 'updater must use electron-updater');
+must(updaterSrc.includes('app.isPackaged'), 'updater must skip in dev unpackaged runs');
 
 const coachUrl = 'https://thehybridsystem.netlify.app/coach.html';
 const res = await fetch(coachUrl, { method: 'GET', redirect: 'follow' });
@@ -32,4 +42,9 @@ const html = await res.text();
 must(html.includes('coach-loop.js'), 'coach.html must load coach-loop.js');
 must(html.includes('coach-views.js'), 'coach.html must load coach-views.js');
 
-console.log('coach-desktop.smoke: ok', { coachUrl, appId: pkg.build.appId });
+console.log('coach-desktop.smoke: ok', {
+  coachUrl,
+  appId: pkg.build.appId,
+  version: pkg.version,
+  shellOta: pkg.build.publish.provider,
+});

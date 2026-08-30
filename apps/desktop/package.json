@@ -1,14 +1,18 @@
 {
   "name": "@hybrid/coach-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
-  "description": "THE Hybrid System coach — Windows desktop shell loading live Netlify coach (OTA via deploy)",
+  "description": "THE Hybrid System coach — Windows desktop shell with GitHub-release OTA",
   "main": "src/main.cjs",
   "scripts": {
     "start": "electron .",
-    "typecheck": "node --check src/main.cjs && node --check desktop.smoke.mjs",
+    "typecheck": "node --check src/main.cjs && node --check src/updater.cjs && node --check desktop.smoke.mjs",
     "dist": "electron-builder --win nsis --publish never",
+    "dist:publish": "electron-builder --win nsis --publish always",
     "check": "node desktop.smoke.mjs"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
     "electron": "^33.4.11",
@@ -22,8 +26,15 @@
     },
     "files": [
       "src/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/electron-updater/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "reflectprotect123-max",
+      "repo": "strengthside",
+      "releaseType": "release"
+    },
     "win": {
       "target": [
         {

@@ -3,13 +3,20 @@
  * Loads the live coach workspace from Netlify so UI updates ship via deploy
  * (same OTA model as browser) without rebuilding this installer.
  *
+ * Packaged builds also auto-update the shell via GitHub Releases (electron-updater).
+ *
  * Does not bundle coach HTML or touch athlete app code.
  */
 const { app, BrowserWindow, shell, Menu } = require('electron');
+const { initUpdater } = require('./updater.cjs');
 
 const DEFAULT_COACH_URL = 'https://thehybridsystem.netlify.app/coach.html';
-const COACH_ORIGIN = 'https://thehybridsystem.netlify.app';
 const COACH_URL = (process.env.HYBRID_COACH_URL || DEFAULT_COACH_URL).trim();
+
+/** @type {import('electron').BrowserWindow | null} */
+let mainWindow = null;
+/** @type {{ isEnabled: boolean; checkForUpdates: () => unknown } | null} */
+let updater = null;
 
 function coachOrigin(url) {
   try {
@@ -32,18 +39,27 @@ function shouldOpenExternally(url) {
   }
 }
 
-function buildMenu(mainWindow) {
+function getMainWindow() {
+  return mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+}
+
+function buildMenu() {
   const template = [
     {
       label: 'Coach',
       submenu: [
         {
-          label: 'Reload coach (get latest)',
+          label: 'Reload coach (get latest UI)',
           accelerator: 'CmdOrCtrl+R',
           click: () => {
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.reload();
-            }
+            const win = getMainWindow();
+            if (win) win.webContents.reload();
+          },
+        },
+        {
+          label: 'Check for app updates',
+          click: () => {
+            updater?.checkForUpdates();
           },
         },
         { type: 'separator' },
@@ -98,13 +114,15 @@ function createWindow() {
     }
   });
 
-  buildMenu(win);
   win.loadURL(COACH_URL);
+  mainWindow = win;
   return win;
 }
 
 app.whenReady().then(() => {
+  buildMenu();
   createWindow();
+  updater = initUpdater(getMainWindow);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
