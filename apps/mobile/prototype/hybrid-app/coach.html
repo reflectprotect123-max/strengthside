@@ -171,7 +171,13 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .instructions-box{position:relative}
 .instructions-box textarea{min-height:120px}
 .char-count{position:absolute;top:8px;right:10px;font-size:11px;color:var(--dim)}
-.block-card{margin-top:16px;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);overflow:hidden}
+.block-card{margin-top:16px;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);overflow:hidden;transition:border-color var(--ease),box-shadow var(--ease)}
+.block-card.dragging{opacity:.55;border-color:rgba(212,165,116,.45)}
+.block-card.drop-target{border-color:var(--copper);box-shadow:0 0 0 1px rgba(212,165,116,.25)}
+.block-drag-handle{display:grid;place-items:center;min-width:28px;min-height:32px;padding:0 4px;border:1px solid var(--line);border-radius:8px;background:var(--panel3);color:var(--muted);cursor:grab;font-size:14px;line-height:1;letter-spacing:-2px;flex-shrink:0;touch-action:none}
+.block-drag-handle:active{cursor:grabbing}
+.block-drag-spacer{width:28px;flex-shrink:0}
+.block-list{display:grid;gap:0}
 .block-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .letter-badge{display:grid;place-items:center;width:32px;height:32px;border-radius:999px;border:1px solid var(--line);font-weight:700;font-size:13px;color:var(--copper2);flex-shrink:0}
 .block-head select{max-width:180px;min-height:36px;padding:6px 8px;font-size:12px}
@@ -1254,6 +1260,52 @@ function toggleSuperset(bi, on){
   persist(); render();
 }
 
+function moveBlock(from, to){
+  closeCoachExEdit();
+  const t = tpl(ui.templateId);
+  if (!t) return;
+  t.blocks = L.decorateBlocks(L.reorderBlocks(t.blocks, from, to));
+  persist();
+  render();
+}
+
+function initBlockDrag(){
+  const list = document.getElementById('coachBlockList');
+  if (!list) return;
+  let dragFrom = null;
+  list.querySelectorAll('.block-drag-handle').forEach((handle) => {
+    handle.addEventListener('dragstart', (ev) => {
+      dragFrom = Number(handle.dataset.blockIndex);
+      ev.dataTransfer.effectAllowed = 'move';
+      ev.dataTransfer.setData('text/plain', String(dragFrom));
+      handle.closest('.block-card')?.classList.add('dragging');
+    });
+    handle.addEventListener('dragend', () => {
+      dragFrom = null;
+      list.querySelectorAll('.block-card').forEach((el) => {
+        el.classList.remove('dragging', 'drop-target');
+      });
+    });
+  });
+  list.querySelectorAll('.block-card').forEach((card) => {
+    card.addEventListener('dragover', (ev) => {
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = 'move';
+      card.classList.add('drop-target');
+    });
+    card.addEventListener('dragleave', (ev) => {
+      if (!card.contains(ev.relatedTarget)) card.classList.remove('drop-target');
+    });
+    card.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      card.classList.remove('drop-target');
+      const from = dragFrom != null ? dragFrom : Number(ev.dataTransfer.getData('text/plain'));
+      const to = Number(card.dataset.blockIndex);
+      if (Number.isFinite(from) && Number.isFinite(to)) moveBlock(from, to);
+    });
+  });
+}
+
 function openExPicker(bi, ei){
   closeCoachExEdit();
   ui.exPicker = { bi, ei };
@@ -1428,8 +1480,11 @@ function sessionHtml(){
       ? `<label class="row" style="gap:6px;margin:0;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500">
           <input type="checkbox" style="width:auto" ${b.superset?'checked':''} onchange="toggleSuperset(${i},this.checked)"> Superset</label>`
       : (isPartner ? `<span class="pill" style="font-size:10px">Superset pair</span>` : '');
-    return `<section class="block-card block-${kind}">
+    return `<section class="block-card block-${kind}" data-block-index="${i}">
       <div class="block-head">
+        ${isPartner
+          ? '<span class="block-drag-spacer" aria-hidden="true"></span>'
+          : `<button type="button" class="block-drag-handle" draggable="true" data-block-index="${i}" aria-label="Drag to reorder block" title="Drag to reorder">⋮⋮</button>`}
         <span class="letter-badge">${esc(b.letter||'?')}</span>
         ${blockTypeSelectHtml(i, b)}
         ${kind==='strength'?scoring:''}
@@ -1454,7 +1509,7 @@ function sessionHtml(){
       <span class="char-count">${instrLen}/10000</span>
       <textarea maxlength="10000" placeholder="Use this area to help the athlete understand goals for today's session." oninput="tpl(ui.templateId).coachInstructions=this.value;persist();var c=this.closest('.instructions-box')&&this.closest('.instructions-box').querySelector('.char-count');if(c)c.textContent=this.value.length+'/10000'">${esc(t.coachInstructions||'')}</textarea>
     </div>
-    ${blocks}
+    <div class="block-list" id="coachBlockList">${blocks}</div>
     <div class="add-block-bar stack">
       <p class="muted" style="margin:0">Add a block type</p>
       <div class="row" style="justify-content:flex-start;gap:8px;flex-wrap:wrap">
@@ -1571,7 +1626,10 @@ function render(){
   else if (ui.view==='nutrition') body = nutritionHtml();
   else body = feedHtml();
   $('coachApp').innerHTML = coachChrome(body);
-  if (ui.view === 'session') growTextAreas();
+  if (ui.view === 'session') {
+    growTextAreas();
+    initBlockDrag();
+  }
   scheduleRefreshCloudStates();
 }
 
@@ -1588,7 +1646,7 @@ window.go=go; window.signOut=signOut; window.resetDemo=resetDemo; window.tryLogi
 window.saveComment=saveComment; window.toggleCard=toggleCard;
 window.openSession=openSession; window.openProgram=openProgram;
 window.newTemplate=newTemplate; window.newProgram=newProgram; window.parseSets=parseSets; window.addEx=addEx; window.addBlk=addBlk;
-window.removeBlk=removeBlk; window.removeEx=removeEx; window.toggleSuperset=toggleSuperset; window.growTextAreas=growTextAreas;
+window.removeBlk=removeBlk; window.removeEx=removeEx; window.toggleSuperset=toggleSuperset; window.moveBlock=moveBlock; window.growTextAreas=growTextAreas;
 window.openExPicker=openExPicker; window.closeExPicker=closeExPicker; window.pickExercise=pickExercise;
 window.setRowRep=setRowRep; window.setRowLoad=setRowLoad;
 window.patchCond=patchCond; window.setCondFmt=setCondFmt; window.nudgeCondMin=nudgeCondMin;
