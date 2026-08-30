@@ -19,7 +19,7 @@
 | **Open PR** | **#97** `cursor/coach-athlete-portal-plan-84a0` — coach → athlete portal (phases 1–5, `performed_set` skipped) |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v96`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.16`** after merge + upload (was **`1.0.15`** portal OTA) |
+| **Capgo** | **`dogfood` @ `1.0.16`** (strength-builder hide + portal; uploaded 30 Aug) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html — **real:** Supabase sign-in → roster link athlete UUID → Publish; **demo:** `dan@thehybrid.local` / `demo` (offline only) |
 | **APK** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
