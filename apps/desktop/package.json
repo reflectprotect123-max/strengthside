@@ -1,0 +1,43 @@
+{
+  "name": "@hybrid/coach-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "THE Hybrid System coach — Windows desktop shell loading live Netlify coach (OTA via deploy)",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "typecheck": "node --check src/main.cjs && node --check desktop.smoke.mjs",
+    "dist": "electron-builder --win nsis --publish never",
+    "check": "node desktop.smoke.mjs"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.hybrid.coach",
+    "productName": "THE Hybrid Coach",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "THE-Hybrid-Coach-Setup-${version}.${ext}"
+    }
+  }
+}

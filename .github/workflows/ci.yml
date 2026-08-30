@@ -64,6 +64,7 @@ jobs:
       - run: pnpm run check:coach-block-types
       - run: pnpm run check:coach-audit-fixes
       - run: pnpm run check:big-mac-bridge
+      - run: pnpm run check:coach-desktop
       - name: Migrations apply (no environment gaps permitted here)
         run: |
           node checks/migrations-apply.mjs | tee /tmp/migrations.log

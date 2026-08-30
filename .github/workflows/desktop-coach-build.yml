@@ -1,0 +1,39 @@
+# Build THE Hybrid Coach Windows installer (.exe).
+# Additive only — does not deploy Netlify or change coach HTML.
+# Manual dispatch; artifact upload for download. OTA for coach UI stays on Netlify.
+name: Build coach desktop
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Coach desktop smoke (config + live URL)
+        run: pnpm run check:coach-desktop
+
+      - name: Build Windows NSIS installer
+        working-directory: apps/desktop
+        run: pnpm run dist
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: THE-Hybrid-Coach-Windows
+          path: apps/desktop/dist/*.exe
+          if-no-files-found: error
