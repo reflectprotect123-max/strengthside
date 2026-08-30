@@ -21,8 +21,11 @@ must(fs.existsSync(updaterPath), 'updater process missing: src/updater.cjs');
 must(pkg.build?.appId === 'com.hybrid.coach', 'appId must be com.hybrid.coach');
 must(String(pkg.main).endsWith('.cjs'), 'electron main must be CommonJS .cjs');
 must(pkg.dependencies?.['electron-updater'], 'electron-updater dependency required for shell OTA');
-must(pkg.build?.publish?.provider === 'github', 'publish.provider must be github for shell OTA');
-must(pkg.build?.publish?.repo === 'strengthside', 'publish.repo must be strengthside');
+must(pkg.build?.publish?.provider === 'generic', 'publish.provider must be generic for coach-desktop-latest OTA');
+must(
+  String(pkg.build?.publish?.url || '').includes('coach-desktop-latest'),
+  'publish.url must point at coach-desktop-latest release feed',
+);
 
 const mainSrc = fs.readFileSync(mainPath, 'utf8');
 const updaterSrc = fs.readFileSync(updaterPath, 'utf8');
@@ -33,6 +36,7 @@ must(mainSrc.includes('./updater.cjs'), 'main must wire shell OTA updater');
 must(mainSrc.includes('Check for app updates'), 'menu must expose shell update check');
 must(!mainSrc.includes('preview-site'), 'desktop must not bundle local preview-site');
 must(updaterSrc.includes('autoUpdater'), 'updater must use electron-updater');
+must(updaterSrc.includes('coach-desktop-latest'), 'updater feed must use coach-desktop-latest release');
 must(updaterSrc.includes('app.isPackaged'), 'updater must skip in dev unpackaged runs');
 
 const coachUrl = 'https://thehybridsystem.netlify.app/coach.html';

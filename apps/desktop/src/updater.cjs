@@ -5,6 +5,10 @@
 const { app, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 
+/** Stable release tag — same pattern as dogfood-latest for the athlete APK. */
+const RELEASE_FEED =
+  'https://github.com/reflectprotect123-max/strengthside/releases/download/coach-desktop-latest';
+
 function initUpdater(getMainWindow) {
   if (!app.isPackaged) {
     return {
@@ -20,6 +24,10 @@ function initUpdater(getMainWindow) {
     };
   }
 
+  autoUpdater.setFeedURL({
+    provider: 'generic',
+    url: RELEASE_FEED,
+  });
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 

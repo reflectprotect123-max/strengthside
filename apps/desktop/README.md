@@ -24,8 +24,8 @@ Manual check: **Coach → Check for app updates**.
 **First OTA-capable installer:** `1.0.1`. If you installed `1.0.0`, download and install
 `1.0.1` once — after that, shell updates are automatic.
 
-**Permanent download:** [GitHub Releases — THE Hybrid Coach](https://github.com/reflectprotect123-max/strengthside/releases?q=coach+OR+Hybrid+Coach&expanded=true)
-(latest `THE-Hybrid-Coach-Setup-x.y.z.exe` from the build workflow).
+**Permanent download:** [Coach Desktop (latest)](https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest)
+(same rolling-release pattern as [Dogfood APK (latest)](https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest)).
 
 Bump `apps/desktop/package.json` `version` before each shell release so the updater
 detects a new build.

@@ -8,7 +8,6 @@
     "start": "electron .",
     "typecheck": "node --check src/main.cjs && node --check src/updater.cjs && node --check desktop.smoke.mjs",
     "dist": "electron-builder --win nsis --publish never",
-    "dist:publish": "electron-builder --win nsis --publish always",
     "check": "node desktop.smoke.mjs"
   },
   "dependencies": {
@@ -30,10 +29,8 @@
       "node_modules/electron-updater/**/*"
     ],
     "publish": {
-      "provider": "github",
-      "owner": "reflectprotect123-max",
-      "repo": "strengthside",
-      "releaseType": "release"
+      "provider": "generic",
+      "url": "https://github.com/reflectprotect123-max/strengthside/releases/download/coach-desktop-latest"
     },
     "win": {
       "target": [
