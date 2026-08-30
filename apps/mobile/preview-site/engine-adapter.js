@@ -112,10 +112,60 @@
     };
   }
 
+  function recoveryGateForAutopilot(state) {
+    if (!global.RecoverySignals) return 'ok';
+    try {
+      var recovery = global.RecoverySignals.recoverySignal(state, {
+        date: new Date().toISOString().slice(0, 10),
+      });
+      return recovery && recovery.gate ? recovery.gate : 'ok';
+    } catch (_e) {
+      return 'ok';
+    }
+  }
+
+  function coachCondField(v) {
+    if (v == null || v === '') return null;
+    return v;
+  }
+
+  function isCondDeferred(task) {
+    if (!task || task.kind !== 'conditioning') return false;
+    if (task.autopilotCond === false) return false;
+    return task.autopilotCond === true || task.autopilotCond == null;
+  }
+
+  function lastCondSessionVolume(state, fmtKey) {
+    var sessions = (state && state.sessions) || [];
+    for (var i = sessions.length - 1; i >= 0; i--) {
+      var sess = sessions[i];
+      if (!sess || sess.status !== 'completed') continue;
+      var tasks = sess.tasks || [];
+      for (var j = tasks.length - 1; j >= 0; j--) {
+        var t = tasks[j];
+        if (!t || t.kind !== 'conditioning' || t.condFmt !== fmtKey) continue;
+        return {
+          rounds: t.rounds,
+          workSec: t.workSec,
+          restSec: t.restSec,
+          minutes: t.targetDurationMin || t.timeCapMin,
+        };
+      }
+    }
+    return null;
+  }
+
+  function decideCondPrescription(input) {
+    if (!hasEngine() || !global.HybridEngine.DecideInitialCondPrescription) {
+      throw new Error('HybridEngine.DecideInitialCondPrescription not loaded');
+    }
+    return global.HybridEngine.DecideInitialCondPrescription.decideInitialCondPrescription(input);
+  }
+
   /**
    * Fill session/block fields on Start from builder + engine prescription.
-   * Builder UI values win for authored minutes/rounds/work/rest; engine
-   * conPrescription applies red-day ease (dailyAdj) and stamps level/note.
+   * When autopilotCond is true, coach volume fields are ignored (engine owns).
+   * Partial pins still win when autopilotCond is false or fields are provided.
    */
   function sessionPatchFromBuilder(input) {
     var opts = input || {};
@@ -126,10 +176,26 @@
     var fmt = formatMeta(fmtKey);
     var whoop = opts.whoop || null;
     var settings = opts.settings || {};
-    var rx = global.HybridEngine.Conditioning.conPrescription(fmtKey, {
+    var defer =
+      opts.autopilotCond === true ||
+      (opts.autopilotCond !== false &&
+        coachCondField(opts.rounds) == null &&
+        coachCondField(opts.workSec) == null &&
+        coachCondField(opts.restSec) == null &&
+        coachCondField(opts.minutes) == null);
+
+    var decision = decideCondPrescription({
+      formatKey: fmtKey,
+      effortKey: effort.key,
+      coachRounds: defer ? null : coachCondField(opts.rounds),
+      coachWorkSec: defer ? null : coachCondField(opts.workSec),
+      coachRestSec: defer ? null : coachCondField(opts.restSec),
+      coachMinutes: defer ? null : coachCondField(opts.minutes),
       whoop: whoop,
-      modality: opts.modality,
       settings: settings,
+      modality: opts.modality,
+      recoveryGate: opts.recoveryGate || 'ok',
+      lastSession: opts.lastSession || null,
     });
 
     var zones = opts.zones || [];
@@ -140,71 +206,78 @@
       zones[0] ||
       null;
 
-    // Prefer engine level-adjusted params; explicit builder numbers still win when provided.
-    var mins;
-    if (opts.minutes != null && opts.minutes !== '') {
-      mins = Math.max(0, Number(opts.minutes) || 0);
-    } else if (rx.minutes != null) {
-      mins = Math.max(0, Number(rx.minutes) || 0);
-    } else {
-      mins = Math.max(0, Number(fmt.minutes) || 30);
-    }
-    var rounds;
-    if (opts.rounds != null && opts.rounds !== '') {
-      rounds = Math.max(1, Number(opts.rounds) || 1);
-    } else if (rx.rounds != null) {
-      rounds = Math.max(1, Number(rx.rounds) || 1);
-    } else {
-      rounds = Math.max(1, Number(fmt.rounds) || 1);
-    }
-    var workSec;
-    if (opts.workSec != null && opts.workSec !== '') {
-      workSec = Math.max(0, Number(opts.workSec) || 0);
-    } else if (rx.work != null) {
-      workSec = Math.max(0, Number(rx.work) || 0);
-    } else {
-      workSec = Math.max(0, Number(fmt.workSec) || 0);
-    }
-    var restSec;
-    if (opts.restSec != null && opts.restSec !== '') {
-      restSec = Math.max(0, Number(opts.restSec) || 0);
-    } else if (rx.rest != null) {
-      restSec = Math.max(0, Number(rx.rest) || 0);
-    } else {
-      restSec = Math.max(0, Number(fmt.restSec) || 0);
-    }
-
-    // Red-day ease mirrors engine levers, applied on top of builder numbers.
-    if (rx.dailyAdj < 0) {
-      if (fmtKey === 'steady') {
-        mins = Math.max(10, mins - 5);
-      } else if (fmtKey !== 'free') {
-        if (rounds > 3) rounds = rounds - 1;
-        else restSec = restSec + 10;
-      }
-    }
-
     return {
       heading: fmt.name,
       conditioningType: fmt.type,
       modality: opts.modality || 'Run',
-      targetDurationMin: mins,
-      timeCapMin: mins,
+      targetDurationMin: decision.targetDurationMin,
+      timeCapMin: decision.targetDurationMin,
       targetHrZone: z ? z.lo + '–' + z.hi : '',
       effort: effort.key,
       condFmt: fmt.key,
-      rounds: rounds,
-      workSec: workSec,
-      restSec: restSec,
+      rounds: decision.rounds,
+      workSec: decision.workSec,
+      restSec: decision.restSec,
       targetWatts:
         opts.targetWatts != null && opts.targetWatts !== ''
           ? Math.max(0, Number(opts.targetWatts) || 0) || ''
           : '',
       notes: '',
-      condRxLevel: rx.level || 0,
-      condRxDailyAdj: rx.dailyAdj || 0,
-      condRxNote: rx.note || '',
+      autopilotCond: decision.autopilotCond,
+      autopilotCondReasons: decision.reasonCodes,
+      condRxLevel: decision.condRxLevel || 0,
+      condRxDailyAdj: decision.condRxDailyAdj || 0,
+      condRxNote: decision.condRxNote || '',
     };
+  }
+
+  /**
+   * Session-start conditioning autopilot — fills rounds/work/rest/minutes from engine.
+   */
+  function applyAutopilotCondToTask(state, task, sessionCtx) {
+    if (!isCondDeferred(task)) return task;
+    sessionCtx = sessionCtx || {};
+    var fmtKey = task.condFmt || task.fmt || 'steady';
+    var whoop = sessionCtx.whoop || null;
+    var settings = (state && state.settings) || {};
+    var decision = decideCondPrescription({
+      formatKey: fmtKey,
+      effortKey: task.effort || 'medium',
+      coachRounds: null,
+      coachWorkSec: null,
+      coachRestSec: null,
+      coachMinutes: null,
+      whoop: whoop,
+      settings: settings,
+      modality: task.modality,
+      recoveryGate: sessionCtx.recoveryGate || recoveryGateForAutopilot(state),
+      lastSession: lastCondSessionVolume(state, fmtKey),
+    });
+    task.rounds = decision.rounds;
+    task.workSec = decision.workSec;
+    task.restSec = decision.restSec;
+    task.targetDurationMin = decision.targetDurationMin;
+    task.timeCapMin = decision.targetDurationMin;
+    task.autopilotCond = decision.autopilotCond;
+    task.autopilotCondReasons = decision.reasonCodes;
+    task.condRxLevel = decision.condRxLevel;
+    task.condRxDailyAdj = decision.condRxDailyAdj;
+    task.condRxNote = decision.condRxNote;
+    if (task.interval) task.interval = null;
+    return task;
+  }
+
+  function applyAutopilotCondToTasks(state, tasks, sessionCtx) {
+    sessionCtx = sessionCtx || {};
+    if (!sessionCtx.whoop && typeof global.athWhoopSampleForEngine === 'function') {
+      try {
+        sessionCtx.whoop = global.athWhoopSampleForEngine();
+      } catch (_e) {}
+    }
+    (tasks || []).forEach(function (t) {
+      if (t && t.kind === 'conditioning') applyAutopilotCondToTask(state, t, sessionCtx);
+    });
+    return tasks;
   }
 
   /**
@@ -761,6 +834,10 @@
     suggestNextPhase: suggestNextPhase,
     applyNextPhaseDecision: applyNextPhaseDecision,
     effortRpeBand: effortRpeBand,
+    isCondDeferred: isCondDeferred,
+    applyAutopilotCondToTask: applyAutopilotCondToTask,
+    applyAutopilotCondToTasks: applyAutopilotCondToTasks,
+    recoveryGateForAutopilot: recoveryGateForAutopilot,
   };
 
   global.EngineAdapter = api;
