@@ -15,8 +15,8 @@
 | --- | --- |
 | **Owner** | Five-engine **research** merged to `main`. ChatGPT dropped for research. App AI wiring **paused**. |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`4592ff3`** (#94 handoff sync — pre #99 merge) |
-| **Open PR** | **#99** ecosystem polish + calendar UX — merge after CI |
+| **`main` tip** | **`e9746cc`** (#99 ecosystem polish + calendar UX — 30 Aug) |
+| **Open PR** | **None** — #99 merged 30 Aug |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v99`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.16`** on channel — **upload `1.0.17`** after merge to ship **v99** bundle |
