@@ -15,11 +15,11 @@
 | --- | --- |
 | **Owner** | Five-engine **research** merged to `main`. ChatGPT dropped for research. App AI wiring **paused**. |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`e23310a`** (#96 Settings scroll on APK WebView — 30 Aug) |
-| **Open PR** | **#97** `cursor/coach-athlete-portal-plan-84a0` — coach → athlete portal (phases 1–5, `performed_set` skipped) |
+| **`main` tip** | **`9f2ca43`** (#98 calendar + block types + demo roster — 30 Aug) |
+| **Open PR** | **None** — #97 portal + #98 calendar merged 30 Aug |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
-| **Cache** | **`the-hybrid-athlete-engine-v96`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.16`** (strength-builder hide + portal; uploaded 30 Aug) |
+| **Cache** | **`the-hybrid-athlete-engine-v97`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.16`** on channel — **upload `1.0.17`** after merge to ship v97 bundle |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html — **real:** Supabase sign-in → roster link athlete UUID → Publish; **demo:** `dan@thehybrid.local` / `demo` (offline only) |
 | **APK** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
@@ -44,8 +44,8 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | `292f04bd-a0a6-490c-8b7d-03c234eb4915` |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.15`** |
-| Upload | `CAPGO_BUNDLE_VERSION=1.0.15 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Channel / bundle | `dogfood` / **`1.0.16`** (upload **`1.0.17`** for v97 cache) |
+| Upload | `CAPGO_BUNDLE_VERSION=1.0.17 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 Also store `CAPGO_TOKEN` in **Cursor Cloud environment secrets**.
 
@@ -97,11 +97,12 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 
 - **One athlete app:** Hybrid HTML — **Home · Library · Calendar · Settings**
 - **Five engines wired:** Strength · Conditioning · Nutrition · Recovery (debt row) · Coordinator (silent only)
-- **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.15`** on dogfood (portal OTA from #97 branch)
-- **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` + **`coach-portal-athlete`** in CI
-- Key merges: **#96** Settings scroll (#92 recovery · **#93** vault · **#91** coach polish)
+- **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.16`** on dogfood (upload **`1.0.17`** for v97)
+- **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` + **`coach-portal-athlete`** + **`coach-block-types`** in CI
+- Key merges: **#98** calendar + block types · **#97** coach → athlete portal · **#96** Settings scroll · **#93** vault · **#92** recovery · **#91** coach polish
 - **Evidence platform:** merged at **`1a249a4`** (2,814 acquired sources, 0 promoted)
-- **Coach → athlete portal (PR #97, pending merge):** From-coach badges · Settings pull/auto-sync · delivery strip · completion write-back · nutrition in cloud snapshot · **`coach-portal-athlete.smoke.mjs`**
+- **Coach → athlete portal (#97):** From-coach badges · Settings pull/auto-sync · delivery strip · completion write-back · nutrition in cloud snapshot · strength builder hidden when coach rx exists · **`coach-portal-athlete.smoke.mjs`**
+- **Coach calendar + blocks (#98):** strength / conditioning / recovery end-to-end · calendar UX polish · demo seed = **Dan Veldman only** (Alex/Jordan removed)
 
 ---
 
@@ -109,7 +110,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 
 ### A — Product on `main` (ship the app)
 
-- [ ] Phone dogfood proof — Capgo **1.0.15** → coach publish → athlete pull → complete → coach **Completed** chip
+- [ ] Phone dogfood proof — Capgo **1.0.17** (v97) → coach publish → athlete pull → complete → coach **Completed** chip
 - [ ] Phone dogfood proof — strapless cond → recovery session → debt row moves
 - [ ] Hybrid week in Library + Calendar + web↔phone sync proof
 - [ ] Logger friction pass
@@ -166,8 +167,7 @@ pnpm run verify
 
 | Branch | Tip | Purpose |
 | --- | --- | --- |
-| `main` | `e23310a` | Athlete product + evidence-platform + #96 scroll fix |
-| `cursor/coach-athlete-portal-plan-84a0` | `4395685` | **PR #97** — coach → athlete portal (phases 1–5) |
+| `main` | `9f2ca43` | Athlete product + evidence-platform + coach portal + calendar/blocks |
 | `claude/big-mac-q7xyqo` | merged | Five-engine evidence platform — history only |
 
 ```
