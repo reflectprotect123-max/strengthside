@@ -81,7 +81,20 @@ if (!loggerHtml.includes('oninput=')) throw new Error('logger inputs should use 
 if (!html.includes('function parseEffortValue')) throw new Error('parseEffortValue missing');
 if (!html.includes('function setSupersetField')) throw new Error('setSupersetField missing');
 if (!html.includes('if(n===0)return 0')) throw new Error('restSeconds(0) fix missing');
-if (!html.includes('onclick="restMenu()"')) throw new Error('rest menu button missing');
+if (!twin.includes('Rest presets')) throw new Error('rest presets missing');
+if (!twin.includes('Set targets')) throw new Error('rep presets missing');
+if (!twin.includes('removeColumn')) throw new Error('remove column hook missing');
+
+LC.applyRestPreset(120);
+if (LC.getRestSec() !== 120) throw new Error('applyRestPreset');
+
+LC.beginSheet({ sets: 3, reps: '8', restSec: 90 });
+LC.applyRepPreset(5, 5);
+if (LC.getSetCount() !== 5) throw new Error('applyRepPreset sets');
+const repsAfter = LC.getSheetColumns().find((c) => c.kind === 'reps')?.values?.[0];
+if (repsAfter !== '5') throw new Error('applyRepPreset reps ' + repsAfter);
+
+if (!html.includes('onclick="copyExercise')) throw new Error('athlete copy exercise always visible');
 
 const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!coachHtml.includes('coachExPersistTimer')) throw new Error('coach persist debounce missing');

@@ -203,6 +203,17 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .guardrail{font-size:12px;color:var(--muted);padding:8px 10px;border-radius:8px;background:rgba(212,165,116,.08);border:1px solid rgba(212,165,116,.15)}
 .divider{height:1px;background:var(--line);margin:10px 0}
 .rx-summary{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.rx-collapse{width:100%;text-align:left;background:transparent;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;cursor:pointer;color:inherit}
+.rx-collapse:hover{border-color:rgba(212,165,116,.35)}
+.validation-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.validation-chip{font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.validation-chip.warn{border-color:var(--warn);color:var(--warn)}
+.validation-chip.ok{border-color:var(--ok);color:var(--ok)}
+.rest-presets,.rep-presets{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.col-head{display:flex;align-items:center;gap:4px}
+.col-rm{min-height:28px;padding:0 8px;line-height:1}
+.exercise-toolbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.starter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .add-block-bar{margin-top:20px}
 .kebab-btn{min-height:32px;min-width:32px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);transition:border-color var(--ease),color var(--ease)}
 .kebab-btn:hover{border-color:rgba(212,165,116,.35);color:var(--text)}
@@ -353,7 +364,7 @@ const N = window.CoachNutrition;
 let S = L.loadState();
 const ui = {
   view:'home', lib:'sessions', athleteId:null, teamId:null, programId:null, templateId:null, sessionId:null,
-  expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'', exEdit:null,
+  expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'', exEdit:null, blkUndo:null,
   cellMenu:null, cellPick:null, progSearch:'',
   calMonth:null, calDay:null, chipMenu:null, libPick:null,
   assignTeamId:null, assignStart:null, nutAthleteId:null,
@@ -484,6 +495,8 @@ function openSession(templateId){
   ui.lib = 'sessions';
   ui.exPicker = null;
   ui.view = 'session';
+  ui.exEdit = null;
+  autoOpenFirstStrengthEdit(templateId);
   render();
 }
 function openProgram(programId){
@@ -781,6 +794,7 @@ function libraryHtml(){
     }).join('');
     return `${tabs}
       <div class="toolbar-row"><p class="lede" style="margin:0;flex:1">Session templates — same block shape the athlete app logs.</p>
+      <button type="button" class="btn small" onclick="openSessionStarterSheet()">From template</button>
       <button type="button" class="btn primary small" onclick="newTemplate()">New session</button></div>
       <div class="stack">${rows || '<div class="empty-panel"><div class="eyebrow">Sessions</div><h2>No templates yet</h2><p class="muted">Create a session, then drop it into a program grid.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="newTemplate()">New session</button></div></div>'}</div>`;
   }
@@ -818,15 +832,146 @@ function addCustomExercise(){
   persist(); render();
 }
 
-function newTemplate(){
-  const t = L.makeTemplate({
-    name:'New session',
+function emptyStrengthExercise(){
+  return L.makeExercise({ name:'Choose exercise', exerciseId:'', sets:3, reps:'8', load:'', metric:'Weight', restSec:90 });
+}
+
+function cloneExerciseData(ex){
+  const er = { ...ex };
+  delete er.id;
+  if (Array.isArray(ex.logColumns)) er.logColumns = ex.logColumns.map((c) => ({ ...c, values: (c.values || []).slice() }));
+  return L.makeExercise(er);
+}
+
+function cloneBlockData(b){
+  const br = { ...b };
+  delete br.id;
+  delete br.letter;
+  delete br.supersetPartner;
+  if (Array.isArray(b.exercises)) br.exercises = b.exercises.map(cloneExerciseData);
+  return L.makeBlock(br);
+}
+
+function trackRecentExercise(exId){
+  if (!exId) return;
+  S.coachMeta = S.coachMeta || {};
+  const rec = (S.coachMeta.recentExercises || []).filter((id) => id !== exId);
+  rec.unshift(exId);
+  S.coachMeta.recentExercises = rec.slice(0, 12);
+}
+
+function autoOpenFirstStrengthEdit(templateId){
+  const t = tpl(templateId);
+  if (!t) return;
+  for (let bi = 0; bi < (t.blocks || []).length; bi++) {
+    const b = t.blocks[bi];
+    if (blockTypeValue(b) === 'strength' && (b.exercises || []).length) {
+      ui.exEdit = { bi, ei: 0 };
+      if (window.LogColumns) {
+        LogColumns.beginSheet(b.exercises[0]);
+        LogColumns.setChangeHandler(() => syncCoachExFromColumns(bi, 0));
+      }
+      return;
+    }
+  }
+}
+
+function autoOpenExercisePicker(bi, ei){
+  ui.exPicker = { bi, ei };
+}
+
+const SESSION_STARTERS = {
+  blank: () => L.makeTemplate({ name:'New session', coachInstructions:'', blocks:[] }),
+  strength: () => L.makeTemplate({
+    name:'Strength only',
     coachInstructions:'',
-    blocks:[L.makeBlock({ heading:'Strength', type:'strength', category:'Strength/Power', scoring:'weight', exercises:[L.makeExercise({ name:'Back Squat', exerciseId:'core-back-squat', sets:3, reps:'5', load:'', metric:'Weight' })] })],
-  });
+    blocks:[L.makeBlock({ heading:'Strength', type:'strength', category:'Strength/Power', scoring:'weight', exercises:[emptyStrengthExercise()] })],
+  }),
+  lower: () => L.makeTemplate({
+    name:'Lower + conditioning',
+    coachInstructions:'',
+    blocks:[
+      L.makeBlock({ heading:'Lower strength', type:'strength', category:'Strength/Power', scoring:'weight', exercises:[emptyStrengthExercise()] }),
+      L.makeBlock({ type:'conditioning', heading:'Steady-state', category:'Conditioning', scoring:'completion', condFmt:'steady', effort:'easy', modality:'Bike', targetDurationMin:20 }),
+    ],
+  }),
+  upper: () => L.makeTemplate({
+    name:'Upper + conditioning',
+    coachInstructions:'',
+    blocks:[
+      L.makeBlock({ heading:'Upper strength', type:'strength', category:'Strength/Power', scoring:'weight', exercises:[emptyStrengthExercise()] }),
+      L.makeBlock({ type:'conditioning', heading:'Steady-state', category:'Conditioning', scoring:'completion', condFmt:'steady', effort:'easy', modality:'Rower', targetDurationMin:15 }),
+    ],
+  }),
+  full: () => L.makeTemplate({
+    name:'Full session',
+    coachInstructions:'',
+    blocks:[
+      L.makeBlock({ type:'text', heading:'Prep', category:'Prep', scoring:'completion', notes:'' }),
+      L.makeBlock({ heading:'Main strength', type:'strength', category:'Strength/Power', scoring:'weight', exercises:[emptyStrengthExercise()] }),
+      L.makeBlock({ type:'conditioning', heading:'Finisher', category:'Conditioning', scoring:'completion', condFmt:'steady', effort:'medium', modality:'Mixed', targetDurationMin:12 }),
+    ],
+  }),
+};
+
+function newTemplateFromStarter(key){
+  closeSessionStarterSheet();
+  const fn = SESSION_STARTERS[key] || SESSION_STARTERS.blank;
+  const t = fn();
   S.templates.push(t);
   persist();
   openSession(t.id);
+  const blocks = tpl(t.id)?.blocks || [];
+  for (let bi = 0; bi < blocks.length; bi++) {
+    if (blockTypeValue(blocks[bi]) === 'strength' && (blocks[bi].exercises || []).length) {
+      const ex = blocks[bi].exercises[0];
+      if (!ex.exerciseId) autoOpenExercisePicker(bi, 0);
+      render();
+      break;
+    }
+  }
+}
+
+function openSessionStarterSheet(){
+  const body = `<div class="picker-overlay" onclick="if(event.target===this)closeSessionStarterSheet()">
+    <div class="picker-panel" role="dialog" aria-label="Session starter">
+      <div class="row"><b>Start from template</b><button type="button" class="btn ghost small" onclick="closeSessionStarterSheet()">Close</button></div>
+      <div class="picker-list" style="margin-top:12px">
+        <button type="button" class="picker-item" onclick="newTemplateFromStarter('blank')"><span>Blank session</span><span class="muted">Empty canvas</span></button>
+        <button type="button" class="picker-item" onclick="newTemplateFromStarter('strength')"><span>Strength only</span><span class="muted">One lift block</span></button>
+        <button type="button" class="picker-item" onclick="newTemplateFromStarter('lower')"><span>Lower + conditioning</span><span class="muted">Strength + bike</span></button>
+        <button type="button" class="picker-item" onclick="newTemplateFromStarter('upper')"><span>Upper + conditioning</span><span class="muted">Strength + rower</span></button>
+        <button type="button" class="picker-item" onclick="newTemplateFromStarter('full')"><span>Full session</span><span class="muted">Prep + strength + finisher</span></button>
+      </div>
+    </div></div>`;
+  const host = document.createElement('div');
+  host.id = 'sessionStarterSheet';
+  host.innerHTML = body;
+  document.body.appendChild(host);
+}
+
+function closeSessionStarterSheet(){
+  const el = document.getElementById('sessionStarterSheet');
+  if (el) el.remove();
+}
+window.closeSessionStarterSheet = closeSessionStarterSheet;
+window.newTemplateFromStarter = newTemplateFromStarter;
+
+function newTemplate(){
+  newTemplateFromStarter('strength');
+}
+
+function duplicateTemplate(){
+  const src = tpl(ui.templateId);
+  if (!src) return;
+  const fresh = L.makeTemplate({
+    name: (src.name || 'Session') + ' (copy)',
+    coachInstructions: src.coachInstructions || '',
+    blocks: (src.blocks || []).map((b) => cloneBlockData(b)),
+  });
+  S.templates.push(fresh);
+  persist();
+  openSession(fresh.id);
 }
 
 function newProgram(){
@@ -1092,7 +1237,11 @@ function syncCoachExFromColumns(bi, ei, opts){
 let coachExPersistTimer = null;
 
 function openCoachExEdit(bi, ei){
-  closeCoachExEdit();
+  if (ui.exEdit && ui.exEdit.bi === bi && ui.exEdit.ei === ei) return;
+  if (ui.exEdit && window.LogColumns) {
+    clearTimeout(coachExPersistTimer);
+    syncCoachExFromColumns(ui.exEdit.bi, ui.exEdit.ei, { flush: true });
+  }
   ui.exEdit = { bi, ei };
   const ex = tplBlocks()[bi].exercises[ei];
   if (window.LogColumns) {
@@ -1117,17 +1266,14 @@ function coachExerciseRxHtml(bi, ei){
   const editing = ui.exEdit && ui.exEdit.bi === bi && ui.exEdit.ei === ei;
   if (!window.LogColumns) return setRowsTable(bi, ei);
   if (!editing) {
-    return `<p class="rx-summary">${esc(coachExerciseSummary(ex))}</p>
-      <p class="rx-summary muted">Leave load blank for autopilot · add % WM column only when you want a fixed percentage.</p>
-      <button type="button" class="btn small" style="margin-top:8px" onclick="openCoachExEdit(${bi},${ei})">Edit prescription</button>`;
+    return `<button type="button" class="rx-collapse" onclick="openCoachExEdit(${bi},${ei})">
+      <p class="rx-summary">${esc(coachExerciseSummary(ex))}</p>
+      <span class="muted">Tap to edit prescription · rest ${LogColumns.fmtRest(ex.restSec || 90)}</span></button>`;
   }
   return `<div class="field" style="margin-top:8px"><label>Rest seconds</label>
-    <input type="number" min="0" value="${LogColumns.getRestSec()}" oninput="LogColumns.onRestChange(this.value)" onchange="LogColumns.onRestChange(this.value)"></div>
+    <input type="number" min="0" data-builder-rest-input value="${LogColumns.getRestSec()}" oninput="LogColumns.onRestChange(this.value)" onchange="LogColumns.onRestChange(this.value)"></div>
     <input type="hidden" id="exSets" value="${LogColumns.getSetCount()}">
-    ${LogColumns.builderLoggerTwinHtml()}
-    <div class="btns" style="margin-top:8px;justify-content:flex-start">
-      <button type="button" class="btn small primary" onclick="closeCoachExEdit()">Done</button>
-    </div>`;
+    ${LogColumns.builderLoggerTwinHtml()}`;
 }
 
 function parseSets(tid, bi, ei, raw){
@@ -1138,11 +1284,23 @@ function parseSets(tid, bi, ei, raw){
 }
 
 function addEx(bi){
+  if (ui.exEdit) {
+    clearTimeout(coachExPersistTimer);
+    syncCoachExFromColumns(ui.exEdit.bi, ui.exEdit.ei, { flush: true });
+  }
   const t = tpl(ui.templateId);
   t.blocks[bi].exercises = t.blocks[bi].exercises || [];
-  t.blocks[bi].exercises.push(L.makeExercise({ name:'New lift', sets:3, reps:'8', load:'', metric:'Weight', restSec:90 }));
+  t.blocks[bi].exercises.push(emptyStrengthExercise());
+  const ei = t.blocks[bi].exercises.length - 1;
   t.blocks = L.decorateBlocks(t.blocks);
-  persist(); render();
+  persist();
+  ui.exEdit = { bi, ei };
+  if (window.LogColumns) {
+    LogColumns.beginSheet(t.blocks[bi].exercises[ei]);
+    LogColumns.setChangeHandler(() => syncCoachExFromColumns(bi, ei));
+  }
+  ui.exPicker = { bi, ei };
+  render();
 }
 
 function removeEx(bi, ei){
@@ -1153,7 +1311,31 @@ function removeEx(bi, ei){
   persist(); render();
 }
 
+function copyExercise(bi, ei){
+  if (ui.exEdit) {
+    clearTimeout(coachExPersistTimer);
+    syncCoachExFromColumns(ui.exEdit.bi, ui.exEdit.ei, { flush: true });
+  }
+  const t = tpl(ui.templateId);
+  const copy = cloneExerciseData(t.blocks[bi].exercises[ei]);
+  t.blocks[bi].exercises.splice(ei + 1, 0, copy);
+  t.blocks = L.decorateBlocks(t.blocks);
+  persist();
+  openCoachExEdit(bi, ei + 1);
+}
+
+function copyBlock(bi){
+  if (ui.exEdit) closeCoachExEdit();
+  const t = tpl(ui.templateId);
+  const copy = cloneBlockData(t.blocks[bi]);
+  copy.heading = (copy.heading || 'Block') + ' copy';
+  t.blocks.splice(bi + 1, 0, copy);
+  t.blocks = L.decorateBlocks(t.blocks);
+  persist(); render();
+}
+
 function addBlk(type){
+  if (ui.exEdit) closeCoachExEdit();
   const t = tpl(ui.templateId);
   const partial = type === 'recovery'
     ? { type:'conditioning', heading:'Recovery movement', category:'Recovery', scoring:'completion', recoverySession:true, condFmt:'steady', effort:'easy', modality:'Mixed', baselineDurationMin:30, targetDurationMin:30, timeCapMin:30, notes:'Mixed modal — walk, easy bike, mobility. Log time and feel, not output.' }
@@ -1161,10 +1343,21 @@ function addBlk(type){
     ? { type:'conditioning', heading:'Steady-state', category:'Conditioning', scoring:'completion', condFmt:'steady', effort:'easy', modality:'Bike', targetDurationMin:20 }
     : type === 'text'
       ? { type:'text', heading:'Prep', category:'Prep', scoring:'completion', notes:'' }
-      : { type:'strength', heading:'Strength', category:'Strength/Power', scoring:'weight', exercises:[L.makeExercise({ name:'Back Squat', exerciseId:'core-back-squat', sets:3, reps:'8', load:'', metric:'Weight' })] };
+      : { type:'strength', heading:'Strength', category:'Strength/Power', scoring:'weight', exercises:[emptyStrengthExercise()] };
   t.blocks.push(L.makeBlock(partial));
   t.blocks = L.decorateBlocks(t.blocks);
-  persist(); render();
+  persist();
+  if (type === 'strength') {
+    const bi = t.blocks.length - 1;
+    const ei = 0;
+    ui.exEdit = { bi, ei };
+    if (window.LogColumns) {
+      LogColumns.beginSheet(t.blocks[bi].exercises[ei]);
+      LogColumns.setChangeHandler(() => syncCoachExFromColumns(bi, ei));
+    }
+    ui.exPicker = { bi, ei };
+  }
+  render();
 }
 
 function clearCondFields(b){
@@ -1192,13 +1385,17 @@ function setBlockType(bi, type){
   if (!b) return;
   if (b.supersetPartner && bi > 0) t.blocks[bi - 1].superset = false;
   if (b.superset && t.blocks[bi + 1]?.supersetPartner) delete t.blocks[bi + 1].supersetPartner;
+  let needsPick = false;
   if (type === 'strength') {
     b.type = 'strength';
     b.scoring = b.scoring === 'completion' ? 'completion' : 'weight';
     b.category = 'Strength/Power';
     clearCondFields(b);
     if (!(b.exercises || []).length) {
-      b.exercises = [L.makeExercise({ name:'Back Squat', exerciseId:'core-back-squat', sets:3, reps:'8', load:'', metric:'Weight' })];
+      b.exercises = [emptyStrengthExercise()];
+      needsPick = true;
+    } else if (b.exercises[0] && !b.exercises[0].exerciseId) {
+      needsPick = true;
     }
   } else if (type === 'conditioning') {
     b.superset = false;
@@ -1224,7 +1421,16 @@ function setBlockType(bi, type){
     clearCondFields(b);
   }
   t.blocks = L.decorateBlocks(t.blocks);
-  persist(); render();
+  persist();
+  if (needsPick) {
+    ui.exEdit = { bi, ei: 0 };
+    if (window.LogColumns) {
+      LogColumns.beginSheet(t.blocks[bi].exercises[0]);
+      LogColumns.setChangeHandler(() => syncCoachExFromColumns(bi, 0));
+    }
+    ui.exPicker = { bi, ei: 0 };
+  }
+  render();
 }
 
 function blockTypeValue(b){
@@ -1252,7 +1458,41 @@ function removeBlk(bi){
   const b = t.blocks[bi];
   if (b?.supersetPartner && bi > 0) t.blocks[bi - 1].superset = false;
   if (b?.superset && t.blocks[bi + 1]?.supersetPartner) delete t.blocks[bi + 1].supersetPartner;
+  ui.blkUndo = { templateId: ui.templateId, index: bi, block: cloneBlockData(b) };
   t.blocks.splice(bi, 1);
+  t.blocks = L.decorateBlocks(t.blocks);
+  persist(); render();
+  showCoachToast('Block deleted — Undo restores it.', 'ok');
+}
+
+function undoRemoveBlk(){
+  const u = ui.blkUndo;
+  if (!u || u.templateId !== ui.templateId) return;
+  const t = tpl(ui.templateId);
+  if (!t) return;
+  t.blocks.splice(u.index, 0, u.block);
+  t.blocks = L.decorateBlocks(t.blocks);
+  ui.blkUndo = null;
+  persist(); render();
+  showCoachToast('Block restored.', 'ok');
+}
+
+function pairSuperset(bi){
+  const t = tpl(ui.templateId);
+  const b = t.blocks[bi];
+  if (!b || blockTypeValue(b) !== 'strength') return;
+  let next = t.blocks[bi + 1];
+  if (!next || blockTypeValue(next) !== 'strength') {
+    t.blocks.splice(bi + 1, 0, L.makeBlock({
+      type:'strength',
+      heading:'Superset B',
+      category:'Strength/Power',
+      scoring:'weight',
+      exercises:[emptyStrengthExercise()],
+      supersetPartner:true,
+    }));
+  }
+  b.superset = true;
   t.blocks = L.decorateBlocks(t.blocks);
   persist(); render();
 }
@@ -1338,14 +1578,18 @@ function pickExercise(exId){
   const cat = (S.exercises||[]).find(e => e.id === exId);
   if (!cat) return;
   const t = tpl(ui.templateId);
-  const ex = t.blocks[ui.exPicker.bi].exercises[ui.exPicker.ei];
+  const bi = ui.exPicker.bi;
+  const ei = ui.exPicker.ei;
+  const ex = t.blocks[bi].exercises[ei];
   ex.name = cat.name;
   ex.exerciseId = cat.id;
   ex.category = cat.category || ex.category;
+  trackRecentExercise(cat.id);
   ui.exPicker = null;
   ui.exSearch = '';
   t.blocks = L.decorateBlocks(t.blocks);
-  persist(); render();
+  persist();
+  openCoachExEdit(bi, ei);
 }
 
 function filteredExercises(){
@@ -1353,17 +1597,33 @@ function filteredExercises(){
   return (S.exercises||[]).filter(e => !q || String(e.name).toLowerCase().includes(q) || String(e.category||'').toLowerCase().includes(q));
 }
 
+function recentExercisePickerItems(){
+  const ids = (S.coachMeta && S.coachMeta.recentExercises) || [];
+  return ids.map((id) => (S.exercises || []).find((e) => e.id === id)).filter(Boolean);
+}
+
 function exercisePickerHtml(){
   if (!ui.exPicker) return '';
-  const list = filteredExercises().slice(0, 80).map(e =>
+  const recent = recentExercisePickerItems();
+  const q = String(ui.exSearch || '').trim().toLowerCase();
+  const recentHtml = !q && recent.length
+    ? `<div class="eyebrow" style="margin-top:12px">Recent</div><div class="picker-list">${recent.map(e =>
+        `<button type="button" class="picker-item" onclick="pickExercise('${e.id}')"><span>${esc(e.name)}</span><span class="muted">${esc(e.category||'')}</span></button>`
+      ).join('')}</div>`
+    : '';
+  const list = filteredExercises().slice(0, 200).map(e =>
     `<button type="button" class="picker-item" onclick="pickExercise('${e.id}')"><span>${esc(e.name)}</span><span class="muted">${esc(e.category||'')}</span></button>`
   ).join('');
+  const total = filteredExercises().length;
+  const more = total > 200 ? `<p class="muted" style="margin-top:8px">${total - 200} more — refine search.</p>` : '';
   return `<div class="picker-overlay" onclick="if(event.target===this)closeExPicker()">
     <div class="picker-panel" role="dialog" aria-label="Choose exercise">
       <div class="row"><b>Choose exercise</b><button type="button" class="btn ghost small" onclick="closeExPicker()">Close</button></div>
       <div class="field" style="margin-top:12px"><label>Search</label>
         <input value="${esc(ui.exSearch)}" oninput="ui.exSearch=this.value;render()" placeholder="Squat, row, bike…"></div>
-      <div class="picker-list">${list || '<div class="muted">No matches.</div>'}</div>
+      ${recentHtml}
+      <div class="eyebrow" style="margin-top:12px">${q ? 'Matches' : 'All exercises'}</div>
+      <div class="picker-list">${list || '<div class="muted">No matches.</div>'}</div>${more}
     </div></div>`;
 }
 
@@ -1481,9 +1741,59 @@ function blockExerciseHtml(b, bi){
     <div class="row" style="align-items:flex-start"><span class="letter-badge" style="width:26px;height:26px;font-size:11px">${esc(b.letter||'?')}</span>
       <button type="button" class="exercise-pick grow" onclick="openExPicker(${bi},${ei})">${esc(e.name||'Choose exercise')}</button>
       <button type="button" class="kebab-btn" title="Remove exercise" onclick="removeEx(${bi},${ei})">×</button></div>
+    <div class="exercise-toolbar">
+      <button type="button" class="btn small" onclick="copyExercise(${bi},${ei})">Copy</button>
+    </div>
     ${coachExerciseRxHtml(bi, ei)}
   </div>`).join('');
   return `${exHtml}<button type="button" class="btn small" style="margin-top:10px" onclick="addEx(${bi})">Add exercise</button>`;
+}
+
+function blockValidationIssues(b, bi){
+  const kind = blockTypeValue(b);
+  const issues = [];
+  if (kind === 'strength') {
+    if (!(b.exercises || []).length) issues.push('Add at least one exercise');
+    for (const e of b.exercises || []) {
+      if (!e.exerciseId) issues.push('Choose exercise for ' + (e.name || 'lift'));
+      if (!String(e.reps || '').trim()) issues.push('Set reps on ' + (e.name || 'lift'));
+    }
+    if (b.superset) {
+      const next = tplBlocks()[bi + 1];
+      if (!next || blockTypeValue(next) !== 'strength') issues.push('Superset needs a strength block after');
+    }
+  } else if (kind === 'conditioning' || kind === 'recovery') {
+    if (!String(b.notes || '').trim() && !L.condPlanLineBlock(b)) issues.push('Add conditioning notes or targets');
+  } else if (kind === 'text') {
+    if (!String(b.notes || '').trim() && !String(b.heading || '').trim()) issues.push('Add prep notes or title');
+  }
+  return issues;
+}
+
+function blockValidationChipsHtml(b, bi){
+  const issues = blockValidationIssues(b, bi);
+  if (!issues.length) return `<div class="validation-chips"><span class="validation-chip ok">Ready</span></div>`;
+  return `<div class="validation-chips">${issues.slice(0, 3).map((msg) => `<span class="validation-chip warn">${esc(msg)}</span>`).join('')}${issues.length > 3 ? `<span class="validation-chip warn">+${issues.length - 3} more</span>` : ''}</div>`;
+}
+
+function templateUsageHint(tid){
+  const programs = new Set();
+  for (const p of S.programs || []) {
+    for (const v of Object.values(p.cells || {})) {
+      if (v === tid) programs.add(p.name || 'Program');
+    }
+  }
+  const sessions = (S.sessions || []).filter((s) => s.templateId === tid);
+  const unpublished = sessions.filter((s) => !s.published && s.status !== 'completed').length;
+  const parts = [];
+  if (programs.size) parts.push('In ' + programs.size + ' program(s)');
+  if (unpublished) parts.push(unpublished + ' unpublished on calendar');
+  else if (sessions.length) parts.push(sessions.length + ' on athlete calendar');
+  return parts.join(' · ') || 'Not assigned yet';
+}
+
+function sessionValidationCount(){
+  return tplBlocks().reduce((n, b, bi) => n + blockValidationIssues(b, bi).length, 0);
 }
 
 function sessionHtml(){
@@ -1497,7 +1807,8 @@ function sessionHtml(){
     const scoring = `<select title="How the athlete logs this strength block" onchange="tpl(ui.templateId).blocks[${i}].scoring=this.value;persist()"><option value="weight" ${b.scoring==='weight'?'selected':''}>Track load</option><option value="completion" ${b.scoring==='completion'?'selected':''}>Completion only</option></select>`;
     const superset = kind === 'strength' && !isPartner
       ? `<label class="row" style="gap:6px;margin:0;font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500">
-          <input type="checkbox" style="width:auto" ${b.superset?'checked':''} onchange="toggleSuperset(${i},this.checked)"> Superset</label>`
+          <input type="checkbox" style="width:auto" ${b.superset?'checked':''} onchange="toggleSuperset(${i},this.checked)"> Superset</label>
+          <button type="button" class="btn small" onclick="pairSuperset(${i})">Pair with next</button>`
       : (isPartner ? `<span class="pill" style="font-size:10px">Superset pair</span>` : '');
     return `<section class="block-card block-${kind}" data-block-index="${i}">
       <div class="block-head">
@@ -1508,8 +1819,10 @@ function sessionHtml(){
         ${blockTypeSelectHtml(i, b)}
         ${kind==='strength'?scoring:''}
         ${superset}
+        <button type="button" class="btn small" onclick="copyBlock(${i})">Copy</button>
         <button type="button" class="kebab-btn danger" title="Delete block" aria-label="Delete block" onclick="removeBlk(${i})">Delete</button>
       </div>
+      ${blockValidationChipsHtml(b, i)}
       <div class="block-body">
         <div class="field"><label>Block title</label><input value="${esc(b.heading||'')}" oninput="tpl(ui.templateId).blocks[${i}].heading=this.value;persist()"></div>
         ${kind==='strength'?`<div class="field"><label>Block notes</label><textarea oninput="tpl(ui.templateId).blocks[${i}].notes=this.value;persist()">${esc(b.notes||'')}</textarea></div>`:''}
@@ -1518,10 +1831,22 @@ function sessionHtml(){
     </section>`;
   }).join('');
   const instrLen = (t.coachInstructions||'').length;
+  const warnCount = sessionValidationCount();
+  const usage = templateUsageHint(t.id);
+  const undoBtn = ui.blkUndo && ui.blkUndo.templateId === t.id
+    ? `<button type="button" class="btn small" onclick="undoRemoveBlk()">Undo delete</button>`
+    : '';
   return `<div class="fade-in"><button type="button" class="btn ghost small page-back" onclick="go('library',{lib:'sessions'})">← Back to sessions</button>
     <div class="builder-top" style="margin-top:12px">
       <input class="builder-title" value="${esc(t.name)}" aria-label="Session title" oninput="tpl(ui.templateId).name=this.value;persist()">
-      <div class="builder-actions"><span class="pill">Saved locally</span></div>
+      <div class="builder-actions">
+        <span class="pill ${warnCount ? 'warn' : 'ok'}">${warnCount ? warnCount + ' to fix' : 'Ready'}</span>
+        <span class="pill">${esc(usage)}</span>
+        ${undoBtn}
+        <button type="button" class="btn small" onclick="duplicateTemplate()">Duplicate</button>
+        <button type="button" class="btn small" onclick="go('assign')">Assign</button>
+        <span class="pill">Saved locally</span>
+      </div>
     </div>
     <div class="card instructions-box">
       <label>Coach instructions</label>

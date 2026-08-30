@@ -308,6 +308,22 @@
     notifyChange();
   }
 
+  function applyRestPreset(sec) {
+    onRestChange(sec);
+    const restInput = global.document && global.document.querySelector('[data-builder-rest-input]');
+    if (restInput) restInput.value = String(Math.max(0, Number(sec) || 0));
+  }
+
+  function applyRepPreset(sets, reps) {
+    const n = Math.max(1, Math.min(12, sets | 0));
+    resizeSets(n);
+    const effortIdx = sheet.columns.findIndex((c) => isEffortKind(c.kind));
+    if (effortIdx < 0) return;
+    for (let i = 0; i < n; i++) onCellChange(effortIdx, i, String(reps));
+    refreshTwin();
+    notifyChange();
+  }
+
   function effortTarget(setIdx) {
     const effort = sheet.columns.find((c) => c.kind === 'reps' || c.kind === 'reps_range' || c.kind === 'time_sec' || c.kind === 'distance_m');
     if (!effort) return '—';
@@ -330,7 +346,7 @@
           // First set: dropdown headers (look like logger mini labels). Later sets: hard labels.
           const head =
             i === 0
-              ? `<select class="logcol-kind mini-select" aria-label="Column ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>`
+              ? `<div class="col-head"><select class="logcol-kind mini-select" aria-label="Column ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>${cols.length > 1 ? `<button type="button" class="col-rm btn ghost small" aria-label="Remove column" onclick="LogColumns.removeColumn(${ci})">×</button>` : ''}</div>`
               : `<span class="mini">${meta.loggerLabel}</span>`;
           return `<div>${head}<input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></div>`;
         })
@@ -344,6 +360,18 @@
       </div>`;
     }).join('');
 
+    const restPresets = [60, 90, 120, 150, 180]
+      .map((s) => `<button type="button" class="btn small" onclick="LogColumns.applyRestPreset(${s})">${s}s</button>`)
+      .join('');
+    const repPresets = [
+      [3, 5],
+      [4, 8],
+      [5, 5],
+      [3, 10],
+    ]
+      .map(([n, r]) => `<button type="button" class="btn small" onclick="LogColumns.applyRepPreset(${n},${r})">${n}×${r}</button>`)
+      .join('');
+
     return `<div class="card" style="margin-top:14px" id="builderLoggerCard">
       <div class="row">
         <div>
@@ -352,6 +380,8 @@
         </div>
         <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
       </div>
+      <div class="rest-presets" style="margin-top:10px"><span class="mini">Rest presets</span>${restPresets}</div>
+      <div class="rep-presets"><span class="mini">Set targets</span>${repPresets}</div>
       <div class="guardrail" style="margin-top:10px">Log <b>RIR on your last set</b> (set ${sheet.sets}) — it drives the next session load.</div>
       <div class="divider"></div>
       ${rows}
@@ -432,6 +462,8 @@
     setChangeHandler,
     addColumn,
     removeColumn,
+    applyRestPreset,
+    applyRepPreset,
     addSet,
     removeSet,
     resizeSets,
