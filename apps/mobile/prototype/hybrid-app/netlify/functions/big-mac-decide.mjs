@@ -178,12 +178,13 @@ function toAthleteFacingUpdate(receipt) {
 }
 
 function decidePython(snapshot) {
-  if (snapshot?.product_engines !== false) return null;
   const script = `
 import json, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(${JSON.stringify(EVIDENCE_DIR)})))
+root = Path(${JSON.stringify(EVIDENCE_DIR)})
+sys.path.insert(0, str(root))
 from platform_core.db import connect, migrate
+from platform_core.auto_promote import ensure_auto_promoted
 from platform_core.decision import decide
 from platform_core.engines import run_all
 from platform_core.athlete_facing_contract import to_athlete_facing_update
@@ -191,6 +192,7 @@ from platform_core.athlete_facing_contract import to_athlete_facing_update
 snapshot = json.loads(sys.stdin.read())
 db = connect(':memory:')
 migrate(db)
+ensure_auto_promoted(db, root / 'runtime')
 outputs = run_all(snapshot, db)
 receipt = decide(db, snapshot, outputs)
 print(json.dumps({
@@ -201,7 +203,7 @@ print(json.dumps({
     'decision_mode': receipt.get('decision_mode'),
   },
   'athlete_facing': to_athlete_facing_update(receipt),
-  'source': 'python_decide',
+  'source': 'python_auto_promoted_decide',
 }))
 `;
   const proc = spawnSync('python3', ['-c', script], {

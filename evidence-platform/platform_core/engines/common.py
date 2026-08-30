@@ -157,6 +157,19 @@ def run_generic_engine(snapshot: Mapping[str, Any], system: str, db: Any = None)
                     synthetic=True,
                     confidence=float(model.get("confidence", 0.0)),
                 )
+            if model.get("product_engine"):
+                from ..product_engines import evaluate_domain
+
+                output = evaluate_domain(system, snapshot)
+                proposed = output["proposed_actions"][0]
+                return make_output(
+                    system=system,
+                    action=proposed["action"],
+                    reason_codes=["AUTO_PROMOTED_PRODUCT_ENGINE", *output["reason_codes"]],
+                    synthetic=False,
+                    state_estimate=output.get("state_estimate"),
+                    confidence=float(output.get("confidence", 0.85)),
+                )
             # A real (non-synthetic) model is registered, but this engine has
             # no reviewed rule module to interpret it with yet - abstain
             # honestly rather than guessing what an unreviewed model means.

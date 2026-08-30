@@ -102,7 +102,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 - Key merges: **#102** full ecosystem bug audit · **#98** calendar + block types · **#97** coach → athlete portal · **#96** Settings scroll · **#93** vault · **#92** recovery · **#91** coach polish
 - **Ecosystem polish (#99):** coach Mon–Sun calendar grid · publish revert on cloud fail · coach toasts · athlete strength builder when signed in (Settings toggle) · import backup · portal toasts · friendly session status labels · cache **v99**
 - **Full ecosystem audit (#102):** coach builder/sync/hybrid session fixes · deep small-bug pass · `coach-audit-fixes.smoke.mjs`
-- **BIG MAC five-engine wiring (post-#102):** `big-mac-product-engines.js` maps shipped Hybrid JS engines → BIG MAC domain outputs (no human promotion gate). `big-mac-bridge.js` hooks strength · conditioning · recovery check-in · nutrition log · coordinator weekly bootstrap. Receipts in `state.meta.bigMacReceipts`. Research corpus path still abstains when `product_engines: false`.
+- **BIG MAC five-engine wiring (post-#102):** `big-mac-product-engines.js` maps shipped Hybrid JS engines → BIG MAC domain outputs. **`auto_promote_product_engines`** registers them as `runtime_artifacts` with `trust_origin=auto_promoted_product` (no human reviewer gate). `big-mac-bridge.js` hooks all five domains. Python `decide()` honors `trigger_domain` for per-hook decisions.
 
 ---
 
@@ -132,7 +132,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 | Tests | 182 pass · `validate_platform.py` → `PASS_PRE_RESEARCH_ONLY` |
 | Merge to `main` | **Done, 30 Aug** — clean, no conflicts, `apps/`/`packages/`/`supabase/` untouched |
 
-**ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** (`strength-ai.js`, `ai-strength-progression.mjs`) — **paused, not wired**. **BIG MAC five-engine wiring** — product deterministic engines as proposers (no human review). LLM lead-fallback **not wired** (Constitution step 5 — Later).
+**ChatGPT:** dropped for five-engine research. **Cursor WIP AI stubs** (`strength-ai.js`, `ai-strength-progression.mjs`) — **paused, not wired**. **BIG MAC five-engine wiring + auto-promotion** — product engines auto-promoted to `runtime_artifacts` (`auto_promoted_product` trust origin). LLM lead-fallback **not wired** (Constitution step 5 — Later).
 
 ### C — Decision Hub (product direction — parked for implementation)
 

@@ -11,7 +11,7 @@
     "version":{"type":"string","minLength":1},
     "artifact_path":{"type":"string","minLength":1},
     "artifact_hash":{"type":"string","pattern":"^[a-f0-9]{64}$"},
-    "trust_origin":{"const":"human_promoted_verified"},
+    "trust_origin":{"enum":["human_promoted_verified","auto_promoted_product"]},
     "llm_tainted":{"const":false},
     "deterministic":{"const":true},
     "status":{"enum":["shadow","active","suspended","retired"]},

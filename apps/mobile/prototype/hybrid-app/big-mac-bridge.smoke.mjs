@@ -72,6 +72,7 @@ from pathlib import Path
 root = Path(${JSON.stringify(path.join(repoRoot, 'evidence-platform'))})
 sys.path.insert(0, str(root))
 from platform_core.db import connect, migrate
+from platform_core.auto_promote import ensure_auto_promoted
 from platform_core.decision import decide
 from platform_core.engines import run_all
 from platform_core.athlete_facing_contract import to_athlete_facing_update
@@ -79,11 +80,14 @@ from platform_core.athlete_facing_contract import to_athlete_facing_update
 snapshot = json.loads(sys.stdin.read())
 db = connect(':memory:')
 migrate(db)
+ensure_auto_promoted(db, root / 'runtime')
 outputs = run_all(snapshot, db)
 receipt = decide(db, snapshot, outputs)
+facing = to_athlete_facing_update(receipt)
 print(json.dumps({
   'action': receipt['action'],
-  'has_update': to_athlete_facing_update(receipt)['has_update'],
+  'has_update': facing['has_update'],
+  'reason_codes': receipt.get('reason_codes', []),
 }))
 `;
 
@@ -99,8 +103,13 @@ if (py.status !== 0) {
 }
 
 const pyResult = JSON.parse(py.stdout.trim());
-must(pyResult.action === 'abstain', 'Python should abstain for research snapshot');
-must(pyResult.action === jsReceipt.action, 'JS/Python research action mismatch');
+must(pyResult.action !== 'abstain', 'Python auto-promoted path should decide, got ' + pyResult.action);
+must(Array.isArray(pyResult.reason_codes), 'Python should return reason_codes');
+must(
+  pyResult.reason_codes.includes('ENGINE_CANDIDATE_APPLIED') ||
+  pyResult.reason_codes.some((c) => String(c).includes('AUTO_PROMOTED') || String(c).includes('PRODUCT_ENGINE')),
+  'Python should cite auto-promoted engine path',
+);
 
 const syntheticSnapshot = {
   fixture: 'synthetic_test_only',

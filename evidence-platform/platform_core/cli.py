@@ -8,6 +8,7 @@ from .gates import promotion_gate,research_gate,research_queue,attempt_promotion
 from .ingest import ingest
 from .search import lineage,traverse_lineage,structured_search,text_search,corpus_search
 from .review import register_reviewer,add_review,revoke
+from .auto_promote import auto_promote_product_engines,ensure_auto_promoted
 
 def emit(v): print(json.dumps(v,indent=2,ensure_ascii=False,sort_keys=True))
 def make_parser():
@@ -25,6 +26,7 @@ def make_parser():
     x=sub.add_parser("register-reviewer"); x.add_argument("reviewer_id"); x.add_argument("role"); x.add_argument("--declaration",required=True)
     x=sub.add_parser("add-review"); x.add_argument("record_type"); x.add_argument("record_id"); x.add_argument("stage"); x.add_argument("outcome"); x.add_argument("--reviewer",required=True); x.add_argument("--notes",default="")
     x=sub.add_parser("revoke"); x.add_argument("record_type"); x.add_argument("record_id"); x.add_argument("--actor",required=True); x.add_argument("--reason",required=True)
+    x=sub.add_parser("auto-promote-product-engines"); x.add_argument("--artifacts-root",default="runtime")
     sub.add_parser("research-gate")
     x=sub.add_parser("research-queue"); x.add_argument("--limit",type=int,default=200)
     x=sub.add_parser("simulate"); x.add_argument("--snapshot",required=True); x.add_argument("--outputs"); x.add_argument("--synthetic-model"); x.add_argument("--persist",action="store_true")
@@ -48,6 +50,7 @@ def main(argv=None):
     elif a.command=="register-reviewer": emit(register_reviewer(db,a.reviewer_id,a.role,a.declaration))
     elif a.command=="add-review": emit(add_review(db,a.record_type,a.record_id,a.stage,a.outcome,a.reviewer,a.notes))
     elif a.command=="revoke": emit(revoke(db,a.record_type,a.record_id,a.actor,a.reason))
+    elif a.command=="auto-promote-product-engines": emit(ensure_auto_promoted(db,a.artifacts_root))
     elif a.command=="research-gate": emit(research_gate(db))
     elif a.command=="research-queue": emit(research_queue(db,a.limit))
     elif a.command=="simulate":
