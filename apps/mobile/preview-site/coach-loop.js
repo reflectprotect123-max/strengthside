@@ -206,12 +206,63 @@
     return block.type === 'strength' ? 'weight' : 'completion';
   }
 
+  /** Keep strength / conditioning / recovery / prep text distinct for athlete flatten. */
+  function normalizeBlockType(block) {
+    if (!block) return block;
+    const cat = String(block.category || '').toLowerCase();
+    const heading = String(block.heading || '').toLowerCase();
+    const hasEx = (block.exercises || []).length > 0;
+    const isRecovery =
+      !!block.recoverySession || cat === 'recovery' || /recover|debt repay|easy flush/.test(heading);
+    const hasCond =
+      block.type === 'conditioning' ||
+      !!block.condFmt ||
+      !!block.conditioningType ||
+      !!block.effort ||
+      (!!block.modality && !hasEx);
+
+    if (block.type === 'text' && !hasEx && !hasCond) return block;
+
+    if (isRecovery || (hasCond && !hasEx)) {
+      block.type = 'conditioning';
+      block.scoring = 'completion';
+      if (isRecovery) {
+        block.recoverySession = true;
+        block.category = block.category || 'Recovery';
+        block.effort = block.effort || 'easy';
+        block.condFmt = block.condFmt || 'steady';
+        block.modality = block.modality || 'Mixed';
+        if (!block.baselineDurationMin) {
+          block.baselineDurationMin = num(block.targetDurationMin) || 30;
+        }
+        if (!block.targetDurationMin) block.targetDurationMin = block.baselineDurationMin;
+      }
+      delete block.exercises;
+      applyCondBuilderToBlock(block);
+      return block;
+    }
+
+    if (hasEx || block.type === 'strength') {
+      block.type = 'strength';
+      block.scoring = block.scoring || 'weight';
+      return block;
+    }
+
+    if (block.modality || block.targetDurationMin) {
+      block.type = 'conditioning';
+      block.scoring = 'completion';
+      applyCondBuilderToBlock(block);
+    }
+    return block;
+  }
+
   function decorateBlocks(blocks) {
     return letterBlocks(blocks).map((b) => {
+      normalizeBlockType(b);
       b.category = categoryForBlock(b);
       b.scoring = scoringForBlock(b);
       b.complete = !!b.complete;
-      (b.exercises || []).forEach(ensureRows);
+      if (b.type === 'strength') (b.exercises || []).forEach(ensureRows);
       return b;
     });
   }
@@ -471,9 +522,11 @@
       restSec: partial.restSec || 0,
       targetWatts: partial.targetWatts == null ? '' : partial.targetWatts,
       planLine: partial.planLine || '',
+      recoverySession: !!partial.recoverySession,
+      baselineDurationMin: partial.baselineDurationMin == null ? 0 : num(partial.baselineDurationMin),
     };
     if (block.type === 'conditioning') applyCondBuilderToBlock(block);
-    return block;
+    return normalizeBlockType(block);
   }
 
   function makeTemplate(partial) {
@@ -1206,6 +1259,7 @@
     isWorkBlock,
     letterBlocks,
     decorateBlocks,
+    normalizeBlockType,
     formatMmSs,
     parseMmSs,
     condFormatMeta,

@@ -363,7 +363,12 @@
 
   function calDayCell(date, sessions, athleteId) {
     var expanded = ui().calDay === date;
-    var chips = sessions.map(sessionChip).join('');
+    var visible = expanded ? sessions : sessions.slice(0, 2);
+    var chips = visible.map(sessionChip).join('');
+    var more =
+      !expanded && sessions.length > 2
+        ? '<div class="cal-chip-meta">+' + (sessions.length - 2) + ' more</div>'
+        : '';
     var empty =
       !sessions.length && expanded
         ? '<div class="cal-empty-actions"><button type="button" class="btn small" onclick="CoachViews.openAddFromLibrary(\'' +
@@ -375,14 +380,17 @@
     return (
       '<div class="cal-day' +
       (expanded ? ' expanded' : '') +
+      (sessions.length ? ' has-sessions' : '') +
       '">' +
       '<button type="button" class="cal-day-num" onclick="CoachViews.toggleCalDay(\'' +
       date +
       '\')">' +
       esc(String(Number(date.slice(8)))) +
+      (sessions.length ? ' · ' + sessions.length : '') +
       '</button>' +
       '<div class="cal-day-body">' +
       chips +
+      more +
       empty +
       '</div></div>'
     );
@@ -464,7 +472,7 @@
       esc(title) +
       '</h1><p class="lede" style="margin-top:4px">' +
       esc(L().monthLabel(mk)) +
-      ' · click a day to expand</p></div>' +
+      ' · select a day to add or publish</p></div>' +
       '<div class="row" style="gap:8px;flex-wrap:wrap">' +
       '<button type="button" class="btn small" aria-label="Previous month" onclick="CoachViews.shiftCalMonth(-1)">‹</button>' +
       '<button type="button" class="btn small" aria-label="Next month" onclick="CoachViews.shiftCalMonth(1)">›</button>' +
