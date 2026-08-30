@@ -298,12 +298,6 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .ex-cat-row:last-child{border-bottom:0}
 .feed-card h2{font-family:var(--font-display);font-weight:600}
 .feed-card{animation:coachFade .4s var(--ease) both}
-.rx-delivery-strip{margin:0 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
-.rx-delivery-strip.ok{border-color:rgba(125,186,154,.45);background:rgba(125,186,154,.06)}
-.rx-delivery-strip.warn{border-color:rgba(212,165,116,.35);background:rgba(212,165,116,.06)}
-.rx-delivery-strip.bad{border-color:rgba(208,137,125,.45);background:rgba(208,137,125,.08)}
-.rx-delivery-strip .eyebrow{margin-bottom:4px}
-.rx-delivery-title{font-family:var(--font-display);font-size:18px;font-weight:600;line-height:1.25}
 .coach-side-foot a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:8px}
 .gate-demo{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
 .gate-demo .muted{font-size:12px}
@@ -430,13 +424,6 @@ function coachPortalToast(result, athleteName){
   showCoachToast('Cloud push: ' + msg, 'warn');
 }
 window.coachPortalToast = coachPortalToast;
-
-function deliveryStripHtml(){
-  const line = (window.CoachCloud && CoachCloud.deliverySummary) ? CoachCloud.deliverySummary() : 'Publish from calendar to send prescriptions.';
-  const st = (window.CoachCloud && CoachCloud.status) || {};
-  const cls = !st.lastPushAt ? 'warn' : (st.lastOk ? 'ok' : 'bad');
-  return `<div class="rx-delivery-strip ${cls}"><div class="eyebrow">Delivery</div><div class="rx-delivery-title">${esc(line)}</div></div>`;
-}
 
 let refreshStatesTimer = null;
 function scheduleRefreshCloudStates(){
@@ -1493,7 +1480,6 @@ function coachChrome(body){
       </div>
     </header>
     <div class="coach-body ${hasRail?'has-rail':''}">
-      ${deliveryStripHtml()}
       <main class="coach-main">${body}</main>
       ${hasRail?`<aside class="coach-rail" aria-label="Programming status">${needsHtml()}</aside>`:''}
     </div>
