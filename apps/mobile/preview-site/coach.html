@@ -211,7 +211,11 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .rx-metric-col input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel3);color:var(--text);font-size:13px}
 .rx-metric-hint{margin:6px 0 0;font-size:10px;color:var(--dim);line-height:1.35}
 .rx-metric-remove{min-width:28px;padding:4px 8px}
-.rx-overrides{margin-top:12px}
+.autopilot-strip{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px;padding:10px 12px;border-radius:10px;border:1px solid rgba(212,165,116,.2);background:rgba(212,165,116,.06)}
+.autopilot-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.autopilot-value{font-size:14px;font-weight:700;color:var(--copper2)}
+.autopilot-note{font-size:11px;color:var(--dim);flex:1;min-width:180px}
+.rx-advanced{margin-top:8px}
 .rx-overrides summary{cursor:pointer;font-size:12px;font-weight:650;color:var(--muted);padding:6px 0}
 .rx-overrides[open] summary{color:var(--copper2);margin-bottom:8px}
 .rx-override-table{margin-top:4px}
@@ -1066,10 +1070,6 @@ function programHtml(){
 function tplBlocks(){ return tpl(ui.templateId)?.blocks || []; }
 
 function coachExerciseSummary(ex){
-  if (window.LogColumns && ex.logColumns && ex.logColumns.length) {
-    const meta = LogColumns.columnsMeta(ex);
-    if (meta) return meta;
-  }
   return L.prescriptionLine(ex);
 }
 
@@ -1128,7 +1128,7 @@ function coachExerciseRxHtml(bi, ei){
   if (!window.LogColumns) return setRowsTable(bi, ei);
   if (!editing) {
     return `<p class="rx-summary">${esc(coachExerciseSummary(ex))}</p>
-      <p class="rx-summary muted">Set 1 from prescription · later sets autoreg in-session from difficulty slider.</p>
+      <p class="rx-summary muted">Sets + reps only — engine handles load · in-session autoreg after set 1.</p>
       ${coachTargetRirField(bi, ei)}
       <button type="button" class="btn small" style="margin-top:8px" onclick="openCoachExEdit(${bi},${ei})">Edit prescription</button>`;
   }

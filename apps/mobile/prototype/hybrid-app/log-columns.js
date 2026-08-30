@@ -24,6 +24,97 @@
     return KIND_MAP[key] || KIND_MAP.reps;
   }
 
+  function isLoadKind(kind) {
+    return kind === 'weight_kg' || kind === 'weight_pct_wm' || kind === 'weight_lwp';
+  }
+
+  function isEffortKind(kind) {
+    return kind === 'reps' || kind === 'reps_range' || kind === 'time_sec' || kind === 'distance_m';
+  }
+
+  function effortKindsOptionsHtml(selected) {
+    return KINDS.filter((k) => isEffortKind(k.key))
+      .map((k) => `<option value="${k.key}" ${k.key === selected ? 'selected' : ''}>${k.label}</option>`)
+      .join('');
+  }
+
+  function loadKindsOptionsHtml(selected) {
+    return KINDS.filter((k) => isLoadKind(k.key))
+      .map((k) => `<option value="${k.key}" ${k.key === selected ? 'selected' : ''}>${k.label}</option>`)
+      .join('');
+  }
+
+  function effortColumn(cols) {
+    return (cols || sheet.columns).find((c) => isEffortKind(c.kind));
+  }
+
+  function loadColumn(cols) {
+    return (cols || sheet.columns).find((c) => isLoadKind(c.kind));
+  }
+
+  function hasPinnedLoad(cols) {
+    const col = loadColumn(cols);
+    if (!col) return false;
+    const v = String((col.values || [])[0] ?? col.value ?? '').trim();
+    if (!v) return false;
+    if (col.kind === 'weight_pct_wm') return Number(v) >= 1 && Number(v) <= 100;
+    if (col.kind === 'weight_lwp') return !Number.isNaN(Number(v));
+    return true;
+  }
+
+  function coachDefaultColumns(ex) {
+    const setCount = Math.max(1, Number(ex && ex.sets) || 3);
+    const reps = String((ex && ex.reps) || '8');
+    const looksTime = /s(ec(onds?)?)?$/i.test(reps.split(',')[0].trim()) || (ex && ex.targetKind === 'seconds');
+    const effortRaw = reps.replace(/s(ec(onds?)?)?$/i, '').trim() || reps;
+    let effortKind = 'reps';
+    if (looksTime) effortKind = 'time_sec';
+    else if (/^\d+\s*[-–]\s*\d+$/.test(effortRaw.trim())) effortKind = 'reps_range';
+    else if (ex && ex.logColumns) {
+      const saved = ex.logColumns.find((c) => isEffortKind(c.kind));
+      if (saved) effortKind = saved.kind;
+    }
+    const cols = [
+      {
+        id: newId(),
+        kind: effortKind,
+        value: effortRaw,
+        values: splitValues(effortRaw, setCount),
+      },
+    ];
+    if (ex && ex.loadExpr && ex.loadExpr.exprKind === 'pct_of_max') {
+      const pct = String(Math.round(Number(ex.loadExpr.exprArg) * 100) || '');
+      cols.unshift({ id: newId(), kind: 'weight_pct_wm', value: pct, values: splitValues(pct, setCount) });
+    } else if (ex && ex.loadExpr && ex.loadExpr.exprKind === 'lwp_delta') {
+      const d = String(ex.loadExpr.exprArg ?? '');
+      cols.unshift({ id: newId(), kind: 'weight_lwp', value: d, values: splitValues(d, setCount) });
+    } else if (ex && String(ex.load || '').trim()) {
+      cols.unshift({
+        id: newId(),
+        kind: 'weight_kg',
+        value: String(ex.load),
+        values: splitValues(ex.load, setCount),
+      });
+    }
+    return cols;
+  }
+
+  function coachNormalizeColumns(ex) {
+    const setCount = Math.max(1, Number(ex && ex.sets) || 3);
+    if (ex && Array.isArray(ex.logColumns) && ex.logColumns.length) {
+      return ex.logColumns.map((c) => {
+        const kind = KIND_MAP[c.kind] ? c.kind : 'reps';
+        const value = c.value == null ? '' : String(c.value);
+        const values =
+          Array.isArray(c.values) && c.values.length
+            ? splitValues(c.values.join(','), setCount)
+            : splitValues(value, setCount);
+        return { id: c.id || newId(), kind, value: joinValues(values), values };
+      });
+    }
+    return coachDefaultColumns(ex || {});
+  }
+
   function splitValues(raw, setCount) {
     const n = Math.max(1, setCount | 0);
     let parts = String(raw == null ? '' : raw)
@@ -87,17 +178,19 @@
   }
 
   function syncLegacyFromColumns(ex, columns, setCount) {
-    const cols = (columns || normalizeColumns(ex)).map((c) => {
+    let cols = (columns || coachNormalizeColumns(ex)).map((c) => {
       const values = Array.isArray(c.values) ? c.values : splitValues(c.value, setCount || ex.sets || 1);
       return { id: c.id || newId(), kind: c.kind, value: joinValues(values), values };
     });
+    cols = cols.filter((c) => !isLoadKind(c.kind) || hasPinnedLoad([c]));
     ex.logColumns = cols;
     if (setCount) ex.sets = Math.max(1, setCount);
-    const effort = cols.find((c) => c.kind === 'reps' || c.kind === 'reps_range' || c.kind === 'time_sec' || c.kind === 'distance_m');
-    const loadCol = cols.find((c) => c.kind === 'weight_kg' || c.kind === 'weight_pct_wm' || c.kind === 'weight_lwp');
-    if (effort) ex.reps = String(effort.value || '').trim() || ex.reps || '1';
+    const effort = effortColumn(cols);
+    const loadCol = loadColumn(cols);
+    if (effort) ex.reps = String(effort.value || '').trim() || ex.reps || '8';
     delete ex.loadExpr;
-    if (loadCol) {
+    delete ex.load;
+    if (loadCol && hasPinnedLoad(cols)) {
       if (loadCol.kind === 'weight_pct_wm') {
         const pct = Number(String(loadCol.values?.[0] ?? loadCol.value).split(',')[0]);
         if (pct >= 1 && pct <= 100) ex.loadExpr = { exprKind: 'pct_of_max', exprArg: pct / 100 };
@@ -156,9 +249,61 @@
       restSec,
       targetRir,
       showOverrides: !!(ex && ex.logColumns && ex.logColumns.some((c) => perSetOverrideActive(c.values, sets))),
-      columns: normalizeColumns({ ...(ex || {}), sets }),
+      columns: coachNormalizeColumns({ ...(ex || {}), sets }),
     };
     return sheet;
+  }
+
+  function effortColumnIndex() {
+    return sheet.columns.findIndex((c) => isEffortKind(c.kind));
+  }
+
+  function loadColumnIndex() {
+    return sheet.columns.findIndex((c) => isLoadKind(c.kind));
+  }
+
+  function onSimpleEffortKind(kind) {
+    const idx = effortColumnIndex();
+    if (idx < 0) return;
+    onKindChange(idx, kind);
+  }
+
+  function onSimpleReps(value) {
+    const idx = effortColumnIndex();
+    if (idx < 0) return;
+    onPrescriptionChange(idx, value);
+  }
+
+  function ensureLoadColumn(kind) {
+    let idx = loadColumnIndex();
+    if (idx < 0) {
+      sheet.columns.unshift({
+        id: newId(),
+        kind: isLoadKind(kind) ? kind : 'weight_kg',
+        value: '',
+        values: splitValues('', sheet.sets),
+      });
+      idx = 0;
+    }
+    return idx;
+  }
+
+  function onPinLoadKind(kind) {
+    const idx = ensureLoadColumn(kind);
+    sheet.columns[idx].kind = isLoadKind(kind) ? kind : 'weight_kg';
+    refreshPrescription();
+    notifyChange();
+  }
+
+  function onPinLoadValue(value) {
+    const idx = ensureLoadColumn(loadColumn()?.kind || 'weight_kg');
+    onPrescriptionChange(idx, value);
+  }
+
+  function clearPinnedLoad() {
+    sheet.columns = sheet.columns.filter((c) => !isLoadKind(c.kind));
+    refreshPrescription();
+    notifyChange();
   }
 
   /** True when any set after 1 differs from set 1 (coach authored per-set overrides). */
@@ -338,103 +483,99 @@
     return String(v == null || v === '' ? '—' : v);
   }
 
-  function metricKindsLabel() {
-    return KINDS.map((k) => k.label).join(', ');
+  function builderPinLoadHtml() {
+    const pinned = hasPinnedLoad();
+    const load = loadColumn();
+    const loadKind = load ? load.kind : 'weight_kg';
+    const loadVal = load ? (load.values || [])[0] == null ? '' : load.values[0] : '';
+    if (!pinned) {
+      return `<details class="rx-overrides rx-advanced"><summary>Pin opening load (optional)</summary>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave blank — the engine sets load from working max, progression, and in-session autoreg. Only pin if you need a fixed kg, % WM, or LWP delta on set 1.</p>
+        <div class="rx-grid cols-2" style="margin-top:8px">
+          <div class="field"><label>Load type</label>
+            <select class="logcol-kind" onchange="LogColumns.onPinLoadKind(this.value)">${loadKindsOptionsHtml(loadKind)}</select></div>
+          <div class="field"><label>Set 1 value</label>
+            <input value="${String(loadVal).replace(/"/g, '&quot;')}" placeholder="e.g. 100 or 70" onchange="LogColumns.onPinLoadValue(this.value)" oninput="LogColumns.onPinLoadValue(this.value)"></div>
+        </div>
+      </details>`;
+    }
+    return `<details class="rx-overrides rx-advanced" open><summary>Pin opening load (optional)</summary>
+      <div class="rx-grid cols-2" style="margin-top:8px">
+        <div class="field"><label>Load type</label>
+          <select class="logcol-kind" onchange="LogColumns.onPinLoadKind(this.value)">${loadKindsOptionsHtml(loadKind)}</select></div>
+        <div class="field"><label>Set 1 value</label>
+          <input value="${String(loadVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onPinLoadValue(this.value)" oninput="LogColumns.onPinLoadValue(this.value)"></div>
+      </div>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedLoad()">Clear — use autopilot load</button>
+    </details>`;
   }
 
   function builderPrescriptionGridHtml() {
-    const cols = sheet.columns;
-    const metricCards = cols
-      .map((c, ci) => {
-        const meta = kindMeta(c.kind);
-        const val = (c.values || [])[0] == null ? '' : c.values[0];
-        const ph = meta.placeholder || '';
-        const removeBtn =
-          cols.length > 1
-            ? `<button type="button" class="btn ghost small rx-metric-remove" aria-label="Remove metric" onclick="LogColumns.removeColumn(${ci})">×</button>`
-            : '';
-        return `<div class="rx-metric-col">
-          <div class="row" style="align-items:center;gap:6px;margin-bottom:6px">
-            <select class="logcol-kind" aria-label="Metric ${ci + 1} type" onchange="LogColumns.onKindChange(${ci},this.value)">${optionsHtml(c.kind)}</select>
-            ${removeBtn}
-          </div>
-          <input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph || 'Set 1'}" aria-label="${meta.label} set 1" onchange="LogColumns.onPrescriptionChange(${ci},this.value)" oninput="LogColumns.onPrescriptionChange(${ci},this.value)">
-          <p class="rx-metric-hint">${shouldForwardFillColumn(c.kind) ? 'Applies to all sets' : 'Set 1 · later sets autoreg unless overridden'}</p>
-        </div>`;
-      })
-      .join('');
-    const addBtn =
-      cols.length < 3
-        ? `<button type="button" class="btn small" onclick="LogColumns.addColumn()">+ Add metric</button>`
-        : `<span class="muted" style="font-size:11px">Max 3 metrics</span>`;
+    const effort = effortColumn() || { kind: 'reps', values: ['8'] };
+    const meta = kindMeta(effort.kind);
+    const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
+    const ph = meta.placeholder || '8 or 6-8';
+    const pinned = hasPinnedLoad();
+    const loadLabel = pinned ? kindMeta(loadColumn().kind).label : 'Autopilot';
     return `<div class="card rx-prescription-card" id="builderPrescriptionCard" style="margin-top:10px">
-      <div class="row" style="align-items:flex-start">
-        <div>
-          <div class="title">Prescription</div>
-          <div class="meta">${sheet.sets} sets · set 1 below · sets 2+ autoreg in-session</div>
-        </div>
-        ${addBtn}
+      <div class="title">Prescription</div>
+      <div class="meta">${sheet.sets} sets · engine handles load · in-session autoreg after set 1</div>
+      <div class="rx-grid cols-2" style="margin-top:12px">
+        <div class="field"><label>Target</label>
+          <select class="logcol-kind" aria-label="Target type" onchange="LogColumns.onSimpleEffortKind(this.value)">${effortKindsOptionsHtml(effort.kind)}</select></div>
+        <div class="field"><label>${meta.loggerLabel}</label>
+          <input value="${String(repsVal).replace(/"/g, '&quot;')}" placeholder="${ph}" aria-label="Target reps or effort" onchange="LogColumns.onSimpleReps(this.value)" oninput="LogColumns.onSimpleReps(this.value)"></div>
       </div>
-      <div class="rx-metric-grid cols-${Math.min(3, cols.length)}">${metricCards}</div>
-      <p class="muted" style="margin:10px 0 0;font-size:11px;line-height:1.45">Loggable metrics: ${metricKindsLabel()}.</p>
+      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span><span class="autopilot-note">Working max + progression — you do not enter kg here</span></div>
+      ${builderPinLoadHtml()}
       <details class="rx-overrides" ${sheet.showOverrides ? 'open' : ''} ontoggle="LogColumns.toggleOverrides(this.open)">
-        <summary>Per-set overrides (optional)</summary>
+        <summary>Per-set rep overrides (optional)</summary>
         ${builderOverridesTableHtml()}
       </details>
     </div>`;
   }
 
   function builderOverridesTableHtml() {
-    const cols = sheet.columns;
-    const head = `<tr><th>Set</th>${cols.map((c) => `<th>${kindMeta(c.kind).loggerLabel}</th>`).join('')}</tr>`;
+    const effort = effortColumn();
+    if (!effort) return '';
+    const ci = sheet.columns.indexOf(effort);
+    const meta = kindMeta(effort.kind);
+    const head = `<tr><th>Set</th><th>${meta.loggerLabel}</th></tr>`;
     const body = Array.from({ length: sheet.sets }, (_, i) => {
-      const cells = cols
-        .map((c, ci) => {
-          const val = (c.values || [])[i] == null ? '' : c.values[i];
-          const ph = i === 0 ? kindMeta(c.kind).placeholder || '' : shouldForwardFillColumn(c.kind) ? 'same as set 1' : 'autoreg';
-          return `<td><input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></td>`;
-        })
-        .join('');
-      return `<tr><td>${i + 1}</td>${cells}</tr>`;
+      const val = (effort.values || [])[i] == null ? '' : effort.values[i];
+      const ph = i === 0 ? meta.placeholder || '' : 'same as set 1';
+      return `<tr><td>${i + 1}</td><td><input value="${String(val).replace(/"/g, '&quot;')}" placeholder="${ph}" onchange="LogColumns.onCellChange(${ci},${i},this.value)" oninput="LogColumns.onCellChange(${ci},${i},this.value)"></td></tr>`;
     }).join('');
     return `<table class="set-table rx-override-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
   }
 
   function builderLoggerTwinHtml() {
-    const cols = sheet.columns;
+    const effort = effortColumn();
+    const meta = effort ? kindMeta(effort.kind) : kindMeta('reps');
+    const effortVal = effort ? String((effort.values || [])[0] || '').trim() || '—' : '—';
     const targetRirLabel =
       sheet.targetRir != null ? `Target ${sheet.targetRir} RIR` : 'Target 2 RIR (default)';
-
-    const rows = Array.from({ length: sheet.sets }, (_, i) => {
-      const active = i === 0;
-      const cells = cols
-        .map((c) => {
-          const meta = kindMeta(c.kind);
-          const val = (c.values || [])[i] == null ? '' : c.values[i];
-          const display = String(val || '').trim() || (active ? '—' : 'autoreg');
-          return `<div><span class="mini">${meta.loggerLabel}</span><input disabled value="${display.replace(/"/g, '&quot;')}"></div>`;
-        })
-        .join('');
-      return `<div class="setrow builder-setrow ${active ? 'last-set' : ''} ${active ? '' : 'done'}" data-set="${i}">
-        <div class="setnum">${i + 1}<span class="target">${effortTarget(i)}</span></div>
-        ${cells}
-        <div><span class="mini">Difficulty</span><input disabled placeholder="${active ? 'slider' : '—'}" aria-label="Difficulty slider preview"></div>
-        <div class="btns" style="margin:0;gap:5px"><button type="button" class="btn small primary" disabled>${active ? 'Next' : 'Done'}</button></div>
-      </div>`;
-    }).join('');
+    const loadDisplay = hasPinnedLoad()
+      ? String((loadColumn().values || [])[0] || '').trim()
+      : 'Autopilot';
 
     return `<div class="card" style="margin-top:14px" id="builderLoggerCard">
       <div class="row">
         <div>
           <div class="title">Athlete logger preview</div>
-          <div class="meta">One set at a time · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
+          <div class="meta">Set 1 of ${sheet.sets} · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
         </div>
         <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
       </div>
-      <div class="guardrail" style="margin-top:10px">Athlete logs <b>${cols.map((c) => kindMeta(c.kind).loggerLabel).join(' + ')}</b> each set, then rates difficulty — engine adjusts the next set.</div>
+      <div class="guardrail" style="margin-top:10px">Athlete sees <b>${loadDisplay}</b> load × <b>${effortVal}</b> ${meta.loggerLabel.toLowerCase()}, then rates difficulty — engine adjusts set 2+.</div>
       <div class="divider"></div>
-      ${rows}
-      <button type="button" class="btn primary block" style="margin-top:12px" disabled>Complete exercise</button>
+      <div class="setrow builder-setrow last-set" data-set="0">
+        <div class="setnum">1<span class="target">${effortVal}</span></div>
+        <div><span class="mini">Weight</span><input disabled value="${loadDisplay.replace(/"/g, '&quot;')}"></div>
+        <div><span class="mini">${meta.loggerLabel}</span><input disabled value="${effortVal.replace(/"/g, '&quot;')}"></div>
+        <div><span class="mini">Difficulty</span><input disabled placeholder="slider"></div>
+        <div class="btns" style="margin:0"><button type="button" class="btn small primary" disabled>Next</button></div>
+      </div>
     </div>`;
   }
 
@@ -493,9 +634,11 @@
     KINDS,
     kindMeta,
     normalizeColumns,
+    coachNormalizeColumns,
     defaultColumns,
     syncLegacyFromColumns,
     columnsMeta,
+    hasPinnedLoad,
     builderColumnsHtml,
     builderPrescriptionHtml,
     builderPrescriptionGridHtml,
@@ -510,6 +653,11 @@
     onPrescriptionChange,
     onCellChange,
     onValueChange: onCellChange,
+    onSimpleReps,
+    onSimpleEffortKind,
+    onPinLoadKind,
+    onPinLoadValue,
+    clearPinnedLoad,
     setChangeHandler,
     addColumn,
     removeColumn,
