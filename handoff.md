@@ -19,7 +19,7 @@
 | **Open PR** | **#97** `cursor/coach-athlete-portal-plan-84a0` — coach → athlete portal (phases 1–5, `performed_set` skipped) |
 | **Five-engine research** | **Merged to `main` at `1a249a4`** — `evidence-platform/` — read **`evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md`** |
 | **Cache** | **`the-hybrid-athlete-engine-v95`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.14`** after #97 merge + upload (was **`1.0.13`** 28 Aug) |
+| **Capgo** | **`dogfood` @ `1.0.15`** (portal OTA uploaded 30 Aug — pending #97 merge to `main`) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html — **real:** Supabase sign-in → roster link athlete UUID → Publish; **demo:** `dan@thehybrid.local` / `demo` (offline only) |
 | **APK** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
@@ -44,8 +44,8 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | `292f04bd-a0a6-490c-8b7d-03c234eb4915` |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.14`** (post-#97) |
-| Upload | `CAPGO_BUNDLE_VERSION=1.0.14 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Channel / bundle | `dogfood` / **`1.0.15`** |
+| Upload | `CAPGO_BUNDLE_VERSION=1.0.15 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 Also store `CAPGO_TOKEN` in **Cursor Cloud environment secrets**.
 
@@ -97,7 +97,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 
 - **One athlete app:** Hybrid HTML — **Home · Library · Calendar · Settings**
 - **Five engines wired:** Strength · Conditioning · Nutrition · Recovery (debt row) · Coordinator (silent only)
-- **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.13`** on phones until **`1.0.14`** OTA after #97
+- **Strength cloud sync v3** · **Recovery debt/repay** · WHOOP + Concept2 · Capgo **`1.0.15`** on dogfood (portal OTA from #97 branch)
 - **Verify:** `pnpm run verify` green; `dogfood-debt.smoke.mjs` + **`coach-portal-athlete`** in CI
 - Key merges: **#96** Settings scroll (#92 recovery · **#93** vault · **#91** coach polish)
 - **Evidence platform:** merged at **`1a249a4`** (2,814 acquired sources, 0 promoted)
@@ -109,7 +109,7 @@ Research / offline only until owner approves app wiring. Add to Netlify env if u
 
 ### A — Product on `main` (ship the app)
 
-- [ ] Phone dogfood proof — Capgo **1.0.14** (post-#97) → coach publish → athlete pull → complete → coach **Completed** chip
+- [ ] Phone dogfood proof — Capgo **1.0.15** → coach publish → athlete pull → complete → coach **Completed** chip
 - [ ] Phone dogfood proof — strapless cond → recovery session → debt row moves
 - [ ] Hybrid week in Library + Calendar + web↔phone sync proof
 - [ ] Logger friction pass
