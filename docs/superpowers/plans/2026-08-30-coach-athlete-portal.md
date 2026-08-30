@@ -110,15 +110,15 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 ---
 
-## Current gaps (baseline)
+## Current gaps (baseline — resolved in PR #97)
 
-1. Athlete cannot distinguish coach vs self sessions (`source: 'coach-bridge'` unused in UI).
-2. Pull is Settings-only; copy mentions bridge file / same browser.
-3. No athlete toast on cloud merge.
-4. No coach delivery strip (push errors → console).
-5. No completion write-back (`assigned_session.state` stays `published`).
-6. Roster: “Link my account” only — no paste UUID.
-7. Strength `performed_set` not linked to `cloudAssignedId`.
+1. ~~Athlete cannot distinguish coach vs self sessions~~ → **From coach** badge + `isCoachPrescription`
+2. ~~Pull is Settings-only~~ → **Check for updates** + foreground auto-sync
+3. ~~No athlete toast on cloud merge~~ → `showPortalToast` / merge callback
+4. ~~No coach delivery strip~~ → `rx-delivery-strip` + publish toasts
+5. ~~No completion write-back~~ → `CoachCloud.markCompleted` + **Completed** chip
+6. ~~Roster: “Link my account” only~~ → UUID paste + link
+7. Strength `performed_set` not linked to `cloudAssignedId` — **out of scope** (Phase 5.3)
 
 ---
 
@@ -147,17 +147,17 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 **Tasks**
 
-- [ ] **1.1** `isCoachPrescription(session)` helper: `source === 'coach-bridge' \|\| coachSessionId`.
-- [ ] **1.2** Calendar `sessionCalendarCard`: copper left border + pill **From coach** when prescription.
-- [ ] **1.3** Home `homeBriefingHtml`: if today’s session is prescription → eyebrow **Today’s prescription** + **Start workout**; if signed in + no sessions → **Check for coach updates** primary.
-- [ ] **1.4** Settings coach card: title **Coach prescriptions**; show last pull time + counts from `CoachSync.status`; primary **Check for updates** (wraps existing pull); secondary import file de-emphasized.
-- [ ] **1.5** Toast/banner on merge: “Coach added N workout(s).” Auto-dismiss 4s; respect reduced motion.
-- [ ] **1.6** Copy audit: remove “same browser” as primary path when cloud signed in.
+- [x] **1.1** `isCoachPrescription(session)` helper: `source === 'coach-bridge' \|\| coachSessionId`.
+- [x] **1.2** Calendar `sessionCalendarCard`: copper left border + pill **From coach** when prescription.
+- [x] **1.3** Home `homeBriefingHtml`: if today’s session is prescription → eyebrow **Today’s prescription** + **Start workout**; if signed in + no sessions → **Check for coach updates** primary.
+- [x] **1.4** Settings coach card: title **Coach prescriptions**; show last pull time + counts from `CoachSync.status`; primary **Check for updates** (wraps existing pull); secondary import file de-emphasized.
+- [x] **1.5** Toast/banner on merge: “Coach added N workout(s).” Auto-dismiss 4s; respect reduced motion.
+- [x] **1.6** Copy audit: remove “same browser” as primary path when cloud signed in.
 
 **Tests**
 
-- [ ] Extend or add `coach-portal-athlete.smoke.mjs` (badge helper, status shape).
-- [ ] `pnpm run verify`
+- [x] Extend or add `coach-portal-athlete.smoke.mjs` (badge helper, status shape).
+- [x] `pnpm run verify`
 
 **Walkthrough artifact**
 
@@ -179,17 +179,17 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 **Tasks**
 
-- [ ] **2.1** Sidebar or header **Delivery** strip: signed in ✓ · last push time · sessions pushed count · error one-liner.
-- [ ] **2.2** Roster row: **Cloud linked** / **Needs link** + paste field for Supabase `auth.users` uuid (save to `cloudUserId`).
-- [ ] **2.3** Publish chip / Publish all: toast **Published to [name]** or explicit error (RLS / missing id).
-- [ ] **2.4** Demote **Demo coach (offline)** visually (secondary, below fold) — real login is default path.
-- [ ] **2.5** Link **Open athlete app** in coach sidebar → athlete Netlify URL.
+- [x] **2.1** Sidebar or header **Delivery** strip: signed in ✓ · last push time · sessions pushed count · error one-liner.
+- [x] **2.2** Roster row: **Cloud linked** / **Needs link** + paste field for Supabase `auth.users` uuid (save to `cloudUserId`).
+- [x] **2.3** Publish chip / Publish all: toast **Published to [name]** or explicit error (RLS / missing id).
+- [x] **2.4** Demote **Demo coach (offline)** visually (secondary, below fold) — real login is default path.
+- [x] **2.5** Link **Open athlete app** in coach sidebar → athlete Netlify URL.
 
 **Tests**
 
-- [ ] `coach-cloud.smoke.mjs` — status fields
-- [ ] `coach-v1-e2e.smoke.mjs` still green
-- [ ] `pnpm run verify`
+- [x] `coach-cloud.smoke.mjs` — status fields
+- [x] `coach-v1-e2e.smoke.mjs` still green
+- [x] `pnpm run verify`
 
 **Walkthrough artifact**
 
@@ -210,13 +210,13 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 **Tasks**
 
-- [ ] **3.1** On `visibilitychange` → visible + Supabase signed in → debounced `CoachCloud.pullForAthlete` (30–60s min interval).
-- [ ] **3.2** If merged > 0 and not on Settings tab → toast + optional Home refresh.
-- [ ] **3.3** Settings shows **Auto-sync on** + last auto pull timestamp.
+- [x] **3.1** On `visibilitychange` → visible + Supabase signed in → debounced `CoachCloud.pullForAthlete` (30–60s min interval).
+- [x] **3.2** If merged > 0 and not on Settings tab → toast + optional Home refresh.
+- [x] **3.3** Settings shows **Auto-sync on** + last auto pull timestamp.
 
 **Tests**
 
-- [ ] Smoke: schedulePull not called with reason `coach-sync-pull` loop
+- [x] Smoke: schedulePull not called with reason `coach-sync-pull` loop
 - [ ] Manual: Capgo APK foreground pull
 
 **Walkthrough artifact**
@@ -239,10 +239,10 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 **Tasks**
 
-- [ ] **4.1** When athlete completes session with `cloudAssignedId`, PATCH `assigned_session.state = 'completed'` (authenticated athlete policy).
-- [ ] **4.2** Coach calendar chip: **Completed** pill when local session or cloud row completed.
-- [ ] **4.3** Coach pull on load (read-only): refresh completion states for published rows.
-- [ ] **4.4** Unpublish: athlete sees **Withdrawn** on scheduled (not active/completed) prescriptions.
+- [x] **4.1** When athlete completes session with `cloudAssignedId`, PATCH `assigned_session.state = 'completed'` (authenticated athlete policy).
+- [x] **4.2** Coach calendar chip: **Completed** pill when local session or cloud row completed.
+- [x] **4.3** Coach pull on load (read-only): refresh completion states for published rows.
+- [x] **4.4** Unpublish: athlete sees **Withdrawn** on scheduled (not active/completed) prescriptions.
 
 **Constraints**
 
@@ -251,8 +251,8 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 **Tests**
 
-- [ ] New smoke: completion patch mocked client
-- [ ] `pnpm run verify`
+- [x] New smoke: completion patch mocked client
+- [x] `pnpm run verify`
 
 **Walkthrough artifact**
 
@@ -266,8 +266,8 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 **Tasks**
 
-- [ ] **5.1** Cloud publish nutrition payload in `resolved_snapshot` (same row or documented extension) — athlete `NutritionUI` reads coach override.
-- [ ] **5.2** Coach chip shows “Macros published” when nutrition bundle present.
+- [x] **5.1** Cloud publish nutrition payload in `resolved_snapshot` (same row or documented extension) — athlete `NutritionUI` reads coach override.
+- [x] **5.2** Coach chip shows “Macros published” when nutrition bundle present.
 - [ ] **5.3** Future: `performed_set` keyed to `assigned_session.id` for coach summary (needs strength-sync design — **separate migration review**).
 
 **Gate:** Owner sign-off before 5.3 schema touch.
@@ -323,7 +323,7 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 
 ---
 
-## Handoff snippet (update after Phase 1 ships)
+## Handoff snippet (shipped in PR #97)
 
 ```markdown
 ### Coach → athlete portal
@@ -331,11 +331,18 @@ Touch: min-height 44px on actions; `prefers-reduced-motion: reduce` → no fade 
 - Coach delivery strip + roster UUID paste (Phase 2)
 - Auto pull on foreground (Phase 3)
 - Completion write-back (Phase 4)
+- Nutrition in cloud snapshot + Macros chip (Phase 5.1–5.2; 5.3 deferred)
 - Plan: `docs/superpowers/plans/2026-08-30-coach-athlete-portal.md`
 ```
 
 ---
 
+## Status
+
+**Implemented** on branch `cursor/coach-athlete-portal-plan-84a0` (**PR #97**, commit `4395685`). Phases 1–5.2 complete; Phase 5.3 (`performed_set`) explicitly skipped. Walkthrough videos per phase still optional for owner dogfood proof.
+
+---
+
 ## Recommended start
 
-**Phase 1 only** — highest feel-per-line-of-code. Stop for owner review before Phase 2.
+**Merge PR #97** → Capgo **`1.0.15`** OTA (uploaded from branch) → owner dogfood proof (coach publish → phone auto-sync → complete → coach **Completed**).
