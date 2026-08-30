@@ -33,6 +33,9 @@ for (const needle of [
 ]) {
   if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);
 }
+if (html.includes('Exercise instructions')) {
+  throw new Error('coach.html must not show per-exercise instructions field in builder');
+}
 if (!src.includes('autopilot load')) throw new Error('coach-loop.js missing autopilot load hint');
 if (!src.includes('Uncategorized')) throw new Error('coach-loop.js missing Uncategorized category');
 if (!src.includes('COND_EFFORTS')) throw new Error('coach-loop.js missing COND_EFFORTS');

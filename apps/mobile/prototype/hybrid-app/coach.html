@@ -1462,7 +1462,6 @@ function blockExerciseHtml(b, bi){
       <button type="button" class="exercise-pick grow" onclick="openExPicker(${bi},${ei})">${esc(e.name||'Choose exercise')}</button>
       <button type="button" class="kebab-btn" title="Remove exercise" onclick="removeEx(${bi},${ei})">×</button></div>
     ${coachExerciseRxHtml(bi, ei)}
-    <div class="field"><label>Exercise instructions</label><textarea oninput="tpl(ui.templateId).blocks[${bi}].exercises[${ei}].coachNote=this.value;persist()">${esc(e.coachNote||'')}</textarea></div>
   </div>`).join('');
   return `${exHtml}<button type="button" class="btn small" style="margin-top:10px" onclick="addEx(${bi})">Add exercise</button>`;
 }
