@@ -338,6 +338,10 @@
       var decision = global.HybridStrength.Progression.decideProgression(exposures, { exerciseId: exerciseId });
       var action = decision.action;
       var reasonCodes = decision.reasonCodes.slice();
+      if (opts.bigMacOverride) {
+        action = opts.bigMacOverride;
+        reasonCodes.push('big_mac_override');
+      }
       var performanceOverride = false;
 
       if (session.sessionPain === 'yes') {
