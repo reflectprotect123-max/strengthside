@@ -37,12 +37,13 @@
     { key: 'hard', name: 'Hard', zoneKey: 'anaerobic', rpe: '8–9.5', cue: 'a few words at a time' },
   ];
 
+  const REMOVED_DEMO_ATHLETE_IDS = ['ath-alex-chen', 'ath-jordan-hale'];
+  const REMOVED_DEMO_ACCOUNT_IDS = ['acct-alex', 'acct-jordan'];
+
   const IDS = {
     coachAccount: 'acct-dan',
     coach: 'coach-dan',
     athleteDan: 'ath-dan-veldman',
-    athleteAlex: 'ath-alex-chen',
-    athleteJordan: 'ath-jordan-hale',
     team: 'team-hybrid-sc',
     program: 'prog-hybrid-base',
     tplStrength: 'tpl-full-body-strength',
@@ -1049,11 +1050,7 @@
     opts = opts || {};
     const startMonday = opts.startMonday || '2026-08-24';
     const templates = seedTemplates();
-    const athletes = [
-      { id: IDS.athleteDan, name: 'Dan Veldman', initials: 'DV' },
-      { id: IDS.athleteAlex, name: 'Alex Chen', initials: 'AC' },
-      { id: IDS.athleteJordan, name: 'Jordan Hale', initials: 'JH' },
-    ];
+    const athletes = [{ id: IDS.athleteDan, name: 'Dan Veldman', initials: 'DV' }];
     const state = {
       version: 1,
       currentUserId: null,
@@ -1074,22 +1071,6 @@
           name: 'Dan Veldman',
           athleteId: IDS.athleteDan,
         },
-        {
-          id: 'acct-alex',
-          email: 'alex@thehybrid.local',
-          password: 'demo',
-          role: 'athlete',
-          name: 'Alex Chen',
-          athleteId: IDS.athleteAlex,
-        },
-        {
-          id: 'acct-jordan',
-          email: 'jordan@thehybrid.local',
-          password: 'demo',
-          role: 'athlete',
-          name: 'Jordan Hale',
-          athleteId: IDS.athleteJordan,
-        },
       ],
       coach: { id: IDS.coach, name: 'Dan' },
       athletes,
@@ -1097,7 +1078,7 @@
         {
           id: IDS.team,
           name: 'hybrid S&C',
-          athleteIds: [IDS.athleteDan, IDS.athleteAlex, IDS.athleteJordan],
+          athleteIds: [IDS.athleteDan],
         },
       ],
       exercises: coreExercises(),
@@ -1159,6 +1140,17 @@
     };
   }
 
+  function pruneRemovedDemoAthletes(state) {
+    if (!state) return state;
+    state.athletes = (state.athletes || []).filter((a) => !REMOVED_DEMO_ATHLETE_IDS.includes(a.id));
+    state.accounts = (state.accounts || []).filter((a) => !REMOVED_DEMO_ACCOUNT_IDS.includes(a.id));
+    for (const team of state.teams || []) {
+      team.athleteIds = (team.athleteIds || []).filter((id) => !REMOVED_DEMO_ATHLETE_IDS.includes(id));
+    }
+    state.sessions = (state.sessions || []).filter((s) => !REMOVED_DEMO_ATHLETE_IDS.includes(s.athleteId));
+    return state;
+  }
+
   function loadState(storage, opts) {
     storage = storage || defaultStorage();
     try {
@@ -1171,7 +1163,7 @@
             mealDays: [],
             checkInReviews: [],
           };
-          return parsed;
+          return pruneRemovedDemoAthletes(parsed);
         }
       }
     } catch (e) {
