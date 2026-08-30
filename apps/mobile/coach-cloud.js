@@ -57,6 +57,18 @@
     return athlete.cloudUserId || athlete.authUserId || null;
   }
 
+  function nutritionPayloadHasContent(payload) {
+    if (!payload) return false;
+    if (payload.mealDay) return true;
+    if ((payload.mealDays || []).length) return true;
+    const t = payload.targets;
+    if (t) {
+      const n = (v) => Number(v) || 0;
+      if (n(t.calories) > 0 || n(t.proteinG) > 0 || n(t.carbsG) > 0 || n(t.fatG) > 0) return true;
+    }
+    return false;
+  }
+
   function nutritionSnapshot(state, athleteId, sessionDate) {
     const N = typeof globalThis !== 'undefined' ? globalThis.CoachNutrition : null;
     const L = typeof globalThis !== 'undefined' ? globalThis.CoachLoop : null;
@@ -71,7 +83,7 @@
       payload.targets = nut.targetsByAthlete[athleteId]
         ? JSON.parse(JSON.stringify(nut.targetsByAthlete[athleteId]))
         : null;
-      return payload;
+      return nutritionPayloadHasContent(payload) ? payload : null;
     } catch (_) {
       return null;
     }
@@ -113,7 +125,7 @@
         timezone: row.timezone,
         coach_session_key: row.coach_session_key,
       };
-      if (existing.data.state === 'draft') {
+      if (row.resolved_snapshot) {
         patch.resolved_snapshot = row.resolved_snapshot;
         patch.published_at = row.published_at;
       }

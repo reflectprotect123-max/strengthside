@@ -56,7 +56,7 @@
     return (
       payload.athletes.find(function (a) {
         return String(a.email || '').toLowerCase() === email;
-      }) || payload.athletes[0] || null
+      }) || null
     );
   }
 
@@ -70,10 +70,7 @@
       return (
         s.coachSessionId === incoming.coachSessionId ||
         s.id === incoming.id ||
-        (s.cloudAssignedId && incoming.cloudAssignedId && s.cloudAssignedId === incoming.cloudAssignedId) ||
-        (s.date === incoming.date &&
-          s.templateId === incoming.templateId &&
-          s.source === 'coach-bridge')
+        (s.cloudAssignedId && incoming.cloudAssignedId && s.cloudAssignedId === incoming.cloudAssignedId)
       );
     });
     if (idx >= 0) {

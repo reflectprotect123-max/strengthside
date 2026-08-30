@@ -782,8 +782,13 @@
   /** Mon–Sun grid cells; null = padding before/after month. */
   function monthGridCells(monthKey) {
     const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
-    const y = parts[0];
-    const m = parts[1];
+    let y = parts[0];
+    let m = parts[1];
+    if (!y || !m || m < 1 || m > 12) {
+      const fb = today().slice(0, 7).split('-').map(Number);
+      y = fb[0];
+      m = fb[1];
+    }
     const pad = (n) => String(n).padStart(2, '0');
     const first = new Date(y, m - 1, 1);
     const startOffset = (first.getDay() + 6) % 7;
@@ -823,15 +828,25 @@
     const horizon = addDays(start, 21);
     const athletes = state.athletes || [];
     const needAthletes = athletes.filter((a) => {
-      const upcoming = (state.sessions || []).filter(
+      const inHorizon = (state.sessions || []).filter(
         (s) =>
           s.athleteId === a.id &&
           s.date >= start &&
           s.date <= horizon &&
           s.status !== 'completed',
       );
-      if (!upcoming.length) return true;
-      return upcoming.some((s) => !s.published);
+      if (!inHorizon.length) {
+        const hasFuturePublished = (state.sessions || []).some(
+          (s) =>
+            s.athleteId === a.id &&
+            s.date >= start &&
+            s.published &&
+            s.status !== 'completed',
+        );
+        if (hasFuturePublished) return false;
+        return true;
+      }
+      return inHorizon.some((s) => !s.published);
     });
     return { athletes: needAthletes, teams: [] };
   }

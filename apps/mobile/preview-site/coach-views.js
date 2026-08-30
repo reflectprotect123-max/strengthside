@@ -319,6 +319,7 @@
     (sessions || []).forEach(function (s, i) {
       if (wasPublished[i]) return;
       L().unpublishSession(s);
+      s.hasNutritionBundle = false;
     });
     persist();
     ctx.render();
@@ -357,17 +358,35 @@
 
   function unpublishChip(id) {
     var s = ctx.ses(id);
+    var wasPublished = s ? !!s.published : false;
     if (s) L().unpublishSession(s);
     ui().chipMenu = null;
     persist();
     ctx.render();
     if (root.CoachCloud && CoachCloud.unpublishSession) {
-      CoachCloud.unpublishSession(S(), s).catch(function (e) {
-        notifyPublishResult(
-          { ok: false, errors: [{ error: String((e && e.message) || e) }] },
-          s && ctx.athleteBy(s.athleteId) && ctx.athleteBy(s.athleteId).name,
-        );
-      });
+      CoachCloud.unpublishSession(S(), s)
+        .then(function (r) {
+          if (r && !r.ok && wasPublished && s) {
+            L().publishSession(s);
+            persist();
+            ctx.render();
+            notifyPublishResult(
+              r,
+              s && ctx.athleteBy(s.athleteId) && ctx.athleteBy(s.athleteId).name,
+            );
+          }
+        })
+        .catch(function (e) {
+          if (wasPublished && s) {
+            L().publishSession(s);
+            persist();
+            ctx.render();
+          }
+          notifyPublishResult(
+            { ok: false, errors: [{ error: String((e && e.message) || e) }] },
+            s && ctx.athleteBy(s.athleteId) && ctx.athleteBy(s.athleteId).name,
+          );
+        });
     }
   }
 
@@ -449,11 +468,15 @@
         : '';
     var empty =
       !sessions.length && expanded
-        ? '<div class="cal-empty-actions"><button type="button" class="btn small" onclick="CoachViews.openAddFromLibrary(\'' +
-          date +
-          "','" +
-          athleteId +
-          '\')">Add from library</button></div>'
+        ? teamMode
+          ? '<div class="cal-empty-actions"><button type="button" class="btn small" onclick="CoachViews.openAddFromLibrary(\'' +
+            date +
+            '\',\'\',true)">Add from library</button></div>'
+          : '<div class="cal-empty-actions"><button type="button" class="btn small" onclick="CoachViews.openAddFromLibrary(\'' +
+            date +
+            "','" +
+            athleteId +
+            '\')">Add from library</button></div>'
         : '';
     return (
       '<div class="cal-day' +
@@ -479,8 +502,19 @@
     ctx.render();
   }
 
-  function openAddFromLibrary(date, athleteId) {
-    ui().libPick = { date: date, athleteId: athleteId };
+  function openAddFromLibrary(date, athleteId, teamMode) {
+    if (teamMode || (!athleteId && ui().view === 'team')) {
+      ui().libPick = { date: date, teamId: ui().teamId, pickAthlete: true };
+    } else {
+      ui().libPick = { date: date, athleteId: athleteId };
+    }
+    ctx.render();
+  }
+
+  function pickLibraryAthlete(athleteId) {
+    var pick = ui().libPick;
+    if (!pick || !pick.pickAthlete) return;
+    ui().libPick = { date: pick.date, athleteId: athleteId };
     ctx.render();
   }
 
@@ -500,6 +534,32 @@
   function libraryPickOverlay() {
     var pick = ui().libPick;
     if (!pick) return '';
+    if (pick.pickAthlete) {
+      var team = ctx.team(pick.teamId);
+      var athleteList = (team && team.athleteIds) || [];
+      var athletes = athleteList
+        .map(function (aid) {
+          var a = ctx.athleteBy(aid);
+          if (!a) return '';
+          return (
+            '<button type="button" class="picker-item" onclick="CoachViews.pickLibraryAthlete(\'' +
+            aid +
+            '\')"><span>' +
+            esc(a.name) +
+            '</span></button>'
+          );
+        })
+        .join('');
+      return (
+        '<div class="picker-overlay" onclick="if(event.target===this)ui.libPick=null;render()">' +
+        '<div class="picker-panel"><div class="row"><b>Choose athlete</b><button type="button" class="btn ghost small" onclick="ui.libPick=null;render()">Close</button></div>' +
+        '<p class="muted">' +
+        esc(pick.date) +
+        '</p><div class="picker-list">' +
+        (athletes || '<div class="muted">No athletes on this team.</div>') +
+        '</div></div></div>'
+      );
+    }
     var list = (S().templates || [])
       .map(function (t) {
         return (
@@ -592,7 +652,7 @@
     var t = ctx.team(ui().teamId);
     if (!t) return teamListHtml();
     var sessions = L().teamCalendar(S(), t.id, monthKey());
-    return calendarShell(t.name, 'teams', '', sessions, (t.athleteIds || [])[0] || '', true);
+    return calendarShell(t.name, 'teams', '', sessions, '', true);
   }
 
   /* ---------- Nutrition N1–N3 ---------- */
@@ -755,6 +815,7 @@
     shiftCalMonth: shiftCalMonth,
     toggleCalDay: toggleCalDay,
     openAddFromLibrary: openAddFromLibrary,
+    pickLibraryAthlete: pickLibraryAthlete,
     pickLibraryTemplate: pickLibraryTemplate,
     saveNutOverride: saveNutOverride,
     clearNutOverride: clearNutOverride,
