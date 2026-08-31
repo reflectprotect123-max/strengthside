@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v4'"), 'migration version');
+must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v5'"), 'migration version');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
 must(html.includes('function normalizeAthleteExercise'), 'normalizeAthleteExercise');
 must(html.includes('function normalizeAthleteCondBlock'), 'normalizeAthleteCondBlock');
@@ -100,13 +100,13 @@ const strengthState = applyAthleteBuilderPatch({
   ],
   sessions: [],
 });
-must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v4', 'migration stamp');
+must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v5', 'migration stamp');
 must(strengthState.templates[0].blocks.length === 1, 'warm/cool text blocks removed');
 must(strengthState.templates[0].blocks[0].type === 'strength', 'single strength block');
 must(strengthState.templates[0].blocks[0].exercises[0].autopilotVolume === true, 'template exercise migrated');
 
 const condState = applyAthleteBuilderPatch({
-  meta: { athleteBuilderVersion: 'athlete-builder-v3' },
+  meta: { athleteBuilderVersion: 'athlete-builder-v4' },
   templates: [
     {
       id: 'tpl-cond',
