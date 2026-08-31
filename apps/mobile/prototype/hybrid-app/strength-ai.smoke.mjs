@@ -16,9 +16,9 @@ const recoverySrc =
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('strength-ai.js')) throw new Error('index.html missing strength-ai.js');
-if (!html.includes('llmProgression')) throw new Error('settings missing llmProgression toggle');
-if (!html.includes('Show Library strength builder')) throw new Error('settings missing plain-language builder toggle');
-if (!html.includes('settings-toggle-help')) throw new Error('settings toggle helper copy missing');
+if (html.includes('Show Library strength builder')) throw new Error('coach builder should not be a settings toggle');
+if (html.includes('settings.llmCoachIntent=this.checked')) throw new Error('llmCoachIntent should not be a settings toggle');
+if (html.includes('settings.llmProgression=this.checked')) throw new Error('llmProgression should not be a settings toggle');
 
 const sandbox = { window: {}, console, fetch: () => Promise.reject(new Error('no network')) };
 sandbox.window = sandbox;
@@ -37,14 +37,17 @@ const decision = StrengthAI.validateProgressionDecision({
 });
 if (!decision || decision.action !== 'hold') throw new Error('validateProgressionDecision failed');
 
+if (!StrengthAI.llmEnabled({ settings: {} })) {
+  throw new Error('progression AI should be on by default');
+}
 if (!StrengthAI.llmEnabled({ settings: { llmProgression: true } })) {
   throw new Error('llmProgression true should enable');
 }
-if (StrengthAI.llmEnabled({ settings: { llmProgression: false, llmCoachIntent: true } })) {
+if (StrengthAI.llmEnabled({ settings: { llmProgression: false } })) {
   throw new Error('llmProgression false should disable progression AI');
 }
 if (!StrengthAI.llmEnabled({ settings: { llmCoachIntent: true } })) {
-  throw new Error('default progression AI should follow coach intent toggle');
+  throw new Error('progression AI stays on when coach intent flag set');
 }
 
 const merged = StrengthAdapter.mergeAiProgressionAction('progress', { action: 'hold', reasonCodes: ['caution'] });

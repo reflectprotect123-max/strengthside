@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v122'"), 'LOCAL_BUILD v119');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v122'"), 'SW v119');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v123'"), 'LOCAL_BUILD v119');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v123'"), 'SW v119');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -39,7 +39,8 @@ must(/\.btn\.small\{[^}]*min-height:var\(--tap-min\)/.test(html), 'btn.small use
 
 
 must(html.includes('function athleteHasActiveCoachStrength'), 'athleteHasActiveCoachStrength');
-must(html.includes("S.settings.showStrengthBuilder!==false"), 'strength builder default-on');
+must(html.includes('function coachControlsStrength(){return false}'), 'builder always available with coach rx');
+must(!html.includes('settings.showStrengthBuilder=this.checked'), 'no builder settings toggle');
 must(html.includes('ath-lift-card'), 'ath-lift-card markup');
 must(!html.includes("coach-strength-hidden .ath-strength-build{display:none"), 'coach gate no longer hides athlete builder CSS');
 
