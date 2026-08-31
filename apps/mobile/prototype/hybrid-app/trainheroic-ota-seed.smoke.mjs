@@ -13,7 +13,8 @@ must(html.includes('function purgeTrainHeroicCalendarSessions'), 'purge helper')
 must(html.includes('function clearTrainHeroicCalendar'), 'Settings clear button');
 must(html.includes('bootTrainHeroicSeed'), 'manual TrainHeroic import helper kept');
 must(!html.includes('setTimeout(function(){bootTrainHeroicSeed()}'), 'no auto seed on boot');
-must(html.includes('Import TrainHeroic (optional)'), 'optional manual import in Settings');
+must(!html.includes('Import TrainHeroic (optional)'), 'TrainHeroic import button removed from Settings');
+must(!html.includes('onclick=retryTrainHeroicOtaSeed()'), 'no Settings TrainHeroic import CTA');
 must(html.includes('isTrainHeroicSession'), 'session detector');
 must(html.includes('function exerciseSuggestHtml'), 'custom exercise suggest');
 must(html.includes('function pickExerciseSuggest'), 'pick suggest');
