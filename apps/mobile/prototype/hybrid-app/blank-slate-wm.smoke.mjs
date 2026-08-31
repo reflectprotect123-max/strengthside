@@ -16,8 +16,8 @@ const sw = readFileSync(join(dir, 'service-worker.js'), 'utf8');
 const bundle = readFileSync(join(dir, 'strength-bundle.js'), 'utf8');
 const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v123'"), 'LOCAL_BUILD v104');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v123'"), 'SW v104');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v124'"), 'LOCAL_BUILD v104');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v124'"), 'SW v104');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(html), 'athlete app has no TrainHeroic code');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(sw), 'service worker has no TrainHeroic seed cache');
 must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise seed on boot');
