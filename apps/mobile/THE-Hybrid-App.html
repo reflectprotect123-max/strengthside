@@ -953,7 +953,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v107';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v108';
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
 function ensureLocalReady(state){state=state||{};state.meta=state.meta||{};state.meta.localRevision=num(state.meta.localRevision);state.meta.ownerId=state.meta.ownerId||localRecordId('user');state.meta.deviceId=state.meta.deviceId||localRecordId('device');state.meta.installId=state.meta.installId||localRecordId('install');state.meta.createdAt=state.meta.createdAt||isoNow();state.meta.updatedAt=isoNow();state.strengthState=state.strengthState||{workingMaxEvents:[],prEvents:[],loadHints:{}};state.meta.progressionAudit=state.meta.progressionAudit||[];delete state['cl'+'oud'];delete state['sy'+'ncQueue'];return state}
@@ -1104,8 +1104,63 @@ function applyCalendarCleanPatch(state){
   state.meta.calendarCleanVersion=CALENDAR_CLEAN_VERSION;
   return state;
 }
+const ATHLETE_BUILDER_VERSION='athlete-builder-v2';
+function templateHasStrength(t){return(t.blocks||[]).some(b=>b&&b.type==='strength'&&(b.exercises||[]).length)}
+function templateIsStrengthWorkout(t){
+  if(!t)return false;
+  if(String(t.templateKind||'').toLowerCase()==='strength')return true;
+  if(isConditioningTemplate(t)&&!templateHasStrength(t))return false;
+  return templateHasStrength(t);
+}
+function athleteDefaultLogColumns(ex){
+  let cols=[];
+  if(window.LogColumns&&LogColumns.coachNormalizeColumns)cols=LogColumns.coachNormalizeColumns(ex||{});
+  if(ex&&ex.loadExpr&&ex.loadExpr.exprKind==='pct_of_max'&&!cols.some(c=>c&&c.kind==='weight_pct_wm'))cols.unshift({id:id(),kind:'weight_pct_wm',value:'',values:[]});
+  if(cols.length<2)cols=[{id:id(),kind:'weight_pct_wm',value:'',values:[]},{id:id(),kind:'reps',value:'',values:[]}];
+  return cols.slice(0,3).map(c=>({id:c.id||id(),kind:c.kind||'reps',value:'',values:[]}));
+}
+function normalizeAthleteExercise(ex){
+  if(!ex||!String(ex.name||'').trim())return ex;
+  ex=clone(ex);
+  ex.restSec=Math.max(0,num(ex.restSec)||120);
+  ex.autopilotVolume=true;
+  ex.sets=null;
+  ex.reps=null;
+  delete ex.load;
+  delete ex.loadExpr;
+  ex.logColumns=athleteDefaultLogColumns(ex);
+  return ex;
+}
+function normalizeAthleteStrengthBlocks(blocks){
+  blocks=Array.isArray(blocks)?blocks:[];
+  let exercises=blocks.filter(b=>b&&b.type==='strength').flatMap(b=>(b.exercises||[]).map(normalizeAthleteExercise));
+  let cond=blocks.filter(b=>b&&b.type==='conditioning').map(b=>clone(b));
+  if(!exercises.length)return cond;
+  return[{id:blocks.find(b=>b&&b.type==='strength')?.id||id(),type:'strength',heading:'Strength',superset:false,exercises},...cond];
+}
+function normalizeAthleteStrengthTemplate(t){
+  if(!templateIsStrengthWorkout(t))return;
+  t.templateKind='strength';
+  t.blocks=normalizeAthleteStrengthBlocks(t.blocks||[]);
+}
+function sessionBlocksCanMigrate(s){
+  if(!s||isCoachPrescription(s))return false;
+  if(s.status==='completed'||s.status==='abandoned')return false;
+  if(s.status==='active'&&(s.tasks||[]).length)return false;
+  return s.status==='scheduled'||s.status==='active';
+}
+function applyAthleteBuilderPatch(state){
+  state=state||{};
+  state.meta=state.meta||{};
+  if(state.meta.athleteBuilderVersion===ATHLETE_BUILDER_VERSION)return state;
+  for(const t of state.templates||[])normalizeAthleteStrengthTemplate(t);
+  for(const s of state.sessions||[]){if(sessionBlocksCanMigrate(s))s.blocks=normalizeAthleteStrengthBlocks(s.blocks||[]);}
+  if(state.draft&&String(state.draft.templateKind||'').toLowerCase()==='strength')state.draft.blocks=normalizeAthleteStrengthBlocks(state.draft.blocks||[]);
+  state.meta.athleteBuilderVersion=ATHLETE_BUILDER_VERSION;
+  return state;
+}
 function applyAthleteShellPatch(state){state=state||{};state.meta=state.meta||{};state.exercises=Array.isArray(state.exercises)?state.exercises:[];state.templates=Array.isArray(state.templates)?state.templates:[];state.sessions=Array.isArray(state.sessions)?state.sessions:[];state.settings=state.settings||{};
-  if(state.meta.builderCleanVersion===BUILDER_CLEAN_VERSION){state=purgeEverydayReadiness(purgeStrengthTemplates(state));return ensureProgramTemplates(applyCalendarCleanPatch(applyBlankSlatePatch(state)))}
+  if(state.meta.builderCleanVersion===BUILDER_CLEAN_VERSION){state=purgeEverydayReadiness(purgeStrengthTemplates(state));return ensureProgramTemplates(applyAthleteBuilderPatch(applyCalendarCleanPatch(applyBlankSlatePatch(state))))}
   state=purgeEverydayReadiness(state);
   state=purgeStrengthTemplates(state);
   state.programs=[];state.activeProgramId=null;state.settings.activeProgramId=null;state.hiddenProgramIds=[];state.hiddenTemplateIds=[];
@@ -1115,7 +1170,7 @@ function applyAthleteShellPatch(state){state=state||{};state.meta=state.meta||{}
   state.meta.builderCleanVersion=BUILDER_CLEAN_VERSION;
   state.meta.everydayReadinessNetlifyPatch=BUILDER_CLEAN_VERSION;
   state.meta.athleteShellVersion=BUILDER_CLEAN_VERSION;
-  return ensureProgramTemplates(applyCalendarCleanPatch(applyBlankSlatePatch(state)))
+  return ensureProgramTemplates(applyAthleteBuilderPatch(applyCalendarCleanPatch(applyBlankSlatePatch(state))))
 }
 function cleanLoadedData(state){state=state||{};state.templates=(state.templates||[]).filter(t=>!legacyTemplate(t));for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');state.exercises=(state.exercises||[]).filter(e=>!new RegExp('^s'+'ump deadlift$','i').test(String(e.name||'')));for(const e of state.exercises||[]){if(new RegExp('^t'+'bar row$','i').test(String(e.name||''))){e.name='T-Bar Row';e.category='Strength — Pull';e.id='core-t-bar-row';e.builtIn=true;e.source='THE-core-100'}}state.exercises=dedupe(state.exercises||[]);return state}
 function load(){try{let raw=readStorage();let saved=JSON.parse(raw||'null'),upgraded=applyAthleteShellPatch(cleanLoadedData(upgradeAlpha2(saved||defaultState())));writeStorage(JSON.stringify(upgraded));return upgraded}catch(e){storageBroken=true;let upgraded=applyAthleteShellPatch(cleanLoadedData(upgradeAlpha2(defaultState())));writeStorage(JSON.stringify(upgraded));return upgraded}}
