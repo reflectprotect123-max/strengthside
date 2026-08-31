@@ -11,10 +11,16 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v5'"), 'migration version');
+must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v6'"), 'migration version');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
 must(html.includes('function normalizeAthleteExercise'), 'normalizeAthleteExercise');
 must(html.includes('function normalizeAthleteCondBlock'), 'normalizeAthleteCondBlock');
+must(html.includes('.rx-prescription-card,.rx-prescription-card.compact{display:none'), 'Prescription card hidden in athlete CSS');
+must(!html.includes("LogColumns.builderPrescriptionHtml({compact:false})"), 'exerciseSheet has no Prescription card');
+
+must(html.includes('function athleteLiftOverviewMeta'), 'athleteLiftOverviewMeta');
+must(html.includes('function athleteLiftMeta(y){return athleteLiftOverviewMeta(y)}') || html.includes('return athleteLiftOverviewMeta(y)'), 'athleteLiftMeta delegates to overview (no columnsMeta values)');
+must(!/exerciseVolumeMeta\(y\)\{[^}]*columnsMeta/.test(html.replace(/\n/g,' ')), 'exerciseVolumeMeta must not call columnsMeta (rehydrates loadExpr values)');
 
 const COND_FORMATS = [
   { key: 'steady', name: 'Steady-state', type: 'easy' },
@@ -77,7 +83,8 @@ must(ex.sets === null && ex.reps === null, 'migrated exercise clears pinned sets
 must(ex.restSec === 90, 'rest preserved');
 must(Array.isArray(ex.logColumns) && ex.logColumns.length >= 2, 'default log columns');
 must(ex.logColumns[0].kind === 'weight_pct_wm', 'load column kind preserved');
-must(ex.logColumns[0].value === '70', 'load column value preserved from loadExpr');
+must(ex.logColumns[0].value === '', 'athlete templates clear pinned load values');
+must(Array.isArray(ex.logColumns[0].values) && ex.logColumns[0].values.every((v) => !String(v || '').trim()), 'no prescription value array');
 
 const strengthState = applyAthleteBuilderPatch({
   meta: {},
@@ -100,7 +107,7 @@ const strengthState = applyAthleteBuilderPatch({
   ],
   sessions: [],
 });
-must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v5', 'migration stamp');
+must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v6', 'migration stamp');
 must(strengthState.templates[0].blocks.length === 1, 'warm/cool text blocks removed');
 must(strengthState.templates[0].blocks[0].type === 'strength', 'single strength block');
 must(strengthState.templates[0].blocks[0].exercises[0].autopilotVolume === true, 'template exercise migrated');

@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v117'"), 'LOCAL_BUILD v117');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v117'"), 'SW v117');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v118'"), 'LOCAL_BUILD v118');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v118'"), 'SW v118');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -22,7 +22,7 @@ must(html.includes('athleteLiftEditor(y,strengthIdx,j)'), 'builder uses inline l
 must(html.includes('function usesAthleteStrengthBuilder'), 'usesAthleteStrengthBuilder');
 must(html.includes('function ensureAthleteStrengthDraft'), 'ensureAthleteStrengthDraft');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
-must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v5'"), 'athlete builder migration version');
+must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v6'"), 'athlete builder migration version');
 must(html.includes('function duplicateTemplate'), 'duplicateTemplate');
 must(html.includes('function cloneTemplateAsUser'), 'cloneTemplateAsUser');
 must(html.includes('function uniqueTemplateName'), 'uniqueTemplateName');
