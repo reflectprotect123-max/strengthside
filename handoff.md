@@ -14,7 +14,7 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`6a7f35d`** (#111 reps forward-fill — 30 Aug) |
+| **`main` tip** | **`a611475`** (athlete strength builder always on + cache v119 — 31 Aug) |
 | **Open PR** | **None** |
 | **Cache** | **`the-hybrid-athlete-engine-v119`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.25`** (uploaded 31 Aug — athlete strength builder always on, cache v119) |

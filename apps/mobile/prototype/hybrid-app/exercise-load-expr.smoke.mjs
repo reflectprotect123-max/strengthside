@@ -8,10 +8,14 @@ import vm from 'node:vm';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 const logSrc = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 
-if (!html.includes('LogColumns.builderPrescriptionHtml')) {
-  throw new Error('exerciseSheet missing prescription builder UI');
+if (!coachHtml.includes('LogColumns.builderPrescriptionHtml')) {
+  throw new Error('coach session builder missing prescription UI');
+}
+if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) {
+  throw new Error('athlete exerciseSheet must not show Prescription card');
 }
 if (!html.includes('LogColumns.syncLegacyFromColumns')) {
   throw new Error('saveExercise missing LogColumns.syncLegacyFromColumns');

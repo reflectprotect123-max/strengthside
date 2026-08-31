@@ -9,10 +9,13 @@ import vm from 'node:vm';
 const dir = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
-if (!html.includes('LogColumns.builderPrescriptionHtml')) throw new Error('builder prescription grid not wired');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v116'")) throw new Error('expected cache v107');
+if (!coachHtml.includes('LogColumns.builderPrescriptionHtml')) throw new Error('coach builder prescription grid not wired');
+if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v119'")) throw new Error('expected cache v119');
+if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-card')) throw new Error('athlete lift editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
 sandbox.window = sandbox;
