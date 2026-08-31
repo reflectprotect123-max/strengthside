@@ -89,6 +89,19 @@ const Cloud = sandbox.CoachCloud;
   if (second) throw new Error('addCalendarSession should dedupe duplicate add');
 }
 
+// addCalendarSession: completed session still blocks duplicate add
+{
+  const state = L.buildSeed({ startMonday: '2026-08-24' });
+  const tplId = state.templates[0].id;
+  const athleteId = state.athletes[0].id;
+  const date = L.addDays(L.today(), 60);
+  const first = L.addCalendarSession(state, { athleteId, date, templateId: tplId });
+  if (!first) throw new Error('addCalendarSession first add failed');
+  first.status = 'completed';
+  const second = L.addCalendarSession(state, { athleteId, date, templateId: tplId });
+  if (second) throw new Error('addCalendarSession should dedupe when completed exists');
+}
+
 // monthGridCells: invalid month rolls to current month grid, not empty
 {
   const cells = L.monthGridCells('bad');

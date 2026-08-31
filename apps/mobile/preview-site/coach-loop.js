@@ -736,6 +736,23 @@
     return program;
   }
 
+  /** Move template from one grid cell to another; swap if target is occupied. */
+  function moveProgramCell(program, fromWeek, fromDay, toWeek, toDay) {
+    const fromKey = cellKey(fromWeek, fromDay);
+    const toKey = cellKey(toWeek, toDay);
+    const moving = (program.cells || {})[fromKey];
+    if (!moving) return program;
+    const displaced = (program.cells || {})[toKey] || null;
+    if (displaced) {
+      program.cells[toKey] = moving;
+      program.cells[fromKey] = displaced;
+    } else {
+      program.cells[toKey] = moving;
+      delete program.cells[fromKey];
+    }
+    return program;
+  }
+
   function addProgramWeek(program) {
     program.weeks = num(program.weeks) + 1;
     return program;
@@ -841,8 +858,7 @@
       (s) =>
         s.athleteId === opts.athleteId &&
         s.date === opts.date &&
-        s.templateId === opts.templateId &&
-        s.status !== 'completed',
+        s.templateId === opts.templateId,
     );
     if (exists) return null;
     const session = instantiateSession(template, {
@@ -1452,6 +1468,7 @@
     setSessionComment,
     emptyProgram,
     setProgramCell,
+    moveProgramCell,
     addProgramWeek,
     assignProgram,
     publishSession,

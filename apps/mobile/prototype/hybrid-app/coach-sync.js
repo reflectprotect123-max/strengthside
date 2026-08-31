@@ -142,14 +142,16 @@
     if (state && state.profile && state.profile.email) {
       return String(state.profile.email).toLowerCase();
     }
-    return defaultAthleteEmail();
+    return null;
   }
 
   function pullLocal(state, opts) {
     opts = opts || {};
     var payload = readBridge();
     if (!payload) return { ok: true, merged: 0 };
-    var bucket = pickBucket(payload, athleteEmailFromState(state, opts));
+    var email = athleteEmailFromState(state, opts);
+    if (!email) return { ok: true, merged: 0, reason: 'no_athlete_email' };
+    var bucket = pickBucket(payload, email);
     if (!bucket) return { ok: true, merged: 0 };
     var merged = 0;
     (bucket.sessions || []).forEach(function (s) {
@@ -227,7 +229,13 @@
     var delay = opts.immediate ? 0 : 800;
     cloudPullTimer = setTimeout(function () {
       var now = Date.now();
-      if (!opts.force && now - lastCloudPullMs < CLOUD_PULL_MIN_MS) return;
+      if (!opts.force && now - lastCloudPullMs < CLOUD_PULL_MIN_MS) {
+        var wait = CLOUD_PULL_MIN_MS - (now - lastCloudPullMs);
+        setTimeout(function () {
+          scheduleCloudPull(state, Object.assign({}, opts, { immediate: true, force: true }));
+        }, wait);
+        return;
+      }
       lastCloudPullMs = now;
       pullAll(state, Object.assign({ auto: true }, opts)).then(function (r) {
         if (!r || !r.ok) return;
@@ -246,6 +254,9 @@
     var r = pull(state, opts);
     if (r.ok && r.merged && typeof global.save === 'function') {
       global.save('coach-sync-pull');
+      if (typeof global.render === 'function' && !(global.S && global.S.tab === 'settings')) {
+        global.render();
+      }
     }
     scheduleCloudPull(state, opts);
     return r;

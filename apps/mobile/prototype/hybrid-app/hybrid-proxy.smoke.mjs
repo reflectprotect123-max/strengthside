@@ -18,6 +18,8 @@ const requiredFns = [
   'concept2-connect.mjs',
   'concept2-sync.mjs',
   'off-proxy.mjs',
+  'big-mac-decide.mjs',
+  'ai-strength-progression.mjs',
   '_hybrid-proxy.mjs',
   '_lib/http.mjs',
 ];

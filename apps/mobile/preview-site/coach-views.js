@@ -248,7 +248,7 @@
     var m = ui().chipMenu;
     if (!m || m.id !== sessionId) return '';
     return (
-      '<div class="kebab-menu" role="menu">' +
+      '<div class="kebab-menu" role="menu" onclick="event.stopPropagation()">' +
       '<button type="button" onclick="CoachViews.publishChip(\'' +
       sessionId +
       '\')">Publish</button>' +
@@ -310,6 +310,7 @@
     if (ev) ev.stopPropagation();
     var cur = ui().chipMenu;
     ui().chipMenu = cur && cur.id === id ? null : { id: id };
+    ui().cellMenu = null;
     ctx.render();
   }
 
@@ -393,6 +394,7 @@
   function deleteChip(id) {
     var s = ctx.ses(id);
     ui().chipMenu = null;
+    if (!confirm('Delete this session from the calendar?')) return;
     function removeLocal() {
       S().sessions = (S().sessions || []).filter(function (x) {
         return x.id !== id;
@@ -645,7 +647,7 @@
       list = L().teamCalendar(S(), ui().teamId, monthKey());
     }
     publishAllForSessions(list.filter(function (s) {
-      return !s.published;
+      return !s.published && s.status !== 'completed';
     }));
   }
 
