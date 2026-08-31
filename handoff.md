@@ -14,7 +14,7 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | pending (#126 athlete dead-code purge — cache v125) |
+| **`main` tip** | **`31a0f36`** (#126 athlete dead-code purge — cache v125) |
 | **Open PR** | **#126** athlete dead-code purge (+ #125 coach file import) |
 | **Cache** | **`the-hybrid-athlete-engine-v125`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.31`** (uploaded 31 Aug — dead-code purge, cache v125) |
