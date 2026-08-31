@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`1c9e0ef`** (verify smokes for v119 / athlete builder always-on — 31 Aug) |
-| **Open PR** | Athlete builder Link lock → superset (`cursor/athlete-superset-lock-84a0`) |
-| **Cache** | **`the-hybrid-athlete-engine-v120`** on this PR (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.25`** (shipped); next upload **`1.0.26`** after this PR merges |
+| **`main` tip** | **`a4028e5`** (#121 athlete Link lock → superset + cache v120 — 31 Aug) |
+| **Open PR** | **None** |
+| **Cache** | **`the-hybrid-athlete-engine-v120`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.25`** (shipped); upload **`1.0.26`** for Link→superset on phone |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -27,7 +27,7 @@
 
 **Ship ritual:** `pnpm run verify` → sync HTML → Capgo upload if bundle moves → refresh this handoff.
 
-**Recent merges (#103–#111):** BIG MAC five engines + auto-promote · Netlify big-mac-decide fix · coach desktop `.exe` + shell OTA · delivery banner removed · builder delete/superset/drag-drop · exercise instructions removed · reps forward-fill.
+**Recent merges (#103–#121):** BIG MAC five engines + auto-promote · Netlify big-mac-decide fix · coach desktop `.exe` + shell OTA · delivery banner removed · builder delete/superset/drag-drop · exercise instructions removed · reps forward-fill · athlete Link lock → superset.
 
 ---
 
@@ -75,7 +75,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 
 | # | Item | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.25** on dogfood (31 Aug, cache v119 — athlete strength builder always available). Next: **1.0.26** / v120 for Link→superset lock after merge. |
+| 1 | Upload Capgo bundle (v99 cache) | **owner proof** | **1.0.25** on dogfood (cache v119). Run **`CAPGO_BUNDLE_VERSION=1.0.26`** for Link→superset (cache v120). Phone: Settings → Check for updates. |
 | 2 | Phone: coach Publish → athlete pull | **owner proof** | Sign in both apps (same Supabase). Coach roster → link athlete UUID → Publish chip. Athlete foreground or Check for updates. |
 | 3 | Phone: complete → coach **Completed** chip | **owner proof** | After #2: log session on phone → coach calendar chip shows Completed. |
 | 4 | Phone: strapless cond → recovery → debt row | **owner proof** | `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs` passes in CI; real phone still needed. |
