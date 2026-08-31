@@ -30,6 +30,8 @@ must(!html.includes("const want=new Set(['Full Body A','Aerobic Conditioning'])"
 must(html.includes('function defaultState(){let x=clone(seed);x.tab='), 'defaultState present');
 must(html.includes('x.templates=[];x.sessions=[]'), 'defaultState starts blank (no seed templates/sessions)');
 must(html.includes('x.exercises=[]'), 'defaultState starts with empty exercises');
+must(html.includes("BLANK_SLATE_VERSION='athlete-blank-slate-v1'"), 'blank slate migration version');
+must(html.includes('function applyBlankSlatePatch'), 'strip seed templates from persisted state');
 must(html.includes("x.status==='completed'))return"), 'coordinator waits for completed sessions');
 must(adapter.includes('setWorkingMax'), 'adapter exports setWorkingMax');
 must(adapter.includes('missingWorkingMaxExerciseIds'), 'adapter exports missingWorkingMaxExerciseIds');

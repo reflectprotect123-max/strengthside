@@ -1052,8 +1052,19 @@ function purgeEverydayReadiness(state){
   });
   return state;
 }
+const BLANK_SLATE_VERSION='athlete-blank-slate-v1';
+function applyBlankSlatePatch(state){
+  state=state||{};
+  state.meta=state.meta||{};
+  if(state.meta.blankSlateVersion===BLANK_SLATE_VERSION)return state;
+  const seedTplIds=new Set((seed.templates||[]).map(t=>t.id));
+  state.templates=(state.templates||[]).filter(t=>!seedTplIds.has(t.id));
+  state.exercises=(state.exercises||[]).filter(e=>!(e.builtIn&&String(e.source||'').includes('THE-core')));
+  state.meta.blankSlateVersion=BLANK_SLATE_VERSION;
+  return state;
+}
 function applyAthleteShellPatch(state){state=state||{};state.meta=state.meta||{};state.exercises=Array.isArray(state.exercises)?state.exercises:[];state.templates=Array.isArray(state.templates)?state.templates:[];state.sessions=Array.isArray(state.sessions)?state.sessions:[];state.settings=state.settings||{};
-  if(state.meta.builderCleanVersion===BUILDER_CLEAN_VERSION){state=purgeEverydayReadiness(purgeStrengthTemplates(state));return ensureProgramTemplates(state)}
+  if(state.meta.builderCleanVersion===BUILDER_CLEAN_VERSION){state=purgeEverydayReadiness(purgeStrengthTemplates(state));return ensureProgramTemplates(applyBlankSlatePatch(state))}
   state=purgeEverydayReadiness(state);
   state=purgeStrengthTemplates(state);
   state.programs=[];state.activeProgramId=null;state.settings.activeProgramId=null;state.hiddenProgramIds=[];state.hiddenTemplateIds=[];
@@ -1063,7 +1074,7 @@ function applyAthleteShellPatch(state){state=state||{};state.meta=state.meta||{}
   state.meta.builderCleanVersion=BUILDER_CLEAN_VERSION;
   state.meta.everydayReadinessNetlifyPatch=BUILDER_CLEAN_VERSION;
   state.meta.athleteShellVersion=BUILDER_CLEAN_VERSION;
-  return ensureProgramTemplates(state)
+  return ensureProgramTemplates(applyBlankSlatePatch(state))
 }
 function cleanLoadedData(state){state=state||{};state.templates=(state.templates||[]).filter(t=>!legacyTemplate(t));for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');state.exercises=(state.exercises||[]).filter(e=>!new RegExp('^s'+'ump deadlift$','i').test(String(e.name||'')));for(const e of state.exercises||[]){if(new RegExp('^t'+'bar row$','i').test(String(e.name||''))){e.name='T-Bar Row';e.category='Strength — Pull';e.id='core-t-bar-row';e.builtIn=true;e.source='THE-core-100'}}state.exercises=dedupe(state.exercises||[]);return state}
 function load(){try{let raw=readStorage();let saved=JSON.parse(raw||'null'),upgraded=applyAthleteShellPatch(cleanLoadedData(upgradeAlpha2(saved||defaultState())));writeStorage(JSON.stringify(upgraded));return upgraded}catch(e){storageBroken=true;let upgraded=applyAthleteShellPatch(cleanLoadedData(upgradeAlpha2(defaultState())));writeStorage(JSON.stringify(upgraded));return upgraded}}
