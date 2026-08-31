@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v118'"), 'LOCAL_BUILD v118');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v118'"), 'SW v118');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v119'"), 'LOCAL_BUILD v119');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v119'"), 'SW v119');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -36,5 +36,11 @@ must(html.includes("onclick=\"duplicateTemplate('"), 'Library Duplicate button')
 must(html.includes('Save as copy'), 'Save as copy controls');
 must(html.includes('touch-action:manipulation'), 'touch-action manipulation');
 must(/\.btn\.small\{[^}]*min-height:var\(--tap-min\)/.test(html), 'btn.small uses tap-min');
+
+
+must(html.includes('function athleteHasActiveCoachStrength'), 'athleteHasActiveCoachStrength');
+must(html.includes("S.settings.showStrengthBuilder!==false"), 'strength builder default-on');
+must(html.includes('ath-lift-card'), 'ath-lift-card markup');
+must(!html.includes("coach-strength-hidden .ath-strength-build{display:none"), 'coach gate no longer hides athlete builder CSS');
 
 console.log('calendar-ux.smoke: ok');
