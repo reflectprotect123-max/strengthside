@@ -17,6 +17,8 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('strength-ai.js')) throw new Error('index.html missing strength-ai.js');
 if (!html.includes('llmProgression')) throw new Error('settings missing llmProgression toggle');
+if (!html.includes('Show Library strength builder')) throw new Error('settings missing plain-language builder toggle');
+if (!html.includes('settings-toggle-help')) throw new Error('settings toggle helper copy missing');
 
 const sandbox = { window: {}, console, fetch: () => Promise.reject(new Error('no network')) };
 sandbox.window = sandbox;

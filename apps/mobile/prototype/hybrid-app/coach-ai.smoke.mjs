@@ -12,6 +12,7 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('coach-ai.js')) throw new Error('index.html missing coach-ai.js');
 if (!html.includes('llmCoachIntent')) throw new Error('settings missing llmCoachIntent toggle');
+if (!html.includes('function settingsToggle')) throw new Error('settingsToggle helper missing');
 if (!html.includes('llmProgression')) throw new Error('settings missing llmProgression toggle');
 
 const sandbox = { window: {}, console, fetch: () => Promise.reject(new Error('no network')) };
