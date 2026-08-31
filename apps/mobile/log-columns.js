@@ -588,7 +588,8 @@
     </details>`;
   }
 
-  function builderPrescriptionGridHtml() {
+  function builderPrescriptionGridHtml(opts = {}) {
+    const compact = !!opts.compact;
     const effort = effortColumn() || { kind: 'reps', values: ['8'] };
     const meta = kindMeta(effort.kind);
     const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
@@ -604,20 +605,24 @@
         <div class="field"><label>${meta.loggerLabel}</label>
           <input value="${String(repsVal).replace(/"/g, '&quot;')}" placeholder="${ph}" aria-label="Target reps or effort" onchange="LogColumns.onSimpleReps(this.value)" oninput="LogColumns.onSimpleReps(this.value)"></div>
       </div>`;
-    const overrideSection = sheet.autopilotVolume
+    const overrideSection = sheet.autopilotVolume || compact
       ? ''
       : `<details class="rx-overrides" ${sheet.showOverrides ? 'open' : ''} ontoggle="LogColumns.toggleOverrides(this.open)">
         <summary>Per-set rep overrides (optional)</summary>
         ${builderOverridesTableHtml()}
       </details>`;
-    return `<div class="card rx-prescription-card" id="builderPrescriptionCard" style="margin-top:10px">
+    const cardClass = compact ? 'card rx-prescription-card compact' : 'card rx-prescription-card';
+    const cardMeta = compact ? 'Engine handles volume and load.' : 'Engine handles volume + load · in-session autoreg after set 1';
+    const pinVolume = compact ? '' : builderPinVolumeHtml();
+    const pinLoad = compact ? '' : builderPinLoadHtml();
+    return `<div class="${cardClass}" id="builderPrescriptionCard" style="margin-top:10px">
       <div class="title">Prescription</div>
-      <div class="meta">Engine handles volume + load · in-session autoreg after set 1</div>
-      <div class="autopilot-strip"><span class="autopilot-label">Volume</span><span class="autopilot-value">${volumeLabel}</span><span class="autopilot-note">History, calibration, recovery — you do not enter sets × reps here</span></div>
+      <div class="meta">${cardMeta}</div>
+      <div class="autopilot-strip"><span class="autopilot-label">Volume</span><span class="autopilot-value">${volumeLabel}</span>${compact ? '' : '<span class="autopilot-note">History, calibration, recovery — you do not enter sets × reps here</span>'}</div>
       ${effortFields}
-      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span><span class="autopilot-note">Working max + progression — you do not enter kg here</span></div>
-      ${builderPinVolumeHtml()}
-      ${builderPinLoadHtml()}
+      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span>${compact ? '' : '<span class="autopilot-note">Working max + progression — you do not enter kg here</span>'}</div>
+      ${pinVolume}
+      ${pinLoad}
       ${overrideSection}
     </div>`;
   }
@@ -668,8 +673,10 @@
     </div>`;
   }
 
-  function builderPrescriptionHtml() {
-    return `${builderPrescriptionGridHtml()}${builderLoggerTwinHtml()}`;
+  function builderPrescriptionHtml(opts = {}) {
+    const compact = !!opts.compact;
+    const grid = builderPrescriptionGridHtml({ compact });
+    return compact ? grid : `${grid}${builderLoggerTwinHtml()}`;
   }
 
   function builderColumnsHtml() {
@@ -679,11 +686,12 @@
   function refreshPrescription() {
     const presc = global.document && global.document.getElementById('builderPrescriptionCard');
     if (presc) {
+      const compact = presc.classList.contains('compact');
       const wrap = global.document.createElement('div');
-      wrap.innerHTML = builderPrescriptionGridHtml();
+      wrap.innerHTML = builderPrescriptionGridHtml({ compact });
       presc.replaceWith(wrap.firstChild);
+      if (!compact) refreshTwin();
     }
-    refreshTwin();
   }
 
   function refreshTwin() {

@@ -33,6 +33,7 @@ jobs:
       - run: pnpm run check:capgo-live-update
       - run: pnpm run check:native-ble
       - run: pnpm run check:blank-slate-wm
+      - run: pnpm run check:calendar-ux
       - run: pnpm run check:hybrid-html-sync
       - run: pnpm run check:builder-suggest
       - run: pnpm run check:nutrition-ui
