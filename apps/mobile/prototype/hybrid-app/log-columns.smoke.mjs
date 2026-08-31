@@ -12,7 +12,7 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!html.includes('LogColumns.builderPrescriptionHtml')) throw new Error('builder prescription grid not wired');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v110'")) throw new Error('expected cache v107');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v111'")) throw new Error('expected cache v107');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
 sandbox.window = sandbox;

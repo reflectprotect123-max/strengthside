@@ -62,14 +62,6 @@
     return true;
   }
 
-  function hasPinnedVolume(ex) {
-    if (ex && ex.autopilotVolume === false) return true;
-    if (sheet.autopilotVolume === false) return true;
-    const effort = effortColumn();
-    const repsVal = effort ? String((effort.values || [])[0] ?? '').trim() : '';
-    return sheet.sets > 0 && repsVal.length > 0 && sheet.autopilotVolume === false;
-  }
-
   function isAutopilotVolume(ex) {
     if (ex && ex.autopilotVolume === true) return true;
     if (ex && ex.autopilotVolume === false) return false;
@@ -617,9 +609,9 @@
         <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave on autopilot — engine picks sets × reps from history, calibration, and recovery. Pin only when you need a fixed prescription.</p>
         <div class="rx-grid cols-2" style="margin-top:8px">
           <div class="field"><label>Sets</label>
-            <input type="number" min="1" max="12" placeholder="3" onchange="LogColumns.pinVolume(Number(this.value), document.getElementById('pinRepsVal').value)"></div>
+            <input id="pinSetsVal" type="number" min="1" max="12" placeholder="3" onchange="LogColumns.pinVolume(Number(this.value), document.getElementById('pinRepsVal').value)"></div>
           <div class="field"><label>Reps</label>
-            <input id="pinRepsVal" placeholder="8 or 6-8" onchange="LogColumns.pinVolume(document.querySelector('#builderPrescriptionCard input[type=number]')?.value || 3, this.value)"></div>
+            <input id="pinRepsVal" placeholder="8 or 6-8" onchange="LogColumns.pinVolume(document.getElementById('pinSetsVal')?.value || 3, this.value)"></div>
         </div>
       </details>`;
     }

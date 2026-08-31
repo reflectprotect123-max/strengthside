@@ -76,6 +76,8 @@ must(ex.autopilotVolume === true, 'migrated exercise uses autopilot volume');
 must(ex.sets === null && ex.reps === null, 'migrated exercise clears pinned sets/reps');
 must(ex.restSec === 90, 'rest preserved');
 must(Array.isArray(ex.logColumns) && ex.logColumns.length >= 2, 'default log columns');
+must(ex.logColumns[0].kind === 'weight_pct_wm', 'load column kind preserved');
+must(ex.logColumns[0].value === '70', 'load column value preserved from loadExpr');
 
 const strengthState = applyAthleteBuilderPatch({
   meta: {},
