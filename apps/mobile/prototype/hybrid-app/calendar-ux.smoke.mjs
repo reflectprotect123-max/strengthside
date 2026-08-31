@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v113'"), 'LOCAL_BUILD v113');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v113'"), 'SW v113');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v114'"), 'LOCAL_BUILD v114');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v114'"), 'SW v114');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -23,5 +23,15 @@ must(html.includes('function usesAthleteStrengthBuilder'), 'usesAthleteStrengthB
 must(html.includes('function ensureAthleteStrengthDraft'), 'ensureAthleteStrengthDraft');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
 must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v5'"), 'athlete builder migration version');
+must(html.includes('function duplicateTemplate'), 'duplicateTemplate');
+must(html.includes('function cloneTemplateAsUser'), 'cloneTemplateAsUser');
+must(html.includes('function uniqueTemplateName'), 'uniqueTemplateName');
+must(html.includes('function templateActionsHtml'), 'templateActionsHtml');
+must(html.includes('ath-tpl-actions'), 'always-visible template actions');
+must(html.includes('function saveTemplateAsCopy'), 'saveTemplateAsCopy');
+must(html.includes('function saveStrengthWorkoutAsCopy'), 'saveStrengthWorkoutAsCopy');
+must(html.includes('function saveCondTemplateAsCopy'), 'saveCondTemplateAsCopy');
+must(html.includes("onclick=\"duplicateTemplate('"), 'Library Duplicate button');
+must(html.includes('Save as copy'), 'Save as copy controls');
 
 console.log('calendar-ux.smoke: ok');
