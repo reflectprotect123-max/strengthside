@@ -73,5 +73,19 @@ const flash = StrengthAI.buildFlashCard(
 if (flash.exercise_id !== 'sq' || flash.deterministic_action !== 'progress') {
   throw new Error('buildFlashCard failed');
 }
+if (flash.progression_mode !== 'load') throw new Error('load flash should set progression_mode load');
+
+const repFlash = StrengthAI.buildRepFlashCard({}, 'dip', {
+  exerciseName: 'Dip',
+  calibration: 'building',
+  sessionPain: 'none',
+  recoveryGate: 'ok',
+  repHistory: [{ date: '2026-08-24', setCount: 3, topReps: 8, addedLoadKg: 0 }],
+  deterministic: { action: 'hold', sets: 3, reps: '8' },
+});
+if (repFlash.progression_mode !== 'reps') throw new Error('rep flash mode missing');
+
+const vol = StrengthAI.validateVolumeDecision({ action: 'progress', sets: 4, reps: '6-8', confidence: 0.7 });
+if (!vol || vol.sets !== 4) throw new Error('validateVolumeDecision failed');
 
 console.log('strength-ai.smoke: ok');

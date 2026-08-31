@@ -274,7 +274,16 @@
     return sheet;
   }
 
-  function defaultAthleteColumns() {
+  function defaultAthleteColumns(ex) {
+    if (
+      global.StrengthAdapter &&
+      StrengthAdapter.repProgressionLift &&
+      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category)
+    ) {
+      return [
+        { id: newId(), kind: 'reps', value: '', values: splitValues('', sheet.sets) },
+      ];
+    }
     return [
       { id: newId(), kind: 'weight_pct_wm', value: '', values: splitValues('', sheet.sets) },
       { id: newId(), kind: 'reps', value: '', values: splitValues('', sheet.sets) },
@@ -283,7 +292,7 @@
 
   function ensureAthleteColumnCount() {
     sheet.autopilotVolume = true;
-    if (!sheet.columns.length) sheet.columns = defaultAthleteColumns();
+    if (!sheet.columns.length) sheet.columns = defaultAthleteColumns(sheet._exercise || {});
     while (sheet.columns.length < 2) {
       sheet.columns.push({
         id: newId(),
@@ -296,17 +305,21 @@
   }
 
   function ensureAthleteLogColumns(ex) {
-    let cols = ex && Array.isArray(ex.logColumns) && ex.logColumns.length ? coachNormalizeColumns(ex) : defaultAthleteColumns();
-    cols = cols.slice(0, 2);
-    while (cols.length < 2) {
+    let cols = ex && Array.isArray(ex.logColumns) && ex.logColumns.length ? coachNormalizeColumns(ex) : defaultAthleteColumns(ex);
+    var repOnly = global.StrengthAdapter && StrengthAdapter.repProgressionLift &&
+      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category);
+    cols = cols.slice(0, repOnly ? 1 : 2);
+    while (cols.length < (repOnly ? 1 : 2)) {
       cols.push({ id: newId(), kind: 'reps', value: '', values: splitValues('', 3) });
     }
-    return cols.slice(0, 2).map((c) => ({
-      id: c.id || newId(),
-      kind: KIND_MAP[c.kind] ? c.kind : 'reps',
-      value: '',
-      values: splitValues('', 3),
-    }));
+    return cols.slice(0, repOnly ? 1 : 2).map(function (c) {
+      return {
+        id: c.id || newId(),
+        kind: KIND_MAP[c.kind] ? c.kind : 'reps',
+        value: '',
+        values: splitValues('', 3),
+      };
+    });
   }
 
   function athleteColumnOptionsHtml(selected) {
@@ -317,6 +330,7 @@
     beginSheet({ ...(ex || {}), autopilotVolume: true, sets: null, reps: null });
     sheet.athleteMode = true;
     sheet.autopilotVolume = true;
+    sheet._exercise = ex || {};
     sheet.columns = ensureAthleteLogColumns(ex || {});
     return sheet;
   }

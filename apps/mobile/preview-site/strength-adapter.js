@@ -30,9 +30,86 @@
     state.strengthState.workingMaxEvents = state.strengthState.workingMaxEvents || [];
     state.strengthState.prEvents = state.strengthState.prEvents || [];
     state.strengthState.loadHints = state.strengthState.loadHints || {};
+    state.strengthState.volumeHints = state.strengthState.volumeHints || {};
     state.meta = state.meta || {};
     state.meta.progressionAudit = state.meta.progressionAudit || [];
     return state.strengthState;
+  }
+
+  /** Bodyweight / rep-only lifts — no working max or kg progression. */
+  function repProgressionLift(name, cat) {
+    var n = String(name || '').toLowerCase();
+    return /(jump|slam|throw|burpee|swing|lateral raise|curl|pushdown|pull[- ]?up|chin[- ]?up|dip|push[- ]?up|nordic|handstand|plank|l[- ]?sit|ab wheel|raise|calf|abduction|carry|row|pulldown|leg press|dumbbell bench|db bench)/.test(n);
+  }
+
+  function findExerciseMetaInSession(session, exerciseId) {
+    var meta = { name: '', category: '' };
+    iterStrengthTasks(session).forEach(function (item) {
+      var id = item.ex.exerciseId || item.ex.id;
+      if (id === exerciseId) {
+        meta.name = item.ex.name || meta.name;
+        meta.category = item.ex.category || meta.category;
+      }
+    });
+    return meta;
+  }
+
+  function exerciseRepSessionHistory(state, exerciseId, limit) {
+    limit = limit || 8;
+    var sessionsById = {};
+    (state.sessions || []).forEach(function (s) {
+      if (s.id) sessionsById[s.id] = s;
+    });
+    var performed = performedFromState(state).filter(function (p) {
+      return p.exerciseId === exerciseId && p.status === 'completed';
+    });
+    var bySession = {};
+    performed.forEach(function (p) {
+      var reps = measurementValue(p, 'reps');
+      if (!reps) return;
+      var sid = p.assignedSessionId;
+      if (!bySession[sid]) bySession[sid] = { sets: [] };
+      bySession[sid].sets.push({
+        reps: reps,
+        loadKg: measurementValue(p, 'load') || 0,
+        at: p.performedAt,
+      });
+    });
+    var rows = Object.keys(bySession).map(function (sid) {
+      var bucket = bySession[sid];
+      var sess = sessionsById[sid] || {};
+      var topReps = 0;
+      var totalReps = 0;
+      bucket.sets.forEach(function (set) {
+        topReps = Math.max(topReps, num(set.reps));
+        totalReps += num(set.reps);
+      });
+      var at = sess.completedAt ? new Date(sess.completedAt).toISOString() : bucket.sets[0].at;
+      return {
+        sessionId: sid,
+        sessionName: sess.name || '',
+        setCount: bucket.sets.length,
+        topReps: topReps,
+        avgReps: bucket.sets.length ? Math.round(totalReps / bucket.sets.length) : topReps,
+        reps: String(topReps),
+        at: at,
+        date: String(sess.date || at || '').slice(0, 10),
+        addedLoadKg: bucket.sets.some(function (s) { return s.loadKg > 0; })
+          ? Math.max.apply(null, bucket.sets.map(function (s) { return s.loadKg; }))
+          : 0,
+      };
+    });
+    rows.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+    return rows.slice(0, limit);
+  }
+
+  function calibrationForRepExercise(state, exerciseId) {
+    var rows = exerciseRepSessionHistory(state, exerciseId, 8);
+    var count = rows.length;
+    var label = count >= 2
+      ? 'Rep model ready'
+      : (count > 0 ? 'Building rep model · ' + count + '/2 sessions' : 'No rep history yet');
+    return { state: count >= 2 ? 'calibrated' : (count ? 'building' : 'uncalibrated'), count: count, label: label };
   }
 
   function measurementValue(set, key) {
@@ -327,6 +404,147 @@
     return { action: engineAction, aiInfluenced: false };
   }
 
+  var VOLUME_CONSERVATIVE_RANK = { progress: 0, hold: 1, deload: 2 };
+
+  function mergeAiVolumeAction(engine, aiDecision) {
+    if (!aiDecision || !aiDecision.action) return { resolved: engine, aiInfluenced: false };
+    var engineRank = VOLUME_CONSERVATIVE_RANK[engine.action] != null ? VOLUME_CONSERVATIVE_RANK[engine.action] : 1;
+    var aiRank = VOLUME_CONSERVATIVE_RANK[aiDecision.action] != null ? VOLUME_CONSERVATIVE_RANK[aiDecision.action] : 1;
+    var out = {
+      action: engine.action,
+      sets: engine.sets,
+      reps: engine.reps,
+      reasonCodes: engine.reasonCodes.slice(),
+    };
+    if (aiRank > engineRank) {
+      out.action = aiDecision.action;
+      if (aiDecision.sets != null) out.sets = aiDecision.sets;
+      if (aiDecision.reps != null) out.reps = aiDecision.reps;
+      return { resolved: out, aiInfluenced: true };
+    }
+    if (aiDecision.sets != null && aiDecision.reps != null && engine.action === 'hold' && aiDecision.action === 'hold') {
+      out.sets = aiDecision.sets;
+      out.reps = aiDecision.reps;
+      return { resolved: out, aiInfluenced: true };
+    }
+    return { resolved: out, aiInfluenced: false };
+  }
+
+  function resolveRepVolumeAction(state, session, exerciseId, recovery) {
+    recovery = recovery || { gate: 'ok', reasonCodes: [] };
+    var repHist = exerciseRepSessionHistory(state, exerciseId, 5);
+    var reasonCodes = [];
+    if (session.sessionPain === 'yes') {
+      return { action: 'hold', sets: null, reps: null, reasonCodes: ['session_pain_yes'], repHistory: repHist };
+    }
+    if (recovery.gate === 'hold') {
+      return {
+        action: 'hold',
+        sets: repHist.length ? repHist[0].setCount : 3,
+        reps: repHist.length ? repHist[0].reps : '8',
+        reasonCodes: ['recovery_gate_hold'].concat(recovery.reasonCodes || []),
+        repHistory: repHist,
+      };
+    }
+    if (!repHist.length) {
+      return { action: 'hold', sets: 3, reps: '8', reasonCodes: ['rep_baseline'], repHistory: repHist };
+    }
+    var last = repHist[0];
+    var sets = last.setCount || 3;
+    var reps = String(last.reps || '8');
+    var action = 'hold';
+    reasonCodes.push('repeat_last_rep_volume');
+    if (repHist.length >= 2 && recovery.gate === 'ok') {
+      var prev = repHist[1];
+      if (last.topReps >= prev.topReps && last.setCount >= prev.setCount) {
+        action = 'progress';
+        var range = parseRepRange(reps);
+        if (range) {
+          reps = String(range.lo) + '-' + String(Math.min(range.hi + 1, range.hi + 2));
+        } else {
+          reps = String(Math.min(num(reps) + 1, 30));
+        }
+        reasonCodes.push('rep_progression_deterministic');
+      }
+    }
+    return { action: action, sets: sets, reps: reps, reasonCodes: reasonCodes, repHistory: repHist };
+  }
+
+  function applyRepVolumeHint(state, session, exerciseId, resolved, recovery) {
+    if (!resolved.sets || !resolved.reps) return false;
+    var ss = ensureStrengthState(state);
+    ss.volumeHints[exerciseId] = {
+      sets: Math.max(1, Math.min(12, num(resolved.sets) || 3)),
+      reps: String(resolved.reps),
+      updatedAt: isoNow(),
+      source: resolved.aiInfluenced ? 'ai_rep_advisory' : 'rep_progression',
+      sessionId: session.id,
+    };
+    appendAudit(state, {
+      at: isoNow(),
+      sessionId: session.id,
+      exerciseId: exerciseId,
+      action: resolved.action === 'progress' ? 'rep_progress' : (resolved.action === 'deload' ? 'rep_deload' : 'rep_hold'),
+      deltaKg: null,
+      nextSets: ss.volumeHints[exerciseId].sets,
+      nextReps: ss.volumeHints[exerciseId].reps,
+      reasonCodes: resolved.reasonCodes.slice(),
+      recoveryGate: recovery.gate,
+      sessionPain: session.sessionPain || 'none',
+      performanceOverride: false,
+      engineVersion: ENGINE_VERSION,
+      aiAdvised: !!resolved.aiInfluenced,
+    });
+    return true;
+  }
+
+  function buildRepAiFlashContext(state, session, exerciseId, resolved, recovery) {
+    return {
+      repHistory: resolved.repHistory || exerciseRepSessionHistory(state, exerciseId, 5),
+      exerciseName: exerciseNameFor(state, exerciseId),
+      calibration: calibrationForRepExercise(state, exerciseId).state,
+      sessionPain: session.sessionPain || 'none',
+      recoveryGate: recovery.gate,
+      recoveryReasonCodes: recovery.reasonCodes || [],
+      deterministic: {
+        action: resolved.action,
+        sets: resolved.sets,
+        reps: resolved.reps,
+        reasonCodes: resolved.reasonCodes.slice(),
+      },
+    };
+  }
+
+  function applyRepVolumeProgressionJob(state, session, exerciseId, recovery, useAi) {
+    var resolved = resolveRepVolumeAction(state, session, exerciseId, recovery);
+    if (!useAi || !global.StrengthAI || !global.StrengthAI.fetchVolumeDecision) {
+      applyRepVolumeHint(state, session, exerciseId, resolved, recovery);
+      return Promise.resolve({ exerciseId: exerciseId, applied: true });
+    }
+    var ctx = buildRepAiFlashContext(state, session, exerciseId, resolved, recovery);
+    var flash = global.StrengthAI.buildRepFlashCard(state, exerciseId, ctx);
+    return global.StrengthAI.fetchVolumeDecision(flash).then(function (ai) {
+      var merged = mergeAiVolumeAction(resolved, ai);
+      var finalResolved = merged.resolved;
+      finalResolved.aiInfluenced = merged.aiInfluenced;
+      if (merged.aiInfluenced) {
+        finalResolved.reasonCodes.push('llm_rep_volume_advisory');
+        (ai.reasonCodes || []).forEach(function (r) {
+          var code = String(r || '').trim();
+          if (!code) return;
+          var tagged = code.indexOf('llm_') === 0 ? code : 'llm_' + code;
+          if (finalResolved.reasonCodes.indexOf(tagged) < 0) finalResolved.reasonCodes.push(tagged);
+        });
+      }
+      applyRepVolumeHint(state, session, exerciseId, finalResolved, recovery);
+      return { exerciseId: exerciseId, applied: true };
+    }).catch(function (err) {
+      if (state.settings && state.settings.llmDebug) console.warn('StrengthAI rep volume:', err);
+      applyRepVolumeHint(state, session, exerciseId, resolved, recovery);
+      return { exerciseId: exerciseId, applied: true };
+    });
+  }
+
   function resolveProgressionAction(state, session, exerciseId, opts) {
     opts = opts || {};
     var performed = opts.performed || performedFromState(state);
@@ -468,6 +686,13 @@
 
     var applied = 0;
     pre.exerciseIds.forEach(function (exerciseId) {
+      var meta = findExerciseMetaInSession(session, exerciseId);
+      var name = meta.name || exerciseNameFor(state, exerciseId);
+      if (repProgressionLift(name, meta.category)) {
+        var repResolved = resolveRepVolumeAction(state, session, exerciseId, pre.recovery);
+        if (applyRepVolumeHint(state, session, exerciseId, repResolved, pre.recovery)) applied++;
+        return;
+      }
       var resolved = resolveProgressionAction(state, session, exerciseId, {
         recovery: pre.recovery,
         performed: pre.performed,
@@ -492,13 +717,18 @@
       global.StrengthAI &&
       global.StrengthAI.llmEnabled &&
       global.StrengthAI.llmEnabled(state) &&
-      global.StrengthAI.fetchProgressionDecision;
+      (global.StrengthAI.fetchProgressionDecision || global.StrengthAI.fetchVolumeDecision);
 
     if (!useAi) {
       return Promise.resolve(applySilentProgression(state, session, opts));
     }
 
     var jobs = pre.exerciseIds.map(function (exerciseId) {
+      var meta = findExerciseMetaInSession(session, exerciseId);
+      var name = meta.name || exerciseNameFor(state, exerciseId);
+      if (repProgressionLift(name, meta.category)) {
+        return applyRepVolumeProgressionJob(state, session, exerciseId, pre.recovery, useAi);
+      }
       var resolved = resolveProgressionAction(state, session, exerciseId, {
         recovery: pre.recovery,
         performed: pre.performed,
@@ -533,7 +763,8 @@
     return Promise.all(jobs).then(function (rows) {
       var applied = 0;
       rows.forEach(function (row) {
-        if (applyResolvedProgression(state, session, row.exerciseId, row.resolved, pre.recovery, pre.performed)) {
+        if (row.applied) applied++;
+        else if (row.resolved && applyResolvedProgression(state, session, row.exerciseId, row.resolved, pre.recovery, pre.performed)) {
           applied++;
         }
       });
@@ -735,6 +966,37 @@
     if (!hasStrength() || !global.HybridStrength.InitialPrescription) return;
     sessionCtx = sessionCtx || {};
     var exerciseId = ex.exerciseId || ex.id;
+    var name = ex.name || exerciseNameFor(state, exerciseId);
+    var cat = ex.category || '';
+    if (repProgressionLift(name, cat)) {
+      var ss = ensureStrengthState(state);
+      var vHint = ss.volumeHints[exerciseId];
+      if (vHint && vHint.sets && vHint.reps) {
+        ex.sets = Math.max(1, Math.min(12, num(vHint.sets) || 3));
+        ex.reps = String(vHint.reps);
+        ex.autopilotVolume = true;
+        ex.autopilotVolumeReasons = [vHint.source || 'volume_hint'];
+        rebuildRowsFromPrescription(ex);
+        return;
+      }
+      var repHist = exerciseRepSessionHistory(state, exerciseId, 1);
+      var lastRep = repHist[0] || null;
+      var repCal = calibrationForRepExercise(state, exerciseId).state;
+      var repDecision = global.HybridStrength.InitialPrescription.decideInitialPrescription({
+        coachSets: ex.sets,
+        coachReps: ex.reps,
+        calibration: repCal,
+        lastSession: lastRep ? { setCount: lastRep.setCount, reps: lastRep.reps } : null,
+        recoveryGate: sessionCtx.recoveryGate || recoveryGateForAutopilot(state),
+        maxSetsForExercise: sessionCtx.maxSetsForExercise,
+      });
+      ex.sets = repDecision.sets;
+      ex.reps = repDecision.reps;
+      ex.autopilotVolume = repDecision.autopilotVolume;
+      ex.autopilotVolumeReasons = repDecision.reasonCodes;
+      rebuildRowsFromPrescription(ex);
+      return;
+    }
     var history = exerciseId ? exerciseExposureHistory(state, exerciseId, 1) : [];
     var last = history[0] || null;
     var exposures = exerciseId
@@ -872,6 +1134,25 @@
     var exerciseId = exercise.exerciseId || exercise.id;
     if (!exerciseId) return { ok: false };
     ensureStrengthState(state);
+    var name = exercise.name || exerciseNameFor(state, exerciseId);
+    var cat = exercise.category || '';
+    if (repProgressionLift(name, cat)) {
+      var vHint = state.strengthState.volumeHints[exerciseId];
+      var repCal = calibrationForRepExercise(state, exerciseId);
+      var repHist = exerciseRepSessionHistory(state, exerciseId, 1);
+      var headline = vHint
+        ? (vHint.sets + ' × ' + vHint.reps + ' · rep autopilot')
+        : (repHist.length ? 'Rep autopilot · last ' + repHist[0].topReps + ' reps' : 'Log reps — targets after history');
+      return {
+        ok: true,
+        loadKg: null,
+        source: 'rep_autopilot',
+        headline: headline,
+        detail: 'Bodyweight / rep-only — LLM sets next sets × reps, not kg',
+        calibration: repCal,
+        repMode: true,
+      };
+    }
     var hint = state.strengthState.loadHints[exerciseId];
     var resolved = exercise.loadExpr ? resolveExerciseLoad(state, exercise, asOfDate) : null;
     var wmKg = workingMaxKgForExercise(state, exerciseId, asOfDate);
@@ -1000,6 +1281,11 @@
     sessionLoadContext: sessionLoadContext,
     calibrationForExercise: calibrationForExercise,
     targetRirForExercise: targetRirForExercise,
+    repProgressionLift: repProgressionLift,
+    exerciseRepSessionHistory: exerciseRepSessionHistory,
+    calibrationForRepExercise: calibrationForRepExercise,
+    mergeAiVolumeAction: mergeAiVolumeAction,
+    resolveRepVolumeAction: resolveRepVolumeAction,
     parseRepRange: parseRepRange,
     ENGINE_VERSION: ENGINE_VERSION,
   };

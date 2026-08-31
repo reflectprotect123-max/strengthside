@@ -32,6 +32,29 @@
     };
   }
 
+  function validateVolumeDecision(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    var action = String(raw.action || '');
+    if (!ALLOWED[action]) return null;
+    var reasonCodes = Array.isArray(raw.reason_codes)
+      ? raw.reason_codes.map(String).slice(0, 16)
+      : (Array.isArray(raw.reasonCodes) ? raw.reasonCodes.map(String).slice(0, 16) : []);
+    var confidence = Number(raw.confidence);
+    if (!Number.isFinite(confidence) || confidence < 0 || confidence > 1) confidence = 0.5;
+    var sets = raw.sets != null ? Number(raw.sets) : null;
+    if (sets != null && (!Number.isFinite(sets) || sets < 1 || sets > 12)) sets = null;
+    var reps = raw.reps != null ? String(raw.reps).trim().slice(0, 24) : null;
+    if (reps && !/^[\d\s\-–,]+$/.test(reps)) reps = null;
+    return {
+      action: action,
+      sets: sets,
+      reps: reps,
+      reasonCodes: reasonCodes,
+      confidence: confidence,
+      source: 'ai_openrouter_rep',
+    };
+  }
+
   function buildFlashCard(state, exerciseId, ctx) {
     ctx = ctx || {};
     var exposures = ctx.exposures || [];
@@ -46,6 +69,7 @@
     });
     var deterministic = ctx.deterministic || null;
     return {
+      progression_mode: 'load',
       exercise_id: exerciseId,
       exercise_name: ctx.exerciseName || exerciseId,
       calibration: ctx.calibration || 'unknown',
@@ -59,6 +83,33 @@
     };
   }
 
+  function buildRepFlashCard(state, exerciseId, ctx) {
+    ctx = ctx || {};
+    var repHistory = (ctx.repHistory || []).slice(0, 5).map(function (r) {
+      return {
+        date: r.date,
+        sets: r.setCount,
+        top_reps: r.topReps,
+        added_load_kg: r.addedLoadKg || 0,
+        session: r.sessionName || '',
+      };
+    });
+    var det = ctx.deterministic || {};
+    return {
+      progression_mode: 'reps',
+      exercise_id: exerciseId,
+      exercise_name: ctx.exerciseName || exerciseId,
+      calibration: ctx.calibration || 'unknown',
+      recent_rep_sessions: repHistory,
+      session_pain: ctx.sessionPain || 'none',
+      recovery_gate: ctx.recoveryGate || 'ok',
+      recovery_reason_codes: ctx.recoveryReasonCodes || [],
+      deterministic_action: det.action || null,
+      deterministic_sets: det.sets != null ? det.sets : null,
+      deterministic_reps: det.reps != null ? det.reps : null,
+    };
+  }
+
   function fetchWithTimeout(url, options, ms) {
     if (typeof AbortController === 'undefined') {
       return fetch(url, options);
@@ -69,17 +120,29 @@
       .finally(function () { clearTimeout(timer); });
   }
 
-  function fetchProgressionDecision(flashCard) {
+  function postFlash(flash) {
     return fetchWithTimeout(ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ flash: flashCard }),
+      body: JSON.stringify({ flash: flash }),
     }, TIMEOUT_MS).then(function (res) {
       if (!res.ok) throw new Error('ai_http_' + res.status);
       return res.json();
-    }).then(function (body) {
+    });
+  }
+
+  function fetchProgressionDecision(flashCard) {
+    return postFlash(flashCard).then(function (body) {
       var validated = validateProgressionDecision(body && body.decision ? body.decision : body);
       if (!validated) throw new Error('ai_invalid_decision');
+      return validated;
+    });
+  }
+
+  function fetchVolumeDecision(flashCard) {
+    return postFlash(flashCard).then(function (body) {
+      var validated = validateVolumeDecision(body && body.decision ? body.decision : body);
+      if (!validated) throw new Error('ai_invalid_volume_decision');
       return validated;
     });
   }
@@ -94,8 +157,11 @@
   global.StrengthAI = {
     llmEnabled: llmEnabled,
     validateProgressionDecision: validateProgressionDecision,
+    validateVolumeDecision: validateVolumeDecision,
     buildFlashCard: buildFlashCard,
+    buildRepFlashCard: buildRepFlashCard,
     fetchProgressionDecision: fetchProgressionDecision,
+    fetchVolumeDecision: fetchVolumeDecision,
     ENDPOINT: ENDPOINT,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
