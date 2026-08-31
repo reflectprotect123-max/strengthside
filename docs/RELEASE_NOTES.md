@@ -6,7 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
-| 1.0.27 | pending | Full Body A starter → athlete builder v7 (single block, Link supersets, cache v121) |
+| 1.0.27 | 2026-08-31 | Full Body A starter → athlete builder v7 (single block, Link supersets, cache v121) |
 | 1.0.26 | 2026-08-31 | Athlete builder Link lock between lifts → session superset (cache v120) |
 | 1.0.19 | pending | Logger friction: MAX targets, zero rest, rest menu, coach persist debounce, program grid swap |
 | 1.0.18 | 2026-08-30 | v99 cache + coach builder fixes (delete blocks, superset, drag-drop, reps forward-fill) |

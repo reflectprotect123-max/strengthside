@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`20cb19d`** (handoff after #121 merge — 31 Aug) |
+| **`main` tip** | **`9e14e81`** (#122 Full Body A athlete builder v7 — 31 Aug) |
 | **Open PR** | **None** |
-| **Cache** | **`the-hybrid-athlete-engine-v120`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.26`** (uploaded 31 Aug — athlete Link lock → superset, cache v120) |
+| **Cache** | **`the-hybrid-athlete-engine-v121`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.27`** (uploaded 31 Aug — Full Body A v7 + cache v121) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
