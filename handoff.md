@@ -14,7 +14,7 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`0432845`** (#125 remove coach file import — cache v124) |
+| **`main` tip** | **`8fd4fdf`** (#125 remove coach file import — cache v124) |
 | **Open PR** | **#125** remove coach file import |
 | **Cache** | **`the-hybrid-athlete-engine-v124`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.30`** (uploaded 31 Aug — remove coach file import, cache v124) |
