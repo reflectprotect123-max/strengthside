@@ -101,7 +101,7 @@
     state = state || {};
     var s = state.settings || {};
     if (s.llmCoachIntent === false) return false;
-    return s.llmCoachIntent === true || s.llmEnabled === true;
+    return true;
   }
 
   function fetchCoachIntent(session) {

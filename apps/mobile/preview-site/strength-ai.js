@@ -88,7 +88,7 @@
     state = state || {};
     var s = state.settings || {};
     if (s.llmProgression === false) return false;
-    return s.llmProgression !== false && (s.llmProgression === true || s.llmCoachIntent !== false || s.llmEnabled === true);
+    return true;
   }
 
   global.StrengthAI = {

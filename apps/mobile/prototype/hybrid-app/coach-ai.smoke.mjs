@@ -11,9 +11,9 @@ const src = readFileSync(join(dir, 'coach-ai.js'), 'utf8');
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('coach-ai.js')) throw new Error('index.html missing coach-ai.js');
-if (!html.includes('llmCoachIntent')) throw new Error('settings missing llmCoachIntent toggle');
-if (!html.includes('function settingsToggle')) throw new Error('settingsToggle helper missing');
-if (!html.includes('llmProgression')) throw new Error('settings missing llmProgression toggle');
+if (!html.includes('function coachControlsStrength(){return false}')) throw new Error('coachControlsStrength should stay off');
+if (html.includes('settings.llmCoachIntent=this.checked')) throw new Error('llmCoachIntent should not be a settings toggle');
+if (html.includes('settings.llmProgression=this.checked')) throw new Error('llmProgression should not be a settings toggle');
 
 const sandbox = { window: {}, console, fetch: () => Promise.reject(new Error('no network')) };
 sandbox.esc = (s) => String(s);
@@ -55,5 +55,7 @@ const cueHtml = sandbox.CoachAI.athleteCueHtml({
 });
 if (!cueHtml.includes('Smooth reps')) throw new Error('athleteCueHtml failed');
 if (sandbox.CoachAI.athleteCueForSession(null)) throw new Error('empty session cue should be blank');
+
+if (!sandbox.CoachAI.llmEnabled({ settings: {} })) throw new Error('coach intent AI should be on by default');
 
 console.log('coach-ai.smoke: ok');
