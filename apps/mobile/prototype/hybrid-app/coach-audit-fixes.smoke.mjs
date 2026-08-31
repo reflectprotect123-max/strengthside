@@ -232,8 +232,11 @@ if (!indexHtml.includes('sessionLooksLikeConditioning(active)&&!sessionHasStreng
 if (!indexHtml.includes('sessionHasStrengthWork(x)&&(x.tasks||[]).some(task=>(task.kind===\'strength\'')) {
   throw new Error('completeSimpleCond must not skip strength on hybrid');
 }
-if (!indexHtml.includes('S.settings?.minimalUi===true')) {
-  throw new Error('minimalUi should be opt-in not default-on');
+if (indexHtml.includes('function minimalUi(')) {
+  throw new Error('minimalUi toggle removed');
+}
+if (/Working maxes[\s\S]{0,320}openStrengthProgress\(\)/.test(indexHtml)) {
+  throw new Error('Settings should not duplicate Library Progress button');
 }
 if (indexHtml.includes('function showBlockHelp(')) {
   throw new Error('showBlockHelp removed — block help is not athlete-facing');

@@ -46,13 +46,10 @@
     }
   }
 
-  function defaultAthleteEmail() {
-    return 'veldman@thehybrid.local';
-  }
-
   function pickBucket(payload, email) {
     if (!payload || !payload.athletes) return null;
-    email = String(email || defaultAthleteEmail()).toLowerCase();
+    if (!email) return null;
+    email = String(email).toLowerCase();
     return (
       payload.athletes.find(function (a) {
         return String(a.email || '').toLowerCase() === email;
@@ -298,7 +295,6 @@
     setMergeCallback: setMergeCallback,
     formatStatusLine: formatStatusLine,
     status: status,
-    defaultAthleteEmail: defaultAthleteEmail,
     BRIDGE_KEY: BRIDGE_KEY,
     NUTRITION_KEY: NUTRITION_KEY,
   };

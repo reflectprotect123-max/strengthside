@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.32 | 2026-08-31 | Remove redundant athlete UI — auto coach sync, no minimal toggle, slimmer Home/Settings (cache v126) |
 | 1.0.31 | 2026-08-31 | Athlete dead-code purge — legacy check-in, ER programs, coach gate branches (cache v125) |
 | 1.0.30 | 2026-08-31 | Remove athlete coach file import — cloud sync only (cache v124) |
 | 1.0.29 | 2026-08-31 | Remove coach toggles — builder + AI always on (cache v123) |

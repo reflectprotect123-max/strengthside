@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v125'"), 'LOCAL_BUILD v119');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v125'"), 'SW v119');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v126'"), 'LOCAL_BUILD v119');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v126'"), 'SW v119');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -43,6 +43,10 @@ must(html.includes('function coachControlsStrength(){return false}'), 'builder a
 must(!html.includes('settings.showStrengthBuilder=this.checked'), 'no builder settings toggle');
 must(!html.includes('function dailyCheckinCard('), 'legacy slider check-in removed');
 must(!html.includes('function openProgram('), 'ER program UI removed from athlete app');
+must(!html.includes('Check for updates'), 'no manual coach pull in settings');
+must(!html.includes('Minimal screen'), 'no minimal screen toggle');
+must(!html.includes('pullCoachBridge'), 'pullCoachBridge removed');
+must(!html.includes('onclick=exportData()>Export backup</button><button class=btn onclick="go(\'calendar\')">Return to calendar'), 'session summary export backup removed');
 must(html.includes('ath-lift-card'), 'ath-lift-card markup');
 must(!html.includes("coach-strength-hidden .ath-strength-build{display:none"), 'coach gate no longer hides athlete builder CSS');
 
