@@ -79,7 +79,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .cal-day-count{display:block;margin-top:2px;font-size:10px;font-weight:700;color:var(--copper2);letter-spacing:.04em}
 .cal-day-label{display:block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.88;line-height:1.1}
 .cal-actions{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
-.cal-actions .btn{flex:0 1 auto;min-height:40px;padding:8px 14px;font-size:12px}
+.cal-actions .btn{flex:0 1 auto;min-height:var(--tap-min);padding:10px 14px;font-size:13px;touch-action:manipulation}
 .cal-empty{padding:14px 16px;border:1px dashed var(--line2);border-radius:14px;background:var(--panel3);text-align:center}
 .cal-empty-title{margin:0;font-size:15px;font-weight:700}
 .cal-empty-hint{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
@@ -179,11 +179,14 @@ body.minimal-ui .streamhero .lead, body.minimal-ui .programchips, body.minimal-u
 .progressnote b{color:var(--ok)}
 .timerbox{text-align:center}.bigtime{font-size:51px;font-weight:900;letter-spacing:-.07em;font-variant-numeric:tabular-nums}.phase{color:var(--gold2);font-size:11px;letter-spacing:.16em;text-transform:uppercase}.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.stat{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel3)}.stat small{display:block;color:var(--muted);font-size:9px;letter-spacing:.11em;text-transform:uppercase}.stat b{display:block;margin-top:4px;font-size:24px;letter-spacing:-.05em}.stat.wide{grid-column:1/-1}.loadmethod{margin-top:4px;color:var(--muted);font-size:11px}.builderbottom{position:sticky;bottom:0;margin-top:16px;padding:11px 0 3px;border-top:1px solid var(--line);background:#090909ed;backdrop-filter:blur(10px)}
 .ath-builder{display:grid;gap:14px;padding-bottom:18px}
-.ath-tpl-actions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 12px}
-.ath-tpl-actions .btn{flex:1 1 calc(50% - 6px);min-width:0}
+.ath-tpl-actions{display:grid;gap:8px;padding:0 12px 12px}
+.ath-tpl-actions-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ath-tpl-actions .btn{min-height:var(--tap-min);width:100%;touch-action:manipulation}
+.ath-tpl-actions .btn.ath-tpl-schedule{font-weight:700}
+.ath-tpl-actions .btn.ath-tpl-delete{min-height:var(--tap-min);border-color:transparent;background:transparent;color:var(--bad);box-shadow:none;opacity:.9}
 .ath-builder-head{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
 .ath-builder-save-row{display:flex;gap:8px;padding:0 0 8px}
-.ath-builder-save-row .btn{flex:1}
+.ath-builder-save-row .btn{flex:1;min-height:var(--tap-min);touch-action:manipulation}
 .ath-builder-name{width:100%;min-height:var(--tap-min);border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);padding:10px 12px;font-weight:700}
 .ath-builder-body{display:grid;gap:8px}
 .ath-lift-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
@@ -404,8 +407,9 @@ h2{font-size:clamp(22px,5.5vw,26px); line-height:1.1}
 }
 .btn.ghost{background:transparent; box-shadow:none}
 .btn.danger,.btn.bad{border-color:rgba(208,137,125,.4); color:#f0b4aa; background:rgba(208,137,125,.06)}
-.btn.small{min-height:36px; padding:8px 11px; font-size:12px; border-radius:11px}
+.btn.small{min-height:var(--tap-min); min-width:var(--tap-min); padding:10px 12px; font-size:13px; border-radius:11px}
 .btn.block{width:100%}
+.btn,button.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .btns{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
 @media(hover:hover){
   .btn:hover{border-color:rgba(212,165,116,.35); background:linear-gradient(180deg,#232a31,#191e24)}
@@ -961,7 +965,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v114';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v115';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1921,7 +1925,7 @@ function restoreHiddenTemplates(){S.hiddenTemplateIds=[];S=purgeStrengthTemplate
 function templateShortMeta(t){let blocks=t.blocks||[],strength=blocks.flatMap(b=>b.type==='strength'?(b.exercises||[]):[]).length,conditioning=blocks.filter(b=>b.type==='conditioning').length;let bits=[`${blocks.length} blocks`];if(strength)bits.push(`${strength} exercise${strength===1?'':'s'}`);if(conditioning)bits.push(`${conditioning} conditioning block${conditioning===1?'':'s'}`);return bits.join(' · ')}
 function exerciseVolumeMeta(y){if(y&&y.autopilotVolume!==false){if(window.LogColumns&&LogColumns.columnsMeta){let m=LogColumns.columnsMeta(y);if(m)return m}return'Autopilot'}return`${y.sets||'—'} × ${y.reps||'—'}`}
 function templateBlockOverview(x){x=normalizeWorkoutBlock(x);if(x.type==='text')return`<div class=overviewitem><b>${esc(x.heading)}</b><div class=meta>${esc(textNotes(x).slice(0,150))}${textNotes(x).length>150?'…':''}</div></div>`;if(x.type==='conditioning')return`<div class=overviewitem><b>${esc(x.heading)}</b><div class=meta>${x.recoverySession?'<span class="pill ok">Recovery</span> · ':''}${esc(condSummary(x))}${String(x.notes||'').trim()?`<br>${esc(String(x.notes).trim())}`:''}</div></div>`;let list=(x.exercises||[]).map(y=>`${exerciseLinkHtml(y.name,y.exerciseId,y.category)} · ${esc(exerciseVolumeMeta(y))}`).join('<br>');return`<div class=overviewitem><b>${esc(x.heading)}</b><div class=meta>${list||'No exercises yet.'}</div></div>`}
-function templateActionsHtml(t){let selfBuild=isConditioningTemplate(t)?'':' ath-strength-build';let delOn=isSeedTemplate(t)?`hideTemplate('${t.id}')`:`deleteTemplate('${t.id}')`;let delLabel=isSeedTemplate(t)?'Hide':'Delete';return`<div class="ath-tpl-actions${selfBuild}" onclick="event.stopPropagation()"><button type=button class="btn small primary" onclick="editTemplate('${t.id}')">Edit</button><button type=button class="btn small" onclick="duplicateTemplate('${t.id}')">Duplicate</button><button type=button class="btn small" onclick="scheduleTemplateToCalendar('${t.id}')">Schedule</button><button type=button class="btn small danger" onclick="${delOn}">${delLabel}</button></div>`}
+function templateActionsHtml(t){let selfBuild=isConditioningTemplate(t)?'':' ath-strength-build';let delOn=isSeedTemplate(t)?`hideTemplate('${t.id}')`:`deleteTemplate('${t.id}')`;let delLabel=isSeedTemplate(t)?'Hide':'Delete';return`<div class="ath-tpl-actions${selfBuild}" onclick="event.stopPropagation()"><div class=ath-tpl-actions-row><button type=button class="btn small" onclick="editTemplate('${t.id}')">Edit</button><button type=button class="btn small" onclick="duplicateTemplate('${t.id}')">Duplicate</button></div><button type=button class="btn small primary ath-tpl-schedule" onclick="scheduleTemplateToCalendar('${t.id}')">Schedule</button><button type=button class="btn small ath-tpl-delete" onclick="${delOn}">${delLabel}</button></div>`}
 function templateOverviewHtml(t){return`<div class=expandbody>${t.coachInstructions?`<div class=liftcue>${esc(t.coachInstructions)}</div>`:''}<div class=overviewlist>${(t.blocks||[]).map(templateBlockOverview).join('')}</div><div class=btns><button class="btn small primary" onclick="previewTemplate('${t.id}')">Full preview</button><button class="btn small" onclick="scheduleSheet('${t.id}')">Schedule…</button></div></div>`}
 function scheduleTemplateToCalendar(templateId){let t=tpl(templateId);if(!t)return;let d=S.selected||today();if(addScheduledSession(t,d,true)){S.selected=d;save();alert(`${t.name} scheduled for ${dateLabel(d)}.`);go('calendar')}else scheduleSheet(templateId)}
 function scheduleTemplateToday(templateId){scheduleTemplateToCalendar(templateId)}

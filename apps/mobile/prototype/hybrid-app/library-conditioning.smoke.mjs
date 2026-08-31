@@ -18,8 +18,8 @@ function must(cond, msg) {
 const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(dir, 'service-worker.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v113'"), 'LOCAL_BUILD v92');
-must(sw.includes('the-hybrid-athlete-engine-v113'), 'service worker cache v92');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v115'"), 'LOCAL_BUILD v92');
+must(sw.includes('the-hybrid-athlete-engine-v115'), 'service worker cache v92');
 
 must(html.includes('library-tabs'), 'library tabs CSS/markup');
 must(html.includes("setLibraryTab('conditioning')"), 'Engine library tab switch');
@@ -29,7 +29,9 @@ must(html.includes('function saveCondTemplate('), 'saveCondTemplate');
 must(html.includes('function publishCondTemplate('), 'publishCondTemplate');
 must(html.includes('function openAthleteConditioningLibrary('), 'openAthleteConditioningLibrary');
 must(html.includes('Publish to day'), 'Publish to day CTA');
-must(html.includes('Save to Library'), 'Save to Library CTA');
+must(html.includes('onclick="saveCondTemplate()"'), 'Save conditioning CTA');
+must(html.includes('function saveCondTemplateAsCopy('), 'Save as copy for conditioning');
+must(html.includes('ath-tpl-actions'), 'template actions always visible');
 
 must(!html.includes('ath-label>CONDITIONING'), 'Home CONDITIONING module removed');
 must(!html.includes('Conditioning lives on Home'), 'Library no longer points conditioning to Home');

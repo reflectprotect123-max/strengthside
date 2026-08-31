@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v114'"), 'LOCAL_BUILD v114');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v114'"), 'SW v114');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v115'"), 'LOCAL_BUILD v115');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v115'"), 'SW v115');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -28,10 +28,13 @@ must(html.includes('function cloneTemplateAsUser'), 'cloneTemplateAsUser');
 must(html.includes('function uniqueTemplateName'), 'uniqueTemplateName');
 must(html.includes('function templateActionsHtml'), 'templateActionsHtml');
 must(html.includes('ath-tpl-actions'), 'always-visible template actions');
+must(html.includes('ath-tpl-schedule'), 'Schedule is primary template CTA');
 must(html.includes('function saveTemplateAsCopy'), 'saveTemplateAsCopy');
 must(html.includes('function saveStrengthWorkoutAsCopy'), 'saveStrengthWorkoutAsCopy');
 must(html.includes('function saveCondTemplateAsCopy'), 'saveCondTemplateAsCopy');
 must(html.includes("onclick=\"duplicateTemplate('"), 'Library Duplicate button');
 must(html.includes('Save as copy'), 'Save as copy controls');
+must(html.includes('touch-action:manipulation'), 'touch-action manipulation');
+must(/\.btn\.small\{[^}]*min-height:var\(--tap-min\)/.test(html), 'btn.small uses tap-min');
 
 console.log('calendar-ux.smoke: ok');
