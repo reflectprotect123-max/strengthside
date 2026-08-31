@@ -953,7 +953,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v108';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v109';
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
 function ensureLocalReady(state){state=state||{};state.meta=state.meta||{};state.meta.localRevision=num(state.meta.localRevision);state.meta.ownerId=state.meta.ownerId||localRecordId('user');state.meta.deviceId=state.meta.deviceId||localRecordId('device');state.meta.installId=state.meta.installId||localRecordId('install');state.meta.createdAt=state.meta.createdAt||isoNow();state.meta.updatedAt=isoNow();state.strengthState=state.strengthState||{workingMaxEvents:[],prEvents:[],loadHints:{}};state.meta.progressionAudit=state.meta.progressionAudit||[];delete state['cl'+'oud'];delete state['sy'+'ncQueue'];return state}
@@ -1104,13 +1104,62 @@ function applyCalendarCleanPatch(state){
   state.meta.calendarCleanVersion=CALENDAR_CLEAN_VERSION;
   return state;
 }
-const ATHLETE_BUILDER_VERSION='athlete-builder-v2';
+const ATHLETE_BUILDER_VERSION='athlete-builder-v3';
 function templateHasStrength(t){return(t.blocks||[]).some(b=>b&&b.type==='strength'&&(b.exercises||[]).length)}
 function templateIsStrengthWorkout(t){
   if(!t)return false;
   if(String(t.templateKind||'').toLowerCase()==='strength')return true;
   if(isConditioningTemplate(t)&&!templateHasStrength(t))return false;
   return templateHasStrength(t);
+}
+function blockIsRecoveryBlock(b){
+  if(!b)return false;
+  let cat=String(b.category||'').toLowerCase(),heading=String(b.heading||'').toLowerCase();
+  return !!b.recoverySession||cat==='recovery'||/recover|debt repay|easy flush/.test(heading);
+}
+function inferCondFmtFromBlock(b){
+  if(b&&b.condFmt)return b.condFmt;
+  let ct=String(b&&b.conditioningType||'').toLowerCase();
+  if(ct==='intervals')return 'intervals';
+  if(ct==='amrap'||ct==='timecap'||ct==='custom')return 'custom';
+  if(num(b&&b.workSec)>0&&(num(b.rounds)>1||ct==='custom'))return 'custom';
+  if(num(b&&b.workSec)>0&&num(b.restSec)>0)return 'intervals';
+  return 'steady';
+}
+function normalizeCondModality(mod){
+  let m=String(mod||'').trim();
+  if(!m)return 'Bike';
+  if(/,|\//.test(m))m=m.split(/[/,]/)[0].trim();
+  let low=m.toLowerCase();
+  if(/run/.test(low))return 'Run';
+  if(/walk/.test(low))return 'Walk';
+  if(/bike|cycle/.test(low))return 'Bike';
+  if(/row/.test(low))return 'Rower';
+  if(/ski/.test(low))return 'Ski erg';
+  if(/circuit|mixed|multi/.test(low))return 'Circuit';
+  let exact=(typeof COND_MODALITIES!=='undefined'?COND_MODALITIES:['Run','Walk','Bike','Rower','Ski erg','Circuit','Other']).find(x=>x.toLowerCase()===low);
+  if(exact)return exact;
+  return 'Other';
+}
+function normalizeAthleteCondBlock(b){
+  if(!b)return null;
+  b=clone(b);
+  let recovery=blockIsRecoveryBlock(b);
+  if(b.type!=='conditioning'&&!recovery&&!(b.condFmt||b.conditioningType||b.modality||num(b.targetDurationMin)))return null;
+  b.type='conditioning';
+  let fmtKey=recovery?'steady':inferCondFmtFromBlock(b);
+  let fmt=(typeof condFormatMeta==='function'?condFormatMeta:((k)=>((typeof COND_FORMATS!=='undefined'?COND_FORMATS:[{key:'steady',name:'Steady-state',type:'easy',rounds:1,workSec:0,restSec:0}]).find(f=>f.key===k)||{key:'steady',name:'Steady-state',type:'easy',rounds:1,workSec:0,restSec:0})))(fmtKey);
+  let effortKeys=(typeof COND_EFFORTS!=='undefined'?COND_EFFORTS:[{key:'easy'},{key:'medium'},{key:'hard'}]).map(e=>e.key);
+  let effort=recovery?'easy':(effortKeys.includes(b.effort)?b.effort:'easy');
+  let mins=Math.max(0,num(b.targetDurationMin)||num(b.timeCapMin)||num(b.baselineDurationMin)||(recovery?30:20));
+  let rounds=Math.max(1,num(b.rounds)||fmt.rounds||1);
+  let workSec=Math.max(0,num(b.workSec)||fmt.workSec||0);
+  let restSec=Math.max(0,b.restSec!=null?num(b.restSec):(fmt.restSec||0));
+  let intervalish=fmt.key==='intervals'||fmt.key==='tempo'||fmt.key==='custom';
+  if(!intervalish){rounds=1;workSec=0;restSec=0}
+  let out={id:b.id||id(),type:'conditioning',heading:recovery?'Recovery movement':fmt.name,conditioningType:fmt.type,modality:recovery?'Mixed':normalizeCondModality(b.modality),targetDurationMin:mins,timeCapMin:mins,effort,condFmt:fmtKey,rounds,workSec,restSec,targetWatts:num(b.targetWatts)||'',notes:String(b.notes||'').trim(),autopilotCond:true};
+  if(recovery){out.recoverySession=true;out.category='Recovery';out.baselineDurationMin=num(b.baselineDurationMin)||mins;out.targetDurationMin=num(b.targetDurationMin)||out.baselineDurationMin;out.timeCapMin=out.targetDurationMin}
+  return out;
 }
 function athleteDefaultLogColumns(ex){
   let cols=[];
@@ -1134,13 +1183,19 @@ function normalizeAthleteExercise(ex){
 function normalizeAthleteStrengthBlocks(blocks){
   blocks=Array.isArray(blocks)?blocks:[];
   let exercises=blocks.filter(b=>b&&b.type==='strength').flatMap(b=>(b.exercises||[]).map(normalizeAthleteExercise));
-  let cond=blocks.filter(b=>b&&b.type==='conditioning').map(b=>clone(b));
-  if(!exercises.length)return cond;
-  return[{id:blocks.find(b=>b&&b.type==='strength')?.id||id(),type:'strength',heading:'Strength',superset:false,exercises},...cond];
+  let cond=blocks.filter(b=>b&&(b.type==='conditioning'||blockIsRecoveryBlock(b))).map(normalizeAthleteCondBlock).filter(Boolean);
+  let primaryCond=cond.length?(cond.find(b=>b.recoverySession)||cond[0]):null;
+  if(!exercises.length)return primaryCond?[primaryCond]:[];
+  return[{id:blocks.find(b=>b&&b.type==='strength')?.id||id(),type:'strength',heading:'Strength',superset:false,exercises},...(primaryCond?[primaryCond]:[])];
 }
 function normalizeAthleteStrengthTemplate(t){
   if(!templateIsStrengthWorkout(t))return;
   t.templateKind='strength';
+  t.blocks=normalizeAthleteStrengthBlocks(t.blocks||[]);
+}
+function normalizeAthleteCondTemplate(t){
+  if(!isConditioningTemplate(t)||templateHasStrength(t))return;
+  t.templateKind='conditioning';
   t.blocks=normalizeAthleteStrengthBlocks(t.blocks||[]);
 }
 function sessionBlocksCanMigrate(s){
@@ -1153,9 +1208,12 @@ function applyAthleteBuilderPatch(state){
   state=state||{};
   state.meta=state.meta||{};
   if(state.meta.athleteBuilderVersion===ATHLETE_BUILDER_VERSION)return state;
-  for(const t of state.templates||[])normalizeAthleteStrengthTemplate(t);
+  for(const t of state.templates||[]){normalizeAthleteStrengthTemplate(t);normalizeAthleteCondTemplate(t);}
   for(const s of state.sessions||[]){if(sessionBlocksCanMigrate(s))s.blocks=normalizeAthleteStrengthBlocks(s.blocks||[]);}
-  if(state.draft&&String(state.draft.templateKind||'').toLowerCase()==='strength')state.draft.blocks=normalizeAthleteStrengthBlocks(state.draft.blocks||[]);
+  if(state.draft){
+    let kind=String(state.draft.templateKind||'').toLowerCase();
+    if(kind==='strength'||kind==='conditioning')state.draft.blocks=normalizeAthleteStrengthBlocks(state.draft.blocks||[]);
+  }
   state.meta.athleteBuilderVersion=ATHLETE_BUILDER_VERSION;
   return state;
 }
