@@ -6,7 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
-| 1.0.29 | pending | Remove coach AI/builder toggles — always on automatically (cache v123) |
+| 1.0.29 | 2026-08-31 | Remove coach toggles — builder + AI always on (cache v123) |
 | 1.0.28 | pending | Settings: plain-language coach toggles + helper text (cache v122) |
 | 1.0.27 | 2026-08-31 | Full Body A starter → athlete builder v7 (single block, Link supersets, cache v121) |
 | 1.0.26 | 2026-08-31 | Athlete builder Link lock between lifts → session superset (cache v120) |
