@@ -23,6 +23,9 @@ jobs:
       - run: pnpm run build
       - run: pnpm run check:engine-adapter
       - run: pnpm run check:cond-thin-twin
+      - run: pnpm run check:cond-interval-autoreg
+      - run: pnpm run check:cond-autopilot-prescription
+      - run: pnpm run check:coach-ai
       - run: pnpm run check:library-conditioning
       - run: pnpm run check:engine-adapt
       - run: pnpm run check:label-scan

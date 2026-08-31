@@ -112,10 +112,74 @@
     };
   }
 
+  function recoveryGateForAutopilot(state) {
+    var gate = 'ok';
+    if (state && state.active && state.sessions) {
+      for (var i = 0; i < state.sessions.length; i++) {
+        var sess = state.sessions[i];
+        if (sess && sess.id === state.active && sess.llmRecoveryGate) {
+          var rank = { hold: 3, caution: 2, ok: 1 };
+          var g = sess.llmRecoveryGate;
+          gate = (rank[g] || 1) >= (rank[gate] || 1) ? g : gate;
+          break;
+        }
+      }
+    }
+    if (!global.RecoverySignals) return gate;
+    try {
+      var recovery = global.RecoverySignals.recoverySignal(state, {
+        date: new Date().toISOString().slice(0, 10),
+      });
+      var rGate = recovery && recovery.gate ? recovery.gate : 'ok';
+      var rank2 = { hold: 3, caution: 2, ok: 1 };
+      return (rank2[rGate] || 1) >= (rank2[gate] || 1) ? rGate : gate;
+    } catch (_e) {
+      return gate;
+    }
+  }
+
+  function coachCondField(v) {
+    if (v == null || v === '') return null;
+    return v;
+  }
+
+  function isCondDeferred(task) {
+    if (!task || task.kind !== 'conditioning') return false;
+    if (task.autopilotCond === false) return false;
+    return task.autopilotCond === true || task.autopilotCond == null;
+  }
+
+  function lastCondSessionVolume(state, fmtKey) {
+    var sessions = (state && state.sessions) || [];
+    for (var i = sessions.length - 1; i >= 0; i--) {
+      var sess = sessions[i];
+      if (!sess || sess.status !== 'completed') continue;
+      var tasks = sess.tasks || [];
+      for (var j = tasks.length - 1; j >= 0; j--) {
+        var t = tasks[j];
+        if (!t || t.kind !== 'conditioning' || t.condFmt !== fmtKey) continue;
+        return {
+          rounds: t.rounds,
+          workSec: t.workSec,
+          restSec: t.restSec,
+          minutes: t.targetDurationMin || t.timeCapMin,
+        };
+      }
+    }
+    return null;
+  }
+
+  function decideCondPrescription(input) {
+    if (!hasEngine() || !global.HybridEngine.DecideInitialCondPrescription) {
+      throw new Error('HybridEngine.DecideInitialCondPrescription not loaded');
+    }
+    return global.HybridEngine.DecideInitialCondPrescription.decideInitialCondPrescription(input);
+  }
+
   /**
    * Fill session/block fields on Start from builder + engine prescription.
-   * Builder UI values win for authored minutes/rounds/work/rest; engine
-   * conPrescription applies red-day ease (dailyAdj) and stamps level/note.
+   * When autopilotCond is true, coach volume fields are ignored (engine owns).
+   * Partial pins still win when autopilotCond is false or fields are provided.
    */
   function sessionPatchFromBuilder(input) {
     var opts = input || {};
@@ -126,10 +190,26 @@
     var fmt = formatMeta(fmtKey);
     var whoop = opts.whoop || null;
     var settings = opts.settings || {};
-    var rx = global.HybridEngine.Conditioning.conPrescription(fmtKey, {
+    var defer =
+      opts.autopilotCond === true ||
+      (opts.autopilotCond !== false &&
+        coachCondField(opts.rounds) == null &&
+        coachCondField(opts.workSec) == null &&
+        coachCondField(opts.restSec) == null &&
+        coachCondField(opts.minutes) == null);
+
+    var decision = decideCondPrescription({
+      formatKey: fmtKey,
+      effortKey: effort.key,
+      coachRounds: defer ? null : coachCondField(opts.rounds),
+      coachWorkSec: defer ? null : coachCondField(opts.workSec),
+      coachRestSec: defer ? null : coachCondField(opts.restSec),
+      coachMinutes: defer ? null : coachCondField(opts.minutes),
       whoop: whoop,
-      modality: opts.modality,
       settings: settings,
+      modality: opts.modality,
+      recoveryGate: opts.recoveryGate || 'ok',
+      lastSession: opts.lastSession || null,
     });
 
     var zones = opts.zones || [];
@@ -140,71 +220,78 @@
       zones[0] ||
       null;
 
-    // Prefer engine level-adjusted params; explicit builder numbers still win when provided.
-    var mins;
-    if (opts.minutes != null && opts.minutes !== '') {
-      mins = Math.max(0, Number(opts.minutes) || 0);
-    } else if (rx.minutes != null) {
-      mins = Math.max(0, Number(rx.minutes) || 0);
-    } else {
-      mins = Math.max(0, Number(fmt.minutes) || 30);
-    }
-    var rounds;
-    if (opts.rounds != null && opts.rounds !== '') {
-      rounds = Math.max(1, Number(opts.rounds) || 1);
-    } else if (rx.rounds != null) {
-      rounds = Math.max(1, Number(rx.rounds) || 1);
-    } else {
-      rounds = Math.max(1, Number(fmt.rounds) || 1);
-    }
-    var workSec;
-    if (opts.workSec != null && opts.workSec !== '') {
-      workSec = Math.max(0, Number(opts.workSec) || 0);
-    } else if (rx.work != null) {
-      workSec = Math.max(0, Number(rx.work) || 0);
-    } else {
-      workSec = Math.max(0, Number(fmt.workSec) || 0);
-    }
-    var restSec;
-    if (opts.restSec != null && opts.restSec !== '') {
-      restSec = Math.max(0, Number(opts.restSec) || 0);
-    } else if (rx.rest != null) {
-      restSec = Math.max(0, Number(rx.rest) || 0);
-    } else {
-      restSec = Math.max(0, Number(fmt.restSec) || 0);
-    }
-
-    // Red-day ease mirrors engine levers, applied on top of builder numbers.
-    if (rx.dailyAdj < 0) {
-      if (fmtKey === 'steady') {
-        mins = Math.max(10, mins - 5);
-      } else if (fmtKey !== 'free') {
-        if (rounds > 3) rounds = rounds - 1;
-        else restSec = restSec + 10;
-      }
-    }
-
     return {
       heading: fmt.name,
       conditioningType: fmt.type,
       modality: opts.modality || 'Run',
-      targetDurationMin: mins,
-      timeCapMin: mins,
+      targetDurationMin: decision.targetDurationMin,
+      timeCapMin: decision.targetDurationMin,
       targetHrZone: z ? z.lo + '–' + z.hi : '',
       effort: effort.key,
       condFmt: fmt.key,
-      rounds: rounds,
-      workSec: workSec,
-      restSec: restSec,
+      rounds: decision.rounds,
+      workSec: decision.workSec,
+      restSec: decision.restSec,
       targetWatts:
         opts.targetWatts != null && opts.targetWatts !== ''
           ? Math.max(0, Number(opts.targetWatts) || 0) || ''
           : '',
       notes: '',
-      condRxLevel: rx.level || 0,
-      condRxDailyAdj: rx.dailyAdj || 0,
-      condRxNote: rx.note || '',
+      autopilotCond: decision.autopilotCond,
+      autopilotCondReasons: decision.reasonCodes,
+      condRxLevel: decision.condRxLevel || 0,
+      condRxDailyAdj: decision.condRxDailyAdj || 0,
+      condRxNote: decision.condRxNote || '',
     };
+  }
+
+  /**
+   * Session-start conditioning autopilot — fills rounds/work/rest/minutes from engine.
+   */
+  function applyAutopilotCondToTask(state, task, sessionCtx) {
+    if (!isCondDeferred(task)) return task;
+    sessionCtx = sessionCtx || {};
+    var fmtKey = task.condFmt || task.fmt || 'steady';
+    var whoop = sessionCtx.whoop || null;
+    var settings = (state && state.settings) || {};
+    var decision = decideCondPrescription({
+      formatKey: fmtKey,
+      effortKey: task.effort || 'medium',
+      coachRounds: null,
+      coachWorkSec: null,
+      coachRestSec: null,
+      coachMinutes: null,
+      whoop: whoop,
+      settings: settings,
+      modality: task.modality,
+      recoveryGate: sessionCtx.recoveryGate || recoveryGateForAutopilot(state),
+      lastSession: lastCondSessionVolume(state, fmtKey),
+    });
+    task.rounds = decision.rounds;
+    task.workSec = decision.workSec;
+    task.restSec = decision.restSec;
+    task.targetDurationMin = decision.targetDurationMin;
+    task.timeCapMin = decision.targetDurationMin;
+    task.autopilotCond = decision.autopilotCond;
+    task.autopilotCondReasons = decision.reasonCodes;
+    task.condRxLevel = decision.condRxLevel;
+    task.condRxDailyAdj = decision.condRxDailyAdj;
+    task.condRxNote = decision.condRxNote;
+    if (task.interval) task.interval = null;
+    return task;
+  }
+
+  function applyAutopilotCondToTasks(state, tasks, sessionCtx) {
+    sessionCtx = sessionCtx || {};
+    if (!sessionCtx.whoop && typeof global.athWhoopSampleForEngine === 'function') {
+      try {
+        sessionCtx.whoop = global.athWhoopSampleForEngine();
+      } catch (_e) {}
+    }
+    (tasks || []).forEach(function (t) {
+      if (t && t.kind === 'conditioning') applyAutopilotCondToTask(state, t, sessionCtx);
+    });
+    return tasks;
   }
 
   /**
@@ -685,6 +772,63 @@
     };
   }
 
+  function effortRpeBand(effortKey) {
+    if (!hasEngine()) return null;
+    var efforts = global.HybridEngine.Constants.CON_EFFORTS;
+    var e = efforts && efforts[effortKey || 'medium'];
+    if (!e || !e.rpe || e.rpe.length < 2) return null;
+    return { rpe: [Number(e.rpe[0]), Number(e.rpe[1])] };
+  }
+
+  function parseHrCeiling(raw) {
+    if (raw == null || raw === '') return undefined;
+    var s = String(raw);
+    var m = s.match(/(\d+)\s*[–-]\s*(\d+)/);
+    if (m) return Number(m[2]);
+    var n = Number(s.replace(/[^\d.]/g, ''));
+    return Number.isFinite(n) ? n : undefined;
+  }
+
+  /**
+   * Intrasession conditioning autoreg — rest-boundary target adjust via decideNextPhase.
+   */
+  function suggestNextPhase(task, input) {
+    input = input || {};
+    if (!hasEngine() || !global.HybridEngine.DecideNextPhase) return null;
+    var fmtKey = (task && (task.condFmt || task.fmt)) || 'intervals';
+    if (!global.HybridEngine.DecideNextPhase.isIntrasessionAutoregFormat(fmtKey)) {
+      return { action: 'noop', reasonCodes: ['steady_or_free_no_intrsession'] };
+    }
+    var rounds = Math.max(1, Number(task.rounds) || 1);
+    var round = task.interval && task.interval.round ? Number(task.interval.round) : 1;
+    return global.HybridEngine.DecideNextPhase.decideNextPhase({
+      formatKey: fmtKey,
+      effort: effortRpeBand(task.effort),
+      felt: input.felt,
+      zoneCompliance: input.zoneCompliance || 'borderline',
+      targetWatts: task.targetWatts != null && task.targetWatts !== '' ? Number(task.targetWatts) : undefined,
+      targetHrCeilingBpm: parseHrCeiling(task.targetHrZone),
+      roundsRemaining: Math.max(0, rounds - round + 1),
+      workDurationSec: Number(task.workSec) || undefined,
+      incomplete: !!input.incomplete,
+    });
+  }
+
+  function applyNextPhaseDecision(task, decision) {
+    if (!task || !decision) return task;
+    if (decision.nextTargetWatts != null) task.targetWatts = decision.nextTargetWatts;
+    if (decision.nextTargetHrCeilingBpm != null && task.targetHrZone !== undefined) {
+      var lo = parseHrCeiling(task.targetHrZone);
+      var bandLo = typeof task.targetHrZone === 'string' && task.targetHrZone.match(/(\d+)/);
+      var start = bandLo ? Number(bandLo[1]) : (lo ? lo - 15 : decision.nextTargetHrCeilingBpm - 15);
+      task.targetHrZone = start + '–' + decision.nextTargetHrCeilingBpm;
+    }
+    if (decision.nextRounds != null) task.rounds = Math.max(1, Number(decision.nextRounds));
+    if (decision.nextWorkDurationSec != null) task.workSec = Math.max(0, Number(decision.nextWorkDurationSec));
+    task.lastPhaseDecision = decision;
+    return task;
+  }
+
   var api = {
     hasEngine: hasEngine,
     zonesForProfile: zonesForProfile,
@@ -701,6 +845,13 @@
     zoneKeyForBpm: zoneKeyForBpm,
     applyConcept2Results: applyConcept2Results,
     tagEchoDeviceMetrics: tagEchoDeviceMetrics,
+    suggestNextPhase: suggestNextPhase,
+    applyNextPhaseDecision: applyNextPhaseDecision,
+    effortRpeBand: effortRpeBand,
+    isCondDeferred: isCondDeferred,
+    applyAutopilotCondToTask: applyAutopilotCondToTask,
+    applyAutopilotCondToTasks: applyAutopilotCondToTasks,
+    recoveryGateForAutopilot: recoveryGateForAutopilot,
   };
 
   global.EngineAdapter = api;

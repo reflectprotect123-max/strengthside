@@ -16,6 +16,8 @@ export * from './plates';
 export * from './hr';
 export * from './geo';
 export * from './conditioning';
+export * from './decideNextPhase';
+export * from './decideInitialCondPrescription';
 export * from './concept2';
 export * from './session';
 export * from './month';
