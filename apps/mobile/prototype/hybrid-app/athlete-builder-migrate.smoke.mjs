@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v6'"), 'migration version');
+must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v7'"), 'migration version');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
 must(html.includes('function normalizeAthleteExercise'), 'normalizeAthleteExercise');
 must(html.includes('function normalizeAthleteCondBlock'), 'normalizeAthleteCondBlock');
@@ -55,6 +55,9 @@ const sandbox = {
     return hasC && !hasS;
   },
   isCoachPrescription: () => false,
+  isSupersetBlock: (block) =>
+    !!block?.superset ||
+    (/superset|pair/i.test(String(block?.heading || '')) && (block.exercises || []).length > 1),
 };
 sandbox.window = sandbox;
 vm.runInNewContext(logColumnsSrc, sandbox);
@@ -107,7 +110,7 @@ const strengthState = applyAthleteBuilderPatch({
   ],
   sessions: [],
 });
-must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v6', 'migration stamp');
+must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v7', 'migration stamp');
 must(strengthState.templates[0].blocks.length === 1, 'warm/cool text blocks removed');
 must(strengthState.templates[0].blocks[0].type === 'strength', 'single strength block');
 must(strengthState.templates[0].blocks[0].exercises[0].autopilotVolume === true, 'template exercise migrated');
@@ -192,5 +195,61 @@ must(recoveryBlock.condFmt === 'steady', 'recovery uses steady format');
 must(recoveryBlock.effort === 'easy', 'recovery effort easy');
 must(recoveryBlock.modality === 'Mixed', 'recovery modality mixed');
 must(recoveryBlock.baselineDurationMin === 40, 'recovery baseline preserved');
+
+const legacyFullBodyA = applyAthleteBuilderPatch({
+  meta: { athleteBuilderVersion: 'athlete-builder-v6' },
+  templates: [
+    {
+      id: '39aa9693-b109-4da3-b66e-89c78d45058b',
+      name: 'Full Body A',
+      source: 'THE-program-core',
+      blocks: [
+        { id: 'w', type: 'text', heading: 'Warm-up', notes: '' },
+        {
+          id: 's1',
+          type: 'strength',
+          heading: 'Strength',
+          exercises: [{ name: 'Bench Press', exerciseId: 'core-bench-press', sets: 4, reps: '10', restSec: 150 }],
+        },
+        {
+          id: 's2',
+          type: 'strength',
+          heading: 'Unilateral Lower',
+          exercises: [{ name: 'Bulgarian Split Squat', exerciseId: 'core-bulgarian-split-squat', sets: 3, reps: '10', restSec: 90 }],
+        },
+        {
+          id: 'ss1',
+          type: 'strength',
+          heading: 'D1 / D2 Superset',
+          superset: true,
+          exercises: [
+            { name: 'Strict Bar Dip', exerciseId: 'program-strict-bar-dip', sets: 3, reps: '7', restSec: 75 },
+            { name: 'Nordic Curl', exerciseId: 'program-nordic-curl', sets: 3, reps: '7', restSec: 75 },
+          ],
+        },
+        {
+          id: 'ss2',
+          type: 'strength',
+          heading: 'E1 / E2 Superset',
+          superset: true,
+          exercises: [
+            { name: 'Barbell Curl', exerciseId: 'program-barbell-curl', sets: 3, reps: '12', restSec: 60 },
+            { name: 'Cable Tricep Pushdown', exerciseId: 'program-cable-tricep-pushdown', sets: 3, reps: '12', restSec: 60 },
+          ],
+        },
+        { id: 'c', type: 'text', heading: 'Cool-down', notes: '' },
+      ],
+    },
+  ],
+  sessions: [],
+});
+const fba = legacyFullBodyA.templates[0];
+must(fba.blocks.length === 1, 'Full Body A collapses to one strength block');
+const exs = fba.blocks[0].exercises;
+must(exs.length === 6, 'Full Body A keeps six lifts');
+must(exs[0].name === 'Bench Press' && exs[0].supersetWithNext === false, 'bench solo');
+must(exs[2].supersetWithNext === true && exs[3].supersetWithNext === false, 'D1/D2 linked');
+must(exs[4].supersetWithNext === true && exs[5].supersetWithNext === false, 'E1/E2 linked');
+must(exs.every((e) => e.autopilotVolume === true && e.sets === null && e.reps === null), 'athlete builder exercise shape');
 
 console.log('athlete-builder-migrate.smoke: ok');
