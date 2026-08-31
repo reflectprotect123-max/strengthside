@@ -10,13 +10,14 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v105'"), 'LOCAL_BUILD v105');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v105'"), 'SW v105');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v106'"), 'LOCAL_BUILD v106');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v106'"), 'SW v106');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
 must(html.includes('cal-drop-target'), 'calendar drag-drop targets');
 must(html.includes('function athleteStrengthBuilder'), 'athleteStrengthBuilder');
+must(html.includes('LogColumns.builderAthleteColumnsHtml'), 'builderAthleteColumnsHtml');
 must(html.includes('function applyCalendarCleanPatch'), 'applyCalendarCleanPatch');
 
 console.log('calendar-ux.smoke: ok');

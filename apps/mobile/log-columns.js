@@ -198,7 +198,7 @@
       const values = Array.isArray(c.values) ? c.values : splitValues(c.value, setCount || ex.sets || 1);
       return { id: c.id || newId(), kind: c.kind, value: joinValues(values), values };
     });
-    cols = cols.filter((c) => !isLoadKind(c.kind) || hasPinnedLoad([c]));
+    cols = cols.filter((c) => !isLoadKind(c.kind) || hasPinnedLoad([c]) || sheet.athleteMode || sheet.autopilotVolume);
     ex.logColumns = cols;
     if (setCount) ex.sets = Math.max(1, setCount);
     const effort = effortColumn(cols);
@@ -253,7 +253,7 @@
   }
 
   /** Sheet draft while Edit lift is open */
-  let sheet = { sets: 3, restSec: 120, targetRir: null, autopilotVolume: true, showOverrides: false, columns: [] };
+  let sheet = { sets: 3, restSec: 120, targetRir: null, autopilotVolume: true, athleteMode: false, showOverrides: false, columns: [] };
   let changeHandler = null;
 
   function setChangeHandler(fn) {
@@ -275,9 +275,43 @@
       restSec,
       targetRir,
       autopilotVolume,
+      athleteMode: false,
       showOverrides: !!(ex && ex.logColumns && ex.logColumns.some((c) => perSetOverrideActive(c.values, sets))),
       columns: coachNormalizeColumns({ ...(ex || {}), sets }),
     };
+    return sheet;
+  }
+
+  function defaultAthleteColumns() {
+    return [
+      { id: newId(), kind: 'weight_pct_wm', value: '', values: splitValues('', sheet.sets) },
+      { id: newId(), kind: 'reps', value: '', values: splitValues('', sheet.sets) },
+    ];
+  }
+
+  function ensureAthleteColumnCount() {
+    sheet.autopilotVolume = true;
+    if (!sheet.columns.length) sheet.columns = defaultAthleteColumns();
+    while (sheet.columns.length < 2) {
+      sheet.columns.push({
+        id: newId(),
+        kind: 'reps',
+        value: '',
+        values: splitValues('', sheet.sets),
+      });
+    }
+    if (sheet.columns.length > 3) sheet.columns = sheet.columns.slice(0, 3);
+  }
+
+  function beginAthleteSheet(ex) {
+    beginSheet({ ...(ex || {}), autopilotVolume: true, sets: null, reps: null });
+    sheet.athleteMode = true;
+    sheet.autopilotVolume = true;
+    if (!ex || !Array.isArray(ex.logColumns) || !ex.logColumns.length) {
+      sheet.columns = defaultAthleteColumns();
+    } else {
+      ensureAthleteColumnCount();
+    }
     return sheet;
   }
 
@@ -420,7 +454,7 @@
   function onKindChange(colIdx, kind) {
     if (!sheet.columns[colIdx]) return;
     sheet.columns[colIdx].kind = KIND_MAP[kind] ? kind : 'reps';
-    refreshPrescription();
+    refreshBuilderUi();
     notifyChange();
   }
 
@@ -517,14 +551,15 @@
       value: '',
       values: splitValues('', sheet.sets),
     });
-    refreshPrescription();
+    refreshBuilderUi();
     notifyChange();
   }
 
   function removeColumn(idx) {
-    if (sheet.columns.length <= 1) return;
+    const min = sheet.athleteMode ? 2 : 1;
+    if (sheet.columns.length <= min) return;
     sheet.columns.splice(idx, 1);
-    refreshPrescription();
+    refreshBuilderUi();
     notifyChange();
   }
 
@@ -673,6 +708,39 @@
     </div>`;
   }
 
+  function builderAthleteColumnsHtml() {
+    ensureAthleteColumnCount();
+    const cols = sheet.columns.slice(0, 3);
+    const rowClass = cols.length >= 3 ? 'cols-3' : 'cols-2';
+    const heads = cols
+      .map((c, i) => {
+        const remove =
+          cols.length > 2
+            ? `<button type="button" class="btn ghost small" onclick="LogColumns.removeColumn(${i})" aria-label="Remove column">×</button>`
+            : '';
+        return `<div class="builder-colhead"><select class="logcol-kind" aria-label="Column ${i + 1}" onchange="LogColumns.onKindChange(${i}, this.value)">${optionsHtml(c.kind)}</select>${remove}</div>`;
+      })
+      .join('');
+    const addBtn =
+      cols.length < 3
+        ? `<button type="button" class="btn small block" style="margin-top:8px" onclick="LogColumns.addColumn()">+ Add column</button>`
+        : '';
+    return `<div class="ath-builder-cols" id="builderAthleteCols"><div class="builder-colhead-row ${rowClass}">${heads}</div>${addBtn}<div class="meta">Sets, reps, load & rest are autopilot.</div></div>`;
+  }
+
+  function refreshAthleteColumns() {
+    const el = global.document && global.document.getElementById('builderAthleteCols');
+    if (!el) return;
+    const wrap = global.document.createElement('div');
+    wrap.innerHTML = builderAthleteColumnsHtml();
+    el.replaceWith(wrap.firstChild);
+  }
+
+  function refreshBuilderUi() {
+    if (sheet.athleteMode) refreshAthleteColumns();
+    else refreshPrescription();
+  }
+
   function builderPrescriptionHtml(opts = {}) {
     const compact = !!opts.compact;
     const grid = builderPrescriptionGridHtml({ compact });
@@ -737,10 +805,12 @@
     columnsMeta,
     hasPinnedLoad,
     builderColumnsHtml,
+    builderAthleteColumnsHtml,
     builderPrescriptionHtml,
     builderPrescriptionGridHtml,
     builderLoggerTwinHtml,
     beginSheet,
+    beginAthleteSheet,
     getSheetColumns,
     getSetCount,
     getRestSec,
