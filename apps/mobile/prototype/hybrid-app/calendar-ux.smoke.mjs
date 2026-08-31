@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v115'"), 'LOCAL_BUILD v115');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v115'"), 'SW v115');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v116'"), 'LOCAL_BUILD v116');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v116'"), 'SW v116');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
