@@ -26,7 +26,8 @@ vm.runInContext(`${bundle}; window.HybridStrength = HybridStrength; ${recovery};
 
 const { StrengthAdapter } = sandbox.window;
 must(html.includes('openStrengthExerciseDetail'), 'index must open exercise detail');
-must(adapter.includes('progressExerciseDetail'), 'adapter must export progressExerciseDetail');
+must(html.includes('saveExerciseWorkingMax'), 'index must save WM from Progress');
+must(adapter.includes('setWorkingMax'), 'adapter must export setWorkingMax');
 
 const state = {
   meta: { progressionAudit: [] },

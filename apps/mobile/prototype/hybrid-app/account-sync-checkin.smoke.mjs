@@ -42,11 +42,11 @@ if (!html.includes('ATH_CHECKIN_STEPS')) throw new Error('ATH_CHECKIN_STEPS miss
 if (!html.includes('function athCheckinAnswer')) throw new Error('athCheckinAnswer missing');
 if (!html.includes('checkin-choice')) throw new Error('checkin-choice UI missing');
 if (html.includes("athSleepSlider('sleepQuality'")) throw new Error('old sleepQuality slider still in check-in card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v101'")) throw new Error('expected cache v96');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v103'")) throw new Error('expected cache v96');
 if (!html.includes("keepScroll=S&&S.tab==='settings'")) throw new Error('shell() must preserve settings scroll');
 if (html.includes("loadStarter('Full Body B')")) throw new Error('Full Body B starter button still present');
 if (html.includes("loadStarter('Full Body C')")) throw new Error('Full Body C starter button still present');
-if (!html.includes("loadStarter('Full Body A')")) throw new Error('Full Body A starter missing');
+if (html.includes("loadStarter('Full Body A')")) throw new Error('Full Body A starter button should be removed for blank slate');
 if (!html.includes('Concept2 Logbook when already linked')) throw new Error('Settings copy missing Concept2-in-sync note');
 
 // Settings scroll: WHOOP/Concept2 must NOT rebuild settings() on status refresh (scroll jump).

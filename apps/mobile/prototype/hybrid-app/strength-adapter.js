@@ -608,6 +608,54 @@
     return wm ? wm.valueKg : null;
   }
 
+  function hasWorkingMax(state, exerciseId, asOfDate) {
+    return workingMaxKgForExercise(state, exerciseId, asOfDate) != null;
+  }
+
+  function missingWorkingMaxExerciseIds(state, exerciseIds, asOfDate) {
+    return (exerciseIds || []).filter(function (id) {
+      return id && !hasWorkingMax(state, id, asOfDate);
+    });
+  }
+
+  /**
+   * Athlete (or coach) sets the anchor working max for an exercise.
+   * Subsequent %WM prescriptions and load hints build from this number.
+   */
+  function setWorkingMax(state, exerciseId, valueKg, opts) {
+    opts = opts || {};
+    if (!exerciseId || !hasStrength()) return { ok: false, reason: 'missing' };
+    var kg = num(valueKg);
+    if (kg <= 0 || kg > 2000) return { ok: false, reason: 'invalid_value' };
+    var ss = ensureStrengthState(state);
+    var athleteId = (state.meta && state.meta.ownerId) || 'local';
+    var source = opts.source || 'athlete_set';
+    var effectiveAt = opts.effectiveAt || isoNow();
+    ss.workingMaxEvents.push({
+      id: localId('wm'),
+      athleteId: athleteId,
+      exerciseId: exerciseId,
+      valueKg: kg,
+      source: source,
+      formula: null,
+      fromSetId: opts.fromSetId || null,
+      effectiveAt: effectiveAt,
+    });
+    if (opts.setLoadHint !== false) {
+      var hintKg = kg;
+      if (opts.exercise && opts.exercise.loadExpr) {
+        var resolved = resolveExerciseLoad(state, opts.exercise, String(effectiveAt).slice(0, 10));
+        if (resolved && resolved.loadKg != null) hintKg = resolved.loadKg;
+      }
+      ss.loadHints[exerciseId] = {
+        loadKg: hintKg,
+        updatedAt: isoNow(),
+        source: source,
+      };
+    }
+    return { ok: true, valueKg: kg, exerciseId: exerciseId };
+  }
+
   function equipmentForExercise(exercise) {
     var eq = exercise && exercise.equipment;
     if (eq && typeof eq === 'object' && (eq.incrementKg != null || eq.rackValuesKg)) return eq;
@@ -944,6 +992,10 @@
     exerciseExposureHistory: exerciseExposureHistory,
     auditReasonText: auditReasonText,
     exerciseNameFor: exerciseNameFor,
+    setWorkingMax: setWorkingMax,
+    hasWorkingMax: hasWorkingMax,
+    missingWorkingMaxExerciseIds: missingWorkingMaxExerciseIds,
+    workingMaxKgForExercise: workingMaxKgForExercise,
     resolveExerciseLoad: resolveExerciseLoad,
     sessionLoadContext: sessionLoadContext,
     calibrationForExercise: calibrationForExercise,
