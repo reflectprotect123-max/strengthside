@@ -725,7 +725,7 @@
       cols.length < 3
         ? `<button type="button" class="btn small block" style="margin-top:8px" onclick="LogColumns.addColumn()">+ Add column</button>`
         : '';
-    return `<div class="ath-builder-cols" id="builderAthleteCols"><div class="builder-colhead-row ${rowClass}">${heads}</div>${addBtn}<div class="meta">Sets, reps, load & rest are autopilot.</div></div>`;
+    return `<div class="ath-builder-cols" id="builderAthleteCols"><div class="builder-colhead-row ${rowClass}">${heads}</div>${addBtn}<div class="meta">Sets, reps & load are autopilot.</div></div>`;
   }
 
   function refreshAthleteColumns() {
