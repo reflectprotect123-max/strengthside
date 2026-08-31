@@ -82,7 +82,7 @@ const Cloud = sandbox.CoachCloud;
   const state = L.buildSeed({ startMonday: '2026-08-24' });
   const tplId = state.templates[0].id;
   const athleteId = state.athletes[0].id;
-  const date = L.today();
+  const date = L.addDays(L.today(), 60);
   const first = L.addCalendarSession(state, { athleteId, date, templateId: tplId });
   const second = L.addCalendarSession(state, { athleteId, date, templateId: tplId });
   if (!first) throw new Error('addCalendarSession first add failed');
