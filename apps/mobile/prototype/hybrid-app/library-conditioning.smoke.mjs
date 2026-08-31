@@ -18,8 +18,8 @@ function must(cond, msg) {
 const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(dir, 'service-worker.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v126'"), 'LOCAL_BUILD v92');
-must(sw.includes('the-hybrid-athlete-engine-v126'), 'service worker cache v92');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v127'"), 'LOCAL_BUILD v92');
+must(sw.includes('the-hybrid-athlete-engine-v127'), 'service worker cache v92');
 
 must(html.includes('library-tabs'), 'library tabs CSS/markup');
 must(html.includes("setLibraryTab('conditioning')"), 'Engine library tab switch');
@@ -28,6 +28,9 @@ must(html.includes('function libraryStrengthTab('), 'libraryStrengthTab');
 must(html.includes('function saveCondTemplate('), 'saveCondTemplate');
 must(html.includes('function publishCondTemplate('), 'publishCondTemplate');
 must(html.includes('function openAthleteConditioningLibrary('), 'openAthleteConditioningLibrary');
+must(html.includes("setLibraryTab('progress')"), 'Progress library tab switch');
+must(html.includes('function libraryProgressTab('), 'libraryProgressTab');
+must(!html.includes('Open progress'), 'no duplicate Open progress CTA in strength tab');
 must(html.includes('Publish to day'), 'Publish to day CTA');
 must(html.includes('onclick="saveCondTemplate()"'), 'Save conditioning CTA');
 must(html.includes('function saveCondTemplateAsCopy('), 'Save as copy for conditioning');
