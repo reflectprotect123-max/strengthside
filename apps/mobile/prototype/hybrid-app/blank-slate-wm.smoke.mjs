@@ -16,11 +16,12 @@ const sw = readFileSync(join(dir, 'service-worker.js'), 'utf8');
 const bundle = readFileSync(join(dir, 'strength-bundle.js'), 'utf8');
 const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v103'"), 'LOCAL_BUILD v103');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v103'"), 'SW v103');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v104'"), 'LOCAL_BUILD v104');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v104'"), 'SW v104');
+must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(html), 'athlete app has no TrainHeroic code');
+must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(sw), 'service worker has no TrainHeroic seed cache');
 must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise seed on boot');
 must(html.includes('No exercises yet'), 'empty exercise library copy');
-must(!html.includes('setTimeout(function(){bootTrainHeroicSeed()}'), 'no auto TrainHeroic seed on boot');
 must(html.includes('function saveExerciseWorkingMax'), 'Progress WM save handler');
 must(html.includes('function openWorkingMaxGate'), 'pre-session WM gate');
 must(html.includes('function saveWorkingMaxGate'), 'pre-session WM save');

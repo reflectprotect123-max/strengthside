@@ -27,28 +27,6 @@ fi
 cd "$REPO"
 bash apps/mobile/sync-hybrid-html.sh
 
-SEED_SRC="${TRAINHEROIC_SEED_FILE:-}"
-if [[ -z "$SEED_SRC" && -f "$REPO/THE-trainheroic-import.json" ]]; then
-  SEED_SRC="$REPO/THE-trainheroic-import.json"
-fi
-if [[ -n "$SEED_SRC" && -f "$SEED_SRC" ]]; then
-  mkdir -p "$REPO/apps/mobile/preview-site/seeds"
-  # Compact JSON (no pretty-print) — half the bytes, same data.
-  node -e "
-    const fs=require('fs');
-    const src=process.argv[1];
-    const site=process.argv[2];
-    const raw=JSON.parse(fs.readFileSync(src,'utf8'));
-    const compact=JSON.stringify(raw);
-    fs.mkdirSync(site+'/seeds',{recursive:true});
-    fs.writeFileSync(site+'/seeds/trainheroic-import.json', compact);
-    const js='window.__TRAINHEROIC_SEED__='+compact+';\\n';
-    fs.writeFileSync(site+'/seeds/trainheroic-import.js', js);
-    fs.writeFileSync(site+'/trainheroic-import.js', js);
-    console.log('upload-capgo-bundle: seed compact', compact.length, 'bytes (+ root + nested .js)');
-  " "$SEED_SRC" "$REPO/apps/mobile/preview-site"
-fi
-
 cd "$ROOT"
 
 if [[ ! -x node_modules/.bin/cap ]]; then
