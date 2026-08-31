@@ -17,7 +17,7 @@
 | **`main` tip** | **`6a7f35d`** (#111 reps forward-fill — 30 Aug) |
 | **Open PR** | **None** |
 | **Cache** | **`the-hybrid-athlete-engine-v99`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.18`** (uploaded 30 Aug — includes v99 + coach builder fixes) |
+| **Capgo** | **`dogfood` @ `1.0.19`** (uploaded 31 Aug — athlete builder inline name/rest/2 cols, no Prescription card, cache v113) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -41,8 +41,8 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.18`** |
-| Upload | `CAPGO_BUNDLE_VERSION=1.0.19 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Channel / bundle | `dogfood` / **`1.0.19`** |
+| Upload | `CAPGO_BUNDLE_VERSION=1.0.20 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 
@@ -75,7 +75,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 
 | # | Item | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.18** on dogfood (30 Aug). Phone: Settings → Check for updates. |
+| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.19** on dogfood (31 Aug, cache v113). Phone: Settings → Check for updates. |
 | 2 | Phone: coach Publish → athlete pull | **owner proof** | Sign in both apps (same Supabase). Coach roster → link athlete UUID → Publish chip. Athlete foreground or Check for updates. |
 | 3 | Phone: complete → coach **Completed** chip | **owner proof** | After #2: log session on phone → coach calendar chip shows Completed. |
 | 4 | Phone: strapless cond → recovery → debt row | **owner proof** | `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs` passes in CI; real phone still needed. |
@@ -99,7 +99,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 ### Phone proof script (items 2–6)
 
 1. Install/open dogfood APK (or Capgo-updated shell).
-2. Pull **1.0.18** (Settings → Check for updates).
+2. Pull **1.0.19** (Settings → Check for updates).
 3. Coach: Supabase sign-in → Athletes → paste athlete UUID → assign + **Publish**.
 4. Athlete: pull → start session → complete all tasks → finish.
 5. Coach: calendar → **Completed** chip on that session.
