@@ -235,8 +235,8 @@ if (!indexHtml.includes('sessionHasStrengthWork(x)&&(x.tasks||[]).some(task=>(ta
 if (!indexHtml.includes('S.settings?.minimalUi===true')) {
   throw new Error('minimalUi should be opt-in not default-on');
 }
-if (!indexHtml.includes('S.settings?.showBlockHelp===true')) {
-  throw new Error('showBlockHelp should read settings');
+if (indexHtml.includes('function showBlockHelp(')) {
+  throw new Error('showBlockHelp removed — block help is not athlete-facing');
 }
 if (!indexHtml.includes("S.tab==='library'")) {
   throw new Error('render/go should remap legacy library tab');
