@@ -17,7 +17,7 @@
 | **`main` tip** | **`6a7f35d`** (#111 reps forward-fill — 30 Aug) |
 | **Open PR** | **None** |
 | **Cache** | **`the-hybrid-athlete-engine-v115`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.21`** (target — Track Dawn UI polish + template UX, cache v115) |
+| **Capgo** | **`dogfood` @ `1.0.21`** (uploaded 31 Aug — Track Dawn UI polish + template UX, cache v115) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
