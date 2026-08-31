@@ -303,15 +303,29 @@
     if (sheet.columns.length > 3) sheet.columns = sheet.columns.slice(0, 3);
   }
 
+  function ensureAthleteLogColumns(ex) {
+    let cols = ex && Array.isArray(ex.logColumns) && ex.logColumns.length ? coachNormalizeColumns(ex) : defaultAthleteColumns();
+    cols = cols.slice(0, 2);
+    while (cols.length < 2) {
+      cols.push({ id: newId(), kind: 'reps', value: '', values: splitValues('', 3) });
+    }
+    return cols.slice(0, 2).map((c) => ({
+      id: c.id || newId(),
+      kind: KIND_MAP[c.kind] ? c.kind : 'reps',
+      value: '',
+      values: splitValues('', 3),
+    }));
+  }
+
+  function athleteColumnOptionsHtml(selected) {
+    return optionsHtml(selected);
+  }
+
   function beginAthleteSheet(ex) {
     beginSheet({ ...(ex || {}), autopilotVolume: true, sets: null, reps: null });
     sheet.athleteMode = true;
     sheet.autopilotVolume = true;
-    if (!ex || !Array.isArray(ex.logColumns) || !ex.logColumns.length) {
-      sheet.columns = defaultAthleteColumns();
-    } else {
-      ensureAthleteColumnCount();
-    }
+    sheet.columns = ensureAthleteLogColumns(ex || {});
     return sheet;
   }
 
@@ -710,22 +724,13 @@
 
   function builderAthleteColumnsHtml() {
     ensureAthleteColumnCount();
-    const cols = sheet.columns.slice(0, 3);
-    const rowClass = cols.length >= 3 ? 'cols-3' : 'cols-2';
+    const cols = sheet.columns.slice(0, 2);
     const heads = cols
       .map((c, i) => {
-        const remove =
-          cols.length > 2
-            ? `<button type="button" class="btn ghost small" onclick="LogColumns.removeColumn(${i})" aria-label="Remove column">×</button>`
-            : '';
-        return `<div class="builder-colhead"><select class="logcol-kind" aria-label="Column ${i + 1}" onchange="LogColumns.onKindChange(${i}, this.value)">${optionsHtml(c.kind)}</select>${remove}</div>`;
+        return `<div class="builder-colhead"><label>Column ${i + 1}</label><select class="logcol-kind" aria-label="Column ${i + 1}" onchange="LogColumns.onKindChange(${i}, this.value)">${optionsHtml(c.kind)}</select></div>`;
       })
       .join('');
-    const addBtn =
-      cols.length < 3
-        ? `<button type="button" class="btn small block" style="margin-top:8px" onclick="LogColumns.addColumn()">+ Add column</button>`
-        : '';
-    return `<div class="ath-builder-cols" id="builderAthleteCols"><div class="builder-colhead-row ${rowClass}">${heads}</div>${addBtn}<div class="meta">Sets, reps & load are autopilot.</div></div>`;
+    return `<div class="ath-builder-cols" id="builderAthleteCols"><div class="builder-colhead-row cols-2">${heads}</div></div>`;
   }
 
   function refreshAthleteColumns() {
@@ -809,6 +814,8 @@
     builderPrescriptionHtml,
     builderPrescriptionGridHtml,
     builderLoggerTwinHtml,
+    ensureAthleteLogColumns,
+    athleteColumnOptionsHtml,
     beginSheet,
     beginAthleteSheet,
     getSheetColumns,

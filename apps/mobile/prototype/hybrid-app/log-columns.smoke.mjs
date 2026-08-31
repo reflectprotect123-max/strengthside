@@ -12,7 +12,7 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!html.includes('LogColumns.builderPrescriptionHtml')) throw new Error('builder prescription grid not wired');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v109'")) throw new Error('expected cache v107');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v110'")) throw new Error('expected cache v107');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
 sandbox.window = sandbox;
@@ -31,7 +31,8 @@ if (!twin.includes('Pin sets')) throw new Error('pin volume advanced missing');
 LC.beginAthleteSheet({ autopilotVolume: true, sets: null, reps: null, restSec: 120 });
 const athlete = LC.builderAthleteColumnsHtml();
 if (!athlete.includes('builder-colhead-row')) throw new Error('athlete column row missing');
-if (!athlete.includes('Add column')) throw new Error('add column control missing');
+if (athlete.includes('Add column')) throw new Error('athlete builder should not offer add column');
+if (athlete.includes('Pin sets')) throw new Error('athlete builder should not show pin UI');
 if ((LC.getSheetColumns() || []).length !== 2) throw new Error('athlete default should be 2 columns');
 
 LC.beginSheet({ sets: 3, reps: '8', restSec: 120, autopilotVolume: false });
