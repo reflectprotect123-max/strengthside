@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v119'"), 'LOCAL_BUILD v119');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v119'"), 'SW v119');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v120'"), 'LOCAL_BUILD v119');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v120'"), 'SW v119');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -42,5 +42,10 @@ must(html.includes('function athleteHasActiveCoachStrength'), 'athleteHasActiveC
 must(html.includes("S.settings.showStrengthBuilder!==false"), 'strength builder default-on');
 must(html.includes('ath-lift-card'), 'ath-lift-card markup');
 must(!html.includes("coach-strength-hidden .ath-strength-build{display:none"), 'coach gate no longer hides athlete builder CSS');
+
+
+must(html.includes('function toggleAthleteSupersetLock'), 'superset lock toggle');
+must(html.includes('ath-ss-lock'), 'superset lock control');
+must(html.includes('supersetWithNext'), 'supersetWithNext exercise flag');
 
 console.log('calendar-ux.smoke: ok');
