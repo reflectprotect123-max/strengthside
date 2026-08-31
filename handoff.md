@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`a611475`** (athlete strength builder always on + cache v119 — 31 Aug) |
-| **Open PR** | **None** |
-| **Cache** | **`the-hybrid-athlete-engine-v119`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.25`** (uploaded 31 Aug — athlete strength builder always on, cache v119) |
+| **`main` tip** | **`1c9e0ef`** (verify smokes for v119 / athlete builder always-on — 31 Aug) |
+| **Open PR** | Athlete builder Link lock → superset (`cursor/athlete-superset-lock-84a0`) |
+| **Cache** | **`the-hybrid-athlete-engine-v120`** on this PR (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.25`** (shipped); next upload **`1.0.26`** after this PR merges |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -75,7 +75,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 
 | # | Item | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.25** on dogfood (31 Aug, cache v119 — athlete strength builder always available). Phone: Settings → Check for updates. |
+| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.25** on dogfood (31 Aug, cache v119 — athlete strength builder always available). Next: **1.0.26** / v120 for Link→superset lock after merge. |
 | 2 | Phone: coach Publish → athlete pull | **owner proof** | Sign in both apps (same Supabase). Coach roster → link athlete UUID → Publish chip. Athlete foreground or Check for updates. |
 | 3 | Phone: complete → coach **Completed** chip | **owner proof** | After #2: log session on phone → coach calendar chip shows Completed. |
 | 4 | Phone: strapless cond → recovery → debt row | **owner proof** | `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs` passes in CI; real phone still needed. |
