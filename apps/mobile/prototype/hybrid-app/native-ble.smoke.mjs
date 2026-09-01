@@ -31,10 +31,10 @@ must(echo.includes('nativeBleAvailable'), 'Echo native availability check');
 must(html.includes('./native-ble.js'), 'index loads native-ble.js');
 must(html.includes('NativeBle.isAvailable'), 'HR uses native BLE availability');
 must(html.includes('NativeBle.connectHeartRate'), 'HR uses native connect');
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v127'"), 'cache v90');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v129'"), 'cache v90');
 
 must(sw.includes('./native-ble.js'), 'service worker caches native-ble.js');
-must(sw.includes('the-hybrid-athlete-engine-v127'), 'service worker cache v90');
+must(sw.includes('the-hybrid-athlete-engine-v129'), 'service worker cache v90');
 
 must(capPkg.includes('@capacitor-community/bluetooth-le'), 'Capacitor BLE plugin dependency');
 
