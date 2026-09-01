@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.40 | 2026-09-01 | Fix Start workout preview crash — restore `blockHelpDropdown` stub (cache v135) |
 | 1.0.39 | 2026-09-01 | Fix Start session button — restore `startSessionNow()` call; remove debug instrumentation (cache v134) |
 | 1.0.38 | 2026-09-01 | Restore warm-up / cool-down text blocks on library starters (cache v133) |
 | 1.0.37 | 2026-09-01 | Fix blank boot after library starters; drop Restore hidden UX (cache v132) |
