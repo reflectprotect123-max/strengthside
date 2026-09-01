@@ -1,5 +1,6 @@
 /**
  * The Engine session logger — 1:1 with conditioning-one-phase-mockup.html
+ * Covers intervals work/rest, steady, recovery skin, and session recap.
  */
 (function (global) {
   function escHtml(value) {
@@ -38,12 +39,17 @@
     return { name: 'Medium', zoneKey: 'aerobic' };
   }
 
-  function applyChrome(t, week) {
+  function isRecovery(t) {
+    return !!(t && (t.recoverySession || String(t.category || '').toLowerCase() === 'recovery'));
+  }
+
+  function applyChrome(t, week, badge) {
     if (global.SessionChrome && global.SessionChrome.applyBrand) {
       global.SessionChrome.applyBrand({
         product: 'engine',
         weekLabel: week || 'Intervals · ' + (t.modality || 'Mixed'),
         elapsedSec: sessionElapsedSec(),
+        badge: badge || '',
       });
     }
   }
@@ -78,12 +84,22 @@
 
   function taskNeedsInterval(t) {
     if (typeof global.taskNeedsIntervalClock === 'function') return global.taskNeedsIntervalClock(t);
-    return t.conditioningType === 'intervals' || t.condFmt === 'intervals';
+    return t.conditioningType === 'intervals' || t.condFmt === 'intervals' || t.condFmt === 'tempo';
   }
 
   function ensureAutoreg(t) {
     if (!t.autoreg) t.autoreg = { restPhase: false };
     return t.autoreg;
+  }
+
+  function deltaBadgeHtml(t) {
+    var d = t.autoreg && t.autoreg.lastPhaseDecision;
+    if (!d || d.nextTargetWatts == null || d.action === 'hold' || d.action === 'noop') return '';
+    var sign = d.action === 'decrease' ? '−' : '+';
+    var prev = num(t._prevTargetWatts);
+    var delta = prev ? Math.abs(Math.round(d.nextTargetWatts - prev)) : null;
+    if (delta == null) return '<span class=engine-delta>' + sign + 'W adjusted</span>';
+    return '<span class=engine-delta>' + sign + delta + 'W</span>';
   }
 
   function adaptNoteHtml(t) {
@@ -98,15 +114,27 @@
     return '<div class="adapt-note' + (d.action === 'decrease' ? ' warn' : '') + '">' + msg + '</div>';
   }
 
+  function handoffHtml() {
+    if (!global.SessionFlow || !global.SessionFlow.nextNodePreviewHtml) return '';
+    return global.SessionFlow.nextNodePreviewHtml() || '';
+  }
+
   function renderWorkPhase(t, iv) {
     var remaining =
       typeof global.intervalRemaining === 'function' ? global.intervalRemaining(iv) : num(iv.remaining);
     var watts = liveWatts(t);
     var hr = liveHr();
     var rounds = num(t.rounds) || 1;
-    var round = Math.min(iv.round, rounds);
-    applyChrome(t, 'Intervals · ' + (t.modality || 'Mixed'));
-    var targetW = t.targetWatts != null && t.targetWatts !== '' ? Math.round(num(t.targetWatts)) : watts;
+    var round = Math.min(Math.max(1, iv.round || 1), rounds);
+    var phase = iv.phase || 'ready';
+    applyChrome(t, 'Intervals · ' + (t.modality || 'Mixed'), 'Work ' + round + '/' + rounds);
+    var targetW = t.targetWatts != null && t.targetWatts !== '' ? Math.round(num(t.targetWatts)) : null;
+    var primary =
+      phase === 'ready'
+        ? '<button type=button class="btn primary" onclick=toggleIntervals()>Start work</button>'
+        : iv.running
+          ? '<button type=button class="btn primary" onclick=skipInterval()>End interval</button>'
+          : '<button type=button class="btn primary" onclick=toggleIntervals()>Resume</button>';
     return (
       '<div class="logger-screen dial-engine">' +
       '<div class=eyebrow>Conditioning · intervals</div>' +
@@ -148,10 +176,9 @@
       escHtml(effortMeta(t).name) +
       '</b></div></div>' +
       adaptNoteHtml(t) +
+      handoffHtml() +
       '<div class=next-wrap>' +
-      '<button type=button class="btn primary" onclick=toggleIntervals()>' +
-      (iv.running ? 'Pause' : iv.phase === 'ready' ? 'Start work' : 'End interval') +
-      '</button>' +
+      primary +
       '<button type=button class="btn ghost" onclick=skipInterval()>Skip phase</button>' +
       '<button type=button class="btn ghost" onclick=leaveSimpleCond()>← Back</button></div></div>'
     );
@@ -160,20 +187,21 @@
   function renderRestPhase(t, iv) {
     var restSec = num(t.restSec) || 90;
     var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
-    if (global.RestOverlay && remaining <= 0 && !global.RestOverlay._started) {
+    if (global.RestOverlay && remaining <= 0) {
       global.RestOverlay.startRest(restSec, function () {
         finishRest();
       });
+      remaining = restSec;
     }
     var rounds = num(t.rounds) || 1;
     var nextRound = Math.min(iv.round + 1, rounds);
-    applyChrome(t, 'Intervals · ' + (t.modality || 'Mixed'));
+    applyChrome(t, 'Intervals · ' + (t.modality || 'Mixed'), 'Rest');
     var sliderHtml =
       global.CondIntervalAutoreg && global.CondIntervalAutoreg.restSliderHtml
         ? global.CondIntervalAutoreg.restSliderHtml(t, iv)
         : '';
     var upNext =
-      'Up next · Interval ' +
+      'Up next · Work ' +
       nextRound +
       '/' +
       rounds +
@@ -181,13 +209,15 @@
       (t.targetWatts != null ? t.targetWatts + 'W' : '—') +
       ' · ' +
       escHtml(zoneLabel(t)) +
+      ' ' +
+      deltaBadgeHtml(t) +
       '</b>';
     var ring = global.RestOverlay
       ? global.RestOverlay.render({
           mode: 'engine',
           remainingSec: remaining,
           upNextHtml: upNext,
-          skipLabel: 'Next interval',
+          skipLabel: 'Skip · start work ' + nextRound,
           skipOnclick: 'CondSessionLogger.finishRest()',
           addOnclick: 'RestOverlay.addRest(30)',
         })
@@ -213,44 +243,70 @@
   function renderSteady(t) {
     var r = t.result || {};
     var effort = effortMeta(t);
-    applyChrome(t, 'Steady · ' + (t.modality || 'Mixed'));
+    var recovery = isRecovery(t);
+    applyChrome(
+      t,
+      recovery ? 'Recovery · ' + (t.modality || 'Mixed') : 'Steady · ' + (t.modality || 'Mixed'),
+      recovery ? 'Zone 1–2' : 'Zone 2',
+    );
     var left = typeof global.blockElapsed === 'function' ? global.blockElapsed(t) : 0;
     var target = num(t.targetDurationMin) * 60;
     var remain = target > 0 ? Math.max(0, target - left) : left;
+    var eyebrow = recovery ? 'Conditioning · recovery' : 'Conditioning · steady-state';
+    var sub = recovery ? 'easy flush · stop before fatigue' : 'conversational pace';
+    var finishLabel = recovery ? 'Finish recovery' : 'Finish · rate session';
     return (
       '<div class="logger-screen dial-engine">' +
-      '<div class=eyebrow>Conditioning · steady-state</div>' +
+      '<div class=eyebrow>' +
+      eyebrow +
+      '</div>' +
       '<div class=task>' +
-      escHtml(t.heading || t.modality || 'Steady') +
+      escHtml(t.heading || (recovery ? 'Recovery' : t.modality || 'Steady')) +
       '</div>' +
       '<div class=progressline>' +
       escHtml(planLine(t)) +
+      (t.recoveryPct != null ? ' · debt repay ' + Math.round(num(t.recoveryPct) * 100) + '%' : '') +
       '</div>' +
-      '<div class=phasechip>Steady · <b>' +
+      '<div class=phasechip>' +
+      (recovery ? 'Recovery' : 'Steady') +
+      ' · <b>' +
       fmtSec(remain) +
       '</b> left</div>' +
       '<div class="hero work">' +
-      '<div class=hero-label>Session time remaining</div>' +
+      '<div class=hero-label>' +
+      (recovery ? 'Recovery time remaining' : 'Session time remaining') +
+      '</div>' +
       '<div class=timer-big id=blockClock>' +
       fmtSec(remain) +
       '</div>' +
-      '<div class=timer-sub>conversational pace</div>' +
+      '<div class=timer-sub>' +
+      sub +
+      '</div>' +
       '<div class=target-row>' +
-      '<div class=target-box><b>—</b><span>HR bpm</span></div>' +
       '<div class=target-box><b>' +
-      escHtml(effort.name) +
+      (liveHr() != null ? Math.round(liveHr()) : '—') +
+      '</b><span>HR bpm</span></div>' +
+      '<div class=target-box><b>' +
+      escHtml(recovery ? 'Easy' : effort.name) +
       '</b><span>Zone</span></div>' +
-      '<div class=target-box><b>RPE 3–4</b><span>Target</span></div></div>' +
+      '<div class=target-box><b>' +
+      (recovery ? 'RPE 2–3' : 'RPE 3–4') +
+      '</b><span>Target</span></div></div>' +
       '<div class=live-hr><div class=hr-gauge>' +
       (liveHr() != null ? Math.round(liveHr()) : '—') +
-      '</div><div class=hr-meta><b>In zone</b>Strap optional</div></div></div>' +
+      '</div><div class=hr-meta><b>' +
+      (recovery ? 'Keep it easy' : 'In zone') +
+      '</b>Strap optional</div></div></div>' +
       '<div class="mph-twin-fields" style="margin-top:12px"><div class=field><label>Minutes</label><input id=condMin type=number min=0 step=.5 value="' +
       escHtml(r.duration ? Math.round((num(r.duration) / 60) * 10) / 10 : t.targetDurationMin || '') +
       '"></div><div class=field><label>Avg HR</label><input id=condHr type=number min=30 max=250 value="' +
       escHtml(r.avgHr || '') +
       '" oninput="setSimpleCondHr(this.value)"></div></div>' +
+      handoffHtml() +
       '<div class=next-wrap>' +
-      '<button type=button class="btn primary" onclick=completeSimpleCond()>Finish · rate session</button>' +
+      '<button type=button class="btn primary" onclick=completeSimpleCond()>' +
+      finishLabel +
+      '</button>' +
       '<button type=button class="btn ghost" onclick=connectSimpleCondHr()>Connect strap</button>' +
       '<button type=button class="btn ghost" onclick=leaveSimpleCond()>← Back</button></div></div>'
     );
@@ -261,39 +317,44 @@
     var rounds = iv ? num(iv.completedRounds) : num(r.roundsCompleted);
     var planned = num(t.rounds) || rounds || 0;
     var duration = r.duration || (iv && iv.elapsed) || 0;
+    var recovery = isRecovery(t);
     var rpe = r.sessionRpe != null ? r.sessionRpe : 6.5;
     var rpeLabel = rpe >= 9 ? 'Max' : rpe >= 8 ? 'Hard' : rpe >= 6 ? 'Medium (6)' : rpe >= 4 ? 'Easy' : 'Very easy';
-    applyChrome(t, 'Complete');
+    applyChrome(t, recovery ? 'Recovery complete' : 'Complete', 'Done');
+    var progressNote = recovery
+      ? '<div class="adapt-note">Recovery logged — no load progression. Debt repay recorded.</div>'
+      : '<div class="adapt-note warn"><b>Next session:</b> engine will adjust rounds or work time when earned.</div>';
     return (
       '<div class="logger-screen dial-engine">' +
       '<div class=eyebrow>Session recap</div>' +
       '<div class=task>' +
-      escHtml(t.heading || 'Conditioning') +
+      escHtml(t.heading || (recovery ? 'Recovery' : 'Conditioning')) +
       '</div>' +
       '<div class=progressline>' +
-      planned +
-      ' rounds · ' +
-      fmtSec(duration) +
-      ' total</div>' +
+      (recovery ? fmtSec(duration) + ' easy movement' : planned + ' rounds · ' + fmtSec(duration) + ' total') +
+      '</div>' +
       '<div class="hero" style="text-align:left;padding:18px">' +
-      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Cardio completion</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">' +
+      (recovery ? 'Recovery summary' : 'Cardio completion') +
+      '</div>' +
       '<div class=recap-grid>' +
-      '<div class=recap-row><span>Time in target zone</span><b class=good>—</b></div>' +
       '<div class=recap-row><span>Avg HR</span><b>' +
       escHtml(r.avgHr || liveHr() || '—') +
       '</b></div>' +
-      '<div class=recap-row><span>Intervals completed</span><b class=good>' +
-      rounds +
-      '/' +
-      planned +
-      '</b></div>' +
-      '<div class=recap-row><span>Avg pace</span><b>' +
-      escHtml(t.targetPace || r.pace || '—') +
-      '</b></div>' +
+      (recovery
+        ? '<div class=recap-row><span>Duration</span><b class=good>' + fmtSec(duration) + '</b></div>'
+        : '<div class=recap-row><span>Intervals completed</span><b class=good>' +
+          rounds +
+          '/' +
+          planned +
+          '</b></div>' +
+          '<div class=recap-row><span>Avg pace</span><b>' +
+          escHtml(t.targetPace || r.pace || '—') +
+          '</b></div>') +
       '<div class=recap-row><span>Session RPE</span><b>' +
       escHtml(rpeLabel) +
       '</b></div></div></div>' +
-      '<div class="adapt-note warn"><b>Next session:</b> engine will adjust rounds or work time when earned.</div>' +
+      progressNote +
       (global.CondIntervalAutoreg && global.CondIntervalAutoreg.recapSliderHtml
         ? global.CondIntervalAutoreg.recapSliderHtml(t)
         : '') +
@@ -322,6 +383,7 @@
     var t = global.current && global.current();
     if (!t) return;
     ensureAutoreg(t).restPhase = false;
+    if (t.targetWatts != null) t._prevTargetWatts = num(t.targetWatts);
     if (global.RestOverlay) global.RestOverlay.stopRest();
     var iv = intervalIv(t);
     if (iv && iv.phase === 'rest' && typeof global.skipInterval === 'function') global.skipInterval();
@@ -340,9 +402,106 @@
     return renderIntervalCore(t);
   }
 
+  /** Static builder preview twin — mirrors work / steady / recovery logger chrome. */
+  function builderTwinHtml(opts) {
+    opts = opts || {};
+    var recovery = !!(opts.recoverySession || opts.isRecovery);
+    var fmt = String(opts.condFmt || opts.fmt || opts.conditioningType || 'steady');
+    var interval = fmt === 'intervals' || fmt === 'tempo' || fmt === 'custom';
+    var rounds = num(opts.rounds) || 8;
+    var workSec = num(opts.workSec) || 240;
+    var restSec = num(opts.restSec) || 180;
+    var mins = num(opts.minutes || opts.targetDurationMin) || 20;
+    var modality = opts.modality || (recovery ? 'Mixed' : 'Bike');
+    var heading = opts.heading || (recovery ? 'Recovery' : modality);
+    var plan =
+      typeof global.condPlanLineFromParts === 'function'
+        ? global.condPlanLineFromParts({
+            modality: modality,
+            effort: opts.effort || (recovery ? 'easy' : 'medium'),
+            fmt: fmt,
+            rounds: rounds,
+            workSec: workSec,
+            restSec: restSec,
+            minutes: mins,
+          })
+        : modality + ' · preview';
+    var watts = opts.targetWatts != null && opts.targetWatts !== '' ? Math.round(num(opts.targetWatts)) : '—';
+    if (interval && !recovery) {
+      return (
+        '<div class="logger-screen dial-engine" id="builderEngineCard" style="min-height:0;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel)">' +
+        '<div class=eyebrow>Athlete logger preview</div>' +
+        '<div class=task>' +
+        escHtml(heading) +
+        '</div>' +
+        '<div class=progressline>' +
+        escHtml(plan) +
+        '</div>' +
+        '<div class=phasechip>Interval <b>1</b> / ' +
+        rounds +
+        ' · work</div>' +
+        '<div class="hero work">' +
+        '<div class=hero-label>Work time remaining</div>' +
+        '<div class=timer-big>' +
+        fmtSec(workSec) +
+        '</div>' +
+        '<div class=timer-sub>stay in target zone</div>' +
+        '<div class=target-row>' +
+        '<div class=target-box><b>' +
+        watts +
+        '</b><span>Watts</span></div>' +
+        '<div class=target-box><b>—</b><span>/500m</span></div>' +
+        '<div class=target-box><b>' +
+        escHtml(zoneLabel({ effort: opts.effort || 'medium' })) +
+        '</b><span>effort</span></div></div></div>' +
+        '<div class=next-wrap><button type=button class="btn primary" disabled>End interval</button></div></div>'
+      );
+    }
+    return (
+      '<div class="logger-screen dial-engine" id="builderEngineCard" style="min-height:0;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel)">' +
+      '<div class=eyebrow>Athlete logger preview</div>' +
+      '<div class=task>' +
+      escHtml(heading) +
+      '</div>' +
+      '<div class=progressline>' +
+      escHtml(plan) +
+      '</div>' +
+      '<div class=phasechip>' +
+      (recovery ? 'Recovery' : 'Steady') +
+      ' · <b>' +
+      fmtSec(mins * 60) +
+      '</b> left</div>' +
+      '<div class="hero work">' +
+      '<div class=hero-label>' +
+      (recovery ? 'Recovery time remaining' : 'Session time remaining') +
+      '</div>' +
+      '<div class=timer-big>' +
+      fmtSec(mins * 60) +
+      '</div>' +
+      '<div class=timer-sub>' +
+      (recovery ? 'easy flush · stop before fatigue' : 'conversational pace') +
+      '</div>' +
+      '<div class=target-row>' +
+      '<div class=target-box><b>—</b><span>HR bpm</span></div>' +
+      '<div class=target-box><b>' +
+      (recovery ? 'Easy' : escHtml(zoneLabel({ effort: opts.effort || 'easy' }))) +
+      '</b><span>Zone</span></div>' +
+      '<div class=target-box><b>' +
+      (recovery ? 'RPE 2–3' : 'RPE 3–4') +
+      '</b><span>Target</span></div></div></div>' +
+      '<div class=next-wrap><button type=button class="btn primary" disabled>' +
+      (recovery ? 'Finish recovery' : 'Finish · rate session') +
+      '</button></div></div>'
+    );
+  }
+
   global.CondSessionLogger = {
     renderSimpleCond: renderSimpleCond,
     renderIntervalTask: renderIntervalTask,
+    renderSteady: renderSteady,
+    renderRecap: renderRecap,
+    builderTwinHtml: builderTwinHtml,
     finishRest: finishRest,
+    isRecovery: isRecovery,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

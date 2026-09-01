@@ -16,6 +16,23 @@
     return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
   }
 
+  function ensurePhaseBadge() {
+    var doc = global.document;
+    if (!doc) return null;
+    var existing = doc.getElementById('sessionPhaseBadge');
+    if (existing) return existing;
+    var right = doc.querySelector('header.top .topright');
+    if (!right) return null;
+    var el = doc.createElement('div');
+    el.id = 'sessionPhaseBadge';
+    el.className = 'engine-badge';
+    el.hidden = true;
+    var clock = doc.getElementById('workoutClock');
+    if (clock && clock.parentNode === right) right.insertBefore(el, clock);
+    else right.insertBefore(el, right.firstChild);
+    return el;
+  }
+
   function applyBrand(opts) {
     opts = opts || {};
     var product = opts.product === 'engine' ? 'engine' : 'strength';
@@ -25,6 +42,7 @@
     var clock = global.document && global.document.getElementById('workoutClock');
     var chip = global.document && global.document.getElementById('saveStatusChip');
     var top = global.document && global.document.querySelector('header.top');
+    var badge = ensurePhaseBadge();
     if (brandB) brandB.textContent = product === 'engine' ? 'ENGINE' : 'HYBRID';
     if (brandSmall) {
       brandSmall.textContent = opts.weekLabel
@@ -43,6 +61,18 @@
       clock.textContent = fmtElapsed(opts.elapsedSec);
       clock.classList.add('show');
     }
+    if (badge) {
+      var label = opts.badge != null && opts.badge !== '' ? String(opts.badge) : '';
+      if (label) {
+        badge.hidden = false;
+        badge.textContent = label;
+        badge.classList.toggle('dial-engine', product === 'engine');
+        badge.classList.toggle('dial-strength', product === 'strength');
+      } else {
+        badge.hidden = true;
+        badge.textContent = '';
+      }
+    }
     if (chip) chip.style.display = 'none';
   }
 
@@ -52,6 +82,7 @@
     var mark = global.document && global.document.querySelector('.brand .mark');
     var chip = global.document && global.document.getElementById('saveStatusChip');
     var top = global.document && global.document.querySelector('header.top');
+    var badge = global.document && global.document.getElementById('sessionPhaseBadge');
     if (brandB) brandB.textContent = 'THE Hybrid';
     if (brandSmall) brandSmall.textContent = 'Track Dawn · Athlete';
     if (mark) {
@@ -60,6 +91,11 @@
     }
     if (top) {
       top.classList.remove('dial-engine', 'dial-strength');
+    }
+    if (badge) {
+      badge.hidden = true;
+      badge.textContent = '';
+      badge.classList.remove('dial-engine', 'dial-strength');
     }
     if (chip) chip.style.display = '';
   }

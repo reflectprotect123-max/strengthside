@@ -75,14 +75,20 @@
     return global.StrengthAdapter ? global.StrengthAdapter.targetRirForExercise(t) : 2;
   }
 
-  function applyChrome(t, week) {
+  function applyChrome(t, week, badge) {
     if (global.SessionChrome && global.SessionChrome.applyBrand) {
       global.SessionChrome.applyBrand({
         product: 'strength',
         weekLabel: week || 'Strength',
         elapsedSec: sessionElapsedSec(),
+        badge: badge || '',
       });
     }
+  }
+
+  function handoffHtml() {
+    if (!global.SessionFlow || !global.SessionFlow.nextNodePreviewHtml) return '';
+    return global.SessionFlow.nextNodePreviewHtml() || '';
   }
 
   function eyebrowFor(t) {
@@ -198,7 +204,7 @@
     var restSec = autoreg.restSec || (typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90);
     var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
     var rir = targetRir(t);
-    applyChrome(t, 'Strength');
+    applyChrome(t, 'Strength', 'Rest');
     var upNext = next
       ? 'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Set <b>' +
         (ordinal + 1) +
@@ -233,6 +239,7 @@
         : '') +
       '</div>' +
       ring +
+      handoffHtml() +
       '</div>'
     );
   }
@@ -242,7 +249,7 @@
     var rir = targetRir(t);
     var missed = autoreg.selectedDifficulty === 'did_not_complete';
     var nextLabel = ordinal + 1 >= planned.length ? 'Done · finish exercise' : 'Next set';
-    applyChrome(t, 'Strength');
+    applyChrome(t, 'Strength', 'Set ' + (ordinal + 1) + '/' + planned.length);
     return (
       '<div class="logger-screen dial-strength">' +
       '<div class=eyebrow>' +
@@ -261,6 +268,7 @@
       '</div>' +
       heroActive(t, row, autoreg) +
       sliderCard(t, autoreg) +
+      handoffHtml() +
       '<div class=next-wrap>' +
       (missed
         ? '<button type="button" class="btn attempt" onclick="StrengthOneSetLogger.retryAttempt()">Log attempt · try again</button>' +
@@ -503,7 +511,7 @@
     var next = currentSupersetItem(t);
     var restSec = autoreg.restSec || 120;
     var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
-    applyChrome(t, 'Strength');
+    applyChrome(t, 'Strength', 'Rest');
     var nextEx = next ? exercises[next.exIndex] : null;
     var upNext = nextEx
       ? 'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Round <b>' +
@@ -529,6 +537,7 @@
       '</div>' +
       '<div class=progressline>Round logged</div>' +
       ring +
+      handoffHtml() +
       '</div>'
     );
   }
@@ -580,7 +589,7 @@
           's between partners</div>'
         : '';
     var nextLabel = lastInRound ? 'Next · ' + fmtRestLabel(roundSec) + ' after round' : 'Next';
-    applyChrome(t, 'Strength');
+    applyChrome(t, 'Strength', 'Round ' + (item.rowIndex + 1) + '/' + roundTotal);
     return (
       '<div class="logger-screen dial-strength">' +
       '<div class=eyebrow>Superset ' +
@@ -602,6 +611,7 @@
       '</div>' +
       heroSuperset(ex, row, t) +
       sliderSuperset(ex, autoreg) +
+      handoffHtml() +
       '<div class=next-wrap>' +
       '<button type="button" class="btn primary" onclick="StrengthOneSetLogger.nextSupersetSet()">' +
       nextLabel +

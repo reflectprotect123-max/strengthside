@@ -80,12 +80,14 @@ if (!workHtml.includes('timer-big')) throw new Error('work missing timer');
 if (!workHtml.includes('target-row')) throw new Error('work missing target row');
 if (!workHtml.includes('phasechip')) throw new Error('work missing phasechip');
 if (!workHtml.includes('hr-gauge')) throw new Error('work missing HR gauge');
+if (!workHtml.includes('End interval')) throw new Error('work primary should End interval when running');
 
 intervalTask.interval.phase = 'rest';
 const restHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
 if (!restHtml.includes('logger-rest') && !restHtml.includes('rest-ring')) throw new Error('rest missing ring');
 if (!restHtml.includes('Recover · between work')) throw new Error('rest eyebrow missing');
 if (!restHtml.includes('How hard was that interval')) throw new Error('rest slider missing');
+if (!restHtml.includes('Up next · Work')) throw new Error('rest up-next work copy missing');
 
 intervalTask.interval.finished = true;
 intervalTask.interval.completedRounds = 8;
@@ -97,5 +99,64 @@ if (!recapHtml.includes('Save · update progression')) throw new Error('recap sa
 if (!recapHtml.includes('Overall session feel') && !recapHtml.includes('slider-card')) {
   throw new Error('recap slider missing');
 }
+
+sandbox.taskNeedsIntervalClock = () => false;
+const steady = {
+  kind: 'conditioning',
+  heading: 'Assault Bike',
+  modality: 'Bike',
+  condFmt: 'steady',
+  effort: 'easy',
+  targetDurationMin: 20,
+  result: {},
+};
+sandbox._task = steady;
+const steadyHtml = sandbox.CondSessionLogger.renderSimpleCond(steady);
+if (!steadyHtml.includes('steady-state')) throw new Error('steady eyebrow missing');
+if (!steadyHtml.includes('Finish · rate session')) throw new Error('steady finish missing');
+
+const recovery = {
+  kind: 'conditioning',
+  heading: 'Recovery movement',
+  modality: 'Mixed',
+  condFmt: 'steady',
+  effort: 'easy',
+  recoverySession: true,
+  targetDurationMin: 20,
+  recoveryPct: 0.35,
+  result: {},
+};
+sandbox._task = recovery;
+const recoveryHtml = sandbox.CondSessionLogger.renderSimpleCond(recovery);
+if (!recoveryHtml.includes('Conditioning · recovery')) throw new Error('recovery eyebrow missing');
+if (!recoveryHtml.includes('Finish recovery')) throw new Error('recovery finish missing');
+if (!recoveryHtml.includes('easy flush')) throw new Error('recovery subcopy missing');
+if (!sandbox.CondSessionLogger.isRecovery(recovery)) throw new Error('isRecovery false');
+
+recovery.interval = { finished: true, completedRounds: 0, elapsed: 1200 };
+recovery.result = { avgHr: 110, duration: 1200 };
+const recoveryRecap = sandbox.CondSessionLogger.renderRecap(recovery, recovery.interval);
+if (!recoveryRecap.includes('no load progression')) throw new Error('recovery recap should suppress load progression');
+
+const twinInterval = sandbox.CondSessionLogger.builderTwinHtml({
+  condFmt: 'intervals',
+  modality: 'Rower',
+  rounds: 8,
+  workSec: 240,
+  restSec: 180,
+  targetWatts: 152,
+  effort: 'medium',
+  heading: 'Row ERG',
+});
+if (!twinInterval.includes('builderEngineCard')) throw new Error('interval twin missing');
+if (!twinInterval.includes('End interval')) throw new Error('interval twin CTA missing');
+
+const twinRecovery = sandbox.CondSessionLogger.builderTwinHtml({
+  isRecovery: true,
+  modality: 'Mixed',
+  minutes: 20,
+  effort: 'easy',
+});
+if (!twinRecovery.includes('Finish recovery')) throw new Error('recovery twin CTA missing');
 
 console.log('cond-session-logger.smoke: ok');
