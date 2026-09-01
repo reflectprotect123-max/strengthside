@@ -41,7 +41,7 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.41`** |
+| Channel / bundle | `dogfood` / **`1.0.42`** |
 | Upload | `CAPGO_BUNDLE_VERSION=1.0.30 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
