@@ -13,7 +13,7 @@ const src = readFileSync(join(join(dir, 'strength-one-set-logger.js')), 'utf8');
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
 if (!src.includes('nextStrengthSet')) throw new Error('nextStrengthSet handler missing in strength-one-set-logger.js');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v135'")) throw new Error('expected cache v100');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v136'")) throw new Error('expected cache v100');
 
 const sandbox = {
   window: {},
@@ -64,7 +64,31 @@ if (!htmlOut.includes('Set 1 of 3')) throw new Error('one-set header missing');
 if (!htmlOut.includes('How did that set feel')) throw new Error('difficulty prompt missing');
 if (!htmlOut.includes('Very easy')) throw new Error('difficulty buttons missing');
 if (!htmlOut.includes('Next set')) throw new Error('Next set button missing');
+if (!htmlOut.includes('oneSetWeight')) throw new Error('weight input missing');
 if (htmlOut.includes('Log</button>')) throw new Error('legacy per-row Log should not appear');
+
+// Module loads before inline esc — render must not depend on window.esc
+const sandboxNoEsc = {
+  window: {},
+  console,
+  current: () => sandboxNoEsc._task,
+  save: () => {},
+  train: () => {},
+  S: {},
+  StrengthAdapter: { targetRirForExercise: () => 2 },
+  activeSession: () => ({ date: '2026-08-30' }),
+  restSeconds: () => 90,
+  fmt: (s) => String(s),
+  restBtn: () => '',
+  strengthLoadHeadlineHtml: () => '',
+  lastRows: () => [],
+};
+sandboxNoEsc.window = sandboxNoEsc;
+vm.createContext(sandboxNoEsc);
+vm.runInContext(src, sandboxNoEsc);
+sandboxNoEsc._task = task;
+const htmlNoEsc = sandboxNoEsc.StrengthOneSetLogger.renderTask(task);
+if (!htmlNoEsc.includes('oneSetWeight')) throw new Error('renderTask must work without window.esc');
 
 task.rows[0].reps = 5;
 sandbox.StrengthOneSetLogger.selectStrengthDifficulty('medium');
