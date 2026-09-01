@@ -16,8 +16,8 @@ const sw = readFileSync(join(dir, 'service-worker.js'), 'utf8');
 const bundle = readFileSync(join(dir, 'strength-bundle.js'), 'utf8');
 const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v130'"), 'LOCAL_BUILD v104');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v130'"), 'SW v104');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v131'"), 'LOCAL_BUILD v104');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v131'"), 'SW v104');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(html), 'athlete app has no TrainHeroic code');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(sw), 'service worker has no TrainHeroic seed cache');
 must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise seed on boot');
@@ -33,7 +33,8 @@ must(html.includes('x.templates=[];x.sessions=[]'), 'defaultState starts blank (
 must(html.includes('x.exercises=[]'), 'defaultState starts with empty exercises');
 must(html.includes("BLANK_SLATE_VERSION='athlete-blank-slate-v1'"), 'blank slate migration version');
 must(html.includes('function ensureStarterTemplates'), 'ensure Full Body A starter template');
-must(html.includes("STARTER_TEMPLATE_NAMES=['Full Body A']"), 'Full Body A in starter list');
+must(html.includes("STARTER_STRENGTH_NAMES=['Full Body A']"), 'Full Body A in starter list');
+must(html.includes("STARTER_RECOVERY_NAMES=['Recovery']"), 'Recovery starter');
 must(html.includes('function applyBlankSlatePatch'), 'strip seed templates from persisted state');
 must(html.includes("x.status==='completed'))return"), 'coordinator waits for completed sessions');
 must(adapter.includes('setWorkingMax'), 'adapter exports setWorkingMax');

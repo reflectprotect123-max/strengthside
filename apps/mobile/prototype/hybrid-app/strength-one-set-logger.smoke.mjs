@@ -13,7 +13,7 @@ const src = readFileSync(join(join(dir, 'strength-one-set-logger.js')), 'utf8');
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
 if (!src.includes('nextStrengthSet')) throw new Error('nextStrengthSet handler missing in strength-one-set-logger.js');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v130'")) throw new Error('expected cache v100');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v131'")) throw new Error('expected cache v100');
 
 const sandbox = {
   window: {},
