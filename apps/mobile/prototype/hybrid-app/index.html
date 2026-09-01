@@ -969,7 +969,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v130';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v131';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1106,26 +1106,68 @@ function applyBlankSlatePatch(state){
   state.meta.blankSlateVersion=BLANK_SLATE_VERSION;
   return state;
 }
-const STARTER_TEMPLATE_NAMES=['Full Body A'];
+const STARTER_STRENGTH_NAMES=['Full Body A'];
+const STARTER_CONDITIONING_NAMES=['Aerobic Conditioning'];
+const STARTER_RECOVERY_NAMES=['Recovery'];
+const STARTER_AEROBIC_ID='45941abb-5878-4ea8-9023-a21f4ba3d58b';
+const STARTER_RECOVERY_ID='starter-recovery-easy-v1';
 function seedTemplateByName(name){return (seed.templates||[]).find(t=>t&&String(t.name||'')===String(name||''))}
+function isStarterTemplate(t){if(!t)return false;if(String(t.source||'')==='THE-starter')return true;return (seed.templates||[]).some(x=>x&&x.id===t.id)}
+function isRecoveryTemplate(t){if(!t)return false;if(String(t.name||'')==='Recovery')return true;return !!(t.blocks||[]).some(b=>b&&b.recoverySession)}
+function buildStarterAerobicCondTemplate(){
+  return{id:STARTER_AEROBIC_ID,name:'Aerobic Conditioning',coachInstructions:'Easy aerobic — stay conversational. Log duration and HR if available.',source:'THE-starter',templateKind:'conditioning',blocks:[{id:id(),type:'conditioning',heading:'Easy aerobic',conditioningType:'easy',modality:'Bike',targetDurationMin:20,timeCapMin:20,effort:'easy',condFmt:'steady',rounds:1,workSec:0,restSec:0,targetWatts:'',notes:'20 min easy aerobic. RPE 3–4. Nasal breathing if possible.',autopilotCond:true}]};
+}
+function buildStarterRecoveryTemplate(){
+  return{id:STARTER_RECOVERY_ID,name:'Recovery',coachInstructions:'Easy movement and breath — repay debt, do not add load.',source:'THE-starter',templateKind:'conditioning',blocks:[{id:id(),type:'conditioning',heading:'Recovery movement',recoverySession:true,category:'Recovery',conditioningType:'easy',modality:'Mixed',targetDurationMin:20,baselineDurationMin:20,timeCapMin:20,effort:'easy',condFmt:'steady',rounds:1,workSec:0,restSec:0,notes:'Easy flush — walk, bike, mobility, or box breathing. Stop before fatigue.',autopilotCond:true}]};
+}
+function starterAerobicNeedsRefresh(t){
+  let blocks=t?.blocks||[];
+  if(blocks.length!==1)return true;
+  if(blocks.some(b=>b&&b.type==='text'))return true;
+  let b=blocks[0];
+  return !(b&&b.type==='conditioning'&&!b.recoverySession);
+}
+function starterRecoveryNeedsRefresh(t){
+  let blocks=t?.blocks||[];
+  if(blocks.length!==1)return true;
+  return !(blocks[0]&&blocks[0].recoverySession);
+}
+function upsertNamedStarter(state,name,buildFn,normalizeFn,needsRefresh){
+  state.templates=state.templates||[];
+  let idx=state.templates.findIndex(t=>String(t.name||'')===name);
+  if(idx<0){
+    let copy=buildFn();
+    touchRecord(copy,'templates');
+    normalizeFn(copy);
+    state.templates.push(copy);
+    return copy;
+  }
+  let cur=state.templates[idx];
+  if(needsRefresh&&needsRefresh(cur)){
+    let copy=buildFn();
+    copy.id=cur.id;
+    touchRecord(copy,'templates');
+    normalizeFn(copy);
+    state.templates[idx]=copy;
+    return copy;
+  }
+  return cur;
+}
 function ensureStarterTemplates(state){
   state=state||{};
   state.templates=Array.isArray(state.templates)?state.templates:[];
-  for(const name of STARTER_TEMPLATE_NAMES){
+  for(const name of STARTER_STRENGTH_NAMES){
     if(state.templates.some(t=>String(t.name||'')===name))continue;
     const src=seedTemplateByName(name);
     if(!src)continue;
     let copy=clone(src);
     touchRecord(copy,'templates');
-    if(templateIsStrengthWorkout(copy)||(copy.blocks||[]).some(b=>b&&b.type==='strength')){
-      copy.templateKind='strength';
-      copy.blocks=normalizeAthleteStrengthBlocks(copy.blocks||[]);
-    }
+    normalizeAthleteStrengthTemplate(copy);
     state.templates.push(copy);
-    for(const b of copy.blocks||[]){
-      if(b&&b.type==='strength')for(const ex of b.exercises||[])registerExercise(state,ex);
-    }
+    for(const b of copy.blocks||[]){if(b&&b.type==='strength')for(const ex of b.exercises||[])registerExercise(state,ex)}
   }
+  upsertNamedStarter(state,'Aerobic Conditioning',buildStarterAerobicCondTemplate,normalizeAthleteCondTemplate,starterAerobicNeedsRefresh);
+  upsertNamedStarter(state,'Recovery',buildStarterRecoveryTemplate,normalizeAthleteCondTemplate,starterRecoveryNeedsRefresh);
   state.exercises=dedupe(state.exercises||[]);
   return state;
 }
@@ -1138,7 +1180,7 @@ function applyCalendarCleanPatch(state){
     if(s.status==='completed'||s.status==='abandoned'||s.status==='active')return true;
     if(isCoachPrescription(s))return true;
     if(seedTplIds.has(String(s.templateId||'')))return false;
-    if(/Full Body [ABC]|Aerobic Conditioning/i.test(String(s.name||'')))return false;
+    if(/Full Body [ABC]|Aerobic Conditioning|^Recovery$/i.test(String(s.name||'')))return false;
     return s.status!=='scheduled';
   });
   state.meta.calendarCleanVersion=CALENDAR_CLEAN_VERSION;
@@ -1577,7 +1619,7 @@ async function resumeAthleteSession(id){let x=ses(id);if(!x)return;if(x.status==
 function makeAdHocConditioningSession(date){return{id:id(),templateId:'adhoc-conditioning',name:'Conditioning',date,status:'scheduled',ephemeral:true,coachInstructions:'',blocks:[{id:id(),type:'conditioning',heading:'Conditioning',conditioningType:'easy',modality:'Run / Row / Bike / Walk',targetDurationMin:30,targetHrZone:'',targetPace:'',targetWatts:'',targetDistance:'',rounds:1,workSec:0,restSec:0,timeCapMin:30,notes:''}],timer:{elapsed:0,on:false,last:null},taskIndex:0,tasks:[],notes:'',summary:null}}
 function nextConditioningSession(){let now=today(),active=activeSession();if(active&&sessionLooksLikeConditioning(active)&&!sessionHasStrengthWork(active))return active;let listed=(S.sessions||[]).filter(x=>sessionLooksLikeConditioning(x)&&!x.ephemeral&&(x.status==='scheduled'||x.status==='active'));let todayHit=listed.find(x=>x.date===now);if(todayHit)return todayHit;let upcoming=listed.filter(x=>x.status==='scheduled'&&x.date>=now).sort((a,b)=>a.date.localeCompare(b.date))[0];if(upcoming)return upcoming;return makeAdHocConditioningSession(now)}
 let simpleCondLog=false;
-let condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,targetWatts:'',name:'',editId:''};
+let condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,targetWatts:'',name:'',editId:'',isRecovery:false};
 const COND_FORMATS=[
   {key:'steady',name:'Steady-state',type:'easy'},
   {key:'intervals',name:'Intervals',type:'intervals',rounds:4,workSec:240,restSec:180},
@@ -1660,7 +1702,8 @@ function renderCondBuilder(){
   let interval=fmtNeedsIntervalFields(fmt);
   let adv=interval?`<div class="mph-twin-fields" style="grid-template-columns:1fr 1fr 1fr"><div class=field><label for=condRounds>Rounds</label><input id=condRounds type=number min=1 step=1 value="${esc(condBuilder.rounds||fmt.rounds||1)}" onchange="setCondBuilderNum('rounds',this)"></div><div class=field><label for=condWork>Work</label><input id=condWork inputmode=numeric placeholder="4:00" value="${esc(formatMmSs(condBuilder.workSec||fmt.workSec||30))}" onchange="setCondBuilderMmSs('workSec',this)"></div><div class=field><label for=condRest>Rest</label><input id=condRest inputmode=numeric placeholder="3:00" value="${esc(formatMmSs(condBuilder.restSec!=null?condBuilder.restSec:(fmt.restSec||90)))}" onchange="setCondBuilderMmSs('restSec',this)"></div></div><p class=mph-hint>Total ≈ ${condIntervalTotalMin()} min · stored as seconds.</p>`:`<div class=field style="margin-top:8px"><label>Minutes</label><div class=mph-mins><button type=button class=mph-step aria-label="fewer minutes" onclick="nudgeCondMinutes(-5)">−</button><b aria-live=polite>${condBuilder.minutes||'—'}</b><button type=button class=mph-step aria-label="more minutes" onclick="nudgeCondMinutes(5)">+</button></div></div>`;
   let watts=modalityWantsEcho(condBuilder.modality)?`<div class=field style="margin-top:8px"><label for=condWatts>Target watts <span class=muted>(optional)</span></label><input id=condWatts type=number min=0 step=5 placeholder="180" value="${esc(condBuilder.targetWatts||'')}" onchange="setCondBuilderNum('targetWatts',this)"></div><p class=mph-hint>Logger offers Connect Echo — not shown here.</p>`:(String(condBuilder.modality||'').toLowerCase().includes('row')?`<p class=mph-hint>Rower: type split after, or import Concept2 from Sync. No live Echo.</p>`:`<p class=mph-hint>Effort lands in <b style="color:${z.color}">${esc(z.name)} ${z.lo}–${z.hi}</b> today.</p>`);
-  $('appScreen').innerHTML=`<div class="mph-shell dial-engine"><button type=button class=mph-back onclick="openAthleteConditioningLibrary()" aria-label="Back to Library">← Library</button>${condTwinHeaderHtml('The Engine · builder',fmt.name,plan)}<div class=field style="margin-top:10px"><label>Workout name</label><input id=condTplName value="${esc(condBuilder.name||'')}" placeholder="Easy bike 20" oninput="condBuilder.name=this.value"><div class=helper>Shown in Library and Calendar.</div></div><div class="mph-twin-fields" style="margin-top:10px"><div class=field><label>Format</label>${condBuilderSelectHtml(COND_FORMATS,'fmt','setCondFmt')}</div><div class=field><label>Modality</label>${condBuilderSelectHtml(COND_MODALITIES.map(m=>({key:m,name:m})),'modality','setCondMod')}</div></div><div class=field style="margin-top:8px"><label>Effort</label></div>${condEffortChipsHtml()}${adv}${watts}<div class="ath-sticky dial-engine" style="grid-template-columns:1fr 1fr"><button type=button class="btn" onclick="saveCondTemplate()">Save</button><button type=button class="btn" onclick="saveCondTemplateAsCopy()">Save as copy</button><button type=button class="btn primary" style="grid-column:1/-1" onclick="publishCondTemplate()">Publish to day</button></div></div>`;
+  let recoveryNote=condBuilder.isRecovery?`<div class=notice style="margin-top:10px"><b>Recovery session</b> — dose scales with check-in and debt at session start.</div>`:'';
+  $('appScreen').innerHTML=`<div class="mph-shell dial-engine"><button type=button class=mph-back onclick="openAthleteConditioningLibrary()" aria-label="Back to Library">← Library</button>${condTwinHeaderHtml(condBuilder.isRecovery?'The Engine · recovery builder':'The Engine · builder',condBuilder.isRecovery?'Recovery':fmt.name,plan)}${recoveryNote}<div class=field style="margin-top:10px"><label>Workout name</label><input id=condTplName value="${esc(condBuilder.name||'')}" placeholder="${condBuilder.isRecovery?'Recovery':'Easy bike 20'}" oninput="condBuilder.name=this.value"><div class=helper>Shown in Library and Calendar.</div></div><div class="mph-twin-fields" style="margin-top:10px"><div class=field><label>Format</label>${condBuilderSelectHtml(COND_FORMATS,'fmt','setCondFmt')}</div><div class=field><label>Modality</label>${condBuilderSelectHtml(COND_MODALITIES.map(m=>({key:m,name:m})),'modality','setCondMod')}</div></div><div class=field style="margin-top:8px"><label>Effort</label></div>${condEffortChipsHtml()}${adv}${watts}<div class="ath-sticky dial-engine" style="grid-template-columns:1fr 1fr"><button type=button class="btn" onclick="saveCondTemplate()">Save</button><button type=button class="btn" onclick="saveCondTemplateAsCopy()">Save as copy</button><button type=button class="btn primary" style="grid-column:1/-1" onclick="publishCondTemplate()">Publish to day</button></div></div>`;
 }
 function setCondFmt(k){patchCondBuilder({fmt:k})}
 function setCondMod(k){patchCondBuilder({modality:k})}
@@ -1713,7 +1756,7 @@ function openAthleteConditioningBuilder(){
   renderCondBuilder();
 }
 function resetCondBuilder(){
-  condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,targetWatts:'',name:'',editId:''};
+  condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,targetWatts:'',name:'',editId:'',isRecovery:false};
 }
 function condBlockFromBuilder(){
   let zones=athZonesForReadiness(athHomeMetrics().recovery);
@@ -1727,7 +1770,24 @@ function condBlockFromBuilder(){
     let mins=Math.max(0,num(condBuilder.minutes)||30);
     patch={heading:fmt.name,conditioningType:fmt.type,modality:condBuilder.modality,targetDurationMin:mins,timeCapMin:mins,targetHrZone:`${z.lo}–${z.hi}`,effort:effort.key,condFmt:fmt.key,rounds:Math.max(1,num(condBuilder.rounds)||fmt.rounds||1),workSec:Math.max(0,num(condBuilder.workSec)||fmt.workSec||0),restSec:Math.max(0,condBuilder.restSec!=null?num(condBuilder.restSec):(fmt.restSec||0)),targetWatts:num(condBuilder.targetWatts)||'',notes:''};
   }
-  return Object.assign({id:id(),type:'conditioning'},patch);
+  let block=Object.assign({id:id(),type:'conditioning'},patch);
+  if(condBuilder.isRecovery){
+    let mins=Math.max(5,num(condBuilder.minutes)||20);
+    block.recoverySession=true;
+    block.category='Recovery';
+    block.heading='Recovery movement';
+    block.modality=condBuilder.modality||'Mixed';
+    block.baselineDurationMin=mins;
+    block.targetDurationMin=mins;
+    block.timeCapMin=mins;
+    block.effort='easy';
+    block.condFmt='steady';
+    block.rounds=1;
+    block.workSec=0;
+    block.restSec=0;
+    if(!String(block.notes||'').trim())block.notes='Easy flush — walk, bike, mobility, or box breathing. Stop before fatigue.';
+  }
+  return block;
 }
 function defaultCondTemplateName(){
   let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
@@ -1740,7 +1800,7 @@ function upsertCondTemplateFromBuilder(){
   let block=condBlockFromBuilder();
   let editId=condBuilder.editId||'';
   let existing=editId?tpl(editId):null;
-  if(existing&&(isSeedTemplate(existing)||isRetiredStrengthTemplate(existing))){
+  if(existing&&(isStarterTemplate(existing)||isRetiredStrengthTemplate(existing))){
     editId='';
     name=uniqueTemplateName(name);
     condBuilder.name=name;
@@ -1956,7 +2016,7 @@ function reschedule(i){let x=ses(i);if(!x||!sessionCanMove(x))return alert('This
 let libraryOpen={program:false,other:false};
 let templateOverviewOpen={};
 function toggleLibrarySection(key){libraryOpen[key]=!libraryOpen[key];library()}
-function toggleTemplateOverview(i){templateOverviewOpen[i]=!templateOverviewOpen[i];library()}function isSeedTemplate(t){return seed.templates.some(x=>x.id===t.id)}
+function toggleTemplateOverview(i){templateOverviewOpen[i]=!templateOverviewOpen[i];library()}function isSeedTemplate(t){return isStarterTemplate(t)}
 function hideTemplate(i){let t=tpl(i);if(!t)return;if(confirm(`Hide ${t.name} from the Library?`)){S.hiddenTemplateIds=S.hiddenTemplateIds||[];if(!S.hiddenTemplateIds.includes(i))S.hiddenTemplateIds.push(i);save();if(isConditioningTemplate(t))openAthleteConditioningLibrary();else openAthleteStrengthLibrary()}}
 function restoreHiddenTemplates(){S.hiddenTemplateIds=[];S=purgeStrengthTemplates(upgradeAlpha2(S));save();programs()}
 function templateShortMeta(t){let blocks=t.blocks||[],strength=blocks.flatMap(b=>b.type==='strength'?(b.exercises||[]):[]).length,conditioning=blocks.filter(b=>b.type==='conditioning').length;let bits=[`${blocks.length} blocks`];if(strength)bits.push(`${strength} exercise${strength===1?'':'s'}`);if(conditioning)bits.push(`${conditioning} conditioning block${conditioning===1?'':'s'}`);return bits.join(' · ')}
@@ -1999,12 +2059,16 @@ function libraryStrengthTab(){
 }
 function libraryConditioningTab(){
   let visible=visibleTemplates().filter(isConditioningTemplate);
-  let starters=visible.filter(t=>String(t.name||'')==='Aerobic Conditioning'||String(t.source||'').includes('THE-program')||String(t.source||'').includes('THE-core'));
-  let custom=visible.filter(t=>!starters.includes(t));
-  let b=`<div class=stack><div class=streamhero dial-engine><div class=eyebrow>The Engine</div><h2>Templates</h2><p class=lead>Edit, duplicate, and save conditioning sessions you reuse. Publish any template to a day when you train.</p><div class=quickgrid><button class="btn primary block" style="grid-column:1/-1" onclick="resetCondBuilder();openAthleteConditioningBuilder()">New conditioning template</button></div></div>`;
-  b+=groupedTemplates('Starter','cond-starter',starters,true);
+  let condStarters=visible.filter(t=>String(t.name||'')==='Aerobic Conditioning');
+  let recoveryStarters=visible.filter(isRecoveryTemplate);
+  let custom=visible.filter(t=>!condStarters.includes(t)&&!recoveryStarters.includes(t));
+  let hidden=(S.hiddenTemplateIds||[]).length;
+  let b=`<div class=stack><div class=streamhero dial-engine><div class=eyebrow>The Engine</div><h2>Templates</h2><p class=lead>Starter conditioning and recovery sessions use the Engine builder and logger. Edit, duplicate, and schedule when you train.</p><div class=quickgrid><button class="btn primary block" style="grid-column:1/-1" onclick="resetCondBuilder();openAthleteConditioningBuilder()">New conditioning template</button></div></div>`;
+  b+=groupedTemplates('Conditioning','cond-starter',condStarters,true);
+  b+=groupedTemplates('Recovery','cond-recovery',recoveryStarters,true);
   b+=groupedTemplates('Your sessions','cond-custom',custom,true);
-  if(!starters.length&&!custom.length)b+=`<div class=empty><b>No Engine sessions yet</b>Build a conditioning workout, then publish it to a day.<div class=btns style="justify-content:center"><button class="btn primary" onclick="resetCondBuilder();openAthleteConditioningBuilder()">Build conditioning</button></div></div>`;
+  if(!condStarters.length&&!recoveryStarters.length&&!custom.length)b+=`<div class=empty><b>No Engine sessions yet</b>Build a conditioning workout, then publish it to a day.<div class=btns style="justify-content:center"><button class="btn primary" onclick="resetCondBuilder();openAthleteConditioningBuilder()">Build conditioning</button></div></div>`;
+  if(hidden)b+=`<div class=card><div class=row><div><div class=title>Hidden templates</div><div class=meta>${hidden} hidden</div></div><button class="btn small" onclick=restoreHiddenTemplates()>Restore all</button></div>`;
   return b+`</div>`;
 }
 function bulletListHtml(items){return Array.isArray(items)&&items.length?`<ul class=bulletlist>${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
@@ -2025,7 +2089,8 @@ function loadCondBuilderFromTemplate(t){
     restSec:Math.max(0,num(b.restSec)||0),
     targetWatts:b.targetWatts||'',
     name:t.name||'',
-    editId:t.id
+    editId:t.id,
+    isRecovery:!!b.recoverySession||isRecoveryTemplate(t),
   };
 }function deleteTemplate(i){let t=tpl(i);if(confirm('Delete this custom workout template?')){S.templates=S.templates.filter(x=>x.id!==i);save();if(isConditioningTemplate(t))openAthleteConditioningLibrary();else openAthleteStrengthLibrary()}}
 function repairDraftConditioningText(){if(!draft||!Array.isArray(draft.blocks))return false;let changed=false;if(draft.name&&CONDITIONING_TEXT_DEFAULTS[draft.name])changed=repairConditioningBlocks(draft.blocks,draft.name,false)||changed;for(const b of draft.blocks){if(b&&b.type==='conditioning'&&needsConditioningNotes(b.notes)){b.notes=conditionDefaultText(b);changed=true}}return changed}
