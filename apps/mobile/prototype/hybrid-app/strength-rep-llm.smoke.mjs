@@ -38,6 +38,62 @@ if (StrengthAdapter.repProgressionLift('Bench Press')) {
   throw new Error('bench should not be rep progression');
 }
 
+if (!StrengthAdapter.percentLiftCandidate('Overhead Press', 'Strength — Push')) {
+  throw new Error('Overhead Press should be a working-max lift');
+}
+if (StrengthAdapter.repProgressionLift('Overhead Press', 'Strength — Push')) {
+  throw new Error('Overhead Press should not use rep progression');
+}
+if (StrengthAdapter.percentLiftCandidate('Lateral Raise')) {
+  throw new Error('Lateral Raise should not be a working-max lift');
+}
+
+const pullState = {
+  meta: { ownerId: 'a1', progressionAudit: [] },
+  exercises: [{ id: 'pull', name: 'Pull Up' }],
+  strengthState: { workingMaxEvents: [], prEvents: [], loadHints: {}, volumeHints: {} },
+  sessions: [{
+    id: 'wp1',
+    name: 'Full Body A',
+    date: '2026-08-20',
+    status: 'completed',
+    completedAt: Date.now(),
+    sessionPain: 'none',
+    tasks: [{
+      kind: 'strength',
+      exerciseId: 'pull',
+      name: 'Pull Up',
+      rows: [
+        { id: 'r1', n: 1, weight: 10, reps: 5, done: true },
+        { id: 'r2', n: 2, weight: 10, reps: 5, done: true },
+      ],
+    }],
+  }],
+};
+
+if (StrengthAdapter.repProgressionLift('Pull Up', '', pullState, 'pull')) {
+  throw new Error('weighted pull-up should leave rep progression');
+}
+if (!StrengthAdapter.percentLiftCandidate('Pull Up', '', pullState, 'pull')) {
+  throw new Error('weighted pull-up should require working max');
+}
+if (!StrengthAdapter.exerciseUsesAddedLoadMode(pullState, 'pull', 'Pull Up')) {
+  throw new Error('weighted pull-up should detect added-load mode');
+}
+
+sandbox.S = pullState;
+LogColumns.beginAthleteSheet({ name: 'Pull Up', exerciseId: 'pull', rows: [{ weight: 10, reps: 5 }] });
+const pullCols = LogColumns.getSheetColumns();
+if (pullCols.length !== 2 || pullCols[0].kind !== 'weight_pct_wm') {
+  throw new Error('weighted pull-up should get weight + reps logger columns');
+}
+
+LogColumns.beginAthleteSheet({ name: 'Pull Up', category: 'Strength — Pull' });
+const bwPullCols = LogColumns.getSheetColumns();
+if (bwPullCols.length !== 1 || bwPullCols[0].kind !== 'reps') {
+  throw new Error('bodyweight pull-up should stay reps-only');
+}
+
 LogColumns.beginAthleteSheet({ name: 'Nordic Curl', category: 'Accessories' });
 const nordicCols = LogColumns.getSheetColumns();
 if (!nordicCols.length || nordicCols[0].kind !== 'reps' || nordicCols.length !== 1) {

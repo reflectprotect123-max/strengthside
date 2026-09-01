@@ -36,10 +36,62 @@
     return state.strengthState;
   }
 
-  /** Bodyweight / rep-only lifts — no working max or kg progression. */
-  function repProgressionLift(name, cat) {
+  var REP_PROGRESSION_NAME =
+    /(jump|slam|throw|burpee|swing|lateral raise|curl|pushdown|pull[- ]?up|chin[- ]?up|dip|push[- ]?up|nordic|handstand|plank|l[- ]?sit|ab wheel|raise|calf|abduction|carry|row|pulldown|leg press|dumbbell bench|db bench)/;
+  var WM_LIFT_EXCLUSIONS =
+    /(jump|slam|throw|burpee|swing|lateral raise|curl|pushdown|pull[- ]?up|chin[- ]?up|dip|row|pulldown|carry|plank|l[- ]?sit|calf|abduction|leg press|dumbbell bench|db bench)/;
+  var WM_VERTICAL_PRESS =
+    /overhead press|shoulder press|strict press|military press|z[- ]?press|landmine press|push press|arnold press/;
+
+  function addedLoadCapableLift(name) {
     var n = String(name || '').toLowerCase();
-    return /(jump|slam|throw|burpee|swing|lateral raise|curl|pushdown|pull[- ]?up|chin[- ]?up|dip|push[- ]?up|nordic|handstand|plank|l[- ]?sit|ab wheel|raise|calf|abduction|carry|row|pulldown|leg press|dumbbell bench|db bench)/.test(n);
+    return /pull[- ]?up|chin[- ]?up|\bdip\b/.test(n);
+  }
+
+  function rowHasAddedLoad(row) {
+    return num(row && (row.weight != null ? row.weight : row.load)) > 0;
+  }
+
+  /** Weighted pull-up / dip / chin-up: belt kg + reps → WM + load progression. */
+  function exerciseUsesAddedLoadMode(state, exerciseId, name, sessionRows) {
+    if (!addedLoadCapableLift(name)) return false;
+    if (exerciseId && state) {
+      var wmEvents = (ensureStrengthState(state).workingMaxEvents || []).filter(function (e) {
+        return e.exerciseId === exerciseId;
+      });
+      if (wmEvents.length) return true;
+    }
+    if (sessionRows && sessionRows.some(rowHasAddedLoad)) return true;
+    if (exerciseId && state) {
+      var repHist = exerciseRepSessionHistory(state, exerciseId, 8);
+      if (repHist.some(function (r) { return num(r.addedLoadKg) > 0; })) return true;
+      var loadHist = exerciseExposureHistory(state, exerciseId, 1);
+      if (loadHist.length) return true;
+    }
+    return false;
+  }
+
+  /** Bodyweight / rep-only lifts — no working max or kg progression unless added-load mode. */
+  function repProgressionLift(name, cat, state, exerciseId, sessionRows) {
+    var n = String(name || '').toLowerCase();
+    if (!REP_PROGRESSION_NAME.test(n)) return false;
+    if (exerciseUsesAddedLoadMode(state, exerciseId, name, sessionRows)) return false;
+    return true;
+  }
+
+  /** Lifts that anchor % prescriptions and working maxes (barbell + added-load bodyweight). */
+  function percentLiftCandidate(name, cat, state, exerciseId, sessionRows) {
+    if (exerciseUsesAddedLoadMode(state, exerciseId, name, sessionRows)) return true;
+    var n = String(name || '').toLowerCase();
+    var c = String(cat || '').toLowerCase();
+    if (WM_LIFT_EXCLUSIONS.test(n)) return false;
+    if (/bench press/.test(n)) return true;
+    if (/squat/.test(n)) return true;
+    if (/deadlift/.test(n)) return true;
+    if (WM_VERTICAL_PRESS.test(n)) return true;
+    if (/\b(clean|snatch|jerk)\b/.test(n)) return true;
+    if (c.includes('power') && /\b(clean|snatch|jerk)\b/.test(n)) return true;
+    return false;
   }
 
   function findExerciseMetaInSession(session, exerciseId) {
@@ -52,6 +104,16 @@
       }
     });
     return meta;
+  }
+
+  function sessionRowsForExercise(session, exerciseId) {
+    var rows = [];
+    if (!session || !exerciseId) return rows;
+    iterStrengthTasks(session).forEach(function (item) {
+      var eid = item.ex.exerciseId || item.ex.id;
+      if (eid === exerciseId) rows = rows.concat(item.ex.rows || []);
+    });
+    return rows;
   }
 
   function exerciseRepSessionHistory(state, exerciseId, limit) {
@@ -688,7 +750,7 @@
     pre.exerciseIds.forEach(function (exerciseId) {
       var meta = findExerciseMetaInSession(session, exerciseId);
       var name = meta.name || exerciseNameFor(state, exerciseId);
-      if (repProgressionLift(name, meta.category)) {
+      if (repProgressionLift(name, meta.category, state, exerciseId, sessionRowsForExercise(session, exerciseId))) {
         var repResolved = resolveRepVolumeAction(state, session, exerciseId, pre.recovery);
         if (applyRepVolumeHint(state, session, exerciseId, repResolved, pre.recovery)) applied++;
         return;
@@ -726,7 +788,7 @@
     var jobs = pre.exerciseIds.map(function (exerciseId) {
       var meta = findExerciseMetaInSession(session, exerciseId);
       var name = meta.name || exerciseNameFor(state, exerciseId);
-      if (repProgressionLift(name, meta.category)) {
+      if (repProgressionLift(name, meta.category, state, exerciseId, sessionRowsForExercise(session, exerciseId))) {
         return applyRepVolumeProgressionJob(state, session, exerciseId, pre.recovery, useAi);
       }
       var resolved = resolveProgressionAction(state, session, exerciseId, {
@@ -832,6 +894,7 @@
 
   function workingMaxKgForExercise(state, exerciseId, asOfDate) {
     if (!exerciseId || !global.HybridStrength?.WorkingMax?.currentWorkingMax) return null;
+    asOfDate = asOfDate || isoNow().slice(0, 10);
     var events = (ensureStrengthState(state).workingMaxEvents || []).filter(function (e) {
       return e.exerciseId === exerciseId;
     });
@@ -968,7 +1031,7 @@
     var exerciseId = ex.exerciseId || ex.id;
     var name = ex.name || exerciseNameFor(state, exerciseId);
     var cat = ex.category || '';
-    if (repProgressionLift(name, cat)) {
+    if (repProgressionLift(name, cat, state, exerciseId, ex.rows)) {
       var ss = ensureStrengthState(state);
       var vHint = ss.volumeHints[exerciseId];
       if (vHint && vHint.sets && vHint.reps) {
@@ -1136,7 +1199,7 @@
     ensureStrengthState(state);
     var name = exercise.name || exerciseNameFor(state, exerciseId);
     var cat = exercise.category || '';
-    if (repProgressionLift(name, cat)) {
+    if (repProgressionLift(name, cat, state, exerciseId, exercise.rows)) {
       var vHint = state.strengthState.volumeHints[exerciseId];
       var repCal = calibrationForRepExercise(state, exerciseId);
       var repHist = exerciseRepSessionHistory(state, exerciseId, 1);
@@ -1189,6 +1252,10 @@
 
     if (!loadKg && wmKg) {
       detail = (detail ? detail + ' · ' : '') + 'Working max ' + wmKg + ' kg';
+    }
+
+    if (addedLoadCapableLift(name) && exerciseUsesAddedLoadMode(state, exerciseId, name, exercise.rows)) {
+      detail = (detail ? detail + ' · ' : '') + 'Added load — WM is belt/plate kg, not bodyweight';
     }
 
     return {
@@ -1282,6 +1349,9 @@
     calibrationForExercise: calibrationForExercise,
     targetRirForExercise: targetRirForExercise,
     repProgressionLift: repProgressionLift,
+    percentLiftCandidate: percentLiftCandidate,
+    addedLoadCapableLift: addedLoadCapableLift,
+    exerciseUsesAddedLoadMode: exerciseUsesAddedLoadMode,
     exerciseRepSessionHistory: exerciseRepSessionHistory,
     calibrationForRepExercise: calibrationForRepExercise,
     mergeAiVolumeAction: mergeAiVolumeAction,

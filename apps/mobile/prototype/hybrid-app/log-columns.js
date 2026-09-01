@@ -274,12 +274,18 @@
     return sheet;
   }
 
-  function defaultAthleteColumns(ex) {
-    if (
+  function repOnlyAthleteColumns(ex) {
+    var state = global.S;
+    var exerciseId = ex && (ex.exerciseId || ex.id);
+    return !!(
       global.StrengthAdapter &&
       StrengthAdapter.repProgressionLift &&
-      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category)
-    ) {
+      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category, state, exerciseId, ex && ex.rows)
+    );
+  }
+
+  function defaultAthleteColumns(ex) {
+    if (repOnlyAthleteColumns(ex)) {
       return [
         { id: newId(), kind: 'reps', value: '', values: splitValues('', sheet.sets) },
       ];
@@ -306,8 +312,7 @@
 
   function ensureAthleteLogColumns(ex) {
     let cols = ex && Array.isArray(ex.logColumns) && ex.logColumns.length ? coachNormalizeColumns(ex) : defaultAthleteColumns(ex);
-    var repOnly = global.StrengthAdapter && StrengthAdapter.repProgressionLift &&
-      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category);
+    var repOnly = repOnlyAthleteColumns(ex);
     cols = cols.slice(0, repOnly ? 1 : 2);
     while (cols.length < (repOnly ? 1 : 2)) {
       cols.push({ id: newId(), kind: 'reps', value: '', values: splitValues('', 3) });
