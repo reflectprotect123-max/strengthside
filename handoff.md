@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`6ff6fd7`** (#124 coach toggles removed — auto builder + AI, cache v123) |
-| **Open PR** | **None** |
-| **Cache** | **`the-hybrid-athlete-engine-v123`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.29`** (uploaded 31 Aug — auto coach settings, cache v123) |
+| **`main` tip** | **`8fd4fdf`** (#125 remove coach file import — cache v124) |
+| **Open PR** | **#125** remove coach file import |
+| **Cache** | **`the-hybrid-athlete-engine-v124`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.30`** (uploaded 31 Aug — remove coach file import, cache v124) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -41,7 +41,7 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.29`** |
+| Channel / bundle | `dogfood` / **`1.0.30`** |
 | Upload | `CAPGO_BUNDLE_VERSION=1.0.30 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
@@ -75,7 +75,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 
 | # | Item | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.27** on dogfood (31 Aug, cache v121 — Full Body A v7 starter). Phone: Settings → Check for updates. |
+| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.30** on dogfood (31 Aug, cache v124 — remove coach file import). Phone: Settings → Check for updates. |
 | 2 | Phone: coach Publish → athlete pull | **owner proof** | Sign in both apps (same Supabase). Coach roster → link athlete UUID → Publish chip. Athlete foreground or Check for updates. |
 | 3 | Phone: complete → coach **Completed** chip | **owner proof** | After #2: log session on phone → coach calendar chip shows Completed. |
 | 4 | Phone: strapless cond → recovery → debt row | **owner proof** | `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs` passes in CI; real phone still needed. |

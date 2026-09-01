@@ -17,7 +17,8 @@ for (const needle of ['coach-bridge.js', 'coach-views.js', 'CoachViews.init']) {
   if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);
 }
 if (!indexHtml.includes('pullCoachBridge')) throw new Error('index.html missing pullCoachBridge');
-if (!indexHtml.includes('importCoachBridge')) throw new Error('index.html missing importCoachBridge');
+if (indexHtml.includes('importCoachBridge')) throw new Error('importCoachBridge should not be exposed in athlete settings');
+if (indexHtml.includes('Import coach file')) throw new Error('Import coach file should not be in athlete settings');
 if (!syncSrc.includes('importPayload')) throw new Error('coach-sync.js missing importPayload');
 
 const store = {};
