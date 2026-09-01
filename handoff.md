@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`28a209a`** (#133 preview Start workout fix — cache v135) |
-| **Open PR** | **`cursor/fix-strength-logger-esc-84a0`** — strength logger empty UI (cache v136) |
+| **`main` tip** | **`83df3b5`** (#134 strength logger esc fix — cache v136) |
+| **Open PR** | **none** |
 | **Cache** | **`the-hybrid-athlete-engine-v136`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.41`** (strength logger esc fix; cache v136) |
+| **Capgo** | **`dogfood` @ `1.0.41`** (strength logger esc fix; cache v136) — **uploaded** |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
