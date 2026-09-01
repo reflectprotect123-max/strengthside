@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`749ccc8`** (#130 blank boot fix + remove Restore hidden — cache v132) |
+| **`main` tip** | **`3561aa1`** (#131 warm-up / cool-down restored — cache v133) |
 | **Open PR** | **none** |
-| **Cache** | **`the-hybrid-athlete-engine-v132`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.37`** (blank boot fix, library starters always visible, cache v132) |
+| **Cache** | **`the-hybrid-athlete-engine-v133`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.38`** (warm-up + cool-down on starters, cache v133) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
