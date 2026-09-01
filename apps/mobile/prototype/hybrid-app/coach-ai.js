@@ -138,65 +138,14 @@
   }
 
   function enrichSessionWithCoachIntent(state, session) {
-    // #region agent log
-    function __agentLog(hypothesisId, location, message, data) {
-      var payload = { hypothesisId: hypothesisId, location: location, message: message, data: data || {}, timestamp: Date.now() };
-      try { (global.__agentDebugLogs = global.__agentDebugLogs || []).push(payload); } catch (e0) {}
-      try { fetch('/__agent_debug', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload), keepalive: true }).catch(function () {}); } catch (e1) {}
-    }
-    var _instrLen = session ? String(session.coachInstructions || '').trim().length : 0;
-    var _enabled = llmEnabled(state);
-    __agentLog('A', 'coach-ai.js:enrichSessionWithCoachIntent:entry', 'enrich entry', {
-      sessionName: session && session.name,
-      coachInstrLen: _instrLen,
-      llmEnabled: _enabled,
-      hasCachedIntent: !!(session && session.llmIntent && session.llmIntentAt),
-      llmIntentAt: session && session.llmIntentAt || null,
-      endpoint: ENDPOINT,
-      timeoutMs: TIMEOUT_MS,
-    });
-    // #endregion
-    if (!llmEnabled(state)) {
-      // #region agent log
-      __agentLog('A', 'coach-ai.js:enrichSessionWithCoachIntent:skip', 'llm disabled — resolve null', {});
-      // #endregion
-      return Promise.resolve(null);
-    }
-    if (!session || !String(session.coachInstructions || '').trim()) {
-      // #region agent log
-      __agentLog('A', 'coach-ai.js:enrichSessionWithCoachIntent:skip', 'empty coachInstructions — resolve null', {});
-      // #endregion
-      return Promise.resolve(null);
-    }
-    if (session.llmIntent && session.llmIntentAt) {
-      // #region agent log
-      __agentLog('A', 'coach-ai.js:enrichSessionWithCoachIntent:cache', 'using cached llmIntent', { llmIntentAt: session.llmIntentAt });
-      // #endregion
-      return Promise.resolve(session.llmIntent);
-    }
-    // #region agent log
-    var _fetchStarted = Date.now();
-    __agentLog('A', 'coach-ai.js:enrichSessionWithCoachIntent:fetchStart', 'fetchCoachIntent starting', { endpoint: ENDPOINT, timeoutMs: TIMEOUT_MS });
-    // #endregion
+    if (!llmEnabled(state)) return Promise.resolve(null);
+    if (!session || !String(session.coachInstructions || '').trim()) return Promise.resolve(null);
+    if (session.llmIntent && session.llmIntentAt) return Promise.resolve(session.llmIntent);
     return fetchCoachIntent(session).then(function (intent) {
-      // #region agent log
-      __agentLog('A', 'coach-ai.js:enrichSessionWithCoachIntent:fetchOk', 'fetchCoachIntent resolved', {
-        elapsedMs: Date.now() - _fetchStarted,
-        hasIntent: !!intent,
-        recoveryGate: intent && intent.recoveryGate || null,
-      });
-      // #endregion
       applyCoachIntentToSession(session, intent);
       session.llmIntentAt = Date.now();
       return intent;
     }).catch(function (err) {
-      // #region agent log
-      __agentLog('A', 'coach-ai.js:enrichSessionWithCoachIntent:fetchErr', 'fetchCoachIntent rejected/caught', {
-        elapsedMs: Date.now() - _fetchStarted,
-        errName: err && err.name,
-        errMsg: err && String(err.message || err).slice(0, 200),
-      });
-      // #endregion
       if (state.settings && state.settings.llmDebug) console.warn('CoachAI:', err);
       return null;
     });
