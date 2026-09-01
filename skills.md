@@ -207,6 +207,7 @@ working this repo. They live at visible repo paths and are committed on
 
 | Skill | Source | Notes |
 |---|---|---|
+| **superpowers (14 skills)** | Vendored at `vendor/skills/`, copied to `.cursor/skills/` | TDD, debugging, brainstorming, writing/executing plans, subagent-driven development, code review, git worktrees, verification. Run `bash scripts/ensure-skills.sh` for Claude Code (`.claude/skills/`). |
 | `ui-ux-pro-max` | `npx ui-ux-pro-max-cli init --ai cursor` | Design intelligence + searchable data. Installer also dropped sibling skills: `banner-design`, `brand`, `design`, `design-system`, `slides`, `ui-styling`. |
 | `frontend-design` | `npx skills add anthropics/skills --skill frontend-design` | Distinctive UI direction. Also mirrored under `.agents/skills/frontend-design`. |
 | `caveman` | `npx skills add juliusbrussee/caveman@caveman` | Terse communication mode. Invoke `/caveman`; off with `stop caveman` / `normal mode`. |
@@ -233,7 +234,7 @@ working this repo. They live at visible repo paths and are committed on
 
 | Bucket | Count | Survives recycle? |
 |---|---|---|
-| Cursor skills under `.cursor/skills/` | 10 directories (ui-ux-pro-max suite + frontend-design + caveman + mem-search) | Yes if committed |
+| Cursor skills under `.cursor/skills/` | 24 directories (14 superpowers + ui-ux-pro-max suite + frontend-design + caveman + mem-search) | Yes if committed |
 | Claude Mem hooks + context rule | project + user hooks | Project yes; user hooks + built tree + API key **no** |
 
 ## Rules of thumb
