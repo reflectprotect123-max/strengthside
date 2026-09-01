@@ -707,6 +707,64 @@
     });
   }
 
+  /** Athlete strength builder — full logger card per lift (no rest timer). */
+  function builderAthleteTwinHtml(ex, opts) {
+    opts = opts || {};
+    const bi = Number(opts.bi) || 0;
+    const ei = Number(opts.ei) || 0;
+    const cols = ensureAthleteLogColumns(ex || {});
+    const repOnly = cols.length === 1;
+    const loadCol = loadColumn(cols);
+    const effortCol = effortColumn(cols) || cols[0];
+    const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
+    const restLabel = fmtRest(restSec);
+    const name = escTwin(ex && ex.name ? ex.name : '');
+    const suggestHtml = opts.suggestHtml || '';
+    const loadCi = loadCol ? cols.indexOf(loadCol) : -1;
+    const effortCi = effortCol ? cols.indexOf(effortCol) : 0;
+    let metricsHtml;
+    if (repOnly || !loadCol) {
+      metricsHtml =
+        '<div class=hero-metrics><div class="metric-col metric-col-single">' +
+        '<div class="metric-val metric-dash">—</div>' +
+        `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${effortCi},this.value)">` +
+        effortKindsOptionsHtml(effortCol.kind) +
+        '</select></div></div>';
+    } else {
+      metricsHtml =
+        '<div class=hero-metrics>' +
+        '<div class=metric-col><div class="metric-val metric-dash">—</div>' +
+        `<select class="builder-metric-select logcol-kind" aria-label="Load metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${loadCi},this.value)">` +
+        loadKindsOptionsHtml(loadCol.kind) +
+        '</select></div>' +
+        '<div class=metric-sep>×</div>' +
+        '<div class=metric-col><div class="metric-val metric-dash">—</div>' +
+        `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${effortCi},this.value)">` +
+        effortKindsOptionsHtml(effortCol.kind) +
+        '</select></div></div>';
+    }
+    return (
+      `<div class="logger-screen dial-strength ath-builder-twin">` +
+      '<div class=eyebrow>Hybrid Strength · builder</div>' +
+      `<input class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<div id="athSuggest_${bi}_${ei}">${suggestHtml}</div>` +
+      `<div class=progressline data-rest-line>One set at a time · Rest ${restLabel} after Next</div>` +
+      '<div class=setchip>Set <b>1</b> / 3</div>' +
+      '<div class=hero>' +
+      '<div class=hero-label>Load & effort · session start fills numbers</div>' +
+      metricsHtml +
+      `<div class=rest-row><label for="athRest_${bi}_${ei}">Rest (seconds)</label>` +
+      `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div>` +
+      '<div class=hero-target>Target: <b>RIR 2</b> · next set adjusts from slider</div></div>' +
+      '<div class="slider-card ath-builder-twin-static"><div class=sliderhead><b>How hard was that set?</b><span class=slidervalue>Medium · RIR ~2</span></div>' +
+      '<input type="range" disabled min="0" max="5" step="1" value="2" aria-hidden="true">' +
+      '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
+      '<div class="next-wrap ath-builder-twin-static">' +
+      '<button type="button" class="btn primary" disabled>Next set</button>' +
+      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>'
+    );
+  }
+
   function builderLoggerTwinHtml() {
     const effort = effortColumn();
     const meta = effort ? kindMeta(effort.kind) : kindMeta('reps');
@@ -836,6 +894,7 @@
     builderPrescriptionHtml,
     builderPrescriptionGridHtml,
     builderLoggerTwinHtml,
+    builderAthleteTwinHtml,
     ensureAthleteLogColumns,
     athleteColumnOptionsHtml,
     beginSheet,

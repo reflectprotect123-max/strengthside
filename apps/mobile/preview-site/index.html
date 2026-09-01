@@ -329,6 +329,21 @@ header.top.dial-engine .stopwatch.on{border-color:var(--zone);color:var(--zone)}
 }
 .ath-ss-lock.on .ath-ss-lock-icon{background:rgba(196,154,92,.25)}
 .ath-lift-card.ss-linked{border-color:rgba(196,154,92,.4)}
+.ath-lift-card.ath-lift-logger{padding:0;border-radius:20px;overflow:hidden;background:var(--panel)}
+.ath-lift-card.ath-lift-logger .logger-screen.ath-builder-twin{min-height:0;padding:18px 16px 8px}
+.ath-lift-card.ath-lift-logger .ath-builder-ex-name{width:100%;border:0;background:transparent;font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.05;letter-spacing:.02em;padding:0;color:var(--text)}
+.ath-lift-card.ath-lift-logger .ath-builder-ex-name:focus{outline:none}
+.ath-lift-card.ath-lift-logger .ath-builder-ex-name::placeholder{color:var(--dim)}
+.ath-lift-card.ath-lift-logger .metric-dash{color:var(--dim)}
+.ath-lift-card.ath-lift-logger .builder-metric-select{width:100%;margin-top:8px;padding:8px 6px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);font-size:11px;font-weight:600;text-align:center;min-height:var(--tap-min);color-scheme:dark}
+.ath-lift-card.ath-lift-logger .builder-metric-select option{background:var(--panel2);color:var(--text)}
+.ath-lift-card.ath-lift-logger .rest-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.ath-lift-card.ath-lift-logger .rest-row label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left}
+.ath-lift-card.ath-lift-logger .rest-row input{width:88px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);text-align:center;font-variant-numeric:tabular-nums;min-height:var(--tap-min)}
+.ath-lift-card.ath-lift-logger .hero{margin-top:18px;padding:20px 16px 16px}
+.ath-lift-card.ath-lift-logger .ath-builder-twin-static{opacity:.72;pointer-events:none}
+.ath-lift-card.ath-lift-logger .ath-lift-delete{margin:0 16px 16px;width:calc(100% - 32px)}
+.ath-lift-card.ath-lift-logger .metric-col-single{grid-column:1/-1;max-width:220px;margin:0 auto}
 
 .builder-colhead-row{display:grid;gap:8px;margin-top:12px}
 .builder-colhead-row.cols-2{grid-template-columns:repeat(2,1fr)}
@@ -1082,7 +1097,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v143';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v144';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -2225,9 +2240,9 @@ function ensureAthleteLiftShape(ex){ex=ex||{};let linked=!!ex.supersetWithNext;e
 function athleteColumnSelectHtml(selected){return window.LogColumns&&LogColumns.athleteColumnOptionsHtml?LogColumns.athleteColumnOptionsHtml(selected||'reps'):`<option value="reps">Reps</option>`}
 function athleteLiftSuggestHtml(query,bi,ei){let q=String(query||'').trim();if(!q)return '';let hits=exerciseSuggestHits(q);if(!hits.length)return `<div class=ex-suggest-empty>No library match — keep typing to save a custom lift.</div>`;return `<div class=ex-suggest role=listbox aria-label="Exercise suggestions">${hits.map(x=>`<button type=button class=searchpick role=option onclick='pickAthleteLiftSuggest(${bi},${ei},${JSON.stringify(x.name)})'><b>${esc(x.name)}</b><span>${esc(x.category||'Custom')}</span></button>`).join('')}</div>`}
 function refreshAthleteLiftSuggest(bi,ei,query){let box=$('athSuggest_'+bi+'_'+ei);if(box)box.innerHTML=athleteLiftSuggestHtml(query,bi,ei)}
-function pickAthleteLiftSuggest(bi,ei,name){setAthleteLiftName(bi,ei,name);refreshAthleteLiftSuggest(bi,ei,'')}
+function pickAthleteLiftSuggest(bi,ei,name){setAthleteLiftName(bi,ei,name);refreshAthleteLiftSuggest(bi,ei,'');athleteStrengthBuilder()}
 function setAthleteLiftName(bi,ei,val){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex.name=String(val||'');ex.category=category(ex.name);persistDraft();refreshAthleteLiftSuggest(bi,ei,ex.name)}
-function setAthleteLiftRest(bi,ei,val){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex.restSec=Math.max(0,num(val)||120);persistDraft()}
+function setAthleteLiftRest(bi,ei,val,el){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex.restSec=Math.max(0,num(val)||0);persistDraft();let card=el&&el.closest?el.closest('.ath-lift-card'):document.querySelector(`[data-lift="${bi}_${ei}"]`);let line=card&&card.querySelector('[data-rest-line]');if(line)line.textContent='One set at a time · Rest '+fmt(ex.restSec)+' after Next'}
 function setAthleteLiftColumnKind(bi,ei,ci,kind){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex=ensureAthleteLiftShape(ex);ex.logColumns[ci].kind=kind;draft.blocks[bi].exercises[ei]=ex;persistDraft()}
 
 function toggleAthleteSupersetLock(bi,ei){
@@ -2238,7 +2253,7 @@ function toggleAthleteSupersetLock(bi,ei){
   persistDraft();
   athleteStrengthBuilder();
 }
-function athleteLiftEditor(y,bi,ei){y=ensureAthleteLiftShape(clone(y));draft.blocks[bi].exercises[ei]=y;let cols=(y.logColumns||[]).slice(0,2);let colHtml=cols.map((c,ci)=>`<div class=builder-colhead><label>Column ${ci+1}</label><select class=logcol-kind aria-label="Column ${ci+1}" onchange="setAthleteLiftColumnKind(${bi},${ei},${ci},this.value)">${athleteColumnSelectHtml(c.kind)}</select></div>`).join('');let linked=!!y.supersetWithNext||(ei>0&&!!(draft.blocks[bi].exercises[ei-1]||{}).supersetWithNext);return `<div class="ath-lift-card${linked?' ss-linked':''}"><div class=field><label>Exercise name</label><input value="${esc(y.name)}" autocomplete=off placeholder="Bench Press" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)"><div id=athSuggest_${bi}_${ei}>${y.name?athleteLiftSuggestHtml(y.name,bi,ei):''}</div></div><div class=field style="margin-top:10px"><label>Rest (seconds)</label><input type=number min=0 value="${y.restSec}" onchange="setAthleteLiftRest(${bi},${ei},this.value)"></div><div class="builder-colhead-row cols-2">${colHtml}</div><button type=button class="btn small danger" style="margin-top:10px" onclick="removeExercise(${bi},${ei})">Delete lift</button></div>`}
+function athleteLiftEditor(y,bi,ei){y=ensureAthleteLiftShape(clone(y));draft.blocks[bi].exercises[ei]=y;let linked=!!y.supersetWithNext||(ei>0&&!!(draft.blocks[bi].exercises[ei-1]||{}).supersetWithNext);let suggest=y.name?athleteLiftSuggestHtml(y.name,bi,ei):'';let twin=window.LogColumns&&LogColumns.builderAthleteTwinHtml?LogColumns.builderAthleteTwinHtml(y,{bi,ei,suggestHtml:suggest}):'';return `<div class="ath-lift-card ath-lift-logger${linked?' ss-linked':''}" data-lift="${bi}_${ei}">${twin}<button type=button class="btn small danger ath-lift-delete" onclick="removeExercise(${bi},${ei})">Delete lift</button></div>`}
 function registerDraftExercises(){for(const b of draft.blocks||[]){if(!b||b.type!=='strength')continue;for(const ex of b.exercises||[]){let name=String(ex.name||'').trim();if(!name)continue;let existing=S.exercises.find(x=>normExercise(x.name)===normExercise(name));if(!existing){existing={id:'custom-'+slugExercise(name)+'-'+id(),name,category:ex.category||category(name),builtIn:false,source:'THE-user',percentCalc:false,manual1rm:''};S.exercises.push(existing)}else if(ex.category)existing.category=ex.category||existing.category;ex.exerciseId=existing.id;ex.category=existing.category;ensureAthleteLiftShape(ex)}}S.exercises=dedupe(S.exercises);S=ensureExerciseTrackingFlags(S)}
 function athleteLiftRow(y,i,j){let meta=athleteLiftMeta(y);return`<div class=ath-lift-row><div><div class=ath-lift-name>${esc(y.name||'Untitled lift')}</div><div class=ath-lift-meta>${esc(meta)}</div></div><div class=ath-lift-actions><button type=button class="btn small" onclick="exerciseSheet(${i},${j})">Edit</button><button type=button class="btn small danger" onclick="removeExercise(${i},${j})">Delete</button></div></div>`}
 function athleteLiftMeta(y){return athleteLiftOverviewMeta(y)}

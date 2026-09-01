@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v143'"), 'LOCAL_BUILD v119');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v143'"), 'SW v119');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v144'"), 'LOCAL_BUILD v119');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v144'"), 'SW v119');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -49,7 +49,7 @@ must(!html.includes('pullCoachBridge'), 'pullCoachBridge removed');
 must(!html.includes('onclick=exportData()>Export backup</button><button class=btn onclick="go(\'calendar\')">Return to calendar'), 'session summary export backup removed');
 must(html.includes("setLibraryTab('progress')"), 'Progress lives in Library tabs');
 must(!html.includes('home-links'), 'home footer links removed');
-must(html.includes('ath-lift-card'), 'ath-lift-card markup');
+must(html.includes('ath-lift-logger'), 'ath-lift-logger markup');
 must(!html.includes("coach-strength-hidden .ath-strength-build{display:none"), 'coach gate no longer hides athlete builder CSS');
 
 
