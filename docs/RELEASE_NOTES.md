@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.35 | 2026-09-01 | Restore Full Body A starter in Library after blank slate (cache v130) |
 | 1.0.34 | 2026-09-01 | Rep-only LLM volume + OHP WM + weighted pull-up added-load mode (cache v129) |
 | 1.0.32 | 2026-08-31 | Remove redundant athlete UI — auto coach sync, no minimal toggle, slimmer Home/Settings (cache v126) |
 | 1.0.31 | 2026-08-31 | Athlete dead-code purge — legacy check-in, ER programs, coach gate branches (cache v125) |
