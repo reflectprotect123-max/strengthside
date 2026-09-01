@@ -39,6 +39,13 @@ const sandbox = {
   normaliseInterval: (t) => t.interval,
   intervalRemaining: () => 136,
   intervalElapsed: () => 44,
+  athHomeMetrics: () => ({ recovery: 71 }),
+  athZonesForReadiness: () => [
+    { key: 'recovery', name: 'Recovery', lo: 100, hi: 120, color: '#7dba9a' },
+    { key: 'aerobic', name: 'Aerobic', lo: 121, hi: 140, color: '#5ec4b4' },
+    { key: 'anaerobic', name: 'Anaerobic', lo: 141, hi: 160, color: '#d4a574' },
+  ],
+  mphZoneForHr: (hr, zones) => zones.find((z) => hr >= z.lo && hr <= z.hi) || zones[1],
   bleHr: { status: 'idle', liveBpm: null },
   echoBike: { status: 'idle' },
   SessionChrome: { applyBrand: () => {} },
@@ -80,9 +87,16 @@ if (!workHtml.includes('timer-big')) throw new Error('work missing timer');
 if (!workHtml.includes('target-row')) throw new Error('work missing target row');
 if (!workHtml.includes('phasechip')) throw new Error('work missing phasechip');
 if (!workHtml.includes('hr-gauge')) throw new Error('work missing HR gauge');
+if (!workHtml.includes('loggerHrGauge')) throw new Error('work missing loggerHrGauge id');
+if (!workHtml.includes('loggerHrTarget')) throw new Error('work missing loggerHrTarget id');
 if (!workHtml.includes('End interval')) throw new Error('work primary should End interval when running');
 if (!workHtml.includes('RIR 2 equivalent')) throw new Error('work target effort copy missing');
-if (!workHtml.includes('bpm')) throw new Error('work zone bpm range missing');
+if (!workHtml.includes('HR bpm')) throw new Error('work HR target label missing');
+
+sandbox.bleHr = { status: 'live', liveBpm: 151 };
+const liveWorkHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
+if (!liveWorkHtml.includes('>151<')) throw new Error('live HR not shown in work phase');
+if (!liveWorkHtml.includes('Anaerobic')) throw new Error('live HR zone name missing');
 
 intervalTask.interval.phase = 'rest';
 const restHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
@@ -90,6 +104,7 @@ if (!restHtml.includes('logger-rest') && !restHtml.includes('rest-ring')) throw 
 if (!restHtml.includes('Recover · between work')) throw new Error('rest eyebrow missing');
 if (!restHtml.includes('How hard was that interval')) throw new Error('rest slider missing');
 if (!restHtml.includes('Up next · Interval')) throw new Error('rest up-next interval copy missing');
+if (!restHtml.includes('loggerHrGauge')) throw new Error('rest missing HR gauge block');
 if (!sandbox.RestOverlay) {}
 
 intervalTask.interval.finished = true;

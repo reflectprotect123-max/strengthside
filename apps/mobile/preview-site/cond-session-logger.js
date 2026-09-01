@@ -77,7 +77,75 @@
   function liveHr() {
     var t = global.current && global.current();
     var r = (t && t.result) || {};
-    return num(global.bleHr && global.bleHr.liveBpm) || num(r.liveHr) || num(r.avgHr) || null;
+    var bpm = num(global.bleHr && global.bleHr.liveBpm) || num(r.liveHr) || num(r.avgHr) || null;
+    return bpm > 0 ? bpm : null;
+  }
+
+  function hrZoneName(t, bpm) {
+    if (bpm != null && typeof global.mphZoneForHr === 'function' && typeof global.athZonesForReadiness === 'function') {
+      var recovery = typeof global.athHomeMetrics === 'function' ? global.athHomeMetrics().recovery : 71;
+      var zones = global.athZonesForReadiness(recovery);
+      return global.mphZoneForHr(bpm, zones).name;
+    }
+    return zoneTarget(t).title;
+  }
+
+  function hrMetaHtml(t, hr) {
+    var live = global.bleHr && global.bleHr.status === 'live';
+    var connecting = global.bleHr && global.bleHr.status === 'connecting';
+    var primary = live ? 'On target' : connecting ? 'Listening…' : hr != null ? 'Live' : 'Strap optional';
+    var secondary = live
+      ? 'Strap live · ' + hrZoneName(t, hr)
+      : connecting
+        ? 'Waiting for bpm…'
+        : hr != null
+          ? Math.round(hr) + ' bpm · connect for live'
+          : 'Connect when ready';
+    return (
+      '<div class=hr-meta><b id=loggerHrMeta>' +
+      escHtml(primary) +
+      '</b><span id=loggerHrMetaSub>' +
+      escHtml(secondary) +
+      '</span></div>'
+    );
+  }
+
+  function hrGaugeBlockHtml(t) {
+    var hr = liveHr();
+    return (
+      '<div class=live-hr><div class=hr-gauge id=loggerHrGauge>' +
+      (hr != null ? Math.round(hr) : '—') +
+      '</div>' +
+      hrMetaHtml(t, hr) +
+      '</div>'
+    );
+  }
+
+  function targetHrBoxHtml(t) {
+    var hr = liveHr();
+    var zt = zoneTarget(t);
+    return (
+      '<div class=target-box><b id=loggerHrTarget>' +
+      (hr != null ? Math.round(hr) : '—') +
+      '</b><span>' +
+      escHtml(hr != null ? hrZoneName(t, hr) : zt.title) +
+      ' · HR bpm</span></div>'
+    );
+  }
+
+  function steadyHrBoxHtml(t, recovery) {
+    var hr = liveHr();
+    var zt = zoneTarget(recovery ? Object.assign({}, t, { effort: 'easy' }) : t);
+    var display =
+      hr != null ? String(Math.round(hr)) : zt.lo ? zt.lo + '–' + zt.hi : recovery ? '100–120' : '120–135';
+    var sub = hr != null ? hrZoneName(t, hr) + ' · live' : 'Target · HR bpm';
+    return (
+      '<div class=target-box><b id=loggerHrTarget>' +
+      escHtml(display) +
+      '</b><span>' +
+      escHtml(sub) +
+      '</span></div>'
+    );
   }
 
   function liveWatts(t) {
@@ -176,18 +244,9 @@
       '<div class=target-box><b>' +
       escHtml(t.targetPace || '—') +
       '</b><span>/500m</span></div>' +
-      '<div class=target-box><b>' +
-      escHtml(zoneTarget(t).title) +
-      '</b><span>' +
-      escHtml(zoneTarget(t).sub) +
-      '</span></div></div>' +
-      '<div class=live-hr><div class=hr-gauge>' +
-      (hr != null ? Math.round(hr) : '—') +
-      '</div><div class=hr-meta><b>' +
-      (global.bleHr && global.bleHr.status === 'live' ? 'On target' : 'Strap optional') +
-      '</b>' +
-      (global.bleHr && global.bleHr.status === 'live' ? 'Strap live · in zone' : 'Connect when ready') +
-      '</div></div>' +
+      targetHrBoxHtml(t) +
+      '</div>' +
+      hrGaugeBlockHtml(t) +
       '<div class=hero-target>Target effort: <b>RIR 2 equivalent · ' +
       escHtml(effortMeta(t).name) +
       '</b></div></div>' +
@@ -232,6 +291,7 @@
       ' ' +
       deltaBadgeHtml(t) +
       '</b>';
+    var restHr = hrGaugeBlockHtml(t);
     var ring = global.RestOverlay
       ? global.RestOverlay.render({
           mode: 'engine',
@@ -255,6 +315,7 @@
       (liveWatts(t) != null ? ' · ' + liveWatts(t) + 'W avg' : '') +
       (liveHr() != null ? ' · HR ' + Math.round(liveHr()) : '') +
       '</div>' +
+      restHr +
       ring +
       '</div>'
     );
@@ -303,17 +364,7 @@
       sub +
       '</div>' +
       '<div class=target-row>' +
-      '<div class=target-box><b>' +
-      (recovery
-        ? (zoneTarget(Object.assign({}, t, { effort: 'easy' })).lo
-            ? zoneTarget(Object.assign({}, t, { effort: 'easy' })).lo +
-              '–' +
-              zoneTarget(Object.assign({}, t, { effort: 'easy' })).hi
-            : '100–120')
-        : zoneTarget(t).lo
-          ? zoneTarget(t).lo + '–' + zoneTarget(t).hi
-          : '120–135') +
-      '</b><span>HR bpm</span></div>' +
+      steadyHrBoxHtml(t, recovery) +
       '<div class=target-box><b>' +
       escHtml(recovery ? 'Zone 2' : zoneTarget(t).title) +
       '</b><span>' +
@@ -322,13 +373,8 @@
       '<div class=target-box><b>' +
       (recovery ? 'RPE 2–3' : 'RPE 3–4') +
       '</b><span>Target</span></div></div>' +
-      '<div class=live-hr><div class=hr-gauge>' +
-      (liveHr() != null ? Math.round(liveHr()) : '—') +
-      '</div><div class=hr-meta><b>' +
-      (recovery ? 'Keep it easy' : 'In zone') +
-      '</b>' +
-      (recovery ? 'Strap optional' : 'Strap optional') +
-      '</div></div></div>' +
+      hrGaugeBlockHtml(t) +
+      '</div>' +
       '<input type=hidden id=condMin value="' +
       escHtml(r.duration ? Math.round((num(r.duration) / 60) * 10) / 10 : t.targetDurationMin || '') +
       '">' +
@@ -487,11 +533,7 @@
         watts +
         '</b><span>Watts</span></div>' +
         '<div class=target-box><b>—</b><span>/500m</span></div>' +
-        '<div class=target-box><b>' +
-        escHtml(zoneTarget({ effort: opts.effort || 'medium' }).title) +
-        '</b><span>' +
-        escHtml(zoneTarget({ effort: opts.effort || 'medium' }).sub) +
-        '</span></div></div></div>' +
+        '<div class=target-box><b>152</b><span>Zone 3 · HR bpm</span></div></div></div>' +
         '<div class=next-wrap><button type=button class="btn primary" disabled>End interval</button></div></div>'
       );
     }
@@ -520,7 +562,7 @@
       (recovery ? 'easy flush · stop before fatigue' : 'conversational pace') +
       '</div>' +
       '<div class=target-row>' +
-      '<div class=target-box><b>—</b><span>HR bpm</span></div>' +
+      '<div class=target-box><b>118</b><span>Zone 2 · live</span></div>' +
       '<div class=target-box><b>' +
       (recovery ? 'Easy' : escHtml(zoneLabel({ effort: opts.effort || 'easy' }))) +
       '</b><span>Zone</span></div>' +
