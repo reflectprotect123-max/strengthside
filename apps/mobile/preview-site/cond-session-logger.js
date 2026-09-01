@@ -611,6 +611,98 @@
     );
   }
 
+  /** Static rest screen preview for Engine builder (intervals only). */
+  function builderRestPreviewHtml(opts) {
+    opts = opts || {};
+    var restSec = num(opts.restSec) || 180;
+    var rounds = Math.max(1, num(opts.rounds) || 8);
+    var modality = opts.modality || 'Bike';
+    var effortKey = opts.effort || 'medium';
+    var zt = zoneTarget({ effort: effortKey });
+    var wattsDisplay =
+      opts.targetWatts != null && opts.targetWatts !== '' ? Math.round(num(opts.targetWatts)) : '—';
+    var upNext =
+      'Up next · Interval 2/' +
+      rounds +
+      '<b>' +
+      wattsDisplay +
+      'W · —/500m · ' +
+      escHtml(zt.title) +
+      '</b>';
+    var ring = global.RestOverlay
+      ? global.RestOverlay.render({
+          mode: 'engine',
+          remainingSec: restSec,
+          upNextHtml: upNext,
+          skipLabel: 'Next interval',
+          skipOnclick: 'return false',
+          addOnclick: 'return false',
+        })
+      : '<div class="logger-rest dial-engine"><div class=rest-ring><div><div class=rest-time>' +
+        fmtSec(restSec) +
+        '</div><div class=rest-label>remaining</div></div></div></div>';
+    return (
+      '<div class="eng-builder-phase eng-builder-static">' +
+      '<div class="logger-screen dial-engine">' +
+      '<div class=eyebrow>Recover · between work</div>' +
+      '<div class=task>' +
+      escHtml(opts.name || modality) +
+      '</div>' +
+      '<div class=progressline>Interval 1 done</div>' +
+      builderStaticHrHtml() +
+      ring +
+      '</div></div>'
+    );
+  }
+
+  /** Static recap screen preview for Engine builder. */
+  function builderRecapPreviewHtml(opts) {
+    opts = opts || {};
+    var recovery = !!(opts.recoverySession || opts.isRecovery);
+    var rounds = Math.max(1, num(opts.rounds) || 8);
+    var mins = num(opts.minutes || opts.targetDurationMin) || 20;
+    var interval = builderFmtNeedsInterval(String(opts.condFmt || opts.fmt || 'steady')) && !recovery;
+    var durationLabel = recovery ? fmtSec(mins * 60) + ' easy movement' : rounds + ' rounds · — total';
+    var progressNote = recovery
+      ? '<div class="adapt-note">Recovery logged — no load progression. Debt repay recorded.</div>'
+      : '<div class="adapt-note warn"><b>Next session:</b> +1 round OR +5s work when earned.</div>';
+    var recapRows = recovery
+      ? '<div class=recap-row><span>Duration</span><b class=good>' +
+        fmtSec(mins * 60) +
+        '</b></div>'
+      : '<div class=recap-row><span>Time in target zone</span><b class=good>—</b></div>' +
+        '<div class=recap-row><span>Intervals completed</span><b class=good>' +
+        rounds +
+        '/' +
+        rounds +
+        '</b></div>' +
+        '<div class=recap-row><span>Avg pace</span><b>—</b></div>';
+    return (
+      '<div class="eng-builder-phase eng-builder-static">' +
+      '<div class="logger-screen dial-engine">' +
+      '<div class=eyebrow>Session recap</div>' +
+      '<div class=task>' +
+      escHtml(opts.name || (recovery ? 'Recovery' : 'Conditioning')) +
+      '</div>' +
+      '<div class=progressline>' +
+      escHtml(durationLabel) +
+      '</div>' +
+      '<div class="hero" style="text-align:left;padding:18px">' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">' +
+      (recovery ? 'Recovery summary' : 'Cardio completion') +
+      '</div>' +
+      '<div class=recap-grid>' +
+      recapRows +
+      '<div class=recap-row><span>Avg HR</span><b>—</b></div>' +
+      '<div class=recap-row><span>Session RPE</span><b>Medium (6)</b></div></div></div>' +
+      progressNote +
+      '<div class="next-wrap eng-builder-static">' +
+      '<button type=button class="btn primary" disabled>' +
+      (recovery ? 'Save recovery' : 'Save · update progression') +
+      '</button></div></div></div>'
+    );
+  }
+
   function builderFieldsHtml(opts, interval) {
     var wattsRow =
       typeof global.modalityWantsEcho === 'function' && global.modalityWantsEcho(opts.modality)
@@ -700,6 +792,7 @@
 
     if (interval) {
       return (
+        '<div class="eng-builder-stack">' +
         '<div class="logger-screen dial-engine eng-builder-twin" id="builderEngineCard">' +
         '<div class=eyebrow>The Engine · builder</div>' +
         '<input class="task eng-builder-name" type="text" value="' +
@@ -746,11 +839,15 @@
         escHtml(effort.name) +
         '</b></div></div>' +
         '<div class="next-wrap eng-builder-static">' +
-        '<button type=button class="btn primary" disabled>End interval</button></div></div>'
+        '<button type=button class="btn primary" disabled>End interval</button></div></div>' +
+        builderRestPreviewHtml(opts) +
+        builderRecapPreviewHtml(opts) +
+        '</div>'
       );
     }
 
     return (
+      '<div class="eng-builder-stack">' +
       '<div class="logger-screen dial-engine eng-builder-twin" id="builderEngineCard">' +
       '<div class=eyebrow>' +
       (recovery ? 'Conditioning · recovery' : 'Conditioning · steady-state') +
@@ -810,7 +907,9 @@
       '<button type=button class="btn primary" disabled>' +
       (recovery ? 'Finish recovery' : 'Finish · rate session') +
       '</button>' +
-      '<button type=button class="btn ghost" disabled>Connect strap</button></div></div>'
+      '<button type=button class="btn ghost" disabled>Connect strap</button></div></div>' +
+      builderRecapPreviewHtml(opts) +
+      '</div>'
     );
   }
 
@@ -825,6 +924,8 @@
     renderRecap: renderRecap,
     builderTwinHtml: builderTwinHtml,
     builderAthleteHtml: builderAthleteHtml,
+    builderRestPreviewHtml: builderRestPreviewHtml,
+    builderRecapPreviewHtml: builderRecapPreviewHtml,
     finishRest: finishRest,
     isRecovery: isRecovery,
   };

@@ -16,7 +16,8 @@ function must(cond, msg) {
 
 must(html.includes('CondSessionLogger.builderAthleteHtml'), 'builderAthleteHtml wired');
 must(html.includes('eng-builder-shell'), 'engine builder shell');
-must(html.includes('eng-builder-twin'), 'engine builder twin CSS');
+must(html.includes('eng-builder-stack'), 'engine builder stack CSS');
+must(html.includes('eng-builder-phase'), 'engine builder phase preview CSS');
 must(!html.includes('Athlete logger preview'), 'old preview-only twin copy removed from builder path');
 
 const sandbox = {
@@ -35,6 +36,11 @@ const sandbox = {
   COND_EFFORTS: [{ key: 'medium', name: 'Medium', zoneKey: 'aerobic', cue: 'short' }],
   athHomeMetrics: () => ({ recovery: 71 }),
   athZonesForReadiness: () => [{ key: 'aerobic', name: 'Medium', lo: 142, hi: 158 }],
+  RestOverlay: {
+    render(o) {
+      return '<div class="logger-rest dial-engine"><div class=rest-time>' + (o.remainingSec || 0) + '</div></div>';
+    },
+  },
 };
 sandbox.window = sandbox;
 vm.runInNewContext(loggerSrc, sandbox);
@@ -56,6 +62,11 @@ must(interval.includes('eng-builder-fields'), 'inline builder fields');
 must(interval.includes('setCondFmt'), 'format handler');
 must(interval.includes('setCondEffort'), 'effort handler');
 must(interval.includes('disabled>End interval'), 'static End interval');
+must(interval.includes('eng-builder-stack'), 'interval stack wrapper');
+must(interval.includes('Recover · between work'), 'rest preview eyebrow');
+must(interval.includes('Session recap'), 'recap preview eyebrow');
+must(interval.includes('logger-rest'), 'rest ring preview');
+must(interval.includes('recap-grid'), 'recap grid preview');
 must(interval.includes('The Engine · builder'), 'builder eyebrow');
 must(!interval.includes('Athlete logger preview'), 'not old preview card');
 
@@ -67,7 +78,9 @@ const steady = CSL.builderAthleteHtml({
   minutes: 20,
 });
 must(steady.includes('nudgeCondMinutes'), 'minutes nudge');
+must(steady.includes('Session recap'), 'steady recap preview');
 must(steady.includes('disabled>Finish · rate session'), 'static finish CTA');
+must(!steady.includes('Recover · between work'), 'steady has no rest preview');
 
 const recovery = CSL.builderAthleteHtml({
   name: 'Recovery',
@@ -77,6 +90,7 @@ const recovery = CSL.builderAthleteHtml({
   effort: 'easy',
   minutes: 20,
 });
+must(recovery.includes('Session recap'), 'recovery recap preview');
 must(recovery.includes('disabled>Finish recovery'), 'recovery finish CTA');
 
 console.log('athlete-engine-builder.smoke: ok');

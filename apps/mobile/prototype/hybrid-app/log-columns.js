@@ -707,6 +707,42 @@
     });
   }
 
+  /** Static rest screen preview for strength builder (no live timer). */
+  function builderRestPreviewHtml(ex, opts) {
+    opts = opts || {};
+    const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
+    const name = escTwin(ex && ex.name ? ex.name : 'This lift');
+    const rir = 2;
+    const upNext =
+      'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Set <b>2</b> / 3</span><b>— kg × — · RIR ' +
+      rir +
+      '</b>';
+    const ring = global.RestOverlay
+      ? global.RestOverlay.render({
+          mode: 'strength',
+          remainingSec: restSec,
+          upNextHtml: upNext,
+          skipLabel: 'Skip rest',
+          skipOnclick: 'return false',
+          addOnclick: 'return false',
+          clockFmt: 'mmss',
+        })
+      : '<div class="logger-rest dial-strength"><div class=rest-ring><div><div class=rest-time>' +
+        fmtRest(restSec) +
+        '</div><div class=rest-label>remaining</div></div></div></div>';
+    return (
+      '<div class="builder-phase-preview ath-builder-twin-static">' +
+      '<div class="logger-screen dial-strength">' +
+      '<div class=eyebrow>Rest · between sets</div>' +
+      '<div class=task>' +
+      name +
+      '</div>' +
+      '<div class=progressline>Set 1 logged · — kg × —</div>' +
+      ring +
+      '</div></div>'
+    );
+  }
+
   /** Athlete strength builder — full logger card per lift (no rest timer). */
   function builderAthleteTwinHtml(ex, opts) {
     opts = opts || {};
@@ -743,7 +779,7 @@
         effortKindsOptionsHtml(effortCol.kind) +
         '</select></div></div>';
     }
-    return (
+    const activeCard =
       `<div class="logger-screen dial-strength ath-builder-twin">` +
       '<div class=eyebrow>Hybrid Strength · builder</div>' +
       `<input class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
@@ -761,7 +797,12 @@
       '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
       '<div class="next-wrap ath-builder-twin-static">' +
       '<button type="button" class="btn primary" disabled>Next set</button>' +
-      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>'
+      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>';
+    return (
+      '<div class="builder-phase-stack">' +
+      activeCard +
+      builderRestPreviewHtml(ex, opts) +
+      '</div>'
     );
   }
 
@@ -895,6 +936,7 @@
     builderPrescriptionGridHtml,
     builderLoggerTwinHtml,
     builderAthleteTwinHtml,
+    builderRestPreviewHtml,
     ensureAthleteLogColumns,
     athleteColumnOptionsHtml,
     beginSheet,

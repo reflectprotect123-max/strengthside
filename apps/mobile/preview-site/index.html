@@ -331,6 +331,9 @@ header.top.dial-engine .stopwatch.on{border-color:var(--zone);color:var(--zone)}
 .ath-lift-card.ss-linked{border-color:rgba(196,154,92,.4)}
 .ath-lift-card.ath-lift-logger{padding:0;border-radius:20px;overflow:hidden;background:var(--panel)}
 .ath-lift-card.ath-lift-logger .logger-screen.ath-builder-twin{min-height:0;padding:18px 16px 8px}
+.builder-phase-stack{display:grid;gap:0}
+.builder-phase-preview .logger-screen{min-height:0;padding:18px 16px 12px;border-top:1px solid var(--line)}
+.builder-phase-preview .logger-rest .rest-actions .btn{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--dim)!important;box-shadow:none}
 .ath-lift-card.ath-lift-logger .ath-builder-ex-name{width:100%;border:0;background:transparent;font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.05;letter-spacing:.02em;padding:0;color:var(--text)}
 .ath-lift-card.ath-lift-logger .ath-builder-ex-name:focus{outline:none}
 .ath-lift-card.ath-lift-logger .ath-builder-ex-name::placeholder{color:var(--dim)}
@@ -359,6 +362,9 @@ header.top.dial-engine .stopwatch.on{border-color:var(--zone);color:var(--zone)}
 .eng-builder-twin .eng-builder-static{opacity:.72;pointer-events:none}
 .eng-builder-twin .eng-builder-static .btn.primary,.eng-builder-twin .eng-builder-static .btn.ghost{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--dim)!important;opacity:1;box-shadow:none}
 .eng-builder-twin .hero{margin-top:14px;padding:20px 16px 16px}
+.eng-builder-stack{display:grid;gap:10px}
+.eng-builder-phase .logger-screen{min-height:0;padding:18px 16px 12px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}
+.eng-builder-phase .logger-rest .rest-actions .btn{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--dim)!important;box-shadow:none}
 
 .builder-colhead-row{display:grid;gap:8px;margin-top:12px}
 .builder-colhead-row.cols-2{grid-template-columns:repeat(2,1fr)}
@@ -1112,7 +1118,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v145';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v146';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
