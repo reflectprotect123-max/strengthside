@@ -220,6 +220,7 @@
           skipLabel: 'Skip · start work ' + nextRound,
           skipOnclick: 'CondSessionLogger.finishRest()',
           addOnclick: 'RestOverlay.addRest(30)',
+          sliderHtml: sliderHtml,
         })
       : '';
     return (
@@ -235,7 +236,6 @@
       (liveHr() != null ? ' · HR ' + Math.round(liveHr()) : '') +
       '</div>' +
       ring +
-      sliderHtml +
       '</div>'
     );
   }

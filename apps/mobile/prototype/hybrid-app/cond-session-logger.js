@@ -179,8 +179,10 @@
       handoffHtml() +
       '<div class=next-wrap>' +
       primary +
-      '<button type=button class="btn ghost" onclick=skipInterval()>Skip phase</button>' +
-      '<button type=button class="btn ghost" onclick=leaveSimpleCond()>← Back</button></div></div>'
+      (phase === 'ready'
+        ? '<button type=button class="btn ghost" onclick=leaveSimpleCond()>← Back</button>'
+        : '') +
+      '</div></div>'
     );
   }
 
@@ -220,6 +222,7 @@
           skipLabel: 'Skip · start work ' + nextRound,
           skipOnclick: 'CondSessionLogger.finishRest()',
           addOnclick: 'RestOverlay.addRest(30)',
+          sliderHtml: sliderHtml,
         })
       : '';
     return (
@@ -235,7 +238,6 @@
       (liveHr() != null ? ' · HR ' + Math.round(liveHr()) : '') +
       '</div>' +
       ring +
-      sliderHtml +
       '</div>'
     );
   }

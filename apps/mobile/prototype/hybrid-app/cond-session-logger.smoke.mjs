@@ -44,7 +44,7 @@ const sandbox = {
   SessionChrome: { applyBrand: () => {} },
   RestOverlay: {
     render: (o) =>
-      `<div id=restOverlay class="logger-rest dial-engine"><div class=rest-ring><div class=rest-time>02:41</div></div>${o.upNextHtml || ''}</div>`,
+      `<div id=restOverlay class="logger-rest dial-engine"><div class=rest-ring><div class=rest-time>02:41</div></div>${o.upNextHtml || ''}${o.sliderHtml || ''}</div>`,
     startRest: () => {},
     remainingSec: () => 161,
     skipRest: () => {},
