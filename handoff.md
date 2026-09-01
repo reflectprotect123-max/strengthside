@@ -15,9 +15,9 @@
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **`main` tip** | **`3561aa1`** (#131 warm-up / cool-down restored — cache v133) |
-| **Open PR** | **none** |
-| **Cache** | **`the-hybrid-athlete-engine-v133`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.38`** (warm-up + cool-down on starters, cache v133) |
+| **Open PR** | **#132** — fix Start session button (cache v134) |
+| **Cache** | **`the-hybrid-athlete-engine-v134`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.39`** (Start session fix; cache v134) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -41,7 +41,7 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.37`** |
+| Channel / bundle | `dogfood` / **`1.0.39`** |
 | Upload | `CAPGO_BUNDLE_VERSION=1.0.30 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
@@ -137,7 +137,7 @@ node apps/mobile/prototype/hybrid-app/coach-v1-e2e.smoke.mjs
 
 | Branch | Tip | Purpose |
 | --- | --- | --- |
-| `main` | `749ccc8` | Athlete + coach + evidence-platform |
+| `main` | `3561aa1` | Athlete + coach + evidence-platform |
 
 **Next agent on product:** §2 table — prioritize **owner proof** rows 2–7 on a real phone.
 
