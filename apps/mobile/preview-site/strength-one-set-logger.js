@@ -43,6 +43,85 @@
     });
   }
 
+  function difficultyByKey(key) {
+    for (var i = 0; i < DIFFICULTIES.length; i++) {
+      if (DIFFICULTIES[i].key === key) return DIFFICULTIES[i];
+    }
+    return DIFFICULTIES[2];
+  }
+
+  function difficultyIndex(key) {
+    for (var i = 0; i < DIFFICULTIES.length; i++) {
+      if (DIFFICULTIES[i].key === key) return i;
+    }
+    return 2;
+  }
+
+  function rowValues(row) {
+    var weightVal = row.weight == null ? '' : row.weight;
+    var repsVal = row.reps == null ? '' : row.reps;
+    if (!String(repsVal).trim() && row.target) repsVal = parseTargetReps(row) || row.target;
+    return { weightVal: weightVal, repsVal: repsVal };
+  }
+
+  function difficultySliderHtml(selectedKey) {
+    var idx = selectedKey != null ? difficultyIndex(selectedKey) : 2;
+    var label = DIFFICULTIES[idx].label;
+    return (
+      '<div class="one-set-difficulty sliderfield">' +
+      '<div class=sliderhead><b>Difficulty</b><span id="oneSetDiffLabel" class=slidervalue>' + escHtml(label) + '</span></div>' +
+      '<input type="range" id="oneSetDifficulty" min="0" max="' + (DIFFICULTIES.length - 1) + '" step="1" value="' + idx + '" ' +
+      'aria-label="Set difficulty" oninput="StrengthOneSetLogger.onDifficultySlide(this.value)">' +
+      '<div class=sliderlabels><span>Easy</span><span>Max</span></div></div>'
+    );
+  }
+
+  function renderGhostRow(i, row, state) {
+    var vals = rowValues(row);
+    var diffLabel = row.difficulty ? difficultyByKey(row.difficulty).label : '';
+    var weightDisplay = state === 'done'
+      ? escHtml(String(row.weight == null ? '—' : row.weight))
+      : escHtml(String(vals.weightVal || '—'));
+    var repsDisplay = state === 'done'
+      ? escHtml(String(row.reps == null ? '—' : row.reps))
+      : escHtml(String(vals.repsVal || row.target || '—'));
+    return (
+      '<div class="setrow builder-setrow one-set-row one-set-' + state + (state === 'done' ? ' done' : '') + '">' +
+      '<div class=setnum>' + (i + 1) + '<span class=target>' + escHtml(String(row.target || '—')) + '</span></div>' +
+      '<div><span class=mini>Weight</span><div class=one-set-readout>' + weightDisplay + '</div></div>' +
+      '<div><span class=mini>Reps</span><div class=one-set-readout>' + repsDisplay + '</div></div>' +
+      '<div><span class=mini>Difficulty</span><div class=one-set-readout one-set-readout-diff>' +
+      escHtml(diffLabel || (state === 'done' ? '—' : 'Up next')) + '</div></div>' +
+      '<div class=one-set-row-action>' + (state === 'done' ? '<span class=one-set-check aria-hidden=true>✓</span>' : '') + '</div></div>'
+    );
+  }
+
+  function renderActiveRow(t, planned, i, row, autoreg) {
+    var ri = rowIndex(t, row);
+    var vals = rowValues(row);
+    var nextLabel = i + 1 >= planned.length ? 'Done' : 'Next';
+    return (
+      '<div class="setrow builder-setrow one-set-row one-set-active last-set one-set-row-active">' +
+      '<div class=setnum>' + (i + 1) + '<span class=target>' + escHtml(String(row.target || '—')) + '</span></div>' +
+      '<div><span class=mini>Weight</span><input type="number" class=one-set-hero-input id="oneSetWeight" value="' +
+      String(vals.weightVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'weight\',this.value)"></div>' +
+      '<div><span class=mini>Reps</span><input type="number" class=one-set-hero-input id="oneSetReps" value="' +
+      String(vals.repsVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'reps\',this.value)"></div>' +
+      '<div class=one-set-difficulty-wrap>' + difficultySliderHtml(autoreg.selectedDifficulty) + '</div>' +
+      '<div class=one-set-row-action><button type="button" class="btn small primary" onclick="nextStrengthSet()">' + nextLabel + '</button></div></div>'
+    );
+  }
+
+  function renderSetStack(t, planned, ordinal, autoreg) {
+    var html = '';
+    for (var i = 0; i < planned.length; i++) {
+      if (i < ordinal) html += renderGhostRow(i, planned[i], 'done');
+      else if (i === ordinal) html += renderActiveRow(t, planned, i, planned[i], autoreg);
+      else html += renderGhostRow(i, planned[i], 'ghost');
+    }
+    return '<div class="one-set-stack">' + html + '</div>';
+  }
+
   function renderTask(t) {
     if (typeof global.current !== 'function') return '';
     syncAutoregOrdinal(t);
@@ -51,9 +130,8 @@
     var ordinal = autoreg.setOrdinal;
     var row = planned[ordinal];
     if (!row) {
-      return '<div class="card task-shell"><div class=title>All sets logged</div><button class="btn primary block" style="margin-top:12px" onclick="completeStrength()">Complete exercise</button></div>';
+      return '<div class="card task-shell one-set-card"><div class=title>All sets logged</div><button class="btn primary block" style="margin-top:12px" onclick="completeStrength()">Complete exercise</button></div>';
     }
-    var ri = rowIndex(t, row);
     var last = typeof global.lastRows === 'function' ? global.lastRows(t.exerciseId, t.name) : [];
     var loadHead = typeof global.strengthLoadHeadlineHtml === 'function'
       ? global.strengthLoadHeadlineHtml(t, global.activeSession && typeof global.activeSession === 'function' ? global.activeSession()?.date : undefined)
@@ -68,19 +146,16 @@
     var prevHtml = prev
       ? '<div class=meta>Last time: ' + escHtml(String(prev.weight || '—')) + ' kg × ' + escHtml(String(prev.reps || '—')) + '</div>'
       : '<div class=meta>No previous sets logged.</div>';
-    var diffBtns = DIFFICULTIES.map(function (d) {
-      var sel = autoreg.selectedDifficulty === d.key ? ' primary' : '';
-      return '<button type="button" class="btn small' + sel + '" onclick="selectStrengthDifficulty(\'' + d.key + '\')">' + escHtml(d.label) + '</button>';
-    }).join('');
-    var weightVal = row.weight == null ? '' : row.weight;
-    var repsVal = row.reps == null ? '' : row.reps;
-    if (!String(repsVal).trim() && row.target) repsVal = parseTargetReps(row) || row.target;
-    return '<div class="card task-shell">' +
+    var progressLink = typeof global.exerciseLinkHtml === 'function'
+      ? '<div class=meta style="margin-top:4px">' + global.exerciseLinkHtml(t.name, t.exerciseId, t.category, 'View progress') + '</div>'
+      : '';
+
+    return (
+      '<div class="card task-shell one-set-card">' +
       '<div class=row><div>' +
-      '<div class=title>' + (typeof global.exerciseLinkHtml === 'function'
-        ? global.exerciseLinkHtml(t.name, t.exerciseId, t.category, 'Progress')
-        : escHtml(t.name)) + '</div>' +
-      '<div class=meta>Set ' + (ordinal + 1) + ' of ' + planned.length + ' · target ' + targetRir + ' RIR · Rest ' +
+      '<div class=title>' + escHtml(t.name) + '</div>' +
+      progressLink +
+      '<div class=meta>One set at a time · Target ' + targetRir + ' RIR · Rest ' +
       (typeof global.fmt === 'function' ? global.fmt(rest) : rest + 's') + ' after Next</div>' +
       prevHtml +
       '</div><div class=btns style="margin-top:0">' +
@@ -88,18 +163,22 @@
       '</div></div>' +
       loadHead +
       coachCue +
-      '<div class=guardrail>Rate difficulty after this set — engine adjusts the next one.</div>' +
+      '<div class=guardrail>Athlete rates <b>difficulty after each set</b> — the engine adjusts load for the next set.</div>' +
       '<div class=divider></div>' +
-      '<div class="setrow builder-setrow one-set-row last-set">' +
-      '<div class=setnum>' + (ordinal + 1) + '<span class=target>' + escHtml(String(row.target || '—')) + '</span></div>' +
-      '<div><span class=mini>Weight</span><input type="number" id="oneSetWeight" value="' + String(weightVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'weight\',this.value)"></div>' +
-      '<div><span class=mini>Reps</span><input type="number" id="oneSetReps" value="' + String(repsVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'reps\',this.value)"></div>' +
-      '</div>' +
-      '<div class=field style="margin-top:14px"><label>How did that set feel?</label>' +
-      '<div class=btns style="flex-wrap:wrap;justify-content:flex-start;margin-top:8px">' + diffBtns + '</div></div>' +
-      '<button class="btn primary block" style="margin-top:14px" onclick="nextStrengthSet()">Next set</button>' +
-      '<button class="btn block" style="margin-top:8px" onclick="completeStrength()">' + (t.complete ? 'Reopen exercise' : 'Complete exercise early') + '</button>' +
-      '</div>';
+      renderSetStack(t, planned, ordinal, autoreg) +
+      '<button class="btn block" style="margin-top:12px" onclick="completeStrength()">' +
+      (t.complete ? 'Reopen exercise' : 'Complete exercise early') + '</button></div>'
+    );
+  }
+
+  function onDifficultySlide(value) {
+    var idx = Number(value);
+    if (!Number.isFinite(idx)) idx = 2;
+    idx = Math.max(0, Math.min(DIFFICULTIES.length - 1, idx));
+    var d = DIFFICULTIES[idx];
+    var label = global.document && global.document.getElementById('oneSetDiffLabel');
+    if (label) label.textContent = d.label;
+    selectStrengthDifficulty(d.key);
   }
 
   function selectStrengthDifficulty(key) {
@@ -119,7 +198,11 @@
     var row = planned[ordinal];
     if (!row) return;
     if (!autoreg.selectedDifficulty) {
-      if (global.alert) global.alert('Pick how the set felt first.');
+      var slider = global.document && global.document.getElementById('oneSetDifficulty');
+      if (slider) onDifficultySlide(slider.value);
+    }
+    if (!autoreg.selectedDifficulty) {
+      if (global.alert) global.alert('Rate difficulty on the slider first.');
       return;
     }
     if (typeof global.validateStrengthRow === 'function') {
@@ -171,6 +254,7 @@
   global.StrengthOneSetLogger = {
     DIFFICULTIES: DIFFICULTIES,
     renderTask: renderTask,
+    onDifficultySlide: onDifficultySlide,
     selectStrengthDifficulty: selectStrengthDifficulty,
     nextStrengthSet: nextStrengthSet,
   };
