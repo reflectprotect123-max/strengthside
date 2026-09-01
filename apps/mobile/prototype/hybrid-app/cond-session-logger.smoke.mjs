@@ -184,7 +184,10 @@ const twinInterval = sandbox.CondSessionLogger.builderTwinHtml({
   heading: 'Row ERG',
 });
 if (!twinInterval.includes('builderEngineCard')) throw new Error('interval twin missing');
-if (!twinInterval.includes('End interval')) throw new Error('interval twin CTA missing');
+if (!twinInterval.includes('eng-builder-fields')) throw new Error('interval builder inline fields missing');
+if (!twinInterval.includes('setCondFmt')) throw new Error('interval builder format select missing');
+if (!twinInterval.includes('disabled>End interval')) throw new Error('interval builder static CTA missing');
+if (twinInterval.includes('Athlete logger preview')) throw new Error('old preview-only twin copy');
 
 const twinRecovery = sandbox.CondSessionLogger.builderTwinHtml({
   isRecovery: true,

@@ -345,6 +345,20 @@ header.top.dial-engine .stopwatch.on{border-color:var(--zone);color:var(--zone)}
 .ath-lift-card.ath-lift-logger .ath-builder-twin-static .btn.primary,.ath-lift-card.ath-lift-logger .ath-builder-twin-static .btn.ghost{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--dim)!important;opacity:1;box-shadow:none}
 .ath-lift-card.ath-lift-logger .ath-lift-delete{margin:0 16px 16px;width:calc(100% - 32px)}
 .ath-lift-card.ath-lift-logger .metric-col-single{grid-column:1/-1;max-width:220px;margin:0 auto}
+.eng-builder-shell{display:grid;gap:12px;padding-bottom:88px}
+.eng-builder-head{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+.eng-builder-kind{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:center}
+.eng-builder-twin{min-height:0;padding:18px 16px 8px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}
+.eng-builder-twin .eng-builder-name{width:100%;border:0;background:transparent;font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.05;letter-spacing:.02em;padding:0;color:var(--text)}
+.eng-builder-twin .eng-builder-name:focus{outline:none}
+.eng-builder-twin .eng-builder-name::placeholder{color:var(--dim)}
+.eng-builder-fields{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel3)}
+.eng-builder-fields .mph-twin-fields{margin-top:0}
+.eng-builder-fields select{width:100%;min-height:var(--tap-min);border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 10px;color-scheme:dark}
+.eng-builder-interval{display:grid;gap:8px;margin-top:10px}
+.eng-builder-twin .eng-builder-static{opacity:.72;pointer-events:none}
+.eng-builder-twin .eng-builder-static .btn.primary,.eng-builder-twin .eng-builder-static .btn.ghost{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--dim)!important;opacity:1;box-shadow:none}
+.eng-builder-twin .hero{margin-top:14px;padding:20px 16px 16px}
 
 .builder-colhead-row{display:grid;gap:8px;margin-top:12px}
 .builder-colhead-row.cols-2{grid-template-columns:repeat(2,1fr)}
@@ -1098,7 +1112,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v144';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v145';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1838,15 +1852,9 @@ function engineZoneSlateHtml(opts){
 }
 function renderCondBuilder(){
   simpleCondLog=false;clearCondLeaveWatch();nav(false);clock(false);
-  let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
-  let zones=athZonesForReadiness(athHomeMetrics().recovery);
-  let z=zones.find(x=>x.key===effort.zoneKey)||zones[0];
-  let plan=condPlanLineBuilder();
-  let interval=fmtNeedsIntervalFields(fmt);
-  let adv=interval?`<div class="mph-twin-fields" style="grid-template-columns:1fr 1fr 1fr"><div class=field><label for=condRounds>Rounds</label><input id=condRounds type=number min=1 step=1 value="${esc(condBuilder.rounds||fmt.rounds||1)}" onchange="setCondBuilderNum('rounds',this)"></div><div class=field><label for=condWork>Work</label><input id=condWork inputmode=numeric placeholder="4:00" value="${esc(formatMmSs(condBuilder.workSec||fmt.workSec||30))}" onchange="setCondBuilderMmSs('workSec',this)"></div><div class=field><label for=condRest>Rest</label><input id=condRest inputmode=numeric placeholder="3:00" value="${esc(formatMmSs(condBuilder.restSec!=null?condBuilder.restSec:(fmt.restSec||90)))}" onchange="setCondBuilderMmSs('restSec',this)"></div></div><p class=mph-hint>Total ≈ ${condIntervalTotalMin()} min · stored as seconds.</p>`:`<div class=field style="margin-top:8px"><label>Minutes</label><div class=mph-mins><button type=button class=mph-step aria-label="fewer minutes" onclick="nudgeCondMinutes(-5)">−</button><b aria-live=polite>${condBuilder.minutes||'—'}</b><button type=button class=mph-step aria-label="more minutes" onclick="nudgeCondMinutes(5)">+</button></div></div>`;
-  let watts=modalityWantsEcho(condBuilder.modality)?`<div class=field style="margin-top:8px"><label for=condWatts>Target watts <span class=muted>(optional)</span></label><input id=condWatts type=number min=0 step=5 placeholder="180" value="${esc(condBuilder.targetWatts||'')}" onchange="setCondBuilderNum('targetWatts',this)"></div><p class=mph-hint>Logger offers Connect Echo — not shown here.</p>`:(String(condBuilder.modality||'').toLowerCase().includes('row')?`<p class=mph-hint>Rower: type split after, or import Concept2 from Sync. No live Echo.</p>`:`<p class=mph-hint>Effort lands in <b style="color:${z.color}">${esc(z.name)} ${z.lo}–${z.hi}</b> today.</p>`);
-  let recoveryNote=condBuilder.isRecovery?`<div class=notice style="margin-top:10px"><b>Recovery session</b> — dose scales with check-in and debt at session start.</div>`:'';
-  $('appScreen').innerHTML=`<div class="mph-shell dial-engine"><button type=button class=mph-back onclick="openAthleteConditioningLibrary()" aria-label="Back to Library">← Library</button>${condTwinHeaderHtml(condBuilder.isRecovery?'The Engine · recovery builder':'The Engine · builder',condBuilder.isRecovery?'Recovery':fmt.name,plan)}${recoveryNote}<div class=field style="margin-top:10px"><label>Workout name</label><input id=condTplName value="${esc(condBuilder.name||'')}" placeholder="${condBuilder.isRecovery?'Recovery':'Easy bike 20'}" oninput="condBuilder.name=this.value"><div class=helper>Shown in Library and Calendar.</div></div><div class="mph-twin-fields" style="margin-top:10px"><div class=field><label>Format</label>${condBuilderSelectHtml(COND_FORMATS,'fmt','setCondFmt')}</div><div class=field><label>Modality</label>${condBuilderSelectHtml(COND_MODALITIES.map(m=>({key:m,name:m})),'modality','setCondMod')}</div></div><div class=field style="margin-top:8px"><label>Effort</label></div>${condEffortChipsHtml()}${adv}${watts}${(window.CondSessionLogger&&CondSessionLogger.builderTwinHtml)?CondSessionLogger.builderTwinHtml({condFmt:condBuilder.fmt,fmt:condBuilder.fmt,modality:condBuilder.modality,effort:condBuilder.effort,rounds:condBuilder.rounds,workSec:condBuilder.workSec,restSec:condBuilder.restSec,minutes:condBuilder.minutes,targetWatts:condBuilder.targetWatts,isRecovery:condBuilder.isRecovery,recoverySession:condBuilder.isRecovery,heading:condBuilder.isRecovery?'Recovery':fmt.name}):''}<div class="ath-sticky dial-engine" style="grid-template-columns:1fr 1fr"><button type=button class="btn" onclick="saveCondTemplate()">Save</button><button type=button class="btn" onclick="saveCondTemplateAsCopy()">Save as copy</button><button type=button class="btn primary" style="grid-column:1/-1" onclick="publishCondTemplate()">Publish to day</button></div></div>`;
+  let card=(window.CondSessionLogger&&CondSessionLogger.builderAthleteHtml)?CondSessionLogger.builderAthleteHtml({condFmt:condBuilder.fmt,fmt:condBuilder.fmt,modality:condBuilder.modality,effort:condBuilder.effort,rounds:condBuilder.rounds,workSec:condBuilder.workSec,restSec:condBuilder.restSec,minutes:condBuilder.minutes,targetWatts:condBuilder.targetWatts,isRecovery:condBuilder.isRecovery,recoverySession:condBuilder.isRecovery,name:condBuilder.name}):'';
+  let recoveryNote=condBuilder.isRecovery?`<div class=notice><b>Recovery session</b> — dose scales with check-in and debt at session start.</div>`:'';
+  $('appScreen').innerHTML=`<div class="eng-builder-shell dial-engine"><div class=eng-builder-head><button type=button class=mph-back onclick="openAthleteConditioningLibrary()" aria-label="Back to Library">← Library</button><span class=eng-builder-kind>${condBuilder.isRecovery?'The Engine · recovery':'The Engine · builder'}</span><button type=button class="btn small primary" onclick="saveCondTemplate()">Save</button></div>${recoveryNote}${card}<div class="ath-sticky dial-engine" style="grid-template-columns:1fr 1fr"><button type=button class="btn" onclick="saveCondTemplate()">Save</button><button type=button class="btn" onclick="saveCondTemplateAsCopy()">Save as copy</button><button type=button class="btn primary" style="grid-column:1/-1" onclick="publishCondTemplate()">Publish to day</button></div></div>`;
 }
 function setCondFmt(k){patchCondBuilder({fmt:k})}
 function setCondMod(k){patchCondBuilder({modality:k})}

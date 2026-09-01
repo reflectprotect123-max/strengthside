@@ -524,68 +524,259 @@
     return renderIntervalCore(t);
   }
 
-  /** Static builder preview twin — mirrors work / steady / recovery logger chrome. */
-  function builderTwinHtml(opts) {
+  function builderFmtNeedsInterval(fmtKey) {
+    return fmtKey === 'intervals' || fmtKey === 'tempo' || fmtKey === 'custom';
+  }
+
+  function builderFormats() {
+    return (
+      global.COND_FORMATS || [
+        { key: 'steady', name: 'Steady-state' },
+        { key: 'intervals', name: 'Intervals' },
+        { key: 'tempo', name: 'Tempo' },
+        { key: 'free', name: 'Free run' },
+        { key: 'custom', name: 'Custom' },
+      ]
+    );
+  }
+
+  function builderModalities() {
+    return global.COND_MODALITIES || ['Run', 'Walk', 'Bike', 'Rower', 'Ski erg', 'Circuit', 'Other'];
+  }
+
+  function builderEfforts() {
+    return (
+      global.COND_EFFORTS || [
+        { key: 'easy', name: 'Easy', zoneKey: 'recovery', cue: 'full sentences' },
+        { key: 'medium', name: 'Medium', zoneKey: 'aerobic', cue: 'short sentences' },
+        { key: 'hard', name: 'Hard', zoneKey: 'anaerobic', cue: 'a few words' },
+      ]
+    );
+  }
+
+  function builderSelectHtml(list, selected, onChangeName) {
+    return list
+      .map(function (item) {
+        var k = item.key || item;
+        var name = item.name || item;
+        return (
+          '<option value="' +
+          escHtml(k) +
+          '"' +
+          (k === selected ? ' selected' : '') +
+          '>' +
+          escHtml(name) +
+          '</option>'
+        );
+      })
+      .join('');
+  }
+
+  function builderEffortChipsHtml(opts) {
+    var recoveryPct =
+      typeof global.athHomeMetrics === 'function' ? global.athHomeMetrics().recovery : 71;
+    var zones =
+      typeof global.athZonesForReadiness === 'function'
+        ? global.athZonesForReadiness(recoveryPct)
+        : [];
+    return builderEfforts()
+      .map(function (e) {
+        var z = zones.find(function (x) {
+          return x.key === e.zoneKey;
+        }) || zones[0];
+        var on = opts.effort === e.key;
+        return (
+          '<button type=button class="mph-eff ' +
+          escHtml(e.key) +
+          (on ? ' on' : '') +
+          '" aria-pressed="' +
+          (on ? 'true' : 'false') +
+          '" onclick="setCondEffort(\'' +
+          e.key +
+          '\')">' +
+          escHtml(e.name) +
+          '<small>' +
+          (z ? z.lo + '–' + z.hi : escHtml(e.cue || '')) +
+          '</small></button>'
+        );
+      })
+      .join('');
+  }
+
+  function builderStaticHrHtml() {
+    return (
+      '<div class="live-hr eng-builder-static">' +
+      '<div class=hr-gauge>—</div>' +
+      '<div class=hr-meta><b>Strap optional</b><span>Connect when ready</span></div></div>'
+    );
+  }
+
+  function builderFieldsHtml(opts, interval) {
+    var wattsRow =
+      typeof global.modalityWantsEcho === 'function' && global.modalityWantsEcho(opts.modality)
+        ? '<div class=field><label for=engCondWatts>Target watts <span class=muted>(optional)</span></label>' +
+          '<input id=engCondWatts type=number min=0 step=5 placeholder="180" value="' +
+          escHtml(opts.targetWatts == null ? '' : opts.targetWatts) +
+          '" onchange="setCondBuilderNum(\'targetWatts\',this)"></div>'
+        : '';
+    var intervalFields = interval
+      ? '<div class="eng-builder-interval" style="grid-template-columns:1fr 1fr 1fr">' +
+        '<div class=field><label for=engCondRounds>Rounds</label>' +
+        '<input id=engCondRounds type=number min=1 step=1 value="' +
+        escHtml(num(opts.rounds) || 1) +
+        '" onchange="setCondBuilderNum(\'rounds\',this)"></div>' +
+        '<div class=field><label for=engCondWork>Work</label>' +
+        '<input id=engCondWork inputmode=numeric placeholder="4:00" value="' +
+        escHtml(fmtSec(num(opts.workSec) || 240)) +
+        '" onchange="setCondBuilderMmSs(\'workSec\',this)"></div>' +
+        '<div class=field><label for=engCondRest>Rest</label>' +
+        '<input id=engCondRest inputmode=numeric placeholder="3:00" value="' +
+        escHtml(fmtSec(num(opts.restSec) || 180)) +
+        '" onchange="setCondBuilderMmSs(\'restSec\',this)"></div></div>' +
+        (typeof global.condIntervalTotalMin === 'function'
+          ? '<p class=mph-hint>Total ≈ ' + global.condIntervalTotalMin() + ' min · stored as seconds.</p>'
+          : '')
+      : '<div class=field><label>Minutes</label><div class=mph-mins>' +
+        '<button type=button class=mph-step aria-label="fewer minutes" onclick="nudgeCondMinutes(-5)">−</button>' +
+        '<b aria-live=polite>' +
+        escHtml(opts.minutes == null || opts.minutes === '' ? '—' : opts.minutes) +
+        '</b>' +
+        '<button type=button class=mph-step aria-label="more minutes" onclick="nudgeCondMinutes(5)">+</button></div></div>';
+    return (
+      '<div class=eng-builder-fields>' +
+      '<div class="mph-twin-fields"><div class=field><label>Format</label>' +
+      '<select aria-label="Format" onchange="setCondFmt(this.value)">' +
+      builderSelectHtml(builderFormats(), opts.fmt || opts.condFmt, 'setCondFmt') +
+      '</select></div><div class=field><label>Modality</label>' +
+      '<select aria-label="Modality" onchange="setCondMod(this.value)">' +
+      builderSelectHtml(
+        builderModalities().map(function (m) {
+          return { key: m, name: m };
+        }),
+        opts.modality,
+        'setCondMod',
+      ) +
+      '</select></div></div>' +
+      '<div class=field style="margin-top:8px"><label>Effort</label></div>' +
+      '<div class=mph-efforts role=group aria-label="Effort">' +
+      builderEffortChipsHtml(opts) +
+      '</div>' +
+      intervalFields +
+      wattsRow +
+      '</div>'
+    );
+  }
+
+  /** Athlete Engine builder — full logger card with inline prescription fields. */
+  function builderAthleteHtml(opts) {
     opts = opts || {};
     var recovery = !!(opts.recoverySession || opts.isRecovery);
-    var fmt = String(opts.condFmt || opts.fmt || opts.conditioningType || 'steady');
-    var interval = fmt === 'intervals' || fmt === 'tempo' || fmt === 'custom';
-    var rounds = num(opts.rounds) || 8;
+    var fmtKey = String(opts.condFmt || opts.fmt || opts.conditioningType || 'steady');
+    var interval = builderFmtNeedsInterval(fmtKey) && !recovery;
+    var rounds = Math.max(1, num(opts.rounds) || 8);
     var workSec = num(opts.workSec) || 240;
     var restSec = num(opts.restSec) || 180;
     var mins = num(opts.minutes || opts.targetDurationMin) || 20;
     var modality = opts.modality || (recovery ? 'Mixed' : 'Bike');
-    var heading = opts.heading || (recovery ? 'Recovery' : modality);
+    var effortKey = opts.effort || (recovery ? 'easy' : 'medium');
+    var effort = effortMeta({ effort: effortKey });
     var plan =
       typeof global.condPlanLineFromParts === 'function'
         ? global.condPlanLineFromParts({
             modality: modality,
-            effort: opts.effort || (recovery ? 'easy' : 'medium'),
-            fmt: fmt,
+            effort: effortKey,
+            fmt: fmtKey,
             rounds: rounds,
             workSec: workSec,
             restSec: restSec,
             minutes: mins,
           })
         : modality + ' · preview';
-    var watts = opts.targetWatts != null && opts.targetWatts !== '' ? Math.round(num(opts.targetWatts)) : '—';
-    if (interval && !recovery) {
+    var name = escHtml(opts.name || '');
+    var placeholder = recovery ? 'Recovery' : 'Easy bike 20';
+    var zt = zoneTarget({ effort: recovery ? 'easy' : effortKey });
+    var wattsDisplay =
+      opts.targetWatts != null && opts.targetWatts !== '' ? Math.round(num(opts.targetWatts)) : '—';
+
+    if (interval) {
       return (
-        '<div class="logger-screen dial-engine" id="builderEngineCard" style="min-height:0;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel)">' +
-        '<div class=eyebrow>Athlete logger preview</div>' +
-        '<div class=task>' +
-        escHtml(heading) +
-        '</div>' +
-        '<div class=progressline>' +
+        '<div class="logger-screen dial-engine eng-builder-twin" id="builderEngineCard">' +
+        '<div class=eyebrow>The Engine · builder</div>' +
+        '<input class="task eng-builder-name" type="text" value="' +
+        name +
+        '" placeholder="' +
+        escHtml(placeholder) +
+        '" aria-label="Workout name" oninput="condBuilder.name=this.value">' +
+        '<div class=progressline data-plan-line>' +
         escHtml(plan) +
         '</div>' +
+        builderFieldsHtml(
+          {
+            fmt: fmtKey,
+            condFmt: fmtKey,
+            modality: modality,
+            effort: effortKey,
+            rounds: rounds,
+            workSec: workSec,
+            restSec: restSec,
+            minutes: mins,
+            targetWatts: opts.targetWatts,
+          },
+          true,
+        ) +
         '<div class=phasechip>Interval <b>1</b> / ' +
         rounds +
         ' · work</div>' +
         '<div class="hero work">' +
         '<div class=hero-label>Work time remaining</div>' +
-        '<div class=timer-big>' +
+        '<div class="timer-big eng-builder-static">' +
         fmtSec(workSec) +
         '</div>' +
         '<div class=timer-sub>stay in target zone</div>' +
         '<div class=target-row>' +
         '<div class=target-box><b>' +
-        watts +
+        wattsDisplay +
         '</b><span>Watts</span></div>' +
         '<div class=target-box><b>—</b><span>/500m</span></div>' +
-        '<div class=target-box><b>152</b><span>Zone 3 · HR bpm</span></div></div></div>' +
-        '<div class=next-wrap><button type=button class="btn primary" disabled>End interval</button></div></div>'
+        '<div class=target-box><b>—</b><span>' +
+        escHtml(zt.title) +
+        ' · HR bpm</span></div></div>' +
+        builderStaticHrHtml() +
+        '<div class=hero-target>Target effort: <b>RIR 2 equivalent · ' +
+        escHtml(effort.name) +
+        '</b></div></div>' +
+        '<div class="next-wrap eng-builder-static">' +
+        '<button type=button class="btn primary" disabled>End interval</button></div></div>'
       );
     }
+
     return (
-      '<div class="logger-screen dial-engine" id="builderEngineCard" style="min-height:0;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel)">' +
-      '<div class=eyebrow>Athlete logger preview</div>' +
-      '<div class=task>' +
-      escHtml(heading) +
-      '</div>' +
-      '<div class=progressline>' +
+      '<div class="logger-screen dial-engine eng-builder-twin" id="builderEngineCard">' +
+      '<div class=eyebrow>' +
+      (recovery ? 'Conditioning · recovery' : 'Conditioning · steady-state') +
+      ' · builder</div>' +
+      '<input class="task eng-builder-name" type="text" value="' +
+      name +
+      '" placeholder="' +
+      escHtml(placeholder) +
+      '" aria-label="Workout name" oninput="condBuilder.name=this.value">' +
+      '<div class=progressline data-plan-line>' +
       escHtml(plan) +
       '</div>' +
+      builderFieldsHtml(
+        {
+          fmt: fmtKey,
+          condFmt: fmtKey,
+          modality: modality,
+          effort: effortKey,
+          rounds: rounds,
+          workSec: workSec,
+          restSec: restSec,
+          minutes: mins,
+          targetWatts: opts.targetWatts,
+        },
+        false,
+      ) +
       '<div class=phasechip>' +
       (recovery ? 'Recovery' : 'Steady') +
       ' · <b>' +
@@ -595,24 +786,36 @@
       '<div class=hero-label>' +
       (recovery ? 'Recovery time remaining' : 'Session time remaining') +
       '</div>' +
-      '<div class=timer-big>' +
+      '<div class="timer-big eng-builder-static">' +
       fmtSec(mins * 60) +
       '</div>' +
       '<div class=timer-sub>' +
       (recovery ? 'easy flush · stop before fatigue' : 'conversational pace') +
       '</div>' +
       '<div class=target-row>' +
-      '<div class=target-box><b>118</b><span>Zone 2 · live</span></div>' +
       '<div class=target-box><b>' +
-      (recovery ? 'Easy' : escHtml(zoneLabel({ effort: opts.effort || 'easy' }))) +
-      '</b><span>Zone</span></div>' +
+      (zt.lo ? zt.lo + '–' + zt.hi : '—') +
+      '</b><span>Target · HR bpm</span></div>' +
+      '<div class=target-box><b>' +
+      escHtml(recovery ? 'Zone 2' : zt.title) +
+      '</b><span>' +
+      escHtml(recovery ? 'Easy' : effort.name) +
+      '</span></div>' +
       '<div class=target-box><b>' +
       (recovery ? 'RPE 2–3' : 'RPE 3–4') +
-      '</b><span>Target</span></div></div></div>' +
-      '<div class=next-wrap><button type=button class="btn primary" disabled>' +
+      '</b><span>Target</span></div></div>' +
+      builderStaticHrHtml() +
+      '</div>' +
+      '<div class="next-wrap eng-builder-static">' +
+      '<button type=button class="btn primary" disabled>' +
       (recovery ? 'Finish recovery' : 'Finish · rate session') +
-      '</button></div></div>'
+      '</button>' +
+      '<button type=button class="btn ghost" disabled>Connect strap</button></div></div>'
     );
+  }
+
+  function builderTwinHtml(opts) {
+    return builderAthleteHtml(opts);
   }
 
   global.CondSessionLogger = {
@@ -621,6 +824,7 @@
     renderSteady: renderSteady,
     renderRecap: renderRecap,
     builderTwinHtml: builderTwinHtml,
+    builderAthleteHtml: builderAthleteHtml,
     finishRest: finishRest,
     isRecovery: isRecovery,
   };
