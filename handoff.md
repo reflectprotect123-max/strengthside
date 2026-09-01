@@ -15,9 +15,9 @@
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **`main` tip** | **`28a209a`** (#133 preview Start workout fix — cache v135) |
-| **Open PR** | **none** |
+| **Open PR** | **`cursor/fix-strength-logger-esc-84a0`** — strength logger empty UI (cache v136) |
 | **Cache** | **`the-hybrid-athlete-engine-v136`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.40`** (preview Start workout fix; cache v135) |
+| **Capgo** | **`dogfood` @ `1.0.41`** (strength logger esc fix; cache v136) |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -28,6 +28,8 @@
 **Ship ritual:** `pnpm run verify` → sync HTML → Capgo upload if bundle moves → refresh this handoff.
 
 **Recent merges (#130–#133):** blank boot + remove Restore hidden · warm-up/cool-down restore · Start session handler fix · preview `blockHelpDropdown` crash fix.
+
+**In flight:** #134 (pending) — `StrengthOneSetLogger.renderTask()` returned empty because `window.esc` was never defined; local `escHtml` fallback restores weight/reps/difficulty logger on bench press and all strength tasks.
 
 ---
 
@@ -41,7 +43,7 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.40`** |
+| Channel / bundle | `dogfood` / **`1.0.41`** |
 | Upload | `CAPGO_BUNDLE_VERSION=1.0.30 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
