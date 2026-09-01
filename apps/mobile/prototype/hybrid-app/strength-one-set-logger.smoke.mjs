@@ -1,5 +1,5 @@
 /**
- * Smoke: one-set strength logger module — mockup hero card UI.
+ * Smoke: one-set strength logger — 1:1 mockup structure.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -8,24 +8,28 @@ import vm from 'node:vm';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
-const src = readFileSync(join(join(dir, 'strength-one-set-logger.js')), 'utf8');
+const src = readFileSync(join(dir, 'strength-one-set-logger.js'), 'utf8');
 
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
-if (!src.includes('nextStrengthSet')) throw new Error('nextStrengthSet handler missing in strength-one-set-logger.js');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v139'")) throw new Error('expected cache v139');
-if (!html.includes('.logger-hero-card{')) throw new Error('index.html missing logger-hero-card CSS');
-if (!html.includes('.one-set-ghost-stack{')) throw new Error('index.html missing ghost stack CSS');
-if (!src.includes('oneSetDifficulty')) throw new Error('difficulty slider missing');
-if (!src.includes('one-set-ghost-stack')) throw new Error('ghost set stack missing');
-if (!src.includes('logger-hero-card')) throw new Error('hero card missing');
-if (!src.includes('sessionChromeHtml')) throw new Error('session chrome integration missing');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v140'")) throw new Error('expected cache v140');
+if (!html.includes('.logger-screen{')) throw new Error('logger-screen CSS missing');
+if (!html.includes('.hero-metrics{')) throw new Error('hero-metrics CSS missing');
+if (!html.includes('.metric-val{')) throw new Error('metric-val CSS missing');
+if (!html.includes('.slider-card{')) throw new Error('slider-card CSS missing');
+if (!src.includes('logger-screen')) throw new Error('logger-screen missing in JS');
+if (!src.includes('hero-metrics')) throw new Error('hero-metrics missing');
+if (!src.includes('setchip')) throw new Error('setchip missing');
 
 const sandbox = {
   window: {},
   console,
   setInterval: () => 1,
   clearInterval: () => {},
+  document: {
+    querySelector: () => null,
+    getElementById: () => null,
+  },
   current: () => sandbox._task,
   esc: (s) => String(s),
   save: () => {},
@@ -36,24 +40,13 @@ const sandbox = {
     targetRirForExercise: () => 2,
     suggestNextSet: () => ({ loadKg: 102.5, reps: 8, targetRir: 2, reasonCodes: ['on_target_hold'] }),
   },
-  SessionChrome: {
-    render: (opts) =>
-      `<div class=session-chrome><span>${opts.subtitle}</span><span>${opts.weekLabel}</span></div>`,
-  },
-  RestOverlay: {
-    render: () => '<div id=restOverlay class="rest-overlay hidden"></div>',
-    startRest: () => {},
-    stopRest: () => {},
-    hide: () => {},
-    remainingSec: () => 90,
-    skipRest: () => {},
-    addRest: () => {},
-  },
-  activeSession: () => ({ date: '2026-08-30' }),
+  activeSession: () => ({ date: '2026-08-30', taskIndex: 1, tasks: [{}, {}, {}] }),
   workElapsed: () => 120,
   restSeconds: () => 90,
-  fmt: (s) => String(s),
-  strengthLoadHeadlineHtml: () => '',
+  fmt: (s) => {
+    const n = Math.max(0, Math.round(+s || 0));
+    return `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+  },
   validateStrengthRow: () => '',
   stopRest: () => {},
   nextTask: () => {},
@@ -66,7 +59,8 @@ vm.runInContext(src, sandbox);
 
 const task = {
   kind: 'strength',
-  name: 'Back Squat',
+  name: 'Barbell Back Squat',
+  heading: 'Lower · Block A',
   exerciseId: 'squat',
   sets: 3,
   reps: '5',
@@ -81,26 +75,31 @@ const task = {
 sandbox._task = task;
 
 const htmlOut = sandbox.StrengthOneSetLogger.renderTask(task);
-if (!htmlOut.includes('session-chrome')) throw new Error('session chrome missing');
-if (!htmlOut.includes('logger-hero-card')) throw new Error('hero card missing');
-if (!htmlOut.includes('one-set-ghost-stack')) throw new Error('ghost stack missing');
-if (!htmlOut.includes('oneSetDifficulty')) throw new Error('difficulty slider missing');
-if (!htmlOut.includes('onclick="nextStrengthSet()"')) throw new Error('Next set button missing');
-if (!htmlOut.includes('oneSetWeight')) throw new Error('weight input missing');
+if (!htmlOut.includes('logger-screen')) throw new Error('logger-screen missing');
+if (!htmlOut.includes('class=task')) throw new Error('task title missing');
+if (!htmlOut.includes('setchip')) throw new Error('setchip missing');
+if (!htmlOut.includes('hero-metrics')) throw new Error('hero metrics missing');
+if (!htmlOut.includes('metric-val')) throw new Error('metric-val missing');
+if (!htmlOut.includes('slider-card')) throw new Error('slider-card missing');
 if (!htmlOut.includes('How hard was that set')) throw new Error('slider copy missing');
-if (htmlOut.includes('How did that set feel')) throw new Error('legacy chip prompt should not appear');
-if (htmlOut.includes('Log</button>')) throw new Error('legacy per-row Log should not appear');
+if (!htmlOut.includes('Very easy')) throw new Error('6 slider labels missing');
+if (!htmlOut.includes("Didn't finish")) throw new Error("Didn't finish label missing");
+if (!htmlOut.includes('Next set')) throw new Error('Next set button missing');
+if (!htmlOut.includes('+ Extra set')) throw new Error('Extra set missing');
+if (htmlOut.includes('one-set-ghost-stack')) throw new Error('ghost stack should not appear in mockup active screen');
+if (htmlOut.includes('How did that set feel')) throw new Error('legacy chips');
 
 task.rows[0].reps = 5;
 sandbox.StrengthOneSetLogger.onDifficultySlide('2');
-if (task.autoreg.selectedDifficulty !== 'medium') throw new Error('difficulty slider selection');
+if (task.autoreg.selectedDifficulty !== 'medium') throw new Error('difficulty');
 
 sandbox.StrengthOneSetLogger.nextStrengthSet();
-if (!task.rows[0].done) throw new Error('set 1 should be marked done');
-if (task.rows[1].weight !== 102.5) throw new Error('set 2 should get engine suggestion, got ' + task.rows[1].weight);
+if (!task.rows[0].done) throw new Error('set 1 not done');
+if (task.rows[1].weight !== 102.5) throw new Error('suggestion missing');
 const restHtml = sandbox.StrengthOneSetLogger.renderTask(task);
-if (!restHtml.includes('rest-overlay') && !restHtml.includes('REST')) {
-  throw new Error('set 2 rest phase should show rest overlay');
+if (!restHtml.includes('logger-rest') && !restHtml.includes('rest-ring')) {
+  throw new Error('rest phase should show rest ring');
 }
+if (!restHtml.includes('Rest · between sets')) throw new Error('rest eyebrow missing');
 
 console.log('strength-one-set-logger.smoke: ok');

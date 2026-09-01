@@ -1,5 +1,5 @@
 /**
- * Smoke: rest overlay module (Phase 0 logger changeover).
+ * Smoke: rest overlay — in-flow mockup ring.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -11,17 +11,19 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const src = readFileSync(join(dir, 'rest-overlay.js'), 'utf8');
 
 if (!html.includes('rest-overlay.js')) throw new Error('index.html missing rest-overlay.js');
-if (!html.includes('.rest-overlay{')) throw new Error('index.html missing rest-overlay CSS');
-if (!html.includes('.rest-ring-progress')) throw new Error('index.html missing rest ring CSS');
+if (!html.includes('.logger-rest{')) throw new Error('index.html missing logger-rest CSS');
+if (!html.includes('.rest-ring{')) throw new Error('index.html missing rest ring CSS');
+if (!html.includes('.rest-time{')) throw new Error('index.html missing rest-time CSS');
 
 const sandbox = {
   window: {},
-  document: {
-    getElementById: () => null,
-  },
+  document: { getElementById: () => null },
   console,
   esc: (s) => String(s),
-  fmt: (n) => String(n) + 's',
+  fmt: (n) => {
+    const sec = Math.max(0, Math.round(+n || 0));
+    return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+  },
   setInterval: () => 1,
   clearInterval: () => {},
 };
@@ -29,27 +31,24 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(src, sandbox);
 
-const hidden = sandbox.RestOverlay.render({
+const htmlOut = sandbox.RestOverlay.render({
   mode: 'strength',
-  visible: false,
   remainingSec: 84,
-  totalSec: 90,
-  summaryHtml: 'Set 2 logged · 100 kg × 5',
-  upNextHtml: '<b>Up next: Set 3 / 4</b><span>100 kg × 5 · RIR 2</span>',
+  upNextHtml: '<b>100 kg × 5 · RIR 2</b>',
 });
-if (!hidden.includes('hidden')) throw new Error('overlay should be hidden by default');
-if (!hidden.includes('restOverlayClock')) throw new Error('clock id missing');
-if (!hidden.includes('Skip rest')) throw new Error('skip button missing');
-if (!hidden.includes('rest-up-next')) throw new Error('up-next block missing');
-if (!hidden.includes('rest-ring-progress')) throw new Error('ring svg missing');
+if (!htmlOut.includes('logger-rest')) throw new Error('logger-rest missing');
+if (!htmlOut.includes('restOverlayClock')) throw new Error('clock id missing');
+if (!htmlOut.includes('Skip rest')) throw new Error('skip button missing');
+if (!htmlOut.includes('rest-ring')) throw new Error('rest ring missing');
+if (!htmlOut.includes('rest-time')) throw new Error('rest-time missing');
+if (!htmlOut.includes('01:24')) throw new Error('formatted time missing');
 
-const visible = sandbox.RestOverlay.render({
+const engine = sandbox.RestOverlay.render({
   mode: 'engine',
-  visible: true,
   remainingSec: 161,
-  phaseLabel: 'REST',
+  skipLabel: 'Next interval',
 });
-if (visible.includes(' hidden')) throw new Error('visible overlay should not have hidden class');
-if (!visible.includes('dial-engine')) throw new Error('engine dial missing');
+if (!engine.includes('dial-engine')) throw new Error('engine dial missing');
+if (!engine.includes('Next interval')) throw new Error('engine skip label missing');
 
 console.log('rest-overlay.smoke: ok');

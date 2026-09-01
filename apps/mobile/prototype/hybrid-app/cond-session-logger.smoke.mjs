@@ -1,5 +1,5 @@
 /**
- * Smoke: Engine session logger — mockup work/rest/steady/recap shells.
+ * Smoke: Engine session logger — mockup work/rest/steady/recap.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -11,24 +11,29 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const src = readFileSync(join(dir, 'cond-session-logger.js'), 'utf8');
 
 if (!html.includes('cond-session-logger.js')) throw new Error('index.html missing cond-session-logger.js');
-if (!html.includes('CondSessionLogger.renderSimpleCond')) throw new Error('renderSimpleCondLog must delegate');
-if (!src.includes('engine-work-countdown')) throw new Error('work countdown missing');
-if (!src.includes('engine-recap-card')) throw new Error('recap card missing');
+if (!html.includes('.timer-big{')) throw new Error('timer-big CSS missing');
+if (!html.includes('.target-row{')) throw new Error('target-row CSS missing');
+if (!src.includes('timer-big')) throw new Error('work countdown missing');
+if (!src.includes('phasechip')) throw new Error('phasechip missing');
 
 const sandbox = {
   window: {},
   console,
+  setInterval: () => 1,
+  clearInterval: () => {},
+  document: { querySelector: () => null, getElementById: () => null },
   current: () => sandbox._task,
   esc: (s) => String(s),
   save: () => {},
-  fmt: (s) => String(s),
+  fmt: (s) => {
+    const n = Math.max(0, Math.round(+s || 0));
+    return `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+  },
   activeSession: () => ({ date: '2026-09-01' }),
   workElapsed: () => 300,
-  blockElapsed: () => 1200,
-  condPlanLineTask: () => '4×4:00 / 3:00 Medium',
+  blockElapsed: () => 300,
+  condPlanLineTask: () => '4 × 4:00 / 3:00 · Medium effort',
   condEffortMeta: () => ({ name: 'Medium', zoneKey: 'aerobic' }),
-  athHomeMetrics: () => ({ recovery: 70 }),
-  athZonesForReadiness: () => [{ key: 'aerobic', label: 'Zone 2' }],
   taskNeedsIntervalClock: () => true,
   ensureTaskInterval: (t) => t.interval,
   normaliseInterval: (t) => t.interval,
@@ -36,19 +41,19 @@ const sandbox = {
   intervalElapsed: () => 44,
   bleHr: { status: 'idle', liveBpm: null },
   echoBike: { status: 'idle' },
-  modalityWantsEcho: () => false,
-  SessionChrome: {
-    render: (opts) => `<div class="session-chrome dial-engine">${opts.subtitle}</div>`,
-  },
+  SessionChrome: { applyBrand: () => {} },
   RestOverlay: {
-    render: () => '<div id=restOverlay class="rest-overlay dial-engine"></div>',
+    render: (o) =>
+      `<div id=restOverlay class="logger-rest dial-engine"><div class=rest-ring><div class=rest-time>02:41</div></div>${o.upNextHtml || ''}</div>`,
     startRest: () => {},
-    remainingSec: () => 0,
+    remainingSec: () => 161,
     skipRest: () => {},
+    stopRest: () => {},
   },
   CondIntervalAutoreg: {
-    restSliderHtml: () => '<input type="range" id=condFelt>',
-    recapSliderHtml: () => '<input type="range" id=condRecapFelt>',
+    restSliderHtml: () =>
+      '<div class=slider-card><div class=sliderhead><b>How hard was that interval?</b></div></div>',
+    recapSliderHtml: () => '<div class=slider-card>recap</div>',
   },
 };
 sandbox.window = sandbox;
@@ -70,18 +75,22 @@ const intervalTask = {
 sandbox._task = intervalTask;
 
 const workHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
-if (!workHtml.includes('session-chrome')) throw new Error('work phase missing session chrome');
-if (!workHtml.includes('engine-work-countdown')) throw new Error('work phase missing countdown');
-if (!workHtml.includes('engine-work-grid')) throw new Error('work phase missing stat grid');
+if (!workHtml.includes('logger-screen')) throw new Error('work missing logger-screen');
+if (!workHtml.includes('timer-big')) throw new Error('work missing timer');
+if (!workHtml.includes('target-row')) throw new Error('work missing target row');
+if (!workHtml.includes('phasechip')) throw new Error('work missing phasechip');
+if (!workHtml.includes('hr-gauge')) throw new Error('work missing HR gauge');
 
 intervalTask.interval.phase = 'rest';
 const restHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
-if (!restHtml.includes('rest-overlay')) throw new Error('rest phase missing overlay');
+if (!restHtml.includes('logger-rest') && !restHtml.includes('rest-ring')) throw new Error('rest missing ring');
+if (!restHtml.includes('Recover · between work')) throw new Error('rest eyebrow missing');
+if (!restHtml.includes('How hard was that interval')) throw new Error('rest slider missing');
 
 intervalTask.interval.finished = true;
 intervalTask.interval.completedRounds = 8;
 intervalTask.result = { avgHr: 151, duration: 3600 };
 const recapHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
-if (!recapHtml.includes('engine-recap-card')) throw new Error('recap missing stats card');
+if (!recapHtml.includes('Session recap')) throw new Error('recap missing');
 
 console.log('cond-session-logger.smoke: ok');

@@ -89,19 +89,21 @@
     return 'not_met';
   }
 
-  function sliderHtml(t, idPrefix, oninput) {
+  function sliderInner(t, idPrefix, oninput, title) {
     idPrefix = idPrefix || 'condFelt';
     oninput = oninput || 'CondIntervalAutoreg.onFeltSlide(this.value)';
+    title = title || 'How hard was that interval?';
     var autoreg = ensureAutoreg(t);
     var idx = feltIndex(autoreg.pendingFelt);
     var label = FELT_OPTIONS[idx].label;
     var hint =
       t.targetWatts != null && t.targetWatts !== ''
         ? 'Next interval target: ' + t.targetWatts + ' W'
-        : 'Engine adjusts next interval from feel + HR zones';
+        : 'Slide if it felt easier or harder — <b>Next interval</b> adjusts pace and HR target.';
     return (
-      '<div class="engine-rest-slider sliderfield dial-engine">' +
-      '<div class=sliderhead><b>How hard was that interval?</b><span id="' +
+      '<div class=sliderhead><b>' +
+      title +
+      '</b><span id="' +
       idPrefix +
       'Label" class=slidervalue>' +
       (global.esc ? global.esc(label) : label) +
@@ -115,33 +117,38 @@
       '" aria-label="Interval difficulty" oninput="' +
       oninput +
       '">' +
-      '<div class=sliderlabels><span>Too easy</span><span>Max</span></div>' +
-      '<div class=logger-hero-meta style="margin-top:6px">' +
+      '<div class=sliderlabels>' +
+      '<span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Stopped</span>' +
+      '</div>' +
+      '<div class=slider-hint>' +
       hint +
-      '</div></div>'
+      '</div>'
     );
   }
 
   function restSliderHtml(t, iv) {
     if (!iv || iv.phase !== 'rest' || iv.finished) return '';
-    return sliderHtml(t, 'condFelt', 'CondIntervalAutoreg.onFeltSlide(this.value)');
+    return (
+      '<div class="slider-card">' +
+      sliderInner(t, 'condFelt', 'CondIntervalAutoreg.onFeltSlide(this.value)') +
+      '</div>'
+    );
+  }
+
+  function restSliderInner(t) {
+    return sliderInner(t, 'condFelt', 'CondIntervalAutoreg.onFeltSlide(this.value)');
   }
 
   function recapSliderHtml(t) {
     return (
-      sliderHtml(t, 'condRecapFelt', 'CondIntervalAutoreg.onRecapSlide(this.value)') +
-      '<div class=logger-hero-meta>Overall session feel — saves with your result</div>'
+      '<div class="slider-card">' +
+      sliderInner(t, 'condRecapFelt', 'CondIntervalAutoreg.onRecapSlide(this.value)', 'Overall session feel') +
+      '</div>'
     );
   }
 
   function restPanelHtml(t, iv) {
-    if (!iv || iv.phase !== 'rest' || iv.finished) return '';
-    if (!global.EngineAdapter || !global.EngineAdapter.suggestNextPhase) return restSliderHtml(t, iv);
-    return (
-      '<div class="card" style="margin-top:10px;padding:12px">' +
-      restSliderHtml(t, iv) +
-      '</div>'
-    );
+    return restSliderHtml(t, iv);
   }
 
   function onFeltSlide(value) {
@@ -205,6 +212,7 @@
     beforeNextWork: beforeNextWork,
     restPanelHtml: restPanelHtml,
     restSliderHtml: restSliderHtml,
+    restSliderInner: restSliderInner,
     recapSliderHtml: recapSliderHtml,
     intervalHtmlExtra: intervalHtmlExtra,
     setIntervalFelt: setIntervalFelt,
