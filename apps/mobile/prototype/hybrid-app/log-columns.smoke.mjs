@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('LogColumns.builderPrescriptionHtml')) throw new Error('coach builder prescription grid not wired');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v140'")) throw new Error('expected cache v120');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v141'")) throw new Error('expected cache v120');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-card')) throw new Error('athlete lift editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -29,7 +29,9 @@ const twin = LC.builderPrescriptionHtml();
 if (!twin.includes('autopilot-strip')) throw new Error('autopilot strip missing');
 if (!twin.includes('Volume')) throw new Error('volume autopilot strip missing');
 if (!twin.includes('Autopilot')) throw new Error('autopilot label missing');
-if (!twin.includes('Pin sets')) throw new Error('pin volume advanced missing');
+if (!twin.includes('logger-screen')) throw new Error('builder twin should match athlete logger');
+if (!twin.includes('hero-metrics')) throw new Error('builder twin hero missing');
+if (!twin.includes('Next set')) throw new Error('builder twin Next set missing');
 
 LC.beginAthleteSheet({ autopilotVolume: true, sets: null, reps: null, restSec: 120 });
 const athlete = LC.builderAthleteColumnsHtml();

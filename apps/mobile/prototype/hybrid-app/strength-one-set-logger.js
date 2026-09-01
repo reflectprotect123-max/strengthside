@@ -151,6 +151,7 @@
         '" onchange="updateSet(' +
         ri +
         ',\'reps\',this.value)"></div>' +
+        '<div class=attempt-dots><span class="dot miss"></span><span class="dot ok"></span></div>' +
         '<input type="hidden" id="oneSetWeight" value="' +
         String(vals.weightVal).replace(/"/g, '&quot;') +
         '">' +
@@ -419,6 +420,230 @@
     if (typeof global.nextTask === 'function') global.nextTask();
   }
 
+  function letterFor(i) {
+    return String.fromCharCode(65 + i);
+  }
+
+  function fmtRestLabel(sec) {
+    if (typeof global.fmt === 'function') return global.fmt(sec);
+    var n = Math.max(0, Math.round(Number(sec) || 0));
+    var m = Math.floor(n / 60);
+    var s = n % 60;
+    if (m && s) return m + ':' + String(s).padStart(2, '0');
+    if (m) return m + ':00';
+    return s + 's';
+  }
+
+  function partnerRestSec(t) {
+    return 45;
+  }
+
+  function roundRestSec(t, ex) {
+    if (typeof global.restSeconds === 'function') {
+      return global.restSeconds((ex && ex.restSec) || (typeof global.supersetRest === 'function' ? global.supersetRest(t) : 120));
+    }
+    return Number(ex && ex.restSec) || 120;
+  }
+
+  function currentSupersetItem(t) {
+    if (typeof global.supersetCurrent === 'function') return global.supersetCurrent(t);
+    return null;
+  }
+
+  function heroSuperset(ex, row, t) {
+    var vals = rowValues(row);
+    var rir = targetRir(ex);
+    var adj =
+      t.lastSuggestion && t.lastSuggestion.reasonCodes && t.lastSuggestion.reasonCodes.length
+        ? '<div class=hero-target>Adjusted <b>' +
+          escHtml(String(t.lastSuggestion.loadKg)) +
+          ' kg</b> after last set</div>'
+        : '<div class=hero-target>Target: <b>RIR ' + rir + '</b> · next set adjusts from slider</div>';
+    return (
+      '<div class="hero">' +
+      '<div class=hero-label>Suggested · tap to edit</div>' +
+      '<div class=hero-metrics>' +
+      '<div><input type="number" class="metric-val" id="oneSetWeight" value="' +
+      String(vals.weightVal).replace(/"/g, '&quot;') +
+      '" onchange="setSupersetValue(\'weight\',this.value)" aria-label="Weight kg">' +
+      '<span class=metric-unit>kg</span></div>' +
+      '<div class=metric-sep>×</div>' +
+      '<div><input type="number" class="metric-val" id="oneSetReps" value="' +
+      String(vals.repsVal).replace(/"/g, '&quot;') +
+      '" onchange="setSupersetValue(\'reps\',this.value)" aria-label="Reps">' +
+      '<span class=metric-unit>reps</span></div></div>' +
+      adj +
+      '</div>'
+    );
+  }
+
+  function sliderSuperset(ex, autoreg) {
+    var idx = autoreg.selectedDifficulty != null ? difficultyIndex(autoreg.selectedDifficulty) : 2;
+    var d = DIFFICULTIES[idx];
+    var rir = targetRir(ex);
+    var valueLabel = d.key === 'medium' ? 'Target RIR ' + rir : d.label;
+    return (
+      '<div class="slider-card">' +
+      '<div class=sliderhead><b>How hard should this feel?</b><span id="oneSetDiffLabel" class=slidervalue>' +
+      escHtml(valueLabel) +
+      '</span></div>' +
+      '<input type="range" id="oneSetDifficulty" min="0" max="' +
+      (DIFFICULTIES.length - 1) +
+      '" step="1" value="' +
+      idx +
+      '" aria-label="Set difficulty" oninput="StrengthOneSetLogger.onDifficultySlide(this.value)">' +
+      '<div class=sliderlabels>' +
+      '<span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span>' +
+      '</div></div>'
+    );
+  }
+
+  function renderSupersetRest(t, autoreg, item) {
+    var exercises = t.exercises || [];
+    var next = currentSupersetItem(t);
+    var restSec = autoreg.restSec || 120;
+    var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
+    applyChrome(t, 'Strength');
+    var nextEx = next ? exercises[next.exIndex] : null;
+    var upNext = nextEx
+      ? 'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Round <b>' +
+        (next.rowIndex + 1) +
+        '</b></span><b>' +
+        escHtml(nextEx.name) +
+        '</b>'
+      : '';
+    var ring = global.RestOverlay
+      ? global.RestOverlay.render({
+          mode: 'strength',
+          remainingSec: remaining,
+          upNextHtml: upNext,
+          skipOnclick: 'StrengthOneSetLogger.finishRest()',
+          addOnclick: 'RestOverlay.addRest(30)',
+        })
+      : '';
+    return (
+      '<div class="logger-screen dial-strength">' +
+      '<div class=eyebrow>Rest · between rounds</div>' +
+      '<div class=task>' +
+      escHtml(t.heading || 'Superset') +
+      '</div>' +
+      '<div class=progressline>Round logged</div>' +
+      ring +
+      '</div>'
+    );
+  }
+
+  function renderSupersetTask(t) {
+    if (!t) return '';
+    var item = currentSupersetItem(t);
+    var autoreg = ensureAutoreg(t);
+    if (autoreg.restPhase) return renderSupersetRest(t, autoreg, item);
+    if (!item) {
+      applyChrome(t, 'Strength');
+      return (
+        '<div class="logger-screen dial-strength">' +
+        '<div class=eyebrow>Superset</div>' +
+        '<div class=task>Superset complete</div>' +
+        '<div class=progressline>All rounds are logged.</div>' +
+        '<div class=next-wrap>' +
+        '<button type="button" class="btn primary" onclick="addSupersetRound()">Add extra round</button>' +
+        '<button type="button" class="btn ghost" onclick="supersetEditSheet()">Edit logged sets</button></div></div>'
+      );
+    }
+    var exercises = t.exercises || [];
+    var ex = exercises[item.exIndex];
+    var row = item.row;
+    var roundTotal = Math.max.apply(
+      null,
+      exercises.map(function (y) {
+        return (y.rows || []).length;
+      }),
+    );
+    var planned = (ex.rows || []).filter(function (r) {
+      return !r.extra;
+    });
+    var partnerSec = partnerRestSec(t);
+    var roundSec = roundRestSec(t, ex);
+    var prevEx = item.exIndex > 0 ? exercises[item.exIndex - 1] : null;
+    var nextEx = exercises[item.exIndex + 1];
+    var lastInRound = !nextEx || !(nextEx.rows || [])[item.rowIndex] || item.exIndex === exercises.length - 1;
+    var pill =
+      prevEx || nextEx
+        ? '<div class=superset-pill>' +
+          letterFor(item.exIndex) +
+          (item.rowIndex + 1) +
+          ' → ' +
+          letterFor(lastInRound ? 0 : item.exIndex + 1) +
+          (item.rowIndex + 1) +
+          ' · ' +
+          partnerSec +
+          's between partners</div>'
+        : '';
+    var nextLabel = lastInRound ? 'Next · ' + fmtRestLabel(roundSec) + ' after round' : 'Next';
+    applyChrome(t, 'Strength');
+    return (
+      '<div class="logger-screen dial-strength">' +
+      '<div class=eyebrow>Superset ' +
+      letterFor(0) +
+      ' · Round ' +
+      (item.rowIndex + 1) +
+      '</div>' +
+      '<div class=task>' +
+      escHtml(ex.name) +
+      '</div>' +
+      '<div class=progressline>' +
+      (prevEx ? 'After ' + escHtml(prevEx.name) + ' · partner rest ' + partnerSec + 's' : 'Round ' + (item.rowIndex + 1) + ' / ' + roundTotal) +
+      '</div>' +
+      pill +
+      '<div class=setchip>Set <b>' +
+      (item.rowIndex + 1) +
+      '</b> / ' +
+      Math.max(planned.length, roundTotal) +
+      '</div>' +
+      heroSuperset(ex, row, t) +
+      sliderSuperset(ex, autoreg) +
+      '<div class=next-wrap>' +
+      '<button type="button" class="btn primary" onclick="StrengthOneSetLogger.nextSupersetSet()">' +
+      nextLabel +
+      '</button>' +
+      '<button type="button" class="btn ghost" onclick="abandonActiveSession()">Abandon workout</button></div></div>'
+    );
+  }
+
+  function nextSupersetSet() {
+    var t = global.current && global.current();
+    if (!t || t.kind !== 'superset') return;
+    if (ensureAutoreg(t).restPhase) return;
+    var item = currentSupersetItem(t);
+    if (!item) {
+      t.complete = true;
+      if (typeof global.save === 'function') global.save();
+      return typeof global.train === 'function' && global.train();
+    }
+    var autoreg = ensureAutoreg(t);
+    if (!autoreg.selectedDifficulty) {
+      var slider = global.document && global.document.getElementById('oneSetDifficulty');
+      if (slider) onDifficultySlide(slider.value);
+    }
+    if (typeof global.validateStrengthRow === 'function') {
+      var err = global.validateStrengthRow(item.row);
+      if (err) return global.alert(err);
+    }
+    var exercises = t.exercises || [];
+    var ex = exercises[item.exIndex];
+    item.row.done = true;
+    item.row.difficulty = autoreg.selectedDifficulty;
+    var next = currentSupersetItem(t);
+    t.complete = !next;
+    autoreg.selectedDifficulty = null;
+    if (typeof global.save === 'function') global.save('superset-log');
+    if (next && next.exIndex === 0) {
+      beginRest(roundRestSec(t, ex));
+      return;
+    }
+    if (typeof global.train === 'function') global.train();
+  }
+
   function clearRestPhase() {
     var t = global.current && global.current();
     if (t && t.autoreg) t.autoreg.restPhase = false;
@@ -427,9 +652,11 @@
   global.StrengthOneSetLogger = {
     DIFFICULTIES: DIFFICULTIES,
     renderTask: renderTask,
+    renderSupersetTask: renderSupersetTask,
     onDifficultySlide: onDifficultySlide,
     selectStrengthDifficulty: selectStrengthDifficulty,
     nextStrengthSet: nextStrengthSet,
+    nextSupersetSet: nextSupersetSet,
     beginRest: beginRest,
     finishRest: finishRest,
     retryAttempt: retryAttempt,

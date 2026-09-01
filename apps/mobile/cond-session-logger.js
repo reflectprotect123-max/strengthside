@@ -259,7 +259,11 @@
   function renderRecap(t, iv) {
     var r = t.result || {};
     var rounds = iv ? num(iv.completedRounds) : num(r.roundsCompleted);
-    applyChrome(t, 'Session recap');
+    var planned = num(t.rounds) || rounds || 0;
+    var duration = r.duration || (iv && iv.elapsed) || 0;
+    var rpe = r.sessionRpe != null ? r.sessionRpe : 6.5;
+    var rpeLabel = rpe >= 9 ? 'Max' : rpe >= 8 ? 'Hard' : rpe >= 6 ? 'Medium (6)' : rpe >= 4 ? 'Easy' : 'Very easy';
+    applyChrome(t, 'Complete');
     return (
       '<div class="logger-screen dial-engine">' +
       '<div class=eyebrow>Session recap</div>' +
@@ -267,20 +271,29 @@
       escHtml(t.heading || 'Conditioning') +
       '</div>' +
       '<div class=progressline>' +
-      rounds +
+      planned +
       ' rounds · ' +
-      fmtSec(r.duration || (iv && iv.elapsed) || 0) +
-      '</div>' +
-      '<div class="hero work"><div class=recap-grid>' +
+      fmtSec(duration) +
+      ' total</div>' +
+      '<div class="hero" style="text-align:left;padding:18px">' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Cardio completion</div>' +
+      '<div class=recap-grid>' +
+      '<div class=recap-row><span>Time in target zone</span><b class=good>—</b></div>' +
       '<div class=recap-row><span>Avg HR</span><b>' +
       escHtml(r.avgHr || liveHr() || '—') +
       '</b></div>' +
-      '<div class=recap-row><span>Intervals</span><b class=good>' +
+      '<div class=recap-row><span>Intervals completed</span><b class=good>' +
       rounds +
+      '/' +
+      planned +
       '</b></div>' +
-      '<div class=recap-row><span>Duration</span><b>' +
-      fmtSec(r.duration || (iv && iv.elapsed) || 0) +
+      '<div class=recap-row><span>Avg pace</span><b>' +
+      escHtml(t.targetPace || r.pace || '—') +
+      '</b></div>' +
+      '<div class=recap-row><span>Session RPE</span><b>' +
+      escHtml(rpeLabel) +
       '</b></div></div></div>' +
+      '<div class="adapt-note warn"><b>Next session:</b> engine will adjust rounds or work time when earned.</div>' +
       (global.CondIntervalAutoreg && global.CondIntervalAutoreg.recapSliderHtml
         ? global.CondIntervalAutoreg.recapSliderHtml(t)
         : '') +

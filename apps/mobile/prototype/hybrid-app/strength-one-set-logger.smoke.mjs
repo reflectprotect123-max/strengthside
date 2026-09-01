@@ -12,7 +12,7 @@ const src = readFileSync(join(dir, 'strength-one-set-logger.js'), 'utf8');
 
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v140'")) throw new Error('expected cache v140');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v141'")) throw new Error('expected cache v140');
 if (!html.includes('.logger-screen{')) throw new Error('logger-screen CSS missing');
 if (!html.includes('.hero-metrics{')) throw new Error('hero-metrics CSS missing');
 if (!html.includes('.metric-val{')) throw new Error('metric-val CSS missing');
@@ -101,5 +101,51 @@ if (!restHtml.includes('logger-rest') && !restHtml.includes('rest-ring')) {
   throw new Error('rest phase should show rest ring');
 }
 if (!restHtml.includes('Rest · between sets')) throw new Error('rest eyebrow missing');
+
+sandbox.StrengthOneSetLogger.finishRest();
+task.autoreg.restPhase = false;
+sandbox.StrengthOneSetLogger.onDifficultySlide('5');
+const missed = sandbox.StrengthOneSetLogger.renderTask(task);
+if (!missed.includes('Did not complete')) throw new Error('missed-rep hero missing');
+if (!missed.includes('Log attempt · try again')) throw new Error('try again button missing');
+if (!missed.includes('Next set · lower target')) throw new Error('lower target button missing');
+if (!missed.includes('hero missed') && !missed.includes('class="hero missed"')) {
+  throw new Error('missed hero class missing');
+}
+
+const ss = {
+  kind: 'superset',
+  heading: 'Superset A',
+  complete: false,
+  exercises: [
+    {
+      name: 'Bench Press',
+      restSec: 120,
+      rows: [{ n: 1, target: '8', weight: 80, reps: 8, done: true, extra: false }],
+    },
+    {
+      name: 'Romanian Deadlift',
+      restSec: 120,
+      rows: [{ n: 1, target: '8', weight: 80, reps: '', done: false, extra: false }],
+    },
+  ],
+};
+sandbox.supersetCurrent = (t) => {
+  const seq = [];
+  const max = Math.max(0, ...t.exercises.map((ex) => (ex.rows || []).length));
+  for (let round = 0; round < max; round++) {
+    for (let exIndex = 0; exIndex < t.exercises.length; exIndex++) {
+      const row = t.exercises[exIndex].rows[round];
+      if (row) seq.push({ exIndex, rowIndex: round, row });
+    }
+  }
+  return seq.find((item) => !item.row.done) || null;
+};
+sandbox._task = ss;
+const ssHtml = sandbox.StrengthOneSetLogger.renderSupersetTask(ss);
+if (!ssHtml.includes('superset-pill')) throw new Error('partner rest pill missing');
+if (!ssHtml.includes('Romanian Deadlift')) throw new Error('partner lift missing');
+if (!ssHtml.includes('How hard should this feel')) throw new Error('superset slider missing');
+if (!ssHtml.includes('Next ·')) throw new Error('round rest Next label missing');
 
 console.log('strength-one-set-logger.smoke: ok');

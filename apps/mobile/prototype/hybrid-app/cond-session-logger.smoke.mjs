@@ -92,5 +92,10 @@ intervalTask.interval.completedRounds = 8;
 intervalTask.result = { avgHr: 151, duration: 3600 };
 const recapHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
 if (!recapHtml.includes('Session recap')) throw new Error('recap missing');
+if (!recapHtml.includes('Cardio completion')) throw new Error('recap stats header missing');
+if (!recapHtml.includes('Save · update progression')) throw new Error('recap save missing');
+if (!recapHtml.includes('Overall session feel') && !recapHtml.includes('slider-card')) {
+  throw new Error('recap slider missing');
+}
 
 console.log('cond-session-logger.smoke: ok');

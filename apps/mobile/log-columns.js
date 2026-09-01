@@ -710,37 +710,37 @@
   function builderLoggerTwinHtml() {
     const effort = effortColumn();
     const meta = effort ? kindMeta(effort.kind) : kindMeta('reps');
-    const targetRirLabel =
-      sheet.targetRir != null ? `Target ${sheet.targetRir} RIR` : 'Target 2 RIR (default)';
+    const rir = sheet.targetRir != null ? sheet.targetRir : 2;
     const loadDisplay = hasPinnedLoad()
       ? String((loadColumn().values || [])[0] || '').trim()
-      : 'Autopilot';
-    const volumeDisplay = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${String((effort.values || [])[0] || '—').trim() || '—'}`;
-
-    const rows = Array.from({ length: sheet.sets }, (_, i) => {
-      const active = i === 0;
-      const effortVal = String((effort && effort.values || [])[i] ?? (effort && effort.value) ?? '').trim() || '—';
-      return `<div class="setrow builder-setrow one-set-row one-set-row-active ${active ? 'one-set-active last-set' : 'one-set-ghost done'}" data-set="${i}">
-        <div class="setnum">${i + 1}<span class="target">${effortVal}</span></div>
-        <div><span class="mini">Weight</span><div class="one-set-readout">${escTwin(loadDisplay)}</div></div>
-        <div><span class="mini">${meta.loggerLabel}</span><div class="one-set-readout">${escTwin(effortVal)}</div></div>
-        <div class="one-set-difficulty-wrap"><div class="one-set-difficulty sliderfield"><div class=sliderhead><b>Difficulty</b><span class=slidervalue>${active ? 'On target' : '—'}</span></div><input type="range" disabled min="0" max="5" step="1" value="2" aria-label="Difficulty slider preview"></div></div>
-        <div class="one-set-row-action"><button type="button" class="btn small primary" disabled>${active ? 'Next' : 'Done'}</button></div>
-      </div>`;
-    }).join('');
-
-    return `<div class="card one-set-card" style="margin-top:14px" id="builderLoggerCard">
-      <div class="row">
-        <div>
-          <div class="title">Athlete logger preview</div>
-          <div class="meta">One set at a time · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
+      : '—';
+    const effortVal = String((effort && effort.values || [])[0] ?? (effort && effort.value) ?? '').trim() || '—';
+    const restLabel = fmtRest(sheet.restSec);
+    return `<div class="logger-screen dial-strength" id="builderLoggerCard" style="min-height:0;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel)">
+      <div class=eyebrow>Athlete logger preview</div>
+      <div class=task>This lift</div>
+      <div class=progressline>One set at a time · Rest ${restLabel} after Next</div>
+      <div class=setchip>Set <b>1</b> / ${sheet.sets || 3}</div>
+      <div class="hero">
+        <div class=hero-label>Tap to edit</div>
+        <div class=hero-metrics>
+          <div><div class=metric-val>${escTwin(loadDisplay)}</div><span class=metric-unit>kg</span></div>
+          <div class=metric-sep>×</div>
+          <div><div class=metric-val>${escTwin(effortVal)}</div><span class=metric-unit>${escTwin(meta.loggerLabel.toLowerCase())}</span></div>
         </div>
-        <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
+        <div class=hero-target>Target: <b>RIR ${rir}</b> · next set adjusts from slider</div>
       </div>
-      <div class="guardrail" style="margin-top:10px">Athlete rates <b>difficulty after each set</b> — the engine adjusts load for the next set. Set 1 uses your prescription; later sets autoreg in-session.</div>
-      <div class="divider"></div>
-      <div class="one-set-stack">${rows}</div>
-      <button type="button" class="btn block" style="margin-top:12px" disabled>Complete exercise early</button>
+      <div class="slider-card">
+        <div class=sliderhead><b>How hard was that set?</b><span class=slidervalue>Medium · RIR ~${rir}</span></div>
+        <input type="range" disabled min="0" max="5" step="1" value="2" aria-label="Difficulty slider preview">
+        <div class=sliderlabels>
+          <span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn't finish</span>
+        </div>
+      </div>
+      <div class=next-wrap>
+        <button type="button" class="btn primary" disabled>Next set</button>
+        <button type="button" class="btn ghost" disabled>+ Extra set</button>
+      </div>
     </div>`;
   }
 
