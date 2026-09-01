@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v7'"), 'migration version');
+must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v8'"), 'migration version');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
 must(html.includes('function normalizeAthleteExercise'), 'normalizeAthleteExercise');
 must(html.includes('function normalizeAthleteCondBlock'), 'normalizeAthleteCondBlock');
@@ -60,13 +60,17 @@ const sandbox = {
     (/superset|pair/i.test(String(block?.heading || '')) && (block.exercises || []).length > 1),
 };
 sandbox.window = sandbox;
+sandbox.isoNow = () => new Date().toISOString();
 vm.runInNewContext(logColumnsSrc, sandbox);
 
+const programTextSrc = html
+  .split('const PROGRAM_TEXT_DEFAULTS')[1]
+  .split('const CONDITIONING_TEXT_DEFAULTS')[0];
 const patchSrc = html
   .split('const ATHLETE_BUILDER_VERSION')[1]
   .split('function applyAthleteShellPatch')[0];
 vm.runInNewContext(
-  `const ATHLETE_BUILDER_VERSION${patchSrc}`,
+  `const PROGRAM_TEXT_DEFAULTS${programTextSrc}const ATHLETE_BUILDER_VERSION${patchSrc}`,
   sandbox,
 );
 
@@ -110,10 +114,12 @@ const strengthState = applyAthleteBuilderPatch({
   ],
   sessions: [],
 });
-must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v7', 'migration stamp');
-must(strengthState.templates[0].blocks.length === 1, 'warm/cool text blocks removed');
-must(strengthState.templates[0].blocks[0].type === 'strength', 'single strength block');
-must(strengthState.templates[0].blocks[0].exercises[0].autopilotVolume === true, 'template exercise migrated');
+must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v8', 'migration stamp');
+must(strengthState.templates[0].blocks.length === 3, 'warm/strength/cool text blocks preserved');
+must(strengthState.templates[0].blocks[0].type === 'text' && /warm/i.test(strengthState.templates[0].blocks[0].heading), 'warm-up block kept');
+must(strengthState.templates[0].blocks[2].type === 'text' && /cool/i.test(strengthState.templates[0].blocks[2].heading), 'cool-down block kept');
+must(strengthState.templates[0].blocks[1].type === 'strength', 'single strength block');
+must(strengthState.templates[0].blocks[1].exercises[0].autopilotVolume === true, 'template exercise migrated');
 
 const condState = applyAthleteBuilderPatch({
   meta: { athleteBuilderVersion: 'athlete-builder-v4' },
@@ -159,8 +165,9 @@ const condState = applyAthleteBuilderPatch({
     },
   ],
 });
-must(condState.templates[0].blocks.length === 1, 'cond template collapses to one block');
-const condBlock = condState.templates[0].blocks[0];
+must(condState.templates[0].blocks.length === 2, 'cond template keeps warm text + conditioning block');
+must(condState.templates[0].blocks[0].type === 'text', 'cond warm text preserved');
+const condBlock = condState.templates[0].blocks[1];
 must(condBlock.type === 'conditioning', 'cond block type');
 must(condBlock.condFmt === 'intervals', 'legacy intervals mapped to condFmt');
 must(condBlock.autopilotCond === true, 'cond autopilot flag');
@@ -244,8 +251,11 @@ const legacyFullBodyA = applyAthleteBuilderPatch({
   sessions: [],
 });
 const fba = legacyFullBodyA.templates[0];
-must(fba.blocks.length === 1, 'Full Body A collapses to one strength block');
-const exs = fba.blocks[0].exercises;
+must(fba.blocks.length === 3, 'Full Body A keeps warm, strength, and cool-down blocks');
+must(/warm/i.test(fba.blocks[0].heading), 'Full Body A warm-up');
+must(fba.blocks[1].type === 'strength', 'Full Body A strength block');
+must(/cool/i.test(fba.blocks[2].heading), 'Full Body A cool-down');
+const exs = fba.blocks[1].exercises;
 must(exs.length === 6, 'Full Body A keeps six lifts');
 must(exs[0].name === 'Bench Press' && exs[0].supersetWithNext === false, 'bench solo');
 must(exs[2].supersetWithNext === true && exs[3].supersetWithNext === false, 'D1/D2 linked');
