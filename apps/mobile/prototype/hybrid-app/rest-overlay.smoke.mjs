@@ -41,7 +41,8 @@ if (!htmlOut.includes('restOverlayClock')) throw new Error('clock id missing');
 if (!htmlOut.includes('Skip rest')) throw new Error('skip button missing');
 if (!htmlOut.includes('rest-ring')) throw new Error('rest ring missing');
 if (!htmlOut.includes('rest-time')) throw new Error('rest-time missing');
-if (!htmlOut.includes('01:24')) throw new Error('formatted time missing');
+if (!htmlOut.includes('1:24')) throw new Error('formatted time missing (mockup m:ss)');
+if (htmlOut.includes('01:24')) throw new Error('rest clock should not zero-pad minutes');
 
 const engine = sandbox.RestOverlay.render({
   mode: 'engine',

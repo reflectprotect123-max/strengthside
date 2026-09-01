@@ -16,11 +16,12 @@
   }
 
   function fmtSec(totalSec) {
-    if (typeof global.fmt === 'function') return global.fmt(totalSec);
+    // Mockup clocks: m:ss (no leading zero on minutes).
+    if (typeof global.formatMmSs === 'function') return global.formatMmSs(totalSec);
     var n = Math.max(0, Math.floor(Number(totalSec) || 0));
     var m = Math.floor(n / 60);
     var s = n % 60;
-    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    return m + ':' + String(s).padStart(2, '0');
   }
 
   function sessionElapsedSec() {
@@ -36,7 +37,26 @@
 
   function effortMeta(t) {
     if (typeof global.condEffortMeta === 'function') return global.condEffortMeta(t.effort || 'medium');
-    return { name: 'Medium', zoneKey: 'aerobic' };
+    return { name: 'Medium', zoneKey: 'aerobic', key: t && t.effort ? t.effort : 'medium' };
+  }
+
+  function zoneTarget(t) {
+    var effort = effortMeta(t);
+    var recovery =
+      typeof global.athHomeMetrics === 'function' ? global.athHomeMetrics().recovery : 71;
+    var zones =
+      typeof global.athZonesForReadiness === 'function' ? global.athZonesForReadiness(recovery) : [];
+    var z =
+      (zones || []).find(function (x) {
+        return x.key === effort.zoneKey || x.name === effort.name;
+      }) ||
+      zones[1] ||
+      zones[0] ||
+      null;
+    var zoneName = { easy: 'Zone 2', medium: 'Zone 3', hard: 'Zone 4' };
+    var title = zoneName[effort.key || t.effort || 'medium'] || (z && z.name) || 'Zone 3';
+    var sub = z ? z.lo + '–' + z.hi + ' bpm' : '142–158 bpm';
+    return { title: title, sub: sub, lo: z && z.lo, hi: z && z.hi };
   }
 
   function isRecovery(t) {
@@ -72,8 +92,7 @@
   }
 
   function zoneLabel(t) {
-    var effort = effortMeta(t);
-    return effort.name || 'Zone';
+    return zoneTarget(t).title;
   }
 
   function intervalIv(t) {
@@ -112,11 +131,6 @@
         : 'Previous interval rated <b>too easy</b> → raised' +
           (d.nextTargetWatts != null ? ' to ' + d.nextTargetWatts + 'W' : '');
     return '<div class="adapt-note' + (d.action === 'decrease' ? ' warn' : '') + '">' + msg + '</div>';
-  }
-
-  function handoffHtml() {
-    if (!global.SessionFlow || !global.SessionFlow.nextNodePreviewHtml) return '';
-    return global.SessionFlow.nextNodePreviewHtml() || '';
   }
 
   function renderWorkPhase(t, iv) {
@@ -163,24 +177,24 @@
       escHtml(t.targetPace || '—') +
       '</b><span>/500m</span></div>' +
       '<div class=target-box><b>' +
-      escHtml(zoneLabel(t)) +
-      '</b><span>effort</span></div></div>' +
+      escHtml(zoneTarget(t).title) +
+      '</b><span>' +
+      escHtml(zoneTarget(t).sub) +
+      '</span></div></div>' +
       '<div class=live-hr><div class=hr-gauge>' +
       (hr != null ? Math.round(hr) : '—') +
       '</div><div class=hr-meta><b>' +
       (global.bleHr && global.bleHr.status === 'live' ? 'On target' : 'Strap optional') +
       '</b>' +
-      (global.bleHr && global.bleHr.status === 'live' ? 'Strap live' : 'Connect when ready') +
+      (global.bleHr && global.bleHr.status === 'live' ? 'Strap live · in zone' : 'Connect when ready') +
       '</div></div>' +
-      '<div class=hero-target>Target effort: <b>' +
+      '<div class=hero-target>Target effort: <b>RIR 2 equivalent · ' +
       escHtml(effortMeta(t).name) +
       '</b></div></div>' +
       adaptNoteHtml(t) +
-      handoffHtml() +
       '<div class=next-wrap>' +
       primary +
-      '<button type=button class="btn ghost" onclick=skipInterval()>Skip phase</button>' +
-      '<button type=button class="btn ghost" onclick=leaveSimpleCond()>← Back</button></div></div>'
+      '</div></div>'
     );
   }
 
@@ -201,14 +215,20 @@
         ? global.CondIntervalAutoreg.restSliderHtml(t, iv)
         : '';
     var upNext =
-      'Up next · Work ' +
+      'Up next · Interval ' +
       nextRound +
       '/' +
       rounds +
       '<b>' +
       (t.targetWatts != null ? t.targetWatts + 'W' : '—') +
       ' · ' +
-      escHtml(zoneLabel(t)) +
+      (function () {
+        var pace = String(t.targetPace || '—');
+        if (pace !== '—' && pace.indexOf('/500') < 0) pace = pace + '/500m';
+        return escHtml(pace);
+      })() +
+      ' · ' +
+      escHtml(zoneTarget(t).title) +
       ' ' +
       deltaBadgeHtml(t) +
       '</b>';
@@ -217,7 +237,7 @@
           mode: 'engine',
           remainingSec: remaining,
           upNextHtml: upNext,
-          skipLabel: 'Skip · start work ' + nextRound,
+          skipLabel: 'Next interval',
           skipOnclick: 'CondSessionLogger.finishRest()',
           addOnclick: 'RestOverlay.addRest(30)',
           sliderHtml: sliderHtml,
@@ -284,11 +304,21 @@
       '</div>' +
       '<div class=target-row>' +
       '<div class=target-box><b>' +
-      (liveHr() != null ? Math.round(liveHr()) : '—') +
+      (recovery
+        ? (zoneTarget(Object.assign({}, t, { effort: 'easy' })).lo
+            ? zoneTarget(Object.assign({}, t, { effort: 'easy' })).lo +
+              '–' +
+              zoneTarget(Object.assign({}, t, { effort: 'easy' })).hi
+            : '100–120')
+        : zoneTarget(t).lo
+          ? zoneTarget(t).lo + '–' + zoneTarget(t).hi
+          : '120–135') +
       '</b><span>HR bpm</span></div>' +
       '<div class=target-box><b>' +
+      escHtml(recovery ? 'Zone 2' : zoneTarget(t).title) +
+      '</b><span>' +
       escHtml(recovery ? 'Easy' : effort.name) +
-      '</b><span>Zone</span></div>' +
+      '</span></div>' +
       '<div class=target-box><b>' +
       (recovery ? 'RPE 2–3' : 'RPE 3–4') +
       '</b><span>Target</span></div></div>' +
@@ -296,19 +326,20 @@
       (liveHr() != null ? Math.round(liveHr()) : '—') +
       '</div><div class=hr-meta><b>' +
       (recovery ? 'Keep it easy' : 'In zone') +
-      '</b>Strap optional</div></div></div>' +
-      '<div class="mph-twin-fields" style="margin-top:12px"><div class=field><label>Minutes</label><input id=condMin type=number min=0 step=.5 value="' +
+      '</b>' +
+      (recovery ? 'Strap optional' : 'Strap optional') +
+      '</div></div></div>' +
+      '<input type=hidden id=condMin value="' +
       escHtml(r.duration ? Math.round((num(r.duration) / 60) * 10) / 10 : t.targetDurationMin || '') +
-      '"></div><div class=field><label>Avg HR</label><input id=condHr type=number min=30 max=250 value="' +
+      '">' +
+      '<input type=hidden id=condHr value="' +
       escHtml(r.avgHr || '') +
-      '" oninput="setSimpleCondHr(this.value)"></div></div>' +
-      handoffHtml() +
+      '">' +
       '<div class=next-wrap>' +
       '<button type=button class="btn primary" onclick=completeSimpleCond()>' +
       finishLabel +
       '</button>' +
-      '<button type=button class="btn ghost" onclick=connectSimpleCondHr()>Connect strap</button>' +
-      '<button type=button class="btn ghost" onclick=leaveSimpleCond()>← Back</button></div></div>'
+      '<button type=button class="btn ghost" onclick=connectSimpleCondHr()>Connect strap</button></div></div>'
     );
   }
 
@@ -323,7 +354,7 @@
     applyChrome(t, recovery ? 'Recovery complete' : 'Complete', 'Done');
     var progressNote = recovery
       ? '<div class="adapt-note">Recovery logged — no load progression. Debt repay recorded.</div>'
-      : '<div class="adapt-note warn"><b>Next session:</b> engine will adjust rounds or work time when earned.</div>';
+      : '<div class="adapt-note warn"><b>Next session:</b> +1 round OR +5s work when earned.</div>';
     return (
       '<div class="logger-screen dial-engine">' +
       '<div class=eyebrow>Session recap</div>' +
@@ -338,6 +369,11 @@
       (recovery ? 'Recovery summary' : 'Cardio completion') +
       '</div>' +
       '<div class=recap-grid>' +
+      (recovery
+        ? ''
+        : '<div class=recap-row><span>Time in target zone</span><b class=good>' +
+          escHtml(r.timeInZonePct != null ? Math.round(num(r.timeInZonePct)) + '%' : '—') +
+          '</b></div>') +
       '<div class=recap-row><span>Avg HR</span><b>' +
       escHtml(r.avgHr || liveHr() || '—') +
       '</b></div>' +
@@ -452,8 +488,10 @@
         '</b><span>Watts</span></div>' +
         '<div class=target-box><b>—</b><span>/500m</span></div>' +
         '<div class=target-box><b>' +
-        escHtml(zoneLabel({ effort: opts.effort || 'medium' })) +
-        '</b><span>effort</span></div></div></div>' +
+        escHtml(zoneTarget({ effort: opts.effort || 'medium' }).title) +
+        '</b><span>' +
+        escHtml(zoneTarget({ effort: opts.effort || 'medium' }).sub) +
+        '</span></div></div></div>' +
         '<div class=next-wrap><button type=button class="btn primary" disabled>End interval</button></div></div>'
       );
     }

@@ -75,20 +75,37 @@
     return global.StrengthAdapter ? global.StrengthAdapter.targetRirForExercise(t) : 2;
   }
 
+  function strengthWeekLabel() {
+    var x = typeof global.activeSession === 'function' ? global.activeSession() : null;
+    var w = x && (x.weekIndex || x.week || x.programWeek || (x.meta && x.meta.week));
+    if (w != null && w !== '') return 'Strength · Week ' + w;
+    return 'Strength · Week 1';
+  }
+
   function applyChrome(t, week, badge) {
     if (global.SessionChrome && global.SessionChrome.applyBrand) {
+      // Strength mockup: brand + stopwatch only — no phase badge.
       global.SessionChrome.applyBrand({
         product: 'strength',
-        weekLabel: week || 'Strength',
+        weekLabel: week || strengthWeekLabel(),
         elapsedSec: sessionElapsedSec(),
-        badge: badge || '',
+        badge: '',
       });
     }
   }
 
   function handoffHtml() {
-    if (!global.SessionFlow || !global.SessionFlow.nextNodePreviewHtml) return '';
-    return global.SessionFlow.nextNodePreviewHtml() || '';
+    // Mockup screens are exact — no session handoff strip on strength boards.
+    return '';
+  }
+
+  function fmtClock(totalSec) {
+    // Mockup clocks use m:ss (no leading zero on minutes), matching formatMmSs.
+    if (typeof global.formatMmSs === 'function') return global.formatMmSs(totalSec);
+    var n = Math.max(0, Math.floor(Number(totalSec) || 0));
+    var m = Math.floor(n / 60);
+    var s = n % 60;
+    return m + ':' + String(s).padStart(2, '0');
   }
 
   function eyebrowFor(t) {
@@ -204,7 +221,7 @@
     var restSec = autoreg.restSec || (typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90);
     var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
     var rir = targetRir(t);
-    applyChrome(t, 'Strength', 'Rest');
+    applyChrome(t, strengthWeekLabel());
     var upNext = next
       ? 'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Set <b>' +
         (ordinal + 1) +
@@ -223,8 +240,10 @@
           mode: 'strength',
           remainingSec: remaining,
           upNextHtml: upNext,
+          skipLabel: 'Skip rest',
           skipOnclick: 'StrengthOneSetLogger.finishRest()',
           addOnclick: 'RestOverlay.addRest(30)',
+          clockFmt: 'mmss',
         })
       : '';
     return (
@@ -239,17 +258,15 @@
         : '') +
       '</div>' +
       ring +
-      handoffHtml() +
       '</div>'
     );
   }
 
   function renderActiveLogger(t, planned, ordinal, autoreg) {
     var row = planned[ordinal];
-    var rir = targetRir(t);
     var missed = autoreg.selectedDifficulty === 'did_not_complete';
-    var nextLabel = ordinal + 1 >= planned.length ? 'Done · finish exercise' : 'Next set';
-    applyChrome(t, 'Strength', 'Set ' + (ordinal + 1) + '/' + planned.length);
+    var nextLabel = ordinal + 1 >= planned.length ? 'Next set' : 'Next set';
+    applyChrome(t, strengthWeekLabel());
     return (
       '<div class="logger-screen dial-strength">' +
       '<div class=eyebrow>' +
@@ -268,7 +285,6 @@
       '</div>' +
       heroActive(t, row, autoreg) +
       sliderCard(t, autoreg) +
-      handoffHtml() +
       '<div class=next-wrap>' +
       (missed
         ? '<button type="button" class="btn attempt" onclick="StrengthOneSetLogger.retryAttempt()">Log attempt · try again</button>' +
@@ -277,7 +293,6 @@
           nextLabel +
           '</button>' +
           '<button type="button" class="btn ghost" onclick="addExtra()">+ Extra set</button>') +
-      '<button type="button" class="btn ghost" style="margin-top:8px;font-size:12px;opacity:.7" onclick="abandonActiveSession()">Abandon workout</button>' +
       '</div></div>'
     );
   }
@@ -511,7 +526,7 @@
     var next = currentSupersetItem(t);
     var restSec = autoreg.restSec || 120;
     var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
-    applyChrome(t, 'Strength', 'Rest');
+    applyChrome(t, strengthWeekLabel());
     var nextEx = next ? exercises[next.exIndex] : null;
     var upNext = nextEx
       ? 'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Round <b>' +
@@ -525,8 +540,10 @@
           mode: 'strength',
           remainingSec: remaining,
           upNextHtml: upNext,
+          skipLabel: 'Skip rest',
           skipOnclick: 'StrengthOneSetLogger.finishRest()',
           addOnclick: 'RestOverlay.addRest(30)',
+          clockFmt: 'mmss',
         })
       : '';
     return (
@@ -537,7 +554,6 @@
       '</div>' +
       '<div class=progressline>Round logged</div>' +
       ring +
-      handoffHtml() +
       '</div>'
     );
   }
@@ -589,7 +605,7 @@
           's between partners</div>'
         : '';
     var nextLabel = lastInRound ? 'Next · ' + fmtRestLabel(roundSec) + ' after round' : 'Next';
-    applyChrome(t, 'Strength', 'Round ' + (item.rowIndex + 1) + '/' + roundTotal);
+    applyChrome(t, strengthWeekLabel());
     return (
       '<div class="logger-screen dial-strength">' +
       '<div class=eyebrow>Superset ' +
@@ -611,12 +627,10 @@
       '</div>' +
       heroSuperset(ex, row, t) +
       sliderSuperset(ex, autoreg) +
-      handoffHtml() +
       '<div class=next-wrap>' +
       '<button type="button" class="btn primary" onclick="StrengthOneSetLogger.nextSupersetSet()">' +
       nextLabel +
-      '</button>' +
-      '<button type="button" class="btn ghost" onclick="abandonActiveSession()">Abandon workout</button></div></div>'
+      '</button></div></div>'
     );
   }
 

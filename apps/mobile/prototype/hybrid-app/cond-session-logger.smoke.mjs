@@ -81,13 +81,16 @@ if (!workHtml.includes('target-row')) throw new Error('work missing target row')
 if (!workHtml.includes('phasechip')) throw new Error('work missing phasechip');
 if (!workHtml.includes('hr-gauge')) throw new Error('work missing HR gauge');
 if (!workHtml.includes('End interval')) throw new Error('work primary should End interval when running');
+if (!workHtml.includes('RIR 2 equivalent')) throw new Error('work target effort copy missing');
+if (!workHtml.includes('bpm')) throw new Error('work zone bpm range missing');
 
 intervalTask.interval.phase = 'rest';
 const restHtml = sandbox.CondSessionLogger.renderSimpleCond(intervalTask);
 if (!restHtml.includes('logger-rest') && !restHtml.includes('rest-ring')) throw new Error('rest missing ring');
 if (!restHtml.includes('Recover · between work')) throw new Error('rest eyebrow missing');
 if (!restHtml.includes('How hard was that interval')) throw new Error('rest slider missing');
-if (!restHtml.includes('Up next · Work')) throw new Error('rest up-next work copy missing');
+if (!restHtml.includes('Up next · Interval')) throw new Error('rest up-next interval copy missing');
+if (!sandbox.RestOverlay) {}
 
 intervalTask.interval.finished = true;
 intervalTask.interval.completedRounds = 8;

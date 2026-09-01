@@ -11,6 +11,12 @@
     });
   }
 
+  function clockLabel(sec) {
+    var n = Math.max(0, Math.floor(Number(sec) || 0));
+    if (typeof global.formatMmSs === 'function') return global.formatMmSs(n);
+    return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0');
+  }
+
   function remainingSec(now) {
     if (!state.endsAt) return Math.max(0, state.totalSec || 0);
     return Math.max(0, Math.ceil((state.endsAt - (now || Date.now())) / 1000));
@@ -21,7 +27,7 @@
     var mode = opts.mode === 'engine' ? 'engine' : 'strength';
     var dialClass = mode === 'engine' ? 'dial-engine' : 'dial-strength';
     var remaining = Number.isFinite(opts.remainingSec) ? Math.max(0, opts.remainingSec) : remainingSec();
-    var timeLabel = typeof global.fmt === 'function' ? global.fmt(remaining) : remaining + 's';
+    var timeLabel = clockLabel(remaining);
     var skipLabel = escHtml(opts.skipLabel || 'Skip rest');
     var addLabel = escHtml(opts.addLabel || '+30s');
     var skipOnclick = escHtml(opts.skipOnclick || 'RestOverlay.skipRest()');
@@ -54,7 +60,7 @@
     var el = global.document && global.document.getElementById('restOverlayClock');
     if (!el) return;
     var rem = remainingSec();
-    el.textContent = typeof global.fmt === 'function' ? global.fmt(rem) : rem + 's';
+    el.textContent = clockLabel(rem);
     if (rem <= 0) skipRest();
   }
 
