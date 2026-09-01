@@ -40,6 +40,11 @@ const sandbox = {
   intervalRemaining: () => 136,
   intervalElapsed: () => 44,
   athHomeMetrics: () => ({ recovery: 71 }),
+  athRecoveryDebtSnapshot: () => ({ debt: { score: 42, repay: 0, elevated: false } }),
+  RecoveryEngine: {
+    recoveryRepayFromSession: (_summary, task) => Math.round((Number(task.result?.duration || 0) / 60) * 0.6 * 10) / 10,
+    recoveryRepayEstimateMinutes: (mins) => Math.round(mins * 0.6 * 10) / 10,
+  },
   athZonesForReadiness: () => [
     { key: 'recovery', name: 'Recovery', lo: 100, hi: 120, color: '#7dba9a' },
     { key: 'aerobic', name: 'Aerobic', lo: 121, hi: 140, color: '#5ec4b4' },
@@ -155,6 +160,18 @@ recovery.interval = { finished: true, completedRounds: 0, elapsed: 1200 };
 recovery.result = { avgHr: 110, duration: 1200 };
 const recoveryRecap = sandbox.CondSessionLogger.renderRecap(recovery, recovery.interval);
 if (!recoveryRecap.includes('no load progression')) throw new Error('recovery recap should suppress load progression');
+if (!recoveryRecap.includes('Recovery debt')) throw new Error('recovery recap missing debt score');
+if (!recoveryRecap.includes('>42<')) throw new Error('recovery recap missing live debt score');
+if (!recoveryRecap.includes('Repay this session')) throw new Error('recovery recap missing repay estimate');
+if (!recoveryRecap.includes('Save recovery')) throw new Error('recovery recap save label missing');
+
+recovery.condRecap = true;
+const recoveryRecapRoute = sandbox.CondSessionLogger.renderSimpleCond(recovery);
+if (!recoveryRecapRoute.includes('Recovery debt')) throw new Error('condRecap route should show debt recap');
+
+recovery.condRecap = false;
+const recoveryFinish = sandbox.CondSessionLogger.renderSimpleCond(recovery);
+if (!recoveryFinish.includes('beginCondRecap()')) throw new Error('recovery finish should route to recap');
 
 const twinInterval = sandbox.CondSessionLogger.builderTwinHtml({
   condFmt: 'intervals',

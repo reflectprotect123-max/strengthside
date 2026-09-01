@@ -63,6 +63,38 @@
     return !!(t && (t.recoverySession || String(t.category || '').toLowerCase() === 'recovery'));
   }
 
+  /** Live delivery debt + estimated repay — recap only, not during active logging. */
+  function recoveryDebtRecapRows(t) {
+    if (!isRecovery(t)) return '';
+    var snap =
+      typeof global.athRecoveryDebtSnapshot === 'function' ? global.athRecoveryDebtSnapshot() : null;
+    if (!snap || !snap.debt || num(snap.debt.score) <= 0) return '';
+    var debt = snap.debt;
+    var score = Math.round(num(debt.score));
+    var scoreClass = score >= 55 ? '' : score >= 30 ? '' : ' class=good';
+    var mins = Math.round((num((t.result || {}).duration) / 60) * 10) / 10;
+    if (mins <= 0) mins = num(t.targetDurationMin) || 0;
+    var repayEst = 0;
+    if (global.RecoveryEngine && global.RecoveryEngine.recoveryRepayFromSession) {
+      repayEst = num(global.RecoveryEngine.recoveryRepayFromSession({}, t));
+    } else if (global.RecoveryEngine && global.RecoveryEngine.recoveryRepayEstimateMinutes && mins > 0) {
+      repayEst = num(global.RecoveryEngine.recoveryRepayEstimateMinutes(mins));
+    }
+    var rows =
+      '<div class=recap-row><span>Recovery debt</span><b' +
+      scoreClass +
+      '>' +
+      score +
+      '</b></div>';
+    if (repayEst > 0) {
+      rows +=
+        '<div class=recap-row><span>Repay this session</span><b class=good>~' +
+        escHtml(repayEst) +
+        '</b></div>';
+    }
+    return rows;
+  }
+
   function applyChrome(t, week, badge) {
     if (global.SessionChrome && global.SessionChrome.applyBrand) {
       global.SessionChrome.applyBrand({
@@ -382,7 +414,9 @@
       escHtml(r.avgHr || '') +
       '">' +
       '<div class=next-wrap>' +
-      '<button type=button class="btn primary" onclick=completeSimpleCond()>' +
+      '<button type=button class="btn primary" onclick=' +
+      (recovery ? 'beginCondRecap()' : 'completeSimpleCond()') +
+      '>' +
       finishLabel +
       '</button>' +
       '<button type=button class="btn ghost" onclick=connectSimpleCondHr()>Connect strap</button></div></div>'
@@ -424,7 +458,10 @@
       escHtml(r.avgHr || liveHr() || '—') +
       '</b></div>' +
       (recovery
-        ? '<div class=recap-row><span>Duration</span><b class=good>' + fmtSec(duration) + '</b></div>'
+        ? recoveryDebtRecapRows(t) +
+          '<div class=recap-row><span>Duration</span><b class=good>' +
+          fmtSec(duration) +
+          '</b></div>'
         : '<div class=recap-row><span>Intervals completed</span><b class=good>' +
           rounds +
           '/' +
@@ -440,7 +477,9 @@
       (global.CondIntervalAutoreg && global.CondIntervalAutoreg.recapSliderHtml
         ? global.CondIntervalAutoreg.recapSliderHtml(t)
         : '') +
-      '<div class=next-wrap><button type=button class="btn primary" onclick=completeSimpleCond()>Save · update progression</button></div></div>'
+      '<div class=next-wrap><button type=button class="btn primary" onclick=completeSimpleCond()>' +
+      (recovery ? 'Save recovery' : 'Save · update progression') +
+      '</button></div></div>'
     );
   }
 
@@ -475,6 +514,7 @@
 
   function renderSimpleCond(t) {
     if (!t) return '';
+    if (t.condRecap && isRecovery(t)) return renderRecap(t, null);
     var iv = intervalIv(t);
     if (taskNeedsInterval(t) && iv) return renderIntervalCore(t);
     return renderSteady(t);
