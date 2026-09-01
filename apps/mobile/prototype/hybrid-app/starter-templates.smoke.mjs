@@ -21,6 +21,8 @@ must(html.includes('function isRecoveryTemplate'), 'recovery template helper');
 must(html.includes("groupedTemplates('Recovery','cond-recovery'"), 'Engine tab recovery section');
 must(html.includes('isRecovery:false'), 'cond builder tracks recovery mode');
 must(html.includes('block.recoverySession=true'), 'cond builder saves recovery flag');
+must(!html.includes('restoreHiddenTemplates'), 'no restore-hidden library UX');
+must(html.includes("touchRecord(copy,'templates',state)"), 'starter touchRecord passes boot state');
 
 const start = html.indexOf('const seed=');
 let i = html.indexOf('=', start) + 1;

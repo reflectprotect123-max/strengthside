@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.37 | 2026-09-01 | Fix blank boot after library starters; drop Restore hidden UX (cache v132) |
 | 1.0.36 | 2026-09-01 | Library starters — Full Body A, Aerobic Conditioning, Recovery (cache v131) |
 | 1.0.35 | 2026-09-01 | Restore Full Body A starter in Library after blank slate (cache v130) |
 | 1.0.34 | 2026-09-01 | Rep-only LLM volume + OHP WM + weighted pull-up added-load mode (cache v129) |
