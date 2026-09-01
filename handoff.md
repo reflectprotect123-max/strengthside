@@ -14,8 +14,8 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`869f842`** (#132 Start session fix — cache v134) |
-| **Open PR** | **#133** — fix preview crash (`blockHelpDropdown`) |
+| **`main` tip** | **`28a209a`** (#133 preview Start workout fix — cache v135) |
+| **Open PR** | **none** |
 | **Cache** | **`the-hybrid-athlete-engine-v135`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` @ `1.0.40`** (preview Start workout fix; cache v135) |
 | **Web** | https://thehybridsystem.netlify.app/ |
@@ -27,7 +27,7 @@
 
 **Ship ritual:** `pnpm run verify` → sync HTML → Capgo upload if bundle moves → refresh this handoff.
 
-**Recent merges (#103–#121):** BIG MAC five engines + auto-promote · Netlify big-mac-decide fix · coach desktop `.exe` + shell OTA · delivery banner removed · builder delete/superset/drag-drop · exercise instructions removed · reps forward-fill · athlete Link lock → superset.
+**Recent merges (#130–#133):** blank boot + remove Restore hidden · warm-up/cool-down restore · Start session handler fix · preview `blockHelpDropdown` crash fix.
 
 ---
 
