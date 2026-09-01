@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.42 | 2026-09-01 | One-set logger grid — 3-column `.one-set-row` CSS (cache v137) |
 | 1.0.41 | 2026-09-01 | Fix strength set logger — `escHtml` fallback when `window.esc` missing (cache v136) |
 | 1.0.40 | 2026-09-01 | Fix Start workout preview crash — restore `blockHelpDropdown` stub (cache v135) |
 | 1.0.39 | 2026-09-01 | Fix Start session button — restore `startSessionNow()` call; remove debug instrumentation (cache v134) |
