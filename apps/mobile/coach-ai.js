@@ -156,12 +156,19 @@
     return session.llmIntent.athleteCue || '';
   }
 
+  function escHtml(value) {
+    if (typeof global.esc === 'function') return global.esc(value);
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (m) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+    });
+  }
+
   function athleteCueHtml(session) {
     var cue = athleteCueForSession(session);
-    if (!cue || !global.esc) return '';
+    if (!cue) return '';
     return (
       '<div class="liftcue" style="margin-top:8px;font-size:12px;line-height:1.35">' +
-      global.esc(cue) +
+      escHtml(cue) +
       '</div>'
     );
   }

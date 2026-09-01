@@ -36,8 +36,15 @@
     return m ? Number(m[1]) : null;
   }
 
+  function escHtml(value) {
+    if (typeof global.esc === 'function') return global.esc(value);
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (m) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+    });
+  }
+
   function renderTask(t) {
-    if (typeof global.current !== 'function' || typeof global.esc !== 'function') return '';
+    if (typeof global.current !== 'function') return '';
     syncAutoregOrdinal(t);
     var autoreg = ensureAutoreg(t);
     var planned = plannedRows(t);
@@ -59,11 +66,11 @@
     var targetRir = global.StrengthAdapter ? global.StrengthAdapter.targetRirForExercise(t) : 2;
     var prev = last[ordinal] || last[last.length - 1] || null;
     var prevHtml = prev
-      ? '<div class=meta>Last time: ' + global.esc(String(prev.weight || '—')) + ' kg × ' + global.esc(String(prev.reps || '—')) + '</div>'
+      ? '<div class=meta>Last time: ' + escHtml(String(prev.weight || '—')) + ' kg × ' + escHtml(String(prev.reps || '—')) + '</div>'
       : '<div class=meta>No previous sets logged.</div>';
     var diffBtns = DIFFICULTIES.map(function (d) {
       var sel = autoreg.selectedDifficulty === d.key ? ' primary' : '';
-      return '<button type="button" class="btn small' + sel + '" onclick="selectStrengthDifficulty(\'' + d.key + '\')">' + global.esc(d.label) + '</button>';
+      return '<button type="button" class="btn small' + sel + '" onclick="selectStrengthDifficulty(\'' + d.key + '\')">' + escHtml(d.label) + '</button>';
     }).join('');
     var weightVal = row.weight == null ? '' : row.weight;
     var repsVal = row.reps == null ? '' : row.reps;
@@ -72,7 +79,7 @@
       '<div class=row><div>' +
       '<div class=title>' + (typeof global.exerciseLinkHtml === 'function'
         ? global.exerciseLinkHtml(t.name, t.exerciseId, t.category, 'Progress')
-        : global.esc(t.name)) + '</div>' +
+        : escHtml(t.name)) + '</div>' +
       '<div class=meta>Set ' + (ordinal + 1) + ' of ' + planned.length + ' · target ' + targetRir + ' RIR · Rest ' +
       (typeof global.fmt === 'function' ? global.fmt(rest) : rest + 's') + ' after Next</div>' +
       prevHtml +
@@ -83,8 +90,8 @@
       coachCue +
       '<div class=guardrail>Rate difficulty after this set — engine adjusts the next one.</div>' +
       '<div class=divider></div>' +
-      '<div class="setrow builder-setrow last-set">' +
-      '<div class=setnum>' + (ordinal + 1) + '<span class=target>' + global.esc(String(row.target || '—')) + '</span></div>' +
+      '<div class="setrow builder-setrow one-set-row last-set">' +
+      '<div class=setnum>' + (ordinal + 1) + '<span class=target>' + escHtml(String(row.target || '—')) + '</span></div>' +
       '<div><span class=mini>Weight</span><input type="number" id="oneSetWeight" value="' + String(weightVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'weight\',this.value)"></div>' +
       '<div><span class=mini>Reps</span><input type="number" id="oneSetReps" value="' + String(repsVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'reps\',this.value)"></div>' +
       '</div>' +
