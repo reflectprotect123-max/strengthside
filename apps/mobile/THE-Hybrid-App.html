@@ -117,6 +117,28 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .rx-toast.ok{border-color:rgba(125,186,154,.5)}
 @media(prefers-reduced-motion:reduce){.rx-toast{transition:none}}
 .task-shell{margin-top:14px}
+.one-set-card{border-color:rgba(212,165,116,.24);background:linear-gradient(165deg,rgba(212,165,116,.07),transparent 42%),linear-gradient(180deg,var(--panel),#101010)}
+.one-set-stack{display:grid;gap:0;margin-top:2px}
+.one-set-stack .setrow{border-bottom:1px solid var(--line);padding:11px 0}
+.one-set-stack .setrow:last-child{border-bottom:0}
+.one-set-row{grid-template-columns:38px 1fr 1fr}
+.one-set-row.one-set-row-active,.setrow.one-set-row.one-set-row-active{grid-template-columns:38px minmax(72px,1fr) minmax(56px,.85fr) minmax(112px,1.12fr) auto;align-items:end;gap:8px}
+.one-set-ghost{opacity:.42}
+.one-set-done{opacity:.76}
+.one-set-active{opacity:1}
+.one-set-readout{min-height:52px;padding:11px 8px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);font-size:18px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;line-height:1.2;display:grid;place-items:center}
+.one-set-readout-diff{font-size:11px;font-weight:650;color:var(--muted);letter-spacing:.02em}
+.one-set-hero-input{font-size:22px;font-weight:700;letter-spacing:-.02em;text-align:center;padding:11px 8px;min-height:52px}
+.one-set-difficulty-wrap{align-self:stretch;display:grid;align-content:end}
+.one-set-difficulty{padding:2px 0 0;margin:0}
+.one-set-difficulty .sliderhead b{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.one-set-difficulty .sliderhead{margin-bottom:6px}
+.one-set-difficulty .slidervalue{font-size:12px;color:var(--copper2)}
+.one-set-difficulty input[type=range]{height:7px;margin-top:2px}
+.one-set-difficulty .sliderlabels{font-size:10px;margin-top:4px}
+.one-set-row-action{display:grid;place-items:end;padding-bottom:2px}
+.one-set-check{color:var(--ok);font-size:16px;font-weight:900}
+@media(max-width:420px){.one-set-row{grid-template-columns:30px 1fr 1fr}.one-set-row.one-set-row-active,.setrow.one-set-row.one-set-row-active{grid-template-columns:28px minmax(64px,1fr) minmax(52px,.8fr) minmax(96px,1fr) auto;gap:6px}.one-set-hero-input,.one-set-readout{min-height:48px;font-size:20px;padding:10px 6px}}
 .task-nav{margin-top:14px}
 .settings-group{gap:12px}
 .settings-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -173,8 +195,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .calibrationchip{display:inline-block;margin-top:8px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .setrow.last-set{border-left:2px solid var(--copper);padding-left:6px;margin-left:-8px}
 .setrow.last-set .mini{color:var(--copper2)}
-.setrow.one-set-row{grid-template-columns:38px 1fr 1fr}
-@media(max-width:420px){.setrow.one-set-row{grid-template-columns:30px 1fr 1fr}}
 .progressnote{margin-top:12px;padding:11px 12px;border:1px solid rgba(124,186,154,.35);border-radius:12px;background:rgba(124,186,154,.08)}
 .progressnote b{color:var(--ok)}
 .timerbox{text-align:center}.bigtime{font-size:51px;font-weight:900;letter-spacing:-.07em;font-variant-numeric:tabular-nums}.phase{color:var(--gold2);font-size:11px;letter-spacing:.16em;text-transform:uppercase}.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.stat{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel3)}.stat small{display:block;color:var(--muted);font-size:9px;letter-spacing:.11em;text-transform:uppercase}.stat b{display:block;margin-top:4px;font-size:24px;letter-spacing:-.05em}.stat.wide{grid-column:1/-1}.loadmethod{margin-top:4px;color:var(--muted);font-size:11px}.builderbottom{position:sticky;bottom:0;margin-top:16px;padding:11px 0 3px;border-top:1px solid var(--line);background:#090909ed;backdrop-filter:blur(10px)}
@@ -972,7 +992,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v137';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v138';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}

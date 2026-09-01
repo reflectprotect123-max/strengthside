@@ -13,10 +13,12 @@ const src = readFileSync(join(join(dir, 'strength-one-set-logger.js')), 'utf8');
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
 if (!src.includes('nextStrengthSet')) throw new Error('nextStrengthSet handler missing in strength-one-set-logger.js');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v137'")) throw new Error('expected cache v137');
-if (!html.includes('.setrow.one-set-row{grid-template-columns:38px 1fr 1fr}')) {
-  throw new Error('index.html missing one-set-row 3-column grid CSS');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v138'")) throw new Error('expected cache v138');
+if (!html.includes('.one-set-row-active{grid-template-columns:')) {
+  throw new Error('index.html missing one-set-row-active grid CSS');
 }
+if (!src.includes('oneSetDifficulty')) throw new Error('difficulty slider missing');
+if (!src.includes('one-set-stack')) throw new Error('ghost set stack missing');
 
 const sandbox = {
   window: {},
@@ -63,14 +65,15 @@ const task = {
 sandbox._task = task;
 
 const htmlOut = sandbox.StrengthOneSetLogger.renderTask(task);
-if (!htmlOut.includes('Set 1 of 3')) throw new Error('one-set header missing');
-if (!htmlOut.includes('How did that set feel')) throw new Error('difficulty prompt missing');
-if (!htmlOut.includes('Very easy')) throw new Error('difficulty buttons missing');
-if (!htmlOut.includes('Next set')) throw new Error('Next set button missing');
+if (!htmlOut.includes('One set at a time')) throw new Error('one-set header missing');
+if (!htmlOut.includes('one-set-stack')) throw new Error('set stack missing');
+if (!htmlOut.includes('one-set-ghost')) throw new Error('ghost rows missing');
+if (!htmlOut.includes('oneSetDifficulty')) throw new Error('difficulty slider missing');
+if (!htmlOut.includes('onclick="nextStrengthSet()"')) throw new Error('in-row Next missing');
 if (!htmlOut.includes('oneSetWeight')) throw new Error('weight input missing');
+if (htmlOut.includes('How did that set feel')) throw new Error('legacy chip prompt should not appear');
 if (htmlOut.includes('Log</button>')) throw new Error('legacy per-row Log should not appear');
 
-// Module loads before inline esc — render must not depend on window.esc
 const sandboxNoEsc = {
   window: {},
   console,
@@ -94,11 +97,14 @@ const htmlNoEsc = sandboxNoEsc.StrengthOneSetLogger.renderTask(task);
 if (!htmlNoEsc.includes('oneSetWeight')) throw new Error('renderTask must work without window.esc');
 
 task.rows[0].reps = 5;
-sandbox.StrengthOneSetLogger.selectStrengthDifficulty('medium');
-if (task.autoreg.selectedDifficulty !== 'medium') throw new Error('difficulty selection');
+sandbox.StrengthOneSetLogger.onDifficultySlide('2');
+if (task.autoreg.selectedDifficulty !== 'medium') throw new Error('difficulty slider selection');
 
 sandbox.StrengthOneSetLogger.nextStrengthSet();
 if (!task.rows[0].done) throw new Error('set 1 should be marked done');
 if (task.rows[1].weight !== 102.5) throw new Error('set 2 should get engine suggestion, got ' + task.rows[1].weight);
+if (!sandbox.StrengthOneSetLogger.renderTask(task).includes('one-set-done')) {
+  throw new Error('set 2 view should show completed set 1');
+}
 
 console.log('strength-one-set-logger.smoke: ok');

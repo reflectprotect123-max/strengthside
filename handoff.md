@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`6f43dd7`** (#135 one-set-row grid CSS — cache v137) |
-| **Open PR** | **none** |
-| **Cache** | **`the-hybrid-athlete-engine-v137`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.42`** (one-set-row 3-column grid; cache v137) — **uploaded** |
+| **`main` tip** | **pending merge** (#136 polished one-set logger — cache v138) |
+| **Open PR** | **#136** polished one-set logger rebuild |
+| **Cache** | **`the-hybrid-athlete-engine-v138`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` @ `1.0.43`** (polished one-set logger — ghost stack, slider, in-row Next; cache v138) — **pending upload** |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -27,7 +27,7 @@
 
 **Ship ritual:** `pnpm run verify` → sync HTML → Capgo upload if bundle moves → refresh this handoff.
 
-**Recent merges (#130–#135):** blank boot + remove Restore hidden · warm-up/cool-down restore · Start session handler fix · preview `blockHelpDropdown` crash fix · strength set logger `escHtml` fallback · one-set-row 3-column grid CSS.
+**Recent merges (#130–#136):** blank boot + remove Restore hidden · warm-up/cool-down restore · Start session handler fix · preview `blockHelpDropdown` crash fix · strength set logger `escHtml` fallback · one-set-row 3-column grid CSS · polished one-set logger (ghost stack, difficulty slider, in-row Next).
 
 ---
 
@@ -41,7 +41,7 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.42`** |
+| Channel / bundle | `dogfood` / **`1.0.43`** |
 | Upload | `CAPGO_BUNDLE_VERSION=1.0.30 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify

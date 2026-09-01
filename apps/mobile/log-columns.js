@@ -701,35 +701,46 @@
     return `<table class="set-table rx-override-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
   }
 
+  function escTwin(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (m) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+    });
+  }
+
   function builderLoggerTwinHtml() {
     const effort = effortColumn();
     const meta = effort ? kindMeta(effort.kind) : kindMeta('reps');
-    const effortVal = effort ? String((effort.values || [])[0] || '').trim() || '—' : '—';
     const targetRirLabel =
       sheet.targetRir != null ? `Target ${sheet.targetRir} RIR` : 'Target 2 RIR (default)';
     const loadDisplay = hasPinnedLoad()
       ? String((loadColumn().values || [])[0] || '').trim()
       : 'Autopilot';
-    const volumeDisplay = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${effortVal}`;
-    const effortPreview = sheet.autopilotVolume ? 'Autopilot' : effortVal;
+    const volumeDisplay = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${String((effort.values || [])[0] || '—').trim() || '—'}`;
 
-    return `<div class="card" style="margin-top:14px" id="builderLoggerCard">
+    const rows = Array.from({ length: sheet.sets }, (_, i) => {
+      const active = i === 0;
+      const effortVal = String((effort && effort.values || [])[i] ?? (effort && effort.value) ?? '').trim() || '—';
+      return `<div class="setrow builder-setrow one-set-row one-set-row-active ${active ? 'one-set-active last-set' : 'one-set-ghost done'}" data-set="${i}">
+        <div class="setnum">${i + 1}<span class="target">${effortVal}</span></div>
+        <div><span class="mini">Weight</span><div class="one-set-readout">${escTwin(loadDisplay)}</div></div>
+        <div><span class="mini">${meta.loggerLabel}</span><div class="one-set-readout">${escTwin(effortVal)}</div></div>
+        <div class="one-set-difficulty-wrap"><div class="one-set-difficulty sliderfield"><div class=sliderhead><b>Difficulty</b><span class=slidervalue>${active ? 'On target' : '—'}</span></div><input type="range" disabled min="0" max="5" step="1" value="2" aria-label="Difficulty slider preview"></div></div>
+        <div class="one-set-row-action"><button type="button" class="btn small primary" disabled>${active ? 'Next' : 'Done'}</button></div>
+      </div>`;
+    }).join('');
+
+    return `<div class="card one-set-card" style="margin-top:14px" id="builderLoggerCard">
       <div class="row">
         <div>
           <div class="title">Athlete logger preview</div>
-          <div class="meta">Set 1 · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
+          <div class="meta">One set at a time · ${targetRirLabel} · Rest ${fmtRest(sheet.restSec)} after Next</div>
         </div>
         <div class="btns" style="margin-top:0"><button type="button" class="btn small primary" id="builderRestBtn" disabled>Rest ${fmtRest(sheet.restSec)}</button></div>
       </div>
-      <div class="guardrail" style="margin-top:10px">Athlete sees <b>${volumeDisplay}</b> volume · <b>${loadDisplay}</b> load — rates difficulty after each set; engine adjusts the next.</div>
+      <div class="guardrail" style="margin-top:10px">Athlete rates <b>difficulty after each set</b> — the engine adjusts load for the next set. Set 1 uses your prescription; later sets autoreg in-session.</div>
       <div class="divider"></div>
-      <div class="setrow builder-setrow last-set" data-set="0">
-        <div class="setnum">1<span class="target">${effortPreview}</span></div>
-        <div><span class="mini">Weight</span><input disabled value="${loadDisplay.replace(/"/g, '&quot;')}"></div>
-        <div><span class="mini">${meta.loggerLabel}</span><input disabled value="${effortPreview.replace(/"/g, '&quot;')}"></div>
-        <div><span class="mini">Difficulty</span><input disabled placeholder="picker"></div>
-        <div class="btns" style="margin:0"><button type="button" class="btn small primary" disabled>Next</button></div>
-      </div>
+      <div class="one-set-stack">${rows}</div>
+      <button type="button" class="btn block" style="margin-top:12px" disabled>Complete exercise early</button>
     </div>`;
   }
 
