@@ -1,5 +1,5 @@
 /**
- * One-set strength logger — difficulty slider + engine suggestNextSet between sets.
+ * One-set strength logger — mockup UI: hero card, session chrome, rest overlay, autoreg slider.
  */
 (function (global) {
   var DIFFICULTIES = [
@@ -16,7 +16,15 @@
   }
 
   function ensureAutoreg(t) {
-    if (!t.autoreg) t.autoreg = { setOrdinal: 0, sessionAnchorKg: null, selectedDifficulty: null };
+    if (!t.autoreg) {
+      t.autoreg = {
+        setOrdinal: 0,
+        sessionAnchorKg: null,
+        selectedDifficulty: null,
+        restPhase: false,
+        restSec: 90,
+      };
+    }
     return t.autoreg;
   }
 
@@ -64,62 +72,162 @@
     return { weightVal: weightVal, repsVal: repsVal };
   }
 
-  function difficultySliderHtml(selectedKey) {
-    var idx = selectedKey != null ? difficultyIndex(selectedKey) : 2;
+  function sessionElapsedSec() {
+    if (typeof global.activeSession !== 'function' || typeof global.workElapsed !== 'function') return 0;
+    var x = global.activeSession();
+    return x ? global.workElapsed(x) : 0;
+  }
+
+  function sessionChromeHtml(t, subtitle) {
+    if (!global.SessionChrome) return '';
+    return global.SessionChrome.render({
+      product: 'strength',
+      title: t.name,
+      subtitle: subtitle,
+      weekLabel: 'STRENGTH',
+      elapsedSec: sessionElapsedSec(),
+    });
+  }
+
+  function targetRir(t) {
+    return global.StrengthAdapter ? global.StrengthAdapter.targetRirForExercise(t) : 2;
+  }
+
+  function difficultySliderHtml(t, autoreg) {
+    var idx = autoreg.selectedDifficulty != null ? difficultyIndex(autoreg.selectedDifficulty) : 2;
     var label = DIFFICULTIES[idx].label;
+    var rir = targetRir(t);
     return (
-      '<div class="one-set-difficulty sliderfield">' +
-      '<div class=sliderhead><b>Difficulty</b><span id="oneSetDiffLabel" class=slidervalue>' + escHtml(label) + '</span></div>' +
-      '<input type="range" id="oneSetDifficulty" min="0" max="' + (DIFFICULTIES.length - 1) + '" step="1" value="' + idx + '" ' +
-      'aria-label="Set difficulty" oninput="StrengthOneSetLogger.onDifficultySlide(this.value)">' +
-      '<div class=sliderlabels><span>Easy</span><span>Max</span></div></div>'
+      '<div class="one-set-difficulty sliderfield dial-strength">' +
+      '<div class=sliderhead><b>How hard was that set?</b><span id="oneSetDiffLabel" class=slidervalue>' +
+      escHtml(label) + '</span></div>' +
+      '<input type="range" id="oneSetDifficulty" min="0" max="' + (DIFFICULTIES.length - 1) + '" step="1" value="' +
+      idx + '" aria-label="Set difficulty" oninput="StrengthOneSetLogger.onDifficultySlide(this.value)">' +
+      '<div class=sliderlabels><span>Very easy</span><span>Max</span></div>' +
+      '<div class=logger-hero-meta style="margin-top:8px;text-align:left">Prescribed <b>RIR ' + rir +
+      '</b>. Slide if it felt easier or harder — <b>Next</b> updates the next set load.</div></div>'
     );
   }
 
-  function renderGhostRow(i, row, state) {
-    var vals = rowValues(row);
-    var diffLabel = row.difficulty ? difficultyByKey(row.difficulty).label : '';
-    var weightDisplay = state === 'done'
-      ? escHtml(String(row.weight == null ? '—' : row.weight))
-      : escHtml(String(vals.weightVal || '—'));
-    var repsDisplay = state === 'done'
-      ? escHtml(String(row.reps == null ? '—' : row.reps))
-      : escHtml(String(vals.repsVal || row.target || '—'));
-    return (
-      '<div class="setrow builder-setrow one-set-row one-set-' + state + (state === 'done' ? ' done' : '') + '">' +
-      '<div class=setnum>' + (i + 1) + '<span class=target>' + escHtml(String(row.target || '—')) + '</span></div>' +
-      '<div><span class=mini>Weight</span><div class=one-set-readout>' + weightDisplay + '</div></div>' +
-      '<div><span class=mini>Reps</span><div class=one-set-readout>' + repsDisplay + '</div></div>' +
-      '<div><span class=mini>Difficulty</span><div class=one-set-readout one-set-readout-diff>' +
-      escHtml(diffLabel || (state === 'done' ? '—' : 'Up next')) + '</div></div>' +
-      '<div class=one-set-row-action>' + (state === 'done' ? '<span class=one-set-check aria-hidden=true>✓</span>' : '') + '</div></div>'
-    );
-  }
-
-  function renderActiveRow(t, planned, i, row, autoreg) {
-    var ri = rowIndex(t, row);
-    var vals = rowValues(row);
-    var nextLabel = i + 1 >= planned.length ? 'Done' : 'Next';
-    return (
-      '<div class="setrow builder-setrow one-set-row one-set-active last-set one-set-row-active">' +
-      '<div class=setnum>' + (i + 1) + '<span class=target>' + escHtml(String(row.target || '—')) + '</span></div>' +
-      '<div><span class=mini>Weight</span><input type="number" class=one-set-hero-input id="oneSetWeight" value="' +
-      String(vals.weightVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'weight\',this.value)"></div>' +
-      '<div><span class=mini>Reps</span><input type="number" class=one-set-hero-input id="oneSetReps" value="' +
-      String(vals.repsVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'reps\',this.value)"></div>' +
-      '<div class=one-set-difficulty-wrap>' + difficultySliderHtml(autoreg.selectedDifficulty) + '</div>' +
-      '<div class=one-set-row-action><button type="button" class="btn small primary" onclick="nextStrengthSet()">' + nextLabel + '</button></div></div>'
-    );
-  }
-
-  function renderSetStack(t, planned, ordinal, autoreg) {
+  function renderGhostStack(planned, ordinal) {
     var html = '';
     for (var i = 0; i < planned.length; i++) {
-      if (i < ordinal) html += renderGhostRow(i, planned[i], 'done');
-      else if (i === ordinal) html += renderActiveRow(t, planned, i, planned[i], autoreg);
-      else html += renderGhostRow(i, planned[i], 'ghost');
+      if (i === ordinal) continue;
+      var row = planned[i];
+      var vals = rowValues(row);
+      var state = row.done ? 'done' : 'ghost';
+      html +=
+        '<div class="one-set-ghost-row one-set-' + state + '">' +
+        '<span class=one-set-ghost-num>Set ' + (i + 1) + '</span>' +
+        '<span class=one-set-ghost-val>' +
+        escHtml(String(row.done ? row.weight : vals.weightVal || '—')) + ' kg × ' +
+        escHtml(String(row.done ? row.reps : vals.repsVal || row.target || '—')) +
+        '</span>' +
+        (row.done ? '<span class=one-set-check aria-hidden=true>✓</span>' : '') +
+        '</div>';
     }
-    return '<div class="one-set-stack">' + html + '</div>';
+    if (!html) return '';
+    return '<div class="one-set-ghost-stack">' + html + '</div>';
+  }
+
+  function renderHeroCard(t, planned, i, row, autoreg) {
+    var ri = rowIndex(t, row);
+    var vals = rowValues(row);
+    var rir = targetRir(t);
+    var missed = autoreg.selectedDifficulty === 'did_not_complete' ||
+      difficultyIndex(autoreg.selectedDifficulty) === DIFFICULTIES.length - 1;
+    var wDisplay = vals.weightVal === '' ? '—' : vals.weightVal;
+    var rDisplay = vals.repsVal === '' ? '—' : vals.repsVal;
+    if (missed) {
+      return (
+        '<div class="logger-hero-card dial-strength">' +
+        '<div class=logger-hero-hint>Did not complete — log reps done</div>' +
+        '<div class="logger-hero-metric" style="font-size:18px;margin-bottom:10px">' +
+        escHtml(String(wDisplay)) + ' kg × ' + escHtml(String(parseTargetReps(row) || row.target || '—')) + ' target</div>' +
+        '<div><span class=mini>Reps done</span>' +
+        '<input type="number" class="one-set-hero-input logger-hero-reps-input" id="oneSetReps" value="' +
+        String(vals.repsVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'reps\',this.value)"></div>' +
+        '<input type="hidden" id="oneSetWeight" value="' + String(vals.weightVal).replace(/"/g, '&quot;') + '">' +
+        '<div class=logger-hero-meta>Next set capped from reps you log — load unchanged unless engine adjusts.</div></div>'
+      );
+    }
+    return (
+      '<div class="logger-hero-card dial-strength">' +
+      '<div class=logger-hero-hint>Tap to edit</div>' +
+      '<div class=logger-hero-metric>' +
+      '<span class=logger-hero-weight-wrap><input type="number" class="one-set-hero-input logger-hero-weight-input" id="oneSetWeight" value="' +
+      String(vals.weightVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'weight\',this.value)"><span class=logger-hero-unit>kg</span></span>' +
+      '<span class=logger-hero-x>×</span>' +
+      '<span class=logger-hero-reps-wrap><input type="number" class="one-set-hero-input logger-hero-reps-input" id="oneSetReps" value="' +
+      String(vals.repsVal).replace(/"/g, '&quot;') + '" onchange="updateSet(' + ri + ',\'reps\',this.value)"><span class=logger-hero-unit>reps</span></span>' +
+      '</div>' +
+      '<div class=logger-hero-meta>Target: <b>RIR ' + rir + '</b> — next set adjusts from slider</div>' +
+      (t.lastSuggestion && t.lastSuggestion.reasonCodes && t.lastSuggestion.reasonCodes.length
+        ? '<div class=logger-hero-meta style="color:var(--copper2)">Adjusted from last set · ' +
+          escHtml(String(t.lastSuggestion.loadKg)) + ' kg × ' + escHtml(String(t.lastSuggestion.reps)) + '</div>'
+        : '') +
+      '</div>'
+    );
+  }
+
+  function renderRestPhase(t, autoreg, planned) {
+    var ordinal = autoreg.setOrdinal;
+    var prev = planned[ordinal - 1];
+    var next = planned[ordinal];
+    var restSec = autoreg.restSec || (typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90);
+    var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
+    var summary = prev
+      ? escHtml(t.name) + '<br>Set ' + ordinal + ' logged · ' + escHtml(String(prev.weight)) + ' kg × ' + escHtml(String(prev.reps))
+      : escHtml(t.name);
+    var upNext = next
+      ? '<b>Up next: Set ' + (ordinal + 1) + ' / ' + planned.length + '</b><span>' +
+        escHtml(String(next.weight || '—')) + ' kg × ' + escHtml(String(next.reps || next.target || '—')) +
+        ' · RIR ' + targetRir(t) + '</span>'
+      : '';
+    if (!global.RestOverlay) return '';
+    return global.RestOverlay.render({
+      mode: 'strength',
+      visible: true,
+      remainingSec: remaining,
+      totalSec: restSec,
+      phaseLabel: 'REST · BETWEEN SETS',
+      summaryHtml: summary,
+      upNextHtml: upNext,
+      skipOnclick: 'StrengthOneSetLogger.finishRest()',
+      addOnclick: 'RestOverlay.addRest(30)',
+    });
+  }
+
+  function renderActiveLogger(t, planned, ordinal, autoreg) {
+    var row = planned[ordinal];
+    var rir = targetRir(t);
+    var nextLabel = ordinal + 1 >= planned.length ? 'Done · finish exercise' : 'Next set';
+    var loadHead = typeof global.strengthLoadHeadlineHtml === 'function'
+      ? global.strengthLoadHeadlineHtml(t, global.activeSession && typeof global.activeSession === 'function' ? global.activeSession()?.date : undefined)
+      : '';
+    var coachCue =
+      global.CoachAI && typeof global.activeSession === 'function' && global.CoachAI.athleteCueHtml
+        ? global.CoachAI.athleteCueHtml(global.activeSession())
+        : '';
+    var progressLink = typeof global.exerciseLinkHtml === 'function'
+      ? '<div class=meta style="margin-top:4px">' + global.exerciseLinkHtml(t.name, t.exerciseId, t.category, 'View progress') + '</div>'
+      : '';
+
+    return (
+      '<div class="card task-shell one-set-card dial-strength">' +
+      sessionChromeHtml(t, 'Set ' + (ordinal + 1) + ' / ' + planned.length) +
+      progressLink +
+      loadHead +
+      coachCue +
+      renderGhostStack(planned, ordinal) +
+      renderHeroCard(t, planned, ordinal, row, autoreg) +
+      difficultySliderHtml(t, autoreg) +
+      '<button type="button" class="btn primary block logger-next-btn" style="margin-top:14px" onclick="nextStrengthSet()">' +
+      nextLabel + '</button>' +
+      '<button type="button" class="btn block" style="margin-top:8px" onclick="addExtra()">+ Extra set</button>' +
+      '<button type="button" class="btn block" style="margin-top:8px" onclick="completeStrength()">' +
+      (t.complete ? 'Reopen exercise' : 'Complete exercise early') + '</button></div>'
+    );
   }
 
   function renderTask(t) {
@@ -128,47 +236,44 @@
     var autoreg = ensureAutoreg(t);
     var planned = plannedRows(t);
     var ordinal = autoreg.setOrdinal;
-    var row = planned[ordinal];
-    if (!row) {
-      return '<div class="card task-shell one-set-card"><div class=title>All sets logged</div><button class="btn primary block" style="margin-top:12px" onclick="completeStrength()">Complete exercise</button></div>';
+    if (!planned.length || ordinal >= planned.length) {
+      return (
+        '<div class="card task-shell one-set-card dial-strength">' +
+        sessionChromeHtml(t, 'Complete') +
+        '<div class=title>All sets logged</div>' +
+        '<button class="btn primary block" style="margin-top:12px" onclick="completeStrength()">Complete exercise</button></div>'
+      );
     }
-    var last = typeof global.lastRows === 'function' ? global.lastRows(t.exerciseId, t.name) : [];
-    var loadHead = typeof global.strengthLoadHeadlineHtml === 'function'
-      ? global.strengthLoadHeadlineHtml(t, global.activeSession && typeof global.activeSession === 'function' ? global.activeSession()?.date : undefined)
-      : '';
-    var coachCue =
-      global.CoachAI && typeof global.activeSession === 'function' && global.CoachAI.athleteCueHtml
-        ? global.CoachAI.athleteCueHtml(global.activeSession())
-        : '';
-    var rest = typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90;
-    var targetRir = global.StrengthAdapter ? global.StrengthAdapter.targetRirForExercise(t) : 2;
-    var prev = last[ordinal] || last[last.length - 1] || null;
-    var prevHtml = prev
-      ? '<div class=meta>Last time: ' + escHtml(String(prev.weight || '—')) + ' kg × ' + escHtml(String(prev.reps || '—')) + '</div>'
-      : '<div class=meta>No previous sets logged.</div>';
-    var progressLink = typeof global.exerciseLinkHtml === 'function'
-      ? '<div class=meta style="margin-top:4px">' + global.exerciseLinkHtml(t.name, t.exerciseId, t.category, 'View progress') + '</div>'
-      : '';
+    if (autoreg.restPhase) return renderRestPhase(t, autoreg, planned);
+    return renderActiveLogger(t, planned, ordinal, autoreg);
+  }
 
-    return (
-      '<div class="card task-shell one-set-card">' +
-      '<div class=row><div>' +
-      '<div class=title>' + escHtml(t.name) + '</div>' +
-      progressLink +
-      '<div class=meta>One set at a time · Target ' + targetRir + ' RIR · Rest ' +
-      (typeof global.fmt === 'function' ? global.fmt(rest) : rest + 's') + ' after Next</div>' +
-      prevHtml +
-      '</div><div class=btns style="margin-top:0">' +
-      (typeof global.restBtn === 'function' ? global.restBtn(rest) : '') +
-      '</div></div>' +
-      loadHead +
-      coachCue +
-      '<div class=guardrail>Athlete rates <b>difficulty after each set</b> — the engine adjusts load for the next set.</div>' +
-      '<div class=divider></div>' +
-      renderSetStack(t, planned, ordinal, autoreg) +
-      '<button class="btn block" style="margin-top:12px" onclick="completeStrength()">' +
-      (t.complete ? 'Reopen exercise' : 'Complete exercise early') + '</button></div>'
-    );
+  function beginRest(sec) {
+    var t = global.current && global.current();
+    if (!t) return;
+    var autoreg = ensureAutoreg(t);
+    autoreg.restPhase = true;
+    autoreg.restSec = Math.max(1, Math.round(Number(sec) || 90));
+    if (global.RestOverlay) {
+      global.RestOverlay.startRest(autoreg.restSec, function () {
+        finishRest();
+      });
+    }
+    if (typeof global.save === 'function') global.save();
+    if (typeof global.train === 'function') global.train();
+  }
+
+  function finishRest() {
+    var t = global.current && global.current();
+    if (!t) return;
+    var autoreg = ensureAutoreg(t);
+    autoreg.restPhase = false;
+    if (global.RestOverlay) {
+      global.RestOverlay.stopRest();
+      global.RestOverlay.hide();
+    }
+    if (typeof global.save === 'function') global.save();
+    if (typeof global.train === 'function') global.train();
   }
 
   function onDifficultySlide(value) {
@@ -192,6 +297,7 @@
   function nextStrengthSet() {
     var t = global.current && global.current();
     if (!t || t.kind !== 'strength') return;
+    if (ensureAutoreg(t).restPhase) return;
     var autoreg = ensureAutoreg(t);
     var planned = plannedRows(t);
     var ordinal = autoreg.setOrdinal;
@@ -238,17 +344,19 @@
     autoreg.selectedDifficulty = null;
     if (typeof global.save === 'function') global.save();
     if (nextOrdinal < planned.length) {
-      if (typeof global.maybeStartRestAfterLog === 'function') {
-        var rest = typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90;
-        global.maybeStartRestAfterLog(rest, true);
-      }
-      if (typeof global.train === 'function') global.train();
+      beginRest(typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90);
       return;
     }
     t.complete = true;
     if (typeof global.save === 'function') global.save();
+    if (global.RestOverlay) global.RestOverlay.stopRest();
     if (typeof global.stopRest === 'function') global.stopRest();
     if (typeof global.nextTask === 'function') global.nextTask();
+  }
+
+  function clearRestPhase() {
+    var t = global.current && global.current();
+    if (t && t.autoreg) t.autoreg.restPhase = false;
   }
 
   global.StrengthOneSetLogger = {
@@ -257,6 +365,9 @@
     onDifficultySlide: onDifficultySlide,
     selectStrengthDifficulty: selectStrengthDifficulty,
     nextStrengthSet: nextStrengthSet,
+    beginRest: beginRest,
+    finishRest: finishRest,
+    clearRestPhase: clearRestPhase,
   };
   global.selectStrengthDifficulty = selectStrengthDifficulty;
   global.nextStrengthSet = nextStrengthSet;

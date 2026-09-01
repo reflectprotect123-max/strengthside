@@ -1,12 +1,13 @@
 /**
- * Conditioning interval autoreg — felt RPE on rest + decideNextPhase between work phases.
- * Coach builder unchanged; hooks existing interval clock in index.html.
+ * Conditioning interval autoreg — RPE slider on rest + decideNextPhase between work phases.
  */
 (function (global) {
   var FELT_OPTIONS = [
     { key: 'easy', label: 'Too easy', rpe: 4 },
     { key: 'on', label: 'On target', rpe: 6.5 },
     { key: 'hard', label: 'Too hard', rpe: 8.5 },
+    { key: 'max', label: 'Max', rpe: 9.5 },
+    { key: 'stopped', label: 'Stopped early', rpe: 10 },
   ];
 
   function num(v) {
@@ -21,6 +22,20 @@
   function ensureAutoreg(t) {
     if (!t.autoreg) t.autoreg = { pendingFelt: null, lastWorkZones: null, workZoneBaseline: null };
     return t.autoreg;
+  }
+
+  function feltIndex(rpe) {
+    if (rpe == null) return 1;
+    var best = 1;
+    var bestDiff = Infinity;
+    for (var i = 0; i < FELT_OPTIONS.length; i++) {
+      var diff = Math.abs(FELT_OPTIONS[i].rpe - num(rpe));
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = i;
+      }
+    }
+    return best;
   }
 
   function snapshotZones(source) {
@@ -74,41 +89,83 @@
     return 'not_met';
   }
 
-  function restPanelHtml(t, iv) {
-    if (!iv || iv.phase !== 'rest' || iv.finished) return '';
-    if (!global.EngineAdapter || !global.EngineAdapter.suggestNextPhase) return '';
+  function sliderHtml(t, idPrefix, oninput) {
+    idPrefix = idPrefix || 'condFelt';
+    oninput = oninput || 'CondIntervalAutoreg.onFeltSlide(this.value)';
     var autoreg = ensureAutoreg(t);
-    var btns = FELT_OPTIONS.map(function (o) {
-      var sel = autoreg.pendingFelt === o.rpe ? ' primary' : '';
-      return (
-        '<button type="button" class="btn small' +
-        sel +
-        '" onclick="CondIntervalAutoreg.setIntervalFelt(' +
-        o.rpe +
-        ')">' +
-        (global.esc ? global.esc(o.label) : o.label) +
-        '</button>'
-      );
-    }).join('');
+    var idx = feltIndex(autoreg.pendingFelt);
+    var label = FELT_OPTIONS[idx].label;
     var hint =
       t.targetWatts != null && t.targetWatts !== ''
         ? 'Next interval target: ' + t.targetWatts + ' W'
         : 'Engine adjusts next interval from feel + HR zones';
-    var cue =
-      global.CoachAI && global.CoachAI.athleteCueHtml && typeof global.activeSession === 'function'
-        ? global.CoachAI.athleteCueHtml(global.activeSession())
-        : '';
     return (
-      '<div class="card" style="margin-top:10px;padding:12px">' +
-      '<div class=title>Rest · how did that interval feel?</div>' +
-      '<div class=meta>' +
+      '<div class="engine-rest-slider sliderfield dial-engine">' +
+      '<div class=sliderhead><b>How hard was that interval?</b><span id="' +
+      idPrefix +
+      'Label" class=slidervalue>' +
+      (global.esc ? global.esc(label) : label) +
+      '</span></div>' +
+      '<input type="range" id="' +
+      idPrefix +
+      '" min="0" max="' +
+      (FELT_OPTIONS.length - 1) +
+      '" step="1" value="' +
+      idx +
+      '" aria-label="Interval difficulty" oninput="' +
+      oninput +
+      '">' +
+      '<div class=sliderlabels><span>Too easy</span><span>Max</span></div>' +
+      '<div class=logger-hero-meta style="margin-top:6px">' +
       hint +
-      ' · pick before the next work phase</div>' +
-      cue +
-      '<div class=btns style="flex-wrap:wrap;justify-content:flex-start;margin-top:8px">' +
-      btns +
       '</div></div>'
     );
+  }
+
+  function restSliderHtml(t, iv) {
+    if (!iv || iv.phase !== 'rest' || iv.finished) return '';
+    return sliderHtml(t, 'condFelt', 'CondIntervalAutoreg.onFeltSlide(this.value)');
+  }
+
+  function recapSliderHtml(t) {
+    return (
+      sliderHtml(t, 'condRecapFelt', 'CondIntervalAutoreg.onRecapSlide(this.value)') +
+      '<div class=logger-hero-meta>Overall session feel — saves with your result</div>'
+    );
+  }
+
+  function restPanelHtml(t, iv) {
+    if (!iv || iv.phase !== 'rest' || iv.finished) return '';
+    if (!global.EngineAdapter || !global.EngineAdapter.suggestNextPhase) return restSliderHtml(t, iv);
+    return (
+      '<div class="card" style="margin-top:10px;padding:12px">' +
+      restSliderHtml(t, iv) +
+      '</div>'
+    );
+  }
+
+  function onFeltSlide(value) {
+    var idx = Number(value);
+    if (!Number.isFinite(idx)) idx = 1;
+    idx = Math.max(0, Math.min(FELT_OPTIONS.length - 1, idx));
+    var opt = FELT_OPTIONS[idx];
+    var label = global.document && global.document.getElementById('condFeltLabel');
+    if (label) label.textContent = opt.label;
+    setIntervalFelt(opt.rpe);
+  }
+
+  function onRecapSlide(value) {
+    var idx = Number(value);
+    if (!Number.isFinite(idx)) idx = 1;
+    idx = Math.max(0, Math.min(FELT_OPTIONS.length - 1, idx));
+    var opt = FELT_OPTIONS[idx];
+    var label = global.document && global.document.getElementById('condRecapFeltLabel');
+    if (label) label.textContent = opt.label;
+    var t = global.current && global.current();
+    if (!t) return;
+    t.result = t.result || {};
+    t.result.sessionRpe = opt.rpe;
+    if (typeof global.save === 'function') global.save();
   }
 
   function setIntervalFelt(rpe) {
@@ -147,8 +204,12 @@
     onWorkEnd: onWorkEnd,
     beforeNextWork: beforeNextWork,
     restPanelHtml: restPanelHtml,
+    restSliderHtml: restSliderHtml,
+    recapSliderHtml: recapSliderHtml,
     intervalHtmlExtra: intervalHtmlExtra,
     setIntervalFelt: setIntervalFelt,
+    onFeltSlide: onFeltSlide,
+    onRecapSlide: onRecapSlide,
     zoneComplianceForTask: zoneComplianceForTask,
   };
   global.setIntervalFelt = setIntervalFelt;

@@ -24,6 +24,7 @@ jobs:
       - run: pnpm run check:engine-adapter
       - run: pnpm run check:cond-thin-twin
       - run: pnpm run check:cond-interval-autoreg
+      - run: pnpm run check:cond-session-logger
       - run: pnpm run check:cond-autopilot-prescription
       - run: pnpm run check:coach-ai
       - run: pnpm run check:strength-ai
