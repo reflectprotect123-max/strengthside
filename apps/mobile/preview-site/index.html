@@ -139,6 +139,44 @@ input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;
 .one-set-row-action{display:grid;place-items:end;padding-bottom:2px}
 .one-set-check{color:var(--ok);font-size:16px;font-weight:900}
 @media(max-width:420px){.one-set-row{grid-template-columns:30px 1fr 1fr}.one-set-row.one-set-row-active,.setrow.one-set-row.one-set-row-active{grid-template-columns:28px minmax(64px,1fr) minmax(52px,.8fr) minmax(96px,1fr) auto;gap:6px}.one-set-hero-input,.one-set-readout{min-height:48px;font-size:20px;padding:10px 6px}}
+.session-chrome{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.session-chrome-eyebrow{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.session-chrome-title{font-size:22px;font-weight:860;letter-spacing:-.04em;line-height:1.05;margin-top:4px}
+.session-chrome-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.session-chrome-elapsed{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--dim);padding-top:2px}
+.dial-strength .session-chrome-eyebrow{color:var(--copper2)}
+.dial-engine .session-chrome-eyebrow{color:var(--zone)}
+.logger-hero-card{margin-top:8px;padding:16px 14px;border:1px solid var(--line);border-radius:16px;background:var(--panel3);text-align:center}
+.dial-strength .logger-hero-card{border-color:rgba(212,165,116,.35);background:linear-gradient(165deg,rgba(212,165,116,.08),transparent 55%),var(--panel3)}
+.dial-engine .logger-hero-card{border-color:rgba(94,196,180,.35);background:linear-gradient(165deg,rgba(94,196,180,.08),transparent 55%),var(--panel3)}
+.logger-hero-hint{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.logger-hero-metric{font-size:28px;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.05}
+.logger-hero-meta{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.4}
+.rest-overlay{position:fixed;inset:0;z-index:55;display:grid;align-content:center;justify-items:center;padding:24px 18px calc(24px + env(safe-area-inset-bottom));background:#0a0c0ef2;backdrop-filter:blur(12px);text-align:center}
+.rest-overlay.hidden{display:none!important}
+.rest-overlay-phase{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2)}
+.rest-overlay-summary{margin-top:8px;font-size:14px;color:var(--text);line-height:1.45}
+.rest-ring-wrap{position:relative;width:min(72vw,260px);height:min(72vw,260px);margin:22px auto 16px}
+.rest-ring{width:100%;height:100%;transform:rotate(-90deg)}
+.rest-ring-track{fill:none;stroke:var(--line);stroke-width:8}
+.rest-ring-progress{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.dial-strength .rest-ring-progress{stroke:var(--copper)}
+.dial-engine .rest-ring-progress{stroke:var(--zone)}
+.rest-ring-center{position:absolute;inset:0;display:grid;place-content:center;gap:2px}
+.rest-ring-time{font-size:42px;font-weight:900;letter-spacing:-.06em;font-variant-numeric:tabular-nums;line-height:1}
+.rest-ring-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rest-up-next{margin:12px 0 18px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel);max-width:360px;width:100%}
+.rest-up-next b{display:block;font-size:13px;color:var(--ok)}
+.rest-up-next span{display:block;margin-top:4px;font-size:12px;color:var(--muted)}
+.rest-overlay-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;max-width:360px;width:100%}
+.engine-work-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.engine-work-stat{padding:10px 8px;border:1px solid var(--line);border-radius:12px;background:var(--panel3)}
+.engine-work-stat small{display:block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.engine-work-stat b{display:block;margin-top:4px;font-size:20px;font-weight:800;letter-spacing:-.04em}
+.engine-recap-card{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--panel3);text-align:left}
+.engine-recap-row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.engine-recap-row:last-child{border:0}
+@media(prefers-reduced-motion:reduce){.rest-ring-progress{transition:none}}
 .task-nav{margin-top:14px}
 .settings-group{gap:12px}
 .settings-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
@@ -904,6 +942,8 @@ body{background:transparent}
 <script src="./recovery-prescription.js"></script>
 <script src="./strength-adapter.js"></script>
 <script src="./strength-one-set-logger.js"></script>
+<script src="./session-chrome.js"></script>
+<script src="./rest-overlay.js"></script>
 <script src="./big-mac-contract.js"></script>
 <script src="./big-mac-product-engines.js"></script>
 <script src="./big-mac-decide-shim.js"></script>

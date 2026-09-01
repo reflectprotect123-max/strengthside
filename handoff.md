@@ -15,9 +15,9 @@
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **`main` tip** | **`0cacc33`** (#136 polished one-set logger — cache v138) |
-| **Open PR** | **none** |
+| **Open PR** | **#138** logger changeover Phase 0 (shared shell) |
 | **Cache** | **`the-hybrid-athlete-engine-v138`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.43`** (polished one-set logger — ghost stack, slider, in-row Next; cache v138) — **uploading** |
+| **Capgo** | **`dogfood` @ `1.0.43`** (polished one-set logger — ghost stack, slider, in-row Next; cache v138) — **uploaded** |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |

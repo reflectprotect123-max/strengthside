@@ -28,6 +28,8 @@ self.addEventListener('install', (event) => {
           './native-bridge.js',
           './log-columns.js',
           './strength-one-set-logger.js',
+          './session-chrome.js',
+          './rest-overlay.js',
           './big-mac-contract.js',
           './big-mac-product-engines.js',
           './big-mac-decide-shim.js',

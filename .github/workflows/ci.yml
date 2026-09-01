@@ -41,6 +41,8 @@ jobs:
       - run: pnpm run check:athlete-builder-migrate
       - run: pnpm run check:athlete-superset-lock
       - run: pnpm run check:session-preview
+      - run: pnpm run check:session-chrome
+      - run: pnpm run check:rest-overlay
       - run: pnpm run check:hybrid-html-sync
       - run: pnpm run check:builder-suggest
       - run: pnpm run check:nutrition-ui
