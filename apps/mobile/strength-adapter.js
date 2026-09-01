@@ -963,6 +963,16 @@
     if (first && (first.weight === '' || first.weight == null)) first.weight = loadKg;
   }
 
+  function fillBlankRowReps(ex) {
+    (ex.rows || []).forEach(function (row) {
+      if (row.done || row.extra) return;
+      if (row.reps !== '' && row.reps != null) return;
+      var raw = String(row.target || '').trim();
+      var m = raw.match(/^(\d+)/);
+      if (m) row.reps = m[1];
+    });
+  }
+
   function isVolumeDeferred(ex) {
     if (!ex) return false;
     if (ex.autopilotVolume === true) return true;
@@ -981,13 +991,14 @@
     while (parts.length < count) parts.push(parts[parts.length - 1] || '');
     parts = parts.slice(0, count);
     ex.rows = parts.map(function (target, i) {
+      var m = String(target).match(/^(\d+)/);
       return {
         id: 'row_' + Math.random().toString(36).slice(2, 9),
         n: i + 1,
         target: target,
         targetKind: /s(ec(onds?)?)?$/i.test(String(target)) ? 'seconds' : 'reps',
         weight: '',
-        reps: '',
+        reps: m ? m[1] : '',
         prescribedLoad: '',
         done: false,
         extra: false,
@@ -1151,6 +1162,7 @@
     if (!ex) return;
     var exerciseId = ex.exerciseId || ex.id;
     if (!exerciseId) return;
+    fillBlankRowReps(ex);
     var hint = ensureStrengthState(state).loadHints[exerciseId];
     if (hint && hint.loadKg && autopilotReadyForExercise(state, exerciseId, 2)) fillBlankRowWeights(ex, hint.loadKg);
     if (ex.loadExpr) {

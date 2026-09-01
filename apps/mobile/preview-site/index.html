@@ -1071,8 +1071,9 @@ function libraryExercise(exerciseId,name,category=''){let ex=(S.exercises||[]).f
 
 function targetList(ex){let count=Math.max(1,num(ex.sets)||1),parts=String(ex.reps??'').split(',').map(x=>x.trim()).filter(Boolean);if(!parts.length)parts=[''];if(parts.length===1)parts=Array.from({length:count},()=>parts[0]);while(parts.length<count)parts.push(parts[parts.length-1]);return parts.slice(0,count)}
 function targetKind(target){return /s(ec(onds?)?)?$/i.test(String(target||'').trim())?'seconds':'reps'}
-function makeRows(ex){return targetList(ex).map((target,i)=>({id:id(),n:i+1,target,targetKind:targetKind(target),weight:'',reps:'',done:false,extra:false}))}
-function upgradeRows(ex){if(window.LogColumns)ex.logColumns=LogColumns.normalizeColumns(ex);ex.rows=ex.rows||makeRows(ex);let targets=targetList(ex);ex.rows.forEach((row,i)=>{if(row.target===undefined)row.target=row.extra?'':(targets[i]||targets[targets.length-1]||'');if(!row.targetKind)row.targetKind=targetKind(row.target);if(row.rir===undefined)row.rir=''});if(window.LogColumns)LogColumns.applyColumnTargetKinds(ex,ex.rows);return ex}
+function seedRepsFromTarget(row){if(!row||row.done||row.extra)return;if(row.reps!==''&&row.reps!=null)return;let m=String(row.target||'').trim().match(/^(\d+)/);if(m)row.reps=m[1]}
+function makeRows(ex){return targetList(ex).map((target,i)=>{let m=String(target).match(/^(\d+)/);return{id:id(),n:i+1,target,targetKind:targetKind(target),weight:'',reps:m?m[1]:'',done:false,extra:false}})}
+function upgradeRows(ex){if(window.LogColumns)ex.logColumns=LogColumns.normalizeColumns(ex);ex.rows=ex.rows||makeRows(ex);let targets=targetList(ex);ex.rows.forEach((row,i)=>{if(row.target===undefined)row.target=row.extra?'':(targets[i]||targets[targets.length-1]||'');if(!row.targetKind)row.targetKind=targetKind(row.target);if(row.rir===undefined)row.rir='';seedRepsFromTarget(row)});if(window.LogColumns)LogColumns.applyColumnTargetKinds(ex,ex.rows);return ex}
 function isSupersetBlock(block){return!!block?.superset||(/superset|pair/i.test(String(block?.heading||''))&&(block.exercises||[]).length>1)}
 function legacyProgramRegex(){return new RegExp('^W'+'eek\\s*[12]\\s*[—-]','i')}
 function legacyPrefixRegex(){return new RegExp('^W'+'eek\\s*1\\s*[—-]\\s*','i')}
@@ -2313,6 +2314,8 @@ function setSupersetValue(k,v){
 function logSupersetSet(){
   let t=current(),item=t?supersetCurrent(t):null;
   if(!item){if(t)t.complete=true;save('superset-complete');return train()}
+  if(window.StrengthOneSetLogger&&StrengthOneSetLogger.syncActiveRowFromDom)StrengthOneSetLogger.syncActiveRowFromDom(item.row);
+  seedRepsFromTarget(item.row);
   let error=validateStrengthRow(item.row);
   if(error)return alert(error);
   let restSec=restSeconds((t.exercises||[])[item.exIndex]?.restSec||supersetRest(t));

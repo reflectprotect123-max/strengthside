@@ -44,6 +44,28 @@
     return m ? Number(m[1]) : null;
   }
 
+  /** Persist prescribed reps on the active row — display fallback alone is not enough for Next set. */
+  function seedActiveRow(row) {
+    if (!row || row.done || row.extra) return false;
+    var changed = false;
+    if (row.reps === '' || row.reps == null) {
+      var fromTarget = parseTargetReps(row);
+      if (fromTarget != null) {
+        row.reps = String(fromTarget);
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  function syncActiveRowFromDom(row) {
+    if (!row || !global.document) return;
+    var w = global.document.getElementById('oneSetWeight');
+    var r = global.document.getElementById('oneSetReps');
+    if (w && String(w.value).trim() !== '') row.weight = w.value;
+    if (r && String(r.value).trim() !== '') row.reps = r.value;
+  }
+
   function escHtml(value) {
     if (typeof global.esc === 'function') return global.esc(value);
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (m) {
@@ -59,9 +81,9 @@
   }
 
   function rowValues(row) {
+    seedActiveRow(row);
     var weightVal = row.weight == null ? '' : row.weight;
     var repsVal = row.reps == null ? '' : row.reps;
-    if (!String(repsVal).trim() && row.target) repsVal = parseTargetReps(row) || row.target;
     return { weightVal: weightVal, repsVal: repsVal };
   }
 
@@ -191,12 +213,16 @@
       String(vals.weightVal).replace(/"/g, '&quot;') +
       '" onchange="updateSet(' +
       ri +
+      ',\'weight\',this.value)" oninput="updateSet(' +
+      ri +
       ',\'weight\',this.value)" aria-label="Weight kg">' +
       '<span class=metric-unit>kg</span></div>' +
       '<div class=metric-sep>×</div>' +
       '<div><input type="number" class="metric-val" id="oneSetReps" value="' +
       String(vals.repsVal).replace(/"/g, '&quot;') +
       '" onchange="updateSet(' +
+      ri +
+      ',\'reps\',this.value)" oninput="updateSet(' +
       ri +
       ',\'reps\',this.value)" aria-label="Reps">' +
       '<span class=metric-unit>reps</span></div></div>' +
@@ -264,6 +290,7 @@
 
   function renderActiveLogger(t, planned, ordinal, autoreg) {
     var row = planned[ordinal];
+    if (seedActiveRow(row) && typeof global.save === 'function') global.save();
     var missed = autoreg.selectedDifficulty === 'did_not_complete';
     var nextLabel = ordinal + 1 >= planned.length ? 'Next set' : 'Next set';
     applyChrome(t, strengthWeekLabel());
@@ -342,7 +369,11 @@
     var autoreg = ensureAutoreg(t);
     autoreg.restPhase = false;
     if (global.RestOverlay) global.RestOverlay.stopRest();
-    if (typeof global.save === 'function') global.save();
+    syncAutoregOrdinal(t);
+    var planned = plannedRows(t);
+    var row = planned[autoreg.setOrdinal];
+    if (seedActiveRow(row) && typeof global.save === 'function') global.save();
+    else if (typeof global.save === 'function') global.save();
     if (typeof global.train === 'function') global.train();
   }
 
@@ -392,6 +423,8 @@
     var ordinal = autoreg.setOrdinal;
     var row = planned[ordinal];
     if (!row) return;
+    syncActiveRowFromDom(row);
+    seedActiveRow(row);
     if (!autoreg.selectedDifficulty) {
       var slider = global.document && global.document.getElementById('oneSetDifficulty');
       if (slider) onDifficultySlide(slider.value);
@@ -488,12 +521,12 @@
       '<div class=hero-metrics>' +
       '<div><input type="number" class="metric-val" id="oneSetWeight" value="' +
       String(vals.weightVal).replace(/"/g, '&quot;') +
-      '" onchange="setSupersetValue(\'weight\',this.value)" aria-label="Weight kg">' +
+      '" onchange="setSupersetValue(\'weight\',this.value)" oninput="setSupersetValue(\'weight\',this.value)" aria-label="Weight kg">' +
       '<span class=metric-unit>kg</span></div>' +
       '<div class=metric-sep>×</div>' +
       '<div><input type="number" class="metric-val" id="oneSetReps" value="' +
       String(vals.repsVal).replace(/"/g, '&quot;') +
-      '" onchange="setSupersetValue(\'reps\',this.value)" aria-label="Reps">' +
+      '" onchange="setSupersetValue(\'reps\',this.value)" oninput="setSupersetValue(\'reps\',this.value)" aria-label="Reps">' +
       '<span class=metric-unit>reps</span></div></div>' +
       adj +
       '</div>'
@@ -685,6 +718,8 @@
     finishRest: finishRest,
     retryAttempt: retryAttempt,
     clearRestPhase: clearRestPhase,
+    seedActiveRow: seedActiveRow,
+    syncActiveRowFromDom: syncActiveRowFromDom,
   };
   global.selectStrengthDifficulty = selectStrengthDifficulty;
   global.nextStrengthSet = nextStrengthSet;

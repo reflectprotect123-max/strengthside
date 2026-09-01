@@ -75,6 +75,7 @@ const task = {
 sandbox._task = task;
 
 const htmlOut = sandbox.StrengthOneSetLogger.renderTask(task);
+if (task.rows[0].reps !== '5') throw new Error('active row reps should seed from target on render');
 if (!htmlOut.includes('logger-screen')) throw new Error('logger-screen missing');
 if (!htmlOut.includes('class=task')) throw new Error('task title missing');
 if (!htmlOut.includes('setchip')) throw new Error('setchip missing');
@@ -143,6 +144,7 @@ sandbox.supersetCurrent = (t) => {
 };
 sandbox._task = ss;
 const ssHtml = sandbox.StrengthOneSetLogger.renderSupersetTask(ss);
+if (ss.exercises[1].rows[0].reps !== '8') throw new Error('superset row reps should seed from target');
 if (!ssHtml.includes('superset-pill')) throw new Error('partner rest pill missing');
 if (!ssHtml.includes('Romanian Deadlift')) throw new Error('partner lift missing');
 if (!ssHtml.includes('How hard should this feel')) throw new Error('superset slider missing');
