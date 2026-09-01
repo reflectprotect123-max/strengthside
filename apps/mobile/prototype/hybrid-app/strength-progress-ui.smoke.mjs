@@ -17,6 +17,8 @@ const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 const recovery = readFileSync(join(dir, 'recovery-engine.js'), 'utf8') + readFileSync(join(dir, 'recovery-signals.js'), 'utf8');
 
 must(html.includes('openStrengthProgress'), 'index must expose Progress screen');
+must(html.includes('function libraryProgressTab('), 'Progress is a Library tab');
+must(html.includes("setLibraryTab('progress')"), 'Progress tab switch');
 must(html.includes('strengthProgressHtml'), 'index must render progress summary');
 must(adapter.includes('progressSummary'), 'adapter must export progressSummary');
 
