@@ -707,43 +707,186 @@
     });
   }
 
+  function builderLiftMetricsHtml(ex, bi, ei) {
+    const cols = ensureAthleteLogColumns(ex || {});
+    const repOnly = cols.length === 1;
+    const loadCol = loadColumn(cols);
+    const effortCol = effortColumn(cols) || cols[0];
+    const loadCi = loadCol ? cols.indexOf(loadCol) : -1;
+    const effortCi = effortCol ? cols.indexOf(effortCol) : 0;
+    if (repOnly || !loadCol) {
+      return (
+        '<div class=hero-metrics><div class="metric-col metric-col-single">' +
+        '<div class="metric-val metric-dash">—</div>' +
+        `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${effortCi},this.value)">` +
+        effortKindsOptionsHtml(effortCol.kind) +
+        '</select></div></div>'
+      );
+    }
+    return (
+      '<div class=hero-metrics>' +
+      '<div class=metric-col><div class="metric-val metric-dash">—</div>' +
+      `<select class="builder-metric-select logcol-kind" aria-label="Load metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${loadCi},this.value)">` +
+      loadKindsOptionsHtml(loadCol.kind) +
+      '</select></div>' +
+      '<div class=metric-sep>×</div>' +
+      '<div class=metric-col><div class="metric-val metric-dash">—</div>' +
+      `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${effortCi},this.value)">` +
+      effortKindsOptionsHtml(effortCol.kind) +
+      '</select></div></div>'
+    );
+  }
+
+  function builderLiftPanelHtml(ex, opts) {
+    opts = opts || {};
+    const bi = Number(opts.bi) || 0;
+    const ei = Number(opts.ei) || 0;
+    const letter = opts.letter ? String(opts.letter) : '';
+    const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
+    const name = escTwin(ex && ex.name ? ex.name : '');
+    const suggestHtml = opts.suggestHtml || '';
+    const letterHtml = letter
+      ? `<div class=ath-ss-panel-letter>${escTwin(letter)}</div>`
+      : '';
+    return (
+      `<div class="ath-ss-lift${letter ? ' ath-ss-lift-' + letter.toLowerCase() : ''}">` +
+      letterHtml +
+      `<input class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<div id="athSuggest_${bi}_${ei}">${suggestHtml}</div>` +
+      '<div class=hero>' +
+      '<div class=hero-label>Load & effort · session start fills numbers</div>' +
+      builderLiftMetricsHtml(ex, bi, ei) +
+      `<div class=rest-row><label for="athRest_${bi}_${ei}">Rest (seconds)</label>` +
+      `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div>` +
+      '<div class=hero-target>Target: <b>RIR 2</b> · next set adjusts from slider</div></div></div>'
+    );
+  }
+
+  function builderRestRingHtml(mode, restSec, upNextHtml) {
+    return global.RestOverlay
+      ? global.RestOverlay.render({
+          mode: mode,
+          remainingSec: restSec,
+          upNextHtml: upNextHtml,
+          skipLabel: mode === 'strength' ? 'Skip rest' : 'Next interval',
+          skipOnclick: 'return false',
+          addOnclick: 'return false',
+          clockFmt: 'mmss',
+        })
+      : '<div class="logger-rest dial-strength"><div class=rest-ring><div><div class=rest-time>' +
+        fmtRest(restSec) +
+        '</div><div class=rest-label>remaining</div></div></div></div>';
+  }
+
+  /** Static rest screen preview for strength builder (no live timer). */
+  function builderRestPreviewHtml(ex, opts) {
+    opts = opts || {};
+    const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
+    const name = escTwin(ex && ex.name ? ex.name : 'This lift');
+    const rir = 2;
+    const upNext =
+      'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Set <b>2</b> / 3</span><b>— kg × — · RIR ' +
+      rir +
+      '</b>';
+    const ring = builderRestRingHtml('strength', restSec, upNext);
+    return (
+      '<div class="builder-phase-preview ath-builder-twin-static">' +
+      '<div class="logger-screen dial-strength">' +
+      '<div class=eyebrow>Rest · between sets</div>' +
+      '<div class=task>' +
+      name +
+      '</div>' +
+      '<div class=progressline>Set 1 logged · — kg × —</div>' +
+      ring +
+      '</div></div>'
+    );
+  }
+
+  function builderSupersetPartnerRestPreviewHtml(exA, exB) {
+    const partnerSec = 45;
+    const nameB = escTwin(exB && exB.name ? exB.name : 'Partner lift');
+    const upNext =
+      'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">B · Round <b>1</b></span><b>' +
+      nameB +
+      '</b>';
+    const ring = builderRestRingHtml('strength', partnerSec, upNext);
+    return (
+      '<div class="builder-phase-preview ath-builder-twin-static">' +
+      '<div class="logger-screen dial-strength">' +
+      '<div class=eyebrow>Rest · between partners</div>' +
+      '<div class=task>' +
+      escTwin(exA && exA.name ? exA.name : 'Superset') +
+      '</div>' +
+      '<div class=progressline>A1 logged · — kg × —</div>' +
+      ring +
+      '</div></div>'
+    );
+  }
+
+  function builderSupersetRoundRestPreviewHtml(exA, exB) {
+    const roundSec = Math.max(
+      Math.max(0, Number(exA && exA.restSec) || 120),
+      Math.max(0, Number(exB && exB.restSec) || 120),
+    );
+    const upNext =
+      'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Round <b>2</b></span><b>' +
+      escTwin(exA && exA.name ? exA.name : 'Lift A') +
+      '</b>';
+    const ring = builderRestRingHtml('strength', roundSec, upNext);
+    return (
+      '<div class="builder-phase-preview ath-builder-twin-static">' +
+      '<div class="logger-screen dial-strength">' +
+      '<div class=eyebrow>Rest · between rounds</div>' +
+      '<div class=task>Superset</div>' +
+      '<div class=progressline>Round 1 logged</div>' +
+      ring +
+      '</div></div>'
+    );
+  }
+
+  /** Merged superset builder card — one card for a linked A/B pair. */
+  function builderSupersetTwinHtml(exA, exB, opts) {
+    opts = opts || {};
+    const bi = Number(opts.bi) || 0;
+    const eiA = Number(opts.eiA) || 0;
+    const eiB = Number(opts.eiB) || eiA + 1;
+    const partnerSec = 45;
+    const roundSec = Math.max(
+      Math.max(0, Number(exA && exA.restSec) || 120),
+      Math.max(0, Number(exB && exB.restSec) || 120),
+    );
+    const activeCard =
+      `<div class="logger-screen dial-strength ath-builder-twin ath-builder-superset">` +
+      '<div class=eyebrow>Superset A · Round 1 · builder</div>' +
+      `<div class=progressline>Round 1 / 3 · ${partnerSec}s between partners · Rest ${fmtRest(roundSec)} after round</div>` +
+      `<div class=superset-pill>A1 → B1 · ${partnerSec}s between partners</div>` +
+      '<div class=setchip>Set <b>1</b> / 3</div>' +
+      builderLiftPanelHtml(exA, { bi: bi, ei: eiA, letter: 'A', suggestHtml: opts.suggestHtmlA || '' }) +
+      builderLiftPanelHtml(exB, { bi: bi, ei: eiB, letter: 'B', suggestHtml: opts.suggestHtmlB || '' }) +
+      '<div class="slider-card ath-builder-twin-static"><div class=sliderhead><b>How hard was that set?</b><span class=slidervalue>Medium · RIR ~2</span></div>' +
+      '<input type="range" disabled min="0" max="5" step="1" value="2" aria-hidden="true">' +
+      '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
+      '<div class="next-wrap ath-builder-twin-static">' +
+      '<button type="button" class="btn primary" disabled>Next</button></div></div>';
+    return (
+      '<div class="builder-phase-stack">' +
+      activeCard +
+      builderSupersetPartnerRestPreviewHtml(exA, exB) +
+      builderSupersetRoundRestPreviewHtml(exA, exB) +
+      '</div>'
+    );
+  }
+
   /** Athlete strength builder — full logger card per lift (no rest timer). */
   function builderAthleteTwinHtml(ex, opts) {
     opts = opts || {};
     const bi = Number(opts.bi) || 0;
     const ei = Number(opts.ei) || 0;
-    const cols = ensureAthleteLogColumns(ex || {});
-    const repOnly = cols.length === 1;
-    const loadCol = loadColumn(cols);
-    const effortCol = effortColumn(cols) || cols[0];
     const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
     const restLabel = fmtRest(restSec);
     const name = escTwin(ex && ex.name ? ex.name : '');
     const suggestHtml = opts.suggestHtml || '';
-    const loadCi = loadCol ? cols.indexOf(loadCol) : -1;
-    const effortCi = effortCol ? cols.indexOf(effortCol) : 0;
-    let metricsHtml;
-    if (repOnly || !loadCol) {
-      metricsHtml =
-        '<div class=hero-metrics><div class="metric-col metric-col-single">' +
-        '<div class="metric-val metric-dash">—</div>' +
-        `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${effortCi},this.value)">` +
-        effortKindsOptionsHtml(effortCol.kind) +
-        '</select></div></div>';
-    } else {
-      metricsHtml =
-        '<div class=hero-metrics>' +
-        '<div class=metric-col><div class="metric-val metric-dash">—</div>' +
-        `<select class="builder-metric-select logcol-kind" aria-label="Load metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${loadCi},this.value)">` +
-        loadKindsOptionsHtml(loadCol.kind) +
-        '</select></div>' +
-        '<div class=metric-sep>×</div>' +
-        '<div class=metric-col><div class="metric-val metric-dash">—</div>' +
-        `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${effortCi},this.value)">` +
-        effortKindsOptionsHtml(effortCol.kind) +
-        '</select></div></div>';
-    }
-    return (
+    const activeCard =
       `<div class="logger-screen dial-strength ath-builder-twin">` +
       '<div class=eyebrow>Hybrid Strength · builder</div>' +
       `<input class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
@@ -752,7 +895,7 @@
       '<div class=setchip>Set <b>1</b> / 3</div>' +
       '<div class=hero>' +
       '<div class=hero-label>Load & effort · session start fills numbers</div>' +
-      metricsHtml +
+      builderLiftMetricsHtml(ex, bi, ei) +
       `<div class=rest-row><label for="athRest_${bi}_${ei}">Rest (seconds)</label>` +
       `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div>` +
       '<div class=hero-target>Target: <b>RIR 2</b> · next set adjusts from slider</div></div>' +
@@ -761,7 +904,12 @@
       '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
       '<div class="next-wrap ath-builder-twin-static">' +
       '<button type="button" class="btn primary" disabled>Next set</button>' +
-      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>'
+      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>';
+    return (
+      '<div class="builder-phase-stack">' +
+      activeCard +
+      builderRestPreviewHtml(ex, opts) +
+      '</div>'
     );
   }
 
@@ -895,6 +1043,8 @@
     builderPrescriptionGridHtml,
     builderLoggerTwinHtml,
     builderAthleteTwinHtml,
+    builderSupersetTwinHtml,
+    builderRestPreviewHtml,
     ensureAthleteLogColumns,
     athleteColumnOptionsHtml,
     beginSheet,
