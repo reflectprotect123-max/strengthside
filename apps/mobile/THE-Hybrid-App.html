@@ -369,11 +369,6 @@ header.top.dial-engine .stopwatch.on{border-color:var(--zone);color:var(--zone)}
 .ath-lift-card.ss-linked{border-color:rgba(196,154,92,.4)}
 .ath-lift-card.ath-lift-logger{padding:0;border-radius:20px;overflow:visible;background:var(--panel)}
 .ath-lift-card.ath-lift-logger .logger-screen.ath-builder-twin{min-height:0;padding:18px 16px 8px}
-.builder-phase-stack{display:grid;gap:0}
-.builder-phase-preview{display:block}
-.builder-phase-preview .logger-screen{min-height:0;padding:18px 16px 12px;border-top:1px solid var(--line);display:flex;flex-direction:column}
-.builder-phase-preview .logger-rest{flex:0 0 auto}
-.builder-phase-preview .logger-rest .rest-actions .btn{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--dim)!important;box-shadow:none}
 .ath-lift-card.ath-lift-logger .ath-builder-ex-name{width:100%;border:0;background:transparent;font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.05;letter-spacing:.02em;padding:0;color:var(--text)}
 .ath-lift-card.ath-lift-logger .ath-builder-ex-name:focus{outline:none}
 .ath-lift-card.ath-lift-logger .ath-builder-ex-name::placeholder{color:var(--dim)}
@@ -384,8 +379,7 @@ header.top.dial-engine .stopwatch.on{border-color:var(--zone);color:var(--zone)}
 .ath-lift-card.ath-lift-logger .rest-row label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left}
 .ath-lift-card.ath-lift-logger .rest-row input{width:88px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);text-align:center;font-variant-numeric:tabular-nums;min-height:var(--tap-min)}
 .ath-lift-card.ath-lift-logger .hero{margin-top:18px;padding:20px 16px 16px}
-.ath-lift-card.ath-lift-logger .ath-builder-twin-static{opacity:.72;pointer-events:none}
-.ath-lift-card.ath-lift-logger .ath-builder-twin-static .btn.primary,.ath-lift-card.ath-lift-logger .ath-builder-twin-static .btn.ghost{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--dim)!important;opacity:1;box-shadow:none}
+.ath-lift-card.ath-lift-logger .ath-builder-calibration{margin-top:14px}
 .ath-lift-card.ath-lift-logger .ath-lift-delete{margin:0 16px 16px;width:calc(100% - 32px)}
 .ath-lift-card.ath-lift-logger .metric-col-single{grid-column:1/-1;max-width:220px;margin:0 auto}
 .ath-lift-card.ath-lift-superset{border-color:rgba(196,154,92,.55)}
@@ -1171,7 +1165,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v152';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v153';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -2332,10 +2326,12 @@ function athleteLiftSuggestHtml(query,bi,ei){let q=String(query||'').trim();if(!
 function refreshAthleteLiftSuggest(bi,ei,query){let box=$('athSuggest_'+bi+'_'+ei);if(box)box.innerHTML=athleteLiftSuggestHtml(query,bi,ei)}
 function athleteLiftRepOnly(ex){return !!(window.StrengthAdapter&&StrengthAdapter.repProgressionLift&&StrengthAdapter.repProgressionLift(ex&&ex.name,ex&&ex.category,S,ex&&ex.exerciseId,ex&&ex.rows))}
 function mountAthLiftCardHtml(html){let wrap=document.createElement('div');wrap.innerHTML=html;return wrap.firstElementChild}
-function refreshAthleteLiftCard(bi,ei){let block=draft?.blocks?.[bi],exercises=block?.exercises||[],y=exercises[ei];if(!block||!y)return athleteStrengthBuilder();if(y.supersetWithNext&&exercises[ei+1]){let card=document.querySelector(`[data-lift="${bi}_${ei}_${ei+1}"]`);if(!card)return athleteStrengthBuilder();let next=mountAthLiftCardHtml(athleteSupersetEditor(exercises[ei],exercises[ei+1],bi,ei));if(next)card.replaceWith(next);growTextAreas();return}let card=document.querySelector(`[data-lift="${bi}_${ei}"]`);if(!card)return athleteStrengthBuilder();let next=mountAthLiftCardHtml(athleteLiftEditor(y,bi,ei));if(next)card.replaceWith(next);growTextAreas()}
-function pickAthleteLiftSuggest(bi,ei,exerciseId,name,cat){let ex=draft?.blocks?.[bi]?.exercises?.[ei];if(!ex)return;ex.name=name;ex.category=cat||category(name);if(exerciseId)ex.exerciseId=exerciseId;else delete ex.exerciseId;registerExercise(S,ex);ensureAthleteLiftShape(ex);draft.blocks[bi].exercises[ei]=ex;persistDraft();refreshAthleteLiftCard(bi,ei)}
-function setAthleteLiftName(bi,ei,val){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;let wasRepOnly=athleteLiftRepOnly(ex);ex.name=String(val||'');ex.category=category(ex.name);let nowRepOnly=athleteLiftRepOnly(ex);if(wasRepOnly!==nowRepOnly){ensureAthleteLiftShape(ex);draft.blocks[bi].exercises[ei]=ex;persistDraft();athleteStrengthBuilder();return}persistDraft();refreshAthleteLiftSuggest(bi,ei,ex.name)}
+function restoreAthLiftNameFocus(bi,ei,start,end){let el=$('athLiftName_'+bi+'_'+ei);if(!el)return;el.focus();try{let len=String(el.value||'').length;el.setSelectionRange(start==null?len:start,end==null?len:end)}catch(e){}}
+function refreshAthleteLiftCard(bi,ei,opts){opts=opts||{};let focusId='athLiftName_'+bi+'_'+ei,keepFocus=!!opts.restoreFocus||(document.activeElement&&document.activeElement.id===focusId),selStart=keepFocus?document.activeElement.selectionStart:null,selEnd=keepFocus?document.activeElement.selectionEnd:null;let block=draft?.blocks?.[bi],exercises=block?.exercises||[],y=exercises[ei];if(!block||!y)return athleteStrengthBuilder();if(y.supersetWithNext&&exercises[ei+1]){let card=document.querySelector(`[data-lift="${bi}_${ei}_${ei+1}"]`);if(!card)return athleteStrengthBuilder();let next=mountAthLiftCardHtml(athleteSupersetEditor(exercises[ei],exercises[ei+1],bi,ei));if(next)card.replaceWith(next);growTextAreas();if(keepFocus)restoreAthLiftNameFocus(bi,ei,selStart,selEnd);return}let card=document.querySelector(`[data-lift="${bi}_${ei}"]`);if(!card)return athleteStrengthBuilder();let next=mountAthLiftCardHtml(athleteLiftEditor(y,bi,ei));if(next)card.replaceWith(next);growTextAreas();if(keepFocus)restoreAthLiftNameFocus(bi,ei,selStart,selEnd)}
+function pickAthleteLiftSuggest(bi,ei,exerciseId,name,cat){let ex=draft?.blocks?.[bi]?.exercises?.[ei];if(!ex)return;let wasRepOnly=athleteLiftRepOnly(ex);ex.name=name;ex.category=cat||category(name);if(exerciseId)ex.exerciseId=exerciseId;else delete ex.exerciseId;registerExercise(S,ex);ensureAthleteLiftShape(ex);draft.blocks[bi].exercises[ei]=ex;persistDraft();let inp=$('athLiftName_'+bi+'_'+ei);if(inp)inp.value=name;refreshAthleteLiftSuggest(bi,ei,'');if(wasRepOnly!==athleteLiftRepOnly(ex))refreshAthleteLiftCard(bi,ei,{restoreFocus:true})}
+function setAthleteLiftName(bi,ei,val){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;let wasRepOnly=athleteLiftRepOnly(ex);ex.name=String(val||'');ex.category=category(ex.name);let nowRepOnly=athleteLiftRepOnly(ex);if(wasRepOnly!==nowRepOnly){ensureAthleteLiftShape(ex);draft.blocks[bi].exercises[ei]=ex;persistDraft();refreshAthleteLiftCard(bi,ei,{restoreFocus:true});return}persistDraft();refreshAthleteLiftSuggest(bi,ei,ex.name)}
 function setAthleteLiftRest(bi,ei,val,el){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex.restSec=Math.max(0,num(val)||0);persistDraft()}
+function setAthleteLiftTargetRir(bi,ei,sliderVal){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;let rir=Math.max(0,Math.min(4,4-Math.round(num(sliderVal)||0)));ex.targetRir=rir;persistDraft();let label=$('athTargetRirLabel_'+bi+'_'+ei);if(label){let names={4:'Very easy',3:'Easy',2:'Medium',1:'Hard',0:'Max effort'};label.textContent=(names[rir]||'Medium')+' · RIR ~'+rir}}
 function setAthleteLiftColumnKind(bi,ei,ci,kind){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex=ensureAthleteLiftShape(ex);ex.logColumns[ci].kind=kind;draft.blocks[bi].exercises[ei]=ex;persistDraft()}
 
 function toggleAthleteSupersetLock(bi,ei){

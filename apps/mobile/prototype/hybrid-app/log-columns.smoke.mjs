@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('LogColumns.builderPrescriptionHtml')) throw new Error('coach builder prescription grid not wired');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v152'")) throw new Error('expected cache v147');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v153'")) throw new Error('expected cache v147');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -46,7 +46,9 @@ const athleteTwin = LC.builderAthleteTwinHtml(ex, { bi: 0, ei: 0 });
 if (!athleteTwin.includes('logger-screen')) throw new Error('athlete builder twin missing logger-screen');
 if (!athleteTwin.includes('builder-metric-select')) throw new Error('athlete builder twin metric selects missing');
 if (!athleteTwin.includes('Rest (seconds)')) throw new Error('athlete builder twin rest row missing');
-if (!athleteTwin.includes('Next set')) throw new Error('athlete builder twin Next set missing');
+if (!athleteTwin.includes('How should this feel')) throw new Error('athlete builder twin calibration slider missing');
+if (athleteTwin.includes('Next set')) throw new Error('athlete builder twin should not show logger Next set');
+if (athleteTwin.includes('How hard was that set')) throw new Error('athlete builder twin should not show post-set slider');
 if (athleteTwin.includes('Autopilot')) throw new Error('athlete builder twin should not show autopilot strip');
 
 LC.beginAthleteSheet({ autopilotVolume: true, sets: null, reps: null, restSec: 120 });

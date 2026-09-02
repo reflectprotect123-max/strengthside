@@ -10,12 +10,13 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v152'"), 'LOCAL_BUILD v151');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v153'"), 'LOCAL_BUILD v153');
 must(html.includes('function athExerciseSuggestBtn'), 'athExerciseSuggestBtn helper');
 must(html.includes('class="searchpick ath-ex-pick"'), 'delegated athlete pick buttons');
 must(html.includes('class="searchpick ex-sheet-pick"'), 'delegated sheet pick buttons');
 must(html.includes('hybridExercisePickPointer'), 'pointerdown pick handler');
 must(html.includes('function refreshAthleteLiftCard'), 'in-place lift card refresh');
+must(html.includes('function restoreAthLiftNameFocus'), 'name focus restore on card refresh');
 must(!html.includes("onclick='pickAthleteLiftSuggest("), 'no fragile inline athlete pick onclick');
 must(html.includes('overflow:visible;background:var(--panel)'), 'lift card does not clip suggest list');
 must(logColumns.includes('id="athLiftName_${bi}_${ei}"'), 'stable lift name input ids');
