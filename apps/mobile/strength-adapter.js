@@ -37,7 +37,7 @@
   }
 
   var REP_PROGRESSION_NAME =
-    /(jump|slam|throw|burpee|swing|lateral raise|curl|pushdown|pull[- ]?up|chin[- ]?up|dip|push[- ]?up|nordic|handstand|plank|l[- ]?sit|ab wheel|raise|calf|abduction|carry|row|pulldown|leg press|dumbbell bench|db bench)/;
+    /(jump|slam|throw|burpee|swing|lateral raise|pushdown|pull[- ]?up|chin[- ]?up|dip|push[- ]?up|nordic|handstand|plank|l[- ]?sit|ab wheel|raise|calf|abduction|carry|row|pulldown|leg press|dumbbell bench|db bench)/;
   var WM_LIFT_EXCLUSIONS =
     /(jump|slam|throw|burpee|swing|lateral raise|curl|pushdown|pull[- ]?up|chin[- ]?up|dip|row|pulldown|carry|plank|l[- ]?sit|calf|abduction|leg press|dumbbell bench|db bench)/;
   var WM_VERTICAL_PRESS =
@@ -69,6 +69,13 @@
       if (loadHist.length) return true;
     }
     return false;
+  }
+
+  /** True bodyweight rep lifts (pull-up, dip, push-up) — not barbell/dumbbell/cable accessories. */
+  function bodyweightRepLift(name, cat, state, exerciseId, sessionRows) {
+    if (!repProgressionLift(name, cat, state, exerciseId, sessionRows)) return false;
+    var n = String(name || '').toLowerCase();
+    return !/(barbell|dumbbell|\bdb\b|cable|machine|ez[- ]?bar|e[- ]?z[- ]?bar|kettlebell|\bkb\b)/.test(n);
   }
 
   /** Bodyweight / rep-only lifts — no working max or kg progression unless added-load mode. */
@@ -1274,7 +1281,9 @@
         loadKg: null,
         source: 'rep_autopilot',
         headline: headline,
-        detail: 'Bodyweight / rep-only — LLM sets next sets × reps, not kg',
+        detail: bodyweightRepLift(name, cat, state, exerciseId, exercise.rows)
+          ? 'Bodyweight — rep targets from history; log reps each set'
+          : 'Rep targets from history — log kg and reps each set',
         calibration: repCal,
         repMode: true,
       };
@@ -1421,6 +1430,7 @@
     calibrationForExercise: calibrationForExercise,
     targetRirForExercise: targetRirForExercise,
     repProgressionLift: repProgressionLift,
+    bodyweightRepLift: bodyweightRepLift,
     percentLiftCandidate: percentLiftCandidate,
     addedLoadCapableLift: addedLoadCapableLift,
     exerciseUsesAddedLoadMode: exerciseUsesAddedLoadMode,

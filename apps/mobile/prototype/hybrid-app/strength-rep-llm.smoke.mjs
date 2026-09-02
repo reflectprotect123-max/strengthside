@@ -28,6 +28,12 @@ const { StrengthAdapter, StrengthAI, LogColumns } = sandbox;
 if (!StrengthAdapter.repProgressionLift('Nordic Curl')) {
   throw new Error('Nordic Curl should be rep progression');
 }
+if (StrengthAdapter.repProgressionLift('Barbell Curl')) {
+  throw new Error('Barbell Curl is weighted — not rep-only bodyweight');
+}
+if (!StrengthAdapter.bodyweightRepLift('Pull Up')) {
+  throw new Error('Pull Up should be bodyweight rep lift');
+}
 if (!StrengthAdapter.repProgressionLift('Strict Bar Dip')) {
   throw new Error('dip should be rep progression');
 }
