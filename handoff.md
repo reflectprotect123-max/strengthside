@@ -31,7 +31,9 @@
 
 **Owner lock — Sep 2026 (ops):** **Coach parked** — no coach portal / desktop / publish-loop work unless owner asks. **No deploys** (Capgo, Netlify, coach `.exe`, migrations) until owner explicitly says ship.
 
-**Recent merges (#130–#139):** blank boot + remove Restore hidden · warm-up/cool-down restore · Start session handler fix · preview `blockHelpDropdown` crash fix · strength set logger `escHtml` fallback · one-set-row 3-column grid CSS · polished one-set logger (ghost stack, difficulty slider, in-row Next) · builder rest/recap previews + merged superset cards.
+**Recent merges (#147–#149):** builder rest preview hidden · builder name edit + calibration slider · **metric-aware logger program (M1–M8, cache v157)** — 1–3 builder metric columns, library defaults on pick, dynamic logger hero, work timer for holds, load+time/carry flows, timed-hold progression fix, L/R sideMode.
+
+**Metric logger (branch `cursor/metric-logger-slice-plan-84a0`, build `the-hybrid-athlete-engine-v157`):** Builder chrome frozen at v153 layout; athletes prescribe load/reps/time/distance via dropdowns; logger mirrors columns; plank gets work timer → slider → rest; farmer walk 3-col; Capgo OTA pending owner ship.
 
 ---
 
