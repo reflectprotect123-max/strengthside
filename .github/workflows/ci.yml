@@ -24,6 +24,7 @@ jobs:
       - run: pnpm run check:engine-adapter
       - run: pnpm run check:cond-thin-twin
       - run: pnpm run check:cond-interval-autoreg
+      - run: pnpm run check:cond-session-logger
       - run: pnpm run check:cond-autopilot-prescription
       - run: pnpm run check:coach-ai
       - run: pnpm run check:strength-ai
@@ -37,10 +38,17 @@ jobs:
       - run: pnpm run check:native-ble
       - run: pnpm run check:blank-slate-wm
       - run: pnpm run check:calendar-ux
+      - run: pnpm run check:athlete-calendar-date
+      - run: pnpm run check:athlete-exercise-pick
       - run: pnpm run check:track-dawn-polish
       - run: pnpm run check:athlete-builder-migrate
+      - run: pnpm run check:athlete-builder-logger
+      - run: pnpm run check:athlete-engine-builder
       - run: pnpm run check:athlete-superset-lock
       - run: pnpm run check:session-preview
+      - run: pnpm run check:session-chrome
+      - run: pnpm run check:session-flow
+      - run: pnpm run check:rest-overlay
       - run: pnpm run check:hybrid-html-sync
       - run: pnpm run check:builder-suggest
       - run: pnpm run check:nutrition-ui
@@ -48,10 +56,16 @@ jobs:
       - run: pnpm run check:e1rm-value
       - run: pnpm run check:strength-adapter-resolve
       - run: pnpm run check:strength-session-start-load
+      - run: pnpm run check:strength-athlete-autopilot-load
       - run: pnpm run check:strength-load-context
       - run: pnpm run check:account-sync-checkin
       - run: pnpm run check:log-columns
       - run: pnpm run check:exercise-load-expr
+      - run: pnpm run check:exercise-load-profiles
+      - run: pnpm run check:exercise-search
+      - run: pnpm run check:trainheroic-import
+      - run: pnpm run gen:exercise-history-seed
+      - run: pnpm run check:exercise-history-seed
       - run: pnpm run check:autopilot-policy
       - run: pnpm run check:strength-volume
       - run: pnpm run check:strength-progression
@@ -64,6 +78,7 @@ jobs:
       - run: pnpm run check:whoop-live
       - run: pnpm run check:coach-loop
       - run: pnpm run check:coach-session-builder
+      - run: pnpm run check:coach-library
       - run: pnpm run check:coach-nutrition
       - run: pnpm run check:coach-program-grid
       - run: pnpm run check:coach-bridge

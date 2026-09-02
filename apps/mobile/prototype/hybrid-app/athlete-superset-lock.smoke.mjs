@@ -9,6 +9,7 @@ function must(cond, msg){ if(!cond) throw new Error(msg); }
 
 must(html.includes('function toggleAthleteSupersetLock'), 'toggleAthleteSupersetLock');
 must(html.includes('ath-ss-lock'), 'lock CSS/control');
+must(html.includes('athleteSupersetEditor'), 'merged superset editor');
 must(html.includes('supersetWithNext'), 'supersetWithNext');
 must(!html.includes("coach-strength-hidden .ath-strength-build{display:none"), 'builder still visible');
 

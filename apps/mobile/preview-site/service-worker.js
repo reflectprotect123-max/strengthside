@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-engine-v138';
+const CACHE = 'the-hybrid-athlete-engine-v151';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -28,6 +28,9 @@ self.addEventListener('install', (event) => {
           './native-bridge.js',
           './log-columns.js',
           './strength-one-set-logger.js',
+          './session-chrome.js',
+          './rest-overlay.js',
+          './cond-session-logger.js',
           './big-mac-contract.js',
           './big-mac-product-engines.js',
           './big-mac-decide-shim.js',

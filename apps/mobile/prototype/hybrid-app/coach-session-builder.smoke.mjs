@@ -17,6 +17,8 @@ for (const needle of [
   'For Weight',
   'For Completion',
   'Choose exercise',
+  'Search variants',
+  'pickExerciseVariant',
   'New session',
   'block-card',
   'engine-box',

@@ -8,6 +8,11 @@
 
 **Architecture:** Pure math stays in `@hybrid/strength-engine` and `@hybrid/engine`. HTML adapters (`strength-adapter.js`, `engine-adapter.js`, `cond-interval-autoreg.js`) own I/O. New UI is extracted from `index.html` into focused modules (`rest-overlay.js`, `session-chrome.js`, `cond-session-logger.js`) with colocated smoke tests. A shared **rest overlay** and **session chrome** serve both engines before either mockup screen ships.
 
+<<<<<<< HEAD
+=======
+> **Progress (2026-09-01 agent):** Phases 0–6 + recovery skin + builder Engine twin + SessionFlow handoff shipped on branch `cursor/logger-changeover-phase0-84a0` (cache v142). Phase 10 Capgo deferred until owner says ship.
+
+>>>>>>> origin/main
 **Tech stack:** Hybrid HTML app (`apps/mobile/prototype/hybrid-app/`), esbuild IIFE bundles, Vitest (packages), colocated `.smoke.mjs` + Playwright spot checks, Capgo cache bump + `bash apps/mobile/sync-hybrid-html.sh` per ship.
 
 **Spec:** Primary UX targets are the owner mockups (ONE-SET LOGGER · THE HYBRID · Aug 2024; THE ENGINE interval/steady/recap boards). Supporting specs:

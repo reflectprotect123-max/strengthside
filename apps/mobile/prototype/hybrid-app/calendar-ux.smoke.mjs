@@ -10,15 +10,22 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v138'"), 'LOCAL_BUILD v119');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v138'"), 'SW v119');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v151'"), 'LOCAL_BUILD v150');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v151'"), 'SW v150');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
 must(html.includes('cal-drop-target'), 'calendar drag-drop targets');
+must(html.includes('function sessionCalendarDate'), 'sessionCalendarDate');
+must(html.includes('function athMonthGridCells'), 'athMonthGridCells');
+must(html.includes('function shiftCalMonth'), 'shiftCalMonth');
+must(html.includes('function athCalDayCell'), 'athCalDayCell with session chips');
+must(html.includes('ath-cal-chip'), 'calendar session chips in grid');
+must(html.includes('x.date=today()'), 'finishSession pins completion date');
 must(html.includes('function athleteStrengthBuilder'), 'athleteStrengthBuilder');
 must(html.includes('function athleteLiftEditor'), 'inline athlete lift editor');
-must(html.includes('athleteLiftEditor(y,strengthIdx,j)'), 'builder uses inline lift editor');
+must(html.includes('function athleteStrengthLiftRows'), 'athlete strength lift row builder');
+must(html.includes('athleteStrengthLiftRows(strengthIdx,exercises)'), 'builder uses grouped lift rows');
 must(html.includes('function usesAthleteStrengthBuilder'), 'usesAthleteStrengthBuilder');
 must(html.includes('function ensureAthleteStrengthDraft'), 'ensureAthleteStrengthDraft');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
@@ -49,7 +56,7 @@ must(!html.includes('pullCoachBridge'), 'pullCoachBridge removed');
 must(!html.includes('onclick=exportData()>Export backup</button><button class=btn onclick="go(\'calendar\')">Return to calendar'), 'session summary export backup removed');
 must(html.includes("setLibraryTab('progress')"), 'Progress lives in Library tabs');
 must(!html.includes('home-links'), 'home footer links removed');
-must(html.includes('ath-lift-card'), 'ath-lift-card markup');
+must(html.includes('ath-lift-logger'), 'ath-lift-logger markup');
 must(!html.includes("coach-strength-hidden .ath-strength-build{display:none"), 'coach gate no longer hides athlete builder CSS');
 
 

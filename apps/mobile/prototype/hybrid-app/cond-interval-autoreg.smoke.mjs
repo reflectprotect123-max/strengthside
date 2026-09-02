@@ -1,5 +1,5 @@
 /**
- * Smoke: conditioning interval autoreg — felt panel + decideNextPhase wiring.
+ * Smoke: conditioning interval autoreg — RPE slider + decideNextPhase wiring.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -14,8 +14,10 @@ const autoregSrc = readFileSync(join(dir, 'cond-interval-autoreg.js'), 'utf8');
 if (!html.includes('cond-interval-autoreg.js')) throw new Error('index.html missing cond-interval-autoreg.js');
 if (!html.includes('CondIntervalAutoreg.onWorkEnd')) throw new Error('advanceInterval must call onWorkEnd');
 if (!html.includes('CondIntervalAutoreg.beforeNextWork')) throw new Error('advanceInterval must call beforeNextWork');
+if (!html.includes('cond-session-logger.js')) throw new Error('index.html missing cond-session-logger.js');
 if (!adapterSrc.includes('suggestNextPhase')) throw new Error('engine-adapter missing suggestNextPhase');
 if (!adapterSrc.includes('applyNextPhaseDecision')) throw new Error('engine-adapter missing applyNextPhaseDecision');
+if (!autoregSrc.includes('onFeltSlide')) throw new Error('RPE slider handler missing');
 
 const sandbox = {
   window: {},
@@ -57,12 +59,13 @@ const task = {
 sandbox._task = task;
 
 sandbox.CondIntervalAutoreg.onWorkEnd(task);
-task.autoreg.pendingFelt = 8.5;
+sandbox.CondIntervalAutoreg.onFeltSlide('2');
+if (task.autoreg.pendingFelt !== 8.5) throw new Error('expected hard felt rpe, got ' + task.autoreg.pendingFelt);
 sandbox.CondIntervalAutoreg.beforeNextWork(task, task.interval);
 if (task.targetWatts !== 180) throw new Error('expected watts decrease after hard felt, got ' + task.targetWatts);
 
-const panel = sandbox.CondIntervalAutoreg.restPanelHtml(task, task.interval);
-if (!panel.includes('how did that interval feel')) throw new Error('rest panel missing');
-if (!panel.includes('Too hard')) throw new Error('felt buttons missing');
+const panel = sandbox.CondIntervalAutoreg.restSliderHtml(task, task.interval);
+if (!panel.includes('How hard was that interval')) throw new Error('rest slider missing');
+if (!panel.includes('type="range"')) throw new Error('slider input missing');
 
 console.log('cond-interval-autoreg.smoke: ok');
