@@ -10,8 +10,8 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v149'"), 'LOCAL_BUILD v148');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v149'"), 'SW v148');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v150'"), 'LOCAL_BUILD v150');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v150'"), 'SW v150');
 must(html.includes('function schedulableTemplates'), 'schedulableTemplates');
 must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions');
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
@@ -19,7 +19,8 @@ must(html.includes('cal-drop-target'), 'calendar drag-drop targets');
 must(html.includes('function sessionCalendarDate'), 'sessionCalendarDate');
 must(html.includes('function athMonthGridCells'), 'athMonthGridCells');
 must(html.includes('function shiftCalMonth'), 'shiftCalMonth');
-must(html.includes('ath-cal-grid'), 'full month calendar grid');
+must(html.includes('function athCalDayCell'), 'athCalDayCell with session chips');
+must(html.includes('ath-cal-chip'), 'calendar session chips in grid');
 must(html.includes('x.date=today()'), 'finishSession pins completion date');
 must(html.includes('function athleteStrengthBuilder'), 'athleteStrengthBuilder');
 must(html.includes('function athleteLiftEditor'), 'inline athlete lift editor');
