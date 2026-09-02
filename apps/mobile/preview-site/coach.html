@@ -362,6 +362,9 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 <div id="coachApp" class="coach-shell hidden"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
 <script src="./whoop.js"></script>
+<script src="./exercise-search-index.js"></script>
+<script src="./exercise-search.js"></script>
+<script src="./coach-exercise-catalog.js"></script>
 <script src="./coach-loop.js"></script>
 <script src="./log-columns.js"></script>
 <script src="./coach-nutrition.js"></script>
@@ -371,7 +374,7 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 <script>
 const L = window.CoachLoop;
 const N = window.CoachNutrition;
-let S = L.loadState();
+let S = L.mergeExerciseCatalog(L.loadState());
 const ui = {
   view:'home', lib:'sessions', athleteId:null, teamId:null, programId:null, templateId:null, sessionId:null,
   expandAll:false, expanded:{}, err:'', exPicker:null, exSearch:'', exEdit:null,
@@ -826,7 +829,7 @@ function exercisesCatalogHtml(){
         <input value="${esc(ui.exCatalogSearch||'')}" oninput="ui.exCatalogSearch=this.value;render()" placeholder="Squat, row…"></div>
       <button type="button" class="btn primary small" onclick="addCustomExercise()">New exercise</button>
     </div>
-    <p class="muted" style="margin-bottom:8px">${list.length} exercise${list.length===1?'':'s'} · used by session builder picker</p>
+    <p class="muted" style="margin-bottom:8px">${list.length} exercise${list.length===1?'':'s'} · 120-library variant search in session builder</p>
     ${blocks || '<div class="empty-panel"><div class="eyebrow">Exercises</div><h2>No matches</h2><p class="muted">Try another search, or add a custom exercise.</p></div>'}`;
 }
 
@@ -1353,17 +1356,41 @@ function openExPicker(bi, ei){
   render();
 }
 
+function coachExerciseSuggestHits(query){
+  const q = String(query||'').trim();
+  if (q.length < 1) return [];
+  if (window.ExerciseSearch?.search) {
+    const hits = ExerciseSearch.search(q, 12);
+    return ExerciseSearch.mergeCustomHits(hits, S.exercises||[], q, 12);
+  }
+  const ql = q.toLowerCase();
+  return (S.exercises||[]).filter(e => String(e.name||'').toLowerCase().includes(ql) || String(e.category||'').toLowerCase().includes(ql))
+    .slice(0, 12).map(e => ({ exerciseId: e.id, name: e.name, category: e.category||'Custom' }));
+}
+
+function ensureCoachExerciseInCatalog(exerciseId, name, category){
+  if (!exerciseId) return;
+  S.exercises = S.exercises || [];
+  let row = S.exercises.find(e => e.id === exerciseId);
+  if (!row) {
+    row = { id: exerciseId, name: name||exerciseId, category: category||'Custom', builtIn: !!ExerciseSearch?.byId?.(exerciseId), source: ExerciseSearch?.byId?.(exerciseId) ? 'THE-core-120' : 'coach-custom' };
+    S.exercises.push(row);
+  } else {
+    if (name) row.name = name;
+    if (category) row.category = category;
+  }
+}
+
 function closeExPicker(){ ui.exPicker = null; ui.exSearch = ''; render(); }
 
-function pickExercise(exId){
+function pickExerciseVariant(exerciseId, name, category){
   if (!ui.exPicker) return;
-  const cat = (S.exercises||[]).find(e => e.id === exId);
-  if (!cat) return;
+  ensureCoachExerciseInCatalog(exerciseId, name, category);
   const t = tpl(ui.templateId);
   const ex = t.blocks[ui.exPicker.bi].exercises[ui.exPicker.ei];
-  ex.name = cat.name;
-  ex.exerciseId = cat.id;
-  ex.category = cat.category || ex.category;
+  ex.name = name || ex.name;
+  ex.exerciseId = exerciseId || ex.exerciseId;
+  ex.category = category || ex.category;
   ui.exPicker = null;
   ui.exSearch = '';
   t.blocks = L.decorateBlocks(t.blocks);
@@ -1371,21 +1398,24 @@ function pickExercise(exId){
 }
 
 function filteredExercises(){
-  const q = String(ui.exSearch||'').trim().toLowerCase();
-  return (S.exercises||[]).filter(e => !q || String(e.name).toLowerCase().includes(q) || String(e.category||'').toLowerCase().includes(q));
+  const q = String(ui.exSearch||'').trim();
+  if (q) return coachExerciseSuggestHits(q).map(h => ({ id: h.exerciseId, name: h.name, category: h.category }));
+  return (S.exercises||[]).slice(0, 80);
 }
 
 function exercisePickerHtml(){
   if (!ui.exPicker) return '';
-  const list = filteredExercises().slice(0, 80).map(e =>
-    `<button type="button" class="picker-item" onclick="pickExercise('${e.id}')"><span>${esc(e.name)}</span><span class="muted">${esc(e.category||'')}</span></button>`
-  ).join('');
+  const q = String(ui.exSearch||'').trim();
+  const hits = coachExerciseSuggestHits(q);
+  const list = hits.length
+    ? hits.map(x => `<button type="button" class="picker-item" onclick='pickExerciseVariant(${JSON.stringify(x.exerciseId||'')},${JSON.stringify(x.name)},${JSON.stringify(x.category||'Custom')})'><span>${esc(x.name)}</span><span class="muted">${esc(x.category||'Custom')}</span></button>`).join('')
+    : (q ? '<div class="muted">No library match — try another variant name.</div>' : '<div class="muted">Type to search exercise variants (names only).</div>');
   return `<div class="picker-overlay" onclick="if(event.target===this)closeExPicker()">
     <div class="picker-panel" role="dialog" aria-label="Choose exercise">
       <div class="row"><b>Choose exercise</b><button type="button" class="btn ghost small" onclick="closeExPicker()">Close</button></div>
-      <div class="field" style="margin-top:12px"><label>Search</label>
-        <input value="${esc(ui.exSearch)}" oninput="ui.exSearch=this.value;render()" placeholder="Squat, row, bike…"></div>
-      <div class="picker-list">${list || '<div class="muted">No matches.</div>'}</div>
+      <div class="field" style="margin-top:12px"><label>Search variants</label>
+        <input value="${esc(ui.exSearch)}" oninput="ui.exSearch=this.value;render()" placeholder="deadlift, lateral raise…" autofocus></div>
+      <div class="picker-list">${list}</div>
     </div></div>`;
 }
 
@@ -1688,7 +1718,7 @@ window.saveComment=saveComment; window.toggleCard=toggleCard;
 window.openSession=openSession; window.openProgram=openProgram;
 window.newTemplate=newTemplate; window.newProgram=newProgram; window.parseSets=parseSets; window.addEx=addEx; window.addBlk=addBlk;
 window.removeBlk=removeBlk; window.removeEx=removeEx; window.toggleSuperset=toggleSuperset; window.moveBlock=moveBlock; window.growTextAreas=growTextAreas;
-window.openExPicker=openExPicker; window.closeExPicker=closeExPicker; window.pickExercise=pickExercise;
+window.openExPicker=openExPicker; window.closeExPicker=closeExPicker; window.pickExerciseVariant=pickExerciseVariant;
 window.setRowRep=setRowRep; window.setRowLoad=setRowLoad;
 window.patchCond=patchCond; window.setCondFmt=setCondFmt; window.nudgeCondMin=nudgeCondMin;
 window.toggleCellMenu=toggleCellMenu; window.openCellPick=openCellPick; window.closeCellPick=closeCellPick;

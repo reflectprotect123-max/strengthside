@@ -19,7 +19,7 @@ for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js strength-bundle.j
   fi
 done
 # Coach workspace (same Netlify origin as athlete — shared Supabase auth storage)
-for f in coach.html coach-loop.js coach-nutrition.js coach-bridge.js coach-views.js; do
+for f in coach.html coach-loop.js coach-exercise-catalog.js coach-nutrition.js coach-bridge.js coach-views.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
