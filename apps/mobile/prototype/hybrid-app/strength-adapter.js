@@ -78,8 +78,23 @@
     return !/(barbell|dumbbell|\bdb\b|cable|machine|ez[- ]?bar|e[- ]?z[- ]?bar|kettlebell|\bkb\b)/.test(n);
   }
 
+  /** Timed holds (plank, wall sit) — time_sec primary, no rep-volume progression. */
+  function timedHoldLift(name, cat, ex) {
+    ex = ex || {};
+    if (Array.isArray(ex.logColumns) && ex.logColumns.some(function (c) { return c.kind === 'time_sec'; })) {
+      var load = ex.logColumns.some(function (c) {
+        return c.kind === 'weight_kg' || c.kind === 'weight_pct_wm' || c.kind === 'weight_lwp';
+      });
+      if (!load) return true;
+    }
+    var n = String(name || '').toLowerCase();
+    if (/^plank$|front plank|side plank|copenhagen plank/.test(n)) return true;
+    return false;
+  }
+
   /** Bodyweight / rep-only lifts — no working max or kg progression unless added-load mode. */
-  function repProgressionLift(name, cat, state, exerciseId, sessionRows) {
+  function repProgressionLift(name, cat, state, exerciseId, sessionRows, ex) {
+    if (timedHoldLift(name, cat, ex)) return false;
     var n = String(name || '').toLowerCase();
     if (!REP_PROGRESSION_NAME.test(n)) return false;
     if (exerciseUsesAddedLoadMode(state, exerciseId, name, sessionRows)) return false;
@@ -1430,6 +1445,7 @@
     calibrationForExercise: calibrationForExercise,
     targetRirForExercise: targetRirForExercise,
     repProgressionLift: repProgressionLift,
+    timedHoldLift: timedHoldLift,
     bodyweightRepLift: bodyweightRepLift,
     percentLiftCandidate: percentLiftCandidate,
     addedLoadCapableLift: addedLoadCapableLift,

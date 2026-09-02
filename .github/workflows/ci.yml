@@ -29,6 +29,7 @@ jobs:
       - run: pnpm run check:coach-ai
       - run: pnpm run check:strength-ai
       - run: pnpm run check:strength-rep-llm
+      - run: pnpm run check:strength-timed-hold
       - run: pnpm run check:library-conditioning
       - run: pnpm run check:starter-templates
       - run: pnpm run check:engine-adapt
