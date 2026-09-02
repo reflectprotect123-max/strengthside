@@ -54,10 +54,10 @@ const sandbox = {
   slugExercise: (n) => n.toLowerCase().replace(/\s+/g, '-'),
   normExercise: (n) => n.toLowerCase().trim(),
   findLibraryExerciseById: (state, eid) => (state.exercises || []).find((x) => x.id === eid) || null,
-  resolveCanonicalExercise: (exerciseId, name) => {
-    const byId = sandbox.S.exercises.find((x) => x.id === exerciseId);
+  resolveCanonicalExercise: (state, exerciseId, name) => {
+    const byId = (state.exercises || []).find((x) => x.id === exerciseId);
     if (byId) return byId;
-    return sandbox.S.exercises.find((x) => sandbox.normExercise(x.name) === sandbox.normExercise(name)) || null;
+    return (state.exercises || []).find((x) => sandbox.normExercise(x.name) === sandbox.normExercise(name)) || null;
   },
   percentLiftCandidate: () => false,
   dedupe: (a) => a,
