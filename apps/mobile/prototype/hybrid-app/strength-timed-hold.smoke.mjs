@@ -48,4 +48,59 @@ must(
   'loaded carry with time_sec is not time-only hold',
 );
 
+must(StrengthAdapter.htmlRowToPerformed, 'htmlRowToPerformed exported');
+
+const session = { id: 's1', completedAt: Date.now() };
+const task = { id: 't1', kind: 'strength', exerciseId: 'core-plank' };
+const plankEx = { exerciseId: 'core-plank', logColumns: [{ kind: 'time_sec' }] };
+const plankRow = { n: 1, weight: 0, reps: 45, targetKind: 'seconds', done: true, rir: 2 };
+const plankPerf = StrengthAdapter.htmlRowToPerformed(session, task, plankEx, plankRow);
+must(
+  plankPerf.measurements.some((m) => m.metricKey === 'duration' && m.value === 45),
+  'seconds row → duration measurement',
+);
+must(
+  !plankPerf.measurements.some((m) => m.metricKey === 'reps'),
+  'seconds row should not emit reps',
+);
+
+const carryEx = {
+  exerciseId: 'core-farmer-walk',
+  logColumns: [{ kind: 'weight_kg' }, { kind: 'distance_m' }, { kind: 'time_sec' }],
+};
+const carryRow = { n: 1, weight: 24, distance: 40, reps: 45, targetKind: 'reps', done: true };
+const carryPerf = StrengthAdapter.htmlRowToPerformed(session, task, carryEx, carryRow);
+must(
+  carryPerf.measurements.some((m) => m.metricKey === 'load' && m.value === 24),
+  'carry load unchanged',
+);
+must(
+  carryPerf.measurements.some((m) => m.metricKey === 'distance' && m.value === 40),
+  'carry distance measurement',
+);
+must(
+  carryPerf.measurements.some((m) => m.metricKey === 'duration' && m.value === 45),
+  'carry time_sec → duration',
+);
+must(
+  !carryPerf.measurements.some((m) => m.metricKey === 'reps'),
+  'carry with time_sec should not emit reps',
+);
+
+const benchEx = { exerciseId: 'bp', logColumns: [{ kind: 'weight_kg' }, { kind: 'reps' }] };
+const benchRow = { n: 1, weight: 100, reps: 5, targetKind: 'reps', done: true };
+const benchPerf = StrengthAdapter.htmlRowToPerformed(session, task, benchEx, benchRow);
+must(
+  benchPerf.measurements.some((m) => m.metricKey === 'load' && m.value === 100),
+  'bench load unchanged',
+);
+must(
+  benchPerf.measurements.some((m) => m.metricKey === 'reps' && m.value === 5),
+  'bench reps unchanged',
+);
+must(
+  !benchPerf.measurements.some((m) => m.metricKey === 'duration'),
+  'bench should not emit duration',
+);
+
 console.log('strength-timed-hold.smoke.mjs OK');

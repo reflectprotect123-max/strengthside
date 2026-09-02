@@ -253,8 +253,20 @@
     var measurements = [];
     var load = num(row.weight);
     var reps = num(row.reps);
+    var logCols = ex.logColumns || task.logColumns || [];
+    var hasTimeSecCol = logCols.some(function (c) { return c.kind === 'time_sec'; });
+    var hasDistanceCol = logCols.some(function (c) { return c.kind === 'distance_m'; });
     if (load > 0) measurements.push({ metricKey: 'load', value: load });
-    if (reps > 0) measurements.push({ metricKey: 'reps', value: reps });
+    if (row.targetKind === 'seconds' || hasTimeSecCol) {
+      var sec = row.targetKind === 'seconds' ? (num(row.reps) || num(row.target)) : num(row.reps);
+      if (sec > 0) measurements.push({ metricKey: 'duration', value: sec });
+    } else if (reps > 0) {
+      measurements.push({ metricKey: 'reps', value: reps });
+    }
+    if (hasDistanceCol) {
+      var metres = num(row.distance);
+      if (metres > 0) measurements.push({ metricKey: 'distance', value: metres });
+    }
     if (String(row.rir != null ? row.rir : '').trim() !== '') {
       var rir = num(row.rir);
       if (rir >= 0) measurements.push({ metricKey: 'rpe', value: Math.min(10, Math.max(1, 10 - rir)) });
@@ -1418,6 +1430,7 @@
     hasStrength: hasStrength,
     ensureStrengthState: ensureStrengthState,
     sessionLoadFromRows: sessionLoadFromRows,
+    htmlRowToPerformed: htmlRowToPerformed,
     performedFromSession: performedFromSession,
     applySilentProgression: applySilentProgression,
     applySilentProgressionAsync: applySilentProgressionAsync,
