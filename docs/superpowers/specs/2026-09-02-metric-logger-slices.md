@@ -7,11 +7,11 @@
 
 ## Owner sign-off
 
-- [ ] Frozen builder contract accepted
-- [ ] Logger flows (load×reps, timed hold, carry) accepted
-- [ ] Left/right flow accepted
-- [ ] Time/distance manual-only (no auto progression) accepted
-- [ ] Slice M1 may start
+- [x] Frozen builder contract accepted
+- [x] Logger flows (load×reps, timed hold, carry) accepted
+- [x] Left/right flow accepted
+- [x] Time/distance manual-only (no auto progression) accepted
+- [x] Slice M1 may start
 
 ## Problem
 
