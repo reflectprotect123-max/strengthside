@@ -751,7 +751,7 @@
     return (
       `<div class="ath-ss-lift${letter ? ' ath-ss-lift-' + letter.toLowerCase() : ''}">` +
       letterHtml +
-      `<input class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<input id="athLiftName_${bi}_${ei}" class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
       `<div id="athSuggest_${bi}_${ei}">${suggestHtml}</div>` +
       '<div class=hero>' +
       '<div class=hero-label>Load & effort · session start fills numbers</div>' +
@@ -889,7 +889,7 @@
     const activeCard =
       `<div class="logger-screen dial-strength ath-builder-twin">` +
       '<div class=eyebrow>Hybrid Strength · builder</div>' +
-      `<input class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<input id="athLiftName_${bi}_${ei}" class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
       `<div id="athSuggest_${bi}_${ei}">${suggestHtml}</div>` +
       `<div class=progressline data-rest-line>One set at a time · Rest ${restLabel} after Next</div>` +
       '<div class=setchip>Set <b>1</b> / 3</div>' +
