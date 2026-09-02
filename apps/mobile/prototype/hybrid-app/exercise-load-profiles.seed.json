@@ -1,0 +1,473 @@
+{
+  "core-barbell-curl": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-cable-tricep-pushdown": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-dumbbell-curl": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-hammer-curl": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-overhead-tricep-extension": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-preacher-curl": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-skull-crusher": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-assault-bike": [
+    "time_sec",
+    "distance_m"
+  ],
+  "core-cycling": [
+    "time_sec",
+    "distance_m"
+  ],
+  "core-jump-rope": [
+    "time_sec",
+    "distance_m"
+  ],
+  "core-rowing-erg": [
+    "time_sec",
+    "distance_m"
+  ],
+  "core-running": [
+    "time_sec",
+    "distance_m"
+  ],
+  "core-swimming": [
+    "time_sec",
+    "distance_m"
+  ],
+  "core-ab-wheel-rollout": [
+    "reps"
+  ],
+  "core-hanging-leg-raise": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-pallof-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-plank": [
+    "time_sec"
+  ],
+  "core-battle-ropes": [
+    "weight_kg",
+    "distance_m",
+    "time_sec"
+  ],
+  "core-farmer-walk": [
+    "weight_kg",
+    "distance_m",
+    "time_sec"
+  ],
+  "core-sled-push": [
+    "weight_kg",
+    "distance_m",
+    "time_sec"
+  ],
+  "core-cable-fly": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-calf-raise": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-leg-curl": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-leg-extension": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-pec-deck": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-box-jump": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-broad-jump": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-medicine-ball-slam": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-seated-dynamic-jump": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-cable-lateral-raise": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-lateral-raise": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-rear-delt-fly": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-deadlift": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-good-morning": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-hip-thrust": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-nordic-curl": [
+    "reps"
+  ],
+  "core-romanian-deadlift": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-sumo-deadlift": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-trap-bar-deadlift": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-barbell-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-cable-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-chest-supported-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-dumbbell-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-face-pull": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-meadows-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-supinated-barbell-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-t-bar-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-bench-press": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-close-grip-bench-press": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-dip": [
+    "reps"
+  ],
+  "core-dumbbell-bench-press": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-incline-bench-press": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-low-incline-db-bench": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-push-up": [
+    "reps"
+  ],
+  "core-strict-bar-dip": [
+    "reps"
+  ],
+  "core-back-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-box-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-front-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-goblet-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-hack-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-leg-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-zercher-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-bulgarian-split-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-reverse-lunge": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-single-leg-rdl": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-step-up": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-walking-lunge": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-chin-up": [
+    "reps"
+  ],
+  "core-lat-pulldown": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-neutral-grip-pulldown": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-pronated-strict-pull-up": [
+    "reps"
+  ],
+  "core-pull-up": [
+    "reps"
+  ],
+  "core-arnold-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-landmine-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "core-overhead-press": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-push-press": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "core-seated-db-overhead-press": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "rebuilt-incline-db-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-dumbbell-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-machine-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-lateral-lunge": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-tempo-bodyweight-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "rebuilt-block-pull": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-band-good-morning": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-db-rdl": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "rebuilt-suitcase-carry": [
+    "weight_kg",
+    "distance_m",
+    "time_sec"
+  ],
+  "rebuilt-sandbag-carry": [
+    "weight_kg",
+    "distance_m",
+    "time_sec"
+  ],
+  "rebuilt-bear-crawl": [
+    "weight_kg",
+    "distance_m",
+    "time_sec"
+  ],
+  "rebuilt-backpack-carry": [
+    "weight_kg",
+    "distance_m",
+    "time_sec"
+  ],
+  "rebuilt-med-ball-throw": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-kettlebell-swing": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-fast-sit-to-stand": [
+    "weight_kg",
+    "reps"
+  ],
+  "rebuilt-jump-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "rebuilt-scap-push-up": [
+    "time_sec"
+  ],
+  "rebuilt-hip-hinge-drill": [
+    "time_sec"
+  ],
+  "library-assisted-pull-up": [
+    "reps"
+  ],
+  "library-inverted-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-seal-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-low-cable-row": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-dumbbell-floor-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-deficit-push-up": [
+    "reps"
+  ],
+  "library-z-press": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-landmine-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "library-cyclist-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "library-cossack-squat": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "library-front-foot-elevated-reverse-lunge": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-b-stance-romanian-deadlift": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "library-cable-pull-through": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-cable-crunch": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-dead-bug": [
+    "time_sec"
+  ],
+  "library-side-plank": [
+    "time_sec"
+  ],
+  "library-copenhagen-plank": [
+    "time_sec"
+  ],
+  "library-adductor-machine": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-seated-leg-curl": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-hip-abduction-machine": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-hang-power-clean": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "library-dumbbell-snatch": [
+    "weight_pct_wm",
+    "reps"
+  ],
+  "library-lateral-bound": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-medicine-ball-rotational-throw": [
+    "weight_kg",
+    "reps"
+  ],
+  "library-skierg": [
+    "time_sec",
+    "distance_m"
+  ]
+}

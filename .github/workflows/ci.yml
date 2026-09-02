@@ -63,6 +63,7 @@ jobs:
       - run: pnpm run check:metric-logger
       - run: pnpm run check:exercise-load-expr
       - run: pnpm run check:exercise-load-profiles
+      - run: pnpm run check:exercise-load-profiles-runtime
       - run: pnpm run check:exercise-search
       - run: pnpm run check:trainheroic-import
       - run: pnpm run gen:exercise-history-seed
