@@ -280,7 +280,7 @@
     return !!(
       global.StrengthAdapter &&
       StrengthAdapter.repProgressionLift &&
-      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category, state, exerciseId, ex && ex.rows)
+      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category, state, exerciseId, ex && ex.rows, ex)
     );
   }
 
