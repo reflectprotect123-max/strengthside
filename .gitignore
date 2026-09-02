@@ -29,6 +29,7 @@ apps/mobile/prototype/hybrid-app/seeds/
 apps/mobile/preview-site/trainheroic-import.js
 apps/mobile/**/trainheroic-import.js
 apps/mobile/**/trainheroic-import.json
+apps/mobile/**/exercise-history-seed.js
 training_data.csv
 tmp/
 supabase/.temp/

@@ -149,24 +149,26 @@ After selection, `exercise-load-profiles.json` defines **which metrics to log** 
 | **1** | Exercise index + search resolver module + unit/smoke tests |
 | **2** | Builder variant picker UI (names only) |
 | **3** | Wire selection → existing `applyLoadHintsToExercise` / profiles |
-| **4** | TH import script + local seed format + alias review CSV |
+| **4** | TH import script → bundled history seed (hints + aliases only) |
 
-Phases 1–3 stand alone without import. Phase 4 fills history for dogfood.
+Phases 1–3 stand alone without import. Phase 4 fills load hints for dogfood.
 
-## TrainHeroic history import (phase 4 — implemented)
+## Exercise history seed (phase 4 — implemented)
 
 ```bash
 pnpm run import:trainheroic -- path/to/trainheroic-userData-export.zip
+pnpm run gen:exercise-history-seed
+bash apps/mobile/sync-hybrid-html.sh
 ```
 
 - **Threshold:** exercises with **>3** logged rows in `training_data.csv`
-- **Maps** TH `ExerciseTitle` → canonical `exercise_id` (manual map + ExerciseSearch); unmapped → `th-custom-*`
-- **Parses** `ExerciseData` (`rep x pound` → kg sets); skips empty warm-up/cardio-only titles from sessions
-- **Output:** gitignored `THE-trainheroic-import.json`
-- **Load in app:** Settings → Import backup → merges sessions, `loadHints`, custom exercises, `meta.thTitleAliases`
+- **Maps** TH `ExerciseTitle` → canonical `exercise_id` (manual map + ExerciseSearch); unmapped titles kept as aliases only
+- **Seed contains:** `loadHints` + `titleAliases` only — **no sessions**, no custom exercises, no templates
+- **Output:** gitignored `exercise-history-seed.js` (generated from gitignored `THE-trainheroic-import.json`)
+- **App boot:** auto-merges seed once — no Settings import step
 
 ## Success criteria
 
 - Athlete types a vague name, sees **variant names**, picks one, and set 1 load comes from **that variant’s history** without weights cluttering search.
 - Same canonical id whether they typed `DB Lateral Raise` or picked Lateral Raise from search after typing `lateral`.
-- Personal TH history optionally seeds those ids once; repo stays free of export data.
+- Personal TH export stays gitignored; bundled seed supplies hints/aliases without importing workout sessions.

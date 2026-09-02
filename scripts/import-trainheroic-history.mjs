@@ -6,7 +6,8 @@
  *   node scripts/import-trainheroic-history.mjs path/to/training_data.csv
  *
  * Output (gitignored): THE-trainheroic-import.json
- * Import in app: Settings → Import backup
+ * Then: pnpm run gen:exercise-history-seed  (load hints + aliases only — no sessions)
+ * The app auto-merges exercise-history-seed.js on boot.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
