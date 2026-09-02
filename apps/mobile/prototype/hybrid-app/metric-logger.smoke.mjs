@@ -9,8 +9,8 @@ import vm from 'node:vm';
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v156'")) {
-  throw new Error('expected cache v156');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v157'")) {
+  throw new Error('expected cache v157');
 }
 
 const sandbox = {
@@ -201,5 +201,44 @@ if (!squatHtml.includes('metric-unit>kg')) throw new Error('squat regression: kg
 if (!squatHtml.includes('metric-unit>reps')) throw new Error('squat regression: reps unit missing');
 if (!squatHtml.includes('metric-sep')) throw new Error('squat regression: × separator missing');
 if (squatHtml.includes('workOverlay')) throw new Error('squat should not show work overlay');
+
+const splitSquatTask = {
+  kind: 'strength',
+  name: 'Bulgarian Split Squat',
+  exerciseId: 'core-bulgarian-split-squat',
+  sideMode: 'both_per_round',
+  restSec: 90,
+  logColumns: [
+    { id: 'load', kind: 'weight_kg', value: '', values: [''] },
+    { id: 'effort', kind: 'reps', value: '', values: [''] },
+  ],
+  rows: [
+    { n: 1, target: '8', targetKind: 'reps', weight: 20, reps: '', done: false, extra: false },
+    { n: 2, target: '8', targetKind: 'reps', weight: '', reps: '', done: false, extra: false },
+    { n: 3, target: '8', targetKind: 'reps', weight: '', reps: '', done: false, extra: false },
+  ],
+};
+sandbox._task = splitSquatTask;
+if (!L.isSidePerRound(splitSquatTask)) throw new Error('split squat sideMode');
+const splitLeft = L.renderTask(splitSquatTask);
+if (!splitLeft.includes('Left · Round')) throw new Error('split squat left round chip');
+if (!splitLeft.includes('Round <b>1</b> / 3')) throw new Error('split squat round 1/3 chip');
+splitSquatTask.rows[0].reps = 8;
+L.onDifficultySlide('2');
+L.nextStrengthSet();
+if (splitSquatTask.autoreg.side !== 'right') throw new Error('after left log should be right side');
+if (splitSquatTask.rows[0].done) throw new Error('row not done until right logged');
+const splitRight = L.renderTask(splitSquatTask);
+if (!splitRight.includes('Right · Round')) throw new Error('split squat right round chip');
+splitSquatTask.rows[0].reps = 8;
+L.onDifficultySlide('2');
+L.nextStrengthSet();
+if (!splitSquatTask.rows[0].done) throw new Error('row done after right log');
+if (splitSquatTask.autoreg.restPhase !== true) throw new Error('rest after right side');
+if (splitSquatTask.autoreg.side !== 'left') throw new Error('side resets to left after round');
+const splitRest = L.renderTask(splitSquatTask);
+if (!splitRest.includes('Rest · between sets')) throw new Error('split squat rest phase');
+if (!splitRest.includes('L 20 kg')) throw new Error('rest summary left kg');
+if (!splitRest.includes('R 20 kg')) throw new Error('rest summary right kg');
 
 console.log('metric-logger.smoke: ok');

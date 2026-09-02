@@ -23,7 +23,7 @@ must(html.includes('removeSupersetPair'), 'delete superset pair');
 must(!html.includes('data-rest-line'), 'builder no longer shows logger rest countdown line');
 must(logColumnsSrc.includes('Rest (seconds)'), 'builder keeps rest seconds input');
 must(html.includes('function setAthleteLiftTargetRir'), 'target RIR calibration handler');
-must(html.includes('function setAthleteLiftColumnCount'), 'setAthleteLiftColumnCount handler');
+must(html.includes('function setAthleteLiftSideMode'), 'sideMode handler');
 must(html.includes('function athleteLiftRepOnly'), 'rep-only layout helper');
 must(html.includes('builder-metric-select'), 'metric dropdown class in CSS or twin');
 
@@ -66,6 +66,7 @@ must(twin.includes('How should this feel'), 'builder target-effort calibration s
 must(twin.includes('setAthleteLiftTargetRir'), 'calibration slider handler');
 must(!twin.includes('How hard was that set'), 'no post-set logger slider in builder');
 must(twin.includes('Rest (seconds)'), 'rest row');
+must(twin.includes('L+R per round'), 'side mode select');
 must(!twin.includes('Rest · between sets'), 'no rest timer preview in builder');
 must(!twin.includes('builder-phase-preview'), 'no rest phase preview stack');
 must(!twin.includes('builder-phase-stack'), 'single builder card only');

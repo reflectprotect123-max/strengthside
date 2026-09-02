@@ -1167,7 +1167,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v156';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v157';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -2337,6 +2337,7 @@ function setAthleteLiftRest(bi,ei,val,el){let ex=draft.blocks[bi].exercises[ei];
 function setAthleteLiftTargetRir(bi,ei,sliderVal){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;let rir=Math.max(0,Math.min(4,4-Math.round(num(sliderVal)||0)));ex.targetRir=rir;persistDraft();let label=$('athTargetRirLabel_'+bi+'_'+ei);if(label){let names={4:'Very easy',3:'Easy',2:'Medium',1:'Hard',0:'Max effort'};label.textContent=(names[rir]||'Medium')+' · RIR ~'+rir}}
 function setAthleteLiftColumnKind(bi,ei,ci,kind){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex=ensureAthleteLiftShape(ex);ex.logColumns[ci].kind=kind;draft.blocks[bi].exercises[ei]=ex;persistDraft()}
 function setAthleteLiftColumnCount(bi,ei,n){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex=ensureAthleteLiftShape(ex);let repOnly=athleteLiftRepOnly(ex);n=Math.max(1,Math.min(repOnly?1:3,Math.round(Number(n)||2)));const defaultKinds=repOnly?['reps']:['weight_pct_wm','reps','distance_m'];while(ex.logColumns.length<n){const kind=defaultKinds[ex.logColumns.length]||'reps';ex.logColumns.push({id:id(),kind,value:'',values:[]})}while(ex.logColumns.length>n)ex.logColumns.pop();draft.blocks[bi].exercises[ei]=ex;persistDraft();refreshAthleteLiftCard(bi,ei)}
+function setAthleteLiftSideMode(bi,ei,val){let ex=draft.blocks[bi].exercises[ei];if(!ex)return;ex.sideMode=val==='both_per_round'?'both_per_round':'none';draft.blocks[bi].exercises[ei]=ex;persistDraft()}
 
 function toggleAthleteSupersetLock(bi,ei){
   let block=draft&&draft.blocks&&draft.blocks[bi];

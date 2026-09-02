@@ -25,11 +25,52 @@
         restSec: 90,
         phase: 'active',
         workStarted: false,
+        side: 'left',
+        round: 1,
       };
     }
     if (t.autoreg.phase == null) t.autoreg.phase = 'active';
     if (t.autoreg.workStarted == null) t.autoreg.workStarted = false;
+    if (isSidePerRound(t)) {
+      if (t.autoreg.side !== 'left' && t.autoreg.side !== 'right') t.autoreg.side = 'left';
+      var planned = plannedRows(t);
+      var ord = t.autoreg.setOrdinal || 0;
+      t.autoreg.round = ord + 1;
+      if (t.autoreg.round > planned.length) t.autoreg.round = Math.max(1, planned.length);
+    }
     return t.autoreg;
+  }
+
+  function isSidePerRound(t) {
+    return !!(t && t.sideMode === 'both_per_round');
+  }
+
+  function sideLabel(side) {
+    return side === 'right' ? 'Right' : 'Left';
+  }
+
+  function setChipHtml(t, autoreg, planned, ordinal) {
+    if (isSidePerRound(t)) {
+      return (
+        '<div class=setchip>' +
+        escHtml(sideLabel(autoreg.side)) +
+        ' · Round <b>' +
+        (ordinal + 1) +
+        '</b> / ' +
+        planned.length +
+        '</div>'
+      );
+    }
+    return '<div class=setchip>Set <b>' + (ordinal + 1) + '</b> / ' + planned.length + '</div>';
+  }
+
+  function stashSideValues(row) {
+    row.leftWeight = row.weight;
+    row.leftReps = row.reps;
+    row.leftDistance = row.distance;
+    row.weight = '';
+    row.reps = '';
+    row.distance = '';
   }
 
   function syncAutoregOrdinal(t) {
@@ -277,6 +318,31 @@
 
   function formatRowMetricsSummary(t, row) {
     var layoutInfo = taskColumnLayout(t);
+    if (isSidePerRound(t) && (row.leftWeight != null || row.leftReps != null || row.leftDistance != null)) {
+      var leftParts = [];
+      var rightParts = [];
+      if (layoutInfo) {
+        layoutInfo.cols.forEach(function (col) {
+          var meta = global.LogColumns.kindMeta(col.kind);
+          var field = rowFieldForKind(col.kind);
+          var leftVal = row['left' + field.charAt(0).toUpperCase() + field.slice(1)];
+          var rightVal = row[field];
+          if (leftVal === '' || leftVal == null) leftVal = '—';
+          if (rightVal === '' || rightVal == null) rightVal = '—';
+          if (field === 'weight') {
+            leftParts.push(escHtml(String(leftVal)) + ' kg');
+            rightParts.push(escHtml(String(rightVal)) + ' kg');
+          } else if (col.kind === 'time_sec') {
+            leftParts.push(escHtml(String(leftVal)) + (leftVal === '—' ? '' : 's'));
+            rightParts.push(escHtml(String(rightVal)) + (rightVal === '—' ? '' : 's'));
+          } else {
+            leftParts.push(escHtml(String(leftVal)) + ' ' + String(meta.loggerLabel || '').toLowerCase());
+            rightParts.push(escHtml(String(rightVal)) + ' ' + String(meta.loggerLabel || '').toLowerCase());
+          }
+        });
+      }
+      return 'L ' + leftParts.join(' · ') + ' · R ' + rightParts.join(' · ');
+    }
     if (!layoutInfo) {
       return (
         escHtml(String(row.weight != null && row.weight !== '' ? row.weight : '—')) +
@@ -599,11 +665,7 @@
       '<div class=progressline>' +
       escHtml(taskProgress(t)) +
       '</div>' +
-      '<div class=setchip>Set <b>' +
-      (ordinal + 1) +
-      '</b> / ' +
-      planned.length +
-      '</div>' +
+      setChipHtml(t, autoreg, planned, ordinal) +
       heroActive(t, row, autoreg) +
       (sliderVisible ? sliderCard(t, autoreg) : '') +
       '<div class=next-wrap>' +
@@ -756,8 +818,19 @@
       var err = global.validateStrengthRow(row);
       if (err) return global.alert(err);
     }
+    if (isSidePerRound(t) && autoreg.side === 'left') {
+      stashSideValues(row);
+      row.leftDifficulty = autoreg.selectedDifficulty;
+      if (row.leftWeight != null && row.leftWeight !== '') row.weight = row.leftWeight;
+      autoreg.side = 'right';
+      autoreg.selectedDifficulty = null;
+      if (typeof global.save === 'function') global.save();
+      if (typeof global.train === 'function') global.train();
+      return;
+    }
     row.done = true;
     row.difficulty = autoreg.selectedDifficulty;
+    if (isSidePerRound(t)) autoreg.side = 'left';
     var performedLoad = Number(row.weight);
     var performedReps = Number(row.reps);
     if (!autoreg.sessionAnchorKg && performedLoad) autoreg.sessionAnchorKg = performedLoad;
@@ -1045,6 +1118,9 @@
     finishWorkEarly: finishWorkEarly,
     retryAttempt: retryAttempt,
     isTimePrimaryHold: isTimePrimaryHold,
+    isSidePerRound: isSidePerRound,
+    sideLabel: sideLabel,
+    setChipHtml: setChipHtml,
     clearRestPhase: clearRestPhase,
     seedActiveRow: seedActiveRow,
     syncActiveRowFromDom: syncActiveRowFromDom,

@@ -747,6 +747,18 @@
     );
   }
 
+  function builderSideModeHtml(ex, bi, ei) {
+    const mode = (ex && ex.sideMode) || 'none';
+    return (
+      '<div class="side-mode-row rest-row">' +
+      `<label for="athSideMode_${bi}_${ei}">Sides</label>` +
+      `<select id="athSideMode_${bi}_${ei}" aria-label="Side mode" onchange="setAthleteLiftSideMode(${bi},${ei},this.value)">` +
+      `<option value="none"${mode === 'none' ? ' selected' : ''}>None</option>` +
+      `<option value="both_per_round"${mode === 'both_per_round' ? ' selected' : ''}>L+R per round</option>` +
+      '</select></div>'
+    );
+  }
+
   function builderLiftMetricsHtml(ex, bi, ei) {
     const { cols, loadCol, layout } = columnLayout(ex || {});
     const effortCol = effortColumn(cols) || cols[0];
@@ -818,6 +830,7 @@
       '<div class=hero>' +
       '<div class=hero-label>Load & effort · session start fills numbers</div>' +
       builderLiftMetricsHtml(ex, bi, ei) +
+      builderSideModeHtml(ex, bi, ei) +
       `<div class=rest-row><label for="athRest_${bi}_${ei}">Rest (seconds)</label>` +
       `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div></div>` +
       builderTargetEffortHtml(ex, bi, ei) +
@@ -856,6 +869,7 @@
       '<div class=hero>' +
       '<div class=hero-label>Load & effort · session start fills numbers</div>' +
       builderLiftMetricsHtml(ex, bi, ei) +
+      builderSideModeHtml(ex, bi, ei) +
       `<div class=rest-row><label for="athRest_${bi}_${ei}">Rest (seconds)</label>` +
       `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div></div>` +
       builderTargetEffortHtml(ex, bi, ei) +
@@ -994,6 +1008,7 @@
     builderLoggerTwinHtml,
     builderAthleteTwinHtml,
     builderSupersetTwinHtml,
+    builderSideModeHtml,
     ensureAthleteLogColumns,
     columnLayout,
     athleteColumnOptionsHtml,
