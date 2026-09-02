@@ -146,7 +146,17 @@
   global.ExerciseSearch = {
     search: search,
     byId: byId,
-    mergeCustomHits: mergeCustomHits,
-    norm: norm,
-  };
+  mergeCustomHits: mergeCustomHits,
+  norm: norm,
+  byId: byId,
+  resolveTitleAlias: function (title, aliasMap) {
+    if (!title || !aliasMap) return null;
+    if (aliasMap[title]) return byId(aliasMap[title]);
+    var q = norm(title);
+    for (var k in aliasMap) {
+      if (norm(k) === q) return byId(aliasMap[k]);
+    }
+    return null;
+  },
+};
 })(typeof window !== 'undefined' ? window : global);

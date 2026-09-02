@@ -153,6 +153,18 @@ After selection, `exercise-load-profiles.json` defines **which metrics to log** 
 
 Phases 1–3 stand alone without import. Phase 4 fills history for dogfood.
 
+## TrainHeroic history import (phase 4 — implemented)
+
+```bash
+pnpm run import:trainheroic -- path/to/trainheroic-userData-export.zip
+```
+
+- **Threshold:** exercises with **>3** logged rows in `training_data.csv`
+- **Maps** TH `ExerciseTitle` → canonical `exercise_id` (manual map + ExerciseSearch); unmapped → `th-custom-*`
+- **Parses** `ExerciseData` (`rep x pound` → kg sets); skips empty warm-up/cardio-only titles from sessions
+- **Output:** gitignored `THE-trainheroic-import.json`
+- **Load in app:** Settings → Import backup → merges sessions, `loadHints`, custom exercises, `meta.thTitleAliases`
+
 ## Success criteria
 
 - Athlete types a vague name, sees **variant names**, picks one, and set 1 load comes from **that variant’s history** without weights cluttering search.
