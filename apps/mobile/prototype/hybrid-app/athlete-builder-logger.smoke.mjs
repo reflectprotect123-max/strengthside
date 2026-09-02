@@ -16,14 +16,13 @@ function must(cond, msg) {
 
 must(html.includes('LogColumns.builderAthleteTwinHtml'), 'builderAthleteTwinHtml wired in index');
 must(html.includes('ath-lift-logger'), 'ath-lift-logger card class');
-must(html.includes('ath-builder-twin-static'), 'static slider/next chrome');
 must(html.includes('builderSupersetTwinHtml'), 'builderSupersetTwinHtml wired');
 must(html.includes('ath-lift-superset'), 'merged superset card CSS');
 must(html.includes('athleteSupersetEditor'), 'merged superset editor');
 must(html.includes('removeSupersetPair'), 'delete superset pair');
 must(!html.includes('data-rest-line'), 'builder no longer shows logger rest countdown line');
 must(logColumnsSrc.includes('Rest (seconds)'), 'builder keeps rest seconds input');
-must(html.includes('ath-builder-twin-static .btn.primary'), 'disabled-looking builder buttons');
+must(html.includes('function setAthleteLiftTargetRir'), 'target RIR calibration handler');
 must(html.includes('function athleteLiftRepOnly'), 'rep-only layout helper');
 must(html.includes('builder-metric-select'), 'metric dropdown class in CSS or twin');
 
@@ -62,10 +61,10 @@ const twin = LC.builderAthleteTwinHtml(
   { bi: 0, ei: 0 },
 );
 must(twin.includes('Hybrid Strength · builder'), 'builder eyebrow');
-must(twin.includes('disabled>Next set'), 'Next set disabled');
-must(twin.includes('disabled>+ Extra set'), 'Extra set disabled');
+must(twin.includes('How should this feel'), 'builder target-effort calibration slider');
+must(twin.includes('setAthleteLiftTargetRir'), 'calibration slider handler');
+must(!twin.includes('How hard was that set'), 'no post-set logger slider in builder');
 must(twin.includes('Rest (seconds)'), 'rest row');
-must(twin.includes('setAthleteLiftRest'), 'rest input handler');
 must(!twin.includes('Rest · between sets'), 'no rest timer preview in builder');
 must(!twin.includes('builder-phase-preview'), 'no rest phase preview stack');
 must(!twin.includes('builder-phase-stack'), 'single builder card only');

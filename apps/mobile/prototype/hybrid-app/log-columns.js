@@ -707,6 +707,32 @@
     });
   }
 
+  function builderTargetRir(ex) {
+    const n = ex && ex.targetRir;
+    if (n != null && Number.isFinite(Number(n))) return Math.max(0, Math.min(4, Math.round(Number(n))));
+    return 2;
+  }
+
+  function builderTargetRirLabel(rir) {
+    return (
+      { 4: 'Very easy', 3: 'Easy', 2: 'Medium', 1: 'Hard', 0: 'Max effort' }[rir] || 'Medium'
+    );
+  }
+
+  /** Builder calibration — target effort feeds session-start load and logger baseline RIR. */
+  function builderTargetEffortHtml(ex, bi, ei) {
+    const rir = builderTargetRir(ex);
+    const sliderVal = 4 - rir;
+    return (
+      '<div class="slider-card ath-builder-calibration">' +
+      '<div class=sliderhead><b>How should this feel?</b>' +
+      `<span id="athTargetRirLabel_${bi}_${ei}" class=slidervalue>${escTwin(builderTargetRirLabel(rir))} · RIR ~${rir}</span></div>` +
+      `<input type="range" id="athTargetRir_${bi}_${ei}" min="0" max="4" step="1" value="${sliderVal}" aria-label="Target effort" oninput="setAthleteLiftTargetRir(${bi},${ei},this.value)">` +
+      '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span></div>' +
+      '<div class=slider-hint>Session start uses this target. During training, the logger slider adjusts load set to set.</div></div>'
+    );
+  }
+
   function builderLiftMetricsHtml(ex, bi, ei) {
     const cols = ensureAthleteLogColumns(ex || {});
     const repOnly = cols.length === 1;
@@ -751,14 +777,15 @@
     return (
       `<div class="ath-ss-lift${letter ? ' ath-ss-lift-' + letter.toLowerCase() : ''}">` +
       letterHtml +
-      `<input id="athLiftName_${bi}_${ei}" class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
       `<div id="athSuggest_${bi}_${ei}">${suggestHtml}</div>` +
       '<div class=hero>' +
       '<div class=hero-label>Load & effort · session start fills numbers</div>' +
       builderLiftMetricsHtml(ex, bi, ei) +
       `<div class=rest-row><label for="athRest_${bi}_${ei}">Rest (seconds)</label>` +
-      `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div>` +
-      '<div class=hero-target>Target: <b>RIR 2</b> · next set adjusts from slider</div></div></div>'
+      `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div></div>` +
+      builderTargetEffortHtml(ex, bi, ei) +
+      '</div>'
     );
   }
 
@@ -856,14 +883,9 @@
       '<div class=eyebrow>Superset A · Round 1 · builder</div>' +
       `<div class=progressline>Round 1 / 3 · A1 then B1</div>` +
       `<div class=superset-pill>A1 → B1 · ${partnerSec}s between partners</div>` +
-      '<div class=setchip>Set <b>1</b> / 3</div>' +
       builderLiftPanelHtml(exA, { bi: bi, ei: eiA, letter: 'A', suggestHtml: opts.suggestHtmlA || '' }) +
       builderLiftPanelHtml(exB, { bi: bi, ei: eiB, letter: 'B', suggestHtml: opts.suggestHtmlB || '' }) +
-      '<div class="slider-card ath-builder-twin-static"><div class=sliderhead><b>How hard was that set?</b><span class=slidervalue>Medium · RIR ~2</span></div>' +
-      '<input type="range" disabled min="0" max="5" step="1" value="2" aria-hidden="true">' +
-      '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
-      '<div class="next-wrap ath-builder-twin-static">' +
-      '<button type="button" class="btn primary" disabled>Next</button></div></div>';
+      '</div>';
     return activeCard;
   }
 
@@ -878,21 +900,15 @@
     return (
       `<div class="logger-screen dial-strength ath-builder-twin">` +
       '<div class=eyebrow>Hybrid Strength · builder</div>' +
-      `<input id="athLiftName_${bi}_${ei}" class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
       `<div id="athSuggest_${bi}_${ei}">${suggestHtml}</div>` +
-      '<div class=setchip>Set <b>1</b> / 3</div>' +
       '<div class=hero>' +
       '<div class=hero-label>Load & effort · session start fills numbers</div>' +
       builderLiftMetricsHtml(ex, bi, ei) +
       `<div class=rest-row><label for="athRest_${bi}_${ei}">Rest (seconds)</label>` +
-      `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div>` +
-      '<div class=hero-target>Target: <b>RIR 2</b> · next set adjusts from slider</div></div>' +
-      '<div class="slider-card ath-builder-twin-static"><div class=sliderhead><b>How hard was that set?</b><span class=slidervalue>Medium · RIR ~2</span></div>' +
-      '<input type="range" disabled min="0" max="5" step="1" value="2" aria-hidden="true">' +
-      '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
-      '<div class="next-wrap ath-builder-twin-static">' +
-      '<button type="button" class="btn primary" disabled>Next set</button>' +
-      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>'
+      `<input id="athRest_${bi}_${ei}" type="number" min="0" step="5" value="${restSec}" aria-label="Rest seconds" oninput="setAthleteLiftRest(${bi},${ei},this.value,this)"></div></div>` +
+      builderTargetEffortHtml(ex, bi, ei) +
+      '</div>'
     );
   }
 
