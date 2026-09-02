@@ -42,7 +42,7 @@ if (!html.includes('ATH_CHECKIN_STEPS')) throw new Error('ATH_CHECKIN_STEPS miss
 if (!html.includes('function athCheckinAnswer')) throw new Error('athCheckinAnswer missing');
 if (!html.includes('checkin-choice')) throw new Error('checkin-choice UI missing');
 if (html.includes("athSleepSlider('sleepQuality'")) throw new Error('old sleepQuality slider still in check-in card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v150'")) throw new Error('expected cache v96');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v151'")) throw new Error('expected cache v96');
 if (!html.includes("keepScroll=S&&S.tab==='settings'")) throw new Error('shell() must preserve settings scroll');
 if (html.includes("loadStarter('Full Body B')")) throw new Error('Full Body B starter button still present');
 if (html.includes("loadStarter('Full Body C')")) throw new Error('Full Body C starter button still present');
