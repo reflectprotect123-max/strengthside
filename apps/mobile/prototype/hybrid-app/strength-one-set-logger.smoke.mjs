@@ -12,7 +12,7 @@ const src = readFileSync(join(dir, 'strength-one-set-logger.js'), 'utf8');
 
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v147'")) throw new Error('expected cache v140');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v148'")) throw new Error('expected cache v140');
 if (!html.includes('.logger-screen{')) throw new Error('logger-screen CSS missing');
 if (!html.includes('.hero-metrics{')) throw new Error('hero-metrics CSS missing');
 if (!html.includes('.metric-val{')) throw new Error('metric-val CSS missing');
