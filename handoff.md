@@ -29,6 +29,8 @@
 
 **Do not revisit (owner lock — Sep 2026):** ARC / multi-coach · Expo / second athlete shell · **pain / illness** (classification may remain in code; **no agent work** — consumption, stops, gates, or new UI). Pain/illness product work is **grokbot**'s lane; treat as **out of scope** here.
 
+**Owner lock — Sep 2026 (ops):** **Coach parked** — no coach portal / desktop / publish-loop work unless owner asks. **No deploys** (Capgo, Netlify, coach `.exe`, migrations) until owner explicitly says ship.
+
 **Recent merges (#130–#139):** blank boot + remove Restore hidden · warm-up/cool-down restore · Start session handler fix · preview `blockHelpDropdown` crash fix · strength set logger `escHtml` fallback · one-set-row 3-column grid CSS · polished one-set logger (ghost stack, difficulty slider, in-row Next) · builder rest/recap previews + merged superset cards.
 
 ---
