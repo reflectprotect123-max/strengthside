@@ -7,6 +7,7 @@ dist/
 .claude/commands/
 .claude/hooks/
 graphify-out/
+.superpowers/
 # Capacitor local build junk (keep apps/mobile/capacitor sources tracked)
 apps/mobile/capacitor/android/.gradle/
 apps/mobile/capacitor/android/**/build/
