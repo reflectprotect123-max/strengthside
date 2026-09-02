@@ -59,6 +59,7 @@ jobs:
       - run: pnpm run check:log-columns
       - run: pnpm run check:exercise-load-expr
       - run: pnpm run check:exercise-load-profiles
+      - run: pnpm run check:exercise-search
       - run: pnpm run check:autopilot-policy
       - run: pnpm run check:strength-volume
       - run: pnpm run check:strength-progression

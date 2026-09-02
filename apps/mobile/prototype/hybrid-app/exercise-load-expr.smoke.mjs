@@ -26,6 +26,8 @@ if (!saveMatch) throw new Error('saveExercise not found in index.html');
 
 const dom = {
   exName: { value: 'Back Squat' },
+  exNameVisible: { value: 'Back Squat' },
+  exExerciseId: { value: '' },
   exCat: { value: 'Squat' },
   exSets: { value: '3' },
   exRest: { value: '120' },
@@ -51,6 +53,12 @@ const sandbox = {
   id: () => 'ex-new',
   slugExercise: (n) => n.toLowerCase().replace(/\s+/g, '-'),
   normExercise: (n) => n.toLowerCase().trim(),
+  findLibraryExerciseById: (state, eid) => (state.exercises || []).find((x) => x.id === eid) || null,
+  resolveCanonicalExercise: (exerciseId, name) => {
+    const byId = sandbox.S.exercises.find((x) => x.id === exerciseId);
+    if (byId) return byId;
+    return sandbox.S.exercises.find((x) => sandbox.normExercise(x.name) === sandbox.normExercise(name)) || null;
+  },
   percentLiftCandidate: () => false,
   dedupe: (a) => a,
   ensureExerciseTrackingFlags: (s) => s,
