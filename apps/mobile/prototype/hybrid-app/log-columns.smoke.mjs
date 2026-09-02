@@ -70,4 +70,31 @@ LC.syncLegacyFromColumns(out, LC.getSheetColumns(), 3);
 if (!out.autopilotVolume) throw new Error('blank volume should stay autopilot');
 if (out.sets != null) throw new Error('autopilot should null sets');
 
+const plankEx = {
+  name: 'Plank',
+  restSec: 60,
+  logColumns: [{ id: 't', kind: 'time_sec', value: '', values: [''] }],
+};
+const plankTwin = LC.builderAthleteTwinHtml(plankEx, { bi: 0, ei: 0 });
+if (!plankTwin.includes('Time (seconds)')) throw new Error('plank twin shows time kind');
+if (plankTwin.includes('metric-sep')) throw new Error('single-column plank should not show × separator');
+
+const carryEx = {
+  name: 'Farmer Walk',
+  restSec: 90,
+  logColumns: [
+    { id: 'w', kind: 'weight_kg', value: '', values: [''] },
+    { id: 'd', kind: 'distance_m', value: '', values: [''] },
+    { id: 't', kind: 'time_sec', value: '', values: [''] },
+  ],
+};
+const carryTwin = LC.builderAthleteTwinHtml(carryEx, { bi: 0, ei: 0 });
+if (!carryTwin.includes('Distance (metres)')) throw new Error('carry twin missing distance');
+if (!carryTwin.includes('Time (seconds)')) throw new Error('carry twin missing time');
+
+if (!LC.columnLayout) throw new Error('columnLayout export missing');
+const carryLayout = LC.columnLayout(carryEx);
+if (carryLayout.layout !== 'triple') throw new Error('carry layout should be triple');
+if (carryLayout.cols.length !== 3) throw new Error('carry should have 3 cols');
+
 console.log('log-columns.smoke: ok');

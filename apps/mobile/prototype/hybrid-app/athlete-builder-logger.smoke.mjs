@@ -23,6 +23,7 @@ must(html.includes('removeSupersetPair'), 'delete superset pair');
 must(!html.includes('data-rest-line'), 'builder no longer shows logger rest countdown line');
 must(logColumnsSrc.includes('Rest (seconds)'), 'builder keeps rest seconds input');
 must(html.includes('function setAthleteLiftTargetRir'), 'target RIR calibration handler');
+must(html.includes('function setAthleteLiftColumnCount'), 'setAthleteLiftColumnCount handler');
 must(html.includes('function athleteLiftRepOnly'), 'rep-only layout helper');
 must(html.includes('builder-metric-select'), 'metric dropdown class in CSS or twin');
 
