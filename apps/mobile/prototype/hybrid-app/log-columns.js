@@ -851,14 +851,10 @@
     const eiA = Number(opts.eiA) || 0;
     const eiB = Number(opts.eiB) || eiA + 1;
     const partnerSec = 45;
-    const roundSec = Math.max(
-      Math.max(0, Number(exA && exA.restSec) || 120),
-      Math.max(0, Number(exB && exB.restSec) || 120),
-    );
     const activeCard =
       `<div class="logger-screen dial-strength ath-builder-twin ath-builder-superset">` +
       '<div class=eyebrow>Superset A · Round 1 · builder</div>' +
-      `<div class=progressline>Round 1 / 3 · ${partnerSec}s between partners · Rest ${fmtRest(roundSec)} after round</div>` +
+      `<div class=progressline>Round 1 / 3 · A1 then B1</div>` +
       `<div class=superset-pill>A1 → B1 · ${partnerSec}s between partners</div>` +
       '<div class=setchip>Set <b>1</b> / 3</div>' +
       builderLiftPanelHtml(exA, { bi: bi, ei: eiA, letter: 'A', suggestHtml: opts.suggestHtmlA || '' }) +
@@ -868,13 +864,7 @@
       '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
       '<div class="next-wrap ath-builder-twin-static">' +
       '<button type="button" class="btn primary" disabled>Next</button></div></div>';
-    return (
-      '<div class="builder-phase-stack">' +
-      activeCard +
-      builderSupersetPartnerRestPreviewHtml(exA, exB) +
-      builderSupersetRoundRestPreviewHtml(exA, exB) +
-      '</div>'
-    );
+    return activeCard;
   }
 
   /** Athlete strength builder — full logger card per lift (no rest timer). */
@@ -883,15 +873,13 @@
     const bi = Number(opts.bi) || 0;
     const ei = Number(opts.ei) || 0;
     const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
-    const restLabel = fmtRest(restSec);
     const name = escTwin(ex && ex.name ? ex.name : '');
     const suggestHtml = opts.suggestHtml || '';
-    const activeCard =
+    return (
       `<div class="logger-screen dial-strength ath-builder-twin">` +
       '<div class=eyebrow>Hybrid Strength · builder</div>' +
       `<input id="athLiftName_${bi}_${ei}" class="task ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
       `<div id="athSuggest_${bi}_${ei}">${suggestHtml}</div>` +
-      `<div class=progressline data-rest-line>One set at a time · Rest ${restLabel} after Next</div>` +
       '<div class=setchip>Set <b>1</b> / 3</div>' +
       '<div class=hero>' +
       '<div class=hero-label>Load & effort · session start fills numbers</div>' +
@@ -904,12 +892,7 @@
       '<div class=sliderlabels><span>Very easy</span><span>Easy</span><span>Medium</span><span>Hard</span><span>Max</span><span>Didn\'t finish</span></div></div>' +
       '<div class="next-wrap ath-builder-twin-static">' +
       '<button type="button" class="btn primary" disabled>Next set</button>' +
-      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>';
-    return (
-      '<div class="builder-phase-stack">' +
-      activeCard +
-      builderRestPreviewHtml(ex, opts) +
-      '</div>'
+      '<button type="button" class="btn ghost" disabled>+ Extra set</button></div></div>'
     );
   }
 
