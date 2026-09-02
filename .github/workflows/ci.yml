@@ -60,6 +60,7 @@ jobs:
       - run: pnpm run check:strength-load-context
       - run: pnpm run check:account-sync-checkin
       - run: pnpm run check:log-columns
+      - run: pnpm run check:metric-logger
       - run: pnpm run check:exercise-load-expr
       - run: pnpm run check:exercise-load-profiles
       - run: pnpm run check:exercise-search

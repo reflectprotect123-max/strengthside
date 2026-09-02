@@ -311,20 +311,34 @@
   }
 
   function ensureAthleteLogColumns(ex) {
-    let cols = ex && Array.isArray(ex.logColumns) && ex.logColumns.length ? coachNormalizeColumns(ex) : defaultAthleteColumns(ex);
-    var repOnly = repOnlyAthleteColumns(ex);
-    cols = cols.slice(0, repOnly ? 1 : 2);
-    while (cols.length < (repOnly ? 1 : 2)) {
+    let cols =
+      ex && Array.isArray(ex.logColumns) && ex.logColumns.length
+        ? coachNormalizeColumns(ex)
+        : defaultAthleteColumns(ex);
+    const repOnly = repOnlyAthleteColumns(ex);
+    const explicitSingle =
+      cols.length === 1 && ex && Array.isArray(ex.logColumns) && ex.logColumns.length === 1;
+    const minCols = repOnly ? 1 : explicitSingle ? 1 : 2;
+    const maxCols = repOnly ? 1 : Math.min(3, Math.max(minCols, cols.length));
+    cols = cols.slice(0, maxCols);
+    while (cols.length < minCols) {
       cols.push({ id: newId(), kind: 'reps', value: '', values: splitValues('', 3) });
     }
-    return cols.slice(0, repOnly ? 1 : 2).map(function (c) {
-      return {
-        id: c.id || newId(),
-        kind: KIND_MAP[c.kind] ? c.kind : 'reps',
-        value: '',
-        values: splitValues('', 3),
-      };
-    });
+    return cols.slice(0, maxCols).map((c) => ({
+      id: c.id || newId(),
+      kind: KIND_MAP[c.kind] ? c.kind : 'reps',
+      value: '',
+      values: splitValues('', 3),
+    }));
+  }
+
+  function columnLayout(ex) {
+    const cols = ensureAthleteLogColumns(ex || {});
+    const loadCol = loadColumn(cols);
+    const effortCols = cols.filter((c) => isEffortKind(c.kind));
+    if (cols.length === 1) return { cols, loadCol: null, effortCols, layout: 'single' };
+    if (cols.length === 3) return { cols, loadCol, effortCols, layout: 'triple' };
+    return { cols, loadCol, effortCols, layout: 'load_x_effort' };
   }
 
   function athleteColumnOptionsHtml(selected) {
@@ -734,13 +748,35 @@
   }
 
   function builderLiftMetricsHtml(ex, bi, ei) {
-    const cols = ensureAthleteLogColumns(ex || {});
-    const repOnly = cols.length === 1;
-    const loadCol = loadColumn(cols);
+    const { cols, loadCol, layout } = columnLayout(ex || {});
     const effortCol = effortColumn(cols) || cols[0];
-    const loadCi = loadCol ? cols.indexOf(loadCol) : -1;
     const effortCi = effortCol ? cols.indexOf(effortCol) : 0;
-    if (repOnly || !loadCol) {
+    if (layout === 'single') {
+      return (
+        '<div class=hero-metrics><div class="metric-col metric-col-single">' +
+        '<div class="metric-val metric-dash">—</div>' +
+        `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${effortCi},this.value)">` +
+        effortKindsOptionsHtml(effortCol.kind) +
+        '</select></div></div>'
+      );
+    }
+    if (layout === 'triple') {
+      let html = '<div class=hero-metrics>';
+      cols.forEach((col, ci) => {
+        if (ci > 0) html += '<div class=metric-sep>·</div>';
+        const options = isLoadKind(col.kind) ? loadKindsOptionsHtml(col.kind) : effortKindsOptionsHtml(col.kind);
+        const ariaLabel = isLoadKind(col.kind) ? 'Load metric' : 'Effort metric';
+        html +=
+          '<div class=metric-col><div class="metric-val metric-dash">—</div>' +
+          `<select class="builder-metric-select logcol-kind" aria-label="${ariaLabel}" onchange="setAthleteLiftColumnKind(${bi},${ei},${ci},this.value)">` +
+          options +
+          '</select></div>';
+      });
+      html += '</div>';
+      return html;
+    }
+    const loadCi = loadCol ? cols.indexOf(loadCol) : -1;
+    if (!loadCol) {
       return (
         '<div class=hero-metrics><div class="metric-col metric-col-single">' +
         '<div class="metric-val metric-dash">—</div>' +
@@ -959,6 +995,7 @@
     builderAthleteTwinHtml,
     builderSupersetTwinHtml,
     ensureAthleteLogColumns,
+    columnLayout,
     athleteColumnOptionsHtml,
     beginSheet,
     beginAthleteSheet,

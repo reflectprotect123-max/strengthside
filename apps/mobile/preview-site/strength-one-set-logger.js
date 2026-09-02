@@ -87,6 +87,73 @@
     return { weightVal: weightVal, repsVal: repsVal };
   }
 
+  function loggerPhase() {
+    return 'active';
+  }
+
+  function metricFieldValue(row, meta) {
+    var field = meta.field;
+    if (row[field] != null && row[field] !== '') return row[field];
+    if (row.targetKind === meta.targetKind && row.target != null) return row.target;
+    return '';
+  }
+
+  function metricInputId(layout, col, index) {
+    if (layout === 'load_x_effort') {
+      return col.kind === 'weight_kg' || col.kind === 'weight_pct_wm' || col.kind === 'weight_lwp'
+        ? 'oneSetWeight'
+        : 'oneSetReps';
+    }
+    if (layout === 'single') return 'oneSetReps';
+    return 'oneSetMetric_' + index;
+  }
+
+  function metricCellsHtml(t, row, ri) {
+    var layoutInfo =
+      t.logColumns && t.logColumns.length && global.LogColumns && global.LogColumns.columnLayout
+        ? global.LogColumns.columnLayout(t)
+        : null;
+    var cols = layoutInfo ? layoutInfo.cols : [{ kind: 'weight_kg' }, { kind: 'reps' }];
+    var layout = layoutInfo ? layoutInfo.layout : 'load_x_effort';
+    return cols
+      .map(function (col, i) {
+        var meta = global.LogColumns && global.LogColumns.kindMeta ? global.LogColumns.kindMeta(col.kind) : { field: 'reps', loggerLabel: 'Reps', targetKind: 'reps' };
+        var field = meta.field;
+        var val = metricFieldValue(row, meta);
+        var unit =
+          meta.field === 'weight'
+            ? 'kg'
+            : String(meta.loggerLabel || 'reps').toLowerCase();
+        var inputId = metricInputId(layout, col, i);
+        var sep =
+          i > 0
+            ? '<div class=metric-sep>' + (layout === 'triple' ? '·' : '×') + '</div>'
+            : '';
+        return (
+          sep +
+          '<div><input type="number" class="metric-val" id="' +
+          inputId +
+          '" value="' +
+          String(val).replace(/"/g, '&quot;') +
+          '" onchange="updateSet(' +
+          ri +
+          ',\'' +
+          field +
+          '\',this.value)" oninput="updateSet(' +
+          ri +
+          ',\'' +
+          field +
+          '\',this.value)" aria-label="' +
+          escHtml(meta.loggerLabel) +
+          '">' +
+          '<span class=metric-unit>' +
+          unit +
+          '</span></div>'
+        );
+      })
+      .join('');
+  }
+
   function sessionElapsedSec() {
     if (typeof global.activeSession !== 'function' || typeof global.workElapsed !== 'function') return 0;
     var x = global.activeSession();
@@ -214,23 +281,8 @@
       '<div class="hero">' +
       '<div class=hero-label>Tap to edit</div>' +
       '<div class=hero-metrics>' +
-      '<div><input type="number" class="metric-val" id="oneSetWeight" value="' +
-      String(vals.weightVal).replace(/"/g, '&quot;') +
-      '" onchange="updateSet(' +
-      ri +
-      ',\'weight\',this.value)" oninput="updateSet(' +
-      ri +
-      ',\'weight\',this.value)" aria-label="Weight kg">' +
-      '<span class=metric-unit>kg</span></div>' +
-      '<div class=metric-sep>×</div>' +
-      '<div><input type="number" class="metric-val" id="oneSetReps" value="' +
-      String(vals.repsVal).replace(/"/g, '&quot;') +
-      '" onchange="updateSet(' +
-      ri +
-      ',\'reps\',this.value)" oninput="updateSet(' +
-      ri +
-      ',\'reps\',this.value)" aria-label="Reps">' +
-      '<span class=metric-unit>reps</span></div></div>' +
+      metricCellsHtml(t, row, ri) +
+      '</div>' +
       '<div class=hero-target>Target: <b>RIR ' +
       rir +
       '</b> · next set adjusts from slider</div>' +
@@ -713,6 +765,8 @@
 
   global.StrengthOneSetLogger = {
     DIFFICULTIES: DIFFICULTIES,
+    loggerPhase: loggerPhase,
+    metricCellsHtml: metricCellsHtml,
     renderTask: renderTask,
     renderSupersetTask: renderSupersetTask,
     onDifficultySlide: onDifficultySlide,
