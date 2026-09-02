@@ -17,7 +17,10 @@ function must(cond, msg) {
 must(html.includes('LogColumns.builderAthleteTwinHtml'), 'builderAthleteTwinHtml wired in index');
 must(html.includes('ath-lift-logger'), 'ath-lift-logger card class');
 must(html.includes('ath-builder-twin-static'), 'static slider/next chrome');
-must(html.includes('builder-phase-stack'), 'builder phase stack CSS');
+must(html.includes('builderSupersetTwinHtml'), 'builderSupersetTwinHtml wired');
+must(html.includes('ath-lift-superset'), 'merged superset card CSS');
+must(html.includes('athleteSupersetEditor'), 'merged superset editor');
+must(html.includes('removeSupersetPair'), 'delete superset pair');
 must(html.includes('builder-phase-preview'), 'rest preview CSS');
 must(html.includes('ath-builder-twin-static .btn.primary'), 'disabled-looking builder buttons');
 must(html.includes('function athleteLiftRepOnly'), 'rep-only layout helper');
@@ -69,6 +72,33 @@ must(twin.includes('Rest · between sets'), 'rest preview eyebrow');
 must(twin.includes('Set 1 logged'), 'rest progress line');
 must(twin.includes('logger-rest'), 'rest ring preview');
 must(!twin.includes('autopilot-strip'), 'no coach autopilot strip');
+
+const ssTwin = LC.builderSupersetTwinHtml(
+  {
+    name: 'Bench Press',
+    restSec: 120,
+    logColumns: [
+      { id: 'a', kind: 'weight_pct_wm', value: '', values: [''] },
+      { id: 'b', kind: 'reps', value: '', values: [''] },
+    ],
+  },
+  {
+    name: 'Barbell Row',
+    restSec: 90,
+    logColumns: [
+      { id: 'c', kind: 'weight_pct_wm', value: '', values: [''] },
+      { id: 'd', kind: 'reps', value: '', values: [''] },
+    ],
+  },
+  { bi: 0, eiA: 0, eiB: 1 },
+);
+must(ssTwin.includes('ath-builder-superset'), 'superset builder class');
+must(ssTwin.includes('Superset A · Round 1'), 'superset eyebrow');
+must(ssTwin.includes('A1 → B1'), 'superset pill');
+must(ssTwin.includes('Rest · between partners'), 'partner rest preview');
+must(ssTwin.includes('Rest · between rounds'), 'round rest preview');
+must(ssTwin.includes('ath-ss-lift-a'), 'lift A panel');
+must(ssTwin.includes('ath-ss-lift-b'), 'lift B panel');
 
 const repOnly = LC.builderAthleteTwinHtml(
   { name: 'Pull-up', restSec: 90, logColumns: [{ id: 'c', kind: 'reps', value: '', values: [''] }] },
