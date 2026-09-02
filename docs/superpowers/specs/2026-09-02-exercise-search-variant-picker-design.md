@@ -1,7 +1,7 @@
 # Exercise search, variant picker, and history foundation
 
 **Date:** 2 September 2026  
-**Status:** Implemented (search + picker wired; TH import still optional)  
+**Status:** Implemented (search + picker + TH import script)  
 **Related:** `test/fixtures/exercise-load-profiles.json`, `2026-09-02-exercise-load-profile-library.md`
 
 ## Problem
