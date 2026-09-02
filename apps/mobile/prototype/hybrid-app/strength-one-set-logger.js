@@ -48,29 +48,113 @@
     return m ? Number(m[1]) : null;
   }
 
+  function taskColumnLayout(t) {
+    if (!t || !global.LogColumns || !global.LogColumns.columnLayout) return null;
+    return global.LogColumns.columnLayout(t);
+  }
+
+  function isLoadKind(kind) {
+    return kind === 'weight_kg' || kind === 'weight_pct_wm' || kind === 'weight_lwp';
+  }
+
+  function resolveLoggerFlow(t) {
+    var layout = taskColumnLayout(t);
+    if (!layout) return 'load_reps';
+    if (layout.layout === 'single' && layout.effortCols[0] && layout.effortCols[0].kind === 'time_sec') {
+      return 'time_primary';
+    }
+    if (layout.layout === 'load_x_effort' && layout.effortCols[0] && layout.effortCols[0].kind === 'time_sec') {
+      return 'load_then_time';
+    }
+    if (layout.layout === 'triple') return 'carry';
+    return 'load_reps';
+  }
+
   function isTimePrimaryHold(t) {
-    if (!t || !global.LogColumns || !global.LogColumns.columnLayout) return false;
-    var layout = global.LogColumns.columnLayout(t);
-    return (
-      layout.layout === 'single' &&
-      layout.effortCols &&
-      layout.effortCols[0] &&
-      layout.effortCols[0].kind === 'time_sec'
-    );
+    return resolveLoggerFlow(t) === 'time_primary';
+  }
+
+  function rowFieldForKind(kind) {
+    if (isLoadKind(kind)) return 'weight';
+    if (kind === 'distance_m') return 'distance';
+    return 'reps';
+  }
+
+  function timeNotLogged(row) {
+    return row.reps === '' || row.reps == null;
+  }
+
+  function loadReadyForWork(row) {
+    var w = row.weight;
+    return w !== '' && w != null;
+  }
+
+  function carryPrescribedTimeSec(t, ordinal) {
+    var cols = (t && t.logColumns) || [];
+    for (var i = 0; i < cols.length; i++) {
+      if (cols[i].kind === 'time_sec') {
+        var col = cols[i];
+        var raw =
+          col.values && col.values[ordinal] != null && String(col.values[ordinal]).trim() !== ''
+            ? col.values[ordinal]
+            : col.value;
+        if (String(raw || '').trim() !== '') return Math.max(1, Math.round(Number(raw)));
+      }
+    }
+    var row = (t.rows || [])[ordinal];
+    if (row && row.targetKind === 'seconds') return prescribedHoldSec(row);
+    return null;
+  }
+
+  function carryUsesWorkTimer(t, row, ordinal) {
+    if (resolveLoggerFlow(t) !== 'carry') return false;
+    var sec = carryPrescribedTimeSec(t, ordinal);
+    return sec != null && sec > 0 && timeNotLogged(row);
   }
 
   function prescribedHoldSec(row) {
     return parseTargetReps(row) || Math.max(1, Math.round(Number(row && row.target) || 30));
   }
 
+  function prescribedWorkSec(t, row, ordinal) {
+    var flow = resolveLoggerFlow(t);
+    if (flow === 'carry') {
+      var carrySec = carryPrescribedTimeSec(t, ordinal);
+      if (carrySec != null) return carrySec;
+    }
+    return prescribedHoldSec(row);
+  }
+
+  function shouldEnterWorkPhase(t, autoreg, row) {
+    var flow = resolveLoggerFlow(t);
+    if (!row || row.done || !timeNotLogged(row)) return false;
+    if (flow === 'time_primary') return true;
+    if (flow === 'load_then_time') return autoreg.phase === 'work';
+    if (flow === 'carry') return carryUsesWorkTimer(t, row, autoreg.setOrdinal);
+    return false;
+  }
+
+  function showSlider(t, autoreg, row) {
+    var flow = resolveLoggerFlow(t);
+    if (autoreg.phase === 'work') return false;
+    if (flow === 'time_primary' || flow === 'load_then_time') return !timeNotLogged(row);
+    if (flow === 'carry' && carryUsesWorkTimer(t, row, autoreg.setOrdinal) && timeNotLogged(row)) return false;
+    return true;
+  }
+
   /** Persist prescribed reps on the active row — display fallback alone is not enough for Next set. */
   function seedActiveRow(row, t) {
     if (!row || row.done || row.extra) return false;
-    if (t && isTimePrimaryHold(t) && ensureAutoreg(t).phase === 'work') return false;
+    var flow = t ? resolveLoggerFlow(t) : 'load_reps';
+    var autoreg = t ? ensureAutoreg(t) : null;
+    if (autoreg && autoreg.phase === 'work') return false;
+    if (flow === 'time_primary' || flow === 'load_then_time' || flow === 'carry') {
+      if (timeNotLogged(row)) return false;
+    }
     var changed = false;
     if (row.reps === '' || row.reps == null) {
       var fromTarget = parseTargetReps(row);
-      if (fromTarget != null) {
+      if (fromTarget != null && row.targetKind !== 'seconds') {
         row.reps = String(fromTarget);
         changed = true;
       }
@@ -78,8 +162,16 @@
     return changed;
   }
 
-  function syncActiveRowFromDom(row) {
+  function syncActiveRowFromDom(row, t) {
     if (!row || !global.document) return;
+    var layout = t ? taskColumnLayout(t) : null;
+    if (layout && layout.layout === 'triple') {
+      layout.cols.forEach(function (col, i) {
+        var el = global.document.getElementById('oneSetMetric_' + i);
+        if (el && String(el.value).trim() !== '') row[rowFieldForKind(col.kind)] = el.value;
+      });
+      return;
+    }
     var w = global.document.getElementById('oneSetWeight');
     var r = global.document.getElementById('oneSetReps');
     if (w && String(w.value).trim() !== '') row.weight = w.value;
@@ -111,17 +203,18 @@
     if (!t) return 'active';
     var autoreg = ensureAutoreg(t);
     if (autoreg.restPhase) return 'rest';
-    if (isTimePrimaryHold(t)) {
-      var planned = plannedRows(t);
-      var row = planned[autoreg.setOrdinal];
-      if (row && !row.done && (row.reps === '' || row.reps == null)) return 'work';
-      if (autoreg.phase === 'work') return 'work';
-    }
+    var flow = resolveLoggerFlow(t);
+    var planned = plannedRows(t);
+    var row = planned[autoreg.setOrdinal];
+    if (!row || row.done) return 'active';
+    if (autoreg.phase === 'work' && timeNotLogged(row)) return 'work';
+    if (flow === 'time_primary' && timeNotLogged(row)) return 'work';
+    if (flow === 'carry' && carryUsesWorkTimer(t, row, autoreg.setOrdinal)) return 'work';
     return 'active';
   }
 
-  function metricFieldValue(row, meta) {
-    var field = meta.field;
+  function metricFieldValue(row, meta, kind) {
+    var field = kind ? rowFieldForKind(kind) : meta.field;
     if (row[field] != null && row[field] !== '') return row[field];
     if (row.targetKind === meta.targetKind && row.target != null) return row.target;
     return '';
@@ -137,23 +230,22 @@
     return 'oneSetMetric_' + index;
   }
 
-  function metricCellsHtml(t, row, ri) {
-    var layoutInfo =
-      t.logColumns && t.logColumns.length && global.LogColumns && global.LogColumns.columnLayout
-        ? global.LogColumns.columnLayout(t)
-        : null;
+  function metricCellsHtml(t, row, ri, opts) {
+    opts = opts || {};
+    var layoutInfo = taskColumnLayout(t);
     var cols = layoutInfo ? layoutInfo.cols : [{ kind: 'weight_kg' }, { kind: 'reps' }];
     var layout = layoutInfo ? layoutInfo.layout : 'load_x_effort';
+    if (opts.loadOnly) cols = cols.filter(function (c) { return isLoadKind(c.kind); });
     return cols
       .map(function (col, i) {
         var meta = global.LogColumns && global.LogColumns.kindMeta ? global.LogColumns.kindMeta(col.kind) : { field: 'reps', loggerLabel: 'Reps', targetKind: 'reps' };
-        var field = meta.field;
-        var val = metricFieldValue(row, meta);
+        var field = rowFieldForKind(col.kind);
+        var val = metricFieldValue(row, meta, col.kind);
         var unit =
-          meta.field === 'weight'
+          field === 'weight'
             ? 'kg'
             : String(meta.loggerLabel || 'reps').toLowerCase();
-        var inputId = metricInputId(layout, col, i);
+        var inputId = metricInputId(layout, col, opts.loadOnly ? 0 : i);
         var sep =
           i > 0
             ? '<div class=metric-sep>' + (layout === 'triple' ? '·' : '×') + '</div>'
@@ -181,6 +273,31 @@
         );
       })
       .join('');
+  }
+
+  function formatRowMetricsSummary(t, row) {
+    var layoutInfo = taskColumnLayout(t);
+    if (!layoutInfo) {
+      return (
+        escHtml(String(row.weight != null && row.weight !== '' ? row.weight : '—')) +
+        ' kg × ' +
+        escHtml(String(row.reps != null && row.reps !== '' ? row.reps : '—'))
+      );
+    }
+    var parts = [];
+    layoutInfo.cols.forEach(function (col) {
+      var meta = global.LogColumns.kindMeta(col.kind);
+      var field = rowFieldForKind(col.kind);
+      var val = row[field];
+      if (val === '' || val == null) {
+        if (row.targetKind === meta.targetKind && row.target != null && row.target !== '') val = row.target;
+        else val = '—';
+      }
+      if (field === 'weight') parts.push(escHtml(String(val)) + ' kg');
+      else if (col.kind === 'time_sec') parts.push(escHtml(String(val)) + (val === '—' ? '' : 's'));
+      else parts.push(escHtml(String(val)) + ' ' + String(meta.loggerLabel || '').toLowerCase());
+    });
+    return parts.join(' · ');
   }
 
   function sessionElapsedSec() {
@@ -310,7 +427,9 @@
       '<div class="hero">' +
       '<div class=hero-label>Tap to edit</div>' +
       '<div class=hero-metrics>' +
-      metricCellsHtml(t, row, ri) +
+      metricCellsHtml(t, row, ri, {
+        loadOnly: resolveLoggerFlow(t) === 'load_then_time' && timeNotLogged(row),
+      }) +
       '</div>' +
       '<div class=hero-target>Target: <b>RIR ' +
       rir +
@@ -404,15 +523,14 @@
     var remaining = global.RestOverlay ? global.RestOverlay.remainingSec() : restSec;
     var rir = targetRir(t);
     applyChrome(t, strengthWeekLabel());
+    var nextSummary = next ? formatRowMetricsSummary(t, next) : '';
     var upNext = next
       ? 'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Set <b>' +
         (ordinal + 1) +
         '</b> / ' +
         planned.length +
         '</span><b>' +
-        escHtml(String(next.weight || '—')) +
-        ' kg × ' +
-        escHtml(String(next.reps || next.target || '—')) +
+        nextSummary +
         ' · RIR ' +
         rir +
         '</b>'
@@ -428,6 +546,7 @@
           clockFmt: 'mmss',
         })
       : '';
+    var prevSummary = prev ? 'Set ' + ordinal + ' logged · ' + formatRowMetricsSummary(t, prev) : '';
     return (
       '<div class="logger-screen dial-strength">' +
       '<div class=eyebrow>Rest · between sets</div>' +
@@ -435,9 +554,7 @@
       escHtml(t.name) +
       '</div>' +
       '<div class=progressline>' +
-      (prev
-        ? 'Set ' + ordinal + ' logged · ' + escHtml(String(prev.weight)) + ' kg × ' + escHtml(String(prev.reps))
-        : '') +
+      prevSummary +
       '</div>' +
       ring +
       '</div>'
@@ -448,8 +565,29 @@
     var row = planned[ordinal];
     if (seedActiveRow(row, t) && typeof global.save === 'function') global.save();
     var missed = autoreg.selectedDifficulty === 'did_not_complete';
+    var flow = resolveLoggerFlow(t);
+    var sliderVisible = showSlider(t, autoreg, row);
     var nextLabel = ordinal + 1 >= planned.length ? 'Next set' : 'Next set';
     applyChrome(t, strengthWeekLabel());
+    var actionHtml = '';
+    if (missed) {
+      actionHtml =
+        '<button type="button" class="btn attempt" onclick="StrengthOneSetLogger.retryAttempt()">Log attempt · try again</button>' +
+        '<button type="button" class="btn primary" style="margin-top:10px" onclick="nextStrengthSet()">Next set · lower target</button>';
+    } else if (flow === 'load_then_time' && timeNotLogged(row)) {
+      if (loadReadyForWork(row)) {
+        actionHtml =
+          '<button type="button" class="btn primary" onclick="StrengthOneSetLogger.startHold()">Start hold</button>';
+      } else {
+        actionHtml = '<div class=slider-hint>Set load, then start the hold timer.</div>';
+      }
+    } else {
+      actionHtml =
+        '<button type="button" class="btn primary" onclick="nextStrengthSet()">' +
+        nextLabel +
+        '</button>' +
+        '<button type="button" class="btn ghost" onclick="addExtra()">+ Extra set</button>';
+    }
     return (
       '<div class="logger-screen dial-strength">' +
       '<div class=eyebrow>' +
@@ -467,15 +605,9 @@
       planned.length +
       '</div>' +
       heroActive(t, row, autoreg) +
-      sliderCard(t, autoreg) +
+      (sliderVisible ? sliderCard(t, autoreg) : '') +
       '<div class=next-wrap>' +
-      (missed
-        ? '<button type="button" class="btn attempt" onclick="StrengthOneSetLogger.retryAttempt()">Log attempt · try again</button>' +
-          '<button type="button" class="btn primary" style="margin-top:10px" onclick="nextStrengthSet()">Next set · lower target</button>'
-        : '<button type="button" class="btn primary" onclick="nextStrengthSet()">' +
-          nextLabel +
-          '</button>' +
-          '<button type="button" class="btn ghost" onclick="addExtra()">+ Extra set</button>') +
+      actionHtml +
       '</div></div>'
     );
   }
@@ -502,14 +634,28 @@
     }
     if (autoreg.restPhase) return renderRestPhase(t, autoreg, planned);
     var row = planned[ordinal];
-    if (row && isTimePrimaryHold(t) && !row.done) {
-      if (row.reps === '' || row.reps == null) autoreg.phase = 'work';
+    if (row && !row.done && shouldEnterWorkPhase(t, autoreg, row)) {
+      if (resolveLoggerFlow(t) === 'time_primary' || resolveLoggerFlow(t) === 'carry') autoreg.phase = 'work';
       if (autoreg.phase === 'work') {
-        if (!autoreg.workStarted) beginWork(prescribedHoldSec(row));
+        if (!autoreg.workStarted) beginWork(prescribedWorkSec(t, row, ordinal));
         return renderWorkPhase(t, autoreg, planned, row);
       }
     }
     return renderActiveLogger(t, planned, ordinal, autoreg);
+  }
+
+  function startHold() {
+    var t = global.current && global.current();
+    if (!t) return;
+    var autoreg = ensureAutoreg(t);
+    var planned = plannedRows(t);
+    var row = planned[autoreg.setOrdinal];
+    if (!row || !loadReadyForWork(row)) return;
+    syncActiveRowFromDom(row, t);
+    autoreg.phase = 'work';
+    autoreg.workStarted = false;
+    if (typeof global.save === 'function') global.save();
+    if (typeof global.train === 'function') global.train();
   }
 
   function beginRest(sec) {
@@ -541,6 +687,11 @@
     if (isTimePrimaryHold(t) && row && !row.done) {
       autoreg.phase = 'work';
       autoreg.workStarted = false;
+    } else if (carryUsesWorkTimer(t, row, autoreg.setOrdinal)) {
+      autoreg.phase = 'work';
+      autoreg.workStarted = false;
+    } else {
+      autoreg.phase = 'active';
     }
     if (typeof global.train === 'function') global.train();
   }
@@ -591,7 +742,7 @@
     var ordinal = autoreg.setOrdinal;
     var row = planned[ordinal];
     if (!row) return;
-    syncActiveRowFromDom(row);
+    syncActiveRowFromDom(row, t);
     seedActiveRow(row, t);
     if (!autoreg.selectedDifficulty) {
       var slider = global.document && global.document.getElementById('oneSetDifficulty');
@@ -876,8 +1027,10 @@
 
   global.StrengthOneSetLogger = {
     DIFFICULTIES: DIFFICULTIES,
+    resolveLoggerFlow: resolveLoggerFlow,
     loggerPhase: loggerPhase,
     metricCellsHtml: metricCellsHtml,
+    formatRowMetricsSummary: formatRowMetricsSummary,
     renderTask: renderTask,
     renderSupersetTask: renderSupersetTask,
     onDifficultySlide: onDifficultySlide,
@@ -886,6 +1039,7 @@
     nextSupersetSet: nextSupersetSet,
     beginRest: beginRest,
     beginWork: beginWork,
+    startHold: startHold,
     finishRest: finishRest,
     finishWorkPhase: finishWorkPhase,
     finishWorkEarly: finishWorkEarly,
