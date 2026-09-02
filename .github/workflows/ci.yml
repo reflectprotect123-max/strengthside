@@ -38,6 +38,8 @@ jobs:
       - run: pnpm run check:native-ble
       - run: pnpm run check:blank-slate-wm
       - run: pnpm run check:calendar-ux
+      - run: pnpm run check:athlete-calendar-date
+      - run: pnpm run check:athlete-exercise-pick
       - run: pnpm run check:track-dawn-polish
       - run: pnpm run check:athlete-builder-migrate
       - run: pnpm run check:athlete-builder-logger
@@ -59,6 +61,11 @@ jobs:
       - run: pnpm run check:account-sync-checkin
       - run: pnpm run check:log-columns
       - run: pnpm run check:exercise-load-expr
+      - run: pnpm run check:exercise-load-profiles
+      - run: pnpm run check:exercise-search
+      - run: pnpm run check:trainheroic-import
+      - run: pnpm run gen:exercise-history-seed
+      - run: pnpm run check:exercise-history-seed
       - run: pnpm run check:autopilot-policy
       - run: pnpm run check:strength-volume
       - run: pnpm run check:strength-progression
@@ -71,6 +78,7 @@ jobs:
       - run: pnpm run check:whoop-live
       - run: pnpm run check:coach-loop
       - run: pnpm run check:coach-session-builder
+      - run: pnpm run check:coach-library
       - run: pnpm run check:coach-nutrition
       - run: pnpm run check:coach-program-grid
       - run: pnpm run check:coach-bridge

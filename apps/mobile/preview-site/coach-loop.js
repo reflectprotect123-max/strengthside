@@ -1006,9 +1006,61 @@
     return (state.accounts || []).find((a) => a.id === state.currentUserId) || null;
   }
 
+  /* ---------- exercise catalog (120-library) ---------- */
+
+  function catalogEntries() {
+    try {
+      const g = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : null;
+      if (g && Array.isArray(g.COACH_EXERCISE_CATALOG) && g.COACH_EXERCISE_CATALOG.length) {
+        return g.COACH_EXERCISE_CATALOG;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return null;
+  }
+
+  function catalogVersion() {
+    try {
+      const g = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : null;
+      return (g && g.COACH_EXERCISE_CATALOG_VERSION) || 'core-120-v1';
+    } catch (e) {
+      return 'core-120-v1';
+    }
+  }
+
+  function mergeExerciseCatalog(state) {
+    const catalog = catalogEntries();
+    if (!catalog || !catalog.length) return state;
+    state.exercises = state.exercises || [];
+    const byId = {};
+    for (const ex of state.exercises) {
+      if (ex && ex.id) byId[ex.id] = ex;
+    }
+    for (const row of catalog) {
+      if (!row || !row.id) continue;
+      const cur = byId[row.id];
+      if (!cur) {
+        const next = { ...row };
+        state.exercises.push(next);
+        byId[row.id] = next;
+      } else if (row.builtIn) {
+        cur.name = row.name;
+        cur.category = row.category;
+        cur.builtIn = true;
+        cur.source = row.source || 'THE-core-120';
+      }
+    }
+    state.meta = state.meta || {};
+    state.meta.coachExerciseCatalogVersion = catalogVersion();
+    return state;
+  }
+
   /* ---------- seed (this product's own sessions, not a third-party program) ---------- */
 
   function coreExercises() {
+    const catalog = catalogEntries();
+    if (catalog && catalog.length) return catalog.map((e) => ({ ...e }));
     return [
       { id: 'core-back-squat', name: 'Back Squat', category: 'Strength — Squat' },
       { id: 'core-bench-press', name: 'Bench Press', category: 'Strength — Push' },
@@ -1320,13 +1372,13 @@
             mealDays: [],
             checkInReviews: [],
           };
-          return pruneRemovedDemoAthletes(parsed);
+          return mergeExerciseCatalog(pruneRemovedDemoAthletes(parsed));
         }
       }
     } catch (e) {
       /* fall through to seed */
     }
-    const state = buildSeed(opts);
+    const state = mergeExerciseCatalog(buildSeed(opts));
     saveState(storage, state);
     return state;
   }
@@ -1339,7 +1391,7 @@
 
   function resetState(storage, opts) {
     storage = storage || defaultStorage();
-    const state = buildSeed(opts);
+    const state = mergeExerciseCatalog(buildSeed(opts));
     saveState(storage, state);
     return state;
   }
@@ -1490,6 +1542,7 @@
     logout,
     currentAccount,
     coreExercises,
+    mergeExerciseCatalog,
     seedTemplates,
     buildSeed,
     memoryStorage,

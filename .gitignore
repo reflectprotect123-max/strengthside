@@ -23,11 +23,13 @@ apps/mobile/**/.netlify/
 # importer reads a real account export; none of it belongs in the repo.
 trainheroic-userData-export-*
 THE-trainheroic-import*.json
+test/fixtures/trainheroic-import-sample-out.json
 apps/mobile/preview-site/seeds/
 apps/mobile/prototype/hybrid-app/seeds/
 apps/mobile/preview-site/trainheroic-import.js
 apps/mobile/**/trainheroic-import.js
 apps/mobile/**/trainheroic-import.json
+apps/mobile/**/exercise-history-seed.js
 training_data.csv
 tmp/
 supabase/.temp/

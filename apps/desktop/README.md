@@ -30,7 +30,27 @@ Manual check: **Coach → Check for app updates**.
 Bump `apps/desktop/package.json` `version` before each shell release so the updater
 detects a new build.
 
-## Local dev
+## Local dev (latest coach UI before Netlify deploy)
+
+```bash
+bash apps/desktop/start-local-coach.sh
+```
+
+That syncs `preview-site`, serves it on port **8765**, and opens Electron against
+`http://127.0.0.1:8765/coach.html`.
+
+Manual equivalent:
+
+```bash
+bash apps/mobile/sync-hybrid-html.sh
+cd apps/mobile/preview-site && python3 -m http.server 8765
+# new terminal:
+cd apps/desktop && HYBRID_COACH_URL=http://127.0.0.1:8765/coach.html pnpm start
+```
+
+Or open `http://127.0.0.1:8765/coach.html` in Chrome — same UI, no Electron.
+
+## Local dev (live Netlify coach)
 
 ```bash
 cd apps/desktop
