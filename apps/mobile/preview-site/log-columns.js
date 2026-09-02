@@ -789,104 +789,19 @@
     );
   }
 
-  function builderRestRingHtml(mode, restSec, upNextHtml) {
-    return global.RestOverlay
-      ? global.RestOverlay.render({
-          mode: mode,
-          remainingSec: restSec,
-          upNextHtml: upNextHtml,
-          skipLabel: mode === 'strength' ? 'Skip rest' : 'Next interval',
-          skipOnclick: 'return false',
-          addOnclick: 'return false',
-          clockFmt: 'mmss',
-        })
-      : '<div class="logger-rest dial-strength"><div class=rest-ring><div><div class=rest-time>' +
-        fmtRest(restSec) +
-        '</div><div class=rest-label>remaining</div></div></div></div>';
-  }
-
-  /** Static rest screen preview for strength builder (no live timer). */
-  function builderRestPreviewHtml(ex, opts) {
-    opts = opts || {};
-    const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
-    const name = escTwin(ex && ex.name ? ex.name : 'This lift');
-    const rir = 2;
-    const upNext =
-      'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Set <b>2</b> / 3</span><b>— kg × — · RIR ' +
-      rir +
-      '</b>';
-    const ring = builderRestRingHtml('strength', restSec, upNext);
-    return (
-      '<div class="builder-phase-preview ath-builder-twin-static">' +
-      '<div class="logger-screen dial-strength">' +
-      '<div class=eyebrow>Rest · between sets</div>' +
-      '<div class=task>' +
-      name +
-      '</div>' +
-      '<div class=progressline>Set 1 logged · — kg × —</div>' +
-      ring +
-      '</div></div>'
-    );
-  }
-
-  function builderSupersetPartnerRestPreviewHtml(exA, exB) {
-    const partnerSec = 45;
-    const nameB = escTwin(exB && exB.name ? exB.name : 'Partner lift');
-    const upNext =
-      'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">B · Round <b>1</b></span><b>' +
-      nameB +
-      '</b>';
-    const ring = builderRestRingHtml('strength', partnerSec, upNext);
-    return (
-      '<div class="builder-phase-preview ath-builder-twin-static">' +
-      '<div class="logger-screen dial-strength">' +
-      '<div class=eyebrow>Rest · between partners</div>' +
-      '<div class=task>' +
-      escTwin(exA && exA.name ? exA.name : 'Superset') +
-      '</div>' +
-      '<div class=progressline>A1 logged · — kg × —</div>' +
-      ring +
-      '</div></div>'
-    );
-  }
-
-  function builderSupersetRoundRestPreviewHtml(exA, exB) {
-    const roundSec = Math.max(
-      Math.max(0, Number(exA && exA.restSec) || 120),
-      Math.max(0, Number(exB && exB.restSec) || 120),
-    );
-    const upNext =
-      'Up next<span class="setchip" style="margin:10px auto 0;display:inline-flex">Round <b>2</b></span><b>' +
-      escTwin(exA && exA.name ? exA.name : 'Lift A') +
-      '</b>';
-    const ring = builderRestRingHtml('strength', roundSec, upNext);
-    return (
-      '<div class="builder-phase-preview ath-builder-twin-static">' +
-      '<div class="logger-screen dial-strength">' +
-      '<div class=eyebrow>Rest · between rounds</div>' +
-      '<div class=task>Superset</div>' +
-      '<div class=progressline>Round 1 logged</div>' +
-      ring +
-      '</div></div>'
-    );
-  }
-
   /** Merged superset builder card — one card for a linked A/B pair. */
   function builderSupersetTwinHtml(exA, exB, opts) {
     opts = opts || {};
     const bi = Number(opts.bi) || 0;
     const eiA = Number(opts.eiA) || 0;
     const eiB = Number(opts.eiB) || eiA + 1;
-    const partnerSec = 45;
-    const activeCard =
+    return (
       `<div class="logger-screen dial-strength ath-builder-twin ath-builder-superset">` +
-      '<div class=eyebrow>Superset A · Round 1 · builder</div>' +
-      `<div class=progressline>Round 1 / 3 · A1 then B1</div>` +
-      `<div class=superset-pill>A1 → B1 · ${partnerSec}s between partners</div>` +
+      '<div class=eyebrow>Superset · builder</div>' +
       builderLiftPanelHtml(exA, { bi: bi, ei: eiA, letter: 'A', suggestHtml: opts.suggestHtmlA || '' }) +
       builderLiftPanelHtml(exB, { bi: bi, ei: eiB, letter: 'B', suggestHtml: opts.suggestHtmlB || '' }) +
-      '</div>';
-    return activeCard;
+      '</div>'
+    );
   }
 
   /** Athlete strength builder — full logger card per lift (no rest timer). */
@@ -1043,7 +958,6 @@
     builderLoggerTwinHtml,
     builderAthleteTwinHtml,
     builderSupersetTwinHtml,
-    builderRestPreviewHtml,
     ensureAthleteLogColumns,
     athleteColumnOptionsHtml,
     beginSheet,

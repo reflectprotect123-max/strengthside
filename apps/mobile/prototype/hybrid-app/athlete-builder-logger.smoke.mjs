@@ -90,8 +90,9 @@ const ssTwin = LC.builderSupersetTwinHtml(
   { bi: 0, eiA: 0, eiB: 1 },
 );
 must(ssTwin.includes('ath-builder-superset'), 'superset builder class');
-must(ssTwin.includes('Superset A · Round 1'), 'superset eyebrow');
-must(ssTwin.includes('A1 → B1'), 'superset pill');
+must(ssTwin.includes('Superset · builder'), 'superset eyebrow');
+must(!ssTwin.includes('Round 1 / 3'), 'no logger round progress in builder');
+must(!ssTwin.includes('A1 → B1'), 'no superset pill in builder');
 must(!ssTwin.includes('Rest · between partners'), 'no partner rest timer preview');
 must(!ssTwin.includes('Rest · between rounds'), 'no round rest timer preview');
 must(ssTwin.includes('ath-ss-lift-a'), 'lift A panel');
