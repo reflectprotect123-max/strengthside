@@ -175,8 +175,13 @@
     var missed = autoreg.selectedDifficulty === 'did_not_complete';
     if (missed) {
       var targetReps = parseTargetReps(row) || row.target || '—';
-      var wLabel = vals.weightVal === '' || vals.weightVal === 0 ? 'BW' : vals.weightVal;
-      var wUnit = vals.weightVal === '' || vals.weightVal === 0 ? 'bodyweight' : 'kg';
+      var bwOnly =
+        global.StrengthAdapter &&
+        global.StrengthAdapter.bodyweightRepLift &&
+        global.StrengthAdapter.bodyweightRepLift(t.name, t.category, global.S, t.exerciseId, t.rows);
+      var noWeight = vals.weightVal === '' || vals.weightVal === 0;
+      var wLabel = noWeight && bwOnly ? 'BW' : noWeight ? '—' : vals.weightVal;
+      var wUnit = noWeight && bwOnly ? 'bodyweight' : 'kg';
       return (
         '<div class="hero missed">' +
         '<div class=hero-label>Did not complete · log reps done</div>' +
