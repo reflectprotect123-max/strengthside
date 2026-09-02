@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.44 | 2026-09-02 | Builder rest/recap previews (Strength + Engine) + merged superset builder cards (cache v147) |
 | 1.0.43 | 2026-09-01 | Polished one-set logger — ghost set stack, difficulty slider, in-row Next, hero inputs (cache v138) |
 | 1.0.42 | 2026-09-01 | One-set logger grid — 3-column `.one-set-row` CSS (cache v137) |
 | 1.0.41 | 2026-09-01 | Fix strength set logger — `escHtml` fallback when `window.esc` missing (cache v136) |
