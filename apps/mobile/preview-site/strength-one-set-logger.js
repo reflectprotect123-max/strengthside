@@ -23,8 +23,12 @@
         selectedDifficulty: null,
         restPhase: false,
         restSec: 90,
+        phase: 'active',
+        workStarted: false,
       };
     }
+    if (t.autoreg.phase == null) t.autoreg.phase = 'active';
+    if (t.autoreg.workStarted == null) t.autoreg.workStarted = false;
     return t.autoreg;
   }
 
@@ -44,9 +48,25 @@
     return m ? Number(m[1]) : null;
   }
 
+  function isTimePrimaryHold(t) {
+    if (!t || !global.LogColumns || !global.LogColumns.columnLayout) return false;
+    var layout = global.LogColumns.columnLayout(t);
+    return (
+      layout.layout === 'single' &&
+      layout.effortCols &&
+      layout.effortCols[0] &&
+      layout.effortCols[0].kind === 'time_sec'
+    );
+  }
+
+  function prescribedHoldSec(row) {
+    return parseTargetReps(row) || Math.max(1, Math.round(Number(row && row.target) || 30));
+  }
+
   /** Persist prescribed reps on the active row — display fallback alone is not enough for Next set. */
-  function seedActiveRow(row) {
+  function seedActiveRow(row, t) {
     if (!row || row.done || row.extra) return false;
+    if (t && isTimePrimaryHold(t) && ensureAutoreg(t).phase === 'work') return false;
     var changed = false;
     if (row.reps === '' || row.reps == null) {
       var fromTarget = parseTargetReps(row);
@@ -80,14 +100,23 @@
     return 2;
   }
 
-  function rowValues(row) {
-    seedActiveRow(row);
+  function rowValues(row, t) {
+    seedActiveRow(row, t);
     var weightVal = row.weight == null ? '' : row.weight;
     var repsVal = row.reps == null ? '' : row.reps;
     return { weightVal: weightVal, repsVal: repsVal };
   }
 
-  function loggerPhase() {
+  function loggerPhase(t) {
+    if (!t) return 'active';
+    var autoreg = ensureAutoreg(t);
+    if (autoreg.restPhase) return 'rest';
+    if (isTimePrimaryHold(t)) {
+      var planned = plannedRows(t);
+      var row = planned[autoreg.setOrdinal];
+      if (row && !row.done && (row.reps === '' || row.reps == null)) return 'work';
+      if (autoreg.phase === 'work') return 'work';
+    }
     return 'active';
   }
 
@@ -237,7 +266,7 @@
 
   function heroActive(t, row, autoreg) {
     var ri = rowIndex(t, row);
-    var vals = rowValues(row);
+    var vals = rowValues(row, t);
     var rir = targetRir(t);
     var missed = autoreg.selectedDifficulty === 'did_not_complete';
     if (missed) {
@@ -297,6 +326,76 @@
     );
   }
 
+  function renderWorkPhase(t, autoreg, planned, row) {
+    var ordinal = autoreg.setOrdinal;
+    var prescribed = prescribedHoldSec(row);
+    var remaining = global.WorkOverlay ? global.WorkOverlay.remainingSec() : prescribed;
+    applyChrome(t, strengthWeekLabel());
+    var ring = global.WorkOverlay
+      ? global.WorkOverlay.render({
+          mode: 'strength',
+          remainingSec: remaining,
+          label: 'remaining',
+          doneEarlyLabel: 'Done early',
+          doneEarlyOnclick: 'StrengthOneSetLogger.finishWorkEarly()',
+        })
+      : '';
+    return (
+      '<div class="logger-screen dial-strength">' +
+      '<div class=eyebrow>Work · hold</div>' +
+      '<div class=task>' +
+      escHtml(t.name) +
+      '</div>' +
+      '<div class=progressline>' +
+      escHtml(taskProgress(t)) +
+      '</div>' +
+      '<div class=setchip>Set <b>' +
+      (ordinal + 1) +
+      '</b> / ' +
+      planned.length +
+      ' · target <b>' +
+      prescribed +
+      's</b></div>' +
+      ring +
+      '</div>'
+    );
+  }
+
+  function beginWork(sec) {
+    var t = global.current && global.current();
+    if (!t) return;
+    var autoreg = ensureAutoreg(t);
+    autoreg.phase = 'work';
+    autoreg.workStarted = true;
+    autoreg.workSec = Math.max(1, Math.round(Number(sec) || 30));
+    if (global.WorkOverlay) {
+      global.WorkOverlay.startWork(autoreg.workSec, function (actualSec) {
+        finishWorkPhase(actualSec);
+      });
+    }
+    if (typeof global.save === 'function') global.save();
+  }
+
+  function finishWorkPhase(actualSec) {
+    var t = global.current && global.current();
+    if (!t) return;
+    var autoreg = ensureAutoreg(t);
+    var planned = plannedRows(t);
+    var row = planned[autoreg.setOrdinal];
+    if (!row) return;
+    row.reps = String(Math.max(1, Math.round(Number(actualSec) || 0)));
+    row.targetKind = 'seconds';
+    autoreg.phase = 'active';
+    autoreg.workStarted = false;
+    if (global.WorkOverlay) global.WorkOverlay.stopWork();
+    if (typeof global.save === 'function') global.save();
+    if (typeof global.train === 'function') global.train();
+  }
+
+  function finishWorkEarly() {
+    if (global.WorkOverlay) global.WorkOverlay.finishEarly();
+  }
+
   function renderRestPhase(t, autoreg, planned) {
     var ordinal = autoreg.setOrdinal;
     var prev = planned[ordinal - 1];
@@ -347,7 +446,7 @@
 
   function renderActiveLogger(t, planned, ordinal, autoreg) {
     var row = planned[ordinal];
-    if (seedActiveRow(row) && typeof global.save === 'function') global.save();
+    if (seedActiveRow(row, t) && typeof global.save === 'function') global.save();
     var missed = autoreg.selectedDifficulty === 'did_not_complete';
     var nextLabel = ordinal + 1 >= planned.length ? 'Next set' : 'Next set';
     applyChrome(t, strengthWeekLabel());
@@ -402,6 +501,14 @@
       );
     }
     if (autoreg.restPhase) return renderRestPhase(t, autoreg, planned);
+    var row = planned[ordinal];
+    if (row && isTimePrimaryHold(t) && !row.done) {
+      if (row.reps === '' || row.reps == null) autoreg.phase = 'work';
+      if (autoreg.phase === 'work') {
+        if (!autoreg.workStarted) beginWork(prescribedHoldSec(row));
+        return renderWorkPhase(t, autoreg, planned, row);
+      }
+    }
     return renderActiveLogger(t, planned, ordinal, autoreg);
   }
 
@@ -429,8 +536,12 @@
     syncAutoregOrdinal(t);
     var planned = plannedRows(t);
     var row = planned[autoreg.setOrdinal];
-    if (seedActiveRow(row) && typeof global.save === 'function') global.save();
+    if (seedActiveRow(row, t) && typeof global.save === 'function') global.save();
     else if (typeof global.save === 'function') global.save();
+    if (isTimePrimaryHold(t) && row && !row.done) {
+      autoreg.phase = 'work';
+      autoreg.workStarted = false;
+    }
     if (typeof global.train === 'function') global.train();
   }
 
@@ -481,7 +592,7 @@
     var row = planned[ordinal];
     if (!row) return;
     syncActiveRowFromDom(row);
-    seedActiveRow(row);
+    seedActiveRow(row, t);
     if (!autoreg.selectedDifficulty) {
       var slider = global.document && global.document.getElementById('oneSetDifficulty');
       if (slider) onDifficultySlide(slider.value);
@@ -564,7 +675,7 @@
   }
 
   function heroSuperset(ex, row, t) {
-    var vals = rowValues(row);
+    var vals = rowValues(row, t);
     var rir = targetRir(ex);
     var adj =
       t.lastSuggestion && t.lastSuggestion.reasonCodes && t.lastSuggestion.reasonCodes.length
@@ -774,8 +885,12 @@
     nextStrengthSet: nextStrengthSet,
     nextSupersetSet: nextSupersetSet,
     beginRest: beginRest,
+    beginWork: beginWork,
     finishRest: finishRest,
+    finishWorkPhase: finishWorkPhase,
+    finishWorkEarly: finishWorkEarly,
     retryAttempt: retryAttempt,
+    isTimePrimaryHold: isTimePrimaryHold,
     clearRestPhase: clearRestPhase,
     seedActiveRow: seedActiveRow,
     syncActiveRowFromDom: syncActiveRowFromDom,
