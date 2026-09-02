@@ -1158,17 +1158,68 @@
     return num(cal.count) >= num(minSessions || 2);
   }
 
+  var DEFAULT_SESSION_PCT_WM = 0.7;
+
+  function loadExprFromLogColumns(ex) {
+    if (!ex || !Array.isArray(ex.logColumns)) return null;
+    for (var i = 0; i < ex.logColumns.length; i++) {
+      var c = ex.logColumns[i];
+      if (!c || !c.kind) continue;
+      var raw = c.values && c.values.length ? c.values[0] : c.value;
+      if (c.kind === 'weight_pct_wm') {
+        var pct = Number(String(raw == null ? '' : raw).split(',')[0]);
+        if (pct >= 1 && pct <= 100) return { exprKind: 'pct_of_max', exprArg: pct / 100 };
+      }
+      if (c.kind === 'weight_lwp') {
+        var delta = Number(String(raw == null ? '' : raw).split(',')[0]);
+        if (!Number.isNaN(delta)) return { exprKind: 'lwp_delta', exprArg: delta };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Athlete autopilot lifts often omit loadExpr — infer %WM (or pinned column) before resolve.
+   */
+  function ensureSessionLoadExpr(state, ex) {
+    if (!ex || ex.loadExpr) return;
+    var fromCols = loadExprFromLogColumns(ex);
+    if (fromCols) {
+      ex.loadExpr = fromCols;
+      return;
+    }
+    var exerciseId = ex.exerciseId || ex.id;
+    var name = ex.name || '';
+    var cat = ex.category || '';
+    if (repProgressionLift(name, cat, state, exerciseId, ex.rows)) return;
+    if (percentLiftCandidate(name, cat, state, exerciseId, ex.rows)) {
+      ex.loadExpr = { exprKind: 'pct_of_max', exprArg: DEFAULT_SESSION_PCT_WM };
+    }
+  }
+
   function applyLoadHintsToExercise(state, ex, asOfDate) {
     if (!ex) return;
     var exerciseId = ex.exerciseId || ex.id;
     if (!exerciseId) return;
+    ensureSessionLoadExpr(state, ex);
     fillBlankRowReps(ex);
+    var name = ex.name || '';
+    var cat = ex.category || '';
+    if (repProgressionLift(name, cat, state, exerciseId, ex.rows)) return;
     var hint = ensureStrengthState(state).loadHints[exerciseId];
-    if (hint && hint.loadKg && autopilotReadyForExercise(state, exerciseId, 2)) fillBlankRowWeights(ex, hint.loadKg);
+    if (hint && hint.loadKg) {
+      fillBlankRowWeights(ex, hint.loadKg);
+      return;
+    }
     if (ex.loadExpr) {
       var resolved = resolveExerciseLoad(state, ex, asOfDate);
-      if (resolved && resolved.loadKg != null) fillBlankRowWeights(ex, resolved.loadKg);
+      if (resolved && resolved.loadKg != null) {
+        fillBlankRowWeights(ex, resolved.loadKg);
+        return;
+      }
     }
+    var hist = exerciseExposureHistory(state, exerciseId, 1);
+    if (hist.length && hist[0].loadKg) fillBlankRowWeights(ex, hist[0].loadKg);
   }
 
   function applyLoadHintsToTasks(state, tasks, asOfDate) {
@@ -1245,6 +1296,14 @@
       source = hint.source === 'auto_estimate' ? 'progression' : 'hint';
       headline = loadKg + ' kg · progression';
       detail = 'Silent bump from recent on-target sessions';
+    }
+
+    if (!exercise.loadExpr && percentLiftCandidate(name, cat, state, exerciseId, exercise.rows)) {
+      ensureSessionLoadExpr(state, exercise);
+      resolved = exercise.loadExpr ? resolveExerciseLoad(state, exercise, asOfDate) : resolved;
+      if (exercise.loadExpr && exercise.loadExpr.exprKind === 'pct_of_max') {
+        pct = Math.round(num(exercise.loadExpr.exprArg) * 100);
+      }
     }
 
     if (exercise.loadExpr && resolved && resolved.loadKg != null) {
@@ -1340,6 +1399,7 @@
     applySilentProgressionAsync: applySilentProgressionAsync,
     mergeAiProgressionAction: mergeAiProgressionAction,
     applyLoadHintsToTasks: applyLoadHintsToTasks,
+    ensureSessionLoadExpr: ensureSessionLoadExpr,
     applyAutopilotToTasks: applyAutopilotToTasks,
     applyAutopilotVolumeToExercise: applyAutopilotVolumeToExercise,
     isVolumeDeferred: isVolumeDeferred,

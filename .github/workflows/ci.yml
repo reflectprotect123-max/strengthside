@@ -54,6 +54,7 @@ jobs:
       - run: pnpm run check:e1rm-value
       - run: pnpm run check:strength-adapter-resolve
       - run: pnpm run check:strength-session-start-load
+      - run: pnpm run check:strength-athlete-autopilot-load
       - run: pnpm run check:strength-load-context
       - run: pnpm run check:account-sync-checkin
       - run: pnpm run check:log-columns
