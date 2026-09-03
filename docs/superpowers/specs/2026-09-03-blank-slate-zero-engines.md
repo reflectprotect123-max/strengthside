@@ -25,6 +25,13 @@ integrations only.
 - WHOOP / Concept2 / Echo FTMS / Capgo (data + device integrations)
 - Shared Supabase **data** tables (twelve-table contract) — ledger only
 
+## Resurrection seal (cache v167)
+
+- No engine packages, artifacts, script tags, or SW precache entries.
+- `index.html` installs **Proxy no-op stubs** that overwrite every old global — method calls cannot reach real logic even if residual names remain in source.
+- Account sync does not pull strength/nutrition/coach engines.
+- **Not magic:** git history can restore files; Capgo/Netlify must ship v167 or older client caches can linger until update.
+
 ## Next
 
 Design **one** adaptive engine package. Do not revive deleted packages or APIs.
