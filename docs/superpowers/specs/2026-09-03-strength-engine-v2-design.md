@@ -24,7 +24,7 @@ After V2, an athlete can:
 2. Finish each set with **slider + reps** — next set load/reps update **silently** in the hero.
 3. Return next session — Set 1 is **suggested** from last session’s final set load (editable).
 4. Override any suggested weight — engine **recalibrates** from the edit.
-5. See the system feel **adaptive from session one** without WM gates or weekly bump math.
+5. Feel the system **adapt from session one** via weight suggestions only — no WM gates, no weekly bump math, no slider tutorial.
 
 ## Non-goals (V2 phase)
 
@@ -51,17 +51,15 @@ After V2, an athlete can:
 | Set 2+ signals | **Slider + reps vs target** — missed reps dominate over slider |
 | Week-to-week | **No extra bump** — next suggestion = where you left off (final set load) |
 | Working max | **Never required** — optional athlete metadata only |
-| Slider calibration | **One-time hint** on first rated set (per device/install), then **silent background learning** per exercise; **recalibrate on manual weight edits** |
-| Load change UX | **Silent** — hero numbers update only |
+| Slider calibration | **No tutorial hint.** Same 6 labels; **silent background learning** per exercise from rated sets. **Manual weight edit → slight recalibration** only (capped nudge, never a full reset) |
+| Load change UX | **Silent** — hero numbers update only; athlete sees **weight suggestions**, not explanations |
 | Reference model | Peak Strength–style autoreg: difficulty + performance → next weight; Est-ability from logs not gates |
 
-### Slider one-time hint (copy direction)
+### What the athlete sees
 
-Shown once before the athlete rates their first set (strength logger):
-
-> **Rate how hard that set felt.** Medium ≈ you could’ve done about 2 more reps. Be honest — the app adjusts your next sets from this.
-
-Dismiss → never show again (`meta.effortHintSeen = true`). No quiz, no multi-step calibration.
+- **Weight suggestion** = the number in the hero (load × reps). That is the only “engine output” in V2.1 UI.
+- **No** one-time slider tooltip, coaching toast, or “why we changed” line.
+- Slider remains unlabeled beyond the existing six difficulty words.
 
 ## Architecture
 
@@ -70,9 +68,8 @@ Dismiss → never show again (`meta.effortHintSeen = true`). No quiz, no multi-s
 ```text
 ┌─────────────────────────────────────┐
 │  One-set logger (UI only)           │
-│  · hero load/reps                   │
+│  · hero load/reps (weight suggestion)│
 │  · 6-step difficulty slider         │
-│  · one-time effort hint             │
 │  · finish set → adapter.planNext    │
 └──────────────┬──────────────────────┘
                │
@@ -159,13 +156,14 @@ interface EffortProfile {
 
 After each rated set, engine compares predicted vs actual outcome and nudges the label’s `bumpKg` (small step, clamped). If athlete repeatedly marks Easy but misses reps, Easy bump shrinks automatically.
 
-### Manual weight edit (recalibration)
+### Manual weight edit (slight recalibration)
 
 When athlete changes load in hero vs engine suggestion before logging:
 
 1. Adapter sets `manualLoadOverride: true` on the performed set payload.
-2. Engine treats logged load as ground truth.
-3. `updateEffortProfile` back-solves: adjust profile so the paired difficulty would have predicted this load within one rounding step.
+2. Engine treats logged load as ground truth for **this set**.
+3. `updateEffortProfile` applies a **small** nudge toward the override (e.g. ≤ one equipment increment toward the back-solved label delta) — **not** a full rewrite of the profile.
+4. Subsequent suggestions move gradually; one angry edit does not yank the whole model.
 
 Same behavior if athlete edits Set 1 suggestion before starting.
 
@@ -227,9 +225,9 @@ No weekly `decideProgression` call on athlete path.
 
 | Element | Behavior |
 | --- | --- |
-| Hero load/reps | Shows engine output; editable (edit triggers recalibration on log) |
-| Slider | Existing 6 labels unchanged |
-| Effort hint | One-time sheet/toast before first ever slider use |
+| Hero load/reps | Shows **weight suggestion**; editable (edit → slight recalibration on log) |
+| Slider | Existing 6 labels unchanged; no tutorial overlay |
+| Effort hint | **None** — no one-time sheet/toast |
 | Set complete | No explanation line when load changes |
 | Superset | Same planNextSet per exercise; partner rest unchanged from logger fixes |
 
