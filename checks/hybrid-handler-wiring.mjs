@@ -78,7 +78,10 @@ const requiredIndexHandlers = [
   'setSupersetValue',
   'addSupersetRound',
   'supersetEditSheet',
+  'editSupersetValue',
+  'toggleSupersetDone',
   'logSupersetSet',
+  'supersetMetricInputs',
   'startSession',
   'startSessionNow',
 ];

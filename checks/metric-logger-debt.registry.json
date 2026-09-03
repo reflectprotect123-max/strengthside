@@ -26,5 +26,26 @@
     "pattern": "function setAthleteLiftColumnKind[\\s\\S]{0,220}refreshAthleteLiftMetricsOnly",
     "mode": "mustMatch",
     "message": "setAthleteLiftColumnKind must refresh builder metric row after kind change"
+  },
+  {
+    "id": "superset-edit-uses-log-columns",
+    "file": "apps/mobile/prototype/hybrid-app/index.html",
+    "pattern": "function supersetEditSheet[\\s\\S]{0,160}LogColumns\\.supersetEditSheetHtml",
+    "mode": "mustMatch",
+    "message": "supersetEditSheet must delegate to LogColumns.supersetEditSheetHtml"
+  },
+  {
+    "id": "superset-legacy-card-metric-inputs",
+    "file": "apps/mobile/prototype/hybrid-app/index.html",
+    "pattern": "function supersetTask[\\s\\S]*supersetMetricInputs\\(ex,row\\)",
+    "mode": "mustMatch",
+    "message": "supersetTask fallback must render metric columns via supersetMetricInputs"
+  },
+  {
+    "id": "superset-next-syncs-dom",
+    "file": "apps/mobile/prototype/hybrid-app/strength-one-set-logger.js",
+    "pattern": "function nextSupersetSet[\\s\\S]*syncActiveRowFromDom\\(item\\.row, ex\\)",
+    "mode": "mustMatch",
+    "message": "nextSupersetSet must sync metric inputs from DOM before validate"
   }
 ]

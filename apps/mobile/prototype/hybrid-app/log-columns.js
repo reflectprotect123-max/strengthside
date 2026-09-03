@@ -982,6 +982,115 @@
     return cells + rir;
   }
 
+  function rowFieldForKind(kind) {
+    if (isLoadKind(kind)) return 'weight';
+    if (kind === 'distance_m') return 'distance';
+    return 'reps';
+  }
+
+  function rowMetricValue(row, kind) {
+    const field = rowFieldForKind(kind);
+    const val = row && row[field];
+    return val == null ? '' : String(val);
+  }
+
+  function supersetMetricFieldHtml(ex, row, opts) {
+    opts = opts || {};
+    const layout = columnLayout(ex || {});
+    return layout.cols
+      .map((col) => {
+        const meta = kindMeta(col.kind);
+        const field = rowFieldForKind(col.kind);
+        const val = rowMetricValue(row, col.kind);
+        const onchange =
+          opts.mode === 'edit'
+            ? `editSupersetValue(${opts.ei},${opts.ri},'${field}',this.value)`
+            : `setSupersetValue('${field}',this.value)`;
+        if (opts.legacyCard) {
+          return (
+            `<div class=field><label>${escTwin(meta.label)}</label>` +
+            `<input type="number" value="${escTwin(val)}" onchange="${onchange}" aria-label="${escTwin(meta.label)}"></div>`
+          );
+        }
+        return (
+          `<div><span class=mini>${escTwin(meta.label)}</span>` +
+          `<input type="number" value="${escTwin(val)}" onchange="${onchange}" aria-label="${escTwin(meta.label)}"></div>`
+        );
+      })
+      .join('');
+  }
+
+  function supersetEditRowHtml(ex, row, ei, ri) {
+    const target =
+      typeof global.targetLabel === 'function'
+        ? global.targetLabel(row)
+        : row.target == null
+          ? ''
+          : String(row.target);
+    const esc =
+      typeof global.esc === 'function'
+        ? global.esc
+        : (s) =>
+            String(s ?? '').replace(/[&<>"']/g, (m) =>
+              ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m],
+            );
+    return (
+      `<div class=setrow><div class=setnum>${row.n}<span class=target>${esc(target)}</span></div>` +
+      supersetMetricFieldHtml(ex, row, { mode: 'edit', ei: ei, ri: ri }) +
+      `<div><span class=mini>RIR</span><input type="number" min="0" max="10" value="${esc(
+        row.rir || '',
+      )}" onchange="editSupersetValue(${ei},${ri},'rir',this.value)"></div>` +
+      `<button class="btn small ${row.done ? '' : 'primary'}" onclick="toggleSupersetDone(${ei},${ri})">${
+        row.done ? 'Logged' : 'Log'
+      }</button></div>`
+    );
+  }
+
+  function supersetEditSheetHtml(task) {
+    const esc =
+      typeof global.esc === 'function'
+        ? global.esc
+        : (s) =>
+            String(s ?? '').replace(/[&<>"']/g, (m) =>
+              ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m],
+            );
+    const exercises = (task && task.exercises) || [];
+    return (
+      '<h2>Edit superset sets</h2><div class=stack>' +
+      exercises
+        .map(
+          (ex, ei) =>
+            `<div class=card><div class=title>${esc(ex.name || 'Exercise')}</div>${(ex.rows || [])
+              .map((r, ri) => supersetEditRowHtml(ex, r, ei, ri))
+              .join('')}</div>`,
+        )
+        .join('') +
+      '</div><button class="btn primary block" style="margin-top:12px" onclick="closeSheet();train()">Done</button>'
+    );
+  }
+
+  function validateAthleteRow(ex, row) {
+    const layout = columnLayout(ex || {});
+    for (const col of layout.cols) {
+      const meta = kindMeta(col.kind);
+      const field = rowFieldForKind(col.kind);
+      const raw = row[field];
+      if (field === 'weight') {
+        const weight = String(raw ?? '').trim() === '' ? null : Number(raw);
+        if (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 2000)) {
+          return 'Enter a weight between 0 and 2000 kg.';
+        }
+        continue;
+      }
+      const n = Number(raw);
+      const label = (meta.loggerLabel || meta.label || field).toLowerCase();
+      if (!Number.isFinite(n) || n <= 0 || n > 1000) {
+        return `Enter ${label} between 1 and 1000.`;
+      }
+    }
+    return '';
+  }
+
   function applyColumnTargetKinds(ex, rows) {
     const cols = normalizeColumns(ex);
     const effort = cols.find((c) => c.kind === 'time_sec') || cols.find((c) => c.kind === 'reps' || c.kind === 'reps_range' || c.kind === 'distance_m');
@@ -1041,6 +1150,11 @@
     toggleOverrides,
     loggerCellsHtml,
     applyColumnTargetKinds,
+    rowFieldForKind,
+    supersetMetricFieldHtml,
+    supersetEditRowHtml,
+    supersetEditSheetHtml,
+    validateAthleteRow,
     fmtRest,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
