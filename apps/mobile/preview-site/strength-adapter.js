@@ -1069,6 +1069,15 @@
     }
   }
 
+  function defaultHoldSecondsFromColumns(ex) {
+    if (!ex || !Array.isArray(ex.logColumns)) return 30;
+    var timeCol = ex.logColumns.find(function (c) { return c && c.kind === 'time_sec'; });
+    if (!timeCol) return 30;
+    var raw = timeCol.values && timeCol.values.length ? timeCol.values[0] : timeCol.value;
+    var n = Number(String(raw == null ? '' : raw).trim());
+    return n >= 1 ? Math.round(n) : 30;
+  }
+
   function applyAutopilotVolumeToExercise(state, ex, sessionCtx) {
     if (!ex || !isVolumeDeferred(ex)) return;
     if (!hasStrength() || !global.HybridStrength.InitialPrescription) return;
@@ -1076,6 +1085,18 @@
     var exerciseId = ex.exerciseId || ex.id;
     var name = ex.name || exerciseNameFor(state, exerciseId);
     var cat = ex.category || '';
+    if (timedHoldLift(name, cat, ex)) {
+      var holdSec = defaultHoldSecondsFromColumns(ex);
+      ex.sets = 3;
+      ex.reps = String(holdSec);
+      ex.autopilotVolume = true;
+      ex.autopilotVolumeReasons = ['timed_hold_default'];
+      rebuildRowsFromPrescription(ex);
+      if (global.LogColumns && global.LogColumns.applyColumnTargetKinds) {
+        global.LogColumns.applyColumnTargetKinds(ex, ex.rows);
+      }
+      return;
+    }
     if (repProgressionLift(name, cat, state, exerciseId, ex.rows)) {
       var ss = ensureStrengthState(state);
       var vHint = ss.volumeHints[exerciseId];

@@ -291,21 +291,20 @@
           i > 0
             ? '<div class=metric-sep>' + (layout === 'triple' ? '·' : '×') + '</div>'
             : '';
+        var changeHandler = opts.superset
+          ? "setSupersetValue('" + field + "',this.value)"
+          : 'updateSet(' + ri + ",'" + field + "',this.value)";
         return (
           sep +
           '<div><input type="number" class="metric-val" id="' +
           inputId +
           '" value="' +
           String(val).replace(/"/g, '&quot;') +
-          '" onchange="updateSet(' +
-          ri +
-          ',\'' +
-          field +
-          '\',this.value)" oninput="updateSet(' +
-          ri +
-          ',\'' +
-          field +
-          '\',this.value)" aria-label="' +
+          '" onchange="' +
+          changeHandler +
+          '" oninput="' +
+          changeHandler +
+          '" aria-label="' +
           escHtml(meta.loggerLabel) +
           '">' +
           '<span class=metric-unit>' +
@@ -899,7 +898,7 @@
   }
 
   function heroSuperset(ex, row, t) {
-    var vals = rowValues(row, t);
+    rowValues(row, ex);
     var rir = targetRir(ex);
     var adj =
       t.lastSuggestion && t.lastSuggestion.reasonCodes && t.lastSuggestion.reasonCodes.length
@@ -911,15 +910,8 @@
       '<div class="hero">' +
       '<div class=hero-label>Suggested · tap to edit</div>' +
       '<div class=hero-metrics>' +
-      '<div><input type="number" class="metric-val" id="oneSetWeight" value="' +
-      String(vals.weightVal).replace(/"/g, '&quot;') +
-      '" onchange="setSupersetValue(\'weight\',this.value)" oninput="setSupersetValue(\'weight\',this.value)" aria-label="Weight kg">' +
-      '<span class=metric-unit>kg</span></div>' +
-      '<div class=metric-sep>×</div>' +
-      '<div><input type="number" class="metric-val" id="oneSetReps" value="' +
-      String(vals.repsVal).replace(/"/g, '&quot;') +
-      '" onchange="setSupersetValue(\'reps\',this.value)" oninput="setSupersetValue(\'reps\',this.value)" aria-label="Reps">' +
-      '<span class=metric-unit>reps</span></div></div>' +
+      metricCellsHtml(ex, row, null, { superset: true }) +
+      '</div>' +
       adj +
       '</div>'
     );

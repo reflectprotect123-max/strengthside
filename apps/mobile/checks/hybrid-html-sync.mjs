@@ -76,6 +76,26 @@ if (build && cache && build !== cache) {
   failures.push(`LOCAL_BUILD (${build}) != SW CACHE (${cache})`);
 }
 
+/** Every local ./script.js in prototype index must exist on deploy roots and in sync-hybrid-html.sh */
+const syncSh = readFileSync(join(root, 'sync-hybrid-html.sh'), 'utf8');
+const localScripts = [...html.matchAll(/<script src="\.\/([^"]+\.js)"><\/script>/g)].map((m) => m[1]);
+const deployRoots = [join(root, ''), join(root, 'preview-site')];
+for (const script of localScripts) {
+  for (const base of deployRoots) {
+    const path = join(base, script);
+    if (!existsSync(path)) {
+      failures.push(`deploy missing script ${script} (expected ${path})`);
+    }
+  }
+  if (!syncSh.includes(script)) {
+    failures.push(`sync-hybrid-html.sh does not copy ${script}`);
+  }
+  const swListed = sw.includes(`'./${script}'`) || sw.includes(`"./${script}"`) || sw.includes(script);
+  if (!swListed && !['label-scan-live.js', 'food-catalog.js'].includes(script)) {
+    failures.push(`service-worker.js precache missing ./${script}`);
+  }
+}
+
 if (failures.length) {
   console.error('hybrid-html-sync FAIL');
   failures.forEach((f) => console.error(' -', f));
