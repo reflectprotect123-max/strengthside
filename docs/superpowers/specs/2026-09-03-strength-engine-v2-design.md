@@ -197,13 +197,20 @@ No special “deload next week” rule. Within session, missed reps + Hard/Max �
 
 **Priority:**
 
-1. **Reps short of target** → decrease load (dominates slider).
-2. **`did_not_complete`** → decrease more; optionally reduce target reps for next set.
+1. **`did_not_complete`** (slider) → decrease more; set failed as a set (bail / stop early / safety). Optionally reduce target reps for next set.
+2. **Reps short of target** but set completed → decrease load (dominates Easy/Very easy). Athlete logged a finished set with fewer reps than prescribed (e.g. 5/8 + Hard).
 3. **`hard` / `max`** with target met → hold or small decrease.
 4. **`medium`** with target met → hold.
 5. **`easy` / `very_easy`** with target met → increase by `profile.bumpKg[label]` (rounded).
 
-Always round to equipment increment. Never increase load if current set missed rep target.
+**Didn’t finish vs missed reps (locked):**
+
+| Situation | Athlete action | Engine |
+| --- | --- | --- |
+| Set not completed (bail / stop) | Slider → **Didn’t finish** | Stronger **down** |
+| Set completed but short of target | Log actual reps + rate how it felt | **Down** from rep miss; slider cannot bump |
+
+Always round to equipment increment. Never increase load if current set missed rep target or used `did_not_complete`.
 
 **Output:**
 
