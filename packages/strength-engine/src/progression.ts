@@ -1,6 +1,4 @@
 // packages/strength-engine/src/progression.ts
-import { calibrationStateFor } from './calibration';
-import type { CalibrationState } from './calibration';
 import type { StrengthExposure } from './exposure';
 
 export interface ProgressionDecision {
@@ -25,7 +23,7 @@ export interface DecideCtx {
  * explicitly, so an AI-backed decider can use it without recomputing it.
  */
 export interface ProgressionDecider {
-  decide(exposures: StrengthExposure[], calibration: CalibrationState, ctx: DecideCtx): Promise<ProgressionDecision>;
+  decide(exposures: StrengthExposure[], calibration: import('./calibration').CalibrationState, ctx: DecideCtx): Promise<ProgressionDecision>;
 }
 
 /**
@@ -53,40 +51,24 @@ function base(ctx: DecideCtx): Pick<ProgressionDecision, 'exerciseId' | 'source'
   return { exerciseId: ctx.exerciseId, source: 'deterministic' };
 }
 
+/**
+ * Athlete-facing progression: one rated on-target session is enough to bump.
+ * Deload only after two consecutive missed sessions. No separate calibration
+ * gate — the athlete should feel progression after a good logged week.
+ */
 export function decideProgression(exposures: StrengthExposure[], ctx: DecideCtx): ProgressionDecision {
-  // Defensive: same reasoning as anchorKgFor above — nothing enforces that
-  // an arbitrary caller's exposures arrive oldest-first.
   const sorted = [...exposures].sort((a, b) => a.performedAt.localeCompare(b.performedAt));
-
-  const calibration = calibrationStateFor(sorted);
-  if (calibration !== 'calibrated') {
-    return { ...base(ctx), action: 'hold', confidence: 0.3, reasonCodes: ['insufficient_exposure'] };
-  }
-
-  // pain_blocked exposures are "excluded entirely from load-progression math"
-  // (exposure.ts's own contract, and the filter calibrationStateFor already
-  // applies). Filter BEFORE taking the window, or one pain-flagged session
-  // shrinks the evidence three real sessions provide.
   const usable = sorted.filter(e => e.exposureClass !== 'pain_blocked');
-  const recent = usable.slice(-3);
-  // Both the exposure class AND onTarget are required: a RATED session
-  // (exposureClass === 'successful') that fell short of the prescribed
-  // stimulus is not full evidence of readiness to progress, and neither is
-  // an on-target but unrated (successful_but_uncertain) session on its own.
-  const allSuccessful = recent.every(e => e.exposureClass === 'successful' && e.onTarget);
-  const repeatedDeterioration = recent.filter(e => e.exposureClass === 'missed').length >= 2;
-  // anchorKgFor only ever reads successful/successful_but_uncertain exposures,
-  // so `usable` and `sorted` give the same anchor — passing the filtered list
-  // keeps this function's math on one consistent set.
-  const anchor = anchorKgFor(usable);
 
-  if (allSuccessful) {
-    const deltaPct = 0.025;
-    return {
-      ...base(ctx), action: 'progress', deltaPct, confidence: 0.9, reasonCodes: ['three_on_target'],
-      ...(anchor != null ? { deltaKg: anchor * deltaPct } : {}),
-    };
+  if (usable.length === 0) {
+    return { ...base(ctx), action: 'hold', confidence: 0.3, reasonCodes: ['no_history'] };
   }
+
+  const anchor = anchorKgFor(usable);
+  const last = usable[usable.length - 1];
+  const recent2 = usable.slice(-2);
+  const repeatedDeterioration = recent2.length >= 2 && recent2.every(e => e.exposureClass === 'missed');
+
   if (repeatedDeterioration && anchor != null) {
     const deltaPct = -0.05;
     return {
@@ -94,20 +76,20 @@ export function decideProgression(exposures: StrengthExposure[], ctx: DecideCtx)
       deltaKg: anchor * deltaPct,
     };
   }
-  // repeatedDeterioration with no anchor (every exposure missed, nothing to
-  // deload FROM) deliberately falls through to hold, same reason code as
-  // any other mixed signal — there is no meaningful distinction from the
-  // caller's side between "signals conflict" and "signals agree on deload
-  // but there is nothing to anchor it to".
+
+  if (last.exposureClass === 'successful' && last.onTarget) {
+    const deltaPct = 0.025;
+    return {
+      ...base(ctx), action: 'progress', deltaPct, confidence: 0.85, reasonCodes: ['on_target_rated'],
+      ...(anchor != null ? { deltaKg: anchor * deltaPct } : {}),
+    };
+  }
+
   return { ...base(ctx), action: 'hold', confidence: 0.7, reasonCodes: ['mixed_signal'] };
 }
 
 export const DeterministicDecider: ProgressionDecider = {
   async decide(exposures, _calibration, ctx) {
-    // _calibration is intentionally unused here — decideProgression computes
-    // its own via calibrationStateFor. The interface still accepts it so a
-    // real AI decider, given the caller's already-computed calibration, can
-    // use it without recomputing.
     return decideProgression(exposures, ctx);
   },
 };
