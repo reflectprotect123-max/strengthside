@@ -32,6 +32,8 @@
 
 **Owner lock — Sep 2026 (ops):** **Coach parked** — no coach portal / desktop / publish-loop work unless owner asks.
 
+**Recent merges (#157):** Library-wide builder columns — load profiles drive kg×reps (not name-regex reps-only); migration v9 repairs stale templates (cache v162).
+
 **Recent merges (#155):** Exercise suggest tap fix — hero panel no longer blocks dropdown picks (cache v160).
 
 **Metric logger (shipped `dogfood` + `live` @ `1.0.47`, cache v159):** Full Body A always-sync + metric-aware builder/logger (M1–M9).
@@ -48,8 +50,8 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | **`dogfood` + `live`** / **`1.0.48`** (cache v160) |
-| Upload | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.48 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Channel / bundle | **`dogfood` + `live`** / **`1.0.49`** (cache v162) |
+| Upload | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.49 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 
