@@ -29,9 +29,6 @@ done
 if [[ -f "$SRC_DIR/coach.html" ]]; then
   cp "$SRC_DIR/coach.html" "$ROOT/coach.html"
 fi
-if [[ -f "$SRC_DIR/coach-bridge.js" ]]; then
-  cp "$SRC_DIR/coach-bridge.js" "$ROOT/coach-bridge.js"
-fi
 
 # Concept2 + Echo FTMS
 for f in concept2.js echo-ftms.js native-bridge.js native-ble.js label-scan.js label-scan-live.js food-catalog.js food-catalog-au.json; do
