@@ -82,6 +82,9 @@ const requiredIndexHandlers = [
   'toggleSupersetDone',
   'logSupersetSet',
   'supersetMetricInputs',
+  'editCompletedRow',
+  'toggleCompletedDone',
+  'addCompletedRow',
   'startSession',
   'startSessionNow',
 ];

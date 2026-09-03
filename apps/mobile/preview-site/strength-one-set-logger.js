@@ -814,7 +814,7 @@
       return;
     }
     if (typeof global.validateStrengthRow === 'function') {
-      var err = global.validateStrengthRow(row);
+      var err = global.validateStrengthRow(row, t);
       if (err) return global.alert(err);
     }
     if (isSidePerRound(t) && autoreg.side === 'left') {

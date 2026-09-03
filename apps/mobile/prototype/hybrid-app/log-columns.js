@@ -1005,7 +1005,9 @@
         const onchange =
           opts.mode === 'edit'
             ? `editSupersetValue(${opts.ei},${opts.ri},'${field}',this.value)`
-            : `setSupersetValue('${field}',this.value)`;
+            : opts.mode === 'completed'
+              ? `editCompletedRow('${opts.sessionId}','${opts.taskId}','${opts.exId}','${opts.rowId}','${field}',this.value)`
+              : `setSupersetValue('${field}',this.value)`;
         if (opts.legacyCard) {
           return (
             `<div class=field><label>${escTwin(meta.label)}</label>` +
@@ -1066,6 +1068,55 @@
         )
         .join('') +
       '</div><button class="btn primary block" style="margin-top:12px" onclick="closeSheet();train()">Done</button>'
+    );
+  }
+
+  function completedRowsHtml(sessionId, task, ex) {
+    const esc =
+      typeof global.esc === 'function'
+        ? global.esc
+        : (s) =>
+            String(s ?? '').replace(/[&<>"']/g, (m) =>
+              ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m],
+            );
+    const owner = ex || task || {};
+    const rows = ex ? ex.rows : task ? task.rows : [];
+    const exId = ex ? ex.id : '';
+    const taskId = task ? task.id : '';
+    return (
+      `<div class=editgrid>${(rows || [])
+        .map((r) => {
+          const target =
+            typeof global.targetLabel === 'function'
+              ? global.targetLabel(r)
+              : r.target == null
+                ? ''
+                : String(r.target);
+          const e1rm =
+            typeof global.rowE1rmHint === 'function' ? global.rowE1rmHint(r) : '';
+          return (
+            `<div class=editrow><div class=setnum>${r.extra ? 'EX' : r.n}<span class=target>${esc(
+              target,
+            )}</span></div>` +
+            supersetMetricFieldHtml(owner, r, {
+              mode: 'completed',
+              sessionId: sessionId,
+              taskId: taskId,
+              exId: exId,
+              rowId: r.id,
+            }) +
+            `<div><span class=mini>RIR</span><input type="number" min="0" max="10" value="${esc(
+              r.rir || '',
+            )}" onchange="editCompletedRow('${sessionId}','${taskId}','${exId}','${r.id}','rir',this.value)"></div>` +
+            `<button class="btn small ${r.extra ? 'danger' : ''}" onclick="${
+              r.extra
+                ? `deleteCompletedRow('${sessionId}','${taskId}','${exId}','${r.id}')`
+                : `toggleCompletedDone('${sessionId}','${taskId}','${exId}','${r.id}')`
+            }">${r.extra ? '×' : r.done ? 'Logged' : 'Log'}</button>${e1rm}</div>`
+          );
+        })
+        .join('')}</div>` +
+      `<button class="btn small" style="margin-top:8px" onclick="addCompletedRow('${sessionId}','${taskId}','${exId}')">Add extra set</button>`
     );
   }
 
@@ -1154,6 +1205,7 @@
     supersetMetricFieldHtml,
     supersetEditRowHtml,
     supersetEditSheetHtml,
+    completedRowsHtml,
     validateAthleteRow,
     fmtRest,
   };

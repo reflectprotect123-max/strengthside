@@ -47,5 +47,26 @@
     "pattern": "function nextSupersetSet[\\s\\S]*syncActiveRowFromDom\\(item\\.row, ex\\)",
     "mode": "mustMatch",
     "message": "nextSupersetSet must sync metric inputs from DOM before validate"
+  },
+  {
+    "id": "strength-next-validates-with-task",
+    "file": "apps/mobile/prototype/hybrid-app/strength-one-set-logger.js",
+    "pattern": "function nextStrengthSet[\\s\\S]*validateStrengthRow\\(row, t\\)",
+    "mode": "mustMatch",
+    "message": "nextStrengthSet must validate with task logColumns context"
+  },
+  {
+    "id": "completed-rows-metric-fields",
+    "file": "apps/mobile/prototype/hybrid-app/index.html",
+    "pattern": "function completedRowsHtml[\\s\\S]{0,160}LogColumns\\.completedRowsHtml",
+    "mode": "mustMatch",
+    "message": "completedRowsHtml must delegate to LogColumns.completedRowsHtml"
+  },
+  {
+    "id": "completed-rows-no-hardcoded-weight",
+    "file": "apps/mobile/prototype/hybrid-app/index.html",
+    "pattern": "function completedRowsHtml[\\s\\S]*<span class=mini>Weight</span>",
+    "mode": "mustNotMatch",
+    "message": "completedRowsHtml must not hard-code Weight column"
   }
 ]
