@@ -176,6 +176,23 @@ scenario('Farmer Walk', 'core-farmer-walk', (twin) => {
   must(html.includes('editSupersetValue(1,0'), 'superset edit sheet wires editSupersetValue for plank row');
 })();
 
+(function completedRowsScenario() {
+  const sb = loadSandbox();
+  const plankCols = sb.ExerciseLoadProfiles.defaultLogColumns('core-plank');
+  const task = {
+    id: 'task-plank',
+    kind: 'strength',
+    name: 'Plank',
+    exerciseId: 'core-plank',
+    logColumns: sb.LogColumns.ensureAthleteLogColumns({ logColumns: plankCols }),
+    rows: [{ id: 'r1', n: 1, target: '30', targetKind: 'seconds', weight: '', reps: 30, rir: '', done: true, extra: false }],
+  };
+  const html = sb.LogColumns.completedRowsHtml('sess1', task, null);
+  must(html.includes('Time (seconds)') || html.includes('Seconds'), 'completed edit shows plank time column');
+  must(!html.includes('<span class=mini>Weight</span>'), 'completed edit must not hard-code Weight');
+  must(html.includes("editCompletedRow('sess1','task-plank','','r1'"), 'completed edit wires editCompletedRow');
+})();
+
 if (failures.length) {
   console.error('metric-logger-matrix FAIL');
   failures.forEach((f) => console.error(' -', f));
