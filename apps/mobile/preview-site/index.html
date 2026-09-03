@@ -1167,7 +1167,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v158';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v159';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1309,6 +1309,7 @@ function applyBlankSlatePatch(state){
   return state;
 }
 const STARTER_STRENGTH_NAMES=['Full Body A'];
+const STARTER_FULLBODY_A_VERSION='fullbody-a-metric-v1';
 const STARTER_CONDITIONING_NAMES=['Aerobic Conditioning'];
 const STARTER_RECOVERY_NAMES=['Recovery'];
 const STARTER_AEROBIC_ID='45941abb-5878-4ea8-9023-a21f4ba3d58b';
@@ -1351,14 +1352,17 @@ function starterRecoveryNeedsRefresh(t){
 }
 function buildStarterFullBodyATemplate(){
   const src=seedTemplateByName('Full Body A');
-  if(!src)return{id:id(),name:'Full Body A',templateKind:'strength',source:'THE-starter',coachInstructions:'',blocks:[]};
+  if(!src)return{id:id(),name:'Full Body A',templateKind:'strength',source:'THE-starter',starterVersion:STARTER_FULLBODY_A_VERSION,coachInstructions:'',blocks:[]};
   let copy=clone(src);
   copy.source='THE-starter';
   copy.templateKind='strength';
+  copy.starterVersion=STARTER_FULLBODY_A_VERSION;
   return copy;
 }
 function starterStrengthNeedsRefresh(t){
   if(!t||String(t.name||'')!=='Full Body A')return true;
+  if(String(t.starterVersion||'')!==STARTER_FULLBODY_A_VERSION)return true;
+  if(String(t.source||'')!=='THE-starter')return true;
   let blocks=t.blocks||[];
   let strengthBlocks=blocks.filter(b=>b&&b.type==='strength');
   if(strengthBlocks.length!==1)return true;
@@ -1380,6 +1384,29 @@ function starterStrengthNeedsRefresh(t){
   if(!curl||!curl.supersetWithNext)return true;
   if(exs[exs.length-1].supersetWithNext)return true;
   return false;
+}
+function ensureFullBodyAStarter(state){
+  state=state||{};
+  state.templates=Array.isArray(state.templates)?state.templates:[];
+  state.meta=state.meta||{};
+  const name='Full Body A';
+  let idx=state.templates.findIndex(t=>String(t.name||'')===name);
+  let cur=idx>=0?state.templates[idx]:null;
+  if(!cur||starterStrengthNeedsRefresh(cur)){
+    let copy=buildStarterFullBodyATemplate();
+    if(cur)copy.id=cur.id;
+    touchRecord(copy,'templates',state);
+    normalizeAthleteStrengthTemplate(copy);
+    if(idx<0)state.templates.push(copy); else state.templates[idx]=copy;
+    cur=copy;
+  }else{
+    normalizeAthleteStrengthTemplate(cur);
+    cur.starterVersion=STARTER_FULLBODY_A_VERSION;
+    cur.source='THE-starter';
+  }
+  state.meta.starterFullBodyAVersion=STARTER_FULLBODY_A_VERSION;
+  for(const b of cur.blocks||[]){if(b&&b.type==='strength')for(const ex of b.exercises||[])registerExercise(state,ex)}
+  return cur;
 }
 function upsertNamedStarter(state,name,buildFn,normalizeFn,needsRefresh){
   state.templates=state.templates||[];
@@ -1405,10 +1432,7 @@ function upsertNamedStarter(state,name,buildFn,normalizeFn,needsRefresh){
 function ensureStarterTemplates(state){
   state=state||{};
   state.templates=Array.isArray(state.templates)?state.templates:[];
-  for(const name of STARTER_STRENGTH_NAMES){
-    let copy=upsertNamedStarter(state,name,buildStarterFullBodyATemplate,normalizeAthleteStrengthTemplate,starterStrengthNeedsRefresh);
-    if(copy){for(const b of copy.blocks||[]){if(b&&b.type==='strength')for(const ex of b.exercises||[])registerExercise(state,ex)}}
-  }
+  ensureFullBodyAStarter(state);
   upsertNamedStarter(state,'Aerobic Conditioning',buildStarterAerobicCondTemplate,normalizeAthleteCondTemplate,starterAerobicNeedsRefresh);
   upsertNamedStarter(state,'Recovery',buildStarterRecoveryTemplate,normalizeAthleteCondTemplate,starterRecoveryNeedsRefresh);
   state.exercises=dedupe(state.exercises||[]);

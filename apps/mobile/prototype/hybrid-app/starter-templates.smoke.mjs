@@ -24,8 +24,9 @@ must(html.includes('block.recoverySession=true'), 'cond builder saves recovery f
 must(!html.includes('restoreHiddenTemplates'), 'no restore-hidden library UX');
 must(html.includes("touchRecord(copy,'templates',state)"), 'starter touchRecord passes boot state');
 must(html.includes('function buildStarterFullBodyATemplate'), 'Full Body A starter factory');
+must(html.includes('function ensureFullBodyAStarter'), 'Full Body A dedicated ensure on boot');
+must(html.includes("STARTER_FULLBODY_A_VERSION='fullbody-a-metric-v1'"), 'Full Body A starter version stamp');
 must(html.includes('function starterStrengthNeedsRefresh'), 'Full Body A starter refresh guard');
-must(html.includes('upsertNamedStarter(state,name,buildStarterFullBodyATemplate'), 'Full Body A upsert on boot');
 must(html.includes('repairProgramText(state,false)'), 'starters repair warm/cool text');
 
 const start = html.indexOf('const seed=');

@@ -156,4 +156,22 @@ must(exs[2].supersetWithNext === true && exs[3].supersetWithNext === false, 'dip
 must(exs[4].supersetWithNext === true && exs[5].supersetWithNext === false, 'curl/pushdown link');
 must(sandbox.starterStrengthNeedsRefresh(fba) === false, 'refreshed starter stable');
 
+const versionStale = sandbox.ensureStarterTemplates({
+  meta: {},
+  templates: [
+    {
+      id: '39aa9693-b109-4da3-b66e-89c78d45058b',
+      name: 'Full Body A',
+      source: 'THE-starter',
+      starterVersion: 'fullbody-a-legacy',
+      blocks: fba.blocks,
+    },
+  ],
+  exercises: [],
+  hiddenTemplateIds: [],
+});
+const bumped = versionStale.templates.find((t) => t.name === 'Full Body A');
+must(bumped.starterVersion === 'fullbody-a-metric-v1', 'version bump rebuilds canonical Full Body A');
+must(versionStale.meta.starterFullBodyAVersion === 'fullbody-a-metric-v1', 'meta records starter version');
+
 console.log('fullbody-a-starter.smoke: ok');
