@@ -62,9 +62,10 @@
     return true;
   }
 
-  function isAutopilotVolume(ex) {
-    if (ex && ex.autopilotVolume === true) return true;
-    if (ex && ex.autopilotVolume === false) return false;
+  function isOpenVolume(ex) {
+    if (!ex) return false;
+    if (ex.openVolume === true) return true;
+    if (ex.openVolume === false) return false;
     const noSets = ex && (ex.sets == null || ex.sets === '');
     const noReps = ex && (ex.reps == null || String(ex.reps).trim() === '');
     return !!(noSets && noReps);
@@ -190,18 +191,18 @@
       const values = Array.isArray(c.values) ? c.values : splitValues(c.value, setCount || ex.sets || 1);
       return { id: c.id || newId(), kind: c.kind, value: joinValues(values), values };
     });
-    cols = cols.filter((c) => !isLoadKind(c.kind) || hasPinnedLoad([c]) || sheet.athleteMode || sheet.autopilotVolume);
+    cols = cols.filter((c) => !isLoadKind(c.kind) || hasPinnedLoad([c]) || sheet.athleteMode || sheet.openVolume);
     ex.logColumns = cols;
     if (setCount) ex.sets = Math.max(1, setCount);
     const effort = effortColumn(cols);
     const loadCol = loadColumn(cols);
     if (effort) ex.reps = String(effort.value || '').trim() || ex.reps || '8';
-    if (sheet.autopilotVolume) {
-      ex.autopilotVolume = true;
+    if (sheet.openVolume) {
+      ex.openVolume = true;
       ex.sets = null;
       ex.reps = null;
     } else {
-      ex.autopilotVolume = false;
+      ex.openVolume = false;
       if (setCount) ex.sets = Math.max(1, setCount);
       if (effort) ex.reps = String(effort.value || '').trim() || '8';
     }
@@ -245,7 +246,7 @@
   }
 
   /** Sheet draft while Edit lift is open */
-  let sheet = { sets: 3, restSec: 120, targetRir: null, autopilotVolume: false, athleteMode: false, showOverrides: false, columns: [] };
+  let sheet = { sets: 3, restSec: 120, targetRir: null, openVolume: false, athleteMode: false, showOverrides: false, columns: [] };
   let changeHandler = null;
 
   function setChangeHandler(fn) {
@@ -257,8 +258,8 @@
   }
 
   function beginSheet(ex) {
-    const autopilotVolume = isAutopilotVolume(ex);
-    const sets = autopilotVolume ? 3 : Math.max(1, Number(ex && ex.sets) || 3);
+    const openVolume = isOpenVolume(ex);
+    const sets = openVolume ? 3 : Math.max(1, Number(ex && ex.sets) || 3);
     const restSec = Math.max(0, Number(ex && ex.restSec) || 120);
     const targetRir =
       ex && ex.targetRir != null && Number.isFinite(Number(ex.targetRir)) ? Math.round(Number(ex.targetRir)) : null;
@@ -266,7 +267,7 @@
       sets,
       restSec,
       targetRir,
-      autopilotVolume,
+      openVolume,
       athleteMode: false,
       showOverrides: !!(ex && ex.logColumns && ex.logColumns.some((c) => perSetOverrideActive(c.values, sets))),
       columns: coachNormalizeColumns({ ...(ex || {}), sets }),
@@ -337,7 +338,7 @@
   }
 
   function ensureAthleteColumnCount() {
-    sheet.autopilotVolume = true;
+    sheet.openVolume = true;
     if (!sheet.columns.length) sheet.columns = defaultAthleteColumns(sheet._exercise || {});
     while (sheet.columns.length < 2) {
       sheet.columns.push({
@@ -386,17 +387,17 @@
   }
 
   function beginAthleteSheet(ex) {
-    beginSheet({ ...(ex || {}), autopilotVolume: false, sets: null, reps: null });
+    beginSheet({ ...(ex || {}), openVolume: false, sets: null, reps: null });
     sheet.athleteMode = true;
-    sheet.autopilotVolume = true;
+    sheet.openVolume = true;
     sheet._exercise = ex || {};
     sheet.columns = ensureAthleteLogColumns(ex || {});
     return sheet;
   }
 
-  function setAutopilotVolume(on) {
-    sheet.autopilotVolume = !!on;
-    if (sheet.autopilotVolume) {
+  function setOpenVolume(on) {
+    sheet.openVolume = !!on;
+    if (sheet.openVolume) {
       sheet.showOverrides = false;
     }
     refreshPrescription();
@@ -404,7 +405,7 @@
   }
 
   function pinVolume(sets, reps) {
-    sheet.autopilotVolume = false;
+    sheet.openVolume = false;
     sheet.sets = Math.max(1, Math.min(12, Number(sets) || 3));
     onSimpleReps(reps || '8');
     resizeSets(sheet.sets);
@@ -413,7 +414,7 @@
   }
 
   function clearPinnedVolume() {
-    sheet.autopilotVolume = true;
+    sheet.openVolume = true;
     onSimpleReps('8');
     refreshPrescription();
     notifyChange();
@@ -672,14 +673,14 @@
         <div class="field"><label>Set 1 value</label>
           <input value="${String(loadVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onPinLoadValue(this.value)" oninput="LogColumns.onPinLoadValue(this.value)"></div>
       </div>
-      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedLoad()">Clear — use autopilot load</button>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedLoad()">Clear — use open load</button>
     </details>`;
   }
 
   function builderPinVolumeHtml() {
-    if (sheet.autopilotVolume) {
+    if (sheet.openVolume) {
       return `<details class="rx-overrides rx-advanced"><summary>Pin sets &amp; reps (optional)</summary>
-        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave on autopilot — engine picks sets × reps from history, calibration, and recovery. Pin only when you need a fixed prescription.</p>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave volume open — sets × reps stay unset until you pin them.</p>
         <div class="rx-grid cols-2" style="margin-top:8px">
           <div class="field"><label>Sets</label>
             <input id="pinSetsVal" type="number" min="1" max="12" placeholder="3" onchange="LogColumns.pinVolume(Number(this.value), document.getElementById('pinRepsVal').value)"></div>
@@ -694,11 +695,11 @@
     return `<details class="rx-overrides rx-advanced" open><summary>Pin sets &amp; reps (optional)</summary>
       <div class="rx-grid cols-2" style="margin-top:8px">
         <div class="field"><label>Sets</label>
-          <input type="number" min="1" max="12" value="${sheet.sets}" onchange="LogColumns.resizeSets(Number(this.value)); LogColumns.setAutopilotVolume(false)"></div>
+          <input type="number" min="1" max="12" value="${sheet.sets}" onchange="LogColumns.resizeSets(Number(this.value)); LogColumns.setOpenVolume(false)"></div>
         <div class="field"><label>${meta.loggerLabel}</label>
-          <input value="${String(repsVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onSimpleReps(this.value); LogColumns.setAutopilotVolume(false)"></div>
+          <input value="${String(repsVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onSimpleReps(this.value); LogColumns.setOpenVolume(false)"></div>
       </div>
-      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedVolume()">Clear — use autopilot volume</button>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedVolume()">Clear — use open volume</button>
     </details>`;
   }
 
@@ -709,9 +710,9 @@
     const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
     const ph = meta.placeholder || '8 or 6-8';
     const pinnedLoad = hasPinnedLoad();
-    const loadLabel = pinnedLoad ? kindMeta(loadColumn().kind).label : 'Autopilot';
-    const volumeLabel = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${repsVal || '—'}`;
-    const effortFields = sheet.autopilotVolume
+    const loadLabel = pinnedLoad ? kindMeta(loadColumn().kind).label : 'Open';
+    const volumeLabel = sheet.openVolume ? 'Open' : `${sheet.sets} × ${repsVal || '—'}`;
+    const effortFields = sheet.openVolume
       ? ''
       : `<div class="rx-grid cols-2" style="margin-top:12px">
         <div class="field"><label>Target</label>
@@ -719,7 +720,7 @@
         <div class="field"><label>${meta.loggerLabel}</label>
           <input value="${String(repsVal).replace(/"/g, '&quot;')}" placeholder="${ph}" aria-label="Target reps or effort" onchange="LogColumns.onSimpleReps(this.value)" oninput="LogColumns.onSimpleReps(this.value)"></div>
       </div>`;
-    const overrideSection = sheet.autopilotVolume || compact
+    const overrideSection = sheet.openVolume || compact
       ? ''
       : `<details class="rx-overrides" ${sheet.showOverrides ? 'open' : ''} ontoggle="LogColumns.toggleOverrides(this.open)">
         <summary>Per-set rep overrides (optional)</summary>
@@ -732,9 +733,9 @@
     return `<div class="${cardClass}" id="builderPrescriptionCard" style="margin-top:10px">
       <div class="title">Prescription</div>
       <div class="meta">${cardMeta}</div>
-      <div class="autopilot-strip"><span class="autopilot-label">Volume</span><span class="autopilot-value">${volumeLabel}</span>${compact ? '' : '<span class="autopilot-note">History, calibration, recovery — you do not enter sets × reps here</span>'}</div>
+      <div class="open-strip"><span class="open-label">Volume</span><span class="open-value">${volumeLabel}</span>${compact ? '' : '<span class="open-note">Volume stays open — pin sets × reps when you want a fixed target</span>'}</div>
       ${effortFields}
-      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span>${compact ? '' : '<span class="autopilot-note">Working max + progression — you do not enter kg here</span>'}</div>
+      <div class="open-strip"><span class="open-label">Load</span><span class="open-value">${loadLabel}</span>${compact ? '' : '<span class="open-note">Load stays open — pin kg when you want a fixed target</span>'}</div>
       ${pinVolume}
       ${pinLoad}
       ${overrideSection}
@@ -1229,10 +1230,10 @@
     onPinLoadKind,
     onPinLoadValue,
     clearPinnedLoad,
-    setAutopilotVolume,
+    setOpenVolume,
     pinVolume,
     clearPinnedVolume,
-    isAutopilotVolume,
+    isOpenVolume,
     setChangeHandler,
     addColumn,
     removeColumn,

@@ -91,7 +91,7 @@
     return Number.isFinite(n) ? n : null;
   }
   // Ephemeral WHOOP UI state before index.html bridges window.S ↔ let S.
-  // Never invent a stub on global.S — that orphans StrengthSync from real app state.
+  // Never invent a stub on global.S — that orphans Whoop from real app state.
   var whoopFallback = { connected: false, lastSyncAt: null, sampleDate: null, email: null };
   function st() {
     const S = appState();
@@ -292,9 +292,9 @@
         bits.push('WHOOP: ' + ((err && err.message) || 'failed'));
       }
 
-      /* strength + nutrition engines deleted 2026-09-03 — Account sync is WHOOP + Concept2 only */
+      /* blank slate */
 
-      /* coach S&C parked 2026-09-03 — no CoachSync.schedulePull from syncAll */
+      /* blank slate */
 
       if (global.Concept2 && typeof global.Concept2.syncIfLinked === 'function') {
         try {

@@ -184,14 +184,9 @@
     if (typeof global.render === 'function') global.render();
   }
   function applyImport(normalized) {
-    if (!(global.EngineAdapter && typeof global.EngineAdapter.applyConcept2Results === 'function')) {
-      return { attached: 0, enriched: 0, standalone: 0, skipped: 0, summary: 'Engine adapter missing' };
-    }
-    const S = appState();
-    if (!S) return { attached: 0, enriched: 0, standalone: 0, skipped: 0, summary: 'App state missing' };
-    const counts = global.EngineAdapter.applyConcept2Results(S, normalized || []);
-    if (typeof global.save === 'function') global.save();
-    return counts;
+    /* engine removed — Concept2 sync stores status only; no session apply */
+    const n = Array.isArray(normalized) ? normalized.length : 0;
+    return { attached: 0, enriched: 0, standalone: n, skipped: 0, summary: n ? (n + ' results fetched') : 'nothing new' };
   }
   async function sync(opts) {
     opts = opts || {};
@@ -208,9 +203,6 @@
       c.lastSyncAt = (body && body.syncedAt) || new Date().toISOString();
       c.resultCount = list.length;
       c.lastSummary =
-        (global.HybridEngine &&
-          global.HybridEngine.Concept2 &&
-          global.HybridEngine.Concept2.concept2ImportSummary(counts)) ||
         counts.summary ||
         '';
       if (typeof global.save === 'function') global.save();
@@ -263,9 +255,6 @@
       c.lastSyncAt = (body && body.syncedAt) || new Date().toISOString();
       c.resultCount = list.length;
       c.lastSummary =
-        (global.HybridEngine &&
-          global.HybridEngine.Concept2 &&
-          global.HybridEngine.Concept2.concept2ImportSummary(counts)) ||
         counts.summary ||
         '';
       if (typeof global.save === 'function') global.save();
