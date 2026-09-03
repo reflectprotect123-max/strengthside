@@ -41,7 +41,7 @@
     "check:session-flow": "node apps/mobile/prototype/hybrid-app/session-flow.smoke.mjs",
     "check:rest-overlay": "node apps/mobile/prototype/hybrid-app/rest-overlay.smoke.mjs",
     "check:work-overlay": "node apps/mobile/prototype/hybrid-app/work-overlay.smoke.mjs",
-    "check:hybrid-html-sync": "node apps/mobile/checks/hybrid-html-sync.mjs",
+    "check:hybrid-html-sync": "pnpm run gen:exercise-history-seed && bash apps/mobile/sync-hybrid-html.sh && node apps/mobile/checks/hybrid-html-sync.mjs",
     "check:hybrid-handler-wiring": "node checks/hybrid-handler-wiring.mjs",
     "check:metric-logger-matrix": "node checks/metric-logger-matrix.mjs",
     "check:metric-logger-debt": "node checks/metric-logger-debt.mjs",
