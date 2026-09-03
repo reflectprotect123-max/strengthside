@@ -275,8 +275,17 @@
   }
 
   function repOnlyAthleteColumns(ex) {
-    var state = global.S;
     var exerciseId = ex && (ex.exerciseId || ex.id);
+    if (
+      exerciseId &&
+      global.ExerciseLoadProfiles &&
+      ExerciseLoadProfiles.loggerRepOnly
+    ) {
+      var profileRepOnly = ExerciseLoadProfiles.loggerRepOnly(exerciseId);
+      if (profileRepOnly === true) return true;
+      if (profileRepOnly === false) return false;
+    }
+    var state = global.S;
     return !!(
       global.StrengthAdapter &&
       StrengthAdapter.repProgressionLift &&
@@ -285,6 +294,24 @@
   }
 
   function defaultAthleteColumns(ex) {
+    var exerciseId = ex && (ex.exerciseId || ex.id);
+    if (
+      exerciseId &&
+      global.ExerciseLoadProfiles &&
+      ExerciseLoadProfiles.defaultLogColumns
+    ) {
+      var profileCols = ExerciseLoadProfiles.defaultLogColumns(exerciseId);
+      if (profileCols && profileCols.length) {
+        return profileCols.map(function (c) {
+          return {
+            id: c.id || newId(),
+            kind: c.kind,
+            value: '',
+            values: splitValues('', sheet.sets),
+          };
+        });
+      }
+    }
     if (repOnlyAthleteColumns(ex)) {
       return [
         { id: newId(), kind: 'reps', value: '', values: splitValues('', sheet.sets) },

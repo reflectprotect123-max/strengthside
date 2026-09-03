@@ -37,7 +37,7 @@
   }
 
   var REP_PROGRESSION_NAME =
-    /(jump|slam|throw|burpee|swing|lateral raise|pushdown|pull[- ]?up|chin[- ]?up|dip|push[- ]?up|nordic|handstand|plank|l[- ]?sit|ab wheel|raise|calf|abduction|carry|row|pulldown|leg press|dumbbell bench|db bench)/;
+    /(jump|slam|throw|burpee|swing|lateral raise|pushdown|pull[- ]?up|chin[- ]?up|dip|push[- ]?up|nordic|handstand|plank|l[- ]?sit|ab wheel|raise|calf|abduction|carry)/;
   var WM_LIFT_EXCLUSIONS =
     /(jump|slam|throw|burpee|swing|lateral raise|curl|pushdown|pull[- ]?up|chin[- ]?up|dip|row|pulldown|carry|plank|l[- ]?sit|calf|abduction|leg press|dumbbell bench|db bench)/;
   var WM_VERTICAL_PRESS =
@@ -95,6 +95,17 @@
   /** Bodyweight / rep-only lifts — no working max or kg progression unless added-load mode. */
   function repProgressionLift(name, cat, state, exerciseId, sessionRows, ex) {
     if (timedHoldLift(name, cat, ex)) return false;
+    if (exerciseId && global.ExerciseLoadProfiles && ExerciseLoadProfiles.defaultLogColumns) {
+      var kinds = ExerciseLoadProfiles.defaultLogColumns(exerciseId);
+      if (kinds && kinds.length) {
+        if (kinds.some(function (k) { return k === 'weight_kg' || k === 'weight_pct_wm'; })) return false;
+        if (kinds.length === 1 && kinds[0] === 'reps') {
+          if (exerciseUsesAddedLoadMode(state, exerciseId, name, sessionRows)) return false;
+          return true;
+        }
+        return false;
+      }
+    }
     var n = String(name || '').toLowerCase();
     if (!REP_PROGRESSION_NAME.test(n)) return false;
     if (exerciseUsesAddedLoadMode(state, exerciseId, name, sessionRows)) return false;

@@ -43,6 +43,15 @@ if (!StrengthAdapter.repProgressionLift('Pull Up')) {
 if (StrengthAdapter.repProgressionLift('Bench Press')) {
   throw new Error('bench should not be rep progression');
 }
+if (StrengthAdapter.repProgressionLift('Supinated Barbell Row', 'Strength — Horizontal Pull', {}, 'core-supinated-barbell-row')) {
+  throw new Error('Supinated Barbell Row should log weight + reps');
+}
+if (StrengthAdapter.repProgressionLift('Barbell Row', 'Strength — Pull', {}, 'core-barbell-row')) {
+  throw new Error('Barbell Row should log weight + reps');
+}
+if (StrengthAdapter.repProgressionLift('Leg Press', 'Strength — Squat', {}, 'core-leg-press')) {
+  throw new Error('Leg Press should log weight + reps');
+}
 
 if (!StrengthAdapter.percentLiftCandidate('Overhead Press', 'Strength — Push')) {
   throw new Error('Overhead Press should be a working-max lift');

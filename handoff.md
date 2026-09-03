@@ -16,7 +16,7 @@
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **`main` tip** | **`fe36dd2`** (#155 exercise suggest tap fix — cache v160) |
 | **Open PR** | — |
-| **Cache** | **`the-hybrid-athlete-engine-v160`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Cache** | **`the-hybrid-athlete-engine-v161`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` + `live` @ `1.0.48`** (exercise picker tap fix; cache v160) — **uploaded** |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |

@@ -1170,7 +1170,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-engine-v160';
+const LOCAL_BUILD='the-hybrid-athlete-engine-v161';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1312,7 +1312,7 @@ function applyBlankSlatePatch(state){
   return state;
 }
 const STARTER_STRENGTH_NAMES=['Full Body A'];
-const STARTER_FULLBODY_A_VERSION='fullbody-a-metric-v1';
+const STARTER_FULLBODY_A_VERSION='fullbody-a-metric-v2';
 const STARTER_CONDITIONING_NAMES=['Aerobic Conditioning'];
 const STARTER_RECOVERY_NAMES=['Recovery'];
 const STARTER_AEROBIC_ID='45941abb-5878-4ea8-9023-a21f4ba3d58b';
@@ -2379,7 +2379,7 @@ function athExerciseSuggestBtn(bi,ei,hit){return `<button type=button class="sea
 function exerciseSheetSuggestBtn(hit){return `<button type=button class="searchpick ex-sheet-pick" role=option data-eid="${esc(hit.exerciseId||'')}" data-name="${esc(hit.name||'')}" data-cat="${esc(hit.category||'Custom')}"><b>${esc(hit.name)}</b><span>${esc(hit.category||'Custom')}</span></button>`}
 function athleteLiftSuggestHtml(query,bi,ei){let q=String(query||'').trim();if(!q)return '';let hits=exerciseSuggestHits(q);if(!hits.length)return `<div class=ex-suggest-empty>No library match — pick a variant or save a custom name.</div>`;return `<div class=ex-suggest role=listbox aria-label="Exercise variants">${hits.map(x=>athExerciseSuggestBtn(bi,ei,x)).join('')}</div>`}
 function refreshAthleteLiftSuggest(bi,ei,query){let box=$('athSuggest_'+bi+'_'+ei);if(box)box.innerHTML=athleteLiftSuggestHtml(query,bi,ei)}
-function athleteLiftRepOnly(ex){return !!(window.StrengthAdapter&&StrengthAdapter.repProgressionLift&&StrengthAdapter.repProgressionLift(ex&&ex.name,ex&&ex.category,S,ex&&ex.exerciseId,ex&&ex.rows,ex))}
+function athleteLiftRepOnly(ex){let eid=ex&&ex.exerciseId;if(eid&&window.ExerciseLoadProfiles&&ExerciseLoadProfiles.loggerRepOnly){let v=ExerciseLoadProfiles.loggerRepOnly(eid);if(v===true)return true;if(v===false)return false}return !!(window.StrengthAdapter&&StrengthAdapter.repProgressionLift&&StrengthAdapter.repProgressionLift(ex&&ex.name,ex&&ex.category,S,ex&&ex.exerciseId,ex&&ex.rows,ex))}
 function mountAthLiftCardHtml(html){let wrap=document.createElement('div');wrap.innerHTML=html;return wrap.firstElementChild}
 function restoreAthLiftNameFocus(bi,ei,start,end){let el=$('athLiftName_'+bi+'_'+ei);if(!el)return;el.focus();try{let len=String(el.value||'').length;el.setSelectionRange(start==null?len:start,end==null?len:end)}catch(e){}}
 function refreshAthleteLiftMetricsOnly(bi,ei){let ex=draft?.blocks?.[bi]?.exercises?.[ei];if(!ex||!window.LogColumns||!LogColumns.builderLiftMetricsHtml)return;let nameEl=$('athLiftName_'+bi+'_'+ei);let scope=nameEl&&nameEl.closest?nameEl.closest('.ath-ss-lift')||nameEl.closest('.ath-lift-card'):null;if(!scope)scope=document.querySelector(`[data-lift="${bi}_${ei}"]`)||document.querySelector(`[data-lift="${bi}_${ei}_${ei+1}"]`)||document.querySelector(`[data-lift="${bi}_${ei-1}_${ei}"]`);if(!scope)return;let hero=scope.querySelector('.hero-metrics');if(!hero)return;let wrap=document.createElement('div');wrap.innerHTML=LogColumns.builderLiftMetricsHtml(ex,bi,ei);let next=wrap.querySelector('.hero-metrics');if(next)hero.replaceWith(next)}

@@ -96,8 +96,11 @@ for (let j = i; j < html.length; j++) {
 }
 must(sandbox.seed, 'seed parse failed');
 
-vm.runInNewContext(logColumnsSrc, sandbox);
-vm.runInNewContext(chunk, sandbox);
+vm.createContext(sandbox);
+vm.runInContext(logColumnsSrc, sandbox);
+vm.runInContext(readFileSync(join(dir, 'exercise-load-profiles.js'), 'utf8'), sandbox);
+vm.runInContext(readFileSync(join(dir, 'strength-adapter.js'), 'utf8'), sandbox);
+vm.runInContext(chunk, sandbox);
 
 const legacy = {
   meta: {},
@@ -152,6 +155,12 @@ must(
   exs.every((ex) => Array.isArray(ex.logColumns) && ex.logColumns.length > 0),
   'metric logColumns on every lift',
 );
+const curl = exs.find((e) => e.exerciseId === 'program-barbell-curl');
+const push = exs.find((e) => e.exerciseId === 'program-cable-tricep-pushdown');
+must(curl && curl.logColumns.length === 2, 'curl has load + reps');
+must(push && push.logColumns.length === 2, 'pushdown has load + reps');
+must(curl.logColumns.some((c) => c.kind === 'weight_kg'), 'curl load column');
+must(push.logColumns.some((c) => c.kind === 'weight_kg'), 'pushdown load column');
 must(exs[2].supersetWithNext === true && exs[3].supersetWithNext === false, 'dip/nordic link');
 must(exs[4].supersetWithNext === true && exs[5].supersetWithNext === false, 'curl/pushdown link');
 must(sandbox.starterStrengthNeedsRefresh(fba) === false, 'refreshed starter stable');
@@ -171,7 +180,7 @@ const versionStale = sandbox.ensureStarterTemplates({
   hiddenTemplateIds: [],
 });
 const bumped = versionStale.templates.find((t) => t.name === 'Full Body A');
-must(bumped.starterVersion === 'fullbody-a-metric-v1', 'version bump rebuilds canonical Full Body A');
-must(versionStale.meta.starterFullBodyAVersion === 'fullbody-a-metric-v1', 'meta records starter version');
+must(bumped.starterVersion === 'fullbody-a-metric-v2', 'version bump rebuilds canonical Full Body A');
+must(versionStale.meta.starterFullBodyAVersion === 'fullbody-a-metric-v2', 'meta records starter version');
 
 console.log('fullbody-a-starter.smoke: ok');
