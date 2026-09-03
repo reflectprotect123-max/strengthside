@@ -12,7 +12,7 @@ mkdir -p "$ROOT/preview-site"
 cp "$SRC" "$ROOT/preview-site/index.html"
 cp "$SW" "$ROOT/preview-site/service-worker.js"
 # Nutrition (local-first MacroTrack core + engine bundle + UI + cloud sync)
-for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js strength-bundle.js recovery-engine.js recovery-signals.js recovery-prescription.js strength-adapter.js strength-one-set-logger.js session-chrome.js session-flow.js rest-overlay.js work-overlay.js cond-session-logger.js cond-interval-autoreg.js coach-ai.js strength-ai.js big-mac-contract.js big-mac-product-engines.js big-mac-decide-shim.js big-mac-bridge.js log-columns.js exercise-load-profiles.js exercise-search-index.js exercise-search.js exercise-history-seed.js exercise-history-seed-apply.js load-headline.js coordinator-adapter.js strength-sync.js coach-sync.js coach-cloud.js; do
+for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js session-chrome.js session-flow.js rest-overlay.js work-overlay.js log-columns.js exercise-load-profiles.js exercise-search-index.js exercise-search.js exercise-history-seed.js exercise-history-seed-apply.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/$f"
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
@@ -20,7 +20,7 @@ for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js strength-bundle.j
 done
 # Coach workspace (same Netlify origin as athlete — shared Supabase auth storage)
 # Parked 2026-09-03: coach.html is a static park page; remaining coach JS stays on disk but is unreachable.
-for f in coach.html coach-loop.js coach-exercise-catalog.js coach-nutrition.js coach-bridge.js coach-views.js; do
+for f in coach.html; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
@@ -32,15 +32,7 @@ fi
 if [[ -f "$SRC_DIR/coach-bridge.js" ]]; then
   cp "$SRC_DIR/coach-bridge.js" "$ROOT/coach-bridge.js"
 fi
-# Conditioning engine bundle (window.HybridEngine) + adapter
-if [[ -f "$SRC_DIR/engine-bundle.js" ]]; then
-  cp "$SRC_DIR/engine-bundle.js" "$ROOT/engine-bundle.js"
-  cp "$SRC_DIR/engine-bundle.js" "$ROOT/preview-site/engine-bundle.js"
-fi
-if [[ -f "$SRC_DIR/engine-adapter.js" ]]; then
-  cp "$SRC_DIR/engine-adapter.js" "$ROOT/engine-adapter.js"
-  cp "$SRC_DIR/engine-adapter.js" "$ROOT/preview-site/engine-adapter.js"
-fi
+
 # Concept2 + Echo FTMS
 for f in concept2.js echo-ftms.js native-bridge.js native-ble.js label-scan.js label-scan-live.js food-catalog.js food-catalog-au.json; do
   if [[ -f "$SRC_DIR/$f" ]]; then

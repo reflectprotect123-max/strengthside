@@ -245,7 +245,7 @@
   }
 
   /** Sheet draft while Edit lift is open */
-  let sheet = { sets: 3, restSec: 120, targetRir: null, autopilotVolume: true, athleteMode: false, showOverrides: false, columns: [] };
+  let sheet = { sets: 3, restSec: 120, targetRir: null, autopilotVolume: false, athleteMode: false, showOverrides: false, columns: [] };
   let changeHandler = null;
 
   function setChangeHandler(fn) {
@@ -386,7 +386,7 @@
   }
 
   function beginAthleteSheet(ex) {
-    beginSheet({ ...(ex || {}), autopilotVolume: true, sets: null, reps: null });
+    beginSheet({ ...(ex || {}), autopilotVolume: false, sets: null, reps: null });
     sheet.athleteMode = true;
     sheet.autopilotVolume = true;
     sheet._exercise = ex || {};
@@ -656,7 +656,7 @@
     const loadVal = load ? (load.values || [])[0] == null ? '' : load.values[0] : '';
     if (!pinned) {
       return `<details class="rx-overrides rx-advanced"><summary>Pin opening load (optional)</summary>
-        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave blank — the engine sets load from working max, progression, and in-session autoreg. Only pin if you need a fixed kg, % WM, or LWP delta on set 1.</p>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave blank — the you set load from working max, progression, and in-session autoreg. Only pin if you need a fixed kg, % WM, or LWP delta on set 1.</p>
         <div class="rx-grid cols-2" style="margin-top:8px">
           <div class="field"><label>Load type</label>
             <select class="logcol-kind" onchange="LogColumns.onPinLoadKind(this.value)">${loadKindsOptionsHtml(loadKind)}</select></div>

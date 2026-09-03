@@ -18,10 +18,13 @@ const requiredFns = [
   'concept2-connect.mjs',
   'concept2-sync.mjs',
   'off-proxy.mjs',
-  'big-mac-decide.mjs',
-  'ai-strength-progression.mjs',
   '_hybrid-proxy.mjs',
   '_lib/http.mjs',
+];
+const deletedCoreModelFns = [
+  'big-mac-decide.mjs',
+  'ai-strength-progression.mjs',
+  'ai-coach-intent.mjs',
 ];
 
 if (!existsSync(join(preview, 'netlify.toml'))) {
@@ -37,6 +40,11 @@ if (/external_node_modules/.test(toml)) {
 
 for (const name of requiredFns) {
   if (!existsSync(join(fnDir, name))) throw new Error('missing function: ' + name);
+}
+for (const name of deletedCoreModelFns) {
+  if (existsSync(join(fnDir, name))) {
+    throw new Error('core-model function must stay deleted: ' + name);
+  }
 }
 if (existsSync(join(fnDir, 'whoop-callback.mjs'))) {
   throw new Error('whoop-callback must not ship on athlete site — OAuth callback lives on hybrid1');

@@ -1,8 +1,9 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 3 September 2026.**
-> **Chat may be cleared after this write — treat §0–§4 as the full memory.**
-> **Product:** Hybrid HTML athlete app + Capgo/dogfood + Netlify. Coach = same URL; **real path** = Supabase sign-in + cloud publish → athlete pull.
+> **AUTHORITATIVE CHECKPOINT — 3 September 2026 (blank slate).**
+> **Core S&C engines deleted** — packages + all wiring. Manual log only.
+> Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
+> **Product:** Hybrid HTML athlete app + Capgo/dogfood + Netlify. Coach = parked.
 > **Companion `THE-HYBRID-ENGINE1`:** shared-Supabase schema stub only — no apps.
 > Charter: `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
 > **`CLAUDE.md`** owns engineering rules and the twelve-table Supabase contract.
@@ -14,29 +15,17 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`fe36dd2`** (#155 exercise suggest tap fix — cache v160) |
-| **Open PR** | — |
-| **Cache** | **`the-hybrid-athlete-engine-v161`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.48`** (exercise picker tap fix; cache v160) — **uploaded** |
+| **Branch** | `cursor/autopilot-rebuild-84a0` |
+| **Cache** | **`the-hybrid-athlete-blank-v164`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **S&C engines** | **DELETED** — no strength-engine / engine / Big Mac / cond-adapt / WM gate |
+| **Coach** | Parked page only — no S&C publish/pull |
 | **Web** | https://thehybridsystem.netlify.app/ |
-| **Coach** | https://thehybridsystem.netlify.app/coach.html |
-| **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
-| **Athlete APK (dogfood)** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
-| **Capgo console (dogfood)** | https://console.capgo.app/app/com.hybrid.athlete |
-| **OpenRouter** | Live on **thehybridsystem** Netlify (`ai-strength-progression`, `big-mac-decide` JS shim) |
-| **Decision Hub** | Parked — `docs/decision-hub-chatgpt-briefing/START-HERE.md` |
 
 **Ship ritual:** `pnpm run verify` → sync HTML → Capgo upload if bundle moves → refresh this handoff.
 
-**Do not revisit (owner lock — Sep 2026):** ARC / multi-coach · Expo / second athlete shell · **pain / illness** (classification may remain in code; **no agent work** — consumption, stops, gates, or new UI). Pain/illness product work is **grokbot**'s lane; treat as **out of scope** here.
+**Do not revisit (owner lock — Sep 2026):** ARC / multi-coach · Expo / second athlete shell · **pain / illness** product work · restoring deleted engine packages from git history.
 
-**Owner lock — Sep 2026 (ops):** **Coach parked** — no coach portal / desktop / publish-loop work unless owner asks.
-
-**Recent merges (#157):** Library-wide builder columns — load profiles drive kg×reps (not name-regex reps-only); migration v9 repairs stale templates (cache v162).
-
-**Recent merges (#155):** Exercise suggest tap fix — hero panel no longer blocks dropdown picks (cache v160).
-
-**Metric logger (shipped `dogfood` + `live` @ `1.0.47`, cache v159):** Full Body A always-sync + metric-aware builder/logger (M1–M9).
+**Owner lock — Sep 2026:** Coach parked. Core model = blank slate — design anew, do not revive old APIs.
 
 ---
 

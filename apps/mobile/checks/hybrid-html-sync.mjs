@@ -47,20 +47,8 @@ mustMatch('package.json → preview-site',
   join(root, 'preview-site/package.json'));
 
 const bundles = [
-  'strength-bundle.js',
-  'engine-bundle.js',
   'nutrition-bundle.js',
-  'coordinator-adapter.js',
-  'recovery-engine.js',
-  'strength-adapter.js',
-  'engine-adapter.js',
-  'coach-sync.js',
-  'coach-cloud.js',
-  'coach.html',
-  'coach-loop.js',
-  'coach-nutrition.js',
-  'coach-bridge.js',
-  'coach-views.js',
+  'coach.html', // parked page — must stay in sync
 ];
 for (const f of bundles) {
   mustMatch(f, join(proto, f), join(root, 'preview-site', f));

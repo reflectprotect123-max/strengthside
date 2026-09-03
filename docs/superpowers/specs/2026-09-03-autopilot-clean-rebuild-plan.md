@@ -1,3 +1,5 @@
+> **SUPERSEDED 2026-09-03.** Core engines were fully deleted, not rewritten in place. See `2026-09-03-blank-slate-zero-engines.md`.
+
 # Autopilot clean rebuild plan
 
 **Date:** 2026-09-03  
