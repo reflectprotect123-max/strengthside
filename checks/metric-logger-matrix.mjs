@@ -149,6 +149,33 @@ scenario('Farmer Walk', 'core-farmer-walk', (twin) => {
   must(html.includes('seconds') || html.includes('Seconds'), 'superset plank shows time column');
 })();
 
+(function supersetEditSheetScenario() {
+  const sb = loadSandbox();
+  const plankCols = sb.ExerciseLoadProfiles.defaultLogColumns('core-plank');
+  const squatCols = sb.ExerciseLoadProfiles.defaultLogColumns('core-back-squat');
+  const task = {
+    kind: 'superset',
+    exercises: [
+      {
+        name: 'Back Squat',
+        exerciseId: 'core-back-squat',
+        logColumns: sb.LogColumns.ensureAthleteLogColumns({ logColumns: squatCols }),
+        rows: [{ n: 1, target: '5', targetKind: 'reps', weight: 100, reps: 5, rir: 2, done: true, extra: false }],
+      },
+      {
+        name: 'Plank',
+        exerciseId: 'core-plank',
+        logColumns: sb.LogColumns.ensureAthleteLogColumns({ logColumns: plankCols }),
+        rows: [{ n: 1, target: '30', targetKind: 'seconds', weight: '', reps: 30, rir: '', done: false, extra: false }],
+      },
+    ],
+  };
+  const html = sb.LogColumns.supersetEditSheetHtml(task);
+  must(html.includes('Time (seconds)') || html.includes('Seconds'), 'superset edit sheet shows plank time column');
+  must(!html.includes('<span class=mini>Weight</span>'), 'superset edit sheet must not hard-code Weight label for plank');
+  must(html.includes('editSupersetValue(1,0'), 'superset edit sheet wires editSupersetValue for plank row');
+})();
+
 if (failures.length) {
   console.error('metric-logger-matrix FAIL');
   failures.forEach((f) => console.error(' -', f));

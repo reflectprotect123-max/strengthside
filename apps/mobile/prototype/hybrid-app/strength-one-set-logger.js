@@ -1067,7 +1067,8 @@
       if (slider) onDifficultySlide(slider.value);
     }
     if (typeof global.validateStrengthRow === 'function') {
-      var err = global.validateStrengthRow(item.row);
+      syncActiveRowFromDom(item.row, ex);
+      var err = global.validateStrengthRow(item.row, ex);
       if (err) return global.alert(err);
     }
     var exercises = t.exercises || [];
