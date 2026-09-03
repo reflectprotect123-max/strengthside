@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 2 September 2026.**
+> **AUTHORITATIVE CHECKPOINT — 3 September 2026.**
 > **Chat may be cleared after this write — treat §0–§4 as the full memory.**
 > **Product:** Hybrid HTML athlete app + Capgo/dogfood + Netlify. Coach = same URL; **real path** = Supabase sign-in + cloud publish → athlete pull.
 > **Companion `THE-HYBRID-ENGINE1`:** shared-Supabase schema stub only — no apps.
@@ -14,10 +14,10 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`9e93e65`** (#139 builder rest/recap previews + merged superset cards — cache v147) |
+| **`main` tip** | **`2bafdc0`** (#149–#151 metric-aware logger + superset/completed-row surfaces — cache v157) |
 | **Open PR** | — |
-| **Cache** | **`the-hybrid-athlete-engine-v147`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`dogfood` @ `1.0.44`** (builder rest/recap previews + merged superset cards; cache v147) — **uploaded** |
+| **Cache** | **`the-hybrid-athlete-engine-v157`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`live` @ `1.0.46`** (metric-aware logger M1–M9, superset + completed-row metrics; cache v157) — **uploaded** |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
@@ -29,11 +29,11 @@
 
 **Do not revisit (owner lock — Sep 2026):** ARC / multi-coach · Expo / second athlete shell · **pain / illness** (classification may remain in code; **no agent work** — consumption, stops, gates, or new UI). Pain/illness product work is **grokbot**'s lane; treat as **out of scope** here.
 
-**Owner lock — Sep 2026 (ops):** **Coach parked** — no coach portal / desktop / publish-loop work unless owner asks. **No deploys** (Capgo, Netlify, coach `.exe`, migrations) until owner explicitly says ship.
+**Owner lock — Sep 2026 (ops):** **Coach parked** — no coach portal / desktop / publish-loop work unless owner asks.
 
-**Recent merges (#147–#149):** builder rest preview hidden · builder name edit + calibration slider · **metric-aware logger program (M1–M8, cache v157)** — 1–3 builder metric columns, library defaults on pick, dynamic logger hero, work timer for holds, load+time/carry flows, timed-hold progression fix, L/R sideMode.
+**Recent merges (#149–#151):** **metric-aware logger program (M1–M9, cache v157)** — 1–3 builder metric columns, library defaults on pick, dynamic logger hero, work timer for holds, load+time/carry flows, timed-hold progression fix, L/R sideMode · superset hero/edit/legacy card metric surfaces · completed workout row editor metrics.
 
-**Metric logger (branch `cursor/metric-logger-slice-plan-84a0`, build `the-hybrid-athlete-engine-v157`):** Builder chrome frozen at v153 layout; athletes prescribe load/reps/time/distance via dropdowns; logger mirrors columns; plank gets work timer → slider → rest; farmer walk 3-col; Capgo OTA pending owner ship.
+**Metric logger (shipped `live` @ `1.0.46`):** Builder chrome frozen at v153 layout; athletes prescribe load/reps/time/distance via dropdowns; logger mirrors columns; plank gets work timer → slider → rest; farmer walk 3-col; superset + completed rows use `LogColumns`.
 
 ---
 
@@ -47,8 +47,8 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | `dogfood` / **`1.0.44`** |
-| Upload | `CAPGO_BUNDLE_VERSION=1.0.30 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Channel / bundle | **`live`** / **`1.0.46`** (dogfood last: `1.0.44` @ v147) |
+| Upload | `CAPGO_CHANNEL=live CAPGO_BUNDLE_VERSION=1.0.46 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 
@@ -81,7 +81,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 
 | # | Item | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Upload Capgo bundle (v99 cache) | **done** | **1.0.31** on dogfood (31 Aug, cache v125 — dead-code purge + coach file import removed). Phone: Settings → Check for updates. |
+| 1 | Upload Capgo bundle | **done** | **`live` @ `1.0.46`** (3 Sep, cache v157 — metric-aware logger + superset/completed surfaces). Phone: Settings → Check for updates. |
 | 2 | Phone: coach Publish → athlete pull | **owner proof** | Sign in both apps (same Supabase). Coach roster → link athlete UUID → Publish chip. Athlete foreground or Check for updates. |
 | 3 | Phone: complete → coach **Completed** chip | **owner proof** | After #2: log session on phone → coach calendar chip shows Completed. |
 | 4 | Phone: strapless cond → recovery → debt row | **owner proof** | `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs` passes in CI; real phone still needed. |
@@ -143,7 +143,7 @@ node apps/mobile/prototype/hybrid-app/coach-v1-e2e.smoke.mjs
 
 | Branch | Tip | Purpose |
 | --- | --- | --- |
-| `main` | `41153b9` | Athlete + coach + evidence-platform |
+| `main` | `2bafdc0` | Athlete + coach + metric logger (v157) |
 
 **Next agent on product:** §2 table — prioritize **owner proof** rows 2–7 on a real phone.
 
