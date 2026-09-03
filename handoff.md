@@ -14,14 +14,15 @@
 | | |
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **`main` tip** | **`2bafdc0`** (#149–#151 metric-aware logger + superset/completed-row surfaces — cache v157) |
+| **`main` tip** | **`f2df0c3`** (#153 Full Body A foundational starter sync — cache v159) |
 | **Open PR** | — |
-| **Cache** | **`the-hybrid-athlete-engine-v157`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **Capgo** | **`live` @ `1.0.46`** (metric-aware logger M1–M9, superset + completed-row metrics; cache v157) — **uploaded** |
+| **Cache** | **`the-hybrid-athlete-engine-v159`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.47`** (Full Body A always-sync starter + metric logger; cache v159) — **uploaded** |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |
 | **Coach Windows** | https://github.com/reflectprotect123-max/strengthside/releases/tag/coach-desktop-latest |
-| **Athlete APK** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
+| **Athlete APK (dogfood)** | https://github.com/reflectprotect123-max/strengthside/releases/tag/dogfood-latest |
+| **Capgo console (dogfood)** | https://console.capgo.app/app/com.hybrid.athlete |
 | **OpenRouter** | Live on **thehybridsystem** Netlify (`ai-strength-progression`, `big-mac-decide` JS shim) |
 | **Decision Hub** | Parked — `docs/decision-hub-chatgpt-briefing/START-HERE.md` |
 
@@ -31,9 +32,9 @@
 
 **Owner lock — Sep 2026 (ops):** **Coach parked** — no coach portal / desktop / publish-loop work unless owner asks.
 
-**Recent merges (#149–#151):** **metric-aware logger program (M1–M9, cache v157)** — 1–3 builder metric columns, library defaults on pick, dynamic logger hero, work timer for holds, load+time/carry flows, timed-hold progression fix, L/R sideMode · superset hero/edit/legacy card metric surfaces · completed workout row editor metrics.
+**Recent merges (#153):** Full Body A foundational starter — `ensureFullBodyAStarter()` syncs canonical template every boot (`STARTER_FULLBODY_A_VERSION`).
 
-**Metric logger (shipped `live` @ `1.0.46`):** Builder chrome frozen at v153 layout; athletes prescribe load/reps/time/distance via dropdowns; logger mirrors columns; plank gets work timer → slider → rest; farmer walk 3-col; superset + completed rows use `LogColumns`.
+**Metric logger (shipped `dogfood` + `live` @ `1.0.47`, cache v159):** Full Body A always-sync + metric-aware builder/logger (M1–M9).
 
 ---
 
@@ -47,8 +48,8 @@
 | --- | --- |
 | `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | **`live`** / **`1.0.46`** (dogfood last: `1.0.44` @ v147) |
-| Upload | `CAPGO_CHANNEL=live CAPGO_BUNDLE_VERSION=1.0.46 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Channel / bundle | **`dogfood` + `live`** / **`1.0.47`** (cache v159) |
+| Upload | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.47 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 
@@ -81,7 +82,7 @@ Status: **done** · **code done / owner proof** · **open** · **parked**
 
 | # | Item | Status | Notes |
 | --- | --- | --- | --- |
-| 1 | Upload Capgo bundle | **done** | **`live` @ `1.0.46`** (3 Sep, cache v157 — metric-aware logger + superset/completed surfaces). Phone: Settings → Check for updates. |
+| 1 | Upload Capgo bundle | **done** | **`dogfood` + `live` @ `1.0.47`** (3 Sep, cache v159 — Full Body A starter sync). Phone: Settings → Check for updates. |
 | 2 | Phone: coach Publish → athlete pull | **owner proof** | Sign in both apps (same Supabase). Coach roster → link athlete UUID → Publish chip. Athlete foreground or Check for updates. |
 | 3 | Phone: complete → coach **Completed** chip | **owner proof** | After #2: log session on phone → coach calendar chip shows Completed. |
 | 4 | Phone: strapless cond → recovery → debt row | **owner proof** | `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs` passes in CI; real phone still needed. |
