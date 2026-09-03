@@ -38,8 +38,10 @@ After V2, an athlete can:
 | Visible “why load changed” copy | Silent hero updates (numbers only) |
 | End-of-session progression banners | Silent |
 | Pain/illness stops | Repo lock — classification may remain; no new consumption work |
-| Testing weeks / explicit 1RM screens | V2.2+ (Peak-style optional later) |
+| Testing weeks / explicit 1RM screens | Later than V2.2 |
 | Postgres schema changes | Local-first; adapter owns state |
+| Supersets / rep-only / timed holds | **V2.2** — `docs/superpowers/specs/2026-09-03-strength-engine-v2-2-design.md` |
+| Conditioning | **V3** |
 
 ## Locked product decisions
 
