@@ -1,5 +1,5 @@
 /**
- * Smoke: %WM is opt-in from builder columns; logger defaults to autopilot after 2 sessions.
+ * Smoke: V3 autopilot — anchors apply immediately; %WM opt-in from builder columns.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -10,7 +10,7 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 
 if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v163'")) {
-  throw new Error('expected cache v100');
+  throw new Error('expected cache v163');
 }
 if (html.includes('repairFullBodyADefaultPctWm')) {
   throw new Error('legacy Full Body A %WM repair should be removed');
@@ -54,11 +54,11 @@ if (!dip || !dip.supersetWithNext) throw new Error('Full Body A dip should link 
 if (!curl || !curl.supersetWithNext) throw new Error('Full Body A curl should link to pushdown');
 if ((fullBodyA.blocks || []).length !== 1) throw new Error('Full Body A should be one strength block');
 
-if (!adapter.includes('autopilotReadyForExercise')) throw new Error('autopilot helper missing');
-if (!adapter.includes('usable.length >= 2')) throw new Error('calibration threshold should be 2 sessions');
-if (!adapter.includes("'/2 sessions'")) throw new Error('calibration label should reference 2 sessions');
-if (!adapter.includes('hint && hint.loadKg && autopilotReadyForExercise(state, exerciseId, 2)')) {
-  throw new Error('hint gating for 2-session autopilot missing');
+if (!adapter.includes('saveSessionAnchors')) throw new Error('V3 saveSessionAnchors missing');
+if (!adapter.includes("source: 'session_anchor'")) throw new Error('session_anchor source missing');
+if (adapter.includes('hint && hint.loadKg && autopilotReadyForExercise(state, exerciseId, 2)')) {
+  throw new Error('2-session hint gate should be removed in V3');
 }
+if (!html.includes('saveSessionAnchors')) throw new Error('index should call saveSessionAnchors on finish');
 
 console.log('autopilot-policy.smoke: ok');

@@ -74,6 +74,21 @@ describe('decideNextPhase', () => {
     expect(miss.nextTargetWatts).toBeLessThan(met.nextTargetWatts!);
   });
 
+  it('holds when +3% push cap reached', () => {
+    const r = decideNextPhase({
+      formatKey: 'intervals',
+      effort: mediumEffort,
+      felt: 5,
+      zoneCompliance: 'met',
+      targetWatts: 200,
+      wattsPushCount: 2,
+      maxWattsPushes: 2,
+    });
+    expect(r.action).toBe('hold');
+    expect(r.reasonCodes).toContain('watts_push_cap');
+    expect(r.nextTargetWatts).toBe(200);
+  });
+
   it('exports provisional conditioning constants', () => {
     expect(IN_SESSION_CONDITIONING.wattsPushPct).toBe(0.03);
     expect(IN_SESSION_CONDITIONING.wattsEaseMetPct).toBe(0.05);

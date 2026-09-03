@@ -1,5 +1,5 @@
 /**
- * Smoke: EngineAdapter.applyConAdapt + prescription reads conProgLevel.
+ * Smoke: EngineAdapter V3 cond anchors + legacy adapter helpers.
  * Run: node apps/mobile/prototype/hybrid-app/engine-adapt.smoke.mjs
  */
 import fs from 'node:fs';
@@ -39,29 +39,37 @@ vm.runInContext(fs.readFileSync(path.join(__dirname, 'engine-adapter.js'), 'utf8
 const Adapter = app.EngineAdapter;
 const Cond = app.HybridEngine.Conditioning;
 
-if (!Adapter.applyConAdapt) throw new Error('applyConAdapt missing');
+if (!Adapter.saveCondAnchors) throw new Error('saveCondAnchors missing');
+if (!Adapter.applyConAdapt) throw new Error('applyConAdapt missing (legacy no-op)');
 if (!Adapter.condResultFromTask) throw new Error('condResultFromTask missing');
 if (!Adapter.zoneKeyForBpm) throw new Error('zoneKeyForBpm missing');
 if (!Cond.conAdapt || !Cond.conProgLevel) throw new Error('engine Conditioning exports missing');
 
-const state = { settings: {}, meta: {} };
-const rec = {
-  fmt: 'steady',
-  modality: undefined,
-  zsec: { low: 600, mod: 400, high: 0 },
-  dur: 1000,
-  rec: 70,
-  sim: false,
+// V3: athlete path saves watts anchors — not conAdapt level progression.
+const state = { settings: { condBenchmarkMaxW: 250 }, meta: {} };
+const task = {
+  kind: 'conditioning',
+  condFmt: 'intervals',
+  effort: 'medium',
+  modality: 'Bike',
+  targetWatts: 200,
+  result: { avgWatts: 195 },
 };
-Adapter.applyConAdapt(state, rec);
-if (!state.settings.conProgress) throw new Error('conProgress not persisted');
-const levelAfter = Cond.conProgLevel('steady', state.settings);
-if (levelAfter < 1) throw new Error(`expected level bump, got ${levelAfter}`);
-if (!state.meta.lastConAdapt || state.meta.lastConAdapt.delta !== 1) {
-  throw new Error('lastConAdapt delta missing');
+Adapter.saveCondAnchors(state, task);
+const key = Adapter.condAnchorKey(task);
+if (!state.settings.condAnchors || !state.settings.condAnchors[key]) {
+  throw new Error('condAnchors not persisted');
+}
+if (state.settings.condAnchors[key].lastTargetWatts !== 200) {
+  throw new Error('lastTargetWatts missing');
 }
 
-// E3: prescription without builder minutes uses level-adjusted duration.
+// applyConAdapt is intentionally a no-op on the athlete path now.
+const before = JSON.stringify(state.settings);
+Adapter.applyConAdapt(state, { fmt: 'steady', zsec: { low: 1, mod: 0, high: 0 }, dur: 60 });
+if (JSON.stringify(state.settings) !== before) throw new Error('applyConAdapt should not mutate settings');
+
+// Prescription builder still reads conProgress when explicitly passed (coach/legacy).
 const p0 = Adapter.sessionPatchFromBuilder({
   fmt: 'steady',
   effort: 'easy',
@@ -80,16 +88,13 @@ if (!(p2.targetDurationMin > p0.targetDurationMin)) {
   throw new Error(`level2 minutes ${p2.targetDurationMin} should exceed level0 ${p0.targetDurationMin}`);
 }
 
-// HTML zone seconds → engine zsec
 const zsec = Adapter.htmlZonesToEngineZsec({ recovery: 10, aerobic: 20, anaerobic: 5, peak: 2 });
 if (zsec.low !== 10 || zsec.mod !== 20 || zsec.high !== 7) throw new Error('htmlZonesToEngineZsec');
 
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-if (!html.includes('applyConAdapt')) throw new Error('index.html missing applyConAdapt wiring');
-if (!html.includes('function completeConditioning') || html.indexOf('applyConAdapt') < 0) throw new Error('applyConAdapt wiring check');
-// Hybrid train path must also adapt (not only simpleCondLog finishers).
+if (!html.includes('saveCondAnchors')) throw new Error('index.html missing saveCondAnchors wiring');
 const cc = html.slice(html.indexOf('function completeConditioning'), html.indexOf('function completeConditioning') + 500);
-if (!cc.includes('applyConAdapt')) throw new Error('completeConditioning missing applyConAdapt');
+if (!cc.includes('saveCondAnchors')) throw new Error('completeConditioning missing saveCondAnchors');
 
 if (!html.includes('settings:S.settings')) throw new Error('index.html missing settings pass-through');
 if (!html.includes('zoneKeyForBpm')) throw new Error('index.html missing zoneKeyForBpm');
@@ -103,7 +108,7 @@ const zoneLoad = Adapter.condLoad({
 if (!zoneLoad.scored || zoneLoad.load <= 0) throw new Error(`condLoad zone fallback expected load, got ${JSON.stringify(zoneLoad)}`);
 
 console.log('engine-adapt.smoke: ok', {
-  levelAfter,
+  anchorKey: key,
   mins0: p0.targetDurationMin,
   mins2: p2.targetDurationMin,
 });

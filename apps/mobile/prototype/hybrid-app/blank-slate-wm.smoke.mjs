@@ -24,8 +24,8 @@ must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise
 must(!html.includes('function libraryExercisesTab'), 'no Library Exercises tab');
 must(!html.includes('function exerciseLibrary('), 'no exercise library sheet');
 must(html.includes('function saveExerciseWorkingMax'), 'Progress WM save handler');
-must(html.includes('function openWorkingMaxGate'), 'pre-session WM gate');
-must(html.includes('function saveWorkingMaxGate'), 'pre-session WM save');
+must(!html.includes('openWorkingMaxGate(i,missing)'), 'pre-session WM gate removed (V3 anchors)');
+must(html.includes('saveSessionAnchors'), 'V3 session-end anchor save');
 must(html.includes('Start blank'), 'library progress blank-slate copy');
 must(!html.includes("const want=new Set(['Full Body A','Aerobic Conditioning'])"), 'no auto starter templates');
 must(html.includes('function defaultState(){let x=clone(seed);x.tab='), 'defaultState present');
@@ -53,11 +53,9 @@ const state = {
   sessions: [],
 };
 
-must(StrengthAdapter.missingWorkingMaxExerciseIds(state, ['squat'], today).length === 1, 'missing WM before set');
 const setResult = StrengthAdapter.setWorkingMax(state, 'squat', 140);
 must(setResult.ok && setResult.valueKg === 140, 'setWorkingMax ok');
 must(StrengthAdapter.hasWorkingMax(state, 'squat', today), 'hasWorkingMax after set');
-must(StrengthAdapter.missingWorkingMaxExerciseIds(state, ['squat'], today).length === 0, 'no missing after set');
 
 const exercise = {
   exerciseId: 'squat',

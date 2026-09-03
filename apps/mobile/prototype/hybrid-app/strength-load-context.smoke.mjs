@@ -30,7 +30,7 @@ const baseState = {
       effectiveAt: `${date}T08:00:00.000Z`,
     }],
     prEvents: [],
-    loadHints: { squat: { loadKg: 62.5, updatedAt: `${date}T09:00:00.000Z`, source: 'auto_estimate' } },
+    loadHints: { squat: { loadKg: 62.5, updatedAt: `${date}T09:00:00.000Z`, source: 'session_anchor' } },
   },
   sessions: [],
 };
@@ -40,10 +40,13 @@ const ex = {
   loadExpr: { exprKind: 'pct_of_max', exprArg: 0.7 },
 };
 
-// With no usable exposure history, %WM prescription wins over hint.
-const coldCtx = StrengthAdapter.sessionLoadContext(baseState, ex, date);
-if (!coldCtx.ok || coldCtx.loadKg !== 70 || coldCtx.source !== 'prescription') {
-  throw new Error('Expected prescription 70kg on cold start, got ' + JSON.stringify(coldCtx));
+// V3: saved anchor wins immediately — no calibration gate before using loadHints.
+const hintCtx = StrengthAdapter.sessionLoadContext(baseState, ex, date);
+if (!hintCtx.ok || hintCtx.loadKg !== 62.5 || hintCtx.source !== 'anchor') {
+  throw new Error('Expected anchor hint 62.5kg, got ' + JSON.stringify(hintCtx));
+}
+if (!String(hintCtx.detail || '').includes('70 kg')) {
+  throw new Error('Expected %WM prescription noted in detail, got ' + hintCtx.detail);
 }
 
 const coldCal = StrengthAdapter.calibrationForExercise(baseState, 'squat');
@@ -51,31 +54,17 @@ if (!coldCal || coldCal.state !== 'uncalibrated' || coldCal.count !== 0) {
   throw new Error('Expected cold uncalibrated state, got ' + JSON.stringify(coldCal));
 }
 
-// After 2 usable sessions, autopilot hint should drive the headline/context.
-const state = {
+// Without a hint, %WM prescription drives the headline.
+const noHintState = {
   ...baseState,
-  sessions: [
-    {
-      id: 's1',
-      status: 'completed',
-      date: '2026-08-18',
-      tasks: [{ kind: 'strength', exerciseId: 'squat', rows: [{ done: true, weight: 60, reps: 8, rir: 2, targetKind: '' }] }],
-    },
-    {
-      id: 's2',
-      status: 'completed',
-      date: '2026-08-19',
-      tasks: [{ kind: 'strength', exerciseId: 'squat', rows: [{ done: true, weight: 62.5, reps: 8, rir: 2, targetKind: '' }] }],
-    },
-  ],
+  strengthState: {
+    ...baseState.strengthState,
+    loadHints: {},
+  },
 };
-const warmCtx = StrengthAdapter.sessionLoadContext(state, ex, date);
-if (!warmCtx.ok || warmCtx.loadKg !== 62.5 || warmCtx.source !== 'progression') {
-  throw new Error('Expected progression hint 62.5 after 2 sessions, got ' + JSON.stringify(warmCtx));
-}
-const warmCal = StrengthAdapter.calibrationForExercise(state, 'squat');
-if (!warmCal || warmCal.state !== 'calibrated' || warmCal.count < 2) {
-  throw new Error('Expected calibrated after 2 sessions, got ' + JSON.stringify(warmCal));
+const prescCtx = StrengthAdapter.sessionLoadContext(noHintState, ex, date);
+if (!prescCtx.ok || prescCtx.loadKg !== 70 || prescCtx.source !== 'prescription') {
+  throw new Error('Expected prescription 70kg without hint, got ' + JSON.stringify(prescCtx));
 }
 
 console.log('strength-load-context.smoke: ok');

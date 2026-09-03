@@ -42,6 +42,10 @@ export interface DecideNextPhaseInput {
   workDurationSec?: number;
   /** Athlete stopped the interval early */
   incomplete?: boolean;
+  /** +3% pushes already applied this workout (Echo cap). */
+  wattsPushCount?: number;
+  /** Max +3% pushes per workout — default 2. */
+  maxWattsPushes?: number;
 }
 
 export interface DecideNextPhaseResult {
@@ -115,8 +119,19 @@ export function decideNextPhase(input: DecideNextPhaseInput): DecideNextPhaseRes
 
   if (gap < 0) {
     const reasons = ['felt_easier_than_prescribed'];
+    const maxPushes = input.maxWattsPushes ?? 2;
+    const pushCount = input.wattsPushCount ?? 0;
     let nextWatts = input.targetWatts;
     let nextHr = input.targetHrCeilingBpm;
+    if (nextWatts != null && pushCount >= maxPushes) {
+      reasons.push('watts_push_cap');
+      return {
+        action: 'hold',
+        reasonCodes: reasons,
+        nextTargetWatts: nextWatts,
+        nextTargetHrCeilingBpm: nextHr,
+      };
+    }
     if (nextWatts != null) {
       nextWatts = clamp(roundWatts(nextWatts * (1 + c.wattsPushPct)), c.minWatts, c.maxWatts);
       reasons.push('watts_push');

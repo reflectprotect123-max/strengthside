@@ -770,8 +770,19 @@ var HybridEngine = (() => {
     }
     if (gap < 0) {
       const reasons2 = ["felt_easier_than_prescribed"];
+      const maxPushes = input.maxWattsPushes ?? 2;
+      const pushCount = input.wattsPushCount ?? 0;
       let nextWatts2 = input.targetWatts;
       let nextHr2 = input.targetHrCeilingBpm;
+      if (nextWatts2 != null && pushCount >= maxPushes) {
+        reasons2.push("watts_push_cap");
+        return {
+          action: "hold",
+          reasonCodes: reasons2,
+          nextTargetWatts: nextWatts2,
+          nextTargetHrCeilingBpm: nextHr2
+        };
+      }
       if (nextWatts2 != null) {
         nextWatts2 = clamp(roundWatts(nextWatts2 * (1 + c.wattsPushPct)), c.minWatts, c.maxWatts);
         reasons2.push("watts_push");
