@@ -12,7 +12,7 @@ const src = readFileSync(join(dir, 'strength-one-set-logger.js'), 'utf8');
 
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v162'")) throw new Error('expected cache v140');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v163'")) throw new Error('expected cache v163');
 if (!html.includes('.logger-screen{')) throw new Error('logger-screen CSS missing');
 if (!html.includes('.hero-metrics{')) throw new Error('hero-metrics CSS missing');
 if (!html.includes('.metric-val{')) throw new Error('metric-val CSS missing');
@@ -149,5 +149,17 @@ if (!ssHtml.includes('superset-pill')) throw new Error('partner rest pill missin
 if (!ssHtml.includes('Romanian Deadlift')) throw new Error('partner lift missing');
 if (!ssHtml.includes('How hard should this feel')) throw new Error('superset slider missing');
 if (!ssHtml.includes('Next ·')) throw new Error('round rest Next label missing');
+
+ss.exercises[1].rows[0].done = true;
+ss.complete = true;
+let nextCalled = false;
+sandbox.nextTask = () => {
+  nextCalled = true;
+};
+const doneHtml = sandbox.StrengthOneSetLogger.renderSupersetTask(ss);
+if (!doneHtml.includes('Superset complete')) throw new Error('superset complete screen missing');
+if (!doneHtml.includes('advanceSupersetTask()')) throw new Error('superset Next button missing');
+sandbox.StrengthOneSetLogger.advanceSupersetTask();
+if (!nextCalled) throw new Error('advanceSupersetTask should call nextTask');
 
 console.log('strength-one-set-logger.smoke: ok');

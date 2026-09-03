@@ -988,7 +988,8 @@
         '<div class=task>Superset complete</div>' +
         '<div class=progressline>All rounds are logged.</div>' +
         '<div class=next-wrap>' +
-        '<button type="button" class="btn primary" onclick="addSupersetRound()">Add extra round</button>' +
+        '<button type="button" class="btn primary" onclick="advanceSupersetTask()">Next</button>' +
+        '<button type="button" class="btn ghost" onclick="addSupersetRound()">Add extra round</button>' +
         '<button type="button" class="btn ghost" onclick="supersetEditSheet()">Edit logged sets</button></div></div>'
       );
     }
@@ -1066,13 +1067,13 @@
       var slider = global.document && global.document.getElementById('oneSetDifficulty');
       if (slider) onDifficultySlide(slider.value);
     }
+    var exercises = t.exercises || [];
+    var ex = exercises[item.exIndex];
     if (typeof global.validateStrengthRow === 'function') {
       syncActiveRowFromDom(item.row, ex);
       var err = global.validateStrengthRow(item.row, ex);
       if (err) return global.alert(err);
     }
-    var exercises = t.exercises || [];
-    var ex = exercises[item.exIndex];
     item.row.done = true;
     item.row.difficulty = autoreg.selectedDifficulty;
     var next = currentSupersetItem(t);
@@ -1083,7 +1084,22 @@
       beginRest(roundRestSec(t, ex));
       return;
     }
+    if (!next) {
+      if (global.RestOverlay) global.RestOverlay.stopRest();
+      if (typeof global.stopRest === 'function') global.stopRest();
+      if (typeof global.nextTask === 'function') return global.nextTask();
+    }
     if (typeof global.train === 'function') global.train();
+  }
+
+  function advanceSupersetTask() {
+    var t = global.current && global.current();
+    if (!t || t.kind !== 'superset') return;
+    t.complete = true;
+    if (typeof global.save === 'function') global.save('superset-advance');
+    if (global.RestOverlay) global.RestOverlay.stopRest();
+    if (typeof global.stopRest === 'function') global.stopRest();
+    if (typeof global.nextTask === 'function') global.nextTask();
   }
 
   function clearRestPhase() {
@@ -1103,6 +1119,7 @@
     selectStrengthDifficulty: selectStrengthDifficulty,
     nextStrengthSet: nextStrengthSet,
     nextSupersetSet: nextSupersetSet,
+    advanceSupersetTask: advanceSupersetTask,
     beginRest: beginRest,
     beginWork: beginWork,
     startHold: startHold,
