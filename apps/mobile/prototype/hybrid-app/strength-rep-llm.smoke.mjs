@@ -14,12 +14,15 @@ const recoverySrc =
   readFileSync(join(dir, 'recovery-engine.js'), 'utf8') +
   readFileSync(join(dir, 'recovery-signals.js'), 'utf8');
 const logCols = readFileSync(join(dir, 'log-columns.js'), 'utf8');
+const profiles = readFileSync(join(dir, 'exercise-load-profiles.js'), 'utf8');
+const searchIndex = readFileSync(join(dir, 'exercise-search-index.js'), 'utf8');
+const search = readFileSync(join(dir, 'exercise-search.js'), 'utf8');
 
 const sandbox = { window: {}, console, fetch: () => Promise.reject(new Error('no network')) };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(
-  `${bundle}; window.HybridStrength = HybridStrength; ${recoverySrc}; ${adapterSrc}; ${aiSrc}; ${logCols}`,
+  `${searchIndex}; ${search}; ${profiles}; ${bundle}; window.HybridStrength = HybridStrength; ${recoverySrc}; ${adapterSrc}; ${aiSrc}; ${logCols}`,
   sandbox,
 );
 
@@ -99,14 +102,14 @@ if (!StrengthAdapter.exerciseUsesAddedLoadMode(pullState, 'pull', 'Pull Up')) {
 sandbox.S = pullState;
 LogColumns.beginAthleteSheet({ name: 'Pull Up', exerciseId: 'pull', rows: [{ weight: 10, reps: 5 }] });
 const pullCols = LogColumns.getSheetColumns();
-if (pullCols.length !== 2 || pullCols[0].kind !== 'weight_pct_wm') {
-  throw new Error('weighted pull-up should get weight + reps logger columns');
+if (pullCols.length !== 2 || pullCols[0].kind !== 'weight_kg') {
+  throw new Error('custom weighted pull-up should get kg + reps logger columns');
 }
 
 LogColumns.beginAthleteSheet({ name: 'Pull Up', category: 'Strength — Pull' });
 const bwPullCols = LogColumns.getSheetColumns();
 if (bwPullCols.length !== 1 || bwPullCols[0].kind !== 'reps') {
-  throw new Error('bodyweight pull-up should stay reps-only');
+  throw new Error('bodyweight pull-up should stay reps-only when name resolves to library id');
 }
 
 LogColumns.beginAthleteSheet({ name: 'Nordic Curl', category: 'Accessories' });
@@ -118,7 +121,27 @@ if (!nordicCols.length || nordicCols[0].kind !== 'reps' || nordicCols.length !==
 LogColumns.beginAthleteSheet({ name: 'Bench Press', category: 'Strength' });
 const benchCols = LogColumns.getSheetColumns();
 if (benchCols.length !== 2 || benchCols[0].kind !== 'weight_pct_wm') {
-  throw new Error('Bench should keep weight + reps columns');
+  throw new Error('Bench should use profile %WM + reps when name resolves to library id');
+}
+
+LogColumns.beginAthleteSheet({ name: 'Custom Movement', category: 'Strength' });
+const customCols = LogColumns.getSheetColumns();
+if (customCols.length !== 2 || customCols[0].kind !== 'weight_kg') {
+  throw new Error('unknown exercise should default to kg + reps');
+}
+
+const staleEx = {
+  name: 'Barbell Curl',
+  exerciseId: 'program-barbell-curl',
+  logColumns: [{ id: 'r', kind: 'reps', value: '', values: [''] }],
+};
+if (!LogColumns.savedLogColumnsStale(staleEx, staleEx.logColumns)) {
+  throw new Error('stale reps-only barbell curl should be detected');
+}
+delete staleEx.logColumns;
+const staleRepair = LogColumns.ensureAthleteLogColumns(staleEx);
+if (staleRepair.length !== 2 || staleRepair[0].kind !== 'weight_kg') {
+  throw new Error('stale reps-only columns should repair to profile kg + reps');
 }
 
 const state = {

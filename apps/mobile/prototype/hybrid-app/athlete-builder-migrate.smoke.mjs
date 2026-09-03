@@ -6,12 +6,15 @@ import vm from 'node:vm';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const logColumnsSrc = fs.readFileSync(path.join(__dirname, 'log-columns.js'), 'utf8');
+const profilesSrc = fs.readFileSync(path.join(__dirname, 'exercise-load-profiles.js'), 'utf8');
+const searchIndexSrc = fs.readFileSync(path.join(__dirname, 'exercise-search-index.js'), 'utf8');
+const searchSrc = fs.readFileSync(path.join(__dirname, 'exercise-search.js'), 'utf8');
 
 function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v8'"), 'migration version');
+must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v9'"), 'migration version');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
 must(html.includes('function normalizeAthleteExercise'), 'normalizeAthleteExercise');
 must(html.includes('function normalizeAthleteCondBlock'), 'normalizeAthleteCondBlock');
@@ -61,6 +64,9 @@ const sandbox = {
 };
 sandbox.window = sandbox;
 sandbox.isoNow = () => new Date().toISOString();
+vm.runInNewContext(searchIndexSrc, sandbox);
+vm.runInNewContext(searchSrc, sandbox);
+vm.runInNewContext(profilesSrc, sandbox);
 vm.runInNewContext(logColumnsSrc, sandbox);
 
 const programTextSrc = html
@@ -114,7 +120,7 @@ const strengthState = applyAthleteBuilderPatch({
   ],
   sessions: [],
 });
-must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v8', 'migration stamp');
+must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v9', 'migration stamp');
 must(strengthState.templates[0].blocks.length === 3, 'warm/strength/cool text blocks preserved');
 must(strengthState.templates[0].blocks[0].type === 'text' && /warm/i.test(strengthState.templates[0].blocks[0].heading), 'warm-up block kept');
 must(strengthState.templates[0].blocks[2].type === 'text' && /cool/i.test(strengthState.templates[0].blocks[2].heading), 'cool-down block kept');

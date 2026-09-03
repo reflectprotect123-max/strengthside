@@ -274,8 +274,31 @@
     return sheet;
   }
 
+  function resolveProfileExerciseId(ex) {
+    if (global.ExerciseLoadProfiles && ExerciseLoadProfiles.resolveAthleteExerciseId) {
+      return ExerciseLoadProfiles.resolveAthleteExerciseId(ex);
+    }
+    return ex && (ex.exerciseId || ex.id);
+  }
+
+  /** Saved reps-only columns that contradict the exercise load profile. */
+  function savedLogColumnsStale(ex, cols) {
+    if (!cols || !cols.length) return false;
+    var exerciseId = resolveProfileExerciseId(ex);
+    if (global.ExerciseLoadProfiles && ExerciseLoadProfiles.loggerRepOnly) {
+      if (exerciseId) {
+        var repOnly = ExerciseLoadProfiles.loggerRepOnly(exerciseId);
+        if (repOnly === true) return false;
+        if (repOnly === false && cols.length === 1 && cols[0].kind === 'reps') return true;
+        if (repOnly === null && cols.length === 1 && cols[0].kind === 'reps') return true;
+      }
+    }
+    if (cols.length === 1 && cols[0].kind === 'reps' && !exerciseId) return true;
+    return false;
+  }
+
   function repOnlyAthleteColumns(ex) {
-    var exerciseId = ex && (ex.exerciseId || ex.id);
+    var exerciseId = resolveProfileExerciseId(ex);
     if (
       exerciseId &&
       global.ExerciseLoadProfiles &&
@@ -285,16 +308,11 @@
       if (profileRepOnly === true) return true;
       if (profileRepOnly === false) return false;
     }
-    var state = global.S;
-    return !!(
-      global.StrengthAdapter &&
-      StrengthAdapter.repProgressionLift &&
-      StrengthAdapter.repProgressionLift(ex && ex.name, ex && ex.category, state, exerciseId, ex && ex.rows, ex)
-    );
+    return false;
   }
 
   function defaultAthleteColumns(ex) {
-    var exerciseId = ex && (ex.exerciseId || ex.id);
+    var exerciseId = resolveProfileExerciseId(ex);
     if (
       exerciseId &&
       global.ExerciseLoadProfiles &&
@@ -312,13 +330,8 @@
         });
       }
     }
-    if (repOnlyAthleteColumns(ex)) {
-      return [
-        { id: newId(), kind: 'reps', value: '', values: splitValues('', sheet.sets) },
-      ];
-    }
     return [
-      { id: newId(), kind: 'weight_pct_wm', value: '', values: splitValues('', sheet.sets) },
+      { id: newId(), kind: 'weight_kg', value: '', values: splitValues('', sheet.sets) },
       { id: newId(), kind: 'reps', value: '', values: splitValues('', sheet.sets) },
     ];
   }
@@ -1197,6 +1210,7 @@
     builderSupersetTwinHtml,
     builderSideModeHtml,
     ensureAthleteLogColumns,
+    savedLogColumnsStale,
     columnLayout,
     athleteColumnOptionsHtml,
     beginSheet,

@@ -35,5 +35,27 @@
     return defs.length === 1 && defs[0].kind === 'reps';
   }
 
-  global.ExerciseLoadProfiles = { defaultLogColumns, loggerRepOnly, resolveExerciseId };
+  /** Resolve canonical library id from exerciseId/id or exact exercise name. */
+  function resolveAthleteExerciseId(ex) {
+    const raw = ex && (ex.exerciseId || ex.id);
+    const fromId = resolveExerciseId(raw);
+    if (fromId && SEED[fromId]) return fromId;
+    if (raw) return fromId || raw;
+    const name = ex && ex.name;
+    if (name && global.ExerciseSearch && ExerciseSearch.search && ExerciseSearch.norm) {
+      const hits = ExerciseSearch.search(name, 1);
+      if (hits.length && ExerciseSearch.norm(hits[0].name) === ExerciseSearch.norm(name)) {
+        const fromName = resolveExerciseId(hits[0].exerciseId);
+        if (SEED[fromName]) return fromName;
+      }
+    }
+    return fromId || null;
+  }
+
+  global.ExerciseLoadProfiles = {
+    defaultLogColumns,
+    loggerRepOnly,
+    resolveExerciseId,
+    resolveAthleteExerciseId,
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
