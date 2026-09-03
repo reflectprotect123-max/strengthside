@@ -16,7 +16,7 @@
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **`main` tip** | **`f2df0c3`** (#153 Full Body A foundational starter sync — cache v159) |
 | **Open PR** | — |
-| **Cache** | **`the-hybrid-athlete-engine-v159`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Cache** | **`the-hybrid-athlete-engine-v160`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **Capgo** | **`dogfood` + `live` @ `1.0.47`** (Full Body A always-sync starter + metric logger; cache v159) — **uploaded** |
 | **Web** | https://thehybridsystem.netlify.app/ |
 | **Coach** | https://thehybridsystem.netlify.app/coach.html |

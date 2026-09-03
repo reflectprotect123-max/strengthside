@@ -11,17 +11,20 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v159'"), 'LOCAL_BUILD v153');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v160'"), 'LOCAL_BUILD v160');
 must(html.includes('function athExerciseSuggestBtn'), 'athExerciseSuggestBtn helper');
 must(html.includes('class="searchpick ath-ex-pick"'), 'delegated athlete pick buttons');
 must(html.includes('class="searchpick ex-sheet-pick"'), 'delegated sheet pick buttons');
-must(html.includes('hybridExercisePickPointer'), 'pointerdown pick handler');
+must(html.includes('hybridExercisePickEvent'), 'pointerdown+click pick handler');
+must(!html.includes('hybridExercisePickPointer'), 'legacy pick handler removed');
+must(html.includes('.ath-suggest-host{position:relative;z-index:20}'), 'suggest host CSS stacks above hero');
 must(html.includes('function refreshAthleteLiftCard'), 'in-place lift card refresh');
 must(html.includes('function refreshAthleteLiftMetricsOnly'), 'metrics-only lift refresh');
 must(html.includes('function restoreAthLiftNameFocus'), 'name focus restore on card refresh');
 must(!html.includes("onclick='pickAthleteLiftSuggest("), 'no fragile inline athlete pick onclick');
 must(html.includes('overflow:visible;background:var(--panel)'), 'lift card does not clip suggest list');
 must(logColumns.includes('id="athLiftName_${bi}_${ei}"'), 'stable lift name input ids');
+must(logColumns.includes('class="ath-suggest-host"'), 'suggest host in log-columns');
 must(html.includes('exercise-load-profiles.js'), 'exercise load profiles script');
 must(
   html.includes('ExerciseLoadProfiles.defaultLogColumns(exerciseId)'),
