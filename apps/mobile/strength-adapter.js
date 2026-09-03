@@ -78,8 +78,23 @@
     return !/(barbell|dumbbell|\bdb\b|cable|machine|ez[- ]?bar|e[- ]?z[- ]?bar|kettlebell|\bkb\b)/.test(n);
   }
 
+  /** Timed holds (plank, wall sit) — time_sec primary, no rep-volume progression. */
+  function timedHoldLift(name, cat, ex) {
+    ex = ex || {};
+    if (Array.isArray(ex.logColumns) && ex.logColumns.some(function (c) { return c.kind === 'time_sec'; })) {
+      var load = ex.logColumns.some(function (c) {
+        return c.kind === 'weight_kg' || c.kind === 'weight_pct_wm' || c.kind === 'weight_lwp';
+      });
+      if (!load) return true;
+    }
+    var n = String(name || '').toLowerCase();
+    if (/^plank$|front plank|side plank|copenhagen plank/.test(n)) return true;
+    return false;
+  }
+
   /** Bodyweight / rep-only lifts — no working max or kg progression unless added-load mode. */
-  function repProgressionLift(name, cat, state, exerciseId, sessionRows) {
+  function repProgressionLift(name, cat, state, exerciseId, sessionRows, ex) {
+    if (timedHoldLift(name, cat, ex)) return false;
     var n = String(name || '').toLowerCase();
     if (!REP_PROGRESSION_NAME.test(n)) return false;
     if (exerciseUsesAddedLoadMode(state, exerciseId, name, sessionRows)) return false;
@@ -238,8 +253,20 @@
     var measurements = [];
     var load = num(row.weight);
     var reps = num(row.reps);
+    var logCols = ex.logColumns || task.logColumns || [];
+    var hasTimeSecCol = logCols.some(function (c) { return c.kind === 'time_sec'; });
+    var hasDistanceCol = logCols.some(function (c) { return c.kind === 'distance_m'; });
     if (load > 0) measurements.push({ metricKey: 'load', value: load });
-    if (reps > 0) measurements.push({ metricKey: 'reps', value: reps });
+    if (row.targetKind === 'seconds' || hasTimeSecCol) {
+      var sec = row.targetKind === 'seconds' ? (num(row.reps) || num(row.target)) : num(row.reps);
+      if (sec > 0) measurements.push({ metricKey: 'duration', value: sec });
+    } else if (reps > 0) {
+      measurements.push({ metricKey: 'reps', value: reps });
+    }
+    if (hasDistanceCol) {
+      var metres = num(row.distance);
+      if (metres > 0) measurements.push({ metricKey: 'distance', value: metres });
+    }
     if (String(row.rir != null ? row.rir : '').trim() !== '') {
       var rir = num(row.rir);
       if (rir >= 0) measurements.push({ metricKey: 'rpe', value: Math.min(10, Math.max(1, 10 - rir)) });
@@ -1042,6 +1069,15 @@
     }
   }
 
+  function defaultHoldSecondsFromColumns(ex) {
+    if (!ex || !Array.isArray(ex.logColumns)) return 30;
+    var timeCol = ex.logColumns.find(function (c) { return c && c.kind === 'time_sec'; });
+    if (!timeCol) return 30;
+    var raw = timeCol.values && timeCol.values.length ? timeCol.values[0] : timeCol.value;
+    var n = Number(String(raw == null ? '' : raw).trim());
+    return n >= 1 ? Math.round(n) : 30;
+  }
+
   function applyAutopilotVolumeToExercise(state, ex, sessionCtx) {
     if (!ex || !isVolumeDeferred(ex)) return;
     if (!hasStrength() || !global.HybridStrength.InitialPrescription) return;
@@ -1049,6 +1085,18 @@
     var exerciseId = ex.exerciseId || ex.id;
     var name = ex.name || exerciseNameFor(state, exerciseId);
     var cat = ex.category || '';
+    if (timedHoldLift(name, cat, ex)) {
+      var holdSec = defaultHoldSecondsFromColumns(ex);
+      ex.sets = 3;
+      ex.reps = String(holdSec);
+      ex.autopilotVolume = true;
+      ex.autopilotVolumeReasons = ['timed_hold_default'];
+      rebuildRowsFromPrescription(ex);
+      if (global.LogColumns && global.LogColumns.applyColumnTargetKinds) {
+        global.LogColumns.applyColumnTargetKinds(ex, ex.rows);
+      }
+      return;
+    }
     if (repProgressionLift(name, cat, state, exerciseId, ex.rows)) {
       var ss = ensureStrengthState(state);
       var vHint = ss.volumeHints[exerciseId];
@@ -1403,6 +1451,7 @@
     hasStrength: hasStrength,
     ensureStrengthState: ensureStrengthState,
     sessionLoadFromRows: sessionLoadFromRows,
+    htmlRowToPerformed: htmlRowToPerformed,
     performedFromSession: performedFromSession,
     applySilentProgression: applySilentProgression,
     applySilentProgressionAsync: applySilentProgressionAsync,
@@ -1430,6 +1479,7 @@
     calibrationForExercise: calibrationForExercise,
     targetRirForExercise: targetRirForExercise,
     repProgressionLift: repProgressionLift,
+    timedHoldLift: timedHoldLift,
     bodyweightRepLift: bodyweightRepLift,
     percentLiftCandidate: percentLiftCandidate,
     addedLoadCapableLift: addedLoadCapableLift,

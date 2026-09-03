@@ -1,0 +1,30 @@
+[
+  {
+    "id": "superset-hero-hardcoded-reps",
+    "file": "apps/mobile/prototype/hybrid-app/strength-one-set-logger.js",
+    "pattern": "function heroSuperset[\\s\\S]*?aria-label=\"Reps\"",
+    "mode": "mustNotMatch",
+    "message": "heroSuperset still hard-codes kg×reps — wire metricCellsHtml with superset handler"
+  },
+  {
+    "id": "autopilot-timed-hold-branch",
+    "file": "apps/mobile/prototype/hybrid-app/strength-adapter.js",
+    "pattern": "timedHoldLift\\(name, cat, ex\\)[\\s\\S]{0,120}return",
+    "mode": "mustMatch",
+    "message": "applyAutopilotVolumeToExercise must early-return for timedHoldLift with seconds prescription"
+  },
+  {
+    "id": "volume-meta-three-cols",
+    "file": "apps/mobile/prototype/hybrid-app/index.html",
+    "pattern": "logColumns\\)\\.slice\\(0,2\\)",
+    "mode": "mustNotMatch",
+    "message": "exerciseVolumeMeta must show up to 3 metric columns (carries)"
+  },
+  {
+    "id": "column-kind-refresh-metrics",
+    "file": "apps/mobile/prototype/hybrid-app/index.html",
+    "pattern": "function setAthleteLiftColumnKind[\\s\\S]{0,220}refreshAthleteLiftMetricsOnly",
+    "mode": "mustMatch",
+    "message": "setAthleteLiftColumnKind must refresh builder metric row after kind change"
+  }
+]
