@@ -16,8 +16,8 @@ const sw = readFileSync(join(dir, 'service-worker.js'), 'utf8');
 const bundle = readFileSync(join(dir, 'strength-bundle.js'), 'utf8');
 const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v163'"), 'LOCAL_BUILD v104');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v163'"), 'SW v104');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v164'"), 'LOCAL_BUILD v104');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-engine-v164'"), 'SW v104');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(html), 'athlete app has no TrainHeroic code');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(sw), 'service worker has no TrainHeroic seed cache');
 must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise seed on boot');
@@ -58,6 +58,34 @@ const setResult = StrengthAdapter.setWorkingMax(state, 'squat', 140);
 must(setResult.ok && setResult.valueKg === 140, 'setWorkingMax ok');
 must(StrengthAdapter.hasWorkingMax(state, 'squat', today), 'hasWorkingMax after set');
 must(StrengthAdapter.missingWorkingMaxExerciseIds(state, ['squat'], today).length === 0, 'no missing after set');
+
+const benchState = {
+  meta: { ownerId: 'athlete-1', progressionAudit: [] },
+  exercises: [{ id: 'bench', name: 'Bench Press' }],
+  strengthState: { workingMaxEvents: [], prEvents: [], loadHints: {} },
+  sessions: [],
+};
+StrengthAdapter.setWorkingMax(benchState, 'bench', 110);
+const benchHint = benchState.strengthState.loadHints.bench;
+must(benchHint && benchHint.loadKg === 77.5, 'WM hint uses 70% session load, not raw WM');
+
+const session = {
+  status: 'completed',
+  completedAt: Date.now(),
+  tasks: [{
+    kind: 'strength',
+    exerciseId: 'bench',
+    rows: [{ id: 'r1', n: 1, weight: 100, reps: 8, difficulty: 'easy', done: true, extra: false }],
+  }],
+};
+const performed = StrengthAdapter.htmlRowToPerformed(
+  session,
+  session.tasks[0],
+  { exerciseId: 'bench', targetRir: 2 },
+  session.tasks[0].rows[0],
+);
+const rpe = (performed.measurements || []).find(function (m) { return m.metricKey === 'rpe'; });
+must(rpe && rpe.value === 7, 'difficulty slider maps to RPE for progression');
 
 const exercise = {
   exerciseId: 'squat',

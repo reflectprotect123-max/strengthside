@@ -719,11 +719,13 @@
     if (typeof global.train === 'function') global.train();
   }
 
-  function beginRest(sec) {
+  function beginRest(sec, opts) {
+    opts = opts || {};
     var t = global.current && global.current();
     if (!t) return;
     var autoreg = ensureAutoreg(t);
     autoreg.restPhase = true;
+    autoreg.restKind = opts.kind || 'set';
     autoreg.restSec = Math.max(1, Math.round(Number(sec) || 90));
     if (global.RestOverlay) {
       global.RestOverlay.startRest(autoreg.restSec, function () {
@@ -857,7 +859,9 @@
     autoreg.selectedDifficulty = null;
     if (typeof global.save === 'function') global.save();
     if (nextOrdinal < planned.length) {
-      beginRest(typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90);
+      beginRest(typeof global.restSeconds === 'function' ? global.restSeconds(t.restSec) : 90, {
+        kind: 'set',
+      });
       return;
     }
     t.complete = true;
@@ -882,7 +886,9 @@
   }
 
   function partnerRestSec(t) {
-    return 45;
+    var raw = t && t.partnerRestSec != null ? t.partnerRestSec : 45;
+    if (typeof global.restSeconds === 'function') return global.restSeconds(raw);
+    return Number(raw) || 45;
   }
 
   function roundRestSec(t, ex) {
@@ -963,13 +969,23 @@
           clockFmt: 'mmss',
         })
       : '';
+    var restEyebrow =
+      autoreg.restKind === 'partner'
+        ? 'Rest · between partners'
+        : 'Rest · between rounds';
+    var restLine =
+      autoreg.restKind === 'partner' ? 'Partner logged' : 'Round logged';
     return (
       '<div class="logger-screen dial-strength">' +
-      '<div class=eyebrow>Rest · between rounds</div>' +
+      '<div class=eyebrow>' +
+      restEyebrow +
+      '</div>' +
       '<div class=task>' +
       escHtml(t.heading || 'Superset') +
       '</div>' +
-      '<div class=progressline>Round logged</div>' +
+      '<div class=progressline>' +
+      restLine +
+      '</div>' +
       ring +
       '</div>'
     );
@@ -1080,8 +1096,12 @@
     t.complete = !next;
     autoreg.selectedDifficulty = null;
     if (typeof global.save === 'function') global.save('superset-log');
+    if (next && next.exIndex > 0) {
+      beginRest(partnerRestSec(t), { kind: 'partner' });
+      return;
+    }
     if (next && next.exIndex === 0) {
-      beginRest(roundRestSec(t, ex));
+      beginRest(roundRestSec(t, ex), { kind: 'round' });
       return;
     }
     if (!next) {

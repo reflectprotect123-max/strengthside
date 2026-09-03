@@ -269,20 +269,6 @@ var HybridStrength = (() => {
     anchorKgFor: () => anchorKgFor,
     decideProgression: () => decideProgression
   });
-
-  // ../../../../packages/strength-engine/src/calibration.ts
-  var calibration_exports = {};
-  __export(calibration_exports, {
-    calibrationStateFor: () => calibrationStateFor
-  });
-  var MIN_EXPOSURES = 3;
-  function calibrationStateFor(exposures) {
-    const usable = exposures.filter((e) => e.exposureClass !== "pain_blocked");
-    if (usable.length === 0) return "uncalibrated";
-    return usable.length >= MIN_EXPOSURES ? "calibrated" : "building";
-  }
-
-  // ../../../../packages/strength-engine/src/progression.ts
   function anchorKgFor(exposures) {
     const sorted = [...exposures].sort((a, b) => a.performedAt.localeCompare(b.performedAt));
     for (let i = sorted.length - 1; i >= 0; i--) {
@@ -296,26 +282,14 @@ var HybridStrength = (() => {
   }
   function decideProgression(exposures, ctx) {
     const sorted = [...exposures].sort((a, b) => a.performedAt.localeCompare(b.performedAt));
-    const calibration = calibrationStateFor(sorted);
-    if (calibration !== "calibrated") {
-      return { ...base(ctx), action: "hold", confidence: 0.3, reasonCodes: ["insufficient_exposure"] };
-    }
     const usable = sorted.filter((e) => e.exposureClass !== "pain_blocked");
-    const recent = usable.slice(-3);
-    const allSuccessful = recent.every((e) => e.exposureClass === "successful" && e.onTarget);
-    const repeatedDeterioration = recent.filter((e) => e.exposureClass === "missed").length >= 2;
-    const anchor = anchorKgFor(usable);
-    if (allSuccessful) {
-      const deltaPct = 0.025;
-      return {
-        ...base(ctx),
-        action: "progress",
-        deltaPct,
-        confidence: 0.9,
-        reasonCodes: ["three_on_target"],
-        ...anchor != null ? { deltaKg: anchor * deltaPct } : {}
-      };
+    if (usable.length === 0) {
+      return { ...base(ctx), action: "hold", confidence: 0.3, reasonCodes: ["no_history"] };
     }
+    const anchor = anchorKgFor(usable);
+    const last = usable[usable.length - 1];
+    const recent2 = usable.slice(-2);
+    const repeatedDeterioration = recent2.length >= 2 && recent2.every((e) => e.exposureClass === "missed");
     if (repeatedDeterioration && anchor != null) {
       const deltaPct = -0.05;
       return {
@@ -325,6 +299,17 @@ var HybridStrength = (() => {
         confidence: 0.85,
         reasonCodes: ["repeated_deterioration"],
         deltaKg: anchor * deltaPct
+      };
+    }
+    if (last.exposureClass === "successful" && last.onTarget) {
+      const deltaPct = 0.025;
+      return {
+        ...base(ctx),
+        action: "progress",
+        deltaPct,
+        confidence: 0.85,
+        reasonCodes: ["on_target_rated"],
+        ...anchor != null ? { deltaKg: anchor * deltaPct } : {}
       };
     }
     return { ...base(ctx), action: "hold", confidence: 0.7, reasonCodes: ["mixed_signal"] };
@@ -708,6 +693,18 @@ var HybridStrength = (() => {
       reasons.push("coach_pinned_reps");
     }
     return { sets, reps, autopilotVolume: true, reasonCodes: reasons };
+  }
+
+  // ../../../../packages/strength-engine/src/calibration.ts
+  var calibration_exports = {};
+  __export(calibration_exports, {
+    calibrationStateFor: () => calibrationStateFor
+  });
+  var MIN_EXPOSURES = 3;
+  function calibrationStateFor(exposures) {
+    const usable = exposures.filter((e) => e.exposureClass !== "pain_blocked");
+    if (usable.length === 0) return "uncalibrated";
+    return usable.length >= MIN_EXPOSURES ? "calibrated" : "building";
   }
   return __toCommonJS(strength_entry_exports);
 })();

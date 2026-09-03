@@ -12,7 +12,7 @@ const src = readFileSync(join(dir, 'strength-one-set-logger.js'), 'utf8');
 
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v163'")) throw new Error('expected cache v163');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v164'")) throw new Error('expected cache v164');
 if (!html.includes('.logger-screen{')) throw new Error('logger-screen CSS missing');
 if (!html.includes('.hero-metrics{')) throw new Error('hero-metrics CSS missing');
 if (!html.includes('.metric-val{')) throw new Error('metric-val CSS missing');
@@ -149,6 +149,37 @@ if (!ssHtml.includes('superset-pill')) throw new Error('partner rest pill missin
 if (!ssHtml.includes('Romanian Deadlift')) throw new Error('partner lift missing');
 if (!ssHtml.includes('How hard should this feel')) throw new Error('superset slider missing');
 if (!ssHtml.includes('Next ·')) throw new Error('round rest Next label missing');
+
+const ssPartner = {
+  kind: 'superset',
+  heading: 'Superset B',
+  complete: false,
+  exercises: [
+    {
+      name: 'Bench Press',
+      restSec: 120,
+      rows: [
+        { n: 1, target: '8', weight: 80, reps: 8, done: false, extra: false },
+        { n: 2, target: '8', weight: 80, reps: '', done: false, extra: false },
+      ],
+    },
+    {
+      name: 'Romanian Deadlift',
+      restSec: 120,
+      rows: [
+        { n: 1, target: '8', weight: 80, reps: '', done: false, extra: false },
+        { n: 2, target: '8', weight: 80, reps: '', done: false, extra: false },
+      ],
+    },
+  ],
+};
+sandbox._task = ssPartner;
+sandbox.StrengthOneSetLogger.onDifficultySlide('2');
+sandbox.StrengthOneSetLogger.nextSupersetSet();
+if (!ssPartner.autoreg.restPhase) throw new Error('partner transition should start rest');
+if (ssPartner.autoreg.restKind !== 'partner') throw new Error('partner rest kind missing');
+const partnerRestHtml = sandbox.StrengthOneSetLogger.renderSupersetTask(ssPartner);
+if (!partnerRestHtml.includes('Rest · between partners')) throw new Error('partner rest eyebrow missing');
 
 ss.exercises[1].rows[0].done = true;
 ss.complete = true;
