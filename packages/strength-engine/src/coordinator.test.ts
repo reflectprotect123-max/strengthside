@@ -50,7 +50,7 @@ describe('planCoordinator', () => {
     const r = planCoordinator({
       ...emptyReceipts(),
       strength: {
-        progressionAudit: [{ at: 't', sessionId: 's', exerciseId: 'bp', action: 'progress', reasonCodes: ['three_on_target'] }],
+        progressionAudit: [{ at: 't', sessionId: 's', exerciseId: 'bp', action: 'progress', reasonCodes: ['on_target_rated'] }],
         sessionPainFlags: [],
       },
       conditioning: { weeklyZoneSeconds: { aerobic: 3600 }, sessionsCompleted: 2 },

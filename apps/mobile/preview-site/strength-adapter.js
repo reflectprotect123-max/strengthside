@@ -258,6 +258,18 @@
     return 0;
   }
 
+  function difficultyToRir(difficulty, targetRir) {
+    var tr = targetRir != null && Number.isFinite(Number(targetRir)) ? Number(targetRir) : 2;
+    var map = {
+      very_easy: Math.min(4, tr + 2),
+      easy: Math.min(4, tr + 1),
+      medium: tr,
+      hard: Math.max(0, tr - 1),
+      max: 0,
+    };
+    return map[difficulty];
+  }
+
   function htmlRowToPerformed(session, task, ex, row) {
     var exerciseId = ex.exerciseId || task.exerciseId;
     var performedAt = new Date(session.completedAt || Date.now()).toISOString();
@@ -278,9 +290,14 @@
       var metres = num(row.distance);
       if (metres > 0) measurements.push({ metricKey: 'distance', value: metres });
     }
+    var rir = null;
     if (String(row.rir != null ? row.rir : '').trim() !== '') {
-      var rir = num(row.rir);
-      if (rir >= 0) measurements.push({ metricKey: 'rpe', value: Math.min(10, Math.max(1, 10 - rir)) });
+      rir = num(row.rir);
+    } else if (row.difficulty) {
+      rir = difficultyToRir(row.difficulty, targetRirForExercise(ex));
+    }
+    if (rir != null && rir >= 0) {
+      measurements.push({ metricKey: 'rpe', value: Math.min(10, Math.max(1, 10 - rir)) });
     }
     if (session.sessionPain === 'yes') {
       measurements.push({ metricKey: 'pain', value: 1 });
@@ -408,9 +425,11 @@
   }
 
   var AUDIT_REASONS = {
+    on_target_rated: 'On-target session — bump next time',
     three_on_target: 'Three on-target sessions',
     repeated_deterioration: 'Repeated misses — deload',
     mixed_signal: 'Mixed signals — hold',
+    no_history: 'No history yet',
     insufficient_exposure: 'Still calibrating',
     session_pain_yes: 'Session pain',
     no_checkin_today: 'No check-in today',
@@ -981,16 +1000,17 @@
       effectiveAt: effectiveAt,
     });
     if (opts.setLoadHint !== false) {
-      var hintKg = kg;
-      if (opts.exercise && opts.exercise.loadExpr) {
-        var resolved = resolveExerciseLoad(state, opts.exercise, String(effectiveAt).slice(0, 10));
-        if (resolved && resolved.loadKg != null) hintKg = resolved.loadKg;
+      var hintKg = initialLoadHintFromWorkingMax(state, exerciseId, kg, {
+        exercise: opts.exercise,
+        effectiveAt: effectiveAt,
+      });
+      if (hintKg != null) {
+        ss.loadHints[exerciseId] = {
+          loadKg: hintKg,
+          updatedAt: isoNow(),
+          source: source,
+        };
       }
-      ss.loadHints[exerciseId] = {
-        loadKg: hintKg,
-        updatedAt: isoNow(),
-        source: source,
-      };
     }
     return { ok: true, valueKg: kg, exerciseId: exerciseId };
   }
@@ -1226,6 +1246,40 @@
 
   var DEFAULT_SESSION_PCT_WM = 0.7;
 
+  function exerciseMetaFromState(state, exerciseId) {
+    var found = null;
+    (state.sessions || []).forEach(function (s) {
+      if (found) return;
+      iterStrengthTasks(s).forEach(function (item) {
+        var eid = item.ex.exerciseId || item.ex.id;
+        if (eid === exerciseId) found = item.ex;
+      });
+    });
+    if (found) return found;
+    var reg = (state.exercises || []).find(function (e) { return e.id === exerciseId; });
+    if (reg) return { exerciseId: exerciseId, name: reg.name, category: reg.category || '' };
+    return { exerciseId: exerciseId };
+  }
+
+  /** First-session load from WM — never stamp raw WM as the working weight. */
+  function initialLoadHintFromWorkingMax(state, exerciseId, wmKg, opts) {
+    opts = opts || {};
+    var asOf = String(opts.effectiveAt || isoNow()).slice(0, 10);
+    var ex = opts.exercise || exerciseMetaFromState(state, exerciseId);
+    if (!ex.exerciseId) ex.exerciseId = exerciseId;
+    ensureSessionLoadExpr(state, ex);
+    if (ex.loadExpr) {
+      var resolved = resolveExerciseLoad(state, ex, asOf);
+      if (resolved && resolved.loadKg != null) return resolved.loadKg;
+    }
+    var name = ex.name || exerciseNameFor(state, exerciseId);
+    var cat = ex.category || '';
+    if (percentLiftCandidate(name, cat, state, exerciseId, ex.rows)) {
+      return roundLoad(wmKg * DEFAULT_SESSION_PCT_WM);
+    }
+    return null;
+  }
+
   function loadExprFromLogColumns(ex) {
     if (!ex || !Array.isArray(ex.logColumns)) return null;
     for (var i = 0; i < ex.logColumns.length; i++) {
@@ -1274,6 +1328,14 @@
     if (repProgressionLift(name, cat, state, exerciseId, ex.rows)) return;
     var hint = ensureStrengthState(state).loadHints[exerciseId];
     if (hint && hint.loadKg) {
+      var wmKg = workingMaxKgForExercise(state, exerciseId, asOfDate);
+      if (wmKg && Math.abs(num(hint.loadKg) - wmKg) < 0.01 && ex.loadExpr) {
+        var wmResolved = resolveExerciseLoad(state, ex, asOfDate);
+        if (wmResolved && wmResolved.loadKg != null) {
+          fillBlankRowWeights(ex, wmResolved.loadKg);
+          return;
+        }
+      }
       fillBlankRowWeights(ex, hint.loadKg);
       return;
     }

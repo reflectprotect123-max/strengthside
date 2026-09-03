@@ -45,25 +45,25 @@ function completedSession(id, exerciseId, rows, extra) {
   };
 }
 
-// Three on-target rated sessions → progress when check-in ok
-const benchRows = (load, reps) => [
-  { id: 'r1', n: 1, weight: load, reps, rir: 2, done: true, extra: false },
-];
+// Three on-target rated sessions → progress when check-in ok (v2: one session is enough)
+const benchRows = (load, reps, extra) => {
+  const row = { id: 'r1', n: 1, weight: load, reps, rir: 2, done: true, extra: false };
+  if (extra && extra.difficulty) row.difficulty = extra.difficulty;
+  return [row];
+};
 state.sessions.push(
   completedSession('s1', 'bench', benchRows(60, 8)),
-  completedSession('s2', 'bench', benchRows(60, 8)),
-  completedSession('s3', 'bench', benchRows(60, 8)),
 );
 
-const session4 = completedSession('s4', 'bench', benchRows(60, 8));
-state.sessions.push(session4);
+const session2 = completedSession('s2', 'bench', benchRows(60, 8));
+state.sessions.push(session2);
 
 const okRecovery = RecoverySignals.recoverySignal({
   checkinComplete: true,
   checkin: { readinessColor: 'green' },
 });
 
-const result = StrengthAdapter.applySilentProgression(state, session4, {
+const result = StrengthAdapter.applySilentProgression(state, session2, {
   recoverySignal: okRecovery,
 });
 
