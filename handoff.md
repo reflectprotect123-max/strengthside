@@ -16,7 +16,7 @@
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `cursor/autopilot-rebuild-84a0` |
-| **Cache** | **`the-hybrid-athlete-blank-v165`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **Cache** | **`the-hybrid-athlete-blank-v167`** (`LOCAL_BUILD` + SW `CACHE` together) |
 | **All product engines** | **DELETED** — no strength/cond/nutrition engines — one adaptive engine TBD |
 | **Coach** | Parked page only — no S&C publish/pull |
 | **Web** | https://thehybridsystem.netlify.app/ |
