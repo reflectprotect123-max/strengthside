@@ -2,6 +2,13 @@
 
 One-line notes when shipping Capgo bundles or coach desktop shells.
 
+## Capgo (live channel)
+
+| Version | Date | Note |
+| --- | --- | --- |
+| 1.0.46 | 2026-09-03 | Metric-aware logger M1–M9 + superset/completed-row metric surfaces (cache v157) |
+| 1.0.45 | 2026-09-03 | (version reserved; not deployed) |
+
 ## Capgo (dogfood channel)
 
 | Version | Date | Note |
