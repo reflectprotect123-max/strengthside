@@ -341,16 +341,7 @@
         }
       }
 
-      if (global.CoachSync && typeof global.CoachSync.schedulePull === 'function' && global.S) {
-        try {
-          ui.message = 'Syncing coach…';
-          renderPanels();
-          global.CoachSync.schedulePull(global.S);
-          bits.push('Coach');
-        } catch (err) {
-          bits.push('Coach: ' + ((err && err.message) || 'failed'));
-        }
-      }
+      /* coach S&C parked 2026-09-03 — no CoachSync.schedulePull from syncAll */
 
       if (global.Concept2 && typeof global.Concept2.syncIfLinked === 'function') {
         try {

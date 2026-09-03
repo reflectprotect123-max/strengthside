@@ -130,3 +130,21 @@ package.json                                           un-quarantine as smokes l
 ```
 
 Do not resurrect: WM gate, `applySilentProgression` bumps, `applyConAdapt` levels, calibration-gated hints.
+
+---
+
+## Coach side — parked (2026-09-03 follow-up)
+
+**Answer:** The first rip did **not** touch coach. That is fixed now.
+
+| Surface | Action |
+|---|---|
+| `coach.html` | Replaced with parked page (no builder, no publish UI) |
+| `coach-bridge.js` / `coach-cloud.js` / `coach-sync.js` / `coach-ai.js` | Parked stubs — no S&C publish/pull/intent |
+| Athlete `index.html` | Script tags for coach-sync/cloud/ai removed; `isCoachPrescription` always false; Coach* globals stubbed |
+| `whoop.js` `syncAll` | CoachSync.schedulePull removed — Account sync no longer pulls coach S&C |
+| Coach + coach-coupled smokes | Quarantined in `package.json` (incl. account-sync, track-dawn coach asserts, log-columns/exercise-load-expr coach builder) |
+
+**No S&C wiring either direction:** coach cannot publish strength/conditioning sessions; athlete cannot pull or treat sessions as coach prescriptions; CoachAI cannot trigger strength/cond autopilot; Whoop Account sync does not schedule coach pull.
+
+Nutrition coach files remain on disk but are unreachable while `coach.html` is parked. Re-enable coach only after Autopilot V3 athlete Open/Next/Close is green — as an explicit later decision.

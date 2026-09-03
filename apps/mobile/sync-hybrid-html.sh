@@ -19,11 +19,19 @@ for f in nutrition-bundle.js nutrition-sync.js nutrition-ui.js strength-bundle.j
   fi
 done
 # Coach workspace (same Netlify origin as athlete — shared Supabase auth storage)
+# Parked 2026-09-03: coach.html is a static park page; remaining coach JS stays on disk but is unreachable.
 for f in coach.html coach-loop.js coach-exercise-catalog.js coach-nutrition.js coach-bridge.js coach-views.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
 done
+# Park page + bridge stub also at mobile root (Capgo / local open)
+if [[ -f "$SRC_DIR/coach.html" ]]; then
+  cp "$SRC_DIR/coach.html" "$ROOT/coach.html"
+fi
+if [[ -f "$SRC_DIR/coach-bridge.js" ]]; then
+  cp "$SRC_DIR/coach-bridge.js" "$ROOT/coach-bridge.js"
+fi
 # Conditioning engine bundle (window.HybridEngine) + adapter
 if [[ -f "$SRC_DIR/engine-bundle.js" ]]; then
   cp "$SRC_DIR/engine-bundle.js" "$ROOT/engine-bundle.js"
