@@ -52,6 +52,9 @@ jobs:
       - run: pnpm run check:rest-overlay
       - run: pnpm run check:work-overlay
       - run: pnpm run check:hybrid-html-sync
+      - run: pnpm run check:hybrid-handler-wiring
+      - run: pnpm run check:metric-logger-matrix
+      - run: pnpm run check:metric-logger-debt
       - run: pnpm run check:builder-suggest
       - run: pnpm run check:nutrition-ui
       - run: pnpm run check:strength-resolve
