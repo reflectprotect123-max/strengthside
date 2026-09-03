@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-blank-v164';
+const CACHE = 'the-hybrid-athlete-blank-v165';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -8,8 +8,6 @@ self.addEventListener('install', (event) => {
           './',
           './index.html',
           './whoop.js',
-          './nutrition-bundle.js',
-          './nutrition-ui.js',
           './echo-ftms.js',
           './native-ble.js',
           './concept2.js',
@@ -20,11 +18,6 @@ self.addEventListener('install', (event) => {
           './session-flow.js',
           './rest-overlay.js',
           './work-overlay.js',
-          './nutrition-sync.js',
-          './label-scan.js',
-          './label-scan-live.js',
-          './food-catalog.js',
-          './food-catalog-au.json',
           './exercise-search-index.js',
           './exercise-search.js',
           './exercise-history-seed.js',

@@ -1,7 +1,7 @@
 # Handoff — TheStrengthEngine
 
 > **AUTHORITATIVE CHECKPOINT — 3 September 2026 (blank slate).**
-> **Core S&C engines deleted** — packages + all wiring. Manual log only.
+> **Core All product engines deleted** — packages + all wiring. Manual log only.
 > Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
 > **Product:** Hybrid HTML athlete app + Capgo/dogfood + Netlify. Coach = parked.
 > **Companion `THE-HYBRID-ENGINE1`:** shared-Supabase schema stub only — no apps.
@@ -16,8 +16,8 @@
 | --- | --- |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `cursor/autopilot-rebuild-84a0` |
-| **Cache** | **`the-hybrid-athlete-blank-v164`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **S&C engines** | **DELETED** — no strength-engine / engine / Big Mac / cond-adapt / WM gate |
+| **Cache** | **`the-hybrid-athlete-blank-v165`** (`LOCAL_BUILD` + SW `CACHE` together) |
+| **All product engines** | **DELETED** — no strength/cond/nutrition engines — one adaptive engine TBD |
 | **Coach** | Parked page only — no S&C publish/pull |
 | **Web** | https://thehybridsystem.netlify.app/ |
 

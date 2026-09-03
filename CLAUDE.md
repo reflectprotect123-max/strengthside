@@ -2,9 +2,8 @@
 
 This repository is **the product**: the Hybrid HTML athlete app (manual
 logging + Library templates + calendar), nutrition, WHOOP/Concept2/Echo, and
-Capgo/dogfood ship. **Core S&C decision engines were deleted 2026-09-03**
-(`packages/strength-engine`, `packages/engine`, `packages/shared-core`, and all
-athlete/coach wiring). See
+Capgo/dogfood ship. **All product engines were deleted 2026-09-03**
+(S&C + nutrition packages and all athlete/coach wiring). See
 `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`. It was split
 out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026 and still
 points at the **same Supabase project**.
@@ -114,8 +113,8 @@ on `thehybridengine1.netlify.app`. The athlete functions only forward
   product brain. Any new core model is a **new package** with new APIs and new
   checks — not a revival of `resolve` / `decideProgression` / `conAdapt` /
   Big Mac.
-- Remaining packages: `@hybrid/nutrition-engine` and `@hybrid/nutrition-core`
-  (nutrition only). Keep nutrition pure (no S&C prescription coupling).
+- **No product engine packages remain.** Nutrition engines were deleted with
+  S&C. The next brain is a **single** adaptive engine — new package, new APIs.
 - Shared Supabase strength tables remain a **data ledger** (see twelve-table
   contract). They do not imply a decision engine exists in this repo.
 

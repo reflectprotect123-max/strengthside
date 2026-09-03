@@ -9,7 +9,7 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const adapter = readFileSync(join(dir, 'strength-adapter.js'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v164'")) {
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v165'")) {
   throw new Error('expected cache v163');
 }
 if (html.includes('repairFullBodyADefaultPctWm')) {

@@ -47,7 +47,6 @@ mustMatch('package.json → preview-site',
   join(root, 'preview-site/package.json'));
 
 const bundles = [
-  'nutrition-bundle.js',
   'coach.html', // parked page — must stay in sync
 ];
 for (const f of bundles) {
