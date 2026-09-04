@@ -20,13 +20,13 @@
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `main` @ merge of blank-slate PR #161 |
 | **Cache** | **`the-hybrid-athlete-blank-v171`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.52`** (last ship was cache v168; this tree is v169) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.53`** (cache blank-v171) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.52** until the next Capgo upload (this tree is cache **blank-v171**). Do not Capgo unless the owner says ship.
+**Phone:** Settings → Check for updates → expect **1.0.53** (cache **blank-v171**).
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -42,9 +42,9 @@
 | --- | --- |
 | Token | repo-root `.capgo` (gitignored) or `CAPGO_TOKEN` |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.52`** |
-| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.52 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
-| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.52` |
+| Channels | **`dogfood` + `live`** both @ **`1.0.53`** |
+| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.53` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 
@@ -120,7 +120,7 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate merged via PR **#161** (2026-09-04) |
-| Capgo | **1.0.52** on `dogfood` + `live` |
+| Capgo | **1.0.53** on `dogfood` + `live` |
 | Netlify | Deploy athlete Netlify workflow **success** on merge commit |
 | Dogfood APK | Workflow **success** on merge commit |
 | Cache | `the-hybrid-athlete-blank-v169` |

@@ -14,4 +14,7 @@ must(html.includes('adaptiveClose') || html.includes('lastClose'), 'stores Close
 must(html.includes('HybridAdaptive.decideNextCond'), 'cond Next');
 must(html.includes('actualRpe'), 'passes actual RPE');
 must(html.includes('modality'), 'watts vs split');
+const ss = html.slice(html.indexOf('function toggleSupersetDone'), html.indexOf('function toggleSupersetDone') + 500);
+must(ss.includes('clearNextLiftFill'), 'superset un-log clears Next fill');
+must(ss.includes('decideNextLift'), 'superset edit Log fills Next');
 console.log('adaptive-logger.smoke: ok');
