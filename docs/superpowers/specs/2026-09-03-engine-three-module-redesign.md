@@ -40,7 +40,7 @@ list.
 | | You | Engine |
 | --- | --- | --- |
 | Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
-| Cards | Template A and B (**which lifts**, order, how many sets). Cond card when you make one. You do not prescribe reps or kg. | **kg and reps** on lifts; watts on cond. Hold seconds stay on the card (countdown only). |
+| Cards | Template A and B (**which lifts**, order, how many sets). Cond card when you make one. You do not prescribe reps or kg. | **kg and reps** on lifts (working reps **3–30**); watts on cond. Hold seconds stay on the card (countdown only). |
 | Logger | You log **weight × reps × RIR** on a lift. Timed holds use the card’s seconds and a **countdown**, not Next. | After each **lift** log, **Next** fills set N+1 **kg and reps**. Holds do not go through Next. Set count stays on the card. |
 
 Nutrition, coach publish, pain/illness UI, and LLM decide are out.
@@ -115,26 +115,32 @@ visible over time and so guesses are better than raw last-kilos.
 Wakes on every completed set, not on Finish.
 
 **Mechanism:** after you tap Log, update Est. 1RM from that row, then
-fill **both** next boxes: reps you just did, and kg as a **% of that
-Est. 1RM** for those reps at the template’s target RIR (`targetRir`,
+fill **both** next boxes: reps clamped to **3–30**, and kg as a **% of
+that Est. 1RM** for those reps at the template’s target RIR (`targetRir`,
 default 2). Same `e1rmValue` formula run backwards. Set count does not
 change.
 
 ```text
 e1rm     = e1rmValue(loggedWeight, loggedReps, loggedRir)
-nextReps = loggedReps                         // believe the log
-pct      = 1 / (1 + (nextReps + targetRir) / 30)
+nextReps = clamp(loggedReps, 3, 30)           // working band
+pct      = 1 / (1 + min(20, nextReps + targetRir) / 30)
 nextW    = e1rm × pct
            then round to plates (2.5 kg)
 ```
 
-`e1rm / (1 + (nextReps + targetRir) / 30)` is the same line. Same three
-boxes you already type. No extra slider.
+Same three boxes you already type. No extra slider.
+
+**Working reps are 3–30.** Not 5. Not 8. Not a different number per
+muscle. You (or Next) can sit anywhere in that band. Logged 2 → Next
+**3**. Logged 40 → Next **30**. First-ever Open still fills **8** so the
+box is not empty; after that the log owns the number.
 
 **v1 % chart** — every cell is that formula. Not a Helms/Zourdos lookup.
 Effective reps (`reps + RIR`) clamp 1–20, same as `e1rmValue`. A true
 1-rep max at RIR 0 is **96.8%**, not 100% — that is Epley, not a bug.
 Next uses the **target RIR column** (default **RIR 2**), not RIR 0.
+Rows 20 and 30 are the logger ceiling: kg % does not go below **60%**.
+The reps **count** can still be 30.
 
 | Reps | RIR 0 | RIR 1 | RIR 2 | RIR 3 | RIR 4 | RIR 5 |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -150,11 +156,14 @@ Next uses the **target RIR column** (default **RIR 2**), not RIR 0.
 | 10 | 75.0% | 73.2% | 71.4% | 69.8% | 68.2% | 66.7% |
 | 12 | 71.4% | 69.8% | 68.2% | 66.7% | 65.2% | 63.8% |
 | 15 | 66.7% | 65.2% | 63.8% | 62.5% | 61.2% | 60.0% |
+| 20 | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% |
+| 30 | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% |
 
-Read it: log a set → new Est. 1RM → next **reps = what you just did** →
-next kg = Est. 1RM × the cell for **those reps × target RIR**. First-ever
-Open is **8s** (75% cell at RIR 2). You did 5s at RIR 2 → 81.1% cell,
-5s again. You did 4s → 4s at the 4-rep cell.
+Read it: log a set → new Est. 1RM → next **reps = clamp(what you just
+did, 3, 30)** → next kg = Est. 1RM × the cell for **those reps × target
+RIR**. First-ever Open fills **8s** (75% cell at RIR 2). You did 5s at
+RIR 2 → 81.1% cell, 5s again. You did 12s → 12s. You did 30s → 30s at
+the 60% cell.
 
 **Strength — golden path (you put Bench on A, 3 sets, target RIR 2. Engine picks reps.)**
 
@@ -173,8 +182,8 @@ Open is **8s** (75% cell at RIR 2). You did 5s at RIR 2 → 81.1% cell,
 | --- | --- |
 | Logged RIR **higher** than target (easier) | Same reps, Est. 1RM up → kg **up** |
 | Logged RIR **on** target | Same reps, kg **holds** |
-| Logged RIR **lower** / missed reps | **Reps = what you did**, kg from that cell |
-| You typed a different kg or reps | Est. 1RM from **that** row → next matches it at target RIR |
+| Logged RIR **lower** / missed reps | **Reps = clamp(what you did, 3, 30)**, kg from that cell |
+| You typed a different kg or reps | Est. 1RM from **that** row → next matches it at target RIR (reps still 3–30) |
 
 The +2.5%-per-easy-set shortcut is **out**. A planned RIR 2 set that
 lands at RIR 2 must not add a plate.
@@ -202,23 +211,19 @@ conditioning.
 **Open** (first set of this lift today):
 
 ```text
-reps = you typed → else last Close reps → else 8
+reps = clamp(you typed → else last Close reps → else 8, 3, 30)
 kg   = you typed → else Est. 1RM × pct(those reps, targetRir) rounded
        to plates → else last Close load → else blank
 ```
 
 No card-reps input. Timed holds skip Open.
 
-**Why 8, not 5, and not a different number per muscle.** 5 was a
-conservative first-day guess — not a growth law. Muscle grows about the
-same across a wide load range when effort is high (roughly ≥30% 1RM).
-The old “6–12 hypertrophy zone” is time and comfort, not unique biology.
-Very heavy sets are better for a tested 1RM; very long sets take longer
-and feel worse. Upper vs lower does **not** get a different load rule.
-Calves / delts / “slow-twitch need high reps” is gym lore — we do **not**
-ship a per-muscle lookup. v1 first-ever Open is **8**: one number in the
-practical 6–12 band. Next still believes the log (12s stay 12s; 5s stay
-5s).
+**Band is 3–30. 8 is only the empty-box fill.** Muscle grows about the
+same across that whole range when effort is high (roughly ≥30% 1RM).
+No per-muscle lookup (calves / delts / “slow-twitch need high reps” is
+gym lore). Upper vs lower does **not** get a different load rule.
+First-ever Open fills **8** so the box is not blank. Next / Close then
+follow the log, clamped to 3–30.
 
 Citations: Schoenfeld et al. 2017 [PMID 28834797](https://pubmed.ncbi.nlm.nih.gov/28834797/);
 Lopez et al. 2021 [PMID 33433148](https://pubmed.ncbi.nlm.nih.gov/33433148/);
@@ -228,9 +233,9 @@ Repo already said the same in
 `docs/research/strength-macrofactor-rp-2026-08-25/THE_Hybrid_Strength_PubMed_RP_Validation_Review.md`.
 
 **Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
-what you actually finished. HTML app saves that. Next Open reads **those
-reps**. Close does **not** invent an extra bump on top of Next. Timed
-holds skip Close.
+what you actually finished. `reps` is clamped 3–30. HTML app saves that.
+Next Open reads **those reps**. Close does **not** invent an extra bump
+on top of Next. Timed holds skip Close.
 
 ---
 
@@ -276,6 +281,10 @@ Colocated. No `--passWithNoTests`.
 12. First-ever Open with no Close: reps = **8**, kg blank until typed.
     Open never reads a card reps field. Same 8 for every lift — no
     per-muscle default.
+13. Working band 3–30: log 12 → Next **12**; log 30 → Next **30**;
+    log 2 → Next **3**; log 40 → Next **30**.
+14. 30 @ RIR 2 uses the clamped-20 e1RM cell (60%). On-target RIR does
+    not drop kg just because the set was long.
 
 ---
 
