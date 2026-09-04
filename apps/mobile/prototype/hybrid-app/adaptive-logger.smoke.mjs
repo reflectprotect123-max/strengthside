@@ -11,4 +11,7 @@ must(!html.includes('HybridAdaptive.decideNextCond') || html.includes('function 
 must(html.includes('HybridAdaptive.closeLift'), 'Finish calls closeLift');
 must(html.includes('HybridAdaptive.openLift'), 'session start calls openLift');
 must(html.includes('adaptiveClose') || html.includes('lastClose'), 'stores Close locally');
+must(html.includes('HybridAdaptive.decideNextCond'), 'cond Next');
+must(html.includes('actualRpe'), 'passes actual RPE');
+must(html.includes('modality'), 'watts vs split');
 console.log('adaptive-logger.smoke: ok');
