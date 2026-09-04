@@ -124,6 +124,30 @@ nextW = e1rm × pct
 `e1rm / (1 + (nextReps + targetRir) / 30)` is the same line. Same three
 boxes you already type. No extra slider.
 
+**v1 % chart** — every cell is that formula. Not a Helms/Zourdos lookup.
+Effective reps (`reps + RIR`) clamp 1–20, same as `e1rmValue`. A true
+1-rep max at RIR 0 is **96.8%**, not 100% — that is Epley, not a bug.
+Next uses the **target RIR column** (default **RIR 2**), not RIR 0.
+
+| Reps | RIR 0 | RIR 1 | RIR 2 | RIR 3 | RIR 4 | RIR 5 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 96.8% | 93.8% | 90.9% | 88.2% | 85.7% | 83.3% |
+| 2 | 93.8% | 90.9% | 88.2% | 85.7% | 83.3% | 81.1% |
+| 3 | 90.9% | 88.2% | 85.7% | 83.3% | 81.1% | 78.9% |
+| 4 | 88.2% | 85.7% | 83.3% | 81.1% | 78.9% | 76.9% |
+| 5 | 85.7% | 83.3% | **81.1%** | 78.9% | 76.9% | 75.0% |
+| 6 | 83.3% | 81.1% | 78.9% | 76.9% | 75.0% | 73.2% |
+| 7 | 81.1% | 78.9% | 76.9% | 75.0% | 73.2% | 71.4% |
+| 8 | 78.9% | 76.9% | 75.0% | 73.2% | 71.4% | 69.8% |
+| 9 | 76.9% | 75.0% | 73.2% | 71.4% | 69.8% | 68.2% |
+| 10 | 75.0% | 73.2% | 71.4% | 69.8% | 68.2% | 66.7% |
+| 12 | 71.4% | 69.8% | 68.2% | 66.7% | 65.2% | 63.8% |
+| 15 | 66.7% | 65.2% | 63.8% | 62.5% | 61.2% | 60.0% |
+
+Read it: log a set → new Est. 1RM → next kg = Est. 1RM × the cell for
+**next reps × target RIR**. Template 5s at RIR 2 → always the **81.1%**
+cell. Reps on the card change → different row, same column.
+
 **Strength — owner golden path (template A, Bench 3×5 @ 80 kg, target RIR 2)**
 
 1. Open 80. Log 80 × 5, RIR 2 (on plan).  
@@ -193,6 +217,8 @@ Colocated. No `--passWithNoTests`.
    rename the day.
 7. Miss at 82.5 × 4 @ RIR 0 → Est. 1RM from that set (~93.5), Next ~75.
    Never treats 82.5 as the new max (no 82.5 × 0.95 rule).
+8. % chart matches inverse `e1rmValue`: 5 @ RIR 2 = 81.1%, 6 @ RIR 2 =
+   78.9%, 1 @ RIR 0 = 96.8% (not 100).
 
 ---
 
