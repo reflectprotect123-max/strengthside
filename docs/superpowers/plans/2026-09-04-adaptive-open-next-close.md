@@ -28,7 +28,7 @@
 - No `decideNextSet` union. No `{ kind: 'hold' }` on the package.
 - Prototype path only. Never edit `preview-site/` or `apps/mobile/*.js` twins by hand.
 - Est. 1RM = HTML `e1rmValue`: `load × (1 + clamp(reps+rir,1,20) / 30)` rounded to 0.1 kg. Scoreboard + Close. **Not** Next kg.
-- Cond: slide after **work** only. Rower/ski = split. Bike/Echo = watts. Easy → +3% W or −1 s/500 m. Hold inside painted band. Hard → −5% W or +1 s. 10 or stopped → −8% W or +3 s. `% Max Capacity` on the talk-test table is copy, not a watts formula.
+- Cond: slide after **work** only. Painted band = card chip Easy 3–4 / Medium 5–7 / Hard 8–9.5. Rower/ski = split. Bike/Echo = watts. Easy → +3% W or −1 s/500 m. Hold inside painted band. Hard → −5% W or +1 s. 10 or stopped → −8% W or +3 s. `% Max Capacity` on the talk-test table is copy, not a watts formula.
 - 15 s hard / 45 s easy: Next must not return a new rest duration. If still cooked at the next hard, cut **work** (treat as too hard), do not lengthen rest.
 - Holds: no Open / Next / Close / Est. 1RM. Existing `WorkOverlay` countdown stays.
 - Engine fills kg first (Open / Next overwrite the box). Logged kg is the proxy for Est. 1RM and the next Next.
@@ -1171,7 +1171,7 @@ git commit -m "feat(logger): Close last lift set and Open next session from it"
 - Consumes: `decideNextCond`
 - Produces: next work target only
 
-Slider labels (talk test, copy only): 1 conversation … 10 cannot speak. Painted target comes from the card (e.g. 7–8). Rest/easy 45 s is not a second slider.
+Slider labels (talk test, copy only): 1 conversation … 10 cannot speak. Painted band = `COND_EFFORTS` chip (`easy` → 3–4, `medium` → 5–7, `hard` → 8–9.5). Rest/easy 45 s is not a second slider.
 
 - [ ] **Step 1: Write the failing smoke**
 
@@ -1196,7 +1196,7 @@ Intervals: when `advanceInterval` sees `iv.phase==='work'` (about to become rest
 decideNextCond({
   dayKind: 'conditioning',
   modality: t.modality,
-  targetRpe: /* painted work band from the card, e.g. 7-8 */,
+  targetRpe: /* from COND_EFFORTS: easy 3-4, medium 5-7, hard 8-9.5 */,
   actualRpe: num(slider),
   currentWatts: num(t.targetWatts) || null,
   currentSplitSec: null,

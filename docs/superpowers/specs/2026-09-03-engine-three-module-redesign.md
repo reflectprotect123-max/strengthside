@@ -293,10 +293,17 @@ Morpheus / HRV.
 The machine does not change. Rower and ski stay in **split**. Bike and
 Echo stay in **watts**. The slider only moves that number.
 
-You paint a **target RPE** on **work** using the talk-test scale below
-(example: 15 s hard at **7–8**). Easy/rest is meant to feel about
-**3–4**. Rest duration does **not** get a slider and does **not**
-change.
+You paint **Easy / Medium / Hard** on the card (not a typed `7–8`).
+
+| Chip | Painted work band |
+| --- | --- |
+| Easy | **3–4** |
+| Medium | **5–7** |
+| Hard | **8–9.5** |
+
+After work you slide **1–10**. We compare that slide to the chip’s
+band. Easy/rest is meant to feel about **3–4**. Rest duration does
+**not** get a slider and does **not** change.
 
 You still pick the watts or split to **begin**. No history → you type
 the first one. After that the slider steers.
@@ -320,9 +327,9 @@ a max. We do **not** use HR.
 | **9** | Near max. Laboured. | Gasping / grunts | Sprint / almost all-out |
 | **10** | Redline. A few seconds. | Cannot speak | Max / had to stop |
 
-Painted **7–8** means the hard bout should land in 7 or 8 on this
-scale. Painted **3–4** is how easy *should* feel — we still **do not**
-slide the easy/rest.
+Painted **Hard (8–9.5)** means the hard bout should land in that band
+on this scale. Easy *should* feel **3–4** — we still **do not** slide
+the easy/rest.
 
 ### After work — Next
 
