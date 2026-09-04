@@ -18,4 +18,8 @@ must(!toggle.includes('actualRpe'), 'toggleSet must not see RPE');
 const hold = slice('startHoldCountdown');
 must(!hold.includes('HybridAdaptive'), 'hold door never calls the package');
 must(!overlay.includes('HybridAdaptive'), 'WorkOverlay never calls the package');
+const adv = slice('advanceInterval');
+must(adv.includes('decideNextCond'), 'advanceInterval is the cond Next door');
+must(!adv.includes('decideNextLift'), 'advanceInterval must not call lift Next');
+must(!adv.includes('rir'), 'advanceInterval must not see RIR');
 console.log('adaptive-routes.smoke: ok');
