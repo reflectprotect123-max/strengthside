@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v171'"), 'LOCAL_BUILD v160');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v172'"), 'LOCAL_BUILD v160');
 must(html.includes('function athExerciseSuggestBtn'), 'athExerciseSuggestBtn helper');
 must(html.includes('class="searchpick ath-ex-pick"'), 'delegated athlete pick buttons');
 must(html.includes('class="searchpick ex-sheet-pick"'), 'delegated sheet pick buttons');

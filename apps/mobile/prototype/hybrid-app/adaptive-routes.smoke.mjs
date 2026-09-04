@@ -22,4 +22,8 @@ const adv = slice('advanceInterval');
 must(adv.includes('decideNextCond'), 'advanceInterval is the cond Next door');
 must(!adv.includes('decideNextLift'), 'advanceInterval must not call lift Next');
 must(!adv.includes('rir'), 'advanceInterval must not see RIR');
+must(html.includes('persistCloseForCond') && html.includes('HybridAdaptive.closeCond'), 'Finish persists cond Close');
+must(html.includes('HybridAdaptive.openCond'), 'session Open calls openCond');
+must(!hold.includes('openCond'), 'hold must not openCond');
+must(!hold.includes('closeCond'), 'hold must not closeCond');
 console.log('adaptive-routes.smoke: ok');
