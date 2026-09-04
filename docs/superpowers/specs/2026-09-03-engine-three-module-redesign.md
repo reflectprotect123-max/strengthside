@@ -18,13 +18,14 @@ adapters, Big Mac, one-set logger, old `decideProgression` APIs.
 ## ELI5
 
 You paint the week: Strength, Conditioning, or Recovery. You own
-templates A and B. You change the lifts.
+templates A and B. You change the **lifts**. You do **not** paint reps
+or kg — the engine fills those.
 
 The engine does three jobs, every workout, same verbs for a lift or a
 row — plus a **guessed 1RM** per lift so you can see strength go up
 and so Open/Next are not just “whatever you did last time in kilos.”
 
-1. **Open** — start from last time’s number (or you type one), using
+1. **Open** — first set’s **kg and reps** (or you type over them), using
    Est. 1RM when we have one.
 2. **Next** — you log a set → the **next** set’s kg **and** reps change.
 3. **Close** — remember last make **and** the new Est. 1RM.
@@ -39,7 +40,7 @@ list.
 | | You | Engine |
 | --- | --- | --- |
 | Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
-| Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only on lifts/cond (kg, reps, watts). Hold seconds stay on the card. |
+| Cards | Template A and B (**which lifts**, order, how many sets). Cond card when you make one. You do not prescribe reps or kg. | **kg and reps** on lifts; watts on cond. Hold seconds stay on the card (countdown only). |
 | Logger | You log **weight × reps × RIR** on a lift. Timed holds use the card’s seconds and a **countdown**, not Next. | After each **lift** log, **Next** fills set N+1 **kg and reps**. Holds do not go through Next. Set count stays on the card. |
 
 Nutrition, coach publish, pain/illness UI, and LLM decide are out.
@@ -58,7 +59,7 @@ Pure TypeScript. Zero I/O. HTML logger is the only caller. `dayKind` is
 | --- | --- | --- | --- |
 | **Open** | First target of this exercise / bout | `openTarget` | No |
 | **Next** | After a logged set / interval | `decideNextSet` | No |
-| **Close** | Session done — remember last make + Est. 1RM | `closeAnchor` | Returns the anchor; **adapter** saves it |
+| **Close** | Session done — remember last make + reps + Est. 1RM | `closeAnchor` | Returns the anchor; **HTML app** saves it |
 
 **Est. 1RM (pure helper, used by Open / Next / Close):**
 `estimateOneRm({ loadKg, reps, rir })` → kilograms. Same math as
@@ -73,8 +74,8 @@ has logged bouts, same clock.
 - Open never waits for a working max, level, or “3 exposures.”
 - Next never saves the week. It only returns set N+1.
 - Close never adds +2.5% “because the session went well.” It stores the
-  last **made** load and the session Est. 1RM. Next Monday’s Open reads
-  those.
+  last **made** load, **reps**, and the session Est. 1RM. Next Open
+  reads those — including the reps. There is no card-reps fallback.
 - WHOOP / HRV / sleep do not change Open or Next numbers. They do not
   flip the day.
 - Pain is not a branch in these three modules.
@@ -153,20 +154,19 @@ Next uses the **target RIR column** (default **RIR 2**), not RIR 0.
 Read it: log a set → new Est. 1RM → next **reps = what you just did** →
 next kg = Est. 1RM × the cell for **those reps × target RIR**. You did
 5s at RIR 2 → 81.1% cell, 5s again. You did 4s → 4s at the 4-rep cell.
-Open (first set of the day) still uses the **card’s** reps.
 
-**Strength — owner golden path (template A, Bench 3×5 @ 80 kg, target RIR 2)**
+**Strength — golden path (you put Bench on A, 3 sets, target RIR 2. Engine picks reps.)**
 
-1. Open 80 × 5. Log 80 × 5, RIR 2 (on plan).  
-   Est. 1RM ~98.7 → Next **80 × 5**. On-plan does **not** add a plate
-   and does not change reps.
-2. Log 80 × 5, RIR 3 (easier than target).  
+1. No history: Open **5** reps, kg blank until you type (v1 default reps
+   = 5). You type 80. Log 80 × 5, RIR 2.  
+   Est. 1RM ~98.7 → Next **80 × 5**.
+2. Log 80 × 5, RIR 3 (easier).  
    Est. 1RM ~101.3 → Next **82.5 × 5**.
-3. Log 82.5 × 4, RIR 0 (miss / grind).  
-   Est. 1RM from **what you did** (~93.5). Next **reps = 4**, kg = 4s @
-   RIR 2 ≈ **77.5**. Not 75 × 5, not 82.5 as a max.
-4. You change the bar yourself: asked 25 × 5, log **40 × 6**, RIR 2.  
-   Est. 1RM ~50.7. Next **40 × 6**, not 27.5 × 5, not 42.5 × 6.
+3. Log 82.5 × 4, RIR 0 (miss).  
+   Est. 1RM ~93.5. Next **77.5 × 4**. Close stores 4s.  
+   Next session Open is **4s** at % of that Est. 1RM — not a card of 5s.
+4. You type **40 × 6**, RIR 2.  
+   Est. 1RM ~50.7. Next **40 × 6**. Close stores 6s. Next Open is 6s.
 
 | How the set went vs target RIR | What Next writes |
 | --- | --- |
@@ -198,11 +198,20 @@ conditioning.
 
 ## Open and Close
 
-**Open** prefers: you typed a number → else `e1rm × pct(cardReps, targetRir)` (card’s reps, same inverse as Next) rounded to plates → else last Close load → else blank. Timed holds skip Open.
+**Open** (first set of this lift today):
+
+```text
+reps = you typed → else last Close reps → else 5
+kg   = you typed → else Est. 1RM × pct(those reps, targetRir) rounded
+       to plates → else last Close load → else blank
+```
+
+No card-reps input. Timed holds skip Open.
 
 **Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
-what you actually finished. HTML app saves hints + Est. 1RM. Close does
-**not** invent an extra bump on top of Next. Timed holds skip Close.
+what you actually finished. HTML app saves that. Next Open reads **those
+reps**. Close does **not** invent an extra bump on top of Next. Timed
+holds skip Close.
 
 ---
 
@@ -214,7 +223,8 @@ what you actually finished. HTML app saves hints + Est. 1RM. Close does
 3. After each logged **lift** set → `decideNextSet` → next row.
    Seconds rows start `WorkOverlay` instead — no `decideNextSet`.
 4. Session end → `closeAnchor` → hint for next Open.
-5. You edit A/B in Library. Engine does not invent exercises.
+5. You pick lifts in Library. Engine does not invent exercises. Engine
+   **does** invent kg and reps.
 
 Implementation plan is a later step. Do not write package code until
 that plan exists and is approved.
@@ -227,22 +237,25 @@ Colocated. No `--passWithNoTests`.
 
 1. Bench 80 × 5 @ RIR 2 → Next **80 × 5** (on-plan does not add a plate or change reps).
 2. Bench 80 × 5 @ RIR 3 → Next **82.5 × 5**.
-3. Asked 25×5, logged 40×6 @ RIR 2 → Est. 1RM ~50.7, Next **40 × 6**, not 27.5×5 and not 42.5×6.
+3. Typed 40×6 @ RIR 2 → Est. 1RM ~50.7, Next **40 × 6**. Close reps = 6.
+   Next Open reps = 6, not a card of 5.
 4. 40×6 at 2 RIR → `e1rmValue` matches today’s logger hint; 40×6 at 0 RIR
    → lower Est. 1RM (harder set, smaller implied max).
 5. Three easy sessions in a row: Close still does **not** invent an extra
    +2.5 on top of what Next already did in-session.
 6. `dayKind` never appears in output; Strength vs Conditioning cannot
    rename the day.
-7. Miss 82.5 × 4 @ RIR 0 → Est. 1RM ~93.5, Next **77.5 × 4** (believes 4,
-   not 75 × 5, not 82.5 as a max).
+7. Miss 82.5 × 4 @ RIR 0 → Est. 1RM ~93.5, Next **77.5 × 4**. Close reps
+   = 4. Next Open is 4s, not 5s.
 8. % chart matches inverse `e1rmValue`: 5 @ RIR 2 = 81.1%, 6 @ RIR 2 =
    78.9%, 1 @ RIR 0 = 96.8% (not 100).
 9. Seconds rows skip Open / Next / Close and never call `e1rmValue`
    (30 s is not 30 reps). Card seconds stay card seconds.
 10. Timed hold v1 is a logger countdown (`WorkOverlay`) for the
     prescribed seconds — no +5 s, no “believe a longer hold.”
-11. Next never changes set count. Card 3× stays 3 sets.
+11. Next never changes set count. You still own how many sets.
+12. First-ever Open with no Close: reps = **5**, kg blank until typed.
+    Open never reads a card reps field.
 
 ---
 
