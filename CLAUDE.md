@@ -1,12 +1,13 @@
 # Claude Code operating contract — TheStrengthEngine
 
 This repository is **the product**: the Hybrid HTML athlete app (manual
-logging + Library templates + calendar), nutrition, WHOOP/Concept2/Echo, and
-Capgo/dogfood ship. **All product engines were deleted 2026-09-03**
-(S&C + nutrition packages and all athlete/coach wiring). See
-`docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`. It was split
-out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026 and still
-points at the **same Supabase project**.
+logging + Library templates + calendar), WHOOP/Concept2/Echo, and Capgo/dogfood
+ship. **All product engines were deleted 2026-09-03** (S&C + nutrition packages
+and all athlete/coach wiring). Blank slate shipped Capgo **1.0.52** / cache
+**v168** on 4 September 2026. See
+`docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md` and `handoff.md`.
+It was split out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026
+and still points at the **same Supabase project**.
 
 `THE-HYBRID-ENGINE1` is a **schema stub only** (as of 26 August 2026): no athlete
 app, no coach product, no Expo, no Netlify coach deploy. Coach/ARC UI was deleted

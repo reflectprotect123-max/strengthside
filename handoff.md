@@ -1,12 +1,10 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 3 September 2026 (blank slate).**
-> **Core All product engines deleted** — packages + all wiring. Manual log only.
+> **AUTHORITATIVE CHECKPOINT — 4 September 2026 (blank slate shipped).**
+> Chat history before this file is disposable. Start here.
+>
 > Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
-> **Product:** Hybrid HTML athlete app + Capgo/dogfood + Netlify. Coach = parked.
-> **Companion `THE-HYBRID-ENGINE1`:** shared-Supabase schema stub only — no apps.
-> Charter: `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`
-> **`CLAUDE.md`** owns engineering rules and the twelve-table Supabase contract.
+> Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
 
 ---
 
@@ -14,129 +12,116 @@
 
 | | |
 | --- | --- |
+| **Product** | Hybrid HTML athlete app only — Home · Library (dumb templates) · Calendar · Settings · manual logger |
+| **Engines** | **NONE.** All product engines deleted (strength, conditioning, nutrition, recovery, coordinator, Big Mac). Do not revive. |
+| **Next brain** | One **new** adaptive intelligent engine package with **new APIs** — design from scratch |
+| **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **Branch** | `cursor/autopilot-rebuild-84a0` |
-| **Cache** | **`the-hybrid-athlete-blank-v167`** (`LOCAL_BUILD` + SW `CACHE` together) |
-| **All product engines** | **DELETED** — no strength/cond/nutrition engines — one adaptive engine TBD |
-| **Coach** | Parked page only — no S&C publish/pull |
-| **Web** | https://thehybridsystem.netlify.app/ |
+| **Branch** | `main` @ merge of blank-slate PR #161 |
+| **Cache** | **`the-hybrid-athlete-blank-v168`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.52`** (blank slate, cache v168) |
+| **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
+| **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
-**Ship ritual:** `pnpm run verify` → sync HTML → Capgo upload if bundle moves → refresh this handoff.
+**Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Do not revisit (owner lock — Sep 2026):** ARC / multi-coach · Expo / second athlete shell · **pain / illness** product work · restoring deleted engine packages from git history.
+**Phone:** Settings → Check for updates → expect **1.0.52** / build **blank-v168**.
 
-**Owner lock — Sep 2026:** Coach parked. Core model = blank slate — design anew, do not revive old APIs.
+**Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
 ---
 
 ## 0.5 Secrets vault (agent recovery)
 
-> **Private repo only.** **Netlify UI only** = value never pasted in chat.
+> **Private repo only.** Prefer Netlify UI for values never pasted in chat.
 
 ### Capgo OTA
 
 | Key | Value |
 | --- | --- |
-| `CAPGO_TOKEN` / repo-root `.capgo` (gitignored) | see vault |
+| Token | repo-root `.capgo` (gitignored) or `CAPGO_TOKEN` |
 | App ID | `com.hybrid.athlete` |
-| Channel / bundle | **`dogfood` + `live`** / **`1.0.49`** (cache v162) |
-| Upload | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.49 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Channels | **`dogfood` + `live`** both @ **`1.0.52`** |
+| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.52 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.52` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 
-Unchanged — see prior vault entries. Athlete site: **thehybridsystem**. OpenRouter on Netlify (not hybrid1).
+Unchanged. Athlete site: **thehybridsystem**. WHOOP ownership stays on hybrid1 Netlify; athlete site proxies.
 
-### Coach access
+### Coach
 
-| Mode | How |
+Parked. No publish/pull. Demo credentials and desktop shell are frozen until coach park lifts.
+
+---
+
+## 1. What exists on `main` now
+
+### Alive
+
+- Hybrid HTML shell + classic manual strength logger (kg × reps × RIR) + conditioning log chrome
+- Session chrome / rest / work overlays
+- Exercise search + load-profile **column UI** (metadata only — not an engine)
+- WHOOP + Concept2 + Echo FTMS + Capgo live update
+- Shared Supabase **twelve-table data ledger** (RLS + `embed-coaching-note`) — storage only
+- Library starters (Full Body A, Aerobic, Recovery) as dumb templates
+- `openVolume` field (was `autopilotVolume`) — open vs pinned sets×reps; no brain behind it
+
+### Gone for good (do not restore)
+
+| Layer | Deleted |
 | --- | --- |
-| **Real (cloud)** | Supabase sign-in on coach.html → roster athlete UUID → **Publish** → athlete pull |
-| **Demo (offline)** | `dan@thehybrid.local` / `demo` — local bridge only |
-| **Windows shell** | Install from **coach-desktop-latest** release; UI OTA via Netlify reload |
+| Packages | `packages/` is **empty** — no `strength-engine`, `engine`, `shared-core`, `nutrition-engine`, `nutrition-core` |
+| Athlete S&C wiring | adapters, bundles, Big Mac, one-set logger, cond autoreg, recovery trio, coordinator, strength AI/sync |
+| Nutrition | UI, sync, food catalog, label scan |
+| Netlify decide | `big-mac-decide`, `ai-strength-progression`, `ai-coach-intent` |
+| Coach S&C | source + stubs; static park page only |
+| Identifiers | Proxy stubs removed; no `StrengthAdapter` / `EngineAdapter` / `BigMacBridge` / `CoachSync` / `Autopilot` globals in live source |
+
+`migrateOpenFields` on load renames legacy `autopilotVolume` → `openVolume` then deletes the old key.
+
+### Evidence-platform
+
+`evidence-platform/` is a separate Python governance tree — **not wired** to the athlete app. Do not treat it as a product engine.
 
 ---
 
-## 1. What's shipped on `main` (do not redo)
+## 2. What to do next
 
-- **Athlete app:** Hybrid HTML — Home · Library · Calendar · Settings
-- **Five product engines + BIG MAC hooks** (strength, conditioning, nutrition, recovery, coordinator)
-- **Coach portal:** cloud publish, calendar, session builder (delete blocks, superset B1/B2, drag-drop, reps forward-fill)
-- **Coach desktop:** Electron shell + GitHub-release shell OTA
-- **Recovery debt/repay** · WHOOP + Concept2 · OpenRouter on Netlify
-- **Verify green** — incl. `coach-v1-e2e`, `big-mac-bridge`, `coach-desktop`, `dogfood-debt.smoke.mjs`
+1. **Design the one adaptive engine** (new package name + new public API). Spec first; do not copy deleted module shapes.
+2. Wire it only after owner sign-off — athlete HTML is the sole consumer until an explicit rewrite.
+3. Ignore old dogfood backlog rows that assumed coach publish, Big Mac hooks, or five engines — those tracks are closed.
 
----
-
-## 2. Twenty-item backlog (1 → 20)
-
-Status: **done** · **code done / owner proof** · **open** · **parked**
-
-| # | Item | Status | Notes |
-| --- | --- | --- | --- |
-| 1 | Upload Capgo bundle | **done** | **`dogfood` + `live` @ `1.0.48`** (3 Sep, cache v160 — exercise picker tap fix). Phone: Settings → Check for updates. |
-| 2 | Phone: coach Publish → athlete pull | **owner proof** | Sign in both apps (same Supabase). Coach roster → link athlete UUID → Publish chip. Athlete foreground or Check for updates. |
-| 3 | Phone: complete → coach **Completed** chip | **owner proof** | After #2: log session on phone → coach calendar chip shows Completed. |
-| 4 | Phone: strapless cond → recovery → debt row | **owner proof** | `node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs` passes in CI; real phone still needed. |
-| 5 | Phone: hybrid week Library + Calendar | **owner proof** | Assign hybrid program; confirm week visible on phone Library/Calendar. |
-| 6 | Phone: web ↔ phone sync after publish | **owner proof** | Change on coach web → athlete phone picks up without reinstall. |
-| 7 | Coach `.exe` smoke on Windows | **owner proof** | Install from coach-desktop-latest; sign-in, publish, Ctrl+R, shell OTA check. |
-| 8 | Code-sign coach `.exe` | **open** | Needs code-signing cert; SmartScreen warning until then. |
-| 9 | Coach logger friction pass | **done** | Debounced persist, rest twin sync (#112). |
-| 10 | Coach chip kebab dismiss | **done** | Click-outside + Escape; chip/cell menus mutual close (#112). |
-| 11 | Program grid swap edge cases | **done** | Occupied cells accept paste; move swaps templates (#112). |
-| 12 | Athlete logger friction pass | **done** | MAX targets, zero rest, rest menu, superset columns (#112). |
-| 13 | BIG MAC five hooks on phone | **owner proof** | CI: `check:big-mac-bridge`; confirm receipts on device after sessions. |
-| 14 | Pain/illness flags | **out of scope** | No agent planning or implementation. Grokbot owns. Legacy `pain_blocked` exposure class in strength-engine may stay; do not extend. |
-| 15 | Refresh handoff | **done** | This write. |
-| 16 | Release notes habit (Capgo + desktop) | **done** | `docs/RELEASE_NOTES.md` — bump row when shipping. |
-| 17 | Permanent links in README/handoff | **done** | coach-desktop-latest + dogfood-latest in §0. |
-| 18 | LLM lead-fallback in athlete app | **parked** | Owner approval required (Constitution step 5). |
-| 19 | Decision Hub implementation | **parked** | Owner sign-off post-research. |
-| 20 | Research corpus → promoted rules | **parked** | 2,814 sources; `gates.py` needs two human reviewers per promotion. |
-
-### Phone proof script (items 2–6)
-
-1. Install/open dogfood APK (or Capgo-updated shell).
-2. Pull **1.0.19** (Settings → Check for updates).
-3. Coach: Supabase sign-in → Athletes → paste athlete UUID → assign + **Publish**.
-4. Athlete: pull → start session → complete all tasks → finish.
-5. Coach: calendar → **Completed** chip on that session.
-6. Repeat: strapless conditioning → recovery prescription → debt row on athlete Home.
-7. Hybrid week: coach program grid → assign → verify Library/Calendar on phone matches web.
-
-### Automated checks (before phone)
+**Useful checks**
 
 ```bash
 pnpm run verify
-node apps/mobile/prototype/hybrid-app/dogfood-proof-prep.smoke.mjs
-node apps/mobile/prototype/hybrid-app/dogfood-debt.smoke.mjs
-node apps/mobile/prototype/hybrid-app/coach-v1-e2e.smoke.mjs
+pnpm run check:hybrid-html-sync
+node apps/mobile/prototype/hybrid-app/blank-slate-wm.smoke.mjs
+node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + openVolume shape
 ```
 
 ---
 
 ## 3. Rules (do not silently reverse)
 
-| Engine | Athlete name | Visible? |
-| --- | --- | --- |
-| Strength | Hybrid Strength | Yes |
-| Conditioning | The Engine | Yes |
-| Nutrition | Nutrition | Yes |
-| Recovery | — | Debt row only |
-| Coordinator | — | Invisible |
-
-- **Silent apply** · **never block training** (solo dogfood) · `@hybrid/strength-engine` **pure**
-- **Out of scope for agents:** ARC / multi-coach · Expo / second athlete shell · pain / illness (grokbot)
-- **Cancelled product tracks:** Coach bench revival · ARC analytics · Expo / PWA athlete shell
+- **Zero product engines** until the new adaptive package lands under a deliberate design.
+- **Do not** recreate Expo / Home / PWA / coach portal / ARC.
+- **Do not** move pain/illness into a specialist engine; flags stay unclassified product-wise.
+- Strength decision logic, when it returns, stays **pure** (no I/O in the package).
+- Migration filenames on the shared Supabase ledger are sacred — never rename applied migrations.
+- Neither this repo nor the hybrid stub writes migrations against the other's tables.
 
 ---
 
-## 4. Branches & PRs
+## 4. Branches & ship record
 
-| Branch | Tip | Purpose |
-| --- | --- | --- |
-| `main` | `2bafdc0` | Athlete + coach + metric logger (v157) |
+| Ref | Note |
+| --- | --- |
+| `main` | Blank slate merged via PR **#161** (2026-09-04) |
+| Capgo | **1.0.52** on `dogfood` + `live` |
+| Netlify | Deploy athlete Netlify workflow **success** on merge commit |
+| Dogfood APK | Workflow **success** on merge commit |
+| Cache | `the-hybrid-athlete-blank-v168` |
 
-**Next agent on product:** §2 table — prioritize **owner proof** rows 2–7 on a real phone.
-
-**Next agent on research:** `evidence-platform/docs/SESSION-HANDOFF-2026-08-30.md` — only if owner asks.
+**Next agent:** read this file + the blank-slate spec + `CLAUDE.md`. Ignore prior chat. Start from blank slate.
