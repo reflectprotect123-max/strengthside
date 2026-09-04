@@ -1104,6 +1104,8 @@ Expected: FAIL (`loads adaptive-bundle.js` or `decideNextLift`)
 
 Also wire `logSupersetSet`: same `decideNextLift` call, next row on **that** `ex.rows`, not the partner lift.
 
+On un-log (`r.done` already true): mark not done, and if the next not-yet-logged non-hold row was filled by Next, clear its `weight`/`reps` (go back). Do not call `decideNextLift` on undo. On the next Log, Next reruns from the (fixed) log.
+
 - [ ] **Step 4: Run smoke + hold smoke**
 
 Run: `node apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs && node apps/mobile/prototype/hybrid-app/adaptive-routes.smoke.mjs && node apps/mobile/prototype/hybrid-app/hold-countdown.smoke.mjs`  

@@ -204,6 +204,14 @@ Logger: engine fills kg first. You may change the box, then Log
 **kg × reps × RIR**. Logged kg is the proxy (Est. 1RM + next Next).
 Next kg/reps come from the table below, **not** from Est. 1RM %.
 
+**Un-log (locked).** Tap Log again to undo that set. The following
+not-yet-logged row that Next filled goes back (clear the engine fill).
+Do **not** invert the formula. Fix the row if it was wrong, Log again —
+`decideNextLift` **reruns** from that log. Same for `logSupersetSet`.
+If the next row is already logged, leave it.
+
+---
+
 **Mechanism:** double progression via **RIR**, inside **the range you
 typed**. Easy in the **middle** of the range does **not** add weight.
 A **single number** (`5`, 3×5, a true single `1`) uses the **same kg
