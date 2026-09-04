@@ -17,4 +17,7 @@ must(html.includes('modality'), 'watts vs split');
 const ss = html.slice(html.indexOf('function toggleSupersetDone'), html.indexOf('function toggleSupersetDone') + 500);
 must(ss.includes('clearNextLiftFill'), 'superset un-log clears Next fill');
 must(ss.includes('decideNextLift'), 'superset edit Log fills Next');
+must(html.includes('HybridAdaptive.closeCond'), 'Finish calls closeCond');
+must(html.includes('HybridAdaptive.openCond'), 'session start calls openCond');
+must(html.includes('adaptiveCondClose'), 'stores cond Close locally');
 console.log('adaptive-logger.smoke: ok');

@@ -19,14 +19,14 @@
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `main` @ merge of blank-slate PR #161 |
-| **Cache** | **`the-hybrid-athlete-blank-v171`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.53`** (cache blank-v171) |
+| **Cache** | **`the-hybrid-athlete-blank-v172`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.53`** (cache blank-v172) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.53** (cache **blank-v171**).
+**Phone:** Settings → Check for updates → expect **1.0.53** (cache **blank-v172**).
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
