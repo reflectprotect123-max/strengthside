@@ -40,7 +40,7 @@ list.
 | --- | --- | --- |
 | Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
 | Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only (kg, reps, watts, time). |
-| Logger | You log the set. | After each log, **Next** fills set N+1. |
+| Logger | You log **weight × reps × RIR** (the set row already on the phone). | After each log, **Next** fills set N+1 from those three fields. |
 
 Nutrition, coach publish, pain/illness UI, and LLM decide are out.
 
@@ -61,7 +61,8 @@ Pure TypeScript. Zero I/O. HTML logger is the only caller. `dayKind` is
 | **Close** | Session done — remember last make + Est. 1RM | `closeAnchor` | Returns the anchor; **adapter** saves it |
 
 **Est. 1RM (pure helper, used by Open / Next / Close):**
-`estimateOneRm({ loadKg, reps, rir })` → kilograms. Not a gym max.
+`estimateOneRm({ loadKg, reps, rir })` → kilograms. Same math as
+today’s `e1rmValue` in the HTML logger. Not a gym max.
 
 Same three functions for Strength and Conditioning. Recovery: if the
 day is an empty rest stamp, these are not called. If the recovery card
@@ -86,17 +87,18 @@ Owner lock (4 Sep 2026): **compute a 1RM estimate** so strength is
 visible over time and so guesses are better than raw last-kilos.
 
 - **Per exercise.** Bench Est. 1RM is not squat Est. 1RM.
-- **From the log:** load, reps, and RIR (or Peak-style difficulty).
-  Formula v1: Helms / Zourdos 2016 Table 2 (citable).  
-  `e1rm = loadKg / percent(reps, rpe)` where `rpe ≈ 10 − rir`.  
-  If RIR is missing, treat as RPE 8 (2 RIR) so a typed 40 × 6 still
-  computes. Version the table; do not paste a keto-blog grid.
+- **From the log (exact current logger):** weight, reps, RIR on the set
+  row. No new Peak slider. Formula v1 is what `e1rmValue` already does:
+  Epley with effective reps = logged reps + RIR  
+  (`load × (1 + (reps + rir) / 30)`). If RIR is blank, treat as 0 extra
+  reps (same as today’s hint when RIR is empty). Helms/Zourdos table is
+  a later swap if we want it — not v1.
 - **Not a tested max.** UI label is Est. 1RM. A later true 1RM test
   can override; until then this is the number.
-- **Updates when you log.** 25 → you lift 40 × 6 at 2 RIR →  
-  40 / 0.79 ≈ **51 kg** Est. 1RM. Next set at 6 @ ~RPE 8 is still
-  **~40**, not 27.5. If that set was *very* easy, Est. 1RM is higher
-  and Next may add a plate.
+- **Updates when you log.** 25 → you lift 40 × 6 at 2 RIR → Est. 1RM
+  uses that row’s `e1rmValue` (about **51 kg**). Next set still **~40**,
+  not 27.5. If RIR is high (very easy), Est. 1RM is higher and Next may
+  add a plate.
 - **Close** writes the session’s best working-set Est. 1RM (and last
   make). Progress chart = that series over weeks.
 - Conditioning has no 1RM. Watts stay watts.
@@ -118,8 +120,8 @@ Wakes on every completed set, not on Finish.
 
 | How the set went | Next set |
 | --- | --- |
-| Made target, easy (RIR ≥ 2, or slider too-easy, or extra reps) | **progress** — last make + plate (2.5% rounded to increment) |
-| Made target, grind (RIR 0–1 / slider hold) | **hold** |
+| Made target, easy (RIR ≥ 2 on the logger field, or extra reps) | **progress** — last make + plate (2.5% rounded to increment) |
+| Made target, grind (RIR 0–1) | **hold** |
 | Missed target reps | **revert_to_last_make** — last made load this session; if none, original Open |
 
 **You typed a different weight than it asked.** Believe the log, not the
@@ -179,8 +181,8 @@ Colocated. No `--passWithNoTests`.
 1. Bench golden path above (82.5 then back to 80; opener 80).
 2. Asked 25×6, logged 40×6 easy → Next is 40×6, not 27.5 and not 42.5.
    Est. 1RM ≈ 51 kg. Close opener can use that, not 25.
-3. 40×6 at 2 RIR → `estimateOneRm` ≈ 51; 40×6 at 0 RIR → lower Est. 1RM
-   (harder set, smaller implied max).
+3. 40×6 at 2 RIR → `e1rmValue` matches today’s logger hint; 40×6 at 0 RIR
+   → lower Est. 1RM (harder set, smaller implied max).
 4. Three easy sessions in a row: Close still does **not** invent an extra
    +2.5 on top of what Next already did in-session.
 5. `dayKind` never appears in output; Strength vs Conditioning cannot
