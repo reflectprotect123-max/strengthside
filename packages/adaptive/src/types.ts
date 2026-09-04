@@ -25,3 +25,43 @@ export type OpenLiftInput = {
 export type OpenLiftResult =
   | { ok: true; loadKg: number | null; reps: number }
   | { ok: false; reason: 'wrong_day' };
+
+export type CondNextInput = {
+  dayKind: DayKind;
+  modality: 'watts' | 'split';
+  targetRpe: RepRange;
+  actualRpe: number;
+  stopped?: boolean;
+  cooked?: boolean;
+  currentWatts?: number;
+  currentSplitSec?: number;
+};
+
+export type CondNextResult =
+  | { ok: true; watts: number }
+  | { ok: true; splitSec: number }
+  | { ok: true; skipped: true }
+  | { ok: false; reason: 'wrong_day' };
+
+export type CloseCondAnchor = { watts?: number | null; splitSec?: number | null };
+
+export type OpenCondInput = {
+  dayKind: DayKind;
+  modality: 'watts' | 'split';
+  lastClose: CloseCondAnchor | null;
+  typedWatts?: number | null;
+  typedSplitSec?: number | null;
+};
+
+export type OpenCondResult =
+  | { ok: true; watts: number | null }
+  | { ok: true; splitSec: number | null }
+  | { ok: false; reason: 'wrong_day' };
+
+export type CloseCondInput = {
+  lastMade: { watts?: number; splitSec?: number };
+};
+
+export type CloseCondResult =
+  | { ok: true; watts: number }
+  | { ok: true; splitSec: number };
