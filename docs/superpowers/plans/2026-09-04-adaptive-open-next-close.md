@@ -19,7 +19,7 @@
 - Package name `@hybrid/adaptive`. Do not revive `@hybrid/strength-engine`, `@hybrid/engine`, adapters, Big Mac, or old `decideProgression`.
 - Pure functions only — no `fetch`, no Supabase, no `localStorage`.
 - `dayKind` is input only; it must never appear on returned objects.
-- Next never changes set count or cond round count. Rest seconds never appear on Next.
+- Next never changes set count by itself. Logger **+ / −** is yours. **+** keeps Next rolling onto the new row. **−** only an unlogged trailing set. Close = last logged, including added sets.
 - One typed reps range **or** a single number. Blank → `{ min: 8, max: 12 }`. No hidden 3–30 cage. No `/calf/i` 20–30 override.
 - Single number (`min === max`): same kg rules; **Next reps never change**. Logged extra reps still Next that number.
 - Range (`min < max`): double progression via RIR (hit top / middle / under min) at ±2.5 kg plates.
@@ -1091,7 +1091,6 @@ must(!hold.includes('HybridAdaptive'), 'hold door never calls the package');
 must(!overlay.includes('HybridAdaptive'), 'WorkOverlay never calls the package');
 console.log('adaptive-routes.smoke: ok');
 ```
-```
 
 Hold path must remain `startHoldCountdown` with zero `HybridAdaptive`.
 
@@ -1102,7 +1101,7 @@ Expected: FAIL (`loads adaptive-bundle.js` or `decideNextLift`)
 
 - [ ] **Step 3: Write minimal HTML**
 
-Also wire `logSupersetSet`: same `decideNextLift` call, next row on **that** `ex.rows`, not the partner lift.
+Logger **+ / −** on the lift card (replace lone `addExtra` with both). **+** appends a row and fills it from `decideNextLift` on the last logged set (keep rolling). **−** only if the last row is not logged. Cap 12. Do not let Next change count on its own.
 
 On un-log (`r.done` already true): mark not done, and if the next not-yet-logged non-hold row was filled by Next, clear its `weight`/`reps` (go back). Do not call `decideNextLift` on undo. On the next Log, Next reruns from the (fixed) log.
 

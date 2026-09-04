@@ -286,6 +286,12 @@ there. You may change it, then Log. Logged kg updates Est. 1RM. Est.
 **Close** = **last logged set only** `{ loadKg, reps, e1rmKg }`. Warm-ups
 earlier so they never Close. A backoff as the last set is believed.
 
+**Sets + / − (locked).** You own the count. Logger has **+** and **−**.
+The engine never adds or removes sets by itself. **+** adds a set and
+Next **keeps rolling** — engine fills that new row from the last log.
+**−** drops only a trailing set that is **not** logged. Close is still
+the last set you actually logged, including ones you added.
+
 ---
 
 ## Timed holds
