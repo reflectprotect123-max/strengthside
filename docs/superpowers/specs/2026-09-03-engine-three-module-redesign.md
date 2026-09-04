@@ -93,6 +93,19 @@ Wakes on every completed set, not on Finish.
 | Made target, grind (RIR 0–1 / slider hold) | **hold** |
 | Missed target reps | **revert_to_last_make** — last made load this session; if none, original Open |
 
+**You typed a different weight than it asked.** Believe the log, not the
+prescription. Asked **25 × 6**, you log **40 × 6** because 25 was a joke.
+
+- Last make = **40**, not 25.
+- Next set is **40 × 6** (re-anchor). It does **not** crawl 25 → 27.5. It
+  does **not** also slap on a plate the same set you just jumped 15 kg
+  (not 42.5 yet).
+- If the next set at 40 is easy too, *then* Next may add a plate.
+- Close stores **40**. Next Strength day Open is 40.
+
+Same if you log *under* the ask and still make the reps (asked 40, you
+did 35 × 6): last make is 35; Next holds 35 unless you miss.
+
 +2.5% / plate rounding is the 16 Aug research **default**, not a proven
 optimum. Applying it **set-by-set** is last night’s Next module + this
 week’s owner lock. The old session-end `decideProgression` (wait 3
@@ -134,11 +147,13 @@ that plan exists and is approved.
 Colocated. No `--passWithNoTests`.
 
 1. Bench golden path above (82.5 then back to 80; opener 80).
-2. Three easy sessions in a row: Close still does **not** invent an extra
+2. Asked 25×6, logged 40×6 easy → Next is 40×6, not 27.5 and not 42.5.
+   Close opener is 40.
+3. Three easy sessions in a row: Close still does **not** invent an extra
    +2.5 on top of what Next already did in-session.
-3. `dayKind` never appears in output; Strength vs Conditioning cannot
+4. `dayKind` never appears in output; Strength vs Conditioning cannot
    rename the day.
-4. Miss at 82.5 never yields 5% off 82.5.
+5. Miss at 82.5 never yields 5% off 82.5.
 
 ---
 
