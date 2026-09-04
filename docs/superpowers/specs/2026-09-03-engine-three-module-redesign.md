@@ -38,7 +38,7 @@ list.
 
 | | You | Engine |
 | --- | --- | --- |
-| Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. | Never changes `dayKind`. No `decideDayKind`. |
+| Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
 | Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only (kg, reps, watts, time). |
 | Logger | You log the set. | After each log, **Next** fills set N+1. |
 
@@ -141,9 +141,10 @@ optimum. Applying it **set-by-set** is last night’s Next module + this
 week’s owner lock. The old session-end `decideProgression` (wait 3
 sessions, then bump) is dead.
 
-**Conditioning** (once you have a card): same Next. Interval 1 easy at
-220 W → interval 2 may be 230 W. Blow up → come back down. Never a squat
-on a Conditioning day.
+**Conditioning** (once you have a card): same Next, **on a Conditioning
+day only**. Interval 1 easy at 220 W → interval 2 may be 230 W. Blow up
+→ come back down. Never a squat on that day. Never a row on a Strength
+day.
 
 ---
 
