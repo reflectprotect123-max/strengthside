@@ -31,7 +31,9 @@ next-kilo boss.
 
 After each set, next set:
 
-Hit the top (12, or 5 if you wrote 5)
+**Range** (you typed `8-12`):
+
+Hit the top (12)
 
 - Easy (RIR 3–4) → +2.5 kg, back to the min
 - Medium (RIR 2) → +2.5 kg, a bit above the min
@@ -43,6 +45,9 @@ In the middle
 - Hard → same bar, back to the min
 
 Under the min → −2.5 kg, back to the min
+
+**Single number** (you typed `5`, or 3×5): same kg rules. **Reps stay
+5.** We do not push reps up. Easy 5 → +2.5 kg and still 5. Not 6.
 
 Set count does not change. Last set is the one that counts. Next
 session starts from that. Time off does not reset you.
@@ -179,8 +184,10 @@ from the table below, **not** from Est. 1RM %.
 
 **Mechanism:** double progression via **RIR**, inside **the range you
 typed**. Easy in the **middle** of the range does **not** add weight.
-Est. 1RM-% Next is **out**. Classic “climb then live on 7s” is **out**.
-The 25 kg × 8 easy → jump toward 40 kg is **out**.
+A **single number** (`5`, 3×5, a true single `1`) uses the **same kg
+rules** and **never moves reps**. Est. 1RM-% Next is **out**. Classic
+“climb then live on 7s” is **out**. The 25 kg × 8 easy → jump toward
+40 kg is **out**.
 
 Plate step: **+2.5 / −2.5 kg** (round to 2.5).
 
@@ -214,6 +221,11 @@ Worked 8–12 examples: easy 12 → +2.5 and **8**. Medium 12 → +2.5 and
 | Hard / grind 0–1 | same | **min** |
 
 **Under the min** → **−2.5 kg**, next reps = **min**.
+
+**Single number (`min === max`)** — you typed `5`, not `5-7`. Same kg
+as the table. Next reps are **always that number**. No “a bit above
+min.” Logged 6 on a painted 5 still Next **5**. Easy 5 → **+2.5 × 5**.
+Grind 5 → **same kg × 5**. Under (4) → **−2.5 × 5**.
 
 Set count does not change. Warm-ups earlier so they never Close.
 
@@ -356,8 +368,11 @@ Colocated. No `--passWithNoTests`.
 8. 80 × 10 @ RIR 3 → **80 × 10** (middle + easy: no jump).
 9. 80 × 10 @ RIR 0 → **80 × 8** (middle + grind → min).
 10. 80 × 6 @ RIR 2 → **77.5 × 8** (under min).
-11. Range `5`: 80 × 5 @ RIR 4 → **82.5 × 5**.
-12. Range `5-7`: 80 × 7 @ RIR 2 → **82.5 × 6** (min+1).
+11. Single number `5`: 80 × 5 @ RIR 4 → **82.5 × 5**. 80 × 5 @ RIR 2 →
+    **82.5 × 5** (not 6). 80 × 6 @ RIR 3 still Next **5** (do not push
+    reps up). 80 × 4 @ RIR 2 → **77.5 × 5**.
+12. Range `5-7`: 80 × 7 @ RIR 2 → **82.5 × 6** (min+1). Range still
+    moves reps. Single number does not.
 13. Logged 0 or 80 reps → Next **refuses** (no substitute band).
 14. Next never returns a new set count.
 

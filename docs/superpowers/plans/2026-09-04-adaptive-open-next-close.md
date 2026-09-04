@@ -18,7 +18,7 @@
 - Next never changes set count or cond round count.
 - One typed reps range; no hidden 3–30 cage; no `/calf/i` 20–30 override.
 - Est. 1RM is the existing HTML `e1rmValue` formula; it does not pick Next kg.
-- Lift Next is the RIR double-progression table in the spec, plate step 2.5 kg. Lift RIR is **not** the cond 1–10 talk-test scale.
+- Lift Next is the RIR double-progression table in the spec, plate step 2.5 kg. Lift RIR is **not** the cond 1–10 talk-test scale. A single painted number (`min === max`) never changes Next reps.
 - Cond Next is target-RPE vs actual-RPE on **work** output only (watts or split). Cond RPE is the locked talk-test 1–10 scale in the spec. Rest duration never changes. `% Max Capacity` on that table is not a watts formula.
 - Colocated tests: `src/foo.ts` ↔ `src/foo.test.ts`. No `--passWithNoTests`.
 - No HTML / cache bump / Capgo in this plan. Logger wire is a follow-up plan.
@@ -363,6 +363,22 @@ describe('decideNextSet lift — hit the top', () => {
     });
   });
 
+  it('medium 5 on a typed 5 adds 2.5 and stays at 5 (no push reps up)', () => {
+    expect(lift(5, 2, { min: 5, max: 5 })).toEqual({
+      ok: true,
+      loadKg: 82.5,
+      reps: 5,
+    });
+  });
+
+  it('logged 6 on a painted 5 still Next 5', () => {
+    expect(lift(6, 3, { min: 5, max: 5 })).toEqual({
+      ok: true,
+      loadKg: 82.5,
+      reps: 5,
+    });
+  });
+
   it('medium 7 on 5-7 adds 2.5 and min+1', () => {
     expect(lift(7, 2, { min: 5, max: 7 })).toEqual({
       ok: true,
@@ -386,9 +402,10 @@ Implement only the lift branch:
 - `reps < 1` or `reps >= 80` → `{ ok: false, reason: 'reps_out_of_sanity' }` (needed in Task 4; can land now).
 - `dayKind !== 'strength'` for `kind: 'lift'` → `{ ok: false, reason: 'wrong_day' }`.
 - Hit top when `logged.reps >= range.max`.
+- If `range.min === range.max`, next reps are **always** that number. Kg still follows easy/medium (+2.5) / grind (hold) / under (−2.5). Do not push reps up even if they logged more than the painted number.
 - Easy RIR `>= 3` → `roundToPlate(load+2.5)`, reps `range.min`.
-- Medium RIR `=== 2` → `load+2.5`; next reps = `range.min` if min===max, else `min + ((max-min) >= 4 ? 2 : 1)` capped at max.
-- Hard RIR `<= 1` → same load, reps `range.max`.
+- Medium RIR `=== 2` → `load+2.5`; if min===max, reps stay min; else next reps = `min + ((max-min) >= 4 ? 2 : 1)` capped at max.
+- Hard RIR `<= 1` → same load, reps `range.max` (which equals min on a single number).
 - `kind: 'hold'` → `{ ok: true, skipped: true }` so later hold tests compile.
 - `kind: 'cond'` may throw or return skipped until Task 7 — do not write watts math yet unless tests require it.
 
