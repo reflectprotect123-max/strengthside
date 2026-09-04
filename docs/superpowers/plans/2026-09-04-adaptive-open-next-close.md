@@ -51,11 +51,32 @@
 | `packages/adaptive/src/index.ts` | Public barrel |
 | `scripts/bundle-adaptive.mjs` | esbuild IIFE → `adaptive-bundle.js` |
 | `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` | Generated; do not hand-edit |
-| `apps/mobile/prototype/hybrid-app/index.html` | Call Open/Next/Close after Log / Finish |
+| `apps/mobile/prototype/hybrid-app/index.html` | Unextracted caller: `toggleSet`, `startHoldCountdown`, `e1rmValue`, `advanceInterval`, `completeConditioning`, `finishSession` |
+| `apps/mobile/prototype/hybrid-app/work-overlay.js` | Graph node `completeWork()` / `startWork()` — hold clock only |
+| `apps/mobile/prototype/hybrid-app/session-flow.js` | Graph node `nextIncompleteTask()` — task handoff, not set Next |
+| `apps/mobile/prototype/hybrid-app/log-columns.js` | Graph node `builderEffortValue()` — painted reps live in `ex.reps` |
 | `apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs` | Source smokes for wire |
 | `package.json` (root) | `build` runs bundle; add smoke to `verify` |
 
 Use **extensionless** relative imports (`from './range.js'` is wrong if files are `.ts` — use `from './range'` so Vitest + `tsc --noEmit` agree without `allowImportingTsExtensions`).
+
+## Graph-backed routes (Graphify + Obsidian)
+
+Ran against `graphify-out/graph.json` (6695 nodes, built `cd2edf72`). Obsidian notes under `graphify-out/obsidian/` (gitignored). **Always pass the prototype node id** — the same symbol exists three times (`prototype/hybrid-app`, `preview-site`, `apps/mobile/` twin). Edit **only** `apps/mobile/prototype/hybrid-app/`, then sync.
+
+**Gap:** `index.html` is **not a graph node**. Graphify AST skipped the inline script. Natural-language `graphify query` also pulled `evidence-platform/` nutrition noise. After that miss, Read on `index.html` is allowed.
+
+| Job | Hook (do this) | Graph / vault (do not confuse) |
+| --- | --- | --- |
+| Lift Next | `toggleSet` in `index.html` (~L2450). Today it copies `r.weight` onto the next empty-kg row. Replace that copy with `decideNextSet`. Range text = `t.reps` (same field `completedTaskEditor` shows; builder writes it via `builderEffortValue()`). |
+| Lift Est. 1RM | Existing `e1rmValue` (~L2527) — keep the formula; `estimateOneRm` must match it. `rowE1rm` already skips seconds rows. |
+| Lift Close / Open | Last **done** non-hold row on Finish (`finishSession` / task complete). Open fills the first empty kg box at session start. |
+| Holds | `toggleSet` already `if(isHoldRow(r)){startHoldCountdown(i);return}`. `startHoldCountdown` → graph `startWork()` → `tick()` → `completeWork()` (`apps_mobile_prototype_hybrid_app_work_overlay_*`). Never call `HybridAdaptive` on this path. `hold-countdown.smoke.mjs` already forbids `decideNextSet`. |
+| Cond Next | **Not** `WorkOverlay.completeWork` (that clock is holds). Intervals: `advanceInterval` when `iv.phase==='work'` (before rest). Steady/tempo block: `completeConditioning` (comment already says cond anchors ripped). Slider after **work** only; do not change `t.restSec` or `t.rounds`. |
+| Session “Up next” | Graph `nextIncompleteTask()` is the **next task**, not the next set. Do not hang set Next there. |
+| Builder paint | `builderEffortValue()` reads `ex.reps`. `shouldForwardFillColumn()` is builder grid fill, not logger Next. |
+
+`graphify explain` on `completeWork()` (prototype id): called from `tick` and `finishEarly`; calls `stopWork`. `graphify affected completeWork`: `startWork` (inferred), `skip`, `tick`, `finishEarly`. Obsidian `completeWork().md` / `startWork().md` currently point at the **preview-site twin** — ignore those paths when editing.
 
 ---
 
@@ -1015,26 +1036,28 @@ git commit -m "feat(adaptive): bundle Open Next Close for the Hybrid HTML app"
 - Consumes: `HybridAdaptive.decideNextSet`, `parseRepRange`
 - Produces: next undone strength row gets `{ weight, reps }` from Next; set count unchanged; hold rows never call it
 
-Find the logger function that marks a set done (today `toggleSet` / Log). After `row.done = true` on a **non-hold** strength row, if there is a next planned row:
+`toggleSet` in `index.html` (not in the graph). After a non-hold log it currently does:
+
+`if(r.done&&r.weight){let next=t.rows.slice(i+1).find(x=>!x.done&&!x.weight);if(next)next.weight=r.weight}`
+
+Replace **that copy** with `decideNextSet`. Do not also copy kg. Painted range is `t.reps` (`builderEffortValue` → `ex.reps` on the card; `completedTaskEditor` already prints `t.reps`). Fallback `row.target`. Do not call this on `isHoldRow(r)` — that branch already returns into `startHoldCountdown`.
 
 ```js
-let range = HybridAdaptive.parseRepRange(String(t.effort || t.repsRange || t.target || ''));
+let range = HybridAdaptive.parseRepRange(String(t.reps || (r && r.target) || ''));
 let next = HybridAdaptive.decideNextSet({
   kind: 'lift',
   dayKind: 'strength',
   range,
-  logged: { loadKg: num(row.weight), reps: num(row.reps), rir: row.rir === '' ? null : num(row.rir) },
+  logged: { loadKg: num(r.weight), reps: num(r.reps), rir: r.rir === '' ? null : num(r.rir) },
 });
 if (next.ok && next.loadKg != null) {
-  let nxt = t.rows[i + 1];
-  if (nxt && !nxt.done && nxt.targetKind !== 'seconds') {
+  let nxt = t.rows.slice(i + 1).find(x => !x.done && x.targetKind !== 'seconds');
+  if (nxt) {
     nxt.weight = next.loadKg;
     nxt.reps = String(next.reps);
   }
 }
 ```
-
-Use the actual field names already on the task/exercise object for the painted range (builder effort text). Do not invent a second 3–30 clamp. Do not call this on `isHoldRow(r)`.
 
 - [ ] **Step 1: Write the failing smoke**
 
@@ -1123,7 +1146,7 @@ git commit -m "feat(logger): Close last lift set and Open next session from it"
 ### Task 12: Conditioning work slider → `decideNextSet` kind cond
 
 **Files:**
-- Modify: `apps/mobile/prototype/hybrid-app/index.html` (after a **work** bout, 1–10 slider; call cond Next; write next work watts or split; do not change rest seconds or round count)
+- Modify: `apps/mobile/prototype/hybrid-app/index.html` — `advanceInterval` (work→rest) and `completeConditioning`; **not** `WorkOverlay.completeWork`
 - Modify: `apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs`
 
 **Interfaces:**
@@ -1147,7 +1170,23 @@ Expected: FAIL until cond strings exist
 
 - [ ] **Step 3: Write minimal HTML**
 
-After work (not rest): read slider 1–10, `decideNextSet({ kind: 'cond', dayKind: 'conditioning', modality, targetRpe, actualRpe, currentWatts or currentSplitSec, stopped })`. Apply `watts` or `splitSec` to the **next work** target. Leave rest duration unchanged. Intervals: after each hard. Tempo: after the block. Steady: one call mid or at end (same function; HTML decides when).
+Do **not** hang this on graph `completeWork()` — that is the hold clock (`startHoldCountdown` callback). Cond anchors were ripped: `completeConditioning` still has the `/* cond anchors ripped — rebuild */` comment.
+
+Intervals: when `advanceInterval` sees `iv.phase==='work'` (about to become rest), show the 1–10 slider, then `decideNextSet` kind `cond`. Apply watts/split to the **next work** target only. Leave `t.restSec` and `t.rounds` unchanged. Tempo/steady: one slider at `completeConditioning` (or mid-block if that UI already exists). `cooked` if they never came back to easy on 15/45 — treat as too hard; still do not lengthen rest.
+
+```js
+decideNextSet({
+  kind: 'cond',
+  dayKind: 'conditioning',
+  modality: t.modality,
+  targetRpe: /* painted work band from the card, e.g. 7-8 */,
+  actualRpe: num(slider),
+  currentWatts: num(t.targetWatts) || null,
+  currentSplitSec: null,
+  stopped: false,
+  cooked: false,
+});
+```
 
 - [ ] **Step 4: Run smoke to verify it passes**
 
@@ -1190,7 +1229,7 @@ Expected: PASS (if fail, fix HTML, do not weaken the hold smoke)
 
 - [ ] **Step 3: Fix HTML if needed**
 
-`if (isHoldRow(r)) { startHoldCountdown(i); return; }` before any `decideNextSet`.
+Keep the existing early return: `if(isHoldRow(r)){startHoldCountdown(i);return}`. Graph path `startWork` → `tick` → `completeWork` must stay the hold clock. Do not add `HybridAdaptive` inside `work-overlay.js`.
 
 - [ ] **Step 4: Re-run smokes**
 
@@ -1310,3 +1349,5 @@ After Task 14: `finishing-a-development-branch` (verify already in Task 14; no C
 | using-git-worktrees | Optional isolation at execution time; stay on this feature branch if already on it |
 | frontend-design / ui-ux-pro-max | Not for Phase A. Phase B uses existing logger chrome; do not restyle Home |
 | caveman | Owner ELI5; keep athlete-facing copy short if any copy is added |
+| graphify | `explain` / `path` / `affected` on prototype node ids; `query` without ids is too noisy (evidence-platform) |
+| Obsidian vault | Same symbols; notes often cite preview-site twins — do not edit those files |
