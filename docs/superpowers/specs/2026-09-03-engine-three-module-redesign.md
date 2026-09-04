@@ -22,7 +22,8 @@ adapters, Big Mac, one-set logger, old `decideProgression` APIs.
 You paint. Day (Strength / Conditioning / Recovery). Lifts, order,
 sets. Reps as a number or a range. **One range only.** `3` and `5` is
 3×5. Blank reps is **8–12**. No hidden 3–30. No secret calf band.
-Typed kg always wins.
+The engine fills kg first. You may change the box, then Log. Logged
+kg is the next proxy and updates Est. 1RM.
 
 **Lifts — RIR, not RPE.** Log weight × reps × RIR. Blank RIR = grind.
 RIR 4 = easy (several left). RIR 2 = medium. RIR 0 = grind. First log
@@ -90,7 +91,7 @@ engines: out.
 | --- | --- | --- |
 | Week | Paint Strength / Conditioning / Recovery. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. |
 | Cards | Which lifts, order, **set count**. **One** reps range. Timed-hold **seconds**. Cond **target RPE** on work. | **kg** on lifts. After Log, **next kg and next reps**. Cond **watts or split** after work. Hold seconds stay on the card. |
-| Logger | Lifts: **weight × reps × RIR**, Log. Blank RIR = grind (0 extra). Cond: RPE **1–10 after work only**. Rest is rest. | Believe the log. Typed kg always wins. |
+| Logger | Lifts: **weight × reps × RIR**, Log. Blank RIR = grind (0 extra). Cond: RPE **1–10 after work only**. Rest is rest. | Engine fills kg first. Believe the **log**. |
 
 **One range only.** No hidden 3–30 band. No secret calf 20–30. If calves
 should be high, type `20-30`.
@@ -102,8 +103,10 @@ should be high, type `20-30`.
 - `5-7` → 5–7
 - `3` sets and `5` reps → 3×5
 
-Typed kg always wins. Sanity: **refuse 0 reps or 80 reps** (not a second
-band — just reject that log for Next).
+The engine fills kg first (Open / Next). You may change the box, then
+Log. **Logged kg** is the proxy for Est. 1RM and the next Next. Sanity:
+**refuse 0 reps or 80 reps** (not a second band — just reject that log
+for Next).
 
 Nutrition, coach publish, pain/illness product, LLM decide: **out**.
 
@@ -195,9 +198,9 @@ This is what the RIR box **means**. Blank = grind.
 | **1** | Hard. Maybe one more. | Almost done |
 | **0** or blank | Grind. Nothing left. | No extra |
 
-Logger: you type **kg**, **reps**, **RIR**, tap Log. Typed kg always
-wins. Est. 1RM updates from that row (scoreboard). Next kg/reps come
-from the table below, **not** from Est. 1RM %.
+Logger: engine fills kg first. You may change the box, then Log
+**kg × reps × RIR**. Logged kg is the proxy (Est. 1RM + next Next).
+Next kg/reps come from the table below, **not** from Est. 1RM %.
 
 **Mechanism:** double progression via **RIR**, inside **the range you
 typed**. Easy in the **middle** of the range does **not** add weight.
@@ -260,15 +263,15 @@ that exercise, not the lunge in between. Close is per exercise.
 
 ```text
 range = parse(card)           # blank → 8–12
-reps  = you typed on the logger
-        → else last Close reps
+reps  = last Close reps
         → else range.min      # first-ever 8–12 starts at 8
-kg    = you typed
-        → else last Close kg
+kg    = last Close kg
         → else blank          # first-ever: you type it
 ```
 
-Est. 1RM does **not** pick Open kg.
+Engine writes that into the first row even if a leftover number is
+there. You may change it, then Log. Logged kg updates Est. 1RM. Est.
+1RM does **not** pick Open kg.
 
 **Close** = **last logged set only** `{ loadKg, reps, e1rmKg }`. Warm-ups
 earlier so they never Close. A backoff as the last set is believed.
@@ -404,7 +407,8 @@ Colocated. No `--passWithNoTests`.
 **Open / Close**
 
 15. First-ever, blank range, no Close: reps **8**, kg **blank**.
-16. Typed kg 40 wins over last Close 80.
+16. Open writes last Close kg even if a leftover number is in the box.
+    Change the box, then Log — that logged kg is the next proxy.
 17. Close is last logged set only. Next Open uses that kg and those reps
     even after time off. Close does not add +2.5 on top of Next.
 

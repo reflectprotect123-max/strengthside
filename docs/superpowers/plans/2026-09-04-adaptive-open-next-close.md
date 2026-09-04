@@ -31,7 +31,7 @@
 - Cond: slide after **work** only. Rower/ski = split. Bike/Echo = watts. Easy → +3% W or −1 s/500 m. Hold inside painted band. Hard → −5% W or +1 s. 10 or stopped → −8% W or +3 s. `% Max Capacity` on the talk-test table is copy, not a watts formula.
 - 15 s hard / 45 s easy: Next must not return a new rest duration. If still cooked at the next hard, cut **work** (treat as too hard), do not lengthen rest.
 - Holds: no Open / Next / Close / Est. 1RM. Existing `WorkOverlay` countdown stays.
-- Typed kg / typed watts / typed split always win Open.
+- Engine fills kg first (Open / Next overwrite the box). Logged kg is the proxy for Est. 1RM and the next Next.
 - Close is last logged work only. No weekly bump. No layoff reset.
 - Athlete edit path: `apps/mobile/prototype/hybrid-app/index.html` then `bash apps/mobile/sync-hybrid-html.sh`. `LOCAL_BUILD` and SW `CACHE` move together.
 - Shared Supabase: no new migrations. No nutrition / coach / pain product / LLM decide.
@@ -568,8 +568,6 @@ export type CloseLiftAnchor = { loadKg: number; reps: number; e1rmKg: number };
 export type OpenLiftInput = {
   dayKind: DayKind;
   rangeText: string | null;
-  typedKg: number | null;
-  typedReps: number | null;
   lastClose: CloseLiftAnchor | null;
 };
 
@@ -592,23 +590,19 @@ describe('openLift', () => {
       openLift({
         dayKind: 'strength',
         rangeText: null,
-        typedKg: null,
-        typedReps: null,
         lastClose: null,
       }),
     ).toEqual({ ok: true, loadKg: null, reps: 8 });
   });
 
-  it('typed kg wins over last Close', () => {
+  it('Open writes last Close even if a leftover typed kg exists (HTML overwrites the box)', () => {
     expect(
       openLift({
         dayKind: 'strength',
         rangeText: '8-12',
-        typedKg: 40,
-        typedReps: null,
         lastClose: { loadKg: 80, reps: 10, e1rmKg: 100 },
       }),
-    ).toEqual({ ok: true, loadKg: 40, reps: 10 });
+    ).toEqual({ ok: true, loadKg: 80, reps: 10 });
   });
 
   it('uses last Close when logger boxes are blank', () => {
@@ -616,15 +610,13 @@ describe('openLift', () => {
       openLift({
         dayKind: 'strength',
         rangeText: '8-12',
-        typedKg: null,
-        typedReps: null,
         lastClose: { loadKg: 82.5, reps: 8, e1rmKg: 110 },
       }),
     ).toEqual({ ok: true, loadKg: 82.5, reps: 8 });
   });
 
   it('refuses a conditioning day', () => {
-    expect(openLift({ dayKind: 'conditioning', rangeText: '8-12', typedKg: 40, typedReps: null, lastClose: null })).toEqual({ ok: false, reason: 'wrong_day' });
+    expect(openLift({ dayKind: 'conditioning', rangeText: '8-12', lastClose: null })).toEqual({ ok: false, reason: 'wrong_day' });
   });
 });
 ```
@@ -638,8 +630,8 @@ Expected: FAIL (`openLift` not defined)
 
 ```text
 range = parseRepRange(rangeText)
-reps  = typedReps ?? lastClose.reps ?? range.min
-kg    = typedKg ?? lastClose.loadKg ?? null
+reps  = lastClose.reps ?? range.min
+kg    = lastClose.loadKg ?? null
 ```
 
 If `dayKind !== 'strength'` → `wrong_day`. Do **not** compute kg from Est. 1RM. Do not open cond here — that is `openCond` in Task 7.
@@ -653,7 +645,7 @@ Expected: PASS
 
 ```bash
 git add packages/adaptive/src
-git commit -m "feat(adaptive): Open uses typed kg, else last Close, else blank"
+git commit -m "feat(adaptive): Open fills last Close kg first"
 ```
 
 ---
@@ -1039,11 +1031,7 @@ git commit -m "feat(adaptive): bundle Open Next Close for the Hybrid HTML app"
 - Consumes: `HybridAdaptive.decideNextLift`, `parseRepRange`
 - Produces: next undone strength row gets `{ weight, reps }` from Next; set count unchanged; hold rows never call it
 
-`toggleSet` in `index.html` (not in the graph). After a non-hold log it currently does:
-
-`if(r.done&&r.weight){let next=t.rows.slice(i+1).find(x=>!x.done&&!x.weight);if(next)next.weight=r.weight}`
-
-Replace **that copy** with `decideNextLift`. Do not also copy kg. Painted range is `t.reps`. Fallback `row.target`. Do not call this on `isHoldRow(r)`.
+`toggleSet` in `index.html` (not in the graph). After a non-hold log it currently copies kg only if the next box is empty. **Overwrite** that next row with Next (engine fills first). If it feels light they change the box, then Log — that logged kg is the next proxy and Est. 1RM.
 
 ```js
 let range = HybridAdaptive.parseRepRange(String(t.reps || (r && r.target) || ''));
@@ -1137,7 +1125,7 @@ git commit -m "feat(logger): fill next lift from RIR Next"
 
 **Interfaces:**
 - Consumes: `closeLift`, `openLift`
-- Produces: persisted `{ loadKg, reps, e1rmKg }` keyed by exercise id; Open fills first row; typed kg still wins if the box is non-empty
+- Produces: persisted `{ loadKg, reps, e1rmKg }` keyed by exercise id; Open **overwrites** the first row from last Close; they may edit then Log
 
 Persist on `S` (existing local state object) under a small map e.g. `S.adaptiveClose = S.adaptiveClose || {}` keyed by `exerciseId || name`. Do not add Supabase migrations.
 
@@ -1156,7 +1144,7 @@ Expected: FAIL on `closeLift` / `openLift`
 
 - [ ] **Step 3: Write minimal HTML**
 
-On Finish of a strength task: last **done** non-hold row → `closeLift({ lastLogged: {...} })` → save. On building the first empty row at session start: `openLift({ dayKind: 'strength', rangeText, typedKg, typedReps, lastClose })`. If Open `loadKg` is null, leave the kg box blank.
+On Finish of a strength task: last **done** non-hold row → `closeLift({ lastLogged: {...} })` → save. On session start: `openLift({ dayKind: 'strength', rangeText, lastClose })` **overwrites** the first row. If Open `loadKg` is null, leave the kg box blank (first-ever).
 
 - [ ] **Step 4: Run smoke to verify it passes**
 
