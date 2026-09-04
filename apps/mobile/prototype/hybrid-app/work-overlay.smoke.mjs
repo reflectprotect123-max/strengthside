@@ -49,4 +49,14 @@ if (!sandbox.WorkOverlay.isRunning()) throw new Error('startWork should mark run
 sandbox.WorkOverlay.finishEarly();
 if (completed == null || completed < 1) throw new Error('finishEarly should invoke onComplete with elapsed seconds');
 
+if (sandbox.WorkOverlay.prescribedSec({ reps: '45', target: '30s' }) !== 45) {
+  throw new Error('typed seconds win over target');
+}
+if (sandbox.WorkOverlay.prescribedSec({ reps: '', target: '30s' }) !== 30) {
+  throw new Error('target 30s should prescribe 30');
+}
+if (sandbox.WorkOverlay.prescribedSec({}) !== 30) {
+  throw new Error('empty row defaults to 30');
+}
+
 console.log('work-overlay.smoke: ok');

@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.53 | 2026-09-04 | Adaptive Open/Next/Close — lift RIR Next, cond talk-test Next, holds clock-only; cache blank-v171 |
 | 1.0.52 | 2026-09-04 | Blank slate — all product engines deleted; name scrub; openVolume; cache v168 |
 | 1.0.49 | 2026-09-03 | Library-wide builder columns — load profiles default kg×reps; repair stale reps-only templates (cache v162) |
 | 1.0.48 | 2026-09-03 | Fix athlete builder exercise suggest taps blocked by hero panel (cache v160) |

@@ -1,7 +1,12 @@
 # Strength rebuild — full design
 
-> **Mono-app (23 Aug 2026):** Engine math in this spec still informs
-> `@hybrid/strength-engine`. **Do not** execute Phase B coach UI or Expo/RN
+> **4 Sep 2026:** Session-grain progression in later Adaptive V2 / Phase E
+> is superseded by
+> `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`.
+> This file remains the ledger/metric (“LEGO”) design only. Do not revive
+> `@hybrid/strength-engine`.
+>
+> **Mono-app (23 Aug 2026):** **Do not** execute Phase B coach UI or Expo/RN
 > Phase C from this doc. Athlete product is `apps/mobile/prototype/hybrid-app/`.
 > See `docs/superpowers/plans/2026-08-23-mono-athlete-app-charter.md`.
 

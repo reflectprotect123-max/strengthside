@@ -5,7 +5,10 @@ logging + Library templates + calendar), WHOOP/Concept2/Echo, and Capgo/dogfood
 ship. **All product engines were deleted 2026-09-03** (S&C + nutrition packages
 and all athlete/coach wiring). Blank slate shipped Capgo **1.0.52** / cache
 **v168** on 4 September 2026. See
-`docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md` and `handoff.md`.
+`docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`,
+`docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`,
+and `handoff.md`. Do not implement `@hybrid/adaptive` until the
+three-module spec is approved and an implementation plan exists.
 It was split out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026
 and still points at the **same Supabase project**.
 

@@ -12,7 +12,7 @@ mkdir -p "$ROOT/preview-site"
 cp "$SRC" "$ROOT/preview-site/index.html"
 cp "$SW" "$ROOT/preview-site/service-worker.js"
 # Session chrome + logger helpers (no product engines)
-for f in session-chrome.js session-flow.js rest-overlay.js work-overlay.js log-columns.js exercise-load-profiles.js exercise-search-index.js exercise-search.js exercise-history-seed.js exercise-history-seed-apply.js; do
+for f in adaptive-bundle.js session-chrome.js session-flow.js rest-overlay.js work-overlay.js log-columns.js exercise-load-profiles.js exercise-search-index.js exercise-search.js exercise-history-seed.js exercise-history-seed-apply.js; do
   if [[ -f "$SRC_DIR/$f" ]]; then
     cp "$SRC_DIR/$f" "$ROOT/$f"
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"

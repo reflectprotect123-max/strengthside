@@ -35,4 +35,7 @@ integrations only.
 
 ## Next
 
-Design **one** adaptive engine package. Do not revive deleted packages or APIs.
+Living engine spec:
+`docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`
+(Open / Next / Close). Do not revive deleted packages or APIs. Do not
+implement until that spec is approved and an implementation plan exists.

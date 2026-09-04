@@ -1,0 +1,72 @@
+import { describe, expect, it } from 'vitest';
+import { decideNextCond } from './decide-next-cond';
+
+describe('decideNextCond', () => {
+  const base = {
+    dayKind: 'conditioning' as const,
+    modality: 'watts' as const,
+    targetRpe: { min: 7, max: 8 },
+    currentWatts: 220,
+  };
+
+  it('at target (talk-test 7-8) holds watts', () => {
+    expect(decideNextCond({ ...base, actualRpe: 7 })).toEqual({ ok: true, watts: 220 });
+  });
+
+  it('too easy (5 vs 7-8) adds 3%', () => {
+    expect(decideNextCond({ ...base, actualRpe: 5 })).toEqual({ ok: true, watts: 227 });
+  });
+
+  it('too hard (9) subtracts 5%', () => {
+    expect(decideNextCond({ ...base, actualRpe: 9 })).toEqual({ ok: true, watts: 209 });
+  });
+
+  it('10 or stopped subtracts 8%', () => {
+    expect(decideNextCond({ ...base, actualRpe: 10 })).toEqual({ ok: true, watts: 202 });
+    expect(decideNextCond({ ...base, actualRpe: 8, stopped: true })).toEqual({
+      ok: true,
+      watts: 202,
+    });
+  });
+
+  it('still cooked at next hard cuts work, does not return restSec', () => {
+    const next = decideNextCond({ ...base, actualRpe: 8, cooked: true });
+    expect(next).toEqual({ ok: true, watts: 209 });
+    expect(next).not.toHaveProperty('restSec');
+    expect(next).not.toHaveProperty('rounds');
+  });
+
+  it('split moves by 1s easy/hard and 3s on 10', () => {
+    const split = {
+      dayKind: 'conditioning' as const,
+      modality: 'split' as const,
+      targetRpe: { min: 7, max: 8 },
+      currentSplitSec: 120,
+    };
+    expect(decideNextCond({ ...split, actualRpe: 5 })).toEqual({ ok: true, splitSec: 119 });
+    expect(decideNextCond({ ...split, actualRpe: 9 })).toEqual({ ok: true, splitSec: 121 });
+    expect(decideNextCond({ ...split, actualRpe: 10 })).toEqual({ ok: true, splitSec: 123 });
+  });
+
+  it('refuses cond on a strength day', () => {
+    expect(decideNextCond({ ...base, dayKind: 'strength', actualRpe: 7 })).toEqual({
+      ok: false,
+      reason: 'wrong_day',
+    });
+  });
+
+  it('both currentWatts and currentSplitSec missing → skipped (walk/run, do not invent)', () => {
+    const next = decideNextCond({
+      dayKind: 'conditioning',
+      modality: 'watts',
+      targetRpe: { min: 3, max: 4 },
+      actualRpe: 3,
+    });
+    expect(next).toEqual({ ok: true, skipped: true });
+    expect(next).not.toHaveProperty('restSec');
+    expect(next).not.toHaveProperty('rounds');
+    expect(next).not.toHaveProperty('dayKind');
+    expect(next).not.toHaveProperty('watts');
+    expect(next).not.toHaveProperty('splitSec');
+  });
+});

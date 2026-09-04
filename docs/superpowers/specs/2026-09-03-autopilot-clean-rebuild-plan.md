@@ -1,4 +1,6 @@
-> **SUPERSEDED 2026-09-03.** Core engines were fully deleted, not rewritten in place. See `2026-09-03-blank-slate-zero-engines.md`.
+> **SUPERSEDED.** Engines were deleted, not rewritten in place. Living
+> spec: `2026-09-03-engine-three-module-redesign.md`. Blank slate:
+> `2026-09-03-blank-slate-zero-engines.md`.
 
 # Autopilot clean rebuild plan
 

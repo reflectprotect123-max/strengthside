@@ -91,8 +91,8 @@ const ex = normalizeAthleteExercise({
   restSec: 90,
   loadExpr: { exprKind: 'pct_of_max', exprArg: 0.7 },
 });
-must(ex.autopilotVolume === true, 'migrated exercise uses autopilot volume');
-must(ex.sets === null && ex.reps === null, 'migrated exercise clears pinned sets/reps');
+must(ex.openVolume === false, 'migrated exercise is a painted fence, not open volume');
+must(ex.sets === 5 && ex.reps === '5', 'migrated exercise keeps painted sets/reps');
 must(ex.restSec === 90, 'rest preserved');
 must(Array.isArray(ex.logColumns) && ex.logColumns.length >= 2, 'default log columns');
 must(ex.logColumns[0].kind === 'weight_pct_wm', 'load column kind preserved');
@@ -125,7 +125,9 @@ must(strengthState.templates[0].blocks.length === 3, 'warm/strength/cool text bl
 must(strengthState.templates[0].blocks[0].type === 'text' && /warm/i.test(strengthState.templates[0].blocks[0].heading), 'warm-up block kept');
 must(strengthState.templates[0].blocks[2].type === 'text' && /cool/i.test(strengthState.templates[0].blocks[2].heading), 'cool-down block kept');
 must(strengthState.templates[0].blocks[1].type === 'strength', 'single strength block');
-must(strengthState.templates[0].blocks[1].exercises[0].autopilotVolume === true, 'template exercise migrated');
+must(strengthState.templates[0].blocks[1].exercises[0].openVolume === false, 'template exercise migrated');
+must(strengthState.templates[0].blocks[1].exercises[0].sets === 3, 'template keeps painted set count');
+must(strengthState.templates[0].blocks[1].exercises[0].reps === '8', 'template keeps painted reps');
 
 const condState = applyAthleteBuilderPatch({
   meta: { athleteBuilderVersion: 'athlete-builder-v4' },
@@ -266,6 +268,6 @@ must(exs.length === 6, 'Full Body A keeps six lifts');
 must(exs[0].name === 'Bench Press' && exs[0].supersetWithNext === false, 'bench solo');
 must(exs[2].supersetWithNext === true && exs[3].supersetWithNext === false, 'D1/D2 linked');
 must(exs[4].supersetWithNext === true && exs[5].supersetWithNext === false, 'E1/E2 linked');
-must(exs.every((e) => e.autopilotVolume === true && e.sets === null && e.reps === null), 'athlete builder exercise shape');
+must(exs.every((e) => e.openVolume === false && e.sets != null && String(e.reps || '').trim()), 'athlete builder keeps painted sets/reps');
 
 console.log('athlete-builder-migrate.smoke: ok');

@@ -4,6 +4,7 @@
 > Chat history before this file is disposable. Start here.
 >
 > Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
+> Engine (Open / Next / Close): `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
 
 ---
@@ -13,19 +14,19 @@
 | | |
 | --- | --- |
 | **Product** | Hybrid HTML athlete app only — Home · Library (dumb templates) · Calendar · Settings · manual logger |
-| **Engines** | **NONE.** All product engines deleted (strength, conditioning, nutrition, recovery, coordinator, Big Mac). Do not revive. |
-| **Next brain** | One **new** adaptive intelligent engine package with **new APIs** — design from scratch |
+| **Engines** | **`@hybrid/adaptive` only** (Open / Next / Close). Deleted engines stay dead — do not revive strength-engine, Big Mac, adapters. |
+| **Next brain** | `@hybrid/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md`. HTML doors: lift Log → `decideNextLift`; cond work slider → `decideNextCond`; holds → WorkOverlay only. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `main` @ merge of blank-slate PR #161 |
-| **Cache** | **`the-hybrid-athlete-blank-v168`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.52`** (blank slate, cache v168) |
+| **Cache** | **`the-hybrid-athlete-blank-v171`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.53`** (cache blank-v171) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.52** / build **blank-v168**.
+**Phone:** Settings → Check for updates → expect **1.0.53** (cache **blank-v171**).
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -41,9 +42,9 @@
 | --- | --- |
 | Token | repo-root `.capgo` (gitignored) or `CAPGO_TOKEN` |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.52`** |
-| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.52 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
-| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.52` |
+| Channels | **`dogfood` + `live`** both @ **`1.0.53`** |
+| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.53` |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 
@@ -88,8 +89,8 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ## 2. What to do next
 
-1. **Design the one adaptive engine** (new package name + new public API). Spec first; do not copy deleted module shapes.
-2. Wire it only after owner sign-off — athlete HTML is the sole consumer until an explicit rewrite.
+1. **Review the living engine spec** — `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`.
+2. After spec approval: implementation plan, then `@hybrid/adaptive`. Do not copy deleted module shapes.
 3. Ignore old dogfood backlog rows that assumed coach publish, Big Mac hooks, or five engines — those tracks are closed.
 
 **Useful checks**
@@ -119,9 +120,9 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate merged via PR **#161** (2026-09-04) |
-| Capgo | **1.0.52** on `dogfood` + `live` |
+| Capgo | **1.0.53** on `dogfood` + `live` |
 | Netlify | Deploy athlete Netlify workflow **success** on merge commit |
 | Dogfood APK | Workflow **success** on merge commit |
-| Cache | `the-hybrid-athlete-blank-v168` |
+| Cache | `the-hybrid-athlete-blank-v169` |
 
-**Next agent:** read this file + the blank-slate spec + `CLAUDE.md`. Ignore prior chat. Start from blank slate.
+**Next agent:** read this file + the blank-slate spec + the three-module engine spec + `CLAUDE.md`. Do not implement the package until that spec is approved and a plan exists.

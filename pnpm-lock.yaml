@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -29,6 +32,18 @@ importers:
         version: 25.1.8(electron-builder-squirrel-windows@25.1.8)
 
   apps/mobile: {}
+
+  packages/adaptive:
+    devDependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jsdom@30.0.1)(lightningcss@1.33.0)(terser@5.50.0)(yaml@2.9.0)
 
   supabase/functions:
     devDependencies:

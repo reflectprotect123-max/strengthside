@@ -9,7 +9,8 @@
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "build": "echo \"BLANK SLATE: no engine packages to build (single adaptive engine TBD)\"",
+    "build": "node scripts/bundle-adaptive.mjs",
+    "check:adaptive-bundle": "node scripts/bundle-adaptive.mjs && node apps/mobile/prototype/hybrid-app/adaptive-bundle.smoke.mjs",
     "check:migrations": "node checks/migrations-apply.mjs",
     "check:engine-adapter": "echo \"QUARANTINED (all engines deleted 2026-09-03): check:engine-adapter\"",
     "check:cond-thin-twin": "echo \"QUARANTINED (all engines deleted 2026-09-03): check:cond-thin-twin\"",
@@ -42,6 +43,9 @@
     "check:session-flow": "node apps/mobile/prototype/hybrid-app/session-flow.smoke.mjs",
     "check:rest-overlay": "node apps/mobile/prototype/hybrid-app/rest-overlay.smoke.mjs",
     "check:work-overlay": "node apps/mobile/prototype/hybrid-app/work-overlay.smoke.mjs",
+    "check:hold-countdown": "node apps/mobile/prototype/hybrid-app/hold-countdown.smoke.mjs",
+    "check:adaptive-logger": "node apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs",
+    "check:adaptive-routes": "node apps/mobile/prototype/hybrid-app/adaptive-routes.smoke.mjs",
     "check:hybrid-html-sync": "pnpm run gen:exercise-history-seed && bash apps/mobile/sync-hybrid-html.sh && node apps/mobile/checks/hybrid-html-sync.mjs",
     "check:hybrid-handler-wiring": "echo \"QUARANTINED (all engines deleted 2026-09-03): check:hybrid-handler-wiring\"",
     "check:metric-logger-matrix": "echo \"QUARANTINED (all engines deleted 2026-09-03): check:metric-logger-matrix\"",
@@ -95,9 +99,10 @@
     "coach:local": "bash apps/desktop/start-local-coach.sh",
     "seed:au-foods": "echo \"QUARANTINED (all engines deleted 2026-09-03): seed:au-foods\"",
     "//verify": "Blank slate: all product engines deleted (S&C + nutrition). Shell + integrations only until one adaptive engine ships.",
-    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:native-bridge && pnpm run check:capgo-live-update && pnpm run check:native-ble && pnpm run check:calendar-ux && pnpm run check:athlete-calendar-date && pnpm run check:athlete-exercise-pick && pnpm run check:session-chrome && pnpm run check:session-flow && pnpm run check:rest-overlay && pnpm run check:work-overlay && pnpm run check:hybrid-html-sync && pnpm run check:builder-suggest && pnpm run check:exercise-load-profiles && pnpm run check:exercise-load-profiles-runtime && pnpm run check:exercise-search && pnpm run check:trainheroic-import && pnpm run gen:exercise-history-seed && pnpm run check:exercise-history-seed && pnpm run check:whoop-ownership && pnpm run check:whoop-deeplink && pnpm run check:hybrid-proxy && pnpm run check:whoop-live"
+    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:native-bridge && pnpm run check:capgo-live-update && pnpm run check:native-ble && pnpm run check:calendar-ux && pnpm run check:athlete-calendar-date && pnpm run check:athlete-exercise-pick && pnpm run check:session-chrome && pnpm run check:session-flow && pnpm run check:rest-overlay && pnpm run check:work-overlay && pnpm run check:hold-countdown && pnpm run check:hybrid-html-sync && pnpm run check:builder-suggest && pnpm run check:exercise-load-profiles && pnpm run check:exercise-load-profiles-runtime && pnpm run check:exercise-search && pnpm run check:trainheroic-import && pnpm run gen:exercise-history-seed && pnpm run check:exercise-history-seed && pnpm run check:whoop-ownership && pnpm run check:whoop-deeplink && pnpm run check:hybrid-proxy && pnpm run check:whoop-live && pnpm run check:adaptive-bundle && pnpm run check:adaptive-logger && pnpm run check:adaptive-routes"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
