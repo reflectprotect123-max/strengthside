@@ -40,7 +40,7 @@ list.
 | --- | --- | --- |
 | Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
 | Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only (kg, reps, watts, time). |
-| Logger | You log **weight × reps × RIR** (the set row already on the phone). | After each log, **Next** fills set N+1 from those three fields. |
+| Logger | You log **weight × reps × RIR**, or **weight × seconds × RIR** on a timed hold (the set row already on the phone). | After each log, **Next** fills set N+1 from those fields. |
 
 Nutrition, coach publish, pain/illness UI, and LLM decide are out.
 
@@ -102,6 +102,9 @@ visible over time and so guesses are better than raw last-kilos.
 - **Close** writes the session’s best working-set Est. 1RM (and last
   make). Progress chart = that series over weeks.
 - Conditioning has no 1RM. Watts stay watts.
+- **Timed holds have no 1RM.** Seconds rows already skip `e1rmValue` in
+  the logger (`targetKind === 'seconds'`). Do not feed hold time into
+  the % chart — 30 s is not 30 reps.
 
 ---
 
@@ -171,20 +174,46 @@ cell. Reps on the card change → different row, same column.
 The +2.5%-per-easy-set shortcut is **out**. A planned RIR 2 set that
 lands at RIR 2 must not add a plate.
 
+**Timed holds** (`targetKind: seconds` — plank, hang, wall sit, weighted
+hold). Same Open / Next / Close. Same RIR box. The number that moves is
+**seconds**, not % of Est. 1RM.
+
+```text
+Open  = last made seconds (and last kg if the hold was loaded)
+Next  = if RIR on target → same seconds
+        if RIR easier    → +5 s
+        if you quit early → what you actually held
+        if you typed a longer time → believe that time
+        then round to 5 s
+Close = last made seconds (and last kg)
+```
+
+No Est. 1RM. No % chart. Weight on a loaded hold **copies forward**; it
+does not go through Epley. You can type a heavier kg — Next believes it,
+same as 25 → 40 on a lift.
+
+**Hold golden path (plank 3 × 30 s, target RIR 2)**
+
+1. Open 30. Log 30 s, RIR 2 → Next **30 s**.
+2. Log 30 s, RIR 4 → Next **35 s**.
+3. Log 18 s, RIR 0 (failed) → Next **20 s** (18 rounded to 5 s), not 30.
+4. Asked 20 s, you hold **45 s**, RIR 2 → Next **45 s**, not 25.
+
 **Conditioning** (once you have a card): same Next, **on a Conditioning
 day only**. Interval 1 easy at 220 W → interval 2 may be 230 W. Blow up
 → come back down. Never a squat on that day. Never a row on a Strength
-day.
+day. A plank on a Strength card is a timed hold, not conditioning.
 
 ---
 
 ## Open and Close
 
-**Open** prefers: you typed a number → else `e1rm × pct(targetReps, targetRir)` (same inverse as Next) rounded to plates → else last Close load → else blank.
+**Open** prefers: you typed a number → else (lift) `e1rm × pct(targetReps, targetRir)` rounded to plates → else (hold) last Close seconds → else last Close load → else blank.
 
-**Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
-what you actually finished. Adapter saves hints + Est. 1RM. Close does
-**not** invent an extra bump on top of Next.
+**Close** returns `{ loadKg, reps, e1rmKg }` for a lift, `{ seconds, loadKg }`
+for a hold, or watts for cond, from what you actually finished. Adapter
+saves hints + Est. 1RM when there is one. Close does **not** invent an
+extra bump on top of Next.
 
 ---
 
@@ -219,6 +248,10 @@ Colocated. No `--passWithNoTests`.
    Never treats 82.5 as the new max (no 82.5 × 0.95 rule).
 8. % chart matches inverse `e1rmValue`: 5 @ RIR 2 = 81.1%, 6 @ RIR 2 =
    78.9%, 1 @ RIR 0 = 96.8% (not 100).
+9. Plank 30 s @ RIR 2 → Next 30 s; 30 s @ RIR 4 → Next 35 s.
+10. Asked 20 s, logged 45 s @ RIR 2 → Next 45 s, not 25.
+11. Seconds rows never call `e1rmValue` and never use the % chart
+    (30 s is not 30 reps). Weighted hold copies kg; Next still moves time.
 
 ---
 
