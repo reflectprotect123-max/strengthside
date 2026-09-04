@@ -25,12 +25,13 @@ integrations only.
 - WHOOP / Concept2 / Echo FTMS / Capgo (data + device integrations)
 - Shared Supabase **data** tables (twelve-table contract) — ledger only
 
-## Resurrection seal (cache v167)
+## Resurrection seal (cache v168 / Capgo 1.0.52)
 
 - No engine packages, artifacts, script tags, or SW precache entries.
-- `index.html` installs **Proxy no-op stubs** that overwrite every old global — method calls cannot reach real logic even if residual names remain in source.
-- Account sync does not pull strength/nutrition/coach engines.
-- **Not magic:** git history can restore files; Capgo/Netlify must ship v167 or older client caches can linger until update.
+- Proxy stubs **removed**; old global **names scrubbed** from live source (`openVolume` replaces `autopilotVolume`).
+- Account sync is WHOOP + Concept2 only (no strength/nutrition/coach engine pulls).
+- Shipped: Capgo **`dogfood` + `live` @ 1.0.52**; Netlify athlete site from `main`.
+- **Not magic:** git history can restore files; devices on older Capgo bundles need Settings → Check for updates.
 
 ## Next
 
