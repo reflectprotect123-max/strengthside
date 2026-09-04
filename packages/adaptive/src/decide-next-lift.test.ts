@@ -57,3 +57,28 @@ describe('decideNextLift — single number never pushes reps', () => {
     expect(lift(4, 2, five)).toEqual({ ok: true, loadKg: 77.5, reps: 5 });
   });
 });
+
+describe('decideNextLift — middle and under on a range', () => {
+  it('middle + easy keeps kg and same reps (no jump)', () => {
+    expect(lift(10, 3)).toEqual({ ok: true, loadKg: 80, reps: 10 });
+  });
+
+  it('middle + grind keeps kg and returns to min', () => {
+    expect(lift(10, 0)).toEqual({ ok: true, loadKg: 80, reps: 8 });
+  });
+
+  it('under min drops 2.5 and returns to min', () => {
+    expect(lift(6, 2)).toEqual({ ok: true, loadKg: 77.5, reps: 8 });
+  });
+
+  it('refuses 0 and 80 reps', () => {
+    expect(lift(0, 2)).toEqual({ ok: false, reason: 'reps_out_of_sanity' });
+    expect(lift(80, 2)).toEqual({ ok: false, reason: 'reps_out_of_sanity' });
+  });
+
+  it('does not return setCount or dayKind', () => {
+    const next = lift(12, 4);
+    expect(next).not.toHaveProperty('setCount');
+    expect(next).not.toHaveProperty('dayKind');
+  });
+});

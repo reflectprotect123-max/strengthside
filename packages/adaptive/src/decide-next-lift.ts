@@ -40,6 +40,8 @@ export function decideNextLift(input: LiftNextInput): LiftNextResult {
     return { ok: true, loadKg: kg, reps: single ? nextRepsSingle : max };
   }
 
-  // middle — Task 4 fills this; return a dummy that fails middle tests until then
-  return { ok: true, loadKg: kg, reps };
+  if (rir >= 2) {
+    return { ok: true, loadKg: kg, reps };
+  }
+  return { ok: true, loadKg: kg, reps: min };
 }
