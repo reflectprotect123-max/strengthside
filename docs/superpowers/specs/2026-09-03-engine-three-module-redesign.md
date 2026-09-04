@@ -1,220 +1,163 @@
-# Engine redesign — three autopilot modules
+# Engine redesign — three modules (living spec)
 
-**Date:** 2026-09-03  
-**Status:** design (maps talk → package shape)  
-**Scope:** Athlete autopilot only. Coach, PM5 CSAFE, EffortProfile learning, supersets V2.2 — later.
+**Date:** 2026-09-03 (talk) · **Aligned:** 2026-09-04 (blank slate + owner locks)  
+**Status:** living design — not implemented  
+**Product:** Hybrid HTML athlete app only.
+
+This is **the** engine spec. Do not also follow the 4 Sep “Strength V2”
+file or the 3 Sep Autopilot V3 / clean-rebuild notes — those are
+superseded pointers.
+
+Blank slate: `2026-09-03-blank-slate-zero-engines.md`.  
+Handoff: `handoff.md`.  
+**Must not revive:** `@hybrid/strength-engine`, `@hybrid/engine`,
+adapters, Big Mac, one-set logger, old `decideProgression` APIs.
 
 ---
 
 ## ELI5
 
-Today the engines are a junk drawer: working-max math, weekly bumps, calibration gates, level ladders, and the useful in-session slider brain all live in one pile.
+You paint the week: Strength, Conditioning, or Recovery. You own
+templates A and B. You change the lifts.
 
-We rebuild around **three jobs every workout does**, for both strength and Echo:
+The engine does three jobs, every workout, same verbs for a lift or a
+row:
 
-1. **Open** — “What do I start with?” → last time’s number (or you type one).
-2. **Next** — “That set/interval felt ___ → what’s next?” → slider math.
-3. **Close** — “Workout done → remember what I finished on.” → save only. No secret bump.
+1. **Open** — start from last time’s number (or you type one).
+2. **Next** — you log a set → the **next** set’s numbers change.
+3. **Close** — remember what you finished on. No secret end-of-week bump.
 
-Same three verbs. Two domains (lift / watts). Everything else is support or legacy.
-
----
-
-## The three modules (shared contract)
-
-Pure TypeScript. Zero I/O. Callers inject data. Adapters own persistence.
-
-| Module | Job | Strength name | Cond name | Input (shape) | Output |
-|---|---|---|---|---|---|
-| **1. Open** | First target of the session | `openStrengthTarget` | `openCondTarget` | anchor + optional effort/benchmark + equipment | starting load/reps **or** watts (+ HR zone label) |
-| **2. Next** | Intrasession autoreg | `decideNextSet` *(exists)* | `decideNextPhase` *(exists)* | what just happened + slider + equipment/caps | next load/reps **or** next watts (capped) |
-| **3. Close** | Persist memory only | `closeStrengthAnchor` | `closeCondAnchor` | completed work this session | new anchor record (no progression decision) |
-
-### Shared rules (both domains)
-
-- Open never requires a working max / level / calibration count.
-- Next never writes long-term state.
-- Close never bumps. It mirrors what was done (or last target used).
-- Red/WHOOP day: may shift **HR zone edges** and optionally **volume**; does **not** ease starting watts/load in Open (product default A).
-- Pain flag: may classify exposure; does not invent a stop in these three modules.
+It never flips a day you meant to train. It never rewrites A/B’s lift
+list.
 
 ---
 
-## Domain A — Strength (`@hybrid/strength-engine`)
+## Who owns what
 
-### Keep (first-class)
+| | You | Engine |
+| --- | --- | --- |
+| Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. | Never changes `dayKind`. No `decideDayKind`. |
+| Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only (kg, reps, watts, time). |
+| Logger | You log the set. | After each log, **Next** fills set N+1. |
 
-| File / API | Role in V3 |
-|---|---|
-| `decideNextSet.ts` | **Module 2** |
-| `rounding.ts` / equipment | Open + Next load rounding |
-| `e1rm.ts`, `pr.ts`, `performed.ts`, `metric.ts` | Logging / PRs — not progression |
-| `exposure.ts` | History for Open fallback when no hint; pain class |
-| `resolve.ts` | Optional %WM when athlete set a manual max |
-
-### New (thin, pure)
-
-| API | Behavior |
-|---|---|
-| `openStrengthTarget({ lastLoadKg, lastReps, equipment, manualLoadKg?, pctOfMax?, workingMaxKg? })` | Prefer `manualLoadKg` → else `lastLoadKg` → else `%WM` if both present → else unresolved (logger shows blank) |
-| `closeStrengthAnchor({ sets: { loadKg, reps, completed }[] })` | Last completed working set load (and reps for rep-mode lifts). Returns `{ loadKg, reps }` — **adapter** writes `loadHints` / `volumeHints` |
-
-### Demote (keep code, stop calling on athlete path)
-
-| API | Why |
-|---|---|
-| `decideProgression` / `DeterministicDecider` | Session-end bumps — dead for athlete autopilot |
-| `calibration.ts` as a **gate** | Labels in Progress UI only; never block Open |
-| `decideInitialPrescription` volume autopilot | Optional later; not required for Open load |
-| `workingMax` as required Open input | Optional for % prescriptions / Progress edit |
-
-### Adapter contract (`strength-adapter.js`)
-
-```
-session start  → openStrengthTarget → fill row 1
-each set end   → decideNextSet     → fill next row
-session end    → closeStrengthAnchor → write loadHints[exerciseId]
-                 (+ recordPrEvents; no applySilentProgression bumps)
-```
-
-`saveSessionAnchors` in the adapter **is** Close + I/O. Pure Close stays in the package so tests don’t need the HTML app.
+Nutrition, coach publish, pain/illness UI, and LLM decide are out.
 
 ---
 
-## Domain B — Conditioning (`@hybrid/engine` conditioning surface)
+## The three modules (one package)
 
-### Keep (first-class)
+**Package:** `@hybrid/adaptive` under `packages/adaptive/` (new).  
+`packages/` is empty on `main`. New APIs. Do not copy deleted files.
 
-| File / API | Role in V3 |
-|---|---|
-| `decideNextPhase.ts` | **Module 2** (+ watts push cap already added) |
-| `hr.ts` / `conZones` | Daily zone edges from WHOOP — Open labels HR, not watts |
-| `CON_EFFORTS` / format builders | Structure (rounds/work/rest), not progression level |
-| Echo FTMS / logger UI | Telemetry + dumb display (outside pure engine) |
+Pure TypeScript. Zero I/O. HTML logger is the only caller. `dayKind` is
+**input**, never output.
 
-### New (thin, pure)
+| Module | Job | API | Writes long-term state? |
+| --- | --- | --- | --- |
+| **Open** | First target of this exercise / bout | `openTarget` | No |
+| **Next** | After a logged set / interval | `decideNextSet` | No |
+| **Close** | Session done — remember the last make | `closeAnchor` | Returns the anchor; **adapter** saves it |
 
-| API | Behavior |
-|---|---|
-| `openCondTarget({ lastTargetWatts, maxWatts, effort, formatKey })` | If `lastTargetWatts` → use it (optionally clamp to effort band). Else `maxWatts * effortPct` (easy 0.60 / med 0.80 / hard 0.92). Else unresolved |
-| `closeCondAnchor({ targetWatts, avgWatts?, maxWattsPrev? })` | Returns `{ lastTargetWatts, maxWatts: max(prev, target, avg) }` — adapter writes `settings.condAnchors[key]` |
-| `condAnchorKey({ format, modality, device })` | e.g. `intervals:bike:echo` |
+Same three functions for Strength and Conditioning. Recovery: if the
+day is an empty rest stamp, these are not called. If the recovery card
+has logged bouts, same clock.
 
-### Demote / stop athlete calls
+### Shared rules
 
-| API | Why |
-|---|---|
-| `conAdapt` level/miss | Not athlete Close |
-| `decideInitialCondPrescription` level ladders | Structure from template/builder; watts from Open |
-| `conProgress` as Open input | Ignore for athlete watts |
-
-### Adapter contract (`engine-adapter.js`)
-
-```
-session start  → openCondTarget → task.targetWatts
-rest boundary  → decideNextPhase (pushCount ≤ 2) → update targetWatts
-session end    → closeCondAnchor → settings.condAnchors[key]
-                 applyConAdapt = no-op (or coach-only later)
-```
+- Open never waits for a working max, level, or “3 exposures.”
+- Next never saves the week. It only returns set N+1.
+- Close never adds +2.5% “because the session went well.” It stores the
+  last **made** load (or last used target). Next Monday’s Open reads that.
+- WHOOP / HRV / sleep do not change Open or Next numbers. They do not
+  flip the day.
+- Pain is not a branch in these three modules.
 
 ---
 
-## Module map (where code lives)
+## Next (the live clock)
 
-```
-packages/strength-engine/src/
-  openTarget.ts      ← NEW  Module 1
-  decideNextSet.ts   ← KEEP Module 2
-  closeAnchor.ts     ← NEW  Module 3
-  progression.ts     ← LEGACY (tests only / coach later)
-  calibration.ts     ← LEGACY gate removed; label helper ok
-  workingMax.ts      ← OPTIONAL support for resolve %
+Wakes on every completed set, not on Finish.
 
-packages/engine/src/
-  openCondTarget.ts  ← NEW  Module 1
-  decideNextPhase.ts ← KEEP Module 2
-  closeCondAnchor.ts ← NEW  Module 3
-  conditioning.ts    ← KEEP formats/efforts; conAdapt marked legacy
-  hr.ts              ← KEEP zone edges (Open support, not Open watts)
-```
+**Strength — owner golden path (template A, Bench 3×5 @ 80 kg)**
 
-Adapters stay dumb I/O:
+1. Open 80. Log 80 × 5, easy (RIR 2 or “too easy”).  
+   → Next: **82.5 × 5** (one plate / 2.5% rounded to increment).
+2. Log 82.5 × 4, miss.  
+   → Next: **80 × 5** (last make this session). Not 82.5 × 0.95.
+3. Log 80 × 5. Done. Bench is still Bench.  
+   → Close stores **80**. Next Strength day Open is 80.
 
-```
-apps/mobile/.../strength-adapter.js  → calls Open/Next/Close, writes local state
-apps/mobile/.../engine-adapter.js    → same for cond
-apps/mobile/.../*-logger.js          → UI only; never invents progression
-```
+| How the set went | Next set |
+| --- | --- |
+| Made target, easy (RIR ≥ 2, or slider too-easy, or extra reps) | **progress** — last make + plate (2.5% rounded to increment) |
+| Made target, grind (RIR 0–1 / slider hold) | **hold** |
+| Missed target reps | **revert_to_last_make** — last made load this session; if none, original Open |
 
----
++2.5% / plate rounding is the 16 Aug research **default**, not a proven
+optimum. Applying it **set-by-set** is last night’s Next module + this
+week’s owner lock. The old session-end `decideProgression` (wait 3
+sessions, then bump) is dead.
 
-## What we are deleting from the *athlete path* (not necessarily files day 1)
-
-| Remove from call graph | Replacement |
-|---|---|
-| WM gate before `startSession` | Open with blank or last anchor |
-| `autopilotReadyForExercise(…, 2)` gate on hints | Open uses hint immediately |
-| `applySilentProgression` → `decideProgression` | Close → `saveSessionAnchors` |
-| `applyConAdapt` → level++ | Close → `saveCondAnchors` |
-| Recovery gate that blocks silent bumps | Gone with silent bumps |
-| Cond “level” as watts source | Open from anchor / % max |
-
-Package files can stay until smokes/coach stop importing them — **stop calling first**, delete files when nothing references them.
+**Conditioning** (once you have a card): same Next. Interval 1 easy at
+220 W → interval 2 may be 230 W. Blow up → come back down. Never a squat
+on a Conditioning day.
 
 ---
 
-## Data shapes (anchors)
+## Open and Close
 
-**Strength** (existing keys, new meaning):
+**Open** prefers: you typed a number → else last Close anchor → else
+blank logger.
 
-```ts
-strengthState.loadHints[exerciseId] = {
-  loadKg: number;
-  updatedAt: string;
-  source: 'session_anchor' | 'manual' | 'history_seed';
-}
-// rep-mode:
-strengthState.volumeHints[exerciseId] = { sets, reps, updatedAt, source: 'session_anchor' }
-```
-
-**Conditioning** (new):
-
-```ts
-settings.condBenchmarkMaxW?: number; // manual max W
-settings.condAnchors: Record<string, {
-  lastTargetWatts: number;
-  maxWatts: number;
-  updatedAt: string;
-}>
-// key = `${fmt}:${modality}:${device}` e.g. intervals:bike:echo
-```
-
-No new Supabase tables required for the 2-day athlete path (local + existing sync blobs).
+**Close** returns `{ loadKg, reps }` or `{ lastTargetWatts, … }` from
+what you actually finished. Adapter writes local hints. Close does
+**not** run progress math.
 
 ---
 
-## 2-day build order (engines then wire)
+## Wiring (later; not this file’s code)
 
-**Day 1 — Strength three modules**
-1. Add `openStrengthTarget` + `closeStrengthAnchor` + tests.
-2. Adapter: Open on apply load hints; Close on session end; Next already wired.
-3. Kill WM gate + calibration gate + progression apply on athlete finalize.
-4. Smokes: anchor write/read, no bump, gate empty.
+1. New package only.
+2. Calendar stamps stay in the HTML app. The package never reads the
+   calendar.
+3. After each logged set → `decideNextSet` → next row.
+4. Session end → `closeAnchor` → hint for next Open.
+5. You edit A/B in Library. Engine does not invent exercises.
 
-**Day 2 — Cond three modules**
-1. Add `openCondTarget` + `closeCondAnchor` + `condAnchorKey` + tests.
-2. Adapter + logger: Open watts, Next with push cap, Close anchors; `applyConAdapt` no-op.
-3. Watts hero (target / live / Δ) in interval logger.
-4. Smokes: Echo intervals key, % effort from max, push cap.
-
-**Explicitly later:** PM5 CSAFE, steady polish, EffortProfile, coach pins, deleting `progression.ts` / `conAdapt` files, package rename.
+Implementation plan is a later step. Do not write package code until
+that plan exists and is approved.
 
 ---
 
-## Success test (skeptical engineer)
+## Tests (before any HTML wire)
 
-1. Fresh lift, no WM → start session → type load → finish → next session opens at that load.
-2. Same load three sessions → Close does **not** invent +2.5 kg.
-3. Slider “too easy” mid-session → Next bumps set N+1 only; Close still saves final performed.
-4. Echo intervals, max W 300, medium → Open ~240 W; two “too easy” pushes then hold; Close stores last target under `intervals:bike:echo`.
-5. `pnpm verify` green; old progression/conAdapt smokes assert legacy APIs exist but athlete wiring does not call them.
+Colocated. No `--passWithNoTests`.
+
+1. Bench golden path above (82.5 then back to 80; opener 80).
+2. Three easy sessions in a row: Close still does **not** invent an extra
+   +2.5 on top of what Next already did in-session.
+3. `dayKind` never appears in output; Strength vs Conditioning cannot
+   rename the day.
+4. Miss at 82.5 never yields 5% off 82.5.
+
+---
+
+## Out of scope
+
+- Restoring deleted engines / adapters / Big Mac / nutrition
+- Coach publish/pull
+- Pain/illness UI or stops
+- LLM decide
+- Inventing a conditioning card you did not write
+- Auto-painting the week (3 lift / 2 cond / 2 recovery)
+
+---
+
+## Supersedes
+
+| File | Why |
+| --- | --- |
+| `2026-09-04-strength-v2-set-by-set-design.md` | Parallel write; folded here |
+| `2026-09-03-autopilot-v3-unified-design.md` | Same three jobs; named deleted adapters |
+| `2026-09-03-autopilot-clean-rebuild-plan.md` | Rebuild-in-place; engines were deleted |
+| 17 Aug Adaptive V2 Phase E `decideProgression` | Session-grain clock is wrong |

@@ -4,7 +4,7 @@
 > Chat history before this file is disposable. Start here.
 >
 > Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
-> Strength V2 (set-by-set): `docs/superpowers/specs/2026-09-04-strength-v2-set-by-set-design.md`
+> Engine (Open / Next / Close): `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
 
 ---
@@ -15,7 +15,7 @@
 | --- | --- |
 | **Product** | Hybrid HTML athlete app only — Home · Library (dumb templates) · Calendar · Settings · manual logger |
 | **Engines** | **NONE.** All product engines deleted (strength, conditioning, nutrition, recovery, coordinator, Big Mac). Do not revive. |
-| **Next brain** | `@hybrid/adaptive` — spec written (`2026-09-04-strength-v2-set-by-set-design.md`). Set-by-set numbers only. Not implemented. Do not revive deleted packages. |
+| **Next brain** | `@hybrid/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md` (Open / Next / Close). Not implemented. Do not revive deleted packages. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `main` @ merge of blank-slate PR #161 |
@@ -89,7 +89,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ## 2. What to do next
 
-1. **Review Strength V2** — `docs/superpowers/specs/2026-09-04-strength-v2-set-by-set-design.md` (set-by-set; you paint the week; engine writes next-set numbers only).
+1. **Review the living engine spec** — `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`.
 2. After spec approval: implementation plan, then `@hybrid/adaptive`. Do not copy deleted module shapes.
 3. Ignore old dogfood backlog rows that assumed coach publish, Big Mac hooks, or five engines — those tracks are closed.
 
@@ -125,4 +125,4 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Dogfood APK | Workflow **success** on merge commit |
 | Cache | `the-hybrid-athlete-blank-v168` |
 
-**Next agent:** read this file + the blank-slate spec + Strength V2 set-by-set + `CLAUDE.md`. Do not implement the package until the spec is approved and a plan exists.
+**Next agent:** read this file + the blank-slate spec + the three-module engine spec + `CLAUDE.md`. Do not implement the package until that spec is approved and a plan exists.

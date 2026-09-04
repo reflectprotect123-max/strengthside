@@ -2,7 +2,7 @@
 
 > **4 Sep 2026:** Session-grain progression in later Adaptive V2 / Phase E
 > is superseded by
-> `docs/superpowers/specs/2026-09-04-strength-v2-set-by-set-design.md`.
+> `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`.
 > This file remains the ledger/metric (“LEGO”) design only. Do not revive
 > `@hybrid/strength-engine`.
 >
