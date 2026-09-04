@@ -26,7 +26,7 @@ and so Open/Next are not just “whatever you did last time in kilos.”
 
 1. **Open** — start from last time’s number (or you type one), using
    Est. 1RM when we have one.
-2. **Next** — you log a set → the **next** set’s numbers change.
+2. **Next** — you log a set → the **next** set’s kg **and** reps change.
 3. **Close** — remember last make **and** the new Est. 1RM.
 
 It never flips a day you meant to train. It never rewrites A/B’s lift
@@ -40,7 +40,7 @@ list.
 | --- | --- | --- |
 | Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
 | Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only on lifts/cond (kg, reps, watts). Hold seconds stay on the card. |
-| Logger | You log **weight × reps × RIR** on a lift. Timed holds use the card’s seconds and a **countdown**, not Next. | After each **lift** log, **Next** fills set N+1. Holds do not go through Next. |
+| Logger | You log **weight × reps × RIR** on a lift. Timed holds use the card’s seconds and a **countdown**, not Next. | After each **lift** log, **Next** fills set N+1 **kg and reps**. Holds do not go through Next. Set count stays on the card. |
 
 Nutrition, coach publish, pain/illness UI, and LLM decide are out.
 
@@ -96,9 +96,9 @@ visible over time and so guesses are better than raw last-kilos.
 - **Not a tested max.** UI label is Est. 1RM. A later true 1RM test
   can override; until then this is the number.
 - **Updates when you log.** 25 → you lift 40 × 6 at 2 RIR → Est. 1RM
-  uses that row’s `e1rmValue` (about **51 kg**). Next set still **~40**,
-  not 27.5. If RIR is high (very easy), Est. 1RM is higher and Next may
-  add a plate.
+  uses that row’s `e1rmValue` (about **51 kg**). Next is **40 × 6**, not
+  27.5 × 5. If RIR is high (very easy), Est. 1RM is higher and Next may
+  add a plate at the same reps.
 - **Close** writes the session’s best working-set Est. 1RM (and last
   make). Progress chart = that series over weeks.
 - Conditioning has no 1RM. Watts stay watts.
@@ -114,15 +114,17 @@ visible over time and so guesses are better than raw last-kilos.
 Wakes on every completed set, not on Finish.
 
 **Mechanism:** after you tap Log, update Est. 1RM from that row, then
-the next weight is a **% of that Est. 1RM**. The % is not a separate
-chart — it is the same `e1rmValue` formula run backwards for the next
-set’s reps and the template’s target RIR (`targetRir`, default 2).
+fill **both** next boxes: reps you just did, and kg as a **% of that
+Est. 1RM** for those reps at the template’s target RIR (`targetRir`,
+default 2). Same `e1rmValue` formula run backwards. Set count does not
+change.
 
 ```text
-e1rm  = e1rmValue(loggedWeight, loggedReps, loggedRir)
-pct   = 1 / (1 + (nextReps + targetRir) / 30)   // e.g. 5 @ RIR 2 ≈ 81%
-nextW = e1rm × pct
-        then round to plates (2.5 kg)
+e1rm     = e1rmValue(loggedWeight, loggedReps, loggedRir)
+nextReps = loggedReps                         // believe the log
+pct      = 1 / (1 + (nextReps + targetRir) / 30)
+nextW    = e1rm × pct
+           then round to plates (2.5 kg)
 ```
 
 `e1rm / (1 + (nextReps + targetRir) / 30)` is the same line. Same three
@@ -148,29 +150,30 @@ Next uses the **target RIR column** (default **RIR 2**), not RIR 0.
 | 12 | 71.4% | 69.8% | 68.2% | 66.7% | 65.2% | 63.8% |
 | 15 | 66.7% | 65.2% | 63.8% | 62.5% | 61.2% | 60.0% |
 
-Read it: log a set → new Est. 1RM → next kg = Est. 1RM × the cell for
-**next reps × target RIR**. Template 5s at RIR 2 → always the **81.1%**
-cell. Reps on the card change → different row, same column.
+Read it: log a set → new Est. 1RM → next **reps = what you just did** →
+next kg = Est. 1RM × the cell for **those reps × target RIR**. You did
+5s at RIR 2 → 81.1% cell, 5s again. You did 4s → 4s at the 4-rep cell.
+Open (first set of the day) still uses the **card’s** reps.
 
 **Strength — owner golden path (template A, Bench 3×5 @ 80 kg, target RIR 2)**
 
-1. Open 80. Log 80 × 5, RIR 2 (on plan).  
-   Est. 1RM ~98.7 → 81% of that is **~80**. Next holds. On-plan RIR
-   does **not** add a plate.
+1. Open 80 × 5. Log 80 × 5, RIR 2 (on plan).  
+   Est. 1RM ~98.7 → Next **80 × 5**. On-plan does **not** add a plate
+   and does not change reps.
 2. Log 80 × 5, RIR 3 (easier than target).  
-   Est. 1RM ~101.3 → Next **82.5**.
+   Est. 1RM ~101.3 → Next **82.5 × 5**.
 3. Log 82.5 × 4, RIR 0 (miss / grind).  
-   Est. 1RM comes from **what you did** (~93.5), not from 82.5 as a max.  
-   Next 5 @ RIR 2 is **~75**. No `82.5 × 0.95` rule.
-4. You change the bar yourself: asked 25 × 6, log **40 × 6**, RIR 2.  
-   Est. 1RM ~50.7. Next 6 @ RIR 2 is **~40**, not 27.5, not 42.5.
+   Est. 1RM from **what you did** (~93.5). Next **reps = 4**, kg = 4s @
+   RIR 2 ≈ **77.5**. Not 75 × 5, not 82.5 as a max.
+4. You change the bar yourself: asked 25 × 5, log **40 × 6**, RIR 2.  
+   Est. 1RM ~50.7. Next **40 × 6**, not 27.5 × 5, not 42.5 × 6.
 
-| How the set went vs target RIR | What the % does |
+| How the set went vs target RIR | What Next writes |
 | --- | --- |
-| Logged RIR **higher** than target (easier) | Est. 1RM up → next weight **up** |
-| Logged RIR **on** target | Est. 1RM fits → next weight **holds** |
-| Logged RIR **lower** / missed reps | Est. 1RM down → next weight **down** |
-| You typed a different kg | Est. 1RM from **that** kg → next weight matches it at target RIR |
+| Logged RIR **higher** than target (easier) | Same reps, Est. 1RM up → kg **up** |
+| Logged RIR **on** target | Same reps, kg **holds** |
+| Logged RIR **lower** / missed reps | **Reps = what you did**, kg from that cell |
+| You typed a different kg or reps | Est. 1RM from **that** row → next matches it at target RIR |
 
 The +2.5%-per-easy-set shortcut is **out**. A planned RIR 2 set that
 lands at RIR 2 must not add a plate.
@@ -195,10 +198,10 @@ conditioning.
 
 ## Open and Close
 
-**Open** prefers: you typed a number → else `e1rm × pct(targetReps, targetRir)` (same inverse as Next) rounded to plates → else last Close load → else blank. Timed holds skip Open.
+**Open** prefers: you typed a number → else `e1rm × pct(cardReps, targetRir)` (card’s reps, same inverse as Next) rounded to plates → else last Close load → else blank. Timed holds skip Open.
 
 **Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
-what you actually finished. Adapter saves hints + Est. 1RM. Close does
+what you actually finished. HTML app saves hints + Est. 1RM. Close does
 **not** invent an extra bump on top of Next. Timed holds skip Close.
 
 ---
@@ -222,23 +225,24 @@ that plan exists and is approved.
 
 Colocated. No `--passWithNoTests`.
 
-1. Bench 80 × 5 @ RIR 2 → Next holds ~80 (on-plan RIR does not add a plate).
-2. Bench 80 × 5 @ RIR 3 → Next ~82.5 (Est. 1RM up, then % of that).
-3. Asked 25×6, logged 40×6 @ RIR 2 → Est. 1RM ~50.7, Next ~40, not 27.5 and not 42.5.
+1. Bench 80 × 5 @ RIR 2 → Next **80 × 5** (on-plan does not add a plate or change reps).
+2. Bench 80 × 5 @ RIR 3 → Next **82.5 × 5**.
+3. Asked 25×5, logged 40×6 @ RIR 2 → Est. 1RM ~50.7, Next **40 × 6**, not 27.5×5 and not 42.5×6.
 4. 40×6 at 2 RIR → `e1rmValue` matches today’s logger hint; 40×6 at 0 RIR
    → lower Est. 1RM (harder set, smaller implied max).
 5. Three easy sessions in a row: Close still does **not** invent an extra
    +2.5 on top of what Next already did in-session.
 6. `dayKind` never appears in output; Strength vs Conditioning cannot
    rename the day.
-7. Miss at 82.5 × 4 @ RIR 0 → Est. 1RM from that set (~93.5), Next ~75.
-   Never treats 82.5 as the new max (no 82.5 × 0.95 rule).
+7. Miss 82.5 × 4 @ RIR 0 → Est. 1RM ~93.5, Next **77.5 × 4** (believes 4,
+   not 75 × 5, not 82.5 as a max).
 8. % chart matches inverse `e1rmValue`: 5 @ RIR 2 = 81.1%, 6 @ RIR 2 =
    78.9%, 1 @ RIR 0 = 96.8% (not 100).
 9. Seconds rows skip Open / Next / Close and never call `e1rmValue`
    (30 s is not 30 reps). Card seconds stay card seconds.
 10. Timed hold v1 is a logger countdown (`WorkOverlay`) for the
     prescribed seconds — no +5 s, no “believe a longer hold.”
+11. Next never changes set count. Card 3× stays 3 sets.
 
 ---
 
