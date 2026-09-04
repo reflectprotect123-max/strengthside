@@ -13,3 +13,5 @@ export { estimateOneRm } from './estimate-one-rm';
 export { roundToPlate } from './plates';
 export { decideNextLift } from './decide-next-lift';
 export { openLift } from './open-lift';
+export { closeLift } from './close-lift';
+export type { CloseLiftInput, CloseLiftResult } from './close-lift';
