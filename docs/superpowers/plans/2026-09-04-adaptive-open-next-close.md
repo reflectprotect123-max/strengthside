@@ -24,7 +24,7 @@
 - Single number (`min === max`): same kg rules; **Next reps never change**. Logged extra reps still Next that number.
 - Range (`min < max`): double progression via RIR (hit top / middle / under min) at ±2.5 kg plates.
 - Lift RIR is **not** cond talk-test 1–10. Blank lift RIR = 0 (grind). Lift Next never reads `actualRpe`. Cond Next never reads `rir`.
-- Three HTML doors only: `toggleSet` → `decideNextLift`; `advanceInterval` / `completeConditioning` → `decideNextCond`; `startHoldCountdown` → `WorkOverlay` and **zero** `HybridAdaptive`.
+- Three HTML doors only: `toggleSet` **and** `logSupersetSet` → `decideNextLift` (Next is **that lift’s** next row, not the partner); `advanceInterval` / `completeConditioning` → `decideNextCond`; `startHoldCountdown` → `WorkOverlay` and **zero** `HybridAdaptive`.
 - No `decideNextSet` union. No `{ kind: 'hold' }` on the package.
 - Prototype path only. Never edit `preview-site/` or `apps/mobile/*.js` twins by hand.
 - Est. 1RM = HTML `e1rmValue`: `load × (1 + clamp(reps+rir,1,20) / 30)` rounded to 0.1 kg. Scoreboard + Close. **Not** Next kg.
@@ -74,7 +74,7 @@ Ran against `graphify-out/graph.json` (6695 nodes, built `cd2edf72`). Obsidian n
 
 | Job | Hook (do this) | Graph / vault (do not confuse) |
 | --- | --- | --- |
-| Lift Next | `toggleSet` → `HybridAdaptive.decideNextLift` only. Range text = `t.reps`. |
+| Lift Next | `toggleSet` **and** `logSupersetSet` → `decideNextLift`. Next = next row of **that** exercise, not the partner. Range text = that lift’s `reps`. |
 | Lift Est. 1RM | Existing `e1rmValue` (~L2527); `estimateOneRm` must match. `rowE1rm` skips seconds. |
 | Lift Close / Open | `closeLift` / `openLift` on Finish / first empty row. |
 | Holds | `startHoldCountdown` → `WorkOverlay`. **No** `HybridAdaptive`. |
@@ -1113,7 +1113,7 @@ Expected: FAIL (`loads adaptive-bundle.js` or `decideNextLift`)
 
 - [ ] **Step 3: Write minimal HTML**
 
-Add `<script src="./adaptive-bundle.js"></script>` next to the other prototype scripts. In the Log/done path, call Next as above. Do not change set count. Typed kg on the **current** row stays what they logged; Next writes the **following** row.
+Also wire `logSupersetSet`: same `decideNextLift` call, next row on **that** `ex.rows`, not the partner lift.
 
 - [ ] **Step 4: Run smoke + hold smoke**
 

@@ -246,6 +246,12 @@ Grind 5 → **same kg × 5**. Under (4) → **−2.5 × 5**.
 
 Set count does not change. Warm-ups earlier so they never Close.
 
+**Supersets (locked 4 Sep).** One lift at a time, in turn. Same lift
+brain (`decideNextLift`). Not the hold clock. Not the cond slider.
+HTML doors: `toggleSet` (single lift) **and** `logSupersetSet`
+(superset). After you log squat, Next fills the **next squat** row for
+that exercise, not the lunge in between. Close is per exercise.
+
 ---
 
 ## Open and Close — lifts
