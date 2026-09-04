@@ -15,7 +15,7 @@
 | --- | --- |
 | **Product** | Hybrid HTML athlete app only — Home · Library (dumb templates) · Calendar · Settings · manual logger |
 | **Engines** | **NONE.** All product engines deleted (strength, conditioning, nutrition, recovery, coordinator, Big Mac). Do not revive. |
-| **Next brain** | `@hybrid/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md` (Open / Next / Close). Not implemented. Do not revive deleted packages. |
+| **Next brain** | `@hybrid/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md`. Plan: `docs/superpowers/plans/2026-09-04-adaptive-open-next-close.md` (not started). Do not revive deleted packages. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `main` @ merge of blank-slate PR #161 |
