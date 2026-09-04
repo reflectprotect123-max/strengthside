@@ -290,8 +290,17 @@ countdown. Weight on a loaded hold is whatever you typed.
 **Not** lift RIR. **Not** double progression. **Not** HR / WHOOP / FTP /
 Morpheus / HRV.
 
-The machine does not change. Rower and ski stay in **split**. Bike and
-Echo stay in **watts**. The slider only moves that number.
+The machine does not change. **If there is a work number, the slider
+moves that number. If there is not, we do not invent one.**
+
+| Modality | Work number | Notes |
+| --- | --- | --- |
+| Bike, Echo | **watts** | Slider Next |
+| Rower, Ski erg | **split** s/500 m | Slider Next |
+| Walk | **none** | Generally **easy** work. Minutes stay yours. No invented pace. |
+| Run, Circuit, Other | **none** unless you typed watts or split | Chip still paints Easy/Medium/Hard. No invented FTP. |
+
+Walk defaults the chip to **Easy** if you did not paint one.
 
 You paint **Easy / Medium / Hard** on the card (not a typed `7–8`).
 

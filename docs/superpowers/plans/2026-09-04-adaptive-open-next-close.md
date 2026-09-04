@@ -28,7 +28,7 @@
 - No `decideNextSet` union. No `{ kind: 'hold' }` on the package.
 - Prototype path only. Never edit `preview-site/` or `apps/mobile/*.js` twins by hand.
 - Est. 1RM = HTML `e1rmValue`: `load × (1 + clamp(reps+rir,1,20) / 30)` rounded to 0.1 kg. Scoreboard + Close. **Not** Next kg.
-- Cond: slide after **work** only. Painted band = card chip Easy 3–4 / Medium 5–7 / Hard 8–9.5. Rower/ski = split. Bike/Echo = watts. Easy → +3% W or −1 s/500 m. Hold inside painted band. Hard → −5% W or +1 s. 10 or stopped → −8% W or +3 s. `% Max Capacity` on the talk-test table is copy, not a watts formula.
+- Cond: slide after **work** only. Painted band = card chip Easy 3–4 / Medium 5–7 / Hard 8–9.5. Bike/Echo = watts. Rower/ski = split. Walk = easy, no invented pace. Run/circuit/other = no Next number unless they typed one. Easy → +3% W or −1 s/500 m. Hold inside painted band. Hard → −5% W or +1 s. 10 or stopped → −8% W or +3 s.
 - 15 s hard / 45 s easy: Next must not return a new rest duration. If still cooked at the next hard, cut **work** (treat as too hard), do not lengthen rest.
 - Holds: no Open / Next / Close / Est. 1RM. Existing `WorkOverlay` countdown stays.
 - Engine fills kg first (Open / Next overwrite the box). Logged kg is the proxy for Est. 1RM and the next Next.
@@ -836,7 +836,7 @@ function condBand(
 
 Watts: hold / `round(w*1.03)` / `round(w*0.95)` / `round(w*0.92)`.  
 Split: hold / −1 / +1 / +3.  
-`dayKind === 'conditioning'` is required. This file must not import `./decide-next-lift` or `./estimate-one-rm`. `openCond` / `closeCond`: typed watts/split win, else last Close, else null. Never `rir`.
+If both `currentWatts` and `currentSplitSec` are null (walk / run with nothing typed), return `{ ok: true, skipped: true }` — do not invent a number. Walk with no chip → treat painted band as Easy 3–4 when they do slide.
 
 - [ ] **Step 4: Run test to verify it passes**
 
