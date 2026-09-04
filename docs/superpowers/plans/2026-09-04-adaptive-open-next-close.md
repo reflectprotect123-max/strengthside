@@ -8,7 +8,7 @@
 
 **Goal:** Ship `@hybrid/adaptive` (pure Open / Next / Close) that matches the 4 Sep recipe, then wire it into the Hybrid HTML logger so lifts use RIR double progression and conditioning uses work-only talk-test RPE.
 
-**Architecture:** New workspace package under `packages/adaptive/` — zero I/O, zero React. HTML is the only caller. Strength and conditioning share `openTarget`, `decideNextSet`, `closeAnchor` and split on `kind`. Timed holds and empty recovery stamps are never called (skip/refuse if they are). After package tests are green, esbuild an IIFE bundle for `apps/mobile/prototype/hybrid-app/`, then `bash apps/mobile/sync-hybrid-html.sh` and bump cache.
+**Architecture:** New workspace package under `packages/adaptive/` — zero I/O, zero React. HTML is the only caller. **Three sealed routes:** lift (`openLift` / `decideNextLift` / `closeLift`), cond (`openCond` / `decideNextCond` / `closeCond`), hold (no package). No `kind:` union. Lift files must not import cond files. After package tests are green, esbuild an IIFE bundle for `apps/mobile/prototype/hybrid-app/`, then `bash apps/mobile/sync-hybrid-html.sh` and bump cache.
 
 **Tech Stack:** TypeScript ES2022 (`tsconfig.base.json`), Vitest 3, pnpm workspace `packages/*`, Hybrid HTML app, esbuild IIFE, colocated `*.smoke.mjs`.
 
@@ -23,7 +23,10 @@
 - One typed reps range **or** a single number. Blank → `{ min: 8, max: 12 }`. No hidden 3–30 cage. No `/calf/i` 20–30 override.
 - Single number (`min === max`): same kg rules; **Next reps never change**. Logged extra reps still Next that number.
 - Range (`min < max`): double progression via RIR (hit top / middle / under min) at ±2.5 kg plates.
-- Lift RIR is **not** cond talk-test 1–10. Blank lift RIR = 0 (grind).
+- Lift RIR is **not** cond talk-test 1–10. Blank lift RIR = 0 (grind). Lift Next never reads `actualRpe`. Cond Next never reads `rir`.
+- Three HTML doors only: `toggleSet` → `decideNextLift`; `advanceInterval` / `completeConditioning` → `decideNextCond`; `startHoldCountdown` → `WorkOverlay` and **zero** `HybridAdaptive`.
+- No `decideNextSet` union. No `{ kind: 'hold' }` on the package.
+- Prototype path only. Never edit `preview-site/` or `apps/mobile/*.js` twins by hand.
 - Est. 1RM = HTML `e1rmValue`: `load × (1 + clamp(reps+rir,1,20) / 30)` rounded to 0.1 kg. Scoreboard + Close. **Not** Next kg.
 - Cond: slide after **work** only. Rower/ski = split. Bike/Echo = watts. Easy → +3% W or −1 s/500 m. Hold inside painted band. Hard → −5% W or +1 s. 10 or stopped → −8% W or +3 s. `% Max Capacity` on the talk-test table is copy, not a watts formula.
 - 15 s hard / 45 s easy: Next must not return a new rest duration. If still cooked at the next hard, cut **work** (treat as too hard), do not lengthen rest.
@@ -45,9 +48,12 @@
 | `packages/adaptive/src/range.ts` | `parseRepRange` |
 | `packages/adaptive/src/plates.ts` | `roundToPlate` |
 | `packages/adaptive/src/estimate-one-rm.ts` | `estimateOneRm` |
-| `packages/adaptive/src/decide-next-set.ts` | `decideNextSet` |
-| `packages/adaptive/src/open-target.ts` | `openTarget` |
-| `packages/adaptive/src/close-anchor.ts` | `closeAnchor` |
+| `packages/adaptive/src/decide-next-lift.ts` | `decideNextLift` only |
+| `packages/adaptive/src/decide-next-cond.ts` | `decideNextCond` only |
+| `packages/adaptive/src/open-lift.ts` | `openLift` |
+| `packages/adaptive/src/open-cond.ts` | `openCond` |
+| `packages/adaptive/src/close-lift.ts` | `closeLift` |
+| `packages/adaptive/src/close-cond.ts` | `closeCond` |
 | `packages/adaptive/src/index.ts` | Public barrel |
 | `scripts/bundle-adaptive.mjs` | esbuild IIFE → `adaptive-bundle.js` |
 | `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` | Generated; do not hand-edit |
@@ -68,13 +74,13 @@ Ran against `graphify-out/graph.json` (6695 nodes, built `cd2edf72`). Obsidian n
 
 | Job | Hook (do this) | Graph / vault (do not confuse) |
 | --- | --- | --- |
-| Lift Next | `toggleSet` in `index.html` (~L2450). Today it copies `r.weight` onto the next empty-kg row. Replace that copy with `decideNextSet`. Range text = `t.reps` (same field `completedTaskEditor` shows; builder writes it via `builderEffortValue()`). |
-| Lift Est. 1RM | Existing `e1rmValue` (~L2527) — keep the formula; `estimateOneRm` must match it. `rowE1rm` already skips seconds rows. |
-| Lift Close / Open | Last **done** non-hold row on Finish (`finishSession` / task complete). Open fills the first empty kg box at session start. |
-| Holds | `toggleSet` already `if(isHoldRow(r)){startHoldCountdown(i);return}`. `startHoldCountdown` → graph `startWork()` → `tick()` → `completeWork()` (`apps_mobile_prototype_hybrid_app_work_overlay_*`). Never call `HybridAdaptive` on this path. `hold-countdown.smoke.mjs` already forbids `decideNextSet`. |
-| Cond Next | **Not** `WorkOverlay.completeWork` (that clock is holds). Intervals: `advanceInterval` when `iv.phase==='work'` (before rest). Steady/tempo block: `completeConditioning` (comment already says cond anchors ripped). Slider after **work** only; do not change `t.restSec` or `t.rounds`. |
-| Session “Up next” | Graph `nextIncompleteTask()` is the **next task**, not the next set. Do not hang set Next there. |
-| Builder paint | `builderEffortValue()` reads `ex.reps`. `shouldForwardFillColumn()` is builder grid fill, not logger Next. |
+| Lift Next | `toggleSet` → `HybridAdaptive.decideNextLift` only. Range text = `t.reps`. |
+| Lift Est. 1RM | Existing `e1rmValue` (~L2527); `estimateOneRm` must match. `rowE1rm` skips seconds. |
+| Lift Close / Open | `closeLift` / `openLift` on Finish / first empty row. |
+| Holds | `startHoldCountdown` → `WorkOverlay`. **No** `HybridAdaptive`. |
+| Cond Next | `advanceInterval` (work→rest) and `completeConditioning` → `decideNextCond` only. |
+| Session “Up next” | `nextIncompleteTask()` is the next **task**. Not set Next. Not cond Next. |
+| Builder paint | `builderEffortValue()` → `ex.reps`. Not logger Next. |
 
 `graphify explain` on `completeWork()` (prototype id): called from `tick` and `finishEarly`; calls `stopWork`. `graphify affected completeWork`: `startWork` (inferred), `skip`, `tick`, `finishEarly`. Obsidian `completeWork().md` / `startWork().md` currently point at the **preview-site twin** — ignore those paths when editing.
 
@@ -321,10 +327,10 @@ git commit -m "feat(adaptive): Est. 1RM scoreboard and 2.5 kg plates"
 ### Task 3: Lift Next — range hit the top + single number
 
 **Files:**
-- Create: `packages/adaptive/src/decide-next-set.ts`
+- Create: `packages/adaptive/src/decide-next-lift.ts`
 - Modify: `packages/adaptive/src/types.ts`
 - Modify: `packages/adaptive/src/index.ts`
-- Test: `packages/adaptive/src/decide-next-set.test.ts`
+- Test: `packages/adaptive/src/decide-next-lift.test.ts`
 
 **Interfaces:**
 - Consumes: `RepRange`, `DayKind`, `roundToPlate`
@@ -334,45 +340,25 @@ git commit -m "feat(adaptive): Est. 1RM scoreboard and 2.5 kg plates"
 export type LiftLogged = { loadKg: number; reps: number; rir?: number | null };
 
 export type LiftNextInput = {
-  kind: 'lift';
   dayKind: DayKind;
   range: RepRange;
   logged: LiftLogged;
 };
 
-export type CondNextInput = {
-  kind: 'cond';
-  dayKind: DayKind;
-  modality: 'watts' | 'split';
-  targetRpe: RepRange;
-  actualRpe: number;
-  stopped?: boolean;
-  cooked?: boolean;
-  currentWatts?: number;
-  currentSplitSec?: number;
-};
-
-export type HoldNextInput = { kind: 'hold' };
-
-export type DecideNextSetInput = LiftNextInput | CondNextInput | HoldNextInput;
-
-export type DecideNextSetResult =
+export type LiftNextResult =
   | { ok: true; loadKg: number; reps: number }
-  | { ok: true; watts: number }
-  | { ok: true; splitSec: number }
-  | { ok: true; skipped: true }
   | { ok: false; reason: 'reps_out_of_sanity' | 'wrong_day' };
 
-export function decideNextSet(input: DecideNextSetInput): DecideNextSetResult;
+export function decideNextLift(input: LiftNextInput): LiftNextResult;
 ```
 
-Must not put `dayKind`, `setCount`, `restSec`, or `rounds` on the result.
+No `kind`, no cond fields, no skip. Must not put `dayKind`, `setCount`, `restSec`, or `rounds` on the result. This file must not mention `actualRpe` or `watts`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { decideNextSet } from './decide-next-set';
+import { decideNextLift } from './decide-next-lift';
 
 const r812 = { min: 8, max: 12 };
 
@@ -382,15 +368,14 @@ function lift(
   range = r812,
   loadKg = 80,
 ) {
-  return decideNextSet({
-    kind: 'lift',
+  return decideNextLift({
     dayKind: 'strength',
     range,
     logged: { loadKg, reps, rir },
   });
 }
 
-describe('decideNextSet lift — hit the top of a range', () => {
+describe('decideNextLift — hit the top of a range', () => {
   it('easy 12 on 8-12 adds 2.5 and returns to min', () => {
     expect(lift(12, 4)).toEqual({ ok: true, loadKg: 82.5, reps: 8 });
   });
@@ -412,7 +397,7 @@ describe('decideNextSet lift — hit the top of a range', () => {
   });
 });
 
-describe('decideNextSet lift — single number never pushes reps', () => {
+describe('decideNextLift — single number never pushes reps', () => {
   const five = { min: 5, max: 5 };
 
   it('easy 5 adds 2.5 and stays at 5', () => {
@@ -435,14 +420,14 @@ describe('decideNextSet lift — single number never pushes reps', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @hybrid/adaptive test src/decide-next-set.test.ts`  
-Expected: FAIL (`decideNextSet` not defined)
+Run: `pnpm --filter @hybrid/adaptive test src/decide-next-lift.test.ts`  
+Expected: FAIL (`decideNextLift` not defined)
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
 import { roundToPlate } from './plates';
-import type { DecideNextSetInput, DecideNextSetResult, RepRange } from './types';
+import type { LiftNextInput, LiftNextResult, RepRange } from './types';
 
 function rirValue(rir: number | null | undefined): number {
   if (rir == null || Number.isNaN(Number(rir))) return 0;
@@ -455,11 +440,7 @@ function mediumBump(range: RepRange): number {
   return Math.min(range.max, range.min + extra);
 }
 
-export function decideNextSet(input: DecideNextSetInput): DecideNextSetResult {
-  if (input.kind === 'hold') return { ok: true, skipped: true };
-  if (input.kind === 'cond') {
-    return { ok: false, reason: 'wrong_day' };
-  }
+export function decideNextLift(input: LiftNextInput): LiftNextResult {
   if (input.dayKind !== 'strength') return { ok: false, reason: 'wrong_day' };
   const reps = input.logged.reps;
   if (reps < 1 || reps >= 80) return { ok: false, reason: 'reps_out_of_sanity' };
@@ -492,11 +473,11 @@ export function decideNextSet(input: DecideNextSetInput): DecideNextSetResult {
 }
 ```
 
-Put the `DecideNextSet*` types in `types.ts` and import them. Hold skip now so later hold tests compile. Cond can `wrong_day` until Task 7.
+Put the lift types in `types.ts`. Do not add cond or hold types in this file.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @hybrid/adaptive test src/decide-next-set.test.ts`  
+Run: `pnpm --filter @hybrid/adaptive test src/decide-next-lift.test.ts`  
 Expected: PASS hit-top + single-number cases. Middle tests are not in this file yet.
 
 - [ ] **Step 5: Commit**
@@ -511,17 +492,17 @@ git commit -m "feat(adaptive): lift Next at range top; single number keeps reps"
 ### Task 4: Lift Next — middle, under min, sanity, no setCount
 
 **Files:**
-- Modify: `packages/adaptive/src/decide-next-set.ts`
-- Modify: `packages/adaptive/src/decide-next-set.test.ts`
+- Modify: `packages/adaptive/src/decide-next-lift.ts`
+- Modify: `packages/adaptive/src/decide-next-lift.test.ts`
 
 **Interfaces:**
-- Consumes: `decideNextSet` from Task 3
+- Consumes: `decideNextLift` from Task 3
 - Produces: same signatures
 
 - [ ] **Step 1: Write the failing tests** (append)
 
 ```ts
-describe('decideNextSet lift — middle and under on a range', () => {
+describe('decideNextLift — middle and under on a range', () => {
   it('middle + easy keeps kg and same reps (no jump)', () => {
     expect(lift(10, 3)).toEqual({ ok: true, loadKg: 80, reps: 10 });
   });
@@ -549,7 +530,7 @@ describe('decideNextSet lift — middle and under on a range', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @hybrid/adaptive test src/decide-next-set.test.ts`  
+Run: `pnpm --filter @hybrid/adaptive test src/decide-next-lift.test.ts`  
 Expected: FAIL on middle/under until those branches exist (if Task 3 already implemented under-min for singles, range under-min may already pass)
 
 - [ ] **Step 3: Write minimal implementation**
@@ -558,25 +539,25 @@ Middle: `min <= reps < max`. RIR `>= 2` → same kg, same reps. RIR `<= 1` → s
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @hybrid/adaptive test src/decide-next-set.test.ts`  
+Run: `pnpm --filter @hybrid/adaptive test src/decide-next-lift.test.ts`  
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/adaptive/src/decide-next-set.ts packages/adaptive/src/decide-next-set.test.ts
+git add packages/adaptive/src/decide-next-lift.ts packages/adaptive/src/decide-next-lift.test.ts
 git commit -m "feat(adaptive): lift Next middle, under-min, and sanity refuse"
 ```
 
 ---
 
-### Task 5: `openTarget` (lifts + hold skip)
+### Task 5: `openLift`
 
 **Files:**
-- Create: `packages/adaptive/src/open-target.ts`
+- Create: `packages/adaptive/src/open-lift.ts`
 - Modify: `packages/adaptive/src/types.ts`
 - Modify: `packages/adaptive/src/index.ts`
-- Test: `packages/adaptive/src/open-target.test.ts`
+- Test: `packages/adaptive/src/open-lift.test.ts`
 
 **Interfaces:**
 - Consumes: `parseRepRange`, `DayKind`
@@ -584,46 +565,31 @@ git commit -m "feat(adaptive): lift Next middle, under-min, and sanity refuse"
 ```ts
 export type CloseLiftAnchor = { loadKg: number; reps: number; e1rmKg: number };
 
-export type OpenTargetInput =
-  | {
-      kind: 'lift';
-      dayKind: DayKind;
-      rangeText: string | null;
-      typedKg: number | null;
-      typedReps: number | null;
-      lastClose: CloseLiftAnchor | null;
-    }
-  | { kind: 'hold' }
-  | {
-      kind: 'cond';
-      dayKind: DayKind;
-      modality: 'watts' | 'split';
-      typedWatts: number | null;
-      typedSplitSec: number | null;
-      lastClose: { watts?: number; splitSec?: number } | null;
-    };
+export type OpenLiftInput = {
+  dayKind: DayKind;
+  rangeText: string | null;
+  typedKg: number | null;
+  typedReps: number | null;
+  lastClose: CloseLiftAnchor | null;
+};
 
-export type OpenTargetResult =
+export type OpenLiftResult =
   | { ok: true; loadKg: number | null; reps: number }
-  | { ok: true; watts: number | null }
-  | { ok: true; splitSec: number | null }
-  | { ok: true; skipped: true }
   | { ok: false; reason: 'wrong_day' };
 
-export function openTarget(input: OpenTargetInput): OpenTargetResult;
+export function openLift(input: OpenLiftInput): OpenLiftResult;
 ```
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { openTarget } from './open-target';
+import { openLift } from './open-lift';
 
-describe('openTarget lift', () => {
+describe('openLift', () => {
   it('first-ever blank range: reps 8, kg blank', () => {
     expect(
-      openTarget({
-        kind: 'lift',
+      openLift({
         dayKind: 'strength',
         rangeText: null,
         typedKg: null,
@@ -635,8 +601,7 @@ describe('openTarget lift', () => {
 
   it('typed kg wins over last Close', () => {
     expect(
-      openTarget({
-        kind: 'lift',
+      openLift({
         dayKind: 'strength',
         rangeText: '8-12',
         typedKg: 40,
@@ -648,8 +613,7 @@ describe('openTarget lift', () => {
 
   it('uses last Close when logger boxes are blank', () => {
     expect(
-      openTarget({
-        kind: 'lift',
+      openLift({
         dayKind: 'strength',
         rangeText: '8-12',
         typedKg: null,
@@ -659,16 +623,16 @@ describe('openTarget lift', () => {
     ).toEqual({ ok: true, loadKg: 82.5, reps: 8 });
   });
 
-  it('hold skips', () => {
-    expect(openTarget({ kind: 'hold' })).toEqual({ ok: true, skipped: true });
+  it('refuses a conditioning day', () => {
+    expect(openLift({ dayKind: 'conditioning', rangeText: '8-12', typedKg: 40, typedReps: null, lastClose: null })).toEqual({ ok: false, reason: 'wrong_day' });
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @hybrid/adaptive test src/open-target.test.ts`  
-Expected: FAIL (`openTarget` not defined)
+Run: `pnpm --filter @hybrid/adaptive test src/open-lift.test.ts`  
+Expected: FAIL (`openLift` not defined)
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -678,11 +642,11 @@ reps  = typedReps ?? lastClose.reps ?? range.min
 kg    = typedKg ?? lastClose.loadKg ?? null
 ```
 
-If `kind: 'lift'` and `dayKind !== 'strength'` → `wrong_day`. Do **not** compute kg from Est. 1RM. Cond Open: `typedWatts ?? lastClose.watts ?? null` (or split). Hold: skipped.
+If `dayKind !== 'strength'` → `wrong_day`. Do **not** compute kg from Est. 1RM. Do not open cond here — that is `openCond` in Task 7.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @hybrid/adaptive test src/open-target.test.ts`  
+Run: `pnpm --filter @hybrid/adaptive test src/open-lift.test.ts`  
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -694,42 +658,37 @@ git commit -m "feat(adaptive): Open uses typed kg, else last Close, else blank"
 
 ---
 
-### Task 6: `closeAnchor`
+### Task 6: `closeLift`
 
 **Files:**
-- Create: `packages/adaptive/src/close-anchor.ts`
+- Create: `packages/adaptive/src/close-lift.ts`
 - Modify: `packages/adaptive/src/index.ts`
-- Test: `packages/adaptive/src/close-anchor.test.ts`
+- Test: `packages/adaptive/src/close-lift.test.ts`
 
 **Interfaces:**
 - Consumes: `estimateOneRm`
 
 ```ts
-export type CloseAnchorInput =
-  | { kind: 'lift'; lastLogged: { loadKg: number; reps: number; rir?: number | null } }
-  | { kind: 'hold' }
-  | { kind: 'cond'; lastMade: { watts?: number; splitSec?: number } };
+export type CloseLiftInput = {
+  lastLogged: { loadKg: number; reps: number; rir?: number | null };
+};
 
-export type CloseAnchorResult =
-  | { ok: true; loadKg: number; reps: number; e1rmKg: number }
-  | { ok: true; watts: number }
-  | { ok: true; splitSec: number }
-  | { ok: true; skipped: true };
+export type CloseLiftResult = { ok: true; loadKg: number; reps: number; e1rmKg: number };
 
-export function closeAnchor(input: CloseAnchorInput): CloseAnchorResult;
+export function closeLift(input: CloseLiftInput): CloseLiftResult;
 ```
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { closeAnchor } from './close-anchor';
+import { closeLift } from './close-lift';
 import { estimateOneRm } from './estimate-one-rm';
 
-describe('closeAnchor', () => {
+describe('closeLift', () => {
   it('stores last logged lift set only, with that row Est. 1RM', () => {
     const last = { loadKg: 82.5, reps: 8, rir: 3 };
-    expect(closeAnchor({ kind: 'lift', lastLogged: last })).toEqual({
+    expect(closeLift({ lastLogged: last })).toEqual({
       ok: true,
       loadKg: 82.5,
       reps: 8,
@@ -738,31 +697,26 @@ describe('closeAnchor', () => {
   });
 
   it('does not add a bonus plate', () => {
-    const closed = closeAnchor({
-      kind: 'lift',
+    const closed = closeLift({
       lastLogged: { loadKg: 80, reps: 12, rir: 4 },
     });
     expect(closed).toMatchObject({ ok: true, loadKg: 80, reps: 12 });
-  });
-
-  it('hold skips', () => {
-    expect(closeAnchor({ kind: 'hold' })).toEqual({ ok: true, skipped: true });
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @hybrid/adaptive test src/close-anchor.test.ts`  
-Expected: FAIL (`closeAnchor` not defined)
+Run: `pnpm --filter @hybrid/adaptive test src/close-lift.test.ts`  
+Expected: FAIL (`closeLift` not defined)
 
 - [ ] **Step 3: Write minimal implementation**
 
-Last logged set only. No weekly bump. Cond: `{ ok: true, watts }` or `{ ok: true, splitSec }` from `lastMade`. Hold: skipped.
+Last logged set only. No weekly bump. No hold skip branch — holds never call this.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @hybrid/adaptive test src/close-anchor.test.ts`  
+Run: `pnpm --filter @hybrid/adaptive test src/close-lift.test.ts`  
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -777,19 +731,39 @@ git commit -m "feat(adaptive): Close is last logged set, no secret bump"
 ### Task 7: Conditioning Next (talk-test vs painted work RPE)
 
 **Files:**
-- Modify: `packages/adaptive/src/decide-next-set.ts`
-- Modify: `packages/adaptive/src/decide-next-set.test.ts`
+- Create: `packages/adaptive/src/decide-next-cond.ts`
+- Create: `packages/adaptive/src/open-cond.ts`
+- Create: `packages/adaptive/src/close-cond.ts`
+- Modify: `packages/adaptive/src/types.ts`
+- Modify: `packages/adaptive/src/index.ts`
+- Test: `packages/adaptive/src/decide-next-cond.test.ts`
 
 **Interfaces:**
-- Consumes: `CondNextInput` from Task 3
+- Consumes: nothing from lift Next/Open/Close / `estimateOneRm`
 - Produces: watts/split results; never `restSec` or `rounds`
+
+```ts
+export type CondNextInput = {
+  dayKind: DayKind;
+  modality: 'watts' | 'split';
+  targetRpe: RepRange;
+  actualRpe: number;
+  stopped?: boolean;
+  cooked?: boolean;
+  currentWatts?: number;
+  currentSplitSec?: number;
+};
+export function decideNextCond(input: CondNextInput):
+  | { ok: true; watts: number }
+  | { ok: true; splitSec: number }
+  | { ok: false; reason: 'wrong_day' };
+```
 
 - [ ] **Step 1: Write the failing tests**
 
 ```ts
-describe('decideNextSet cond', () => {
+describe('decideNextCond', () => {
   const base = {
-    kind: 'cond' as const,
     dayKind: 'conditioning' as const,
     modality: 'watts' as const,
     targetRpe: { min: 7, max: 8 },
@@ -797,27 +771,27 @@ describe('decideNextSet cond', () => {
   };
 
   it('at target (talk-test 7-8) holds watts', () => {
-    expect(decideNextSet({ ...base, actualRpe: 7 })).toEqual({ ok: true, watts: 220 });
+    expect(decideNextCond({ ...base, actualRpe: 7 })).toEqual({ ok: true, watts: 220 });
   });
 
   it('too easy (5 vs 7-8) adds 3%', () => {
-    expect(decideNextSet({ ...base, actualRpe: 5 })).toEqual({ ok: true, watts: 227 });
+    expect(decideNextCond({ ...base, actualRpe: 5 })).toEqual({ ok: true, watts: 227 });
   });
 
   it('too hard (9) subtracts 5%', () => {
-    expect(decideNextSet({ ...base, actualRpe: 9 })).toEqual({ ok: true, watts: 209 });
+    expect(decideNextCond({ ...base, actualRpe: 9 })).toEqual({ ok: true, watts: 209 });
   });
 
   it('10 or stopped subtracts 8%', () => {
-    expect(decideNextSet({ ...base, actualRpe: 10 })).toEqual({ ok: true, watts: 202 });
-    expect(decideNextSet({ ...base, actualRpe: 8, stopped: true })).toEqual({
+    expect(decideNextCond({ ...base, actualRpe: 10 })).toEqual({ ok: true, watts: 202 });
+    expect(decideNextCond({ ...base, actualRpe: 8, stopped: true })).toEqual({
       ok: true,
       watts: 202,
     });
   });
 
   it('still cooked at next hard cuts work, does not return restSec', () => {
-    const next = decideNextSet({ ...base, actualRpe: 8, cooked: true });
+    const next = decideNextCond({ ...base, actualRpe: 8, cooked: true });
     expect(next).toEqual({ ok: true, watts: 209 });
     expect(next).not.toHaveProperty('restSec');
     expect(next).not.toHaveProperty('rounds');
@@ -825,19 +799,18 @@ describe('decideNextSet cond', () => {
 
   it('split moves by 1s easy/hard and 3s on 10', () => {
     const split = {
-      kind: 'cond' as const,
       dayKind: 'conditioning' as const,
       modality: 'split' as const,
       targetRpe: { min: 7, max: 8 },
       currentSplitSec: 120,
     };
-    expect(decideNextSet({ ...split, actualRpe: 5 })).toEqual({ ok: true, splitSec: 119 });
-    expect(decideNextSet({ ...split, actualRpe: 9 })).toEqual({ ok: true, splitSec: 121 });
-    expect(decideNextSet({ ...split, actualRpe: 10 })).toEqual({ ok: true, splitSec: 123 });
+    expect(decideNextCond({ ...split, actualRpe: 5 })).toEqual({ ok: true, splitSec: 119 });
+    expect(decideNextCond({ ...split, actualRpe: 9 })).toEqual({ ok: true, splitSec: 121 });
+    expect(decideNextCond({ ...split, actualRpe: 10 })).toEqual({ ok: true, splitSec: 123 });
   });
 
   it('refuses cond on a strength day', () => {
-    expect(decideNextSet({ ...base, dayKind: 'strength', actualRpe: 7 })).toEqual({
+    expect(decideNextCond({ ...base, dayKind: 'strength', actualRpe: 7 })).toEqual({
       ok: false,
       reason: 'wrong_day',
     });
@@ -849,7 +822,7 @@ Watts math: `Math.round(220 * 1.03) === 227`, `Math.round(220 * 0.95) === 209`, 
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @hybrid/adaptive test src/decide-next-set.test.ts`  
+Run: `pnpm --filter @hybrid/adaptive test src/decide-next-cond.test.ts`  
 Expected: FAIL until cond math exists
 
 - [ ] **Step 3: Write minimal implementation**
@@ -871,17 +844,17 @@ function condBand(
 
 Watts: hold / `round(w*1.03)` / `round(w*0.95)` / `round(w*0.92)`.  
 Split: hold / −1 / +1 / +3.  
-`kind: 'cond'` requires `dayKind === 'conditioning'`.
+`dayKind === 'conditioning'` is required. This file must not import `./decide-next-lift` or `./estimate-one-rm`. `openCond` / `closeCond`: typed watts/split win, else last Close, else null. Never `rir`.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @hybrid/adaptive test src/decide-next-set.test.ts`  
+Run: `pnpm --filter @hybrid/adaptive test src/decide-next-cond.test.ts`  
 Expected: PASS including 227 / 209 / 202
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add packages/adaptive/src/decide-next-set.ts packages/adaptive/src/decide-next-set.test.ts
+git add packages/adaptive/src/decide-next-cond.ts packages/adaptive/src/decide-next-cond.test.ts packages/adaptive/src/open-cond.ts packages/adaptive/src/close-cond.ts
 git commit -m "feat(adaptive): cond Next from talk-test RPE vs painted work"
 ```
 
@@ -901,23 +874,44 @@ git commit -m "feat(adaptive): cond Next from talk-test RPE vs painted work"
 
 ```ts
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
-  closeAnchor,
-  decideNextSet,
+  closeCond,
+  closeLift,
+  decideNextCond,
+  decideNextLift,
   estimateOneRm,
-  openTarget,
+  openCond,
+  openLift,
   parseRepRange,
   roundToPlate,
 } from './index';
 
 describe('public API', () => {
-  it('exports the three modules plus estimate, plates, and range', () => {
+  it('exports lift and cond as separate functions', () => {
     expect(typeof parseRepRange).toBe('function');
     expect(typeof estimateOneRm).toBe('function');
     expect(typeof roundToPlate).toBe('function');
-    expect(typeof openTarget).toBe('function');
-    expect(typeof decideNextSet).toBe('function');
-    expect(typeof closeAnchor).toBe('function');
+    expect(typeof openLift).toBe('function');
+    expect(typeof decideNextLift).toBe('function');
+    expect(typeof closeLift).toBe('function');
+    expect(typeof openCond).toBe('function');
+    expect(typeof decideNextCond).toBe('function');
+    expect(typeof closeCond).toBe('function');
+  });
+
+  it('lift source never mentions RPE or watts', () => {
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const lift = readFileSync(join(dir, 'decide-next-lift.ts'), 'utf8');
+    expect(lift).not.toMatch(/actualRpe|watts|splitSec/);
+  });
+
+  it('cond source never mentions RIR or loadKg', () => {
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const cond = readFileSync(join(dir, 'decide-next-cond.ts'), 'utf8');
+    expect(cond).not.toMatch(/\brir\b|loadKg/);
   });
 });
 ```
@@ -960,7 +954,7 @@ git commit -m "feat(adaptive): export Open Next Close for the athlete app"
 
 **Interfaces:**
 - Consumes: `packages/adaptive/src/index.ts`
-- Produces: `globalThis.HybridAdaptive` with `decideNextSet`, `openTarget`, `closeAnchor`, `estimateOneRm`, `parseRepRange`
+- Produces: `globalThis.HybridAdaptive` with `decideNextLift`, `decideNextCond`, `openLift`, `openCond`, `closeLift`, `closeCond`, `estimateOneRm`, `parseRepRange`
 
 - [ ] **Step 1: Write the failing smoke**
 
@@ -974,14 +968,22 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const bundle = readFileSync(join(dir, 'adaptive-bundle.js'), 'utf8');
 const ctx = { HybridAdaptive: undefined };
 vm.runInNewContext(bundle, ctx);
-if (!ctx.HybridAdaptive?.decideNextSet) throw new Error('HybridAdaptive.decideNextSet missing');
-const next = ctx.HybridAdaptive.decideNextSet({
-  kind: 'lift',
+if (!ctx.HybridAdaptive?.decideNextLift) throw new Error('HybridAdaptive.decideNextLift missing');
+if (!ctx.HybridAdaptive?.decideNextCond) throw new Error('HybridAdaptive.decideNextCond missing');
+const next = ctx.HybridAdaptive.decideNextLift({
   dayKind: 'strength',
   range: { min: 8, max: 12 },
   logged: { loadKg: 80, reps: 12, rir: 4 },
 });
-if (next.loadKg !== 82.5 || next.reps !== 8) throw new Error('bundle Next mismatch');
+if (next.loadKg !== 82.5 || next.reps !== 8) throw new Error('bundle lift Next mismatch');
+const cond = ctx.HybridAdaptive.decideNextCond({
+  dayKind: 'conditioning',
+  modality: 'watts',
+  targetRpe: { min: 7, max: 8 },
+  actualRpe: 7,
+  currentWatts: 220,
+});
+if (!cond.ok || cond.watts !== 220) throw new Error('bundle cond Next mismatch');
 console.log('adaptive-bundle.smoke: ok');
 ```
 
@@ -1025,27 +1027,27 @@ git commit -m "feat(adaptive): bundle Open Next Close for the Hybrid HTML app"
 
 ---
 
-### Task 10: After Log on a lift, fill the next row from `decideNextSet`
+### Task 10: After Log on a lift, fill the next row from `decideNextLift`
 
 **Files:**
-- Modify: `apps/mobile/prototype/hybrid-app/index.html` (script tag for `adaptive-bundle.js`; after a working set is marked done, call `HybridAdaptive.decideNextSet` and write next row kg/reps)
+- Modify: `apps/mobile/prototype/hybrid-app/index.html` (script tag for `adaptive-bundle.js`; after a working set is marked done, call `HybridAdaptive.decideNextLift` and write next row kg/reps)
 - Create: `apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs`
-- Modify: `package.json` `verify` to include `check:adaptive-logger`
+- Create: `apps/mobile/prototype/hybrid-app/adaptive-routes.smoke.mjs`
+- Modify: `package.json` `verify` to include `check:adaptive-logger` and `check:adaptive-routes`
 
 **Interfaces:**
-- Consumes: `HybridAdaptive.decideNextSet`, `parseRepRange`
+- Consumes: `HybridAdaptive.decideNextLift`, `parseRepRange`
 - Produces: next undone strength row gets `{ weight, reps }` from Next; set count unchanged; hold rows never call it
 
 `toggleSet` in `index.html` (not in the graph). After a non-hold log it currently does:
 
 `if(r.done&&r.weight){let next=t.rows.slice(i+1).find(x=>!x.done&&!x.weight);if(next)next.weight=r.weight}`
 
-Replace **that copy** with `decideNextSet`. Do not also copy kg. Painted range is `t.reps` (`builderEffortValue` → `ex.reps` on the card; `completedTaskEditor` already prints `t.reps`). Fallback `row.target`. Do not call this on `isHoldRow(r)` — that branch already returns into `startHoldCountdown`.
+Replace **that copy** with `decideNextLift`. Do not also copy kg. Painted range is `t.reps`. Fallback `row.target`. Do not call this on `isHoldRow(r)`.
 
 ```js
 let range = HybridAdaptive.parseRepRange(String(t.reps || (r && r.target) || ''));
-let next = HybridAdaptive.decideNextSet({
-  kind: 'lift',
+let next = HybridAdaptive.decideNextLift({
   dayKind: 'strength',
   range,
   logged: { loadKg: num(r.weight), reps: num(r.reps), rir: r.rir === '' ? null : num(r.rir) },
@@ -1069,18 +1071,45 @@ import { fileURLToPath } from 'node:url';
 const html = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'index.html'), 'utf8');
 function must(c, m) { if (!c) throw new Error(m); }
 must(html.includes('src="./adaptive-bundle.js"'), 'loads adaptive-bundle.js');
-must(html.includes('HybridAdaptive.decideNextSet'), 'Log calls decideNextSet');
-must(html.includes("kind:'lift'") || html.includes('kind: "lift"') || html.includes("kind: 'lift'"), 'lift kind');
-must(!/isHoldRow\(r\)[\s\S]{0,200}HybridAdaptive\.decideNextSet/.test(html) || html.includes("if(isHoldRow(r)){startHoldCountdown"), 'holds still start countdown, not Next');
+must(html.includes('HybridAdaptive.decideNextLift'), 'Log calls decideNextLift');
+must(html.includes("if(isHoldRow(r)){startHoldCountdown"), 'holds still start countdown, not Next');
+must(!html.includes('HybridAdaptive.decideNextCond') || html.includes('function advanceInterval'), 'cond Next is not on the lift Log path');
 console.log('adaptive-logger.smoke: ok');
 ```
 
-Tune the hold assertion to the real `toggleSet` text after you write it: Hold path must remain `startHoldCountdown` without `decideNextSet`.
+`adaptive-routes.smoke.mjs` (same folder):
+
+```js
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const dir = dirname(fileURLToPath(import.meta.url));
+const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const overlay = readFileSync(join(dir, 'work-overlay.js'), 'utf8');
+function slice(name) {
+  const i = html.indexOf('function ' + name);
+  if (i < 0) throw new Error('missing ' + name);
+  return html.slice(i, i + 800);
+}
+function must(c, m) { if (!c) throw new Error(m); }
+const toggle = slice('toggleSet');
+must(toggle.includes('decideNextLift'), 'toggleSet is the lift door');
+must(!toggle.includes('decideNextCond'), 'toggleSet must not call cond Next');
+must(!toggle.includes('actualRpe'), 'toggleSet must not see RPE');
+const hold = slice('startHoldCountdown');
+must(!hold.includes('HybridAdaptive'), 'hold door never calls the package');
+must(!overlay.includes('HybridAdaptive'), 'WorkOverlay never calls the package');
+console.log('adaptive-routes.smoke: ok');
+```
+```
+
+Hold path must remain `startHoldCountdown` with zero `HybridAdaptive`.
 
 - [ ] **Step 2: Run smoke to verify it fails**
 
 Run: `node apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs`  
-Expected: FAIL (`loads adaptive-bundle.js` or `decideNextSet`)
+Expected: FAIL (`loads adaptive-bundle.js` or `decideNextLift`)
 
 - [ ] **Step 3: Write minimal HTML**
 
@@ -1088,7 +1117,7 @@ Add `<script src="./adaptive-bundle.js"></script>` next to the other prototype s
 
 - [ ] **Step 4: Run smoke + hold smoke**
 
-Run: `node apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs && node apps/mobile/prototype/hybrid-app/hold-countdown.smoke.mjs`  
+Run: `node apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs && node apps/mobile/prototype/hybrid-app/adaptive-routes.smoke.mjs && node apps/mobile/prototype/hybrid-app/hold-countdown.smoke.mjs`  
 Expected: both PASS
 
 - [ ] **Step 5: Commit**
@@ -1100,14 +1129,14 @@ git commit -m "feat(logger): fill next lift from RIR Next"
 
 ---
 
-### Task 11: Session Finish → `closeAnchor`; next session `openTarget`
+### Task 11: Session Finish → `closeLift`; next session `openLift`
 
 **Files:**
-- Modify: `apps/mobile/prototype/hybrid-app/index.html` (on session complete, store last logged set per lift; on session start, fill first row from `openTarget`)
+- Modify: `apps/mobile/prototype/hybrid-app/index.html` (on session complete, store last logged set per lift; on session start, fill first row from `openLift`)
 - Modify: `apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs`
 
 **Interfaces:**
-- Consumes: `closeAnchor`, `openTarget`
+- Consumes: `closeLift`, `openLift`
 - Produces: persisted `{ loadKg, reps, e1rmKg }` keyed by exercise id; Open fills first row; typed kg still wins if the box is non-empty
 
 Persist on `S` (existing local state object) under a small map e.g. `S.adaptiveClose = S.adaptiveClose || {}` keyed by `exerciseId || name`. Do not add Supabase migrations.
@@ -1115,19 +1144,19 @@ Persist on `S` (existing local state object) under a small map e.g. `S.adaptiveC
 - [ ] **Step 1: Write the failing smoke** (append to `adaptive-logger.smoke.mjs`)
 
 ```js
-must(html.includes('HybridAdaptive.closeAnchor'), 'Finish calls closeAnchor');
-must(html.includes('HybridAdaptive.openTarget'), 'session start calls openTarget');
+must(html.includes('HybridAdaptive.closeLift'), 'Finish calls closeLift');
+must(html.includes('HybridAdaptive.openLift'), 'session start calls openLift');
 must(html.includes('adaptiveClose') || html.includes('lastClose'), 'stores Close locally');
 ```
 
 - [ ] **Step 2: Run smoke to verify it fails**
 
 Run: `node apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs`  
-Expected: FAIL on `closeAnchor` / `openTarget`
+Expected: FAIL on `closeLift` / `openLift`
 
 - [ ] **Step 3: Write minimal HTML**
 
-On Finish of a strength task: last **done** non-hold row → `closeAnchor({ kind: 'lift', lastLogged: {...} })` → save. On building the first empty row at session start: `openTarget({ kind: 'lift', dayKind: 'strength', rangeText, typedKg, typedReps, lastClose })`. If Open `loadKg` is null, leave the kg box blank.
+On Finish of a strength task: last **done** non-hold row → `closeLift({ lastLogged: {...} })` → save. On building the first empty row at session start: `openLift({ dayKind: 'strength', rangeText, typedKg, typedReps, lastClose })`. If Open `loadKg` is null, leave the kg box blank.
 
 - [ ] **Step 4: Run smoke to verify it passes**
 
@@ -1143,14 +1172,15 @@ git commit -m "feat(logger): Close last lift set and Open next session from it"
 
 ---
 
-### Task 12: Conditioning work slider → `decideNextSet` kind cond
+### Task 12: Conditioning work slider → `decideNextCond`
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` — `advanceInterval` (work→rest) and `completeConditioning`; **not** `WorkOverlay.completeWork`
 - Modify: `apps/mobile/prototype/hybrid-app/adaptive-logger.smoke.mjs`
+- Modify: `apps/mobile/prototype/hybrid-app/adaptive-routes.smoke.mjs`
 
 **Interfaces:**
-- Consumes: `decideNextSet` cond branch
+- Consumes: `decideNextCond`
 - Produces: next work target only
 
 Slider labels (talk test, copy only): 1 conversation … 10 cannot speak. Painted target comes from the card (e.g. 7–8). Rest/easy 45 s is not a second slider.
@@ -1158,7 +1188,7 @@ Slider labels (talk test, copy only): 1 conversation … 10 cannot speak. Painte
 - [ ] **Step 1: Write the failing smoke**
 
 ```js
-must(html.includes("kind: 'cond'") || html.includes('kind:"cond"') || html.includes("kind:'cond'"), 'cond Next');
+must(html.includes('HybridAdaptive.decideNextCond'), 'cond Next');
 must(html.includes('actualRpe'), 'passes actual RPE');
 must(html.includes('modality'), 'watts vs split');
 ```
@@ -1172,11 +1202,10 @@ Expected: FAIL until cond strings exist
 
 Do **not** hang this on graph `completeWork()` — that is the hold clock (`startHoldCountdown` callback). Cond anchors were ripped: `completeConditioning` still has the `/* cond anchors ripped — rebuild */` comment.
 
-Intervals: when `advanceInterval` sees `iv.phase==='work'` (about to become rest), show the 1–10 slider, then `decideNextSet` kind `cond`. Apply watts/split to the **next work** target only. Leave `t.restSec` and `t.rounds` unchanged. Tempo/steady: one slider at `completeConditioning` (or mid-block if that UI already exists). `cooked` if they never came back to easy on 15/45 — treat as too hard; still do not lengthen rest.
+Intervals: when `advanceInterval` sees `iv.phase==='work'` (about to become rest), show the 1–10 slider, then `decideNextCond`. Apply watts/split to the **next work** target only. Leave `t.restSec` and `t.rounds` unchanged. Tempo/steady: one slider at `completeConditioning`. `cooked` if they never came back to easy on 15/45 — treat as too hard; still do not lengthen rest.
 
 ```js
-decideNextSet({
-  kind: 'cond',
+decideNextCond({
   dayKind: 'conditioning',
   modality: t.modality,
   targetRpe: /* painted work band from the card, e.g. 7-8 */,
@@ -1210,17 +1239,11 @@ git commit -m "feat(logger): cond work RPE slider moves watts or split only"
 
 **Interfaces:**
 - Consumes: existing `WorkOverlay` / `startHoldCountdown`
-- Produces: unchanged hold clock; no `decideNextSet` on seconds rows
+- Produces: unchanged hold clock; no adaptive call on seconds rows
 
 - [ ] **Step 1: Write / keep failing assertions**
 
-Keep `hold-countdown.smoke.mjs` requiring `startHoldCountdown` and no Next on that path. Add:
-
-```js
-must(html.includes("kind: 'hold'") === false || html.includes("kind:'hold'"), 'optional explicit hold skip');
-```
-
-Prefer: hold path never reaches `HybridAdaptive` at all.
+Keep `hold-countdown.smoke.mjs` requiring `startHoldCountdown` and no Next on that path. Add to `adaptive-routes.smoke.mjs`: after Task 12, `advanceInterval` slice must include `decideNextCond` and must not include `decideNextLift` or `rir`.
 
 - [ ] **Step 2: Run both smokes**
 
@@ -1308,15 +1331,15 @@ git commit -m "chore: sync Hybrid HTML and bump blank cache to v171"
 | Single number never pushes reps | 3 |
 | Sanity 0 / 80; no setCount | 4 |
 | Open typed / Close / first-ever 8 blank kg | 5, 6 |
-| Holds skip | 3, 5, 6, 13 |
+| Holds never call the package | 13 |
 | `dayKind` never in output; wrong day | 3, 7 |
 | Cond talk-test vs painted work; rest not in result; cooked cuts work | 7, 12 |
-| Barrel + verify collects package | 8 |
-| HTML Log / Finish / Open / cond slider / sync | 9–14 |
+| Barrel + source isolation (lift vs cond) | 8 |
+| HTML three doors + routes smoke | 9–14 |
 
 **Placeholder scan:** no TBD / “similar to Task N” / “add error handling” without code.
 
-**Types:** `decideNextSet`, `openTarget`, `closeAnchor`, `estimateOneRm`, `parseRepRange`, `roundToPlate`, `RepRange`, `DayKind`, `cooked` / `stopped` on cond — same names in later tasks.
+**Types:** `decideNextLift`, `decideNextCond`, `openLift`, `openCond`, `closeLift`, `closeCond`, `estimateOneRm`, `parseRepRange`, `roundToPlate`, `RepRange`, `DayKind`, `cooked` / `stopped` on cond — same names in later tasks. No `decideNextSet`.
 
 **Phase split:** HTML is a second phase because the spec forbids wiring before package tests. One plan so executors do not invent a second recipe.
 

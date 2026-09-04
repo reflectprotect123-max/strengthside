@@ -109,7 +109,7 @@ Nutrition, coach publish, pain/illness product, LLM decide: **out**.
 
 ---
 
-## The three modules (one package)
+## Three sealed routes (one package)
 
 **Package:** `@hybrid/adaptive` under `packages/adaptive/` (new).  
 `packages/` is empty of product engines. New APIs. Do not copy deleted
@@ -118,20 +118,37 @@ files.
 Pure TypeScript. Zero I/O. HTML logger is the only caller. `dayKind` is
 **input**, never output.
 
-| Module | Job | API | Writes long-term state? |
+**Nothing shares a door.** Lift, hold, and cond are three routes. They
+do not share a `kind:` switch, a Next function, or an HTML helper that
+can see both RIR and RPE.
+
+| Route | HTML door (only this) | Package files | Never |
 | --- | --- | --- | --- |
-| **Open** | First target of this exercise / bout | `openTarget` | No |
-| **Next** | After a logged set / work bout | `decideNextSet` | No |
-| **Close** | Session done — last make + Est. 1RM | `closeAnchor` | Returns the anchor; **HTML app** saves it |
+| **Lift** | `toggleSet` (Next), task finish (Close), first empty row (Open) | `open-lift.ts`, `decide-next-lift.ts`, `close-lift.ts`, `estimate-one-rm.ts` | RPE, watts, split, `WorkOverlay`, rest seconds |
+| **Hold** | `startHoldCountdown` → `WorkOverlay.startWork` | **none** | `HybridAdaptive` at all |
+| **Cond** | `advanceInterval` after work; `completeConditioning` for tempo/steady | `open-cond.ts`, `decide-next-cond.ts`, `close-cond.ts` | RIR, kg, reps double-progression, hold clock |
+
+| Job | Lift API | Cond API |
+| --- | --- | --- |
+| Open | `openLift` | `openCond` |
+| Next | `decideNextLift` | `decideNextCond` |
+| Close | `closeLift` | `closeCond` |
+
+There is **no** `decideNextSet` / `openTarget` / `closeAnchor` union.
+There is **no** `{ kind: 'hold' }` on the package. Holds are not a
+skipped adaptive call — they are a different door.
+
+Shared utilities only: `parseRepRange` (lift cards), `roundToPlate`
+(lift kg). Cond rounds watts in `decide-next-cond.ts`. Lift files must
+not import cond files. Cond files must not import lift Next/Open/Close
+or `estimateOneRm`.
 
 **Est. 1RM (lifts only):**
 `estimateOneRm({ loadKg, reps, rir })` → kilograms. Same math as
 today’s `e1rmValue` in the HTML logger. Scoreboard + Close. **Not** the
-Next kg formula.
+Next kg formula. Cond has no 1RM.
 
-Same three function **names** for Strength and Conditioning. Different
-math inside. Recovery empty rest stamp: **do not call**. Timed holds:
-**do not call**.
+Recovery empty rest stamp: **do not call** any adaptive function.
 
 ### Shared rules
 
@@ -337,9 +354,11 @@ You own how many rounds / blocks.
 
 1. New package only. Tests green **before** HTML wire.
 2. Calendar stamps stay in the HTML app.
-3. After each logged **lift** set → `decideNextSet` → next row.
-4. Seconds rows start `WorkOverlay` — no `decideNextSet`.
-5. Session end → `closeAnchor` → hint for next Open.
+3. After each logged **lift** set → `decideNextLift` → next row.
+4. Seconds rows start `WorkOverlay` — **zero** `HybridAdaptive`.
+5. After each cond **work** bout → `decideNextCond` → next work number only.
+6. Session end lift → `closeLift`. Cond → `closeCond`. Next Open is that Close.
+7. You pick lifts in Library. Engine does not invent exercises.
 6. You pick lifts in Library. Engine does not invent exercises.
 
 Do not write package code until the plan is executed on purpose.
@@ -385,9 +404,9 @@ Colocated. No `--passWithNoTests`.
 
 **Holds / day**
 
-18. Hold input → skip (no kg/reps/e1RM).
-19. `dayKind` never appears in output. Lift Next on a Conditioning day
-    refuses. Cond Next on a Strength day refuses.
+18. Holds never call the package. `WorkOverlay` only.
+19. `dayKind` never appears in output. `decideNextLift` on a Conditioning day
+    refuses. `decideNextCond` on a Strength day refuses.
 
 **Cond**
 
