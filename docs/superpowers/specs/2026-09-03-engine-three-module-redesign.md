@@ -21,11 +21,13 @@ You paint the week: Strength, Conditioning, or Recovery. You own
 templates A and B. You change the lifts.
 
 The engine does three jobs, every workout, same verbs for a lift or a
-row:
+row — plus a **guessed 1RM** per lift so you can see strength go up
+and so Open/Next are not just “whatever you did last time in kilos.”
 
-1. **Open** — start from last time’s number (or you type one).
+1. **Open** — start from last time’s number (or you type one), using
+   Est. 1RM when we have one.
 2. **Next** — you log a set → the **next** set’s numbers change.
-3. **Close** — remember what you finished on. No secret end-of-week bump.
+3. **Close** — remember last make **and** the new Est. 1RM.
 
 It never flips a day you meant to train. It never rewrites A/B’s lift
 list.
@@ -56,7 +58,10 @@ Pure TypeScript. Zero I/O. HTML logger is the only caller. `dayKind` is
 | --- | --- | --- | --- |
 | **Open** | First target of this exercise / bout | `openTarget` | No |
 | **Next** | After a logged set / interval | `decideNextSet` | No |
-| **Close** | Session done — remember the last make | `closeAnchor` | Returns the anchor; **adapter** saves it |
+| **Close** | Session done — remember last make + Est. 1RM | `closeAnchor` | Returns the anchor; **adapter** saves it |
+
+**Est. 1RM (pure helper, used by Open / Next / Close):**
+`estimateOneRm({ loadKg, reps, rir })` → kilograms. Not a gym max.
 
 Same three functions for Strength and Conditioning. Recovery: if the
 day is an empty rest stamp, these are not called. If the recovery card
@@ -67,10 +72,34 @@ has logged bouts, same clock.
 - Open never waits for a working max, level, or “3 exposures.”
 - Next never saves the week. It only returns set N+1.
 - Close never adds +2.5% “because the session went well.” It stores the
-  last **made** load (or last used target). Next Monday’s Open reads that.
+  last **made** load and the session Est. 1RM. Next Monday’s Open reads
+  those.
 - WHOOP / HRV / sleep do not change Open or Next numbers. They do not
   flip the day.
 - Pain is not a branch in these three modules.
+
+---
+
+## Est. 1RM
+
+Owner lock (4 Sep 2026): **compute a 1RM estimate** so strength is
+visible over time and so guesses are better than raw last-kilos.
+
+- **Per exercise.** Bench Est. 1RM is not squat Est. 1RM.
+- **From the log:** load, reps, and RIR (or Peak-style difficulty).
+  Formula v1: Helms / Zourdos 2016 Table 2 (citable).  
+  `e1rm = loadKg / percent(reps, rpe)` where `rpe ≈ 10 − rir`.  
+  If RIR is missing, treat as RPE 8 (2 RIR) so a typed 40 × 6 still
+  computes. Version the table; do not paste a keto-blog grid.
+- **Not a tested max.** UI label is Est. 1RM. A later true 1RM test
+  can override; until then this is the number.
+- **Updates when you log.** 25 → you lift 40 × 6 at 2 RIR →  
+  40 / 0.79 ≈ **51 kg** Est. 1RM. Next set at 6 @ ~RPE 8 is still
+  **~40**, not 27.5. If that set was *very* easy, Est. 1RM is higher
+  and Next may add a plate.
+- **Close** writes the session’s best working-set Est. 1RM (and last
+  make). Progress chart = that series over weeks.
+- Conditioning has no 1RM. Watts stay watts.
 
 ---
 
@@ -85,7 +114,7 @@ Wakes on every completed set, not on Finish.
 2. Log 82.5 × 4, miss.  
    → Next: **80 × 5** (last make this session). Not 82.5 × 0.95.
 3. Log 80 × 5. Done. Bench is still Bench.  
-   → Close stores **80**. Next Strength day Open is 80.
+   → Close stores **80** and the session Est. 1RM.
 
 | How the set went | Next set |
 | --- | --- |
@@ -101,7 +130,8 @@ prescription. Asked **25 × 6**, you log **40 × 6** because 25 was a joke.
   does **not** also slap on a plate the same set you just jumped 15 kg
   (not 42.5 yet).
 - If the next set at 40 is easy too, *then* Next may add a plate.
-- Close stores **40**. Next Strength day Open is 40.
+- Close stores **40** and Est. 1RM ≈ **51 kg**. Next Strength day Open
+  can be 40, or 51 × the next session’s target %.
 
 Same if you log *under* the ask and still make the reps (asked 40, you
 did 35 × 6): last make is 35; Next holds 35 unless you miss.
@@ -119,12 +149,11 @@ on a Conditioning day.
 
 ## Open and Close
 
-**Open** prefers: you typed a number → else last Close anchor → else
-blank logger.
+**Open** prefers: you typed a number → else `e1rm × percent(targetReps, targetRpe)` rounded to plates → else last Close load → else blank.
 
-**Close** returns `{ loadKg, reps }` or `{ lastTargetWatts, … }` from
-what you actually finished. Adapter writes local hints. Close does
-**not** run progress math.
+**Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
+what you actually finished. Adapter saves hints + Est. 1RM. Close does
+**not** invent an extra bump on top of Next.
 
 ---
 
@@ -148,12 +177,14 @@ Colocated. No `--passWithNoTests`.
 
 1. Bench golden path above (82.5 then back to 80; opener 80).
 2. Asked 25×6, logged 40×6 easy → Next is 40×6, not 27.5 and not 42.5.
-   Close opener is 40.
-3. Three easy sessions in a row: Close still does **not** invent an extra
+   Est. 1RM ≈ 51 kg. Close opener can use that, not 25.
+3. 40×6 at 2 RIR → `estimateOneRm` ≈ 51; 40×6 at 0 RIR → lower Est. 1RM
+   (harder set, smaller implied max).
+4. Three easy sessions in a row: Close still does **not** invent an extra
    +2.5 on top of what Next already did in-session.
-4. `dayKind` never appears in output; Strength vs Conditioning cannot
+5. `dayKind` never appears in output; Strength vs Conditioning cannot
    rename the day.
-5. Miss at 82.5 never yields 5% off 82.5.
+6. Miss at 82.5 never yields 5% off 82.5.
 
 ---
 
