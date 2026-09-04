@@ -57,9 +57,8 @@ const fixture = {
   version: 2,
   updated: '2026-09-02',
   purpose:
-    'Reference: which engine metrics and logger columns each exercise uses. Derived from hybrid-engine-exercise-library-120 plus profile rules. Not wired into strength-adapter yet.',
+    'Reference: which logger columns each exercise uses. Derived from hybrid-engine-exercise-library-120 plus profile rules. Core S&C engines deleted 2026-09-03 — this fixture is UI/column metadata only.',
   sources: [
-    'packages/strength-engine/src/metric.ts',
     'apps/mobile/prototype/hybrid-app/log-columns.js',
     'evidence-platform/.../hybrid-engine-exercise-library-120.json',
     'https://www.strongerbyscience.com/progressive-overload-strategies/',

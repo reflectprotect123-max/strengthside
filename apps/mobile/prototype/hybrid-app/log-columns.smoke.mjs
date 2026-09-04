@@ -1,5 +1,5 @@
 /**
- * Smoke: log column kinds + simplified coach builder (autopilot volume + load).
+ * Smoke: log column kinds + simplified coach builder (open volume + load).
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -12,9 +12,9 @@ const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
-if (!coachHtml.includes('LogColumns.builderPrescriptionHtml')) throw new Error('coach builder prescription grid not wired');
+if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-engine-v163'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v168'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -23,18 +23,18 @@ vm.runInNewContext(src, sandbox);
 const LC = sandbox.LogColumns;
 if (!LC) throw new Error('LogColumns missing');
 
-LC.beginSheet({ autopilotVolume: true, sets: null, reps: null, restSec: 150 });
+LC.beginSheet({ openVolume: true, sets: null, reps: null, restSec: 150 });
 if (!LC.getSheetColumns().length) throw new Error('effort column expected for preview');
 const twin = LC.builderPrescriptionHtml();
-if (!twin.includes('autopilot-strip')) throw new Error('autopilot strip missing');
-if (!twin.includes('Volume')) throw new Error('volume autopilot strip missing');
-if (!twin.includes('Autopilot')) throw new Error('autopilot label missing');
+if (!twin.includes('open-strip')) throw new Error('open strip missing');
+if (!twin.includes('Volume')) throw new Error('volume open strip missing');
+if (!twin.includes('Open')) throw new Error('open label missing');
 if (!twin.includes('logger-screen')) throw new Error('builder twin should match athlete logger');
 if (!twin.includes('hero-metrics')) throw new Error('builder twin hero missing');
 if (!twin.includes('Next set')) throw new Error('builder twin Next set missing');
 
 const ex = {
-  autopilotVolume: true,
+  openVolume: true,
   restSec: 150,
   name: 'Bench Press',
   logColumns: [
@@ -49,26 +49,26 @@ if (!athleteTwin.includes('Rest (seconds)')) throw new Error('athlete builder tw
 if (!athleteTwin.includes('How should this feel')) throw new Error('athlete builder twin calibration slider missing');
 if (athleteTwin.includes('Next set')) throw new Error('athlete builder twin should not show logger Next set');
 if (athleteTwin.includes('How hard was that set')) throw new Error('athlete builder twin should not show post-set slider');
-if (athleteTwin.includes('Autopilot')) throw new Error('athlete builder twin should not show autopilot strip');
+if (athleteTwin.includes('Open')) throw new Error('athlete builder twin should not show open strip');
 
-LC.beginAthleteSheet({ autopilotVolume: true, sets: null, reps: null, restSec: 120 });
+LC.beginAthleteSheet({ openVolume: true, sets: null, reps: null, restSec: 120 });
 const athlete = LC.builderAthleteColumnsHtml();
 if (!athlete.includes('builder-colhead-row')) throw new Error('athlete column row missing');
 if (athlete.includes('Add column')) throw new Error('athlete builder should not offer add column');
 if (athlete.includes('Pin sets')) throw new Error('athlete builder should not show pin UI');
 if ((LC.getSheetColumns() || []).length !== 2) throw new Error('athlete default should be 2 columns');
 
-LC.beginSheet({ sets: 3, reps: '8', restSec: 120, autopilotVolume: false });
+LC.beginSheet({ sets: 3, reps: '8', restSec: 120, openVolume: false });
 LC.onSimpleReps('5-7');
 const out = { sets: 3, reps: 'x' };
 LC.syncLegacyFromColumns(out, LC.getSheetColumns(), 3);
-if (out.autopilotVolume !== false) throw new Error('pinned volume should disable autopilot');
+if (out.openVolume !== false) throw new Error('pinned volume should disable open volume');
 if (out.reps !== '5-7') throw new Error('sync reps ' + out.reps);
 
-LC.beginSheet({ autopilotVolume: true, sets: null, reps: null, restSec: 120 });
+LC.beginSheet({ openVolume: true, sets: null, reps: null, restSec: 120 });
 LC.syncLegacyFromColumns(out, LC.getSheetColumns(), 3);
-if (!out.autopilotVolume) throw new Error('blank volume should stay autopilot');
-if (out.sets != null) throw new Error('autopilot should null sets');
+if (!out.openVolume) throw new Error('blank volume should stay open volume');
+if (out.sets != null) throw new Error('open volume should null sets');
 
 const plankEx = {
   name: 'Plank',

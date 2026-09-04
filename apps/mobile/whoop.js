@@ -91,7 +91,7 @@
     return Number.isFinite(n) ? n : null;
   }
   // Ephemeral WHOOP UI state before index.html bridges window.S ↔ let S.
-  // Never invent a stub on global.S — that orphans StrengthSync from real app state.
+  // Never invent a stub on global.S — that orphans Whoop from real app state.
   var whoopFallback = { connected: false, lastSyncAt: null, sampleDate: null, email: null };
   function st() {
     const S = appState();
@@ -145,16 +145,6 @@
   }
   function cloudStatusLines() {
     var lines = '';
-    if (global.StrengthSync && global.StrengthSync.getStatus) {
-      var ss = global.StrengthSync.getStatus();
-      var sLast = ss.lastSyncAt ? new Date(ss.lastSyncAt).toLocaleString() : 'never';
-      lines += statusChip('Strength', !!ss.lastOk && !ss.lastError, ss.lastError || sLast);
-    }
-    if (global.NutritionSync && global.NutritionSync.getStatus) {
-      var ns = global.NutritionSync.getStatus();
-      var nLast = ns.lastSyncAt ? new Date(ns.lastSyncAt).toLocaleString() : 'never';
-      lines += statusChip('Nutrition', !!ns.lastOk && !ns.lastError, ns.lastError || nLast);
-    }
     var w = st();
     lines += statusChip('WHOOP', !!w.connected, w.connected ? metaLine() : 'not connected');
     if (global.Concept2 && typeof global.Concept2.metaLine === 'function') {
@@ -169,7 +159,7 @@
     const msg = ui.message ? '<div class=meta style="margin-top:8px">' + esc(ui.message) + '</div>' : '';
     if (!w.email) {
       return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Sign in & sync</div>' +
-        '<div class=meta>One sign-in syncs calendar sessions, templates, strength, nutrition, WHOOP, and Concept2 Logbook (when already linked). Use the same account on web and phone.</div>' +
+        '<div class=meta>One sign-in syncs calendar sessions, templates, WHOOP, and Concept2 Logbook (when already linked). Use the same account on web and phone.</div>' +
         '<div class=field style="margin-top:12px"><label>Email</label><input id=whoopEmail type=email autocomplete=username placeholder="you@email.com"></div>' +
         '<div class=field><label>Password</label><input id=whoopPassword type=password autocomplete=current-password></div>' +
         '<div class=btns style="margin-top:12px"><button class="btn primary block" onclick="Whoop.signIn()"' + busy + '>Sign in & sync</button></div>' + msg + '</div>';
@@ -302,55 +292,9 @@
         bits.push('WHOOP: ' + ((err && err.message) || 'failed'));
       }
 
-      if (global.StrengthSync && typeof global.StrengthSync.reconcile === 'function' && global.S) {
-        try {
-          ui.message = 'Syncing strength…';
-          renderPanels();
-          global.S = await global.StrengthSync.reconcile(global.S);
-          if (typeof global.save === 'function') global.save('strength-sync');
-          var ss = global.StrengthSync.getStatus ? global.StrengthSync.getStatus() : null;
-          if (ss && ss.lastError) bits.push('Strength: ' + ss.lastError);
-          else bits.push('Strength');
-        } catch (err) {
-          bits.push('Strength: ' + ((err && err.message) || 'failed'));
-        }
-      } else if (!global.S) {
-        bits.push('Strength: app state not ready');
-      }
+      /* blank slate */
 
-      if (global.NutritionSync && typeof global.NutritionSync.reconcile === 'function') {
-        try {
-          var local =
-            (global.NutritionUI && typeof global.NutritionUI.load === 'function' && global.NutritionUI.load()) ||
-            null;
-          if (local) {
-            ui.message = 'Syncing nutrition…';
-            renderPanels();
-            var merged = await global.NutritionSync.reconcile(local);
-            if (global.NutritionUI && typeof global.NutritionUI.replace === 'function') {
-              global.NutritionUI.replace(merged);
-            }
-            var ns = global.NutritionSync.getStatus ? global.NutritionSync.getStatus() : null;
-            if (ns && ns.lastError) bits.push('Nutrition: ' + ns.lastError);
-            else bits.push('Nutrition');
-          } else {
-            bits.push('Nutrition (open Nutrition once to enable)');
-          }
-        } catch (err) {
-          bits.push('Nutrition: ' + ((err && err.message) || 'failed'));
-        }
-      }
-
-      if (global.CoachSync && typeof global.CoachSync.schedulePull === 'function' && global.S) {
-        try {
-          ui.message = 'Syncing coach…';
-          renderPanels();
-          global.CoachSync.schedulePull(global.S);
-          bits.push('Coach');
-        } catch (err) {
-          bits.push('Coach: ' + ((err && err.message) || 'failed'));
-        }
-      }
+      /* blank slate */
 
       if (global.Concept2 && typeof global.Concept2.syncIfLinked === 'function') {
         try {

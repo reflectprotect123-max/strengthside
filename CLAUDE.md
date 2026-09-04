@@ -1,9 +1,12 @@
 # Claude Code operating contract — TheStrengthEngine
 
-This repository is **the product**: the Hybrid HTML athlete app, strength
-prescription/logging, working-max and PR tracking, progression, and Capgo/dogfood
-ship. It was split out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on
-19 August 2026 and still points at the **same Supabase project**.
+This repository is **the product**: the Hybrid HTML athlete app (manual
+logging + Library templates + calendar), nutrition, WHOOP/Concept2/Echo, and
+Capgo/dogfood ship. **All product engines were deleted 2026-09-03**
+(S&C + nutrition packages and all athlete/coach wiring). See
+`docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`. It was split
+out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026 and still
+points at the **same Supabase project**.
 
 `THE-HYBRID-ENGINE1` is a **schema stub only** (as of 26 August 2026): no athlete
 app, no coach product, no Expo, no Netlify coach deploy. Coach/ARC UI was deleted
@@ -105,15 +108,15 @@ on `thehybridengine1.netlify.app`. The athlete functions only forward
 
 ## Product ownership
 
-- `@hybrid/strength-engine` owns strength prescription resolution, load rounding,
-  e1RM, working-max tracking, PR detection, exposure classification, calibration and
-  progression. It is **pure functions and types — zero I/O, zero React.** Callers
-  inject data via `ResolveCtx`-shaped parameters. Keep it that way: the moment it
-  reaches for a database client, every consumer inherits that dependency.
-- The package name is still `@hybrid/strength-engine`. It was not renamed on the
-  split, because renaming it would have touched every import in a tree that had just
-  been proven green — a rename is a change to make deliberately, not as a side effect
-  of moving house.
+- **Blank slate (2026-09-03):** `@hybrid/strength-engine`, `@hybrid/engine`, and
+  `@hybrid/shared-core` are **deleted**. Do not restore them from history as the
+  product brain. Any new core model is a **new package** with new APIs and new
+  checks — not a revival of `resolve` / `decideProgression` / `conAdapt` /
+  Big Mac.
+- **No product engine packages remain.** Nutrition engines were deleted with
+  S&C. The next brain is a **single** adaptive engine — new package, new APIs.
+- Shared Supabase strength tables remain a **data ledger** (see twelve-table
+  contract). They do not imply a decision engine exists in this repo.
 
 ## Athlete app — one surface
 
@@ -125,10 +128,11 @@ else is the app.
   `apps/mobile/THE-Hybrid-App.html` (or the githack / Update button).
 - Expo Home, `prototype/home.html`, and `prototype/pwa/` were **deleted**.
   Do not recreate them. Do not run Expo to see the app.
-- Athlete product is the Hybrid HTML app only. Coach / ARC prototypes and `apps/web`
-  were removed here; the hybrid companion repo no longer ships coach either.
-- `@hybrid/strength-engine` stays the pure decision layer. The HTML app is the
-  only place athlete screens get built until a later, explicit rewrite.
+- Athlete product is the Hybrid HTML app only. Coach is **parked**
+  (`coach.html` static page). No coach S&C publish/pull until explicitly unparked
+  after a new model exists.
+- Strength/conditioning today: **manual log + dumb Library templates**. No
+  prescription brain, no silent progression, no WM start gate.
 
 ## Pain and illness are safety flags, not readiness penalties
 
