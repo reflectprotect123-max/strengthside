@@ -1,37 +1,81 @@
 # Engine redesign — three modules (living spec)
 
-**Date:** 2026-09-03 (talk) · **Aligned:** 2026-09-04 (blank slate + owner locks)  
-**Status:** living design — not implemented  
+**Date:** talk through 4 September 2026  
+**Status:** recipe locked — not implemented  
 **Product:** Hybrid HTML athlete app only.
 
-This is **the** engine spec. Do not also follow the 4 Sep “Strength V2”
-file or the 3 Sep Autopilot V3 / clean-rebuild notes — those are
-superseded pointers.
+This is **the** engine spec. Older Next formulas in git (e1RM-%, 3–30
+cage, calf 20–30, cond +3/−5/−8 vs easy/medium/hard) are **wrong** if
+they disagree with this file.
 
 Blank slate: `2026-09-03-blank-slate-zero-engines.md`.  
 Handoff: `handoff.md`.  
+Plan: `docs/superpowers/plans/2026-09-04-adaptive-open-next-close.md`.
+
 **Must not revive:** `@hybrid/strength-engine`, `@hybrid/engine`,
 adapters, Big Mac, one-set logger, old `decideProgression` APIs.
 
 ---
 
-## ELI5
+## Locked recipe (4 Sep 2026)
 
-You paint the week: Strength, Conditioning, or Recovery. You own
-templates A and B. You change the **lifts**. You do **not** paint reps
-or kg — the engine fills those.
+You paint. Day (Strength / Conditioning / Recovery). Lifts, order,
+sets. Reps as a number or a range. **One range only.** `3` and `5` is
+3×5. Blank reps is **8–12**. No hidden 3–30. No secret calf band.
+Typed kg always wins.
 
-The engine does three jobs, every workout, same verbs for a lift or a
-row — plus a **guessed 1RM** per lift so you can see strength go up
-and so Open/Next are not just “whatever you did last time in kilos.”
+**Lifts — RIR, not RPE.** Log weight × reps × RIR. Blank RIR = grind.
+RIR 4 = easy (several left). RIR 2 = medium. RIR 0 = grind. First log
+makes Est. 1RM. Every log updates it. Scoreboard only — not the
+next-kilo boss.
 
-1. **Open** — first set’s **kg and reps** (or you type over them), using
-   Est. 1RM when we have one.
-2. **Next** — you log a set → the **next** set’s kg **and** reps change.
-3. **Close** — remember last make **and** the new Est. 1RM.
+After each set, next set:
 
-It never flips a day you meant to train. It never rewrites A/B’s lift
-list.
+Hit the top (12, or 5 if you wrote 5)
+
+- Easy (RIR 3–4) → +2.5 kg, back to the min
+- Medium (RIR 2) → +2.5 kg, a bit above the min
+- Hard (RIR 0–1) → same bar, try the top again
+
+In the middle
+
+- Easy or medium → same bar, same reps
+- Hard → same bar, back to the min
+
+Under the min → −2.5 kg, back to the min
+
+Set count does not change. Last set is the one that counts. Next
+session starts from that. Time off does not reset you.
+
+**Holds.** Countdown only. Engine not called.
+
+**Conditioning — RPE slider (talk test 1–10 below).** No double
+progression. Slider only moves **work** (watts or split). Rest is rest.
+You own the rounds. Rower/ski = split. Bike/Echo = watts.
+
+You finish a work bout. A slider comes up: how hard was that? That is
+RPE. You slide it. The next **work** target moves.
+
+- Easy — more in you → a bit more watts, or a faster split
+- About right → same target
+- Hard → a bit less / slower
+- Miss / had to stop → bigger cut
+
+Intervals — slide after each work bout, during rest. Round count does
+not change. Tempo — slide after a whole block. Steady — once mid-session
+or at the end, not every minute.
+
+You still pick the first watts or split. No history → you type it.
+After that the slider steers.
+
+**15 s hard (RPE 7–8) / 45 s easy (RPE 3–4):** that is still your
+structure. The slider does not steal the clock. Slide after the 15 s
+hard. The 45 s stays 45 s and stays easy. No second brain on rest. If
+you never get back to easy, the next **hard** comes down so you can
+recover. 45 s stays 45 s.
+
+Not built yet. This is the recipe. Nutrition, coach, pain stops, old
+engines: out.
 
 ---
 
@@ -39,18 +83,32 @@ list.
 
 | | You | Engine |
 | --- | --- | --- |
-| Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
-| Cards | Template A and B (**which lifts**, order, how many sets). Cond card when you make one. You do not prescribe reps or kg. | **kg and reps** on lifts (working reps **3–30**; calf-named lifts **20–30**); watts on cond. Hold seconds stay on the card (countdown only). |
-| Logger | You log **weight × reps × RIR** on a lift. Timed holds use the card’s seconds and a **countdown**, not Next. | After each **lift** log, **Next** fills set N+1 **kg and reps**. Holds do not go through Next. Set count stays on the card. |
+| Week | Paint Strength / Conditioning / Recovery. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. |
+| Cards | Which lifts, order, **set count**. **One** reps range. Timed-hold **seconds**. Cond **target RPE** on work. | **kg** on lifts. After Log, **next kg and next reps**. Cond **watts or split** after work. Hold seconds stay on the card. |
+| Logger | Lifts: **weight × reps × RIR**, Log. Blank RIR = grind (0 extra). Cond: RPE **1–10 after work only**. Rest is rest. | Believe the log. Typed kg always wins. |
 
-Nutrition, coach publish, pain/illness UI, and LLM decide are out.
+**One range only.** No hidden 3–30 band. No secret calf 20–30. If calves
+should be high, type `20-30`.
+
+**How the range is read**
+
+- Blank reps → **8–12**
+- `8` → 8–8 (always “at the top” when you hit 8)
+- `5-7` → 5–7
+- `3` sets and `5` reps → 3×5
+
+Typed kg always wins. Sanity: **refuse 0 reps or 80 reps** (not a second
+band — just reject that log for Next).
+
+Nutrition, coach publish, pain/illness product, LLM decide: **out**.
 
 ---
 
 ## The three modules (one package)
 
 **Package:** `@hybrid/adaptive` under `packages/adaptive/` (new).  
-`packages/` is empty on `main`. New APIs. Do not copy deleted files.
+`packages/` is empty of product engines. New APIs. Do not copy deleted
+files.
 
 Pure TypeScript. Zero I/O. HTML logger is the only caller. `dayKind` is
 **input**, never output.
@@ -58,285 +116,274 @@ Pure TypeScript. Zero I/O. HTML logger is the only caller. `dayKind` is
 | Module | Job | API | Writes long-term state? |
 | --- | --- | --- | --- |
 | **Open** | First target of this exercise / bout | `openTarget` | No |
-| **Next** | After a logged set / interval | `decideNextSet` | No |
-| **Close** | Session done — remember last make + reps + Est. 1RM | `closeAnchor` | Returns the anchor; **HTML app** saves it |
+| **Next** | After a logged set / work bout | `decideNextSet` | No |
+| **Close** | Session done — last make + Est. 1RM | `closeAnchor` | Returns the anchor; **HTML app** saves it |
 
-**Est. 1RM (pure helper, used by Open / Next / Close):**
+**Est. 1RM (lifts only):**
 `estimateOneRm({ loadKg, reps, rir })` → kilograms. Same math as
-today’s `e1rmValue` in the HTML logger. Not a gym max.
+today’s `e1rmValue` in the HTML logger. Scoreboard + Close. **Not** the
+Next kg formula.
 
-Same three functions for Strength and Conditioning. Recovery: if the
-day is an empty rest stamp, these are not called. If the recovery card
-has logged bouts, same clock.
+Same three function **names** for Strength and Conditioning. Different
+math inside. Recovery empty rest stamp: **do not call**. Timed holds:
+**do not call**.
 
 ### Shared rules
 
 - Open never waits for a working max, level, or “3 exposures.”
-- Next never saves the week. It only returns set N+1.
-- Close never adds +2.5% “because the session went well.” It stores the
-  last **made** load, **reps**, and the session Est. 1RM. Next Open
-  reads those — including the reps. There is no card-reps fallback.
-- WHOOP / HRV / sleep do not change Open or Next numbers. They do not
-  flip the day.
+- Next never saves the week. It only returns set N+1 (or next work
+  output). It never changes set count or round count.
+- Close never adds a weekly bump. Next Open is last Close even after
+  time off. No layoff rule.
+- WHOOP / HRV / sleep / HR do not change Open or Next numbers.
 - Pain is not a branch in these three modules.
 
 ---
 
-## Est. 1RM
+## Est. 1RM (scoreboard)
 
-Owner lock (4 Sep 2026): **compute a 1RM estimate** so strength is
-visible over time and so guesses are better than raw last-kilos.
-
-- **Per exercise.** Bench Est. 1RM is not squat Est. 1RM.
-- **From the log (exact current logger):** weight, reps, RIR on the set
-  row. No new Peak slider. Formula v1 is what `e1rmValue` already does:
-  Epley with effective reps = logged reps + RIR  
-  (`load × (1 + (reps + rir) / 30)`). If RIR is blank, treat as 0 extra
-  reps (same as today’s hint when RIR is empty). Helms/Zourdos table is
-  a later swap if we want it — not v1.
-- **Not a tested max.** UI label is Est. 1RM. A later true 1RM test
-  can override; until then this is the number.
-- **Updates when you log.** 25 → you lift 40 × 6 at 2 RIR → Est. 1RM
-  uses that row’s `e1rmValue` (about **51 kg**). Next is **40 × 6**, not
-  27.5 × 5. If RIR is high (very easy), Est. 1RM is higher and Next may
-  add a plate at the same reps.
-- **Close** writes the session’s best working-set Est. 1RM (and last
-  make). Progress chart = that series over weeks.
-- Conditioning has no 1RM. Watts stay watts.
-- **Timed holds have no 1RM and no Next.** Seconds rows already skip
-  `e1rmValue`. Do not feed hold time into the % chart — 30 s is not 30
-  reps. The card’s seconds stay the card’s seconds. The logger runs a
-  countdown (`WorkOverlay`). Engine Open / Next / Close are not called.
+- **Per exercise.** Bench is not squat.
+- From the log: weight, reps, RIR. No Peak slider.
+- v1 = existing `e1rmValue`:  
+  `load × (1 + (reps + rir) / 30)`  
+  effective reps clamp **1–20**. Blank RIR = **0**.
+- First log with no history **creates** the estimate.
+- Updates every log. UI label: **Est. 1RM**.
+- Close stores last-set kg, last-set reps, and that row’s Est. 1RM.
+- Conditioning has no 1RM. Timed holds have no 1RM.
 
 ---
 
-## Next (the live clock)
+## Next — lifts (the live clock)
 
-Wakes on every completed set, not on Finish.
+Wakes on every completed **working** set, not on Finish.
 
-**Mechanism:** after you tap Log, update Est. 1RM from that row, then
-fill **both** next boxes: reps clamped to that lift’s band, and kg as a
-**% of that Est. 1RM** for those reps at the template’s target RIR
-(`targetRir`, default 2). Same `e1rmValue` formula run backwards. Set
-count does not change.
+**Not** cond RPE. **Not** the talk-test 1–10. Lifts are **RIR**
+(reps in reserve) on **weight × reps × RIR**. No Peak slider.
 
-```text
-band     = calf-named lift → 20–30  else 3–30
-e1rm     = e1rmValue(loggedWeight, loggedReps, loggedRir)
-nextReps = clamp(loggedReps, band.min, band.max)
-pct      = 1 / (1 + min(20, nextReps + targetRir) / 30)
-nextW    = e1rm × pct
-           then round to plates (2.5 kg)
-```
+### Lift RIR scale (locked)
 
-Same three boxes you already type. No extra slider.
+This is what the RIR box **means**. Blank = grind.
 
-**Working reps are 3–30**, except **calf-named lifts hold 20–30**.
-Not 5. Not a different number per other muscle. Logged 2 on bench →
-Next **3**. Logged 40 → Next **30**. Logged 12 on a calf raise → Next
-**20**. First-ever Open fills **8** (or **20** on calves) so the box is
-not empty; after that the log owns the number inside that lift’s band.
+| RIR | How it felt | Talk to yourself |
+| ---: | --- | --- |
+| **4** (and 5+) | Easy. Several more in the tank. | Could have done 4+ extra reps |
+| **3** | Easy. Clearly more in you. | 3 extra |
+| **2** | Medium. Honest work. | About 2 extra |
+| **1** | Hard. Maybe one more. | Almost done |
+| **0** or blank | Grind. Nothing left. | No extra |
 
-Calf = exercise `name` or `id` matches `/calf/i` (Calf Raise, seated /
-standing / deficit calf, etc.). Not laterals, not abs, not “slow-twitch
-accessories.” Product heuristic, not a growth law — Schoenfeld 2020
-found 6–10 RM and 20–30 RM grew soleus and gastrocnemius the same.
+Logger: you type **kg**, **reps**, **RIR**, tap Log. Typed kg always
+wins. Est. 1RM updates from that row (scoreboard). Next kg/reps come
+from the table below, **not** from Est. 1RM %.
 
-**v1 % chart** — every cell is that formula. Not a Helms/Zourdos lookup.
-Effective reps (`reps + RIR`) clamp 1–20, same as `e1rmValue`. A true
-1-rep max at RIR 0 is **96.8%**, not 100% — that is Epley, not a bug.
-Next uses the **target RIR column** (default **RIR 2**), not RIR 0.
-Rows 20 and 30 are the logger ceiling: kg % does not go below **60%**.
-The reps **count** can still be 30.
+**Mechanism:** double progression via **RIR**, inside **the range you
+typed**. Easy in the **middle** of the range does **not** add weight.
+Est. 1RM-% Next is **out**. Classic “climb then live on 7s” is **out**.
+The 25 kg × 8 easy → jump toward 40 kg is **out**.
 
-| Reps | RIR 0 | RIR 1 | RIR 2 | RIR 3 | RIR 4 | RIR 5 |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 96.8% | 93.8% | 90.9% | 88.2% | 85.7% | 83.3% |
-| 2 | 93.8% | 90.9% | 88.2% | 85.7% | 83.3% | 81.1% |
-| 3 | 90.9% | 88.2% | 85.7% | 83.3% | 81.1% | 78.9% |
-| 4 | 88.2% | 85.7% | 83.3% | 81.1% | 78.9% | 76.9% |
-| 5 | 85.7% | 83.3% | 81.1% | 78.9% | 76.9% | 75.0% |
-| 6 | 83.3% | 81.1% | 78.9% | 76.9% | 75.0% | 73.2% |
-| 7 | 81.1% | 78.9% | 76.9% | 75.0% | 73.2% | 71.4% |
-| 8 | 78.9% | 76.9% | **75.0%** | 73.2% | 71.4% | 69.8% |
-| 9 | 76.9% | 75.0% | 73.2% | 71.4% | 69.8% | 68.2% |
-| 10 | 75.0% | 73.2% | 71.4% | 69.8% | 68.2% | 66.7% |
-| 12 | 71.4% | 69.8% | 68.2% | 66.7% | 65.2% | 63.8% |
-| 15 | 66.7% | 65.2% | 63.8% | 62.5% | 61.2% | 60.0% |
-| 20 | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% |
-| 30 | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% | 60.0% |
+Plate step: **+2.5 / −2.5 kg** (round to 2.5).
 
-Read it: log a set → new Est. 1RM → next **reps = clamp(what you just
-did, band)** → next kg = Est. 1RM × the cell for **those reps × target
-RIR**. First-ever Open fills **8s** (75% cell at RIR 2), or **20s** on
-a calf raise (60% cell). You did 5s at RIR 2 → 81.1% cell, 5s again.
-You did 12s on bench → 12s. You did 12s on calves → **20s**. You did
-30s → 30s at the 60% cell.
+RIR buckets for Next:
 
-**Strength — golden path (you put Bench on A, 3 sets, target RIR 2. Engine picks reps.)**
+| How it felt | RIR |
+| --- | ---: |
+| Easy | **3–4** (5+ counts as easy) |
+| Medium | **2** |
+| Hard / grind | **0–1** (blank RIR = 0) |
 
-1. No history: Open **8** reps, kg blank (first-ever default). You type
-   80 and log 80 × 5, RIR 2 (you did 5s — Next believes that).  
-   Est. 1RM ~98.7 → Next **80 × 5**.
-2. Log 80 × 5, RIR 3 (easier).  
-   Est. 1RM ~101.3 → Next **82.5 × 5**.
-3. Log 82.5 × 4, RIR 0 (miss).  
-   Est. 1RM ~93.5. Next **77.5 × 4**. Close stores 4s.  
-   Next session Open is **4s** at % of that Est. 1RM — not first-ever 8s.
-4. You type **40 × 6**, RIR 2.  
-   Est. 1RM ~50.7. Next **40 × 6**. Close stores 6s. Next Open is 6s.
+Range = `{min, max}` from the card. Hit the top means `loggedReps >= max`.
+Middle means `min <= loggedReps < max`. Under means `loggedReps < min`.
 
-| How the set went vs target RIR | What Next writes |
-| --- | --- |
-| Logged RIR **higher** than target (easier) | Same reps, Est. 1RM up → kg **up** |
-| Logged RIR **on** target | Same reps, kg **holds** |
-| Logged RIR **lower** / missed reps | **Reps = clamp(what you did, band)**, kg from that cell |
-| You typed a different kg or reps | Est. 1RM from **that** row → next matches it at target RIR (reps still in band) |
+**Hit the top** (12 on 8–12, or 5 on a typed 5):
 
-The +2.5%-per-easy-set shortcut is **out**. A planned RIR 2 set that
-lands at RIR 2 must not add a plate.
-
-**Timed holds** (`targetKind: seconds` — plank, hang, wall sit). **No
-advancement.** Not Open, not Next, not Close, not % of Est. 1RM.
-
-The card says 30 s → every set is 30 s. The logger **starts `WorkOverlay`**
-for that many seconds when you tap **Hold**. Done / done-early logs the
-hold. Next set is the same 30 s and another countdown.
-
-Weight on a loaded hold is whatever you typed or copied. Engine does
-not change it.
-
-**Conditioning** (once you have a card): same Next, **on a Conditioning
-day only**. Watts, not Est. 1RM. Never a squat on that day. Never a row
-on a Strength day. A plank on a Strength card is a timed hold
-(countdown only), not conditioning. Steady / free / recovery: Next is a
-no-op (clock only). Intervals / tempo / custom: after each work bout,
-Next adjusts **target watts** from how that bout felt vs the card’s
-prescribed effort (`easy` / `medium` / `hard`).
-
-Product heuristic (old Hybrid `decideNextPhase` table — not a paper,
-not FTP). Round to a whole watt. At most **two** +3% pushes in one
-session; further easy bouts hold. Do not change round count (you own
-how many intervals). No HR / WHOOP branch.
-
-Felt is easier / on / harder / stopped. Gap = felt vs prescribed.
-
-| Felt vs prescribed | Finished the bout? | Next watts |
+| RIR | Next kg | Next reps |
 | --- | --- | --- |
-| Easier | any | **+3%** (unless already two pushes this session → hold) |
-| On target | yes | **hold** |
-| Harder | yes | **−5%** |
-| Harder or stopped | no | **−8%** |
+| Easy 3–4 | **+2.5** | **min** |
+| Medium 2 | **+2.5** | a bit above min: `min+2` if `(max-min) >= 4`, else `min+1` (still capped at max). If min=max, stay at min. |
+| Hard 0–1 | same kg | **max** again |
 
-```text
-220 W, prescribed hard, felt easier  → 227 W
-227 W, felt on                       → 227 W
-227 W, felt harder, finished         → 216 W
-220 W, stopped early                 → 202 W
-third easier bout after two pushes   → hold
-```
+Worked 8–12 examples: easy 12 → +2.5 and **8**. Medium 12 → +2.5 and
+**10**. Grind 12 → same kg and **12**.
 
-**Open / Close (cond):** typed watts win. Else last Close watts. Else
-blank (no invented FTP). Close stores last made watts. Next Open reads
-that.
+**In the middle** (8–11 on 8–12):
+
+| RIR | Next kg | Next reps |
+| --- | --- | --- |
+| Easy or medium 2–4 | same | **same reps** |
+| Hard / grind 0–1 | same | **min** |
+
+**Under the min** → **−2.5 kg**, next reps = **min**.
+
+Set count does not change. Warm-ups earlier so they never Close.
 
 ---
 
-## Open and Close
+## Open and Close — lifts
 
 **Open** (first set of this lift today):
 
 ```text
-band      = calf-named lift → 20–30  else 3–30
-firstEver = calf-named lift → 20     else 8
-reps = clamp(you typed → else last Close reps → else firstEver, band)
-kg   = you typed → else Est. 1RM × pct(those reps, targetRir) rounded
-       to plates → else last Close load → else blank
+range = parse(card)           # blank → 8–12
+reps  = you typed on the logger
+        → else last Close reps
+        → else range.min      # first-ever 8–12 starts at 8
+kg    = you typed
+        → else last Close kg
+        → else blank          # first-ever: you type it
 ```
 
-No card-reps input. Timed holds skip Open.
+Est. 1RM does **not** pick Open kg.
 
-**Band is 3–30. Calves hold 20–30.** 8 (or 20 on calves) is only the
-empty-box fill. Muscle grows about the same across 3–30 when effort is
-high (roughly ≥30% 1RM), **including calves** — Schoenfeld et al. 2020
-[PMID 32358310](https://pubmed.ncbi.nlm.nih.gov/32358310/) grew soleus
-and gastrocnemius the same on 6–10 RM vs 20–30 RM. The 20+ calf floor
-is a product hold (small ROM, easy to grind high reps), not fiber-type
-science. Not laterals, not abs. Upper vs lower still share the same
-3–30 rule. Next / Close follow the log inside that lift’s band.
+**Close** = **last logged set only** `{ loadKg, reps, e1rmKg }`. Warm-ups
+earlier so they never Close. A backoff as the last set is believed.
 
-Citations: Schoenfeld et al. 2017 [PMID 28834797](https://pubmed.ncbi.nlm.nih.gov/28834797/);
-Lopez et al. 2021 [PMID 33433148](https://pubmed.ncbi.nlm.nih.gov/33433148/);
-Schoenfeld et al. 2021 *Sports* [repetition continuum](https://www.mdpi.com/2075-4663/9/2/32);
-IUSCA 2021 [hypertrophy position stand](https://doi.org/10.47206/ijsc.v1i1.81).
-Repo already said the same in
-`docs/research/strength-macrofactor-rp-2026-08-25/THE_Hybrid_Strength_PubMed_RP_Validation_Review.md`.
+---
 
-**Close** returns `{ loadKg, reps, e1rmKg }` for lifts, or `{ watts }`
-for cond, from what you actually finished. Lift `reps` are clamped to
-that lift’s band. HTML app saves that. Next Open reads those. Close
-does **not** invent an extra bump on top of Next. Timed holds and
-steady cond skip Close.
+## Timed holds
+
+No Open, no Next, no Close, no Est. 1RM. Card seconds + `WorkOverlay`
+countdown. Weight on a loaded hold is whatever you typed.
+
+---
+
+## Next — conditioning
+
+**Not** lift RIR. **Not** double progression. **Not** HR / WHOOP / FTP /
+Morpheus / HRV.
+
+The machine does not change. Rower and ski stay in **split**. Bike and
+Echo stay in **watts**. The slider only moves that number.
+
+You paint a **target RPE** on **work** using the talk-test scale below
+(example: 15 s hard at **7–8**). Easy/rest is meant to feel about
+**3–4**. Rest duration does **not** get a slider and does **not**
+change.
+
+You still pick the watts or split to **begin**. No history → you type
+the first one. After that the slider steers.
+
+### Cond RPE scale (locked) — talk test
+
+This is what the slider **means**. `% Max Capacity` is how the bout
+should **feel**, not a watts formula. We do **not** set watts to 70% of
+a max. We do **not** use HR.
+
+| RPE | Feel | Talk test | Typical use |
+| ---: | --- | --- | --- |
+| **1** | Effortless. Takes focus to go this easy. | Normal conversation | Warm-up, cool-down, active recovery |
+| **2** | Relaxed “all-day” aerobic | Conversational | Easy aerobic, low fatigue |
+| **3** | Very comfortable. Light sweat. | Conversational | Easy aerobic / recovery spin |
+| **4** | Comfortable, slight rise in breathing | Slight interference | Easy/mod aerobic |
+| **5** | Tempo, steady, sustainable | 2–3 sentences max | Steady / long tempo hold |
+| **6** | On the aerobic/anaerobic edge | Broken sentences | Harder tempo / threshold-ish hold |
+| **7** | Deep, rapid breathing. Hard to focus. | Short phrases / words | Hard intervals |
+| **8** | Intense rhythm. Discomfort mounting. | Single words only | Very hard intervals |
+| **9** | Near max. Laboured. | Gasping / grunts | Sprint / almost all-out |
+| **10** | Redline. A few seconds. | Cannot speak | Max / had to stop |
+
+Painted **7–8** means the hard bout should land in 7 or 8 on this
+scale. Painted **3–4** is how easy *should* feel — we still **do not**
+slide the easy/rest.
+
+### After work — Next
+
+Slide **after the work bout**. Compare actual RPE vs painted work
+target:
+
+| How the work felt vs target | Next **work** number |
+| --- | --- |
+| Easy — more in you (actual **below** the painted band) | a bit more: **+3% watts**, or **−1 s** /500 m split |
+| About right (inside the painted band, e.g. 7–8) | **hold** |
+| Hard (above the band, not a stop) | a bit less: **−5% watts**, or **+1 s** /500 m |
+| Miss / had to stop, or actual **10** | bigger cut: **−8% watts**, or **+3 s** /500 m |
+
+Watts round to a whole watt.
+
+If the easy/rest never gets you back to easy (you are still cooked
+when the next hard starts), treat that as **too hard** on the next
+**work** number — cut the hard. Do not lengthen rest. Do not invent a
+second slider.
+
+### When you slide
+
+| Structure | When | What moves | What does not |
+| --- | --- | --- | --- |
+| **Intervals** (e.g. 15 s hard / 45 s easy) | After each **hard** bout, during rest | Next hard watts/split | Clock. 15 s stays 15 s. 45 s stays 45 s. Round count. |
+| **Tempo block** (e.g. 8 min) | After the whole **block** | Next block’s work number | Not every 30 s. Rest stays rest. |
+| **Steady** | Once **mid-session** or at the **end** | Mid: rest of *this* session. End: next session’s Open. | Not every minute. |
+
+You own how many rounds / blocks.
+
+**Open / Close (cond):** typed watts or split win. Else last Close
+(including a steady session that only slid at the end). Else blank
+(no invented FTP). Close stores last made **work** output.
 
 ---
 
 ## Wiring (later; not this file’s code)
 
-1. New package only.
-2. Calendar stamps stay in the HTML app. The package never reads the
-   calendar.
+1. New package only. Tests green **before** HTML wire.
+2. Calendar stamps stay in the HTML app.
 3. After each logged **lift** set → `decideNextSet` → next row.
-   Seconds rows start `WorkOverlay` instead — no `decideNextSet`.
-4. Session end → `closeAnchor` → hint for next Open.
-5. You pick lifts in Library. Engine does not invent exercises. Engine
-   **does** invent kg and reps.
+4. Seconds rows start `WorkOverlay` — no `decideNextSet`.
+5. Session end → `closeAnchor` → hint for next Open.
+6. You pick lifts in Library. Engine does not invent exercises.
 
-Implementation plan is a later step. Do not write package code until
-that plan exists and is approved.
+Do not write package code until the plan is executed on purpose.
 
 ---
 
-## Tests (before any HTML wire)
+## Tests (package, before any HTML wire)
 
 Colocated. No `--passWithNoTests`.
 
-1. Bench 80 × 5 @ RIR 2 → Next **80 × 5** (on-plan does not add a plate or change reps).
-2. Bench 80 × 5 @ RIR 3 → Next **82.5 × 5**.
-3. Typed 40×6 @ RIR 2 → Est. 1RM ~50.7, Next **40 × 6**. Close reps = 6.
-   Next Open reps = 6, not first-ever 8.
-4. 40×6 at 2 RIR → `e1rmValue` matches today’s logger hint; 40×6 at 0 RIR
-   → lower Est. 1RM (harder set, smaller implied max).
-5. Three easy sessions in a row: Close still does **not** invent an extra
-   +2.5 on top of what Next already did in-session.
-6. `dayKind` never appears in output; Strength vs Conditioning cannot
-   rename the day.
-7. Miss 82.5 × 4 @ RIR 0 → Est. 1RM ~93.5, Next **77.5 × 4**. Close reps
-   = 4. Next Open is 4s, not first-ever 8s.
-8. % chart matches inverse `e1rmValue`: 5 @ RIR 2 = 81.1%, 6 @ RIR 2 =
-   78.9%, 1 @ RIR 0 = 96.8% (not 100).
-9. Seconds rows skip Open / Next / Close and never call `e1rmValue`
-   (30 s is not 30 reps). Card seconds stay card seconds.
-10. Timed hold v1 is a logger countdown (`WorkOverlay`) for the
-    prescribed seconds — no +5 s, no “believe a longer hold.”
-11. Next never changes set count. You still own how many sets.
-12. First-ever Open with no Close: reps = **8**, kg blank until typed.
-    Open never reads a card reps field. Same 8 for every non-calf lift.
-13. Working band 3–30: log 12 → Next **12**; log 30 → Next **30**;
-    log 2 → Next **3**; log 40 → Next **30**.
-14. 30 @ RIR 2 uses the clamped-20 e1RM cell (60%). On-target RIR does
-    not drop kg just because the set was long.
-15. Calf Raise first-ever Open: reps = **20**, kg blank. Bench stays **8**.
-    Match is `/calf/i` on name or id — not laterals, not abs.
-16. Calf band 20–30: log 25 → Next **25**; log 12 → Next **20**;
-    log 40 → Next **30**.
-17. Cond 220 W, felt easier than prescribed → Next **227** W.
-    Felt on target → **hold**. Felt harder, finished → **−5%**.
-    Stopped / incomplete → **−8%**.
-18. Two +3% cond pushes in a session, then another easier bout → hold
-    (cap). Round count does not change.
-19. Steady / free / recovery cond: Next is a no-op. Intervals only.
-20. Cond Next never runs on a Strength day. Strength Next never writes
-    watts.
+**Range**
+
+1. Blank → `{ min: 8, max: 12 }`. `5` → `{ 5, 5 }`. `5-7` → `{ 5, 7 }`.
+2. `20-30` on a calf name is just that range — no extra calf rule.
+
+**Est. 1RM**
+
+3. `40×6` @ RIR 2 matches today’s `e1rmValue`. Same set @ RIR 0 is lower.
+4. Blank RIR = 0 extra.
+
+**Lift Next (8–12 unless noted)**
+
+5. 80 × 12 @ RIR 4 → **82.5 × 8** (top + easy).
+6. 80 × 12 @ RIR 2 → **82.5 × 10** (top + medium, min+2).
+7. 80 × 12 @ RIR 0 → **80 × 12** (top + grind).
+8. 80 × 10 @ RIR 3 → **80 × 10** (middle + easy: no jump).
+9. 80 × 10 @ RIR 0 → **80 × 8** (middle + grind → min).
+10. 80 × 6 @ RIR 2 → **77.5 × 8** (under min).
+11. Range `5`: 80 × 5 @ RIR 4 → **82.5 × 5**.
+12. Range `5-7`: 80 × 7 @ RIR 2 → **82.5 × 6** (min+1).
+13. Logged 0 or 80 reps → Next **refuses** (no substitute band).
+14. Next never returns a new set count.
+
+**Open / Close**
+
+15. First-ever, blank range, no Close: reps **8**, kg **blank**.
+16. Typed kg 40 wins over last Close 80.
+17. Close is last logged set only. Next Open uses that kg and those reps
+    even after time off. Close does not add +2.5 on top of Next.
+
+**Holds / day**
+
+18. Hold input → skip (no kg/reps/e1RM).
+19. `dayKind` never appears in output. Lift Next on a Conditioning day
+    refuses. Cond Next on a Strength day refuses.
+
+**Cond**
+
+20. 220 W, target 7–8, actual 7 → **220**. Actual 5 (talk-test easy vs
+    7–8) → **227**. Actual 9 → **209**. Actual 10 or stopped → **202**.
+21. Split 120 s/500 m, too easy → **119**. Too hard → **121**. 10/stop
+    → **123**.
+22. Round count and rest seconds are not in the result. 15/45: Next
+    never returns a new rest duration.
+23. RPE meaning is the talk-test table (7 = short phrases, 10 = cannot
+    speak). `% Max Capacity` on that table is copy, not a watts %.
 
 ---
 
@@ -347,15 +394,21 @@ Colocated. No `--passWithNoTests`.
 - Pain/illness UI or stops
 - LLM decide
 - Inventing a conditioning card you did not write
-- Auto-painting the week (3 lift / 2 cond / 2 recovery)
+- Auto-painting the week
+- Peak Strength 16-week parabolic / red-dot CNS protocol
+- Helms/Zourdos table (later swap, not v1)
 
 ---
 
 ## Supersedes
 
-| File | Why |
+| File / idea | Why |
 | --- | --- |
-| `2026-09-04-strength-v2-set-by-set-design.md` | Parallel write; folded here |
-| `2026-09-03-autopilot-v3-unified-design.md` | Same three jobs; named deleted adapters |
-| `2026-09-03-autopilot-clean-rebuild-plan.md` | Rebuild-in-place; engines were deleted |
-| 17 Aug Adaptive V2 Phase E `decideProgression` | Session-grain clock is wrong |
+| e1RM-% Next + % chart in older revisions of this file | Scoreboard only now |
+| Hidden 3–30 working band | You type one range |
+| Calf-named 20–30 override | Type `20-30` if you want it |
+| Cond felt vs easy/medium/hard + two-push cap | Target RPE vs actual RPE |
+| `2026-09-04-strength-v2-set-by-set-design.md` | Parallel write |
+| `2026-09-03-autopilot-v3-unified-design.md` | Named deleted adapters |
+| `2026-09-03-autopilot-clean-rebuild-plan.md` | Rebuild-in-place |
+| 17 Aug Adaptive V2 `decideProgression` | Session-grain clock |
