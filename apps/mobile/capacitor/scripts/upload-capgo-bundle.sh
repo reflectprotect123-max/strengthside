@@ -20,6 +20,10 @@ if [[ -z "${CAPGO_TOKEN:-}" && -f "$REPO/.capgo" ]]; then
 fi
 
 if [[ -z "${CAPGO_TOKEN:-}" ]]; then
+  if [[ "${CAPGO_REQUIRE:-}" == "1" ]]; then
+    echo "upload-capgo-bundle: FAIL (CAPGO_TOKEN unset and no $REPO/.capgo). Set CAPGO_REQUIRE=0 to soft-skip." >&2
+    exit 1
+  fi
   echo "upload-capgo-bundle: skip (CAPGO_TOKEN unset and no $REPO/.capgo). Bundled APK / Netlify unchanged."
   exit 0
 fi
@@ -41,3 +45,4 @@ npx --yes @capgo/cli@latest bundle upload com.hybrid.athlete \
   ${VERSION:+--bundle "$VERSION"} \
   ${VERSION:+--comment "bundle $VERSION"}
 echo "upload-capgo-bundle: done."
+echo "upload-capgo-bundle: tip — for dogfood+live ship use: CAPGO_BUNDLE_VERSION=$VERSION bash scripts/ship-capgo.sh"

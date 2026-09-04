@@ -33,7 +33,12 @@ must(bridge.includes("return Promise.resolve('skipped')") || bridge.includes("'s
 must(gradle.includes("project(':capgo-capacitor-updater')"), 'android gradle wires Capgo');
 must(settings.includes("include ':capgo-capacitor-updater'"), 'settings.gradle includes Capgo');
 must(upload.includes('CAPGO_TOKEN'), 'upload script gated on CAPGO_TOKEN');
-must(upload.includes('exit 0'), 'upload script skips cleanly without token');
+must(upload.includes('exit 0'), 'upload script soft-skips without token by default');
+must(upload.includes('CAPGO_REQUIRE'), 'upload script can hard-fail when CAPGO_REQUIRE=1');
+must(existsSync(join(root, 'scripts/ship-capgo.sh')), 'ship-capgo.sh exists for dogfood+live');
+const ship = readFileSync(join(root, 'scripts/ship-capgo.sh'), 'utf8');
+must(ship.includes('channel set live'), 'ship pins live channel');
+must(ship.includes('exit 1'), 'ship fails hard without token');
 must(readme.includes('Capgo') && readme.includes('autoUpdate'), 'README documents Capgo + opt-in');
 must(readme.includes('Reversible') || readme.includes('reversible'), 'README documents reversible path');
 must(existsSync(join(root, 'scripts/upload-capgo-bundle.sh')), 'upload script exists');

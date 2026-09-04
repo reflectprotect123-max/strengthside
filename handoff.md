@@ -44,7 +44,9 @@
 | App ID | `com.hybrid.athlete` |
 | Channels | **`dogfood` + `live`** both @ **`1.0.53`** |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Ship dogfood + live | `CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
 | Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.53` |
+| CI | Actions → **Capgo ship** workflow (needs repo secret `CAPGO_TOKEN`) |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
 

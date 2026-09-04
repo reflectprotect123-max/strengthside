@@ -1,0 +1,39 @@
+# Manual Capgo OTA ship (dogfood + live). Needs repo secret CAPGO_TOKEN.
+name: Capgo ship
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Capgo bundle version (e.g. 1.0.53)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ship:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Require CAPGO_TOKEN
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo "Missing repo secret CAPGO_TOKEN" >&2
+            exit 1
+          fi
+      - name: Ship Capgo
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+          CAPGO_BUNDLE_VERSION: ${{ inputs.version }}
+        run: bash apps/mobile/capacitor/scripts/ship-capgo.sh
