@@ -19,14 +19,14 @@
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `main` @ merge of blank-slate PR #161 |
-| **Cache** | **`the-hybrid-athlete-blank-v168`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.52`** (blank slate, cache v168) |
+| **Cache** | **`the-hybrid-athlete-blank-v169`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.52`** (last ship was cache v168; this tree is v169) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.52** / build **blank-v168**.
+**Phone:** Settings → Check for updates → expect **1.0.52** until the next Capgo upload (this tree is cache **blank-v169**).
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -123,6 +123,6 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Capgo | **1.0.52** on `dogfood` + `live` |
 | Netlify | Deploy athlete Netlify workflow **success** on merge commit |
 | Dogfood APK | Workflow **success** on merge commit |
-| Cache | `the-hybrid-athlete-blank-v168` |
+| Cache | `the-hybrid-athlete-blank-v169` |
 
 **Next agent:** read this file + the blank-slate spec + the three-module engine spec + `CLAUDE.md`. Do not implement the package until that spec is approved and a plan exists.

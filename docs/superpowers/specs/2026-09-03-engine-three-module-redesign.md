@@ -178,9 +178,9 @@ lands at RIR 2 must not add a plate.
 **Timed holds** (`targetKind: seconds` — plank, hang, wall sit). **No
 advancement.** Not Open, not Next, not Close, not % of Est. 1RM.
 
-The card says 30 s → every set is 30 s. The logger starts the existing
-`WorkOverlay` countdown for that many seconds. Done / done-early logs
-the hold. Next set is the same 30 s and another countdown.
+The card says 30 s → every set is 30 s. The logger **starts `WorkOverlay`**
+for that many seconds when you tap **Hold**. Done / done-early logs the
+hold. Next set is the same 30 s and another countdown.
 
 Weight on a loaded hold is whatever you typed or copied. Engine does
 not change it.

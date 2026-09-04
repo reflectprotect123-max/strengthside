@@ -9,7 +9,7 @@ import vm from 'node:vm';
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v168'")) {
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v169'")) {
   throw new Error('expected cache v157');
 }
 
