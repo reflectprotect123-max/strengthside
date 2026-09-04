@@ -14,19 +14,19 @@
 | | |
 | --- | --- |
 | **Product** | Hybrid HTML athlete app only — Home · Library (dumb templates) · Calendar · Settings · manual logger |
-| **Engines** | **NONE.** All product engines deleted (strength, conditioning, nutrition, recovery, coordinator, Big Mac). Do not revive. |
-| **Next brain** | `@hybrid/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md`. Plan: `docs/superpowers/plans/2026-09-04-adaptive-open-next-close.md` (not started). Do not revive deleted packages. |
+| **Engines** | **`@hybrid/adaptive` only** (Open / Next / Close). Deleted engines stay dead — do not revive strength-engine, Big Mac, adapters. |
+| **Next brain** | `@hybrid/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md`. HTML doors: lift Log → `decideNextLift`; cond work slider → `decideNextCond`; holds → WorkOverlay only. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | `main` @ merge of blank-slate PR #161 |
-| **Cache** | **`the-hybrid-athlete-blank-v169`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Cache** | **`the-hybrid-athlete-blank-v171`** (`LOCAL_BUILD` + SW `CACHE` must match) |
 | **Capgo** | **`dogfood` + `live` @ `1.0.52`** (last ship was cache v168; this tree is v169) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.52** until the next Capgo upload (this tree is cache **blank-v169**).
+**Phone:** Settings → Check for updates → expect **1.0.52** until the next Capgo upload (this tree is cache **blank-v171**). Do not Capgo unless the owner says ship.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 

@@ -12,7 +12,7 @@ function must(cond, msg) {
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v170'"), 'LOCAL_BUILD v135');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v171'"), 'LOCAL_BUILD v135');
 must(html.includes('function blockHelpDropdown('), 'blockHelpDropdown helper present');
 must(html.includes('function strengthBlockDropdown('), 'strengthBlockDropdown helper present');
 must(html.includes('function previewSession('), 'previewSession present');
