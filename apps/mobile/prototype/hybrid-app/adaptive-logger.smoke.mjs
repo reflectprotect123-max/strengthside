@@ -8,4 +8,7 @@ must(html.includes('src="./adaptive-bundle.js"'), 'loads adaptive-bundle.js');
 must(html.includes('HybridAdaptive.decideNextLift'), 'Log calls decideNextLift');
 must(html.includes("if(isHoldRow(r)){startHoldCountdown"), 'holds still start countdown, not Next');
 must(!html.includes('HybridAdaptive.decideNextCond') || html.includes('function advanceInterval'), 'cond Next is not on the lift Log path');
+must(html.includes('HybridAdaptive.closeLift'), 'Finish calls closeLift');
+must(html.includes('HybridAdaptive.openLift'), 'session start calls openLift');
+must(html.includes('adaptiveClose') || html.includes('lastClose'), 'stores Close locally');
 console.log('adaptive-logger.smoke: ok');
