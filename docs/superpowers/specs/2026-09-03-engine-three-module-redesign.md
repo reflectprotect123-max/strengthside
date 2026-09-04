@@ -109,39 +109,43 @@ visible over time and so guesses are better than raw last-kilos.
 
 Wakes on every completed set, not on Finish.
 
-**Strength — owner golden path (template A, Bench 3×5 @ 80 kg)**
+**Mechanism:** after you tap Log, update Est. 1RM from that row, then
+the next weight is a **% of that Est. 1RM**. The % is not a separate
+chart — it is the same `e1rmValue` formula run backwards for the next
+set’s reps and the template’s target RIR (`targetRir`, default 2).
 
-1. Open 80. Log 80 × 5, easy (RIR 2 or “too easy”).  
-   → Next: **82.5 × 5** (one plate / 2.5% rounded to increment).
-2. Log 82.5 × 4, miss.  
-   → Next: **80 × 5** (last make this session). Not 82.5 × 0.95.
-3. Log 80 × 5. Done. Bench is still Bench.  
-   → Close stores **80** and the session Est. 1RM.
+```text
+e1rm  = e1rmValue(loggedWeight, loggedReps, loggedRir)
+pct   = 1 / (1 + (nextReps + targetRir) / 30)   // e.g. 5 @ RIR 2 ≈ 81%
+nextW = e1rm × pct
+        then round to plates (2.5 kg)
+```
 
-| How the set went | Next set |
+`e1rm / (1 + (nextReps + targetRir) / 30)` is the same line. Same three
+boxes you already type. No extra slider.
+
+**Strength — owner golden path (template A, Bench 3×5 @ 80 kg, target RIR 2)**
+
+1. Open 80. Log 80 × 5, RIR 2 (on plan).  
+   Est. 1RM ~98.7 → 81% of that is **~80**. Next holds. On-plan RIR
+   does **not** add a plate.
+2. Log 80 × 5, RIR 3 (easier than target).  
+   Est. 1RM ~101.3 → Next **82.5**.
+3. Log 82.5 × 4, RIR 0 (miss / grind).  
+   Est. 1RM comes from **what you did** (~93.5), not from 82.5 as a max.  
+   Next 5 @ RIR 2 is **~75**. No `82.5 × 0.95` rule.
+4. You change the bar yourself: asked 25 × 6, log **40 × 6**, RIR 2.  
+   Est. 1RM ~50.7. Next 6 @ RIR 2 is **~40**, not 27.5, not 42.5.
+
+| How the set went vs target RIR | What the % does |
 | --- | --- |
-| Made target, easy (RIR ≥ 2 on the logger field, or extra reps) | **progress** — last make + plate (2.5% rounded to increment) |
-| Made target, grind (RIR 0–1) | **hold** |
-| Missed target reps | **revert_to_last_make** — last made load this session; if none, original Open |
+| Logged RIR **higher** than target (easier) | Est. 1RM up → next weight **up** |
+| Logged RIR **on** target | Est. 1RM fits → next weight **holds** |
+| Logged RIR **lower** / missed reps | Est. 1RM down → next weight **down** |
+| You typed a different kg | Est. 1RM from **that** kg → next weight matches it at target RIR |
 
-**You typed a different weight than it asked.** Believe the log, not the
-prescription. Asked **25 × 6**, you log **40 × 6** because 25 was a joke.
-
-- Last make = **40**, not 25.
-- Next set is **40 × 6** (re-anchor). It does **not** crawl 25 → 27.5. It
-  does **not** also slap on a plate the same set you just jumped 15 kg
-  (not 42.5 yet).
-- If the next set at 40 is easy too, *then* Next may add a plate.
-- Close stores **40** and Est. 1RM ≈ **51 kg**. Next Strength day Open
-  can be 40, or 51 × the next session’s target %.
-
-Same if you log *under* the ask and still make the reps (asked 40, you
-did 35 × 6): last make is 35; Next holds 35 unless you miss.
-
-+2.5% / plate rounding is the 16 Aug research **default**, not a proven
-optimum. Applying it **set-by-set** is last night’s Next module + this
-week’s owner lock. The old session-end `decideProgression` (wait 3
-sessions, then bump) is dead.
+The +2.5%-per-easy-set shortcut is **out**. A planned RIR 2 set that
+lands at RIR 2 must not add a plate.
 
 **Conditioning** (once you have a card): same Next, **on a Conditioning
 day only**. Interval 1 easy at 220 W → interval 2 may be 230 W. Blow up
@@ -152,7 +156,7 @@ day.
 
 ## Open and Close
 
-**Open** prefers: you typed a number → else `e1rm × percent(targetReps, targetRpe)` rounded to plates → else last Close load → else blank.
+**Open** prefers: you typed a number → else `e1rm × pct(targetReps, targetRir)` (same inverse as Next) rounded to plates → else last Close load → else blank.
 
 **Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
 what you actually finished. Adapter saves hints + Est. 1RM. Close does
@@ -178,16 +182,17 @@ that plan exists and is approved.
 
 Colocated. No `--passWithNoTests`.
 
-1. Bench golden path above (82.5 then back to 80; opener 80).
-2. Asked 25×6, logged 40×6 easy → Next is 40×6, not 27.5 and not 42.5.
-   Est. 1RM ≈ 51 kg. Close opener can use that, not 25.
-3. 40×6 at 2 RIR → `e1rmValue` matches today’s logger hint; 40×6 at 0 RIR
+1. Bench 80 × 5 @ RIR 2 → Next holds ~80 (on-plan RIR does not add a plate).
+2. Bench 80 × 5 @ RIR 3 → Next ~82.5 (Est. 1RM up, then % of that).
+3. Asked 25×6, logged 40×6 @ RIR 2 → Est. 1RM ~50.7, Next ~40, not 27.5 and not 42.5.
+4. 40×6 at 2 RIR → `e1rmValue` matches today’s logger hint; 40×6 at 0 RIR
    → lower Est. 1RM (harder set, smaller implied max).
-4. Three easy sessions in a row: Close still does **not** invent an extra
+5. Three easy sessions in a row: Close still does **not** invent an extra
    +2.5 on top of what Next already did in-session.
-5. `dayKind` never appears in output; Strength vs Conditioning cannot
+6. `dayKind` never appears in output; Strength vs Conditioning cannot
    rename the day.
-6. Miss at 82.5 never yields 5% off 82.5.
+7. Miss at 82.5 × 4 @ RIR 0 → Est. 1RM from that set (~93.5), Next ~75.
+   Never treats 82.5 as the new max (no 82.5 × 0.95 rule).
 
 ---
 
