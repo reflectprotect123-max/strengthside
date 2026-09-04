@@ -31,6 +31,7 @@
 - Cond: slide after **work** only. Painted band = card chip Easy 3–4 / Medium 5–7 / Hard 8–9.5. Bike/Echo = watts. Rower/ski = split. Walk = easy, no invented pace. Run/circuit/other = no Next number unless they typed one. Easy → +3% W or −1 s/500 m. Hold inside painted band. Hard → −5% W or +1 s. 10 or stopped → −8% W or +3 s.
 - 15 s hard / 45 s easy: Next must not return a new rest duration. If still cooked at the next hard, cut **work** (treat as too hard), do not lengthen rest.
 - Holds: no Open / Next / Close / Est. 1RM. Existing `WorkOverlay` countdown stays.
+- Recovery / `recoverySession`: no slider, no `decideNextCond`, no watts/split. Stamp done only.
 - Engine fills kg first (Open / Next overwrite the box). Logged kg is the proxy for Est. 1RM and the next Next.
 - Close is last logged work only. No weekly bump. No layoff reset.
 - Athlete edit path: `apps/mobile/prototype/hybrid-app/index.html` then `bash apps/mobile/sync-hybrid-html.sh`. `LOCAL_BUILD` and SW `CACHE` move together.
@@ -1188,7 +1189,7 @@ Expected: FAIL until cond strings exist
 
 - [ ] **Step 3: Write minimal HTML**
 
-Do **not** hang this on graph `completeWork()` — that is the hold clock (`startHoldCountdown` callback). Cond anchors were ripped: `completeConditioning` still has the `/* cond anchors ripped — rebuild */` comment.
+If `t.recoverySession` or `dayKind === 'recovery'`, do not call `decideNextCond`. Stamp done only. Do **not** hang cond Next on graph `completeWork()` — that is the hold clock.
 
 Intervals: when `advanceInterval` sees `iv.phase==='work'` (about to become rest), show the 1–10 slider, then `decideNextCond`. Apply watts/split to the **next work** target only. Leave `t.restSec` and `t.rounds` unchanged. Tempo/steady: one slider at `completeConditioning`. `cooked` if they never came back to easy on 15/45 — treat as too hard; still do not lengthen rest.
 

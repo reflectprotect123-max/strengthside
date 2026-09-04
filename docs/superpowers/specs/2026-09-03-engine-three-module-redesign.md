@@ -152,6 +152,8 @@ today’s `e1rmValue` in the HTML logger. Scoreboard + Close. **Not** the
 Next kg formula. Cond has no 1RM.
 
 Recovery empty rest stamp: **do not call** any adaptive function.
+`recoverySession` / Recovery day: `completeConditioning` does **not**
+open the cond slider. No watts. No split. Stamp done only.
 
 ### Shared rules
 
