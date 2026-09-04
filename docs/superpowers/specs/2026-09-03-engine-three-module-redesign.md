@@ -207,10 +207,38 @@ Weight on a loaded hold is whatever you typed or copied. Engine does
 not change it.
 
 **Conditioning** (once you have a card): same Next, **on a Conditioning
-day only**. Interval 1 easy at 220 W → interval 2 may be 230 W. Blow up
-→ come back down. Never a squat on that day. Never a row on a Strength
-day. A plank on a Strength card is a timed hold (countdown only), not
-conditioning.
+day only**. Watts, not Est. 1RM. Never a squat on that day. Never a row
+on a Strength day. A plank on a Strength card is a timed hold
+(countdown only), not conditioning. Steady / free / recovery: Next is a
+no-op (clock only). Intervals / tempo / custom: after each work bout,
+Next adjusts **target watts** from how that bout felt vs the card’s
+prescribed effort (`easy` / `medium` / `hard`).
+
+Product heuristic (old Hybrid `decideNextPhase` table — not a paper,
+not FTP). Round to a whole watt. At most **two** +3% pushes in one
+session; further easy bouts hold. Do not change round count (you own
+how many intervals). No HR / WHOOP branch.
+
+Felt is easier / on / harder / stopped. Gap = felt vs prescribed.
+
+| Felt vs prescribed | Finished the bout? | Next watts |
+| --- | --- | --- |
+| Easier | any | **+3%** (unless already two pushes this session → hold) |
+| On target | yes | **hold** |
+| Harder | yes | **−5%** |
+| Harder or stopped | no | **−8%** |
+
+```text
+220 W, prescribed hard, felt easier  → 227 W
+227 W, felt on                       → 227 W
+227 W, felt harder, finished         → 216 W
+220 W, stopped early                 → 202 W
+third easier bout after two pushes   → hold
+```
+
+**Open / Close (cond):** typed watts win. Else last Close watts. Else
+blank (no invented FTP). Close stores last made watts. Next Open reads
+that.
 
 ---
 
@@ -244,10 +272,11 @@ IUSCA 2021 [hypertrophy position stand](https://doi.org/10.47206/ijsc.v1i1.81).
 Repo already said the same in
 `docs/research/strength-macrofactor-rp-2026-08-25/THE_Hybrid_Strength_PubMed_RP_Validation_Review.md`.
 
-**Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
-what you actually finished. `reps` is clamped to that lift’s band.
-HTML app saves that. Next Open reads **those reps**. Close does **not**
-invent an extra bump on top of Next. Timed holds skip Close.
+**Close** returns `{ loadKg, reps, e1rmKg }` for lifts, or `{ watts }`
+for cond, from what you actually finished. Lift `reps` are clamped to
+that lift’s band. HTML app saves that. Next Open reads those. Close
+does **not** invent an extra bump on top of Next. Timed holds and
+steady cond skip Close.
 
 ---
 
@@ -300,6 +329,14 @@ Colocated. No `--passWithNoTests`.
     Match is `/calf/i` on name or id — not laterals, not abs.
 16. Calf band 20–30: log 25 → Next **25**; log 12 → Next **20**;
     log 40 → Next **30**.
+17. Cond 220 W, felt easier than prescribed → Next **227** W.
+    Felt on target → **hold**. Felt harder, finished → **−5%**.
+    Stopped / incomplete → **−8%**.
+18. Two +3% cond pushes in a session, then another easier bout → hold
+    (cap). Round count does not change.
+19. Steady / free / recovery cond: Next is a no-op. Intervals only.
+20. Cond Next never runs on a Strength day. Strength Next never writes
+    watts.
 
 ---
 
