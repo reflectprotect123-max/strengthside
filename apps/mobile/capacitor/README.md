@@ -62,7 +62,8 @@ Capgo does **not** replace Netlify. Netlify still hosts the browser app and WHOO
 
 1. Create a Capgo account / app for `com.hybrid.athlete` ([capgo.app](https://capgo.app)).
 2. Set `CAPGO_TOKEN` in your shell (API key — never commit).
-3. Upload: `bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh`
+3. Ship dogfood + live: `CAPGO_BUNDLE_VERSION=x.y.z bash apps/mobile/capacitor/scripts/ship-capgo.sh`
+4. Or dogfood-only: `bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh`
 4. Set `"autoUpdate": true` in `apps/mobile/capacitor/capacitor.config.json`.
 5. Rebuild **one** dogfood APK and install it (`build-dogfood-apk.sh`). Later HTML-only changes can OTA without reinstall.
 
