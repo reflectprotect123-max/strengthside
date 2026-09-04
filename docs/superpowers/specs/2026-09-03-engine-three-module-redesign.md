@@ -142,29 +142,30 @@ Next uses the **target RIR column** (default **RIR 2**), not RIR 0.
 | 2 | 93.8% | 90.9% | 88.2% | 85.7% | 83.3% | 81.1% |
 | 3 | 90.9% | 88.2% | 85.7% | 83.3% | 81.1% | 78.9% |
 | 4 | 88.2% | 85.7% | 83.3% | 81.1% | 78.9% | 76.9% |
-| 5 | 85.7% | 83.3% | **81.1%** | 78.9% | 76.9% | 75.0% |
+| 5 | 85.7% | 83.3% | 81.1% | 78.9% | 76.9% | 75.0% |
 | 6 | 83.3% | 81.1% | 78.9% | 76.9% | 75.0% | 73.2% |
 | 7 | 81.1% | 78.9% | 76.9% | 75.0% | 73.2% | 71.4% |
-| 8 | 78.9% | 76.9% | 75.0% | 73.2% | 71.4% | 69.8% |
+| 8 | 78.9% | 76.9% | **75.0%** | 73.2% | 71.4% | 69.8% |
 | 9 | 76.9% | 75.0% | 73.2% | 71.4% | 69.8% | 68.2% |
 | 10 | 75.0% | 73.2% | 71.4% | 69.8% | 68.2% | 66.7% |
 | 12 | 71.4% | 69.8% | 68.2% | 66.7% | 65.2% | 63.8% |
 | 15 | 66.7% | 65.2% | 63.8% | 62.5% | 61.2% | 60.0% |
 
 Read it: log a set → new Est. 1RM → next **reps = what you just did** →
-next kg = Est. 1RM × the cell for **those reps × target RIR**. You did
-5s at RIR 2 → 81.1% cell, 5s again. You did 4s → 4s at the 4-rep cell.
+next kg = Est. 1RM × the cell for **those reps × target RIR**. First-ever
+Open is **8s** (75% cell at RIR 2). You did 5s at RIR 2 → 81.1% cell,
+5s again. You did 4s → 4s at the 4-rep cell.
 
 **Strength — golden path (you put Bench on A, 3 sets, target RIR 2. Engine picks reps.)**
 
-1. No history: Open **5** reps, kg blank until you type (v1 default reps
-   = 5). You type 80. Log 80 × 5, RIR 2.  
+1. No history: Open **8** reps, kg blank (first-ever default). You type
+   80 and log 80 × 5, RIR 2 (you did 5s — Next believes that).  
    Est. 1RM ~98.7 → Next **80 × 5**.
 2. Log 80 × 5, RIR 3 (easier).  
    Est. 1RM ~101.3 → Next **82.5 × 5**.
 3. Log 82.5 × 4, RIR 0 (miss).  
    Est. 1RM ~93.5. Next **77.5 × 4**. Close stores 4s.  
-   Next session Open is **4s** at % of that Est. 1RM — not a card of 5s.
+   Next session Open is **4s** at % of that Est. 1RM — not first-ever 8s.
 4. You type **40 × 6**, RIR 2.  
    Est. 1RM ~50.7. Next **40 × 6**. Close stores 6s. Next Open is 6s.
 
@@ -201,12 +202,30 @@ conditioning.
 **Open** (first set of this lift today):
 
 ```text
-reps = you typed → else last Close reps → else 5
+reps = you typed → else last Close reps → else 8
 kg   = you typed → else Est. 1RM × pct(those reps, targetRir) rounded
        to plates → else last Close load → else blank
 ```
 
 No card-reps input. Timed holds skip Open.
+
+**Why 8, not 5, and not a different number per muscle.** 5 was a
+conservative first-day guess — not a growth law. Muscle grows about the
+same across a wide load range when effort is high (roughly ≥30% 1RM).
+The old “6–12 hypertrophy zone” is time and comfort, not unique biology.
+Very heavy sets are better for a tested 1RM; very long sets take longer
+and feel worse. Upper vs lower does **not** get a different load rule.
+Calves / delts / “slow-twitch need high reps” is gym lore — we do **not**
+ship a per-muscle lookup. v1 first-ever Open is **8**: one number in the
+practical 6–12 band. Next still believes the log (12s stay 12s; 5s stay
+5s).
+
+Citations: Schoenfeld et al. 2017 [PMID 28834797](https://pubmed.ncbi.nlm.nih.gov/28834797/);
+Lopez et al. 2021 [PMID 33433148](https://pubmed.ncbi.nlm.nih.gov/33433148/);
+Schoenfeld et al. 2021 *Sports* [repetition continuum](https://www.mdpi.com/2075-4663/9/2/32);
+IUSCA 2021 [hypertrophy position stand](https://doi.org/10.47206/ijsc.v1i1.81).
+Repo already said the same in
+`docs/research/strength-macrofactor-rp-2026-08-25/THE_Hybrid_Strength_PubMed_RP_Validation_Review.md`.
 
 **Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
 what you actually finished. HTML app saves that. Next Open reads **those
@@ -238,7 +257,7 @@ Colocated. No `--passWithNoTests`.
 1. Bench 80 × 5 @ RIR 2 → Next **80 × 5** (on-plan does not add a plate or change reps).
 2. Bench 80 × 5 @ RIR 3 → Next **82.5 × 5**.
 3. Typed 40×6 @ RIR 2 → Est. 1RM ~50.7, Next **40 × 6**. Close reps = 6.
-   Next Open reps = 6, not a card of 5.
+   Next Open reps = 6, not first-ever 8.
 4. 40×6 at 2 RIR → `e1rmValue` matches today’s logger hint; 40×6 at 0 RIR
    → lower Est. 1RM (harder set, smaller implied max).
 5. Three easy sessions in a row: Close still does **not** invent an extra
@@ -246,7 +265,7 @@ Colocated. No `--passWithNoTests`.
 6. `dayKind` never appears in output; Strength vs Conditioning cannot
    rename the day.
 7. Miss 82.5 × 4 @ RIR 0 → Est. 1RM ~93.5, Next **77.5 × 4**. Close reps
-   = 4. Next Open is 4s, not 5s.
+   = 4. Next Open is 4s, not first-ever 8s.
 8. % chart matches inverse `e1rmValue`: 5 @ RIR 2 = 81.1%, 6 @ RIR 2 =
    78.9%, 1 @ RIR 0 = 96.8% (not 100).
 9. Seconds rows skip Open / Next / Close and never call `e1rmValue`
@@ -254,8 +273,9 @@ Colocated. No `--passWithNoTests`.
 10. Timed hold v1 is a logger countdown (`WorkOverlay`) for the
     prescribed seconds — no +5 s, no “believe a longer hold.”
 11. Next never changes set count. You still own how many sets.
-12. First-ever Open with no Close: reps = **5**, kg blank until typed.
-    Open never reads a card reps field.
+12. First-ever Open with no Close: reps = **8**, kg blank until typed.
+    Open never reads a card reps field. Same 8 for every lift — no
+    per-muscle default.
 
 ---
 
