@@ -39,8 +39,8 @@ list.
 | | You | Engine |
 | --- | --- | --- |
 | Week | Paint Strength / Conditioning / Recovery. Move a stamp when work wrecks a day. **Lift and cond are never the same day.** | Never changes `dayKind`. No `decideDayKind`. Never puts a row on a Strength day or a squat on a Conditioning day. |
-| Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only (kg, reps, watts, time). |
-| Logger | You log **weight × reps × RIR**, or **weight × seconds × RIR** on a timed hold (the set row already on the phone). | After each log, **Next** fills set N+1 from those fields. |
+| Cards | Template A and B (lifts, order, set count). Cond card when you make one. | Numbers only on lifts/cond (kg, reps, watts). Hold seconds stay on the card. |
+| Logger | You log **weight × reps × RIR** on a lift. Timed holds use the card’s seconds and a **countdown**, not Next. | After each **lift** log, **Next** fills set N+1. Holds do not go through Next. |
 
 Nutrition, coach publish, pain/illness UI, and LLM decide are out.
 
@@ -102,9 +102,10 @@ visible over time and so guesses are better than raw last-kilos.
 - **Close** writes the session’s best working-set Est. 1RM (and last
   make). Progress chart = that series over weeks.
 - Conditioning has no 1RM. Watts stay watts.
-- **Timed holds have no 1RM.** Seconds rows already skip `e1rmValue` in
-  the logger (`targetKind === 'seconds'`). Do not feed hold time into
-  the % chart — 30 s is not 30 reps.
+- **Timed holds have no 1RM and no Next.** Seconds rows already skip
+  `e1rmValue`. Do not feed hold time into the % chart — 30 s is not 30
+  reps. The card’s seconds stay the card’s seconds. The logger runs a
+  countdown (`WorkOverlay`). Engine Open / Next / Close are not called.
 
 ---
 
@@ -174,46 +175,31 @@ cell. Reps on the card change → different row, same column.
 The +2.5%-per-easy-set shortcut is **out**. A planned RIR 2 set that
 lands at RIR 2 must not add a plate.
 
-**Timed holds** (`targetKind: seconds` — plank, hang, wall sit, weighted
-hold). Same Open / Next / Close. Same RIR box. The number that moves is
-**seconds**, not % of Est. 1RM.
+**Timed holds** (`targetKind: seconds` — plank, hang, wall sit). **No
+advancement.** Not Open, not Next, not Close, not % of Est. 1RM.
 
-```text
-Open  = last made seconds (and last kg if the hold was loaded)
-Next  = if RIR on target → same seconds
-        if RIR easier    → +5 s
-        if you quit early → what you actually held
-        if you typed a longer time → believe that time
-        then round to 5 s
-Close = last made seconds (and last kg)
-```
+The card says 30 s → every set is 30 s. The logger starts the existing
+`WorkOverlay` countdown for that many seconds. Done / done-early logs
+the hold. Next set is the same 30 s and another countdown.
 
-No Est. 1RM. No % chart. Weight on a loaded hold **copies forward**; it
-does not go through Epley. You can type a heavier kg — Next believes it,
-same as 25 → 40 on a lift.
-
-**Hold golden path (plank 3 × 30 s, target RIR 2)**
-
-1. Open 30. Log 30 s, RIR 2 → Next **30 s**.
-2. Log 30 s, RIR 4 → Next **35 s**.
-3. Log 18 s, RIR 0 (failed) → Next **20 s** (18 rounded to 5 s), not 30.
-4. Asked 20 s, you hold **45 s**, RIR 2 → Next **45 s**, not 25.
+Weight on a loaded hold is whatever you typed or copied. Engine does
+not change it.
 
 **Conditioning** (once you have a card): same Next, **on a Conditioning
 day only**. Interval 1 easy at 220 W → interval 2 may be 230 W. Blow up
 → come back down. Never a squat on that day. Never a row on a Strength
-day. A plank on a Strength card is a timed hold, not conditioning.
+day. A plank on a Strength card is a timed hold (countdown only), not
+conditioning.
 
 ---
 
 ## Open and Close
 
-**Open** prefers: you typed a number → else (lift) `e1rm × pct(targetReps, targetRir)` rounded to plates → else (hold) last Close seconds → else last Close load → else blank.
+**Open** prefers: you typed a number → else `e1rm × pct(targetReps, targetRir)` (same inverse as Next) rounded to plates → else last Close load → else blank. Timed holds skip Open.
 
-**Close** returns `{ loadKg, reps, e1rmKg }` for a lift, `{ seconds, loadKg }`
-for a hold, or watts for cond, from what you actually finished. Adapter
-saves hints + Est. 1RM when there is one. Close does **not** invent an
-extra bump on top of Next.
+**Close** returns `{ loadKg, reps, e1rmKg }` (or watts for cond) from
+what you actually finished. Adapter saves hints + Est. 1RM. Close does
+**not** invent an extra bump on top of Next. Timed holds skip Close.
 
 ---
 
@@ -222,7 +208,8 @@ extra bump on top of Next.
 1. New package only.
 2. Calendar stamps stay in the HTML app. The package never reads the
    calendar.
-3. After each logged set → `decideNextSet` → next row.
+3. After each logged **lift** set → `decideNextSet` → next row.
+   Seconds rows start `WorkOverlay` instead — no `decideNextSet`.
 4. Session end → `closeAnchor` → hint for next Open.
 5. You edit A/B in Library. Engine does not invent exercises.
 
@@ -248,10 +235,10 @@ Colocated. No `--passWithNoTests`.
    Never treats 82.5 as the new max (no 82.5 × 0.95 rule).
 8. % chart matches inverse `e1rmValue`: 5 @ RIR 2 = 81.1%, 6 @ RIR 2 =
    78.9%, 1 @ RIR 0 = 96.8% (not 100).
-9. Plank 30 s @ RIR 2 → Next 30 s; 30 s @ RIR 4 → Next 35 s.
-10. Asked 20 s, logged 45 s @ RIR 2 → Next 45 s, not 25.
-11. Seconds rows never call `e1rmValue` and never use the % chart
-    (30 s is not 30 reps). Weighted hold copies kg; Next still moves time.
+9. Seconds rows skip Open / Next / Close and never call `e1rmValue`
+   (30 s is not 30 reps). Card seconds stay card seconds.
+10. Timed hold v1 is a logger countdown (`WorkOverlay`) for the
+    prescribed seconds — no +5 s, no “believe a longer hold.”
 
 ---
 
