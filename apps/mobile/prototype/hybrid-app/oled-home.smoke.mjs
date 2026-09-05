@@ -33,4 +33,15 @@ must(html.includes('background:var(--oled-bg)') || html.includes('background: va
 must(!/\.btn\.primary[^{]*\{[^}]*linear-gradient\(180deg,\s*#e8c49a/i.test(html), 'global .btn.primary is not gold gradient brick');
 must(html.includes('--oled-bg:#000000'), 'OLED tokens still present');
 
+must(html.includes('.logger-screen') || html.includes('logger-active'), 'logger surface hooks exist');
+must(!/\.logger-screen\s+\.btn\.primary\{[^}]*linear-gradient\(180deg,\s*#e8c49a/i.test(html), 'logger strength primary not gold brick');
+must(
+  !/\.logger-screen\.dial-engine\s+\.btn\.primary\{[^}]*linear-gradient\(180deg,\s*#6ed4c4/i.test(html) ||
+    (html.includes('.logger-screen.dial-engine .btn.primary') && html.includes('var(--oled-raised)')),
+  'logger engine primary not teal fill brick',
+);
+must(!html.includes('.logger-screen .btn.primary{background:linear-gradient(180deg,#e8c49a,#c9955f)'), 'no gold logger CTA brick');
+must(html.includes('.logger-screen') && (html.includes('var(--oled-bg)') || html.includes('var(--oled-surface)')), 'logger OLED surfaces');
+must(html.includes('Room 2') || html.includes('.app.logger-active, .logger-screen'), 'Room 2 logger OLED block');
+
 console.log('oled-home.smoke: ok');
