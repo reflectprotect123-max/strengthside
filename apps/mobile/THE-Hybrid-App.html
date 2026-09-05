@@ -798,35 +798,133 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 }
 
 /* Room 3–4 — Library / Calendar / Settings under OLED shell */
+/* Full Library float: no gray card mass — hairlines + type only */
 .shell-screen--oled .streamhero,
 .shell-screen--oled .card,
 .shell-screen--oled .session-card,
-.shell-screen--oled .ath-cal-day,
-.shell-screen--oled .day,
 .shell-screen--oled .weekbox,
 .shell-screen--oled .expandcard,
+.shell-screen--oled .ath-tpl-card,
+.shell-screen--oled .notice,
+.shell-screen--oled .empty,
+.shell-screen--oled .ath-strength-build-coach-note{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding-left:0;
+  padding-right:0;
+}
+.shell-screen--oled .streamhero{
+  padding:8px 0 16px;
+  border-bottom:1px solid rgba(255,255,255,.08)!important;
+}
+.shell-screen--oled .streamhero.dial-strength,
+.shell-screen--oled .streamhero.dial-engine{
+  border-left:0!important;
+  background:transparent!important;
+}
+.shell-screen--oled .streamhero .eyebrow{color:var(--oled-muted)!important}
+.shell-screen--oled .streamhero h2{color:var(--oled-text);letter-spacing:-.02em}
+.shell-screen--oled .streamhero .lead{color:var(--oled-muted)}
+
+/* Template / draft rows — float with hairline separators */
+.shell-screen--oled .card.expandcard,
+.shell-screen--oled .expandcard,
+.shell-screen--oled .weekbox .card,
 .shell-screen--oled .ath-tpl-card{
-  background:transparent;
-  border-color:rgba(255,255,255,.1);
-  box-shadow:none;
+  border-bottom:1px solid rgba(255,255,255,.08)!important;
+  padding:14px 0!important;
+  margin:0!important;
+}
+.shell-screen--oled .expandhead,
+.shell-screen--oled .weekhead{
+  background:transparent!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+.shell-screen--oled .weekchev,
+.shell-screen--oled .expandchev,
+.shell-screen--oled .dropbox summary:after{
+  color:rgba(255,255,255,.4)!important;
+}
+.shell-screen--oled .weekbox{
+  border:0!important;
+  margin:18px 0 8px;
+}
+.shell-screen--oled .weekhead{
+  border-bottom:1px solid rgba(255,255,255,.1)!important;
+  padding:10px 0!important;
+  margin-bottom:4px;
+}
+.shell-screen--oled .weekbody{padding:0!important;background:transparent!important}
+
+/* Tabs — no gray tray; active = white type only */
+.shell-screen--oled .library-tabs{
+  background:transparent!important;
+  border:0!important;
+  border-bottom:1px solid rgba(255,255,255,.1)!important;
+  border-radius:0!important;
+  padding:0 0 8px!important;
+  gap:0!important;
+  margin:0 0 18px!important;
+}
+.shell-screen--oled .library-tab{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  color:var(--oled-muted)!important;
+  box-shadow:none!important;
+}
+.shell-screen--oled .library-tab.active,
+.shell-screen--oled .ath-tab.active,
+.shell-screen--oled .library-tab.engine.active,
+.shell-screen--oled .library-tab.progress.active{
+  background:transparent!important;
+  color:var(--oled-text)!important;
+  box-shadow:none!important;
+  border-bottom:2px solid #fff!important;
+  border-radius:0!important;
 }
 .shell-screen--oled .pill,
 .shell-screen--oled .pill.warn,
-.shell-screen--oled .pill.ok{
-  border-color:rgba(255,255,255,.22);
-  color:rgba(255,255,255,.7);
-  background:transparent;
+.shell-screen--oled .pill.ok,
+.shell-screen--oled .pill.draft{
+  border:1px solid rgba(255,255,255,.2)!important;
+  color:rgba(255,255,255,.65)!important;
+  background:transparent!important;
 }
-.shell-screen--oled .btn.primary:not(.oled-cta){
-  border-color:rgba(255,255,255,.28);
+.shell-screen--oled .btn.primary:not(.oled-cta),
+.shell-screen--oled .btn.small.primary{
+  border:1px solid rgba(255,255,255,.28)!important;
+  background:transparent!important;
+  color:var(--oled-text)!important;
+  box-shadow:none!important;
+}
+.shell-screen--oled .btn.danger,
+.shell-screen--oled .btn.small.danger{
+  border-color:rgba(255,255,255,.16)!important;
+  color:rgba(255,180,170,.85)!important;
+  background:transparent!important;
+}
+.shell-screen--oled .ath-module:not(.ath-module-whoop){
+  background:transparent!important;
+  border:0!important;
+  border-bottom:1px solid rgba(255,255,255,.08)!important;
+  border-radius:0!important;
+}
+
+/* Calendar / Settings keep light structure (not Library) */
+.shell-screen--oled .ath-cal-day,
+.shell-screen--oled .day{
   background:transparent;
-  color:var(--oled-text);
+  border:1px solid rgba(255,255,255,.1);
   box-shadow:none;
 }
-.shell-screen--oled .ath-cal-day.has-sessions{border-color:rgba(255,255,255,.08)}
+.shell-screen--oled .ath-cal-day.has-sessions{border-color:rgba(255,255,255,.12)}
 .shell-screen--oled .ath-cal-day.active,
 .shell-screen--oled .day.active{
-  border-color:rgba(255,255,255,.35);
+  border-color:rgba(255,255,255,.4);
   background:var(--oled-raised);
   color:var(--oled-text);
   box-shadow:none;
@@ -835,54 +933,14 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .shell-screen--oled .day.active b{color:var(--oled-text)}
 .shell-screen--oled .ath-cal-day.has-coach .ath-cal-day-num b{color:var(--oled-text)}
 .shell-screen--oled .cal-day-count{color:var(--oled-muted)}
-.shell-screen--oled .library-tabs{border-color:rgba(255,255,255,.08);background:var(--oled-surface)}
-.shell-screen--oled .library-tab{color:var(--oled-muted)}
-.shell-screen--oled .library-tab.active,
-.shell-screen--oled .ath-tab.active{
-  background:var(--oled-raised);
-  color:var(--oled-text);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
-}
-.shell-screen--oled .library-tab.engine.active,
-.shell-screen--oled .library-tab.progress.active{
-  background:var(--oled-raised);
-  color:var(--oled-text);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
-}
-.shell-screen--oled .streamhero.dial-strength{border-left:2px solid rgba(255,255,255,.45);background:transparent}
-.shell-screen--oled .streamhero.dial-engine{border-left:2px solid var(--zone);background:transparent}
 .shell-screen--oled .settings-group .card{
-  background:var(--oled-surface);
-  border-color:rgba(255,255,255,.08);
-}
-
-
-/* OLED punch — Library floats on void; kill copper chrome */
-.shell-screen--oled .streamhero,
-.shell-screen--oled .weekbox,
-.shell-screen--oled .card.expandcard,
-.shell-screen--oled .expandcard{
   background:transparent;
-  border-color:rgba(255,255,255,.1);
+  border:0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  border-radius:0;
   box-shadow:none;
 }
-.shell-screen--oled .weekhead,
-.shell-screen--oled .expandhead{
-  background:transparent;
-}
-.shell-screen--oled .weekchev,
-.shell-screen--oled .expandchev,
-.shell-screen--oled .dropbox summary:after{
-  color:rgba(255,255,255,.45)!important;
-}
-.shell-screen--oled .library-tabs{
-  background:transparent;
-  border-color:rgba(255,255,255,.1);
-}
-.shell-screen--oled .ath-module:not(.ath-module-whoop){
-  background:transparent;
-  border-color:rgba(255,255,255,.1);
-}
+
 .top,.header{
   background:#000!important;
   border-bottom-color:rgba(255,255,255,.06)!important;
@@ -1404,7 +1462,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v184';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v185';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}

@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v184'"), 'LOCAL_BUILD v183');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v185'"), 'LOCAL_BUILD v183');
 must(html.includes('function athWhoopDialSvg'), 'Whoop-style dial helper');
 must(html.includes('ath-whoop-dials'), 'three-dial row on home');
 must(html.includes('>SLEEP<') || html.includes("'SLEEP'") || html.includes('"SLEEP"'), 'SLEEP dial label');
