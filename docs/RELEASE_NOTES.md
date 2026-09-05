@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.56 | 2026-09-05 | Full Body B + C starters on open-logger athlete pattern (null sets/reps + metric logColumns); cache blank-v175 |
 | 1.0.55 | 2026-09-05 | Calendar one-week strip + horizontal scroll-snap; Today kept, month Prev/Next removed; cache blank-v174 |
 | 1.0.54 | 2026-09-05 | Seal Adaptive from timed holds + distance carries (weight×metres); holds WorkOverlay-only; cache blank-v173 |
 | 1.0.52 | 2026-09-04 | Blank slate — all product engines deleted; name scrub; openVolume; cache v168 |
