@@ -15,6 +15,8 @@ REPO="$(cd "$ROOT/../../.." && pwd)"
 CHANNEL="${CAPGO_CHANNEL:-dogfood}"
 VERSION="${CAPGO_BUNDLE_VERSION:-}"
 
+# Soft-rematerialize from handoff vault when possible (never fail the soft-skip path).
+bash "$REPO/scripts/rematerialize-capgo-from-vault.sh" 2>/dev/null || true
 if [[ -z "${CAPGO_TOKEN:-}" && -f "$REPO/.capgo" ]]; then
   CAPGO_TOKEN="$(cat "$REPO/.capgo")"
 fi
