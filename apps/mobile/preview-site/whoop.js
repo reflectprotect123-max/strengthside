@@ -111,7 +111,7 @@
     if (recovery != null && recovery > 0) { c.whoopRecovery = Math.round(recovery); changed = true; }
     if (hrv != null && hrv > 0) { c.hrv = Math.round(hrv); changed = true; }
     if (rhr != null && rhr > 0) { c.restingHr = Math.round(rhr); changed = true; }
-    if (sleepPerf != null && sleepPerf > 0) { c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
+    if (sleepPerf != null && sleepPerf > 0) { c.whoopSleepPerformance = Math.round(sleepPerf); c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
     if (strain != null && strain > 0) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
     if (changed) {
       c.updatedAt = Date.now();
