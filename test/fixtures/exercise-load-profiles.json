@@ -1,9 +1,8 @@
 {
   "version": 2,
   "updated": "2026-09-02",
-  "purpose": "Reference: which engine metrics and logger columns each exercise uses. Derived from hybrid-engine-exercise-library-120 plus profile rules. Not wired into strength-adapter yet.",
+  "purpose": "Reference: which logger columns each exercise uses. Derived from hybrid-engine-exercise-library-120 plus profile rules. Core S&C engines deleted 2026-09-03 — this fixture is UI/column metadata only.",
   "sources": [
-    "packages/strength-engine/src/metric.ts",
     "apps/mobile/prototype/hybrid-app/log-columns.js",
     "evidence-platform/.../hybrid-engine-exercise-library-120.json",
     "https://www.strongerbyscience.com/progressive-overload-strategies/",
@@ -163,19 +162,17 @@
     },
     "distance_time_load": {
       "count_in_library": 7,
-      "description": "Loaded carries and conditioning — load, distance, duration.",
+      "description": "Loaded carries — load + distance only (non-timed). Library mode name is legacy; no prescribed time column.",
       "default_log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ],
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
-      "default_profile": "carry_distance_time_load"
+      "default_profile": "carry_distance_load"
     },
     "time_or_reps": {
       "count_in_library": 4,
@@ -325,25 +322,23 @@
       "progression": "cond_engine_not_strength",
       "note": "Logged via conditioning logger, not strength one-set logger."
     },
-    "carry_distance_time_load": {
-      "label": "Carry — load + distance + time",
+    "carry_distance_load": {
+      "label": "Carry — load + distance (non-timed)",
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ],
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "metrics_progression": [
         "load",
         "distance"
       ],
-      "progression": "rep_volume_hint_today",
-      "note": "Adapter regex treats carry as rep progression today; fixture uses explicit load metrics."
+      "progression": "sealed_from_adaptive",
+      "note": "Distance effort only — no prescribed time. Adaptive Open/Next/Close must not touch carries (same seal as timed holds)."
     }
   },
   "profile_rules": {
@@ -648,17 +643,15 @@
       "name": "Battle Ropes",
       "category": "Loaded Carry / Conditioning",
       "tracking_mode": "distance_time_load",
-      "profile": "carry_distance_time_load",
+      "profile": "carry_distance_load",
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ]
     },
     {
@@ -666,17 +659,15 @@
       "name": "Farmer Walk",
       "category": "Loaded Carry / Conditioning",
       "tracking_mode": "distance_time_load",
-      "profile": "carry_distance_time_load",
+      "profile": "carry_distance_load",
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ]
     },
     {
@@ -684,17 +675,15 @@
       "name": "Sled Push",
       "category": "Loaded Carry / Conditioning",
       "tracking_mode": "distance_time_load",
-      "profile": "carry_distance_time_load",
+      "profile": "carry_distance_load",
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ]
     },
     {
@@ -1858,17 +1847,15 @@
       "name": "Suitcase Carry",
       "category": "Loaded Carry / Conditioning",
       "tracking_mode": "distance_time_load",
-      "profile": "carry_distance_time_load",
+      "profile": "carry_distance_load",
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ]
     },
     {
@@ -1876,17 +1863,15 @@
       "name": "Sandbag Carry",
       "category": "Loaded Carry / Conditioning",
       "tracking_mode": "distance_time_load",
-      "profile": "carry_distance_time_load",
+      "profile": "carry_distance_load",
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ]
     },
     {
@@ -1894,17 +1879,15 @@
       "name": "Bear Crawl",
       "category": "Loaded Carry / Conditioning",
       "tracking_mode": "distance_time_load",
-      "profile": "carry_distance_time_load",
+      "profile": "carry_distance_load",
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ]
     },
     {
@@ -1912,17 +1895,15 @@
       "name": "Backpack Carry",
       "category": "Loaded Carry / Conditioning",
       "tracking_mode": "distance_time_load",
-      "profile": "carry_distance_time_load",
+      "profile": "carry_distance_load",
       "metrics_per_set": [
         "load",
-        "distance",
-        "duration"
+        "distance"
       ],
       "metrics_last_set": [],
       "log_columns": [
         "weight_kg",
-        "distance_m",
-        "time_sec"
+        "distance_m"
       ]
     },
     {
@@ -2468,7 +2449,7 @@
     {
       "exercise_pattern": "row|pulldown|leg press|carry",
       "issue": "Adapter rep-progression regex includes rows/carries; many should log kg",
-      "intended_profile": "accessory_kg_reps or carry_distance_time_load"
+      "intended_profile": "accessory_kg_reps or carry_distance_load"
     },
     {
       "exercise_pattern": "Nordic Curl",
@@ -2498,7 +2479,7 @@
     "cardio_duration_distance": 7,
     "bodyweight_reps": 10,
     "isometric_time_or_reps": 6,
-    "carry_distance_time_load": 7,
+    "carry_distance_load": 7,
     "main_pct_wm": 29
   },
   "exercise_count": 120
