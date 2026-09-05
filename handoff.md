@@ -73,7 +73,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ### Sync honesty (important)
 
-`Whoop.syncAll` refreshes **WHOOP recovery** and **Concept2 Logbook** when linked. It does **not** sync calendar sessions or Library templates. Training state is **localStorage** on device (plus local recovery snapshot). Settings + WHOOP card copy must stay honest about that until real session sync returns.
+`Whoop.syncAll` refreshes **WHOOP recovery** and **Concept2 Logbook** when linked. It does **not** sync calendar sessions or Library templates. Training state is **localStorage** on device (plus local recovery snapshot). Settings + WHOOP card copy must stay honest about that until Phase S implements the written contract: `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md`.
 
 ### Gone for good (do not restore)
 
@@ -97,7 +97,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 ## 2. What to do next
 
 1. Keep `@hybrid/adaptive` pure; HTML is the only athlete UI surface.
-2. Cloud journal / real session+template sync is a **product decision**, not a drive-by restore of deleted sync code.
+2. Cloud journal / session+template sync: contract is written (Phase M); **implement in Phase S** per `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md` — not a drive-by restore of deleted sync code.
 3. After merging audit fixes: Capgo ship with matching `LOCAL_BUILD` / SW cache / bundle version.
 
 **Useful checks**

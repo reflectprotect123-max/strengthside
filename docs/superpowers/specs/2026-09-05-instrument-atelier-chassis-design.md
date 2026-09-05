@@ -87,7 +87,7 @@ Make the athlete app feel **premium and simple** by structuring it as three room
 ### Phase M — write in this work (no full implement)
 
 - Document the **session + template sync contract**: entities, conflict rules, offline-first, WHOOP proxy ownership boundary.
-- Lives in this spec’s companion contract section (or a short linked contract doc created by the plan).
+- **Contract doc:** [2026-09-05-session-template-sync-contract.md](./2026-09-05-session-template-sync-contract.md) — explicit-revision conflict rule, offline-first, Phase S checklist.
 
 ### Phase S — later plan
 
