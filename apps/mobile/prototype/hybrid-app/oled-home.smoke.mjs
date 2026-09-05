@@ -44,4 +44,17 @@ must(!html.includes('.logger-screen .btn.primary{background:linear-gradient(180d
 must(html.includes('.logger-screen') && (html.includes('var(--oled-bg)') || html.includes('var(--oled-surface)')), 'logger OLED surfaces');
 must(html.includes('Room 2') || html.includes('.app.logger-active, .logger-screen'), 'Room 2 logger OLED block');
 
+must((html.match(/shell-screen--oled/g) || []).length >= 2, 'OLED shell used beyond Home alone');
+const calendarBlock = html.match(/function calendar\(\)[\s\S]*?\nfunction sessionStatusLabel/)?.[0] || '';
+must(calendarBlock.includes('shell-screen--oled'), 'shell-screen--oled in calendar()');
+const programsBlock = html.match(/function programs\(\)[\s\S]*?\nfunction libraryProgressTab/)?.[0] || '';
+must(programsBlock.includes('shell-screen--oled'), 'shell-screen--oled in programs()');
+const settingsBlock = html.match(/function settings\(\)[\s\S]*?function downloadJson/)?.[0] || '';
+must(settingsBlock.includes('shell-screen--oled'), 'shell-screen--oled in settings()');
+const progressBlock = html.match(/function libraryProgressTab\(\)[\s\S]*?\nfunction libraryStrengthTab/)?.[0] || '';
+must(progressBlock.includes('shell-screen--oled'), 'shell-screen--oled in libraryProgressTab()');
+must(html.includes('.shell-screen--oled .ath-cal-day'), 'calendar days OLED-scoped');
+must(html.includes('.shell-screen--oled .library-tab'), 'library tabs OLED-scoped');
+must(html.includes('.shell-screen--oled .settings-group'), 'settings OLED-scoped');
+
 console.log('oled-home.smoke: ok');
