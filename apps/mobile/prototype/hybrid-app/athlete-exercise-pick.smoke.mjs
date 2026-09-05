@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v176'"), 'LOCAL_BUILD v160');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v177'"), 'LOCAL_BUILD v177');
 must(html.includes('function athExerciseSuggestBtn'), 'athExerciseSuggestBtn helper');
 must(html.includes('class="searchpick ath-ex-pick"'), 'delegated athlete pick buttons');
 must(html.includes('class="searchpick ex-sheet-pick"'), 'delegated sheet pick buttons');
@@ -29,6 +29,17 @@ must(html.includes('exercise-load-profiles.js'), 'exercise load profiles script'
 must(
   html.includes('ExerciseLoadProfiles.defaultLogColumns(exerciseId)'),
   'pick applies profile defaults',
+);
+must(html.includes('athSuggestPickLockUntil'), 'pick lock keeps dropdown closed after select');
+must(html.includes('inp.blur()') || html.includes('inp.blur('), 'pick blurs name field after apply');
+must(
+  /function athleteLiftEditor\([^)]*\)\{[^}]*!y\.exerciseId/.test(html.replace(/\n/g, ' ')),
+  'lift editor does not reopen suggest once exerciseId is applied',
+);
+must(
+  html.includes("refreshAthleteLiftCard(bi,ei,{restoreFocus:false})") ||
+    html.includes('refreshAthleteLiftCard(bi,ei,{restoreFocus:!1})'),
+  'pick must not restore focus (which reopens suggest via onfocus)',
 );
 
 const sandbox = {
@@ -89,15 +100,66 @@ function extractFunction(src, name) {
   throw new Error(name + ' unclosed');
 }
 
+let blurCount = 0;
+let lastSuggestHtml = 'OPEN';
+let cardOpts = null;
+const nameInput = {
+  value: '',
+  blur() {
+    blurCount += 1;
+  },
+};
+const suggestBox = {
+  set innerHTML(v) {
+    lastSuggestHtml = v;
+  },
+  get innerHTML() {
+    return lastSuggestHtml;
+  },
+};
+sandbox.$ = (id) => {
+  if (id === 'athLiftName_0_0') return nameInput;
+  if (id === 'athSuggest_0_0') return suggestBox;
+  return null;
+};
+sandbox.refreshAthleteLiftCard = (bi, ei, opts) => {
+  cardOpts = opts || null;
+};
+sandbox.athleteLiftRepOnly = (() => {
+  let n = 0;
+  return () => {
+    n += 1;
+    // first call (was) false, second (after plank profile) true → forces card refresh path
+    return n > 1;
+  };
+})();
+
+const refreshSrc = extractFunction(html, 'refreshAthleteLiftSuggest');
 const pickSrc = extractFunction(html, 'pickAthleteLiftSuggest');
 must(pickSrc, 'pickAthleteLiftSuggest function');
+must(refreshSrc, 'refreshAthleteLiftSuggest function');
+// lock var is declared near pick helpers — seed if present in html as assignment target
+if (html.includes('athSuggestPickLockUntil')) {
+  vm.runInContext('var athSuggestPickLockUntil=0;', sandbox);
+}
+vm.runInContext(refreshSrc, sandbox);
 vm.runInContext(pickSrc, sandbox);
+// real refresh must be used (not the no-op stub)
+must(typeof sandbox.refreshAthleteLiftSuggest === 'function', 'refresh helper live');
 
 sandbox.pickAthleteLiftSuggest(0, 0, 'core-plank', 'Plank', 'Core');
 const ex = sandbox.draft.blocks[0].exercises[0];
 must(ex.exerciseId === 'core-plank', 'exerciseId set');
 must(ex.logColumns && ex.logColumns.length === 1, 'plank single column');
 must(ex.logColumns[0].kind === 'time_sec', 'plank → time_sec');
+must(nameInput.value === 'Plank', 'name input updated');
+must(blurCount >= 1, 'name field blurred after pick');
+must(lastSuggestHtml === '', 'suggest list cleared after pick');
+must(cardOpts && cardOpts.restoreFocus === false, 'card refresh does not restore focus');
+
+// onfocus-style reopen must stay suppressed while pick lock is hot
+sandbox.refreshAthleteLiftSuggest(0, 0, 'Plank');
+must(lastSuggestHtml === '', 'pick lock blocks immediate suggest reopen');
 
 const twin = sandbox.LogColumns.builderAthleteTwinHtml(ex, { bi: 0, ei: 0 });
 must(twin.includes('Time (seconds)'), 'plank twin shows Time (seconds)');

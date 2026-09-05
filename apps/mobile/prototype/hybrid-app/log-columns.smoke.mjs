@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v176'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v177'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
