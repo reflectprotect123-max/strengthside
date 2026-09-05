@@ -746,7 +746,7 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .library-tab{min-height:44px;border:0;border-radius:11px;background:transparent;color:var(--muted);font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .library-tab.active{color:var(--text);background:rgba(212,165,116,.14);box-shadow:inset 0 0 0 1px rgba(212,165,116,.35)}
 .library-tab.engine.active{background:rgba(94,196,180,.14);box-shadow:inset 0 0 0 1px rgba(94,196,180,.4);color:#9fe8dc}
-.library-tab.progress.active{background:rgba(182,138,80,.14);box-shadow:inset 0 0 0 1px rgba(182,138,80,.4);color:var(--gold2)}
+.library-tab.recovery.active{background:rgba(182,138,80,.14);box-shadow:inset 0 0 0 1px rgba(182,138,80,.4);color:var(--gold2)}
 .coach-strength-coach-msg{display:none}
 .coach-rx-active .coach-strength-coach-msg{display:block}
 .coach-rx-active .ath-strength-build-coach-note{display:block}
@@ -1153,7 +1153,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v181';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v182';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -2253,7 +2253,7 @@ function openAthleteStrengthBuilder(){libraryActiveTab='strength';newTemplate(''
 function openAthleteStrengthLibrary(){libraryActiveTab='strength';S.tab='programs';save('nav-library');render()}
 function openAthleteConditioningLibrary(){libraryActiveTab='conditioning';S.tab='programs';save('nav-library');render()}
 
-function setLibraryTab(tab){libraryActiveTab=tab==='conditioning'?'conditioning':(tab==='progress'?'progress':'strength');programs()}
+function setLibraryTab(tab){libraryActiveTab=tab==='conditioning'?'conditioning':(tab==='recovery'?'recovery':'strength');programs()}
 function isConditioningTemplate(t){
   if(!t)return false;
   if(String(t.templateKind||'').toLowerCase()==='conditioning')return true;
@@ -2264,7 +2264,7 @@ function isConditioningTemplate(t){
 }
 function libraryTabsHtml(){
   let tab=libraryActiveTab||'strength';
-  return `<div class="library-tabs ath-strength-build" role=tablist aria-label="Library"><button type=button role=tab class="library-tab ${tab==='strength'?'active':''}" aria-selected="${tab==='strength'}" onclick="setLibraryTab('strength')">Hybrid Strength</button><button type=button role=tab class="library-tab engine ${tab==='conditioning'?'active':''}" aria-selected="${tab==='conditioning'}" onclick="setLibraryTab('conditioning')">The Engine</button><button type=button role=tab class="library-tab progress ${tab==='progress'?'active':''}" aria-selected="${tab==='progress'}" onclick="setLibraryTab('progress')">Progress</button></div>`;
+  return `<div class="library-tabs ath-strength-build" role=tablist aria-label="Library"><button type=button role=tab class="library-tab ${tab==='strength'?'active':''}" aria-selected="${tab==='strength'}" onclick="setLibraryTab('strength')">Hybrid Strength</button><button type=button role=tab class="library-tab engine ${tab==='conditioning'?'active':''}" aria-selected="${tab==='conditioning'}" onclick="setLibraryTab('conditioning')">The Engine</button><button type=button role=tab class="library-tab recovery ${tab==='recovery'?'active':''}" aria-selected="${tab==='recovery'}" onclick="setLibraryTab('recovery')">Recovery</button></div>`;
 }
 function normalizeWorkoutBlock(b){if(!b)return b;b=clone(b);let cat=String(b.category||'').toLowerCase(),heading=String(b.heading||'').toLowerCase(),hasEx=(b.exercises||[]).length>0,isRecovery=!!b.recoverySession||cat==='recovery'||/recover|debt repay|easy flush/.test(heading),hasCond=b.type==='conditioning'||b.condFmt||b.conditioningType||b.effort||(b.modality&&!hasEx);if(b.type==='text'&&!hasEx&&!hasCond)return b;if(isRecovery||(hasCond&&!hasEx)){b.type='conditioning';if(isRecovery){b.recoverySession=true;b.category=b.category||'Recovery';b.effort=b.effort||'easy';b.condFmt=b.condFmt||'steady';b.modality=b.modality||'Mixed';if(!b.baselineDurationMin)b.baselineDurationMin=num(b.targetDurationMin)||30;if(!b.targetDurationMin)b.targetDurationMin=b.baselineDurationMin}delete b.exercises;return b}if(hasEx||b.type==='strength'){b.type='strength';return b}if(b.modality||b.targetDurationMin){b.type='conditioning';delete b.exercises}return b}
 function sessionBlockKindSummary(blocks){blocks=(blocks||[]).map(normalizeWorkoutBlock);let s=blocks.filter(b=>b&&b.type==='strength').length,c=blocks.filter(b=>b&&b.type==='conditioning'&&!b.recoverySession).length,r=blocks.filter(b=>b&&(b.recoverySession||String(b.category||'').toLowerCase()==='recovery')).length,parts=[];if(s)parts.push(s+' strength');if(c)parts.push(c+' cond');if(r)parts.push(r+' recovery');return parts.join(' · ')||'No blocks'}
@@ -2345,12 +2345,16 @@ function duplicateTemplate(templateId){let t=tpl(templateId);if(!t)return;let co
 function templateCard(t){let open=!!templateOverviewOpen[t.id];return`<div class="card expandcard"><button class=expandhead onclick="toggleTemplateOverview('${t.id}')"><div><strong>${esc(t.name)}</strong><span>${templateShortMeta(t)}</span></div><div class=expandchev>${open?'▾':'▸'}</div></button>${templateActionsHtml(t)}${open?templateOverviewHtml(t):''}</div>`}
 function groupedTemplates(title,key,templates,open){if(!templates.length)return'';let action='';return`<div class=weekbox><button class=weekhead onclick="toggleLibrarySection('${key}')"><div><strong>${esc(title)}</strong><span>${templates.length} template${templates.length===1?'':'s'} · tap to ${open?'hide':'show'}</span></div><div class=weekchev>${open?'▾':'▸'}</div></button>${open?`${action}<div class=weekbody>${templates.map(templateCard).join('')}</div>`:''}</div>`}let libraryActiveTab='strength';
 function programs(){
-  let subtitle=libraryActiveTab==='conditioning'?'The Engine':(libraryActiveTab==='progress'?'Progress':'Hybrid Strength');
-  let body=libraryActiveTab==='conditioning'?libraryConditioningTab():(libraryActiveTab==='progress'?libraryProgressTab():libraryStrengthTab());
+  let subtitle=libraryActiveTab==='conditioning'?'The Engine':(libraryActiveTab==='recovery'?'Recovery':'Hybrid Strength');
+  let body=libraryActiveTab==='conditioning'?libraryConditioningTab():(libraryActiveTab==='recovery'?libraryRecoveryTab():libraryStrengthTab());
   shell('Library',subtitle,libraryTabsHtml()+body);
 }
-function libraryProgressTab(){
-  return `<div class="stack shell-screen"><div class=card><div class=eyebrow>Progress</div><div class=meta>Core engines removed. Progress returns when a new model is built from scratch. Library templates and manual logging stay.</div></div></div>`;
+function libraryRecoveryTab(){
+  let visible=visibleTemplates().filter(isRecoveryTemplate);
+  let b=`<div class=stack><div class=streamhero dial-engine><div class=eyebrow>Recovery</div><h2>Templates</h2><p class=lead>Recovery sessions use the Engine builder and logger — easy flush and movement, no strain target. Edit, duplicate, and schedule when you need to recover.</p><div class=quickgrid><button class="btn primary block" style="grid-column:1/-1" onclick="resetCondBuilder();openAthleteConditioningBuilder()">New recovery session</button></div></div>`;
+  b+=groupedTemplates('Recovery','lib-recovery',visible,true);
+  if(!visible.length)b+=`<div class=empty><b>No recovery sessions yet</b>Build a recovery session, then it lands here.<div class=btns style="justify-content:center"><button class="btn primary" onclick="resetCondBuilder();openAthleteConditioningBuilder()">Build recovery</button></div></div>`;
+  return b+`</div>`;
 }
 function libraryStrengthTab(){
   let visible=visibleTemplates().filter(t=>!isConditioningTemplate(t));
@@ -2366,15 +2370,13 @@ function libraryStrengthTab(){
   return b+`</div></div>`;
 }
 function libraryConditioningTab(){
-  let visible=visibleTemplates().filter(isConditioningTemplate);
+  let visible=visibleTemplates().filter(isConditioningTemplate).filter(t=>!isRecoveryTemplate(t));
   let condStarters=visible.filter(t=>String(t.name||'')==='Aerobic Conditioning');
-  let recoveryStarters=visible.filter(isRecoveryTemplate);
-  let custom=visible.filter(t=>!condStarters.includes(t)&&!recoveryStarters.includes(t));
-  let b=`<div class=stack><div class=streamhero dial-engine><div class=eyebrow>The Engine</div><h2>Templates</h2><p class=lead>Starter conditioning and recovery sessions use the Engine builder and logger. Edit, duplicate, and schedule when you train.</p><div class=quickgrid><button class="btn primary block" style="grid-column:1/-1" onclick="resetCondBuilder();openAthleteConditioningBuilder()">New conditioning template</button></div></div>`;
+  let custom=visible.filter(t=>!condStarters.includes(t));
+  let b=`<div class=stack><div class=streamhero dial-engine><div class=eyebrow>The Engine</div><h2>Templates</h2><p class=lead>Starter conditioning sessions use the Engine builder and logger. Edit, duplicate, and schedule when you train. Recovery sessions live in the Recovery tab.</p><div class=quickgrid><button class="btn primary block" style="grid-column:1/-1" onclick="resetCondBuilder();openAthleteConditioningBuilder()">New conditioning template</button></div></div>`;
   b+=groupedTemplates('Conditioning','cond-starter',condStarters,true);
-  b+=groupedTemplates('Recovery','cond-recovery',recoveryStarters,true);
   b+=groupedTemplates('Your sessions','cond-custom',custom,true);
-  if(!condStarters.length&&!recoveryStarters.length&&!custom.length)b+=`<div class=empty><b>No Engine sessions yet</b>Build a conditioning workout, then publish it to a day.<div class=btns style="justify-content:center"><button class="btn primary" onclick="resetCondBuilder();openAthleteConditioningBuilder()">Build conditioning</button></div></div>`;
+  if(!condStarters.length&&!custom.length)b+=`<div class=empty><b>No Engine sessions yet</b>Build a conditioning workout, then publish it to a day.<div class=btns style="justify-content:center"><button class="btn primary" onclick="resetCondBuilder();openAthleteConditioningBuilder()">Build conditioning</button></div></div>`;
   return b+`</div>`;
 }
 function bulletListHtml(items){return Array.isArray(items)&&items.length?`<ul class=bulletlist>${items.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
@@ -2648,7 +2650,7 @@ function recoveryPostureHintHtml(){return ''}
 function strengthProgressHtml(){return `<div class=empty><b>Progress rebuild pending</b><div class=meta>Old strength engine wiring removed. Library templates stay.</div></div>`;}
 function strengthExerciseDetailHtml(){return strengthProgressHtml();}
 function openStrengthExerciseDetail(exerciseId){nav(false);let name=exerciseId;shell('Progress',esc(name)+' · history',strengthExerciseDetailHtml(exerciseId))}
-function openStrengthProgress(){libraryActiveTab='progress';S.tab='programs';save('nav-progress');render()}
+function openStrengthProgress(){libraryActiveTab='recovery';S.tab='programs';save('nav-progress');render()}
 async function finalizeSilentStrength(x){/* core engines deleted — blank slate */}
 function promptSessionPain(sessionId){sheet(`<h2>Any pain today?</h2><p class=lead>One quick check — keeps next loads smart. Training is never blocked.</p><div class=stack><button class="btn primary block" onclick="recordSessionPain('${sessionId}','none')">No</button><button class="btn block" onclick="recordSessionPain('${sessionId}','mild')">Mild</button><button class="btn block" onclick="showSessionPainNote('${sessionId}')">Yes</button></div><div id=painNoteWrap style="display:none;margin-top:12px" class=field><label>Optional note</label><textarea class=openbox id=painNote placeholder="Where / what"></textarea><button class="btn primary block" style="margin-top:10px" onclick="recordSessionPain('${sessionId}','yes')">Save</button></div>`)}
 function showSessionPainNote(sessionId){let w=$('painNoteWrap');if(w)w.style.display='block'}
