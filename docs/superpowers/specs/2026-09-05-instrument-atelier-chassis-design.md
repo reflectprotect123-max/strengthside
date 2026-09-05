@@ -115,7 +115,7 @@ Every implementation task must leave **evidence**, not vibes.
 
 ### Manual dogfood (required before Capgo)
 
-1. Cold open → Home shows dials + strength/cond overview; no readiness check-in.
+1. Cold open → Home shows dials + today peek; cond peek = HR zones only; Start asks yes/no; no readiness check-in.
 2. Library → Strength / Engine / Recovery tabs render OLED-native.
 3. Build a strength block → logger for that session matches builder columns 1:1.
 4. Build rower/ski cond → split field; bike → watts.
@@ -157,7 +157,7 @@ Every implementation task must leave **evidence**, not vibes.
 | Success | Feel + clean dogfood session |
 | Visual | OLED system as now |
 | Build approach | Soft rooms in current HTML (1+2) |
-| Home content | Dials + strength/cond overview; drop readiness check-in |
+| Home content | Dials + today peek; cond = HR zones; Start → yes/no confirm; drop readiness check-in |
 | Library | Strength \| Engine \| Recovery |
 | Publish | Day-picker sheet |
 | Logger | Matches builder 1:1; builder wins |
