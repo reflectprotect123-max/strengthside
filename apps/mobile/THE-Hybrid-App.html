@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#07090b" />
+<meta name="theme-color" content="#000000" />
 <title>THE Hybrid System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -34,7 +34,7 @@
   --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;
   --focus:0 0 0 2px var(--bg),0 0 0 4px rgba(212,165,116,.7);
 }
-*{box-sizing:border-box}html,body{margin:0;background:var(--oled-bg);color:var(--text);font-family:var(--font-body)}body{min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:760px;margin:auto;min-height:100svh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:#090909e8;backdrop-filter:blur(14px)}.brand{display:flex;gap:10px;align-items:center}.mark{display:grid;place-items:center;width:40px;height:40px;border:1px solid rgba(255,255,255,.18);border-radius:11px;color:#fff;font-weight:900;font-size:11px;letter-spacing:.12em;background:transparent}.brand b{display:block;font-size:16px;letter-spacing:.18em}.brand small{display:block;margin-top:2px;color:var(--muted);font-size:9px;letter-spacing:.2em;text-transform:uppercase}.stopwatch{display:none;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);padding:9px 12px;min-width:74px;font-variant-numeric:tabular-nums}.topright{display:flex;align-items:center;gap:8px}.stopwatch.show{display:block}.stopwatch.on{border-color:var(--gold);color:var(--gold2)}main{padding:20px 16px 28px}.eyebrow{margin-bottom:8px;color:var(--gold2);font-size:11px;font-weight:850;letter-spacing:.21em;text-transform:uppercase}h1,h2,h3,p{margin:0}h1{font-family:var(--font-display);font-size:30px;line-height:1.05;letter-spacing:.01em;font-weight:700}h2{font-size:21px;letter-spacing:-.035em}.lead,.meta{color:var(--muted);font-size:13px;line-height:1.5}.lead{margin-top:8px}.stack{display:grid;gap:12px;margin-top:17px}.card{padding:15px;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,var(--panel),#101010);box-shadow:var(--shadow)}.card.soft{box-shadow:none;background:var(--panel)}.row{display:flex;gap:10px;align-items:center;justify-content:space-between}.row.start{align-items:flex-start}.title{font-weight:820;letter-spacing:-.02em}.pill{padding:5px 8px;border:1px solid #b68a5070;border-radius:999px;color:var(--gold2);font-size:10px;letter-spacing:.08em;text-transform:uppercase}.pill.ok{border-color:#9cb48b80;color:var(--ok)}.pill.warn{border-color:#d4a35b80;color:var(--warn)}.pill.bad{border-color:#cb817480;color:var(--bad)}.btn{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);font-weight:760;min-height:var(--tap-min)}.btn.primary{border-color:var(--gold);background:var(--gold);color:#14110d}.btn.ghost{background:transparent}.btn.danger{border-color:#cb817466;color:#e7a59a}.btn.small{padding:7px 9px;font-size:12px;min-height:var(--tap-min)}.btn.block{width:100%}.btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.field{display:grid;gap:6px;margin-top:11px}.field label{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}input,textarea,select{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#0d0d0d;color:var(--text)}textarea{min-height:140px;resize:vertical;line-height:1.45;white-space:pre-wrap;overflow:auto}.openbox{min-height:140px;width:100%;line-height:1.45;white-space:pre-wrap;overflow:auto}.openbox.tall{min-height:170px}.openbox.previewtext{margin-top:10px;background:#0d0d0d;color:var(--text)}.openbox[readonly]{color:var(--text);opacity:.92}input:focus-visible,textarea:focus-visible,select:focus-visible{border-color:var(--gold)}.divider{height:1px;margin:13px 0;background:var(--line)}.empty{padding:30px 17px;border:1px dashed var(--line2);border-radius:var(--r);color:var(--muted);text-align:center}.empty b{display:block;margin-bottom:7px;color:var(--text)}.notice{padding:11px;border:1px solid #b68a5055;border-radius:12px;background:#b68a5015;color:#e8d4b7;font-size:12px;line-height:1.45}
+*{box-sizing:border-box}html,body{margin:0;background:var(--oled-bg);color:var(--text);font-family:var(--font-body)}body{min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:760px;margin:auto;min-height:100svh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:#000;backdrop-filter:none}.brand{display:flex;gap:10px;align-items:center}.mark{display:grid;place-items:center;width:40px;height:40px;border:1px solid rgba(255,255,255,.18);border-radius:11px;color:#fff;font-weight:900;font-size:11px;letter-spacing:.12em;background:transparent}.brand b{display:block;font-size:16px;letter-spacing:.18em}.brand small{display:block;margin-top:2px;color:var(--muted);font-size:9px;letter-spacing:.2em;text-transform:uppercase}.stopwatch{display:none;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);padding:9px 12px;min-width:74px;font-variant-numeric:tabular-nums}.topright{display:flex;align-items:center;gap:8px}.stopwatch.show{display:block}.stopwatch.on{border-color:var(--gold);color:var(--gold2)}main{padding:20px 16px 28px}.eyebrow{margin-bottom:8px;color:var(--gold2);font-size:11px;font-weight:850;letter-spacing:.21em;text-transform:uppercase}h1,h2,h3,p{margin:0}h1{font-family:var(--font-display);font-size:30px;line-height:1.05;letter-spacing:.01em;font-weight:700}h2{font-size:21px;letter-spacing:-.035em}.lead,.meta{color:var(--muted);font-size:13px;line-height:1.5}.lead{margin-top:8px}.stack{display:grid;gap:12px;margin-top:17px}.card{padding:15px;border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,var(--panel),#101010);box-shadow:var(--shadow)}.card.soft{box-shadow:none;background:var(--panel)}.row{display:flex;gap:10px;align-items:center;justify-content:space-between}.row.start{align-items:flex-start}.title{font-weight:820;letter-spacing:-.02em}.pill{padding:5px 8px;border:1px solid #b68a5070;border-radius:999px;color:var(--gold2);font-size:10px;letter-spacing:.08em;text-transform:uppercase}.pill.ok{border-color:#9cb48b80;color:var(--ok)}.pill.warn{border-color:#d4a35b80;color:var(--warn)}.pill.bad{border-color:#cb817480;color:var(--bad)}.btn{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);font-weight:760;min-height:var(--tap-min)}.btn.primary{border-color:var(--gold);background:var(--gold);color:#14110d}.btn.ghost{background:transparent}.btn.danger{border-color:#cb817466;color:#e7a59a}.btn.small{padding:7px 9px;font-size:12px;min-height:var(--tap-min)}.btn.block{width:100%}.btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.field{display:grid;gap:6px;margin-top:11px}.field label{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}input,textarea,select{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#0d0d0d;color:var(--text)}textarea{min-height:140px;resize:vertical;line-height:1.45;white-space:pre-wrap;overflow:auto}.openbox{min-height:140px;width:100%;line-height:1.45;white-space:pre-wrap;overflow:auto}.openbox.tall{min-height:170px}.openbox.previewtext{margin-top:10px;background:#0d0d0d;color:var(--text)}.openbox[readonly]{color:var(--text);opacity:.92}input:focus-visible,textarea:focus-visible,select:focus-visible{border-color:var(--gold)}.divider{height:1px;margin:13px 0;background:var(--line)}.empty{padding:30px 17px;border:1px dashed var(--line2);border-radius:var(--r);color:var(--muted);text-align:center}.empty b{display:block;margin-bottom:7px;color:var(--text)}.notice{padding:11px;border:1px solid #b68a5055;border-radius:12px;background:#b68a5015;color:#e8d4b7;font-size:12px;line-height:1.45}
 .checkstatus{border-color:#b68a5070;background:linear-gradient(180deg,#17120d,#120f0c)}
 .checkstatus.build{border-color:#9cb48b80;background:linear-gradient(180deg,#172015,#10140f)}
 .checkstatus.control{border-color:#d4a35b80;background:linear-gradient(180deg,#21180d,#14100b)}
@@ -718,15 +718,31 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
   letter-spacing:.22em;
   font-size:11px;
 }
-.shell-screen--oled .ath-whoop-dials{gap:10px;margin:6px 0 10px}
+.shell-screen--oled .ath-whoop-dials{gap:8px;margin:10px 0 14px}
 .shell-screen--oled .ath-whoop-dial-ring,
 .shell-screen--oled .ath-whoop-dial-ring svg{
-  width:92px;height:92px;
+  width:110px;height:110px;
 }
-.shell-screen--oled .ath-whoop-dial-val{font-size:24px}
+.shell-screen--oled .ath-whoop-dial-val{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.shell-screen--oled .ath-whoop-dial-val small{font-size:12px;opacity:.9}
 .shell-screen--oled .ath-whoop-dial-lab{
-  color:rgba(255,255,255,.55);
-  letter-spacing:.16em;
+  color:rgba(255,255,255,.5);
+  letter-spacing:.18em;
+  font-size:10px;
+  margin-top:2px;
+}
+.shell-screen--oled .ath-whoop-dial-ring{
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.04));
+}
+.shell-screen--oled .ath-date{
+  font-size:clamp(22px,5.5vw,28px)!important;
+  margin:2px 0 12px!important;
+  font-weight:600;
+  color:rgba(255,255,255,.72)!important;
+}
+.shell-screen--oled > h1,
+.shell-screen--oled h1.page-title{
+  font-size:clamp(26px,6.5vw,32px);
 }
 .shell-screen--oled .ath-label{color:var(--oled-muted)}
 .shell-screen--oled .ath-sleep-hint,
@@ -804,11 +820,50 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
   color:var(--oled-text);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
 }
-.shell-screen--oled .streamhero.dial-strength{border-left:3px solid var(--copper);background:var(--oled-surface)}
-.shell-screen--oled .streamhero.dial-engine{border-left:3px solid var(--zone);background:var(--oled-surface)}
+.shell-screen--oled .streamhero.dial-strength{border-left:2px solid rgba(255,255,255,.45);background:transparent}
+.shell-screen--oled .streamhero.dial-engine{border-left:2px solid var(--zone);background:transparent}
 .shell-screen--oled .settings-group .card{
   background:var(--oled-surface);
   border-color:rgba(255,255,255,.08);
+}
+
+
+/* OLED punch — Library floats on void; kill copper chrome */
+.shell-screen--oled .streamhero,
+.shell-screen--oled .weekbox,
+.shell-screen--oled .card.expandcard,
+.shell-screen--oled .expandcard{
+  background:transparent;
+  border-color:rgba(255,255,255,.1);
+  box-shadow:none;
+}
+.shell-screen--oled .weekhead,
+.shell-screen--oled .expandhead{
+  background:transparent;
+}
+.shell-screen--oled .weekchev,
+.shell-screen--oled .expandchev,
+.shell-screen--oled .dropbox summary:after{
+  color:rgba(255,255,255,.45)!important;
+}
+.shell-screen--oled .library-tabs{
+  background:transparent;
+  border-color:rgba(255,255,255,.1);
+}
+.shell-screen--oled .ath-module:not(.ath-module-whoop){
+  background:transparent;
+  border-color:rgba(255,255,255,.1);
+}
+.top,.header{
+  background:#000!important;
+  border-bottom-color:rgba(255,255,255,.06)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.savestatus,.savestatus.ok{
+  border-color:rgba(255,255,255,.16)!important;
+  background:transparent!important;
+  color:rgba(255,255,255,.55)!important;
 }
 
 /* Room 2 — OLED Logger */
@@ -1320,7 +1375,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v182';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v183';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1934,7 +1989,8 @@ function athClamp(n,min,max){return Math.min(max,Math.max(min,n))}
 function athDefaultZones(maxHr){maxHr=maxHr||190;let lo=Math.round(maxHr*0.5),mid=Math.round(maxHr*0.65),hi=Math.round(maxHr*0.8);return[{key:'recovery',name:'Recovery',lo,hi:mid-1,color:'#9fc59b'},{key:'aerobic',name:'Aerobic',lo:mid,hi:hi-1,color:'#d1a464'},{key:'anaerobic',name:'Hard',lo:hi,hi:maxHr,color:'#cf7f7c'}]}
 function athSaneMaxHr(){let n=num(S.profile&&S.profile.maxHr);return n>=160&&n<=220?n:190}function athSaneRecovery(raw){let n=num(raw);return n>=20&&n<=100?n:71}function athZonesForReadiness(recovery,maxHr){maxHr=maxHr||athSaneMaxHr();if(maxHr<160||maxHr>220)maxHr=190;return athDefaultZones(maxHr)}
 function athSleepPercent(c){c=c||{};if(num(c.whoopSleepPerformance)>0)return athClamp(Math.round(num(c.whoopSleepPerformance)),0,100);if(num(c.sleepQuality)>0)return athClamp(Math.round(num(c.sleepQuality)/10*100),0,100);if(num(c.sleepHours)>0)return athClamp(Math.round(num(c.sleepHours)/8*100),0,100);return null}
-function athWhoopDialSvg(opts){opts=opts||{};let size=opts.size||76,stroke=5.5,c=size/2,r=c-stroke/2-1.5,max=num(opts.max)||100,raw=opts.value,has=raw!=null&&raw!==''&&Number.isFinite(Number(raw)),prog=has?athClamp(num(raw)/max,0,1):0,circ=2*Math.PI*r,color=opts.color||'#9db4c8',label=opts.label||'',unit=opts.unit||'';let valHtml=has?(unit==='%'?(`<span class=ath-whoop-n>${Math.round(num(raw))}</span><small>%</small>`):(Math.abs(num(raw)%1)>0.001?num(raw).toFixed(1):String(Math.round(num(raw))))):'—';return`<div class=ath-whoop-dial><div class=ath-whoop-dial-ring><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><g transform="rotate(-90 ${c} ${c})"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#2c2c2e" stroke-width="${stroke}"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-prog)}"/></g></svg><div class=ath-whoop-dial-val>${valHtml}</div></div><div class=ath-whoop-dial-lab>${esc(label)}</div></div>`}
+function athWhoopDialSvg(opts){opts=opts||{};let size=opts.size||76,stroke=size>=100?7.5:(size>=90?6.5:5.5),c=size/2,r=c-stroke/2-1.5,max=num(opts.max)||100,raw=opts.value,has=raw!=null&&raw!==''&&Number.isFinite(Number(raw)),prog=has?athClamp(num(raw)/max,0,1):0,circ=2*Math.PI*r,color=opts.color||'#9db4c8',label=opts.label||'',unit=opts.unit||'',fid='wg'+Math.round(c)+String(color).replace(/[^a-zA-Z0-9]/g,'').slice(0,8);let valHtml=has?(unit==='%'?(`<span class=ath-whoop-n>${Math.round(num(raw))}</span><small>%</small>`):(Math.abs(num(raw)%1)>0.001?num(raw).toFixed(1):String(Math.round(num(raw))))):'—';let glow=has?`<defs><filter id="${fid}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`:'';let arc=has?`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-prog)}" filter="url(#${fid})" style="filter:drop-shadow(0 0 6px ${color})"/>`:`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"/>`;return`<div class=ath-whoop-dial><div class=ath-whoop-dial-ring><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">${glow}<g transform="rotate(-90 ${c} ${c})"><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#111113" stroke-width="${stroke}"/>${has?arc:''}</g></svg><div class=ath-whoop-dial-val>${valHtml}</div></div><div class=ath-whoop-dial-lab>${esc(label)}</div></div>`}
+
 function athHomeMetrics(){let c=dailyCheckin(today(),false)||{};let recovery=athSaneRecovery(c.whoopRecovery);let sleep=athSleepPercent(c);if(sleep==null)sleep=88;let strain=num(c.whoopStrain);let hrv=num(c.hrv)||62;let rhr=num(c.restingHr)||48;return{recovery,strain,sleep,hrv,rhr}}
 function athRingsSvg(rings,size){size=size||88;let stroke=Math.max(7,size*.08),gap=stroke+3,c=size/2,out=`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><g transform="rotate(-90 ${c} ${c})">`;rings.forEach((r,i)=>{let rad=c-stroke/2-2-gap*i,circ=2*Math.PI*rad,prog=athClamp(r.progress,0,1);out+=`<circle cx="${c}" cy="${c}" r="${rad}" fill="none" stroke="#ffffff14" stroke-width="${stroke}"/>`;out+=`<circle cx="${c}" cy="${c}" r="${rad}" fill="none" stroke="${r.color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-prog)}"/>`});return out+'</g></svg>'}
 function athZoneBarHtml(zones){let spans=zones.map(z=>Math.max(1,(z.hi-z.lo)+1)),total=spans.reduce((a,b)=>a+b,0);return`<div class=ath-zbar>${zones.map((z,i)=>{let w=(spans[i]/total)*100;let rad=i===0?'border-radius:999px 0 0 999px':(i===zones.length-1?'border-radius:0 999px 999px 0':'');return`<div class=ath-zseg style="flex:0 0 ${w}%;width:${w}%;background:${z.color};${rad}"></div>`}).join('')}</div>`}
@@ -1983,7 +2039,7 @@ function tickCondZoneSeconds(bpm){
   bleHr.lastZoneAt=now;
 }
 
-function athModulesHtml(){let m=athHomeMetrics(),zones=athZonesForReadiness(m.recovery),zoneSecs=athTodayZoneSeconds(),zoneTotal=athZoneSecondsTotal(zoneSecs);let sleepDials=`<div class=ath-whoop-dials>${athWhoopDialSvg({label:'SLEEP',value:m.sleep,max:100,color:'#9db4c8',unit:'%',size:92})}${athWhoopDialSvg({label:'RECOVERY',value:m.recovery,max:100,color:'#16f26b',unit:'%',size:92})}${athWhoopDialSvg({label:'STRAIN',value:m.strain>0?m.strain:null,max:21,color:'#1ba3ff',unit:'',size:92})}</div>`;let debtSnap=athRecoveryDebtSnapshot(),debtRow='';if(debtSnap&&debtSnap.debt){let d=debtSnap.debt,dc=d.score>=55?'#cf7f7c':(d.score>=30?'#d1a464':'#9fc59b');debtRow=`<div class=ath-row><span class=ath-dot style="background:${dc}"></span><span class=ath-ll>Recovery debt</span><span class=ath-lv>${d.score}</span></div><p class=ath-sleep-hint>From delivery ledger</p>`}let longDate=new Date(today()+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});let athlete=(S.profile&& (S.profile.displayName||S.profile.name))||'Athlete';let workout=(S.sessions.find(x=>x.date===today()&&(x.status==='scheduled'||x.status==='active'))||{}).name||'No session scheduled';return`<div class=ath-session><div class=ath-date>${esc(longDate)}</div><div class=ath-athlete><div class=ath-avatar aria-hidden=true><svg class=ath-flash viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></div><div><p class=ath-name>${esc(athlete)}</p><p class=ath-workout>${esc(workout)}</p></div></div><button type=button class="ath-module ath-module-whoop" onclick="openAthleteSleepOverview()" aria-label="WHOOP — sleep, recovery, and strain"><span class=ath-label>WHOOP</span><div class=ath-whoop-wrap>${sleepDials}<div class=ath-whoop-meta>${debtRow}<p class=ath-sleep-hint>Check-in inside</p></div></div><span class=ath-chev aria-hidden=true>›</span></button></div>`}
+function athModulesHtml(){let m=athHomeMetrics(),zones=athZonesForReadiness(m.recovery),zoneSecs=athTodayZoneSeconds(),zoneTotal=athZoneSecondsTotal(zoneSecs);let sleepDials=`<div class=ath-whoop-dials>${athWhoopDialSvg({label:'SLEEP',value:m.sleep,max:100,color:'#9db4c8',unit:'%',size:110})}${athWhoopDialSvg({label:'RECOVERY',value:m.recovery,max:100,color:'#16f26b',unit:'%',size:110})}${athWhoopDialSvg({label:'STRAIN',value:m.strain>0?m.strain:null,max:21,color:'#1ba3ff',unit:'',size:110})}</div>`;let debtSnap=athRecoveryDebtSnapshot(),debtRow='';if(debtSnap&&debtSnap.debt){let d=debtSnap.debt,dc=d.score>=55?'#cf7f7c':(d.score>=30?'#d1a464':'#9fc59b');debtRow=`<div class=ath-row><span class=ath-dot style="background:${dc}"></span><span class=ath-ll>Recovery debt</span><span class=ath-lv>${d.score}</span></div><p class=ath-sleep-hint>From delivery ledger</p>`}let longDate=new Date(today()+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});let athlete=(S.profile&& (S.profile.displayName||S.profile.name))||'Athlete';let workout=(S.sessions.find(x=>x.date===today()&&(x.status==='scheduled'||x.status==='active'))||{}).name||'No session scheduled';return`<div class=ath-session><div class=ath-date>${esc(longDate)}</div><div class=ath-athlete><div class=ath-avatar aria-hidden=true><svg class=ath-flash viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></div><div><p class=ath-name>${esc(athlete)}</p><p class=ath-workout>${esc(workout)}</p></div></div><button type=button class="ath-module ath-module-whoop" onclick="openAthleteSleepOverview()" aria-label="WHOOP — sleep, recovery, and strain"><span class=ath-label>WHOOP</span><div class=ath-whoop-wrap>${sleepDials}<div class=ath-whoop-meta>${debtRow}<p class=ath-sleep-hint>Check-in inside</p></div></div><span class=ath-chev aria-hidden=true>›</span></button></div>`}
 let athSleepTab='checkin';
 
 let athCheckinStep=0;

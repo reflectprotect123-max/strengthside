@@ -18,8 +18,8 @@ function must(cond, msg) {
 const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
 const sw = fs.readFileSync(path.join(dir, 'service-worker.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v182'"), 'LOCAL_BUILD v92');
-must(sw.includes('the-hybrid-athlete-blank-v182'), 'service worker cache v92');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v183'"), 'LOCAL_BUILD v92');
+must(sw.includes('the-hybrid-athlete-blank-v183'), 'service worker cache v92');
 must(html.includes("groupedTemplates('Recovery','cond-recovery'"), 'recovery starter section');
 
 must(html.includes('library-tabs'), 'library tabs CSS/markup');

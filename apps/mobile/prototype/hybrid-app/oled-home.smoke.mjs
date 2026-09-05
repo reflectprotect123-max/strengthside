@@ -25,7 +25,7 @@ must(html.includes('var(--oled-bg)'), 'Home uses --oled-bg');
 must(html.includes('var(--oled-surface)'), 'Home uses --oled-surface');
 must(!/Training load below/.test(html), 'no stale Training load below copy');
 must(!/btn primary block/.test(homeBriefingBlock), 'homeBriefingHtml has no gold primary brick');
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v182'"), 'LOCAL_BUILD v182');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v183'"), 'LOCAL_BUILD v183');
 
 must(!/radial-gradient\([^\)]*rgba\(212,\s*165,\s*116/.test(html.match(/body\{[\s\S]*?\n\}/)?.[0] || ''), 'body has no copper radial wash');
 must(html.includes('.nav') && html.includes('var(--oled-bg)'), 'nav uses OLED tokens OR body background uses --oled-bg');
@@ -59,7 +59,9 @@ must(html.includes('.shell-screen--oled .settings-group'), 'settings OLED-scoped
 
 must(html.includes('<small>Athlete</small>'), 'brand subtitle is Athlete (not Track Dawn)');
 must(!/<small>[^<]*Track Dawn[^<]*<\/small>/.test(html), 'Track Dawn brand line removed');
-must(html.includes('size:92'), 'Home dials enlarged for OLED hierarchy');
+must(html.includes('size:110'), 'Home dials enlarged for OLED hierarchy');
+must(html.includes('feGaussianBlur'), 'dial arcs have luminous glow filter');
+must(html.includes('110px;height:110px') || html.includes('width:110px'), 'OLED CSS dial rings are 110px');
 must(html.includes('background:#fff') && html.includes('.btn.oled-cta'), 'Home CTA is high-contrast white');
 must(html.includes('.shell-screen--oled .ath-module-whoop') && /ath-module-whoop\{[^}]*background:transparent/.test(html), 'WHOOP dials float on true black');
 
