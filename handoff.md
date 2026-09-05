@@ -40,9 +40,9 @@
 
 | Key | Value |
 | --- | --- |
-| Token | repo-root `.capgo` (gitignored) or `CAPGO_TOKEN` |
+| Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — write to gitignored repo-root `.capgo` or export `CAPGO_TOKEN` (also add Cursor env secret `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.53`** |
+| Channels | **`dogfood` + `live`** both @ **`1.0.53`** (shipped 5 Sep from vault recover) |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
 | Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.53` |
