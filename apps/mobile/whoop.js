@@ -159,7 +159,7 @@
     const msg = ui.message ? '<div class=meta style="margin-top:8px">' + esc(ui.message) + '</div>' : '';
     if (!w.email) {
       return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Sign in & sync</div>' +
-        '<div class=meta>One sign-in syncs calendar sessions, templates, WHOOP, and Concept2 Logbook (when already linked). Use the same account on web and phone.</div>' +
+        '<div class=meta>Sign in with the same account on web and phone. Sync refreshes WHOOP recovery and Concept2 Logbook when linked — sessions and templates stay on this device for now.</div>' +
         '<div class=field style="margin-top:12px"><label>Email</label><input id=whoopEmail type=email autocomplete=username placeholder="you@email.com"></div>' +
         '<div class=field><label>Password</label><input id=whoopPassword type=password autocomplete=current-password></div>' +
         '<div class=btns style="margin-top:12px"><button class="btn primary block" onclick="Whoop.signIn()"' + busy + '>Sign in & sync</button></div>' + msg + '</div>';
@@ -171,7 +171,7 @@
       '<div class=meta>' + esc(w.email) + '</div>' +
       cloudStatusLines() +
       '<div class=btns style="margin-top:12px">' +
-      '<button class="btn primary block" onclick="Whoop.syncAll()"' + busy + '>Sync all</button>' +
+      '<button class="btn primary block" onclick="Whoop.syncAll()"' + busy + '>Sync WHOOP & Concept2</button>' +
       whoopBtn +
       '<button class="btn" onclick="Whoop.signOut()"' + busy + '>Sign out</button></div>' +
       msg +

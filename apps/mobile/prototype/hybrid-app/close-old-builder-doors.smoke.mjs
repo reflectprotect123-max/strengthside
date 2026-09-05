@@ -40,7 +40,7 @@ must(renderFn.includes('condBuilderSelectHtml') || renderFn.includes('setCondFmt
 must(renderFn.includes('nudgeCondMinutes') || renderFn.includes('Minutes'), 'minutes control present');
 must(renderFn.includes('eng-builder-name') || renderFn.includes('condBuilder.name'), 'name field present');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v179'"), 'LOCAL_BUILD bumped to blank-v176');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v180'"), 'LOCAL_BUILD bumped to blank-v176');
 
 if (failures.length) {
   console.error('close-old-builder-doors.smoke FAIL');

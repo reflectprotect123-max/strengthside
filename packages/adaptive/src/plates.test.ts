@@ -7,3 +7,8 @@ describe('roundToPlate', () => {
     expect(roundToPlate(81.25)).toBe(82.5);
   });
 });
+
+  it('clamps negatives to 0', () => {
+    expect(roundToPlate(-2.5)).toBe(0);
+    expect(roundToPlate(-1)).toBe(0);
+  });

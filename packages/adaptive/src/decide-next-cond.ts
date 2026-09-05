@@ -17,6 +17,20 @@ function present(n: number | undefined): n is number {
   return n != null && Number.isFinite(n);
 }
 
+function nextWatts(w: number, band: 'hold' | 'up' | 'down' | 'cut'): CondNextResult {
+  if (band === 'hold') return { ok: true, watts: w };
+  if (band === 'up') return { ok: true, watts: Math.round(w * 1.03) };
+  if (band === 'down') return { ok: true, watts: Math.round(w * 0.95) };
+  return { ok: true, watts: Math.round(w * 0.92) };
+}
+
+function nextSplit(s: number, band: 'hold' | 'up' | 'down' | 'cut'): CondNextResult {
+  if (band === 'hold') return { ok: true, splitSec: s };
+  if (band === 'up') return { ok: true, splitSec: s - 1 };
+  if (band === 'down') return { ok: true, splitSec: s + 1 };
+  return { ok: true, splitSec: s + 3 };
+}
+
 export function decideNextCond(input: CondNextInput): CondNextResult {
   if (input.dayKind !== 'conditioning') return { ok: false, reason: 'wrong_day' };
 
@@ -25,20 +39,13 @@ export function decideNextCond(input: CondNextInput): CondNextResult {
   if (!hasWatts && !hasSplit) return { ok: true, skipped: true };
 
   const band = condBand(input.actualRpe, input.targetRpe, input.stopped, input.cooked);
-  const useWatts =
-    input.modality === 'watts' ? hasWatts : hasWatts && !hasSplit;
 
-  if (useWatts) {
-    const w = input.currentWatts as number;
-    if (band === 'hold') return { ok: true, watts: w };
-    if (band === 'up') return { ok: true, watts: Math.round(w * 1.03) };
-    if (band === 'down') return { ok: true, watts: Math.round(w * 0.95) };
-    return { ok: true, watts: Math.round(w * 0.92) };
+  // Split modalities never fall back to watts — locked architecture.
+  if (input.modality === 'split') {
+    if (!hasSplit) return { ok: true, skipped: true };
+    return nextSplit(input.currentSplitSec as number, band);
   }
 
-  const s = input.currentSplitSec as number;
-  if (band === 'hold') return { ok: true, splitSec: s };
-  if (band === 'up') return { ok: true, splitSec: s - 1 };
-  if (band === 'down') return { ok: true, splitSec: s + 1 };
-  return { ok: true, splitSec: s + 3 };
+  if (!hasWatts) return { ok: true, skipped: true };
+  return nextWatts(input.currentWatts as number, band);
 }
