@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { decideNextCond } from './decide-next-cond';
+import { describe, expect, it } from 'vitest';
 
 describe('decideNextCond', () => {
   const base = {
@@ -68,5 +68,20 @@ describe('decideNextCond', () => {
     expect(next).not.toHaveProperty('dayKind');
     expect(next).not.toHaveProperty('watts');
     expect(next).not.toHaveProperty('splitSec');
+  });
+});
+
+describe('decideNextCond — split seal', () => {
+  it('split modality never falls back to watts', () => {
+    expect(
+      decideNextCond({
+        dayKind: 'conditioning',
+        modality: 'split',
+        targetRpe: { min: 7, max: 8 },
+        actualRpe: 5,
+        currentWatts: 220,
+        currentSplitSec: undefined,
+      }),
+    ).toEqual({ ok: true, skipped: true });
   });
 });

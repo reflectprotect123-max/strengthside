@@ -23,7 +23,7 @@ export function decideNextLift(input: LiftNextInput): LiftNextResult {
   const nextRepsSingle = min;
 
   if (reps < min) {
-    return { ok: true, loadKg: roundToPlate(kg - 2.5), reps: single ? nextRepsSingle : min };
+    return { ok: true, loadKg: roundToPlate(Math.max(0, kg - 2.5)), reps: single ? nextRepsSingle : min };
   }
 
   if (reps >= max) {
