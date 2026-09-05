@@ -25,7 +25,7 @@ must(html.includes('var(--oled-bg)'), 'Home uses --oled-bg');
 must(html.includes('var(--oled-surface)'), 'Home uses --oled-surface');
 must(!/Training load below/.test(html), 'no stale Training load below copy');
 must(!/btn primary block/.test(homeBriefingBlock), 'homeBriefingHtml has no gold primary brick');
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v183'"), 'LOCAL_BUILD v183');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v184'"), 'LOCAL_BUILD v183');
 
 must(!/radial-gradient\([^\)]*rgba\(212,\s*165,\s*116/.test(html.match(/body\{[\s\S]*?\n\}/)?.[0] || ''), 'body has no copper radial wash');
 must(html.includes('.nav') && html.includes('var(--oled-bg)'), 'nav uses OLED tokens OR body background uses --oled-bg');

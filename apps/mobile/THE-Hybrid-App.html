@@ -732,7 +732,20 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
   margin-top:2px;
 }
 .shell-screen--oled .ath-whoop-dial-ring{
-  filter:drop-shadow(0 0 10px rgba(255,255,255,.04));
+  filter:drop-shadow(0 0 14px rgba(22,242,107,.12));
+}
+.shell-screen--oled .ath-whoop-dial:nth-child(1) .ath-whoop-dial-ring{
+  filter:drop-shadow(0 0 14px rgba(157,180,200,.18));
+}
+.shell-screen--oled .ath-whoop-dial:nth-child(2) .ath-whoop-dial-ring{
+  filter:drop-shadow(0 0 18px rgba(22,242,107,.28));
+}
+.shell-screen--oled .ath-whoop-dial:nth-child(3) .ath-whoop-dial-ring{
+  filter:drop-shadow(0 0 14px rgba(27,163,255,.16));
+}
+.shell-screen--oled .ath-whoop-dial-val .ath-whoop-n,
+.shell-screen--oled .ath-whoop-dial-val{
+  text-shadow:0 0 18px rgba(255,255,255,.18);
 }
 .shell-screen--oled .ath-date{
   font-size:clamp(22px,5.5vw,28px)!important;
@@ -789,9 +802,25 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .shell-screen--oled .card,
 .shell-screen--oled .session-card,
 .shell-screen--oled .ath-cal-day,
-.shell-screen--oled .day{
-  background:var(--oled-surface);
-  border-color:rgba(255,255,255,.08);
+.shell-screen--oled .day,
+.shell-screen--oled .weekbox,
+.shell-screen--oled .expandcard,
+.shell-screen--oled .ath-tpl-card{
+  background:transparent;
+  border-color:rgba(255,255,255,.1);
+  box-shadow:none;
+}
+.shell-screen--oled .pill,
+.shell-screen--oled .pill.warn,
+.shell-screen--oled .pill.ok{
+  border-color:rgba(255,255,255,.22);
+  color:rgba(255,255,255,.7);
+  background:transparent;
+}
+.shell-screen--oled .btn.primary:not(.oled-cta){
+  border-color:rgba(255,255,255,.28);
+  background:transparent;
+  color:var(--oled-text);
   box-shadow:none;
 }
 .shell-screen--oled .ath-cal-day.has-sessions{border-color:rgba(255,255,255,.08)}
@@ -920,9 +949,9 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .nav,#bottomNav{
   position:fixed; left:0; right:0; bottom:0; z-index:40;
   border-top:1px solid rgba(255,255,255,.08);
-  background:var(--oled-bg);
-  -webkit-backdrop-filter:blur(18px) saturate(140%);
-  backdrop-filter:blur(18px) saturate(140%);
+  background:#000;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
 }
 .navin,.nav .navin,#bottomNav .navin{
   display:grid; grid-template-columns:repeat(4,1fr);
@@ -1375,7 +1404,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v183';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v184';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
