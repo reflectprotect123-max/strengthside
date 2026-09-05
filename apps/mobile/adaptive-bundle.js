@@ -59,7 +59,8 @@ var HybridAdaptive = (() => {
 
   // packages/adaptive/src/plates.ts
   function roundToPlate(kg) {
-    return Math.round(kg / 2.5) * 2.5;
+    if (!Number.isFinite(kg)) return 0;
+    return Math.max(0, Math.round(kg / 2.5) * 2.5);
   }
 
   // packages/adaptive/src/decide-next-lift.ts
@@ -82,7 +83,7 @@ var HybridAdaptive = (() => {
     const single = min === max;
     const nextRepsSingle = min;
     if (reps < min) {
-      return { ok: true, loadKg: roundToPlate(kg - 2.5), reps: single ? nextRepsSingle : min };
+      return { ok: true, loadKg: roundToPlate(Math.max(0, kg - 2.5)), reps: single ? nextRepsSingle : min };
     }
     if (reps >= max) {
       if (rir >= 3) {
@@ -134,25 +135,30 @@ var HybridAdaptive = (() => {
   function present(n) {
     return n != null && Number.isFinite(n);
   }
+  function nextWatts(w, band) {
+    if (band === "hold") return { ok: true, watts: w };
+    if (band === "up") return { ok: true, watts: Math.round(w * 1.03) };
+    if (band === "down") return { ok: true, watts: Math.round(w * 0.95) };
+    return { ok: true, watts: Math.round(w * 0.92) };
+  }
+  function nextSplit(s, band) {
+    if (band === "hold") return { ok: true, splitSec: s };
+    if (band === "up") return { ok: true, splitSec: s - 1 };
+    if (band === "down") return { ok: true, splitSec: s + 1 };
+    return { ok: true, splitSec: s + 3 };
+  }
   function decideNextCond(input) {
     if (input.dayKind !== "conditioning") return { ok: false, reason: "wrong_day" };
     const hasWatts = present(input.currentWatts);
     const hasSplit = present(input.currentSplitSec);
     if (!hasWatts && !hasSplit) return { ok: true, skipped: true };
     const band = condBand(input.actualRpe, input.targetRpe, input.stopped, input.cooked);
-    const useWatts = input.modality === "watts" ? hasWatts : hasWatts && !hasSplit;
-    if (useWatts) {
-      const w = input.currentWatts;
-      if (band === "hold") return { ok: true, watts: w };
-      if (band === "up") return { ok: true, watts: Math.round(w * 1.03) };
-      if (band === "down") return { ok: true, watts: Math.round(w * 0.95) };
-      return { ok: true, watts: Math.round(w * 0.92) };
+    if (input.modality === "split") {
+      if (!hasSplit) return { ok: true, skipped: true };
+      return nextSplit(input.currentSplitSec, band);
     }
-    const s = input.currentSplitSec;
-    if (band === "hold") return { ok: true, splitSec: s };
-    if (band === "up") return { ok: true, splitSec: s - 1 };
-    if (band === "down") return { ok: true, splitSec: s + 1 };
-    return { ok: true, splitSec: s + 3 };
+    if (!hasWatts) return { ok: true, skipped: true };
+    return nextWatts(input.currentWatts, band);
   }
 
   // packages/adaptive/src/open-cond.ts

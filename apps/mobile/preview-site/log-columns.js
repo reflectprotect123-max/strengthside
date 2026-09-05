@@ -1222,8 +1222,8 @@
       }
       const n = Number(raw);
       const label = (meta.loggerLabel || meta.label || field).toLowerCase();
-      if (!Number.isFinite(n) || n <= 0 || n > 1000) {
-        return `Enter ${label} between 1 and 1000.`;
+      if (!Number.isFinite(n) || n <= 0 || n >= 80) {
+        return `Enter ${label} between 1 and 79.`;
       }
     }
     return '';
