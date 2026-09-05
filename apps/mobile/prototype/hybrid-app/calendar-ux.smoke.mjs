@@ -17,8 +17,9 @@ must(html.includes('function clearAllPlannedSessions'), 'clearAllPlannedSessions
 must(html.includes('function moveSessionToDate'), 'moveSessionToDate');
 must(html.includes('cal-drop-target'), 'calendar drag-drop targets');
 must(html.includes('function sessionCalendarDate'), 'sessionCalendarDate');
-must(html.includes('function athMonthGridCells'), 'athMonthGridCells');
-must(html.includes('function shiftCalMonth'), 'shiftCalMonth');
+must(html.includes('function weekDayKeys'), 'weekDayKeys');
+must(html.includes('function shiftCalWeek'), 'shiftCalWeek');
+must(html.includes('ath-cal-weeks'), 'week scroller');
 must(html.includes('function athCalDayCell'), 'athCalDayCell with session chips');
 must(html.includes('ath-cal-chip'), 'calendar session chips in grid');
 must(html.includes('x.date=today()'), 'finishSession pins completion date');

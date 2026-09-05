@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
@@ -30,21 +31,6 @@ function calDaySessions(k, sessions) {
   );
 }
 
-function athMonthGridCells(monthKey) {
-  const parts = String(monthKey).split('-').map(Number);
-  let y = parts[0];
-  let m = parts[1];
-  const pad = (n) => String(n).padStart(2, '0');
-  const first = new Date(y, m - 1, 1);
-  const startOffset = (first.getDay() + 6) % 7;
-  const last = new Date(y, m, 0).getDate();
-  const cells = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let d = 1; d <= last; d++) cells.push(`${y}-${pad(m)}-${pad(d)}`);
-  while (cells.length % 7 !== 0) cells.push(null);
-  return cells;
-}
-
 const sessions = [
   { id: 'scheduled-wed', date: '2026-09-03', status: 'scheduled' },
   {
@@ -71,12 +57,24 @@ must(tuesdayRows.length === 1 && tuesdayRows[0].id === 'done-tuesday', 'Tuesday 
 const wedRows = calDaySessions('2026-09-03', sessions);
 must(wedRows.length === 1 && wedRows[0].id === 'scheduled-wed', 'Wednesday planned session');
 
-const sepCells = athMonthGridCells('2026-09-01');
-must(sepCells.length === 35, 'September 2026 month grid length');
-must(sepCells[1] === '2026-09-01', 'Sep 1 lands on Tuesday column');
+const helpers = [];
+for (const name of ['weekStartKey', 'weekDayKeys', 'addDaysKey']) {
+  const start = html.indexOf(`function ${name}`);
+  must(start >= 0, `missing ${name}`);
+  const end = html.indexOf('\nfunction ', start + 1);
+  helpers.push(html.slice(start, end));
+}
+const sandbox = {
+  today: () => '2026-09-05',
+  localDate,
+};
+vm.createContext(sandbox);
+vm.runInContext(helpers.join('\n'), sandbox);
+const week = sandbox.weekDayKeys('2026-09-05');
+must(week[0] === '2026-08-31' && week[6] === '2026-09-06', 'week of Sat 5 Sep is Mon–Sun');
 
-must(html.includes('ath-cal-grid'), 'month grid markup');
-must(html.includes('shiftCalMonth'), 'month navigation');
+must(html.includes('ath-cal-weeks'), 'week scroller markup');
+must(html.includes('shiftCalWeek'), 'week navigation');
 must(html.includes('x.date=today()'), 'finishSession pins completion date');
 
 console.log('athlete-calendar-date.smoke: ok');
