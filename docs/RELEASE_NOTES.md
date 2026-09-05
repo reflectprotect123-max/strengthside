@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.55 | 2026-09-05 | Calendar one-week strip + horizontal scroll-snap; Today kept, month Prev/Next removed; cache blank-v174 |
 | 1.0.54 | 2026-09-05 | Seal Adaptive from timed holds + distance carries (weight×metres); holds WorkOverlay-only; cache blank-v173 |
 | 1.0.52 | 2026-09-04 | Blank slate — all product engines deleted; name scrub; openVolume; cache v168 |
 | 1.0.49 | 2026-09-03 | Library-wide builder columns — load profiles default kg×reps; repair stale reps-only templates (cache v162) |
