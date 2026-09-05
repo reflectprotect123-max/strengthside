@@ -684,6 +684,57 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .ath-whoop-meta{display:flex;flex-direction:column;gap:4px}
 .ath-whoop-meta .ath-sleep-hint{margin:0}
 
+/* Room 1 — OLED Home */
+.shell-screen--oled{
+  background:var(--oled-bg);
+  color:var(--oled-text);
+}
+.shell-screen--oled .ath-date{color:var(--oled-text)}
+.shell-screen--oled .ath-name{color:var(--oled-muted)}
+.shell-screen--oled .ath-workout{color:var(--oled-text)}
+.shell-screen--oled .ath-avatar{
+  border-color:rgba(255,255,255,.12);
+  background:var(--oled-raised);
+  color:var(--oled-muted);
+}
+.shell-screen--oled .ath-module,
+.shell-screen--oled .ath-module-whoop{
+  border:1px solid rgba(255,255,255,.08);
+  background:var(--oled-surface);
+  box-shadow:none;
+}
+.shell-screen--oled .ath-label{color:var(--oled-muted)}
+.shell-screen--oled .ath-sleep-hint,
+.shell-screen--oled .ath-ll{color:var(--oled-muted)}
+.shell-screen--oled .ath-lv{color:var(--oled-text)}
+.shell-screen--oled .home-brief{
+  border:1px solid rgba(255,255,255,.08);
+  background:var(--oled-surface);
+  box-shadow:none;
+}
+.shell-screen--oled .home-brief .eyebrow{color:var(--oled-muted)}
+.shell-screen--oled .home-brief .title{color:var(--oled-text)}
+.shell-screen--oled .home-brief .meta{color:var(--oled-muted)}
+.shell-screen--oled .btn.oled-cta,
+.shell-screen--oled .btn.oled-cta.block{
+  border:1px solid rgba(255,255,255,.22);
+  background:var(--oled-raised);
+  color:var(--oled-text);
+  box-shadow:none;
+}
+@media(hover:hover){
+  .shell-screen--oled .ath-module:not(.static):hover{
+    border-color:rgba(255,255,255,.16);
+    transform:none;
+    background:var(--oled-raised);
+  }
+  .shell-screen--oled .btn.oled-cta:hover{
+    border-color:rgba(255,255,255,.35);
+    background:#2c2c2e;
+    transform:none;
+  }
+}
+
 .ath-legend{flex:1; display:flex; flex-direction:column; gap:6px}
 .ath-row{display:flex; align-items:center; gap:8px}
 .ath-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 2px rgba(0,0,0,.25)}
@@ -1817,7 +1868,7 @@ function tickCondZoneSeconds(bpm){
   bleHr.lastZoneAt=now;
 }
 
-function athModulesHtml(){let m=athHomeMetrics(),zones=athZonesForReadiness(m.recovery),zoneSecs=athTodayZoneSeconds(),zoneTotal=athZoneSecondsTotal(zoneSecs);let sleepDials=`<div class=ath-whoop-dials>${athWhoopDialSvg({label:'SLEEP',value:m.sleep,max:100,color:'#9db4c8',unit:'%'})}${athWhoopDialSvg({label:'RECOVERY',value:m.recovery,max:100,color:'#16f26b',unit:'%'})}${athWhoopDialSvg({label:'STRAIN',value:m.strain>0?m.strain:null,max:21,color:'#1ba3ff',unit:''})}</div>`;let debtSnap=athRecoveryDebtSnapshot(),debtRow='';if(debtSnap&&debtSnap.debt){let d=debtSnap.debt,dc=d.score>=55?'#cf7f7c':(d.score>=30?'#d1a464':'#9fc59b');debtRow=`<div class=ath-row><span class=ath-dot style="background:${dc}"></span><span class=ath-ll>Recovery debt</span><span class=ath-lv>${d.score}</span></div><p class=ath-sleep-hint>Delivery ledger — not the same as Training load below</p>`}let longDate=new Date(today()+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});let athlete=(S.profile&& (S.profile.displayName||S.profile.name))||'Athlete';let workout=(S.sessions.find(x=>x.date===today()&&(x.status==='scheduled'||x.status==='active'))||{}).name||'No session scheduled';return`<div class=ath-session><div class=ath-date>${esc(longDate)}</div><div class=ath-athlete><div class=ath-avatar aria-hidden=true><svg class=ath-flash viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></div><div><p class=ath-name>${esc(athlete)}</p><p class=ath-workout>${esc(workout)}</p></div></div><button type=button class="ath-module ath-module-whoop" onclick="openAthleteSleepOverview()" aria-label="WHOOP — sleep, recovery, and strain"><span class=ath-label>WHOOP</span><div class=ath-whoop-wrap>${sleepDials}<div class=ath-whoop-meta>${debtRow}<p class=ath-sleep-hint>Check-in inside</p></div></div><span class=ath-chev aria-hidden=true>›</span></button></div>`}
+function athModulesHtml(){let m=athHomeMetrics(),zones=athZonesForReadiness(m.recovery),zoneSecs=athTodayZoneSeconds(),zoneTotal=athZoneSecondsTotal(zoneSecs);let sleepDials=`<div class=ath-whoop-dials>${athWhoopDialSvg({label:'SLEEP',value:m.sleep,max:100,color:'#9db4c8',unit:'%'})}${athWhoopDialSvg({label:'RECOVERY',value:m.recovery,max:100,color:'#16f26b',unit:'%'})}${athWhoopDialSvg({label:'STRAIN',value:m.strain>0?m.strain:null,max:21,color:'#1ba3ff',unit:''})}</div>`;let debtSnap=athRecoveryDebtSnapshot(),debtRow='';if(debtSnap&&debtSnap.debt){let d=debtSnap.debt,dc=d.score>=55?'#cf7f7c':(d.score>=30?'#d1a464':'#9fc59b');debtRow=`<div class=ath-row><span class=ath-dot style="background:${dc}"></span><span class=ath-ll>Recovery debt</span><span class=ath-lv>${d.score}</span></div><p class=ath-sleep-hint>From delivery ledger</p>`}let longDate=new Date(today()+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});let athlete=(S.profile&& (S.profile.displayName||S.profile.name))||'Athlete';let workout=(S.sessions.find(x=>x.date===today()&&(x.status==='scheduled'||x.status==='active'))||{}).name||'No session scheduled';return`<div class=ath-session><div class=ath-date>${esc(longDate)}</div><div class=ath-athlete><div class=ath-avatar aria-hidden=true><svg class=ath-flash viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></div><div><p class=ath-name>${esc(athlete)}</p><p class=ath-workout>${esc(workout)}</p></div></div><button type=button class="ath-module ath-module-whoop" onclick="openAthleteSleepOverview()" aria-label="WHOOP — sleep, recovery, and strain"><span class=ath-label>WHOOP</span><div class=ath-whoop-wrap>${sleepDials}<div class=ath-whoop-meta>${debtRow}<p class=ath-sleep-hint>Check-in inside</p></div></div><span class=ath-chev aria-hidden=true>›</span></button></div>`}
 let athSleepTab='checkin';
 
 let athCheckinStep=0;
@@ -2233,12 +2284,12 @@ function showPortalToast(msg,tone){if(!msg)return;let old=document.querySelector
 function onCoachMerge(info){info=info||{};if(info.withdrawn>0)showPortalToast(info.withdrawn===1?'Coach withdrew 1 workout.':'Coach withdrew '+info.withdrawn+' workouts.','ok');else if(info.total>0)showPortalToast(info.total===1?'Coach added 1 workout.':'Coach added '+info.total+' workouts.','ok')}
 function coachRxPill(x){return isCoachPrescription(x)?'<span class="pill">From coach</span>':''}
 function homeBriefingHtml(active,todaySessions,future){
-  if(active){let rx=isCoachPrescription(active)?'<span class="home-pill">From coach</span>':'<span class="home-pill live">in progress</span>';return`<div class=home-brief><div class=home-brief-header><div class=eyebrow>Live session</div>${rx}</div><div class=title>${esc(active.name)}</div><div class=meta>You are mid-workout · ${dateLabel(active.date)}</div><div class=home-cta><button type=button class="btn primary block" onclick="openActiveWorkout()">Resume workout</button></div></div>`}
-  if(todaySessions.length){let x=todaySessions[0],rx=isCoachPrescription(x),eyebrow=rx?"Today's prescription":'Today',pill=rx?coachRxPill(x):`<span class="home-pill">${todaySessions.length} planned</span>`;return`<div class=home-brief><div class=home-brief-header><div class=eyebrow>${eyebrow}</div>${pill}</div><div class=title>${esc(x.name)}</div><div class=meta>Ready now${todaySessions.length>1?` · +${todaySessions.length-1} more after this`:''}</div><div class=home-cta><button type=button class="btn primary block" onclick="previewSession('${x.id}')">Start workout</button></div></div>`}
+  if(active){let rx=isCoachPrescription(active)?'<span class="home-pill">From coach</span>':'<span class="home-pill live">in progress</span>';return`<div class=home-brief><div class=home-brief-header><div class=eyebrow>Live session</div>${rx}</div><div class=title>${esc(active.name)}</div><div class=meta>You are mid-workout · ${dateLabel(active.date)}</div><div class=home-cta><button type=button class="btn oled-cta block" onclick="openActiveWorkout()">Resume workout</button></div></div>`}
+  if(todaySessions.length){let x=todaySessions[0],rx=isCoachPrescription(x),eyebrow=rx?"Today's prescription":'Today',pill=rx?coachRxPill(x):`<span class="home-pill">${todaySessions.length} planned</span>`;return`<div class=home-brief><div class=home-brief-header><div class=eyebrow>${eyebrow}</div>${pill}</div><div class=title>${esc(x.name)}</div><div class=meta>Ready now${todaySessions.length>1?` · +${todaySessions.length-1} more after this`:''}</div><div class=home-cta><button type=button class="btn oled-cta block" onclick="previewSession('${x.id}')">Start workout</button></div></div>`}
   let next=future[0];
-  return`<div class=home-brief><div class=home-brief-header><div class=eyebrow>Next up</div><span class="home-pill">plan</span></div><div class=title>${next?esc(next.name):'No session scheduled'}</div><div class=meta>${next?`Scheduled ${dateLabel(next.date)}`:'Build in Library, then schedule a day.'}</div><div class=home-cta><button type=button class="btn primary block" onclick="${next?"go('calendar')":"openAthleteStrengthLibrary()"}">${next?'Open Calendar':'Open Library'}</button></div></div>`;
+  return`<div class=home-brief><div class=home-brief-header><div class=eyebrow>Next up</div><span class="home-pill">plan</span></div><div class=title>${next?esc(next.name):'No session scheduled'}</div><div class=meta>${next?`Scheduled ${dateLabel(next.date)}`:'Build in Library, then schedule a day.'}</div><div class=home-cta><button type=button class="btn oled-cta block" onclick="${next?"go('calendar')":"openAthleteStrengthLibrary()"}">${next?'Open Calendar':'Open Library'}</button></div></div>`;
 }
-function home(){releaseTrainingWake();let now=today(),active=activeSession(),todaySessions=S.sessions.filter(x=>x.date===now&&x.status==='scheduled'&&x.id!==active?.id&&!x.coachWithdrawn).sort(calendarSessionSort),future=S.sessions.filter(x=>x.status==='scheduled'&&x.date>now&&!x.coachWithdrawn).sort((a,b)=>a.date.localeCompare(b.date));shell('Home','Train today',`<div class="stack shell-screen">${athModulesHtml()}${homeBriefingHtml(active,todaySessions,future)}</div>`);scheduleCondFinishPrompt();if(window.Whoop)Whoop.autoSyncIfPossible()}
+function home(){releaseTrainingWake();let now=today(),active=activeSession(),todaySessions=S.sessions.filter(x=>x.date===now&&x.status==='scheduled'&&x.id!==active?.id&&!x.coachWithdrawn).sort(calendarSessionSort),future=S.sessions.filter(x=>x.status==='scheduled'&&x.date>now&&!x.coachWithdrawn).sort((a,b)=>a.date.localeCompare(b.date));shell('Home','Train today',`<div class="stack shell-screen shell-screen--oled">${athModulesHtml()}${homeBriefingHtml(active,todaySessions,future)}</div>`);scheduleCondFinishPrompt();if(window.Whoop)Whoop.autoSyncIfPossible()}
 
 function openAthleteStrengthBuilder(){libraryActiveTab='strength';newTemplate('','strength')}
 function openAthleteStrengthLibrary(){libraryActiveTab='strength';S.tab='programs';save('nav-library');render()}
