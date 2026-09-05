@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v178'"), 'LOCAL_BUILD v178');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v179'"), 'LOCAL_BUILD v179');
 must(html.includes('function athWhoopDialSvg'), 'Whoop-style dial helper');
 must(html.includes('ath-whoop-dials'), 'three-dial row on home');
 must(html.includes('>SLEEP<') || html.includes("'SLEEP'") || html.includes('"SLEEP"'), 'SLEEP dial label');
@@ -23,6 +23,8 @@ must(/#1[Bb][Aa]3[Ff][Ff]/.test(html), 'strain blue arc #1ba3ff');
 must(!html.includes("athRingsSvg([{progress:m.recovery/100,color:'#3dff9e'}"), 'nested triple-ring sleep module removed');
 must(whoop.includes('whoopSleepPerformance'), 'WHOOP stores raw sleep performance 0–100');
 must(html.includes('function athSleepPercent'), 'athSleepPercent helper');
+must(html.includes('ath-whoop-n'), 'percent dials stack number over %');
+must(html.includes('flex-direction:column') && html.includes('ath-whoop-dial-val'), 'dial value column layout');
 
 function extractFn(src, name) {
   const start = src.indexOf('function ' + name);
