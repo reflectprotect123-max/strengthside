@@ -89,11 +89,13 @@ const html = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'index.h
 function must(c, m) { if (!c) throw new Error(m); }
 must(!/readiness check-?in/i.test(html) || !html.includes('openAthleteSleepOverview') /* refine: assert check-in entry removed from Home render */ , 'Home still exposes readiness check-in — tighten assertion to athModulesHtml/home()');
 must(html.includes('athWhoopDial') || html.includes('WHOOP'), 'WHOOP dials missing');
-must(/strength/i.test(html) && /cond/i.test(html), 'Home overview hooks missing — assert specific overview helpers once named');
+must(html.includes('confirmStartSession') || html.includes('openStartConfirm'), 'Start confirm missing');
+must(html.includes('homeTodayPeekHtml') || html.includes('todayPeek'), 'Today peek helper missing');
+must(html.includes('HR') || html.includes('zone'), 'Cond peek must be HR zones');
 console.log('instrument-home.smoke: ok');
 ```
 
-Tighten assertions in Step 1 to the **exact** helper names you will add in Task 3 (`homeStrengthCondOverviewHtml`, etc.) — write those names into the smoke first (TDD).
+Tighten assertions in Step 1 to the **exact** helper names from Task 3 (`homeTodayPeekHtml`, `confirmStartSession`, zone helpers) — write those names into the smoke first (TDD).
 
 - [ ] **Step 2: Write Library smoke**
 
@@ -122,15 +124,18 @@ git commit -m "test: add instrument/atelier smokes (red)"
 
 ---
 
-### Task 3: Instrument Home — dials + strength/cond overview
+### Task 3: Instrument Home — dials + today peek (Start + confirm)
 
 **Files:**
 - Modify: `apps/mobile/prototype/hybrid-app/index.html` (`home()`, `athModulesHtml` / related)
 - Modify: SW + `LOCAL_BUILD` bump together
 
-- [ ] **Step 1: Implement overview helper + strip readiness check-in from Home**
+- [ ] **Step 1: Implement today peek + strip readiness check-in from Home**
 
-Home shows WHOOP dials + compact strength & conditioning overview only.
+Home shows WHOOP dials + today peek only:
+- Strength today → label + **Start**
+- Cond today → **that day’s HR zones only** + **Start**
+- **Start** → yes/no confirm sheet before `startSession` (no accidental start)
 
 - [ ] **Step 2: Sync twins + bump cache**
 
@@ -157,7 +162,7 @@ Screenshot Home → `/opt/cursor/artifacts/instrument-home-overview.webp`
 
 ```bash
 git add apps/mobile/prototype/hybrid-app/index.html apps/mobile/prototype/hybrid-app/service-worker.js apps/mobile/THE-Hybrid-App.html apps/mobile/preview-site apps/mobile/service-worker.js
-git commit -m "feat(instrument): Home dials + strength/cond overview"
+git commit -m "feat(instrument): Home dials + today peek with Start confirm"
 ```
 
 ---
@@ -312,7 +317,7 @@ git push -u origin cursor/audit-critical-fixes-0ae6
 
 | Spec requirement | Task |
 | --- | --- |
-| Home dials + strength/cond overview; drop check-in | 3 |
+| Home dials + today peek (cond = HR zones; Start confirm); drop check-in | 3 |
 | OLED retained | 3–6 (no brass revive) |
 | Library Recovery tab | 4 |
 | Builder = logger 1:1 | 5 |

@@ -20,7 +20,7 @@ Make the athlete app feel **premium and simple** by structuring it as three room
 
 | Room | Role | Contains |
 | --- | --- | --- |
-| **Instrument** | Train | Home (OLED dials + small strength/cond overview) + in-session logger + adaptive doors |
+| **Instrument** | Train | Home (OLED dials + today peek: strength/cond Start with confirm; cond shows HR zones) + in-session logger + adaptive doors |
 | **Atelier** | Workshop | Library + builders; Publish to a chosen day |
 | **Chassis** | Basement | Local persistence, adaptive Close memory, honest sync UX, written sync contract |
 
@@ -38,8 +38,10 @@ Make the athlete app feel **premium and simple** by structuring it as three room
 
 - WHOOP dials (sleep / recovery / strain) stay.
 - **Remove** the readiness check-in from Home.
-- Add a **small overview** of today’s / next **strength** and **conditioning** (not a dashboard dump).
-- One clear path into today’s session.
+- **Today peek** (what’s on today only — not a dashboard dump):
+  - If today has **strength**: show it with a **Start** control.
+  - If today has **conditioning**: show **that day’s heart-rate zones only** (the bands in use for the session) with a **Start** control — not a full cond briefing.
+  - **Start** always opens a **yes / no confirm** before the session begins (no accidental starts).
 - No builder chrome, no sync essays on Home.
 
 ### Logger
