@@ -67,18 +67,15 @@
   ],
   "core-battle-ropes": [
     "weight_kg",
-    "distance_m",
-    "time_sec"
+    "distance_m"
   ],
   "core-farmer-walk": [
     "weight_kg",
-    "distance_m",
-    "time_sec"
+    "distance_m"
   ],
   "core-sled-push": [
     "weight_kg",
-    "distance_m",
-    "time_sec"
+    "distance_m"
   ],
   "core-cable-fly": [
     "weight_kg",
@@ -335,23 +332,19 @@
   ],
   "rebuilt-suitcase-carry": [
     "weight_kg",
-    "distance_m",
-    "time_sec"
+    "distance_m"
   ],
   "rebuilt-sandbag-carry": [
     "weight_kg",
-    "distance_m",
-    "time_sec"
+    "distance_m"
   ],
   "rebuilt-bear-crawl": [
     "weight_kg",
-    "distance_m",
-    "time_sec"
+    "distance_m"
   ],
   "rebuilt-backpack-carry": [
     "weight_kg",
-    "distance_m",
-    "time_sec"
+    "distance_m"
   ],
   "rebuilt-med-ball-throw": [
     "weight_kg",
@@ -468,6 +461,42 @@
   ],
   "library-skierg": [
     "time_sec",
+    "distance_m"
+  ],
+  "core-farmer-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-suitcase-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-front-rack-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-overhead-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-sandbag-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-bear-hug-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-yoke-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-zercher-carry": [
+    "weight_kg",
+    "distance_m"
+  ],
+  "core-backpack-carry": [
+    "weight_kg",
     "distance_m"
   ]
 }
