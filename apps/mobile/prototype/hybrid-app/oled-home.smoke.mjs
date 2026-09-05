@@ -25,7 +25,7 @@ must(html.includes('var(--oled-bg)'), 'Home uses --oled-bg');
 must(html.includes('var(--oled-surface)'), 'Home uses --oled-surface');
 must(!/Training load below/.test(html), 'no stale Training load below copy');
 must(!/btn primary block/.test(homeBriefingBlock), 'homeBriefingHtml has no gold primary brick');
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v185'"), 'LOCAL_BUILD v183');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v186'"), 'LOCAL_BUILD v186');
 
 must(!/radial-gradient\([^\)]*rgba\(212,\s*165,\s*116/.test(html.match(/body\{[\s\S]*?\n\}/)?.[0] || ''), 'body has no copper radial wash');
 must(html.includes('.nav') && html.includes('var(--oled-bg)'), 'nav uses OLED tokens OR body background uses --oled-bg');
@@ -47,14 +47,15 @@ must(html.includes('Room 2') || html.includes('.app.logger-active, .logger-scree
 must((html.match(/shell-screen--oled/g) || []).length >= 2, 'OLED shell used beyond Home alone');
 const calendarBlock = html.match(/function calendar\(\)[\s\S]*?\nfunction sessionStatusLabel/)?.[0] || '';
 must(calendarBlock.includes('shell-screen--oled'), 'shell-screen--oled in calendar()');
-const programsBlock = html.match(/function programs\(\)[\s\S]*?\nfunction libraryProgressTab/)?.[0] || '';
+const programsBlock = html.match(/function programs\(\)\{[\s\S]*?\n\}/)?.[0] || '';
 must(programsBlock.includes('shell-screen--oled'), 'shell-screen--oled in programs()');
+must(programsBlock.includes('oled-lib-root'), 'programs() mounts oled-lib-root');
 const settingsBlock = html.match(/function settings\(\)[\s\S]*?function downloadJson/)?.[0] || '';
 must(settingsBlock.includes('shell-screen--oled'), 'shell-screen--oled in settings()');
-const progressBlock = html.match(/function libraryProgressTab\(\)[\s\S]*?\nfunction libraryStrengthTab/)?.[0] || '';
-must(progressBlock.includes('shell-screen--oled'), 'shell-screen--oled in libraryProgressTab()');
+const progressBlock = html.match(/function libraryProgressTab\(\)\{[\s\S]*?\n\}/)?.[0] || '';
+must(progressBlock.includes('oled-lib'), 'libraryProgressTab uses oled-lib native markup');
 must(html.includes('.shell-screen--oled .ath-cal-day'), 'calendar days OLED-scoped');
-must(html.includes('.shell-screen--oled .library-tab'), 'library tabs OLED-scoped');
+must(html.includes('.oled-lib-tab'), 'library tabs use native oled-lib-tab styles');
 must(html.includes('.shell-screen--oled .settings-group'), 'settings OLED-scoped');
 
 must(html.includes('<small>Athlete</small>'), 'brand subtitle is Athlete (not Track Dawn)');
@@ -66,9 +67,15 @@ must(html.includes('background:#fff') && html.includes('.btn.oled-cta'), 'Home C
 must(html.includes('.shell-screen--oled .ath-module-whoop') && /ath-module-whoop\{[^}]*background:transparent/.test(html), 'WHOOP dials float on true black');
 
 
-must(html.includes('Full Library float'), 'full Library float CSS marker');
-must(/\.shell-screen--oled \.library-tabs\{[^}]*background:transparent!important/.test(html), 'library tabs transparent');
-must(/\.shell-screen--oled \.card\.expandcard[\s\S]*?border-bottom:1px solid/.test(html), 'template rows use hairline separators');
-must(!/\.shell-screen--oled \.library-tabs\{[^}]*background:var\(--oled-surface\)/.test(html), 'library tabs not oled-surface tray');
+
+must(html.includes('OLED Library — native structure'), 'native Library CSS block present');
+must(html.includes('oled-lib-row'), 'Library uses native oled-lib-row markup');
+must(html.includes('oled-lib-section'), 'Library uses native oled-lib-section markup');
+must(html.includes('oled-lib-tabs'), 'Library uses native oled-lib-tabs markup');
+must(html.includes('oled-lib-hero'), 'Library uses native oled-lib-hero markup');
+must(/function groupedTemplates[\s\S]*?oled-lib-section/.test(html), 'groupedTemplates emits oled-lib-section');
+must(/function templateCard[\s\S]*?oled-lib-row/.test(html), 'templateCard emits oled-lib-row');
+must(!/function groupedTemplates[\s\S]*?weekbox/.test(html), 'groupedTemplates no longer emits weekbox');
+must(!/function templateCard[\s\S]*?card expandcard/.test(html), 'templateCard no longer emits card expandcard');
 
 console.log('oled-home.smoke: ok');
