@@ -4,7 +4,7 @@
 # Usage (repo root):
 #   CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/ship-capgo.sh
 #
-# Token: CAPGO_TOKEN env or repo-root .capgo (gitignored).
+# Token: CAPGO_TOKEN env, repo-root .capgo (gitignored), or handoff.md §0.5 vault.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
@@ -12,11 +12,12 @@ VERSION="${CAPGO_BUNDLE_VERSION:-}"
 APP_ID="${CAPGO_APP_ID:-com.hybrid.athlete}"
 CHANNELS="${CAPGO_CHANNELS:-dogfood,live}"
 
+bash "$REPO/scripts/rematerialize-capgo-from-vault.sh"
 if [[ -z "${CAPGO_TOKEN:-}" && -f "$REPO/.capgo" ]]; then
   CAPGO_TOKEN="$(cat "$REPO/.capgo")"
 fi
 if [[ -z "${CAPGO_TOKEN:-}" ]]; then
-  echo "ship-capgo: FAIL — set CAPGO_TOKEN or create $REPO/.capgo" >&2
+  echo "ship-capgo: FAIL — set CAPGO_TOKEN, create $REPO/.capgo, or restore vault Token in handoff.md" >&2
   exit 1
 fi
 if [[ -z "$VERSION" ]]; then
