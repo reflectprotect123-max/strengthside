@@ -197,6 +197,12 @@ var HybridAdaptive = (() => {
         splitSec: pick(input.typedSplitSec, input.lastClose?.splitSec)
       };
     }
+    if (input.modality === "rpm") {
+      return {
+        ok: true,
+        rpm: pick(input.typedRpm, input.lastClose?.rpm)
+      };
+    }
     return {
       ok: true,
       watts: pick(input.typedWatts, input.lastClose?.watts)
@@ -205,6 +211,7 @@ var HybridAdaptive = (() => {
 
   // packages/adaptive/src/close-cond.ts
   function closeCond(input) {
+    if (input.lastMade.rpm != null) return { ok: true, rpm: input.lastMade.rpm };
     if (input.lastMade.watts != null) return { ok: true, watts: input.lastMade.watts };
     return { ok: true, splitSec: input.lastMade.splitSec };
   }

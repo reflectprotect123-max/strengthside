@@ -52,21 +52,24 @@ export type CloseCondAnchor = { watts?: number | null; splitSec?: number | null;
 
 export type OpenCondInput = {
   dayKind: DayKind;
-  modality: 'watts' | 'split';
+  modality: 'watts' | 'split' | 'rpm';
   lastClose: CloseCondAnchor | null;
   typedWatts?: number | null;
   typedSplitSec?: number | null;
+  typedRpm?: number | null;
 };
 
 export type OpenCondResult =
   | { ok: true; watts: number | null }
   | { ok: true; splitSec: number | null }
+  | { ok: true; rpm: number | null }
   | { ok: false; reason: 'wrong_day' };
 
 export type CloseCondInput = {
-  lastMade: { watts?: number; splitSec?: number };
+  lastMade: { watts?: number; splitSec?: number; rpm?: number };
 };
 
 export type CloseCondResult =
   | { ok: true; watts: number }
-  | { ok: true; splitSec: number };
+  | { ok: true; splitSec: number }
+  | { ok: true; rpm: number };
