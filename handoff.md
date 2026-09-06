@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 5 September 2026 (audit critical fixes).**
+> **AUTHORITATIVE CHECKPOINT — 6 September 2026 (Capgo 1.0.61 OTA).**
 > Chat history before this file is disposable. Start here.
 >
 > Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
@@ -19,14 +19,14 @@
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v180`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.60`** still on blank-v179 until the next OTA ship |
+| **Cache** | **`the-hybrid-athlete-blank-v190`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.61`** (blank-v190) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.60** until the next Capgo ship (then bump version + cache together).
+**Phone:** Settings → Check for updates → expect **1.0.61** / blank-v190.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -45,7 +45,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.60`** (pre–v180 OTA; bump on next ship) |
+| Channels | **`dogfood` + `live`** both @ **`1.0.61`** (blank-v190) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
@@ -102,7 +102,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 1. Keep `@hybrid/adaptive` pure; HTML is the only athlete UI surface.
 2. Cloud journal / session+template sync: contract is written (Phase M); **implement in Phase S** per `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md` — not a drive-by restore of deleted sync code.
-3. After merging audit fixes: Capgo ship with matching `LOCAL_BUILD` / SW cache / bundle version.
+3. Capgo **1.0.61** shipped 6 Sep 2026 (dogfood + live, blank-v190). Next OTA: bump cache + bundle together.
 
 **Useful checks**
 
@@ -134,9 +134,9 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 | Ref | Note |
 | --- | --- |
-| `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.60** on `dogfood` + `live` (still blank-v179 until next ship) |
-| Cache (this fix branch) | `the-hybrid-athlete-blank-v180` |
-| Audit fixes | Honest sync copy · interval RPE break · kg floor · typed Open cond · split UI · stable cond keys · reps 1–79 · handoff truth |
+| `main` | Merged Cond adaptive + OLED + suggest-close + Capgo vault; OTA **1.0.61** / blank-v190 |
+| Capgo | **1.0.61** on `dogfood` + `live` |
+| Cache | `the-hybrid-athlete-blank-v190` |
+| Recent product | Cond Actual/RPE→Next · Threshold · rpm Open/Close · Pace anchors · Engine Analytics · OLED Home/Library |
 
-**Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.
+**Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages. Nutrition stays in `archive/` only.
