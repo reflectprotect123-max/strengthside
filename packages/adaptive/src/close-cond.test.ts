@@ -10,6 +10,14 @@ describe('closeCond', () => {
     expect(closeCond({ lastMade: { splitSec: 120 } })).toEqual({ ok: true, splitSec: 120 });
   });
 
+  it('stores last made rpm with no bump', () => {
+    expect(closeCond({ lastMade: { rpm: 82 } })).toEqual({ ok: true, rpm: 82 });
+  });
+
+  it('rpm Close does not fall back to watts', () => {
+    expect(closeCond({ lastMade: { rpm: 82, watts: 220 } })).toEqual({ ok: true, rpm: 82 });
+  });
+
   it('does not return restSec, rounds, or dayKind', () => {
     const closed = closeCond({ lastMade: { watts: 202 } });
     expect(closed).not.toHaveProperty('restSec');
