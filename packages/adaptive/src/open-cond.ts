@@ -14,6 +14,12 @@ export function openCond(input: OpenCondInput): OpenCondResult {
       splitSec: pick(input.typedSplitSec, input.lastClose?.splitSec),
     };
   }
+  if (input.modality === 'rpm') {
+    return {
+      ok: true,
+      rpm: pick(input.typedRpm, input.lastClose?.rpm),
+    };
+  }
   return {
     ok: true,
     watts: pick(input.typedWatts, input.lastClose?.watts),

@@ -11,7 +11,7 @@
     { key: 'weight_pct_wm', label: 'Weight % (of WM)', loggerLabel: 'Weight', field: 'weight', targetKind: 'reps', placeholder: '70' },
     { key: 'weight_lwp', label: 'Weight (LWP)', loggerLabel: 'Weight', field: 'weight', targetKind: 'reps', placeholder: '+2.5' },
     { key: 'time_sec', label: 'Time (seconds)', loggerLabel: 'Seconds', field: 'reps', targetKind: 'seconds', placeholder: '30' },
-    { key: 'distance_m', label: 'Distance (metres)', loggerLabel: 'Metres', field: 'reps', targetKind: 'reps', placeholder: '100' },
+    { key: 'distance_m', label: 'Distance (metres)', loggerLabel: 'Metres', field: 'reps', targetKind: 'distance', placeholder: '100' },
   ];
 
   const KIND_MAP = Object.fromEntries(KINDS.map((k) => [k.key, k]));
@@ -1069,7 +1069,9 @@
 
   function rowFieldForKind(kind) {
     if (isLoadKind(kind)) return 'weight';
-    if (kind === 'distance_m') return 'distance';
+    // Metres live in `reps` on the strength logger row (same field as hold seconds).
+    // targetKind === 'distance' seals Adaptive and labels Metres.
+    if (kind === 'distance_m') return 'reps';
     return 'reps';
   }
 
@@ -1220,8 +1222,8 @@
       }
       const n = Number(raw);
       const label = (meta.loggerLabel || meta.label || field).toLowerCase();
-      if (!Number.isFinite(n) || n <= 0 || n > 1000) {
-        return `Enter ${label} between 1 and 1000.`;
+      if (!Number.isFinite(n) || n <= 0 || n >= 80) {
+        return `Enter ${label} between 1 and 79.`;
       }
     }
     return '';
@@ -1229,7 +1231,12 @@
 
   function applyColumnTargetKinds(ex, rows) {
     const cols = normalizeColumns(ex);
-    const effort = cols.find((c) => c.kind === 'time_sec') || cols.find((c) => c.kind === 'reps' || c.kind === 'reps_range' || c.kind === 'distance_m');
+    // Distance carries are non-timed: prefer distance_m over time_sec when both
+    // appear (legacy saved columns). Holds keep time_sec when that is the only effort.
+    const effort =
+      cols.find((c) => c.kind === 'distance_m') ||
+      cols.find((c) => c.kind === 'time_sec') ||
+      cols.find((c) => c.kind === 'reps' || c.kind === 'reps_range');
     const tk = effort ? kindMeta(effort.kind).targetKind : 'reps';
     (rows || []).forEach((r) => {
       if (!r.extra) r.targetKind = tk;

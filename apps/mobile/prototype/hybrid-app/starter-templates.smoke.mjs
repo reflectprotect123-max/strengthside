@@ -12,7 +12,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("STARTER_STRENGTH_NAMES=['Full Body A']"), 'strength starter list');
+must(html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C']"), 'strength starter list');
 must(html.includes("STARTER_CONDITIONING_NAMES=['Aerobic Conditioning']"), 'conditioning starter list');
 must(html.includes("STARTER_RECOVERY_NAMES=['Recovery']"), 'recovery starter list');
 must(html.includes('function buildStarterAerobicCondTemplate'), 'aerobic starter factory');
@@ -67,5 +67,9 @@ for (let j = i; j < html.length; j++) {
 }
 must(seed, 'seed parse failed');
 must((seed.templates || []).some((t) => t && t.name === 'Full Body A'), 'seed still has Full Body A');
+must((seed.templates || []).some((t) => t && t.name === 'Full Body B'), 'seed still has Full Body B');
+must((seed.templates || []).some((t) => t && t.name === 'Full Body C'), 'seed still has Full Body C');
+must(html.includes('function ensureFullBodyBStarter'), 'Full Body B ensure');
+must(html.includes('function ensureFullBodyCStarter'), 'Full Body C ensure');
 
 console.log('starter-templates.smoke: ok');

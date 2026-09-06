@@ -64,8 +64,10 @@ must(byName['Barbell Curl'].profile === 'accessory_kg_reps', 'Barbell Curl → a
 must(byName['Barbell Curl'].metrics_per_set.includes('load'), 'curl logs load');
 must(byName['Pull Up'].profile === 'bodyweight_reps', 'Pull Up → bodyweight_reps');
 must(!byName['Pull Up'].metrics_per_set.includes('load'), 'pull-up no load metric');
-must(byName['Farmer Walk'].profile === 'carry_distance_time_load', 'Farmer Walk → carry');
+must(byName['Farmer Walk'].profile === 'carry_distance_load', 'Farmer Walk → carry');
 must(byName['Farmer Walk'].metrics_per_set.includes('distance'), 'carry logs distance');
+must(!byName['Farmer Walk'].metrics_per_set.includes('duration'), 'carry is non-timed');
+must(JSON.stringify(byName['Farmer Walk'].log_columns) === JSON.stringify(['weight_kg','distance_m']), 'carry columns weight+distance');
 must(byName['Assault Bike'].profile === 'cardio_duration_distance', 'Assault Bike → cardio');
 must(byName['Plank'].profile === 'isometric_time_or_reps', 'Plank → isometric');
 must(byName['Nordic Curl'].profile === 'bodyweight_reps', 'Nordic → bodyweight');

@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 4 September 2026 (blank slate shipped).**
+> **AUTHORITATIVE CHECKPOINT — 5 September 2026 (audit critical fixes).**
 > Chat history before this file is disposable. Start here.
 >
 > Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
@@ -15,18 +15,18 @@
 | --- | --- |
 | **Product** | Hybrid HTML athlete app only — Home · Library (dumb templates) · Calendar · Settings · manual logger |
 | **Engines** | **`@hybrid/adaptive` only** (Open / Next / Close). Deleted engines stay dead — do not revive strength-engine, Big Mac, adapters. |
-| **Next brain** | `@hybrid/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md`. HTML doors: lift Log → `decideNextLift`; cond work slider → `decideNextCond`; holds → WorkOverlay only. |
+| **Next brain** | `@hybrid/adaptive` in `packages/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md`. HTML doors: lift Log → `decideNextLift`; cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
-| **Branch** | `main` @ merge of blank-slate PR #161 |
-| **Cache** | **`the-hybrid-athlete-blank-v172`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.53`** (cache blank-v172) |
+| **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
+| **Cache** | **`the-hybrid-athlete-blank-v180`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.60`** still on blank-v179 until the next OTA ship |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.53** (cache **blank-v172**).
+**Phone:** Settings → Check for updates → expect **1.0.60** until the next Capgo ship (then bump version + cache together).
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -45,11 +45,11 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.53`** (shipped 5 Sep from vault recover) |
+| Channels | **`dogfood` + `live`** both @ **`1.0.60`** (pre–v180 OTA; bump on next ship) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
-| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
-| Ship dogfood + live | `CAPGO_BUNDLE_VERSION=1.0.53 bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
-| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle 1.0.53` |
+| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
+| Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
+| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle <ver>` |
 | CI | Actions → **Capgo ship** workflow (needs repo secret `CAPGO_TOKEN`) |
 
 ### OpenRouter · Supabase · WHOOP · Netlify
@@ -62,7 +62,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ---
 
-## 1. What exists on `main` now
+## 1. What exists on `main` / current tree now
 
 ### Alive
 
@@ -72,14 +72,19 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 - WHOOP + Concept2 + Echo FTMS + Capgo live update
 - Shared Supabase **twelve-table data ledger** (RLS + `embed-coaching-note`) — storage only
 - Library starters (Full Body A, Aerobic, Recovery) as dumb templates
-- `openVolume` field (was `autopilotVolume`) — open vs pinned sets×reps; no brain behind it
+- `openVolume` field (was `autopilotVolume`) — open vs pinned sets×reps; brain is `@hybrid/adaptive` Open/Next/Close only
+- **`packages/adaptive`** — pure Open / Next / Close for lift + cond (vitest colocated). This is the only product engine.
+
+### Sync honesty (important)
+
+`Whoop.syncAll` refreshes **WHOOP recovery** and **Concept2 Logbook** when linked. It does **not** sync calendar sessions or Library templates. Training state is **localStorage** on device (plus local recovery snapshot). Settings + WHOOP card copy must stay honest about that until Phase S implements the written contract: `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md`.
 
 ### Gone for good (do not restore)
 
 | Layer | Deleted |
 | --- | --- |
-| Packages | `packages/` is **empty** — no `strength-engine`, `engine`, `shared-core`, `nutrition-engine`, `nutrition-core` |
-| Athlete S&C wiring | adapters, bundles, Big Mac, one-set logger, cond autoreg, recovery trio, coordinator, strength AI/sync |
+| Old packages | No `strength-engine`, `engine`, `shared-core`, `nutrition-engine`, `nutrition-core` — those stay deleted. **`packages/adaptive` is the exception and is live.** |
+| Athlete S&C wiring | adapters, Big Mac, one-set logger, cond autoreg, recovery trio, coordinator, strength AI/cloud sync |
 | Nutrition | UI, sync, food catalog, label scan |
 | Netlify decide | `big-mac-decide`, `ai-strength-progression`, `ai-coach-intent` |
 | Coach S&C | source + stubs; static park page only |
@@ -95,15 +100,18 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ## 2. What to do next
 
-1. **Review the living engine spec** — `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`.
-2. After spec approval: implementation plan, then `@hybrid/adaptive`. Do not copy deleted module shapes.
-3. Ignore old dogfood backlog rows that assumed coach publish, Big Mac hooks, or five engines — those tracks are closed.
+1. Keep `@hybrid/adaptive` pure; HTML is the only athlete UI surface.
+2. Cloud journal / session+template sync: contract is written (Phase M); **implement in Phase S** per `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md` — not a drive-by restore of deleted sync code.
+3. After merging audit fixes: Capgo ship with matching `LOCAL_BUILD` / SW cache / bundle version.
 
 **Useful checks**
 
 ```bash
 pnpm run verify
 pnpm run check:hybrid-html-sync
+pnpm run check:adaptive-bundle
+pnpm run check:adaptive-logger
+pnpm run check:adaptive-routes
 node apps/mobile/prototype/hybrid-app/blank-slate-wm.smoke.mjs
 node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + openVolume shape
 ```
@@ -112,12 +120,13 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 ## 3. Rules (do not silently reverse)
 
-- **Zero product engines** until the new adaptive package lands under a deliberate design.
+- **One product engine:** `@hybrid/adaptive`. Do not revive deleted engines or invent a second brain.
 - **Do not** recreate Expo / Home / PWA / coach portal / ARC.
 - **Do not** move pain/illness into a specialist engine; flags stay unclassified product-wise.
-- Strength decision logic, when it returns, stays **pure** (no I/O in the package).
+- Adaptive decision logic stays **pure** (no I/O in the package).
 - Migration filenames on the shared Supabase ledger are sacred — never rename applied migrations.
 - Neither this repo nor the hybrid stub writes migrations against the other's tables.
+- Cache pins: bump `LOCAL_BUILD` and SW `CACHE` together; Capgo version is a separate ship step.
 
 ---
 
@@ -125,10 +134,9 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 | Ref | Note |
 | --- | --- |
-| `main` | Blank slate merged via PR **#161** (2026-09-04) |
-| Capgo | **1.0.53** on `dogfood` + `live` |
-| Netlify | Deploy athlete Netlify workflow **success** on merge commit |
-| Dogfood APK | Workflow **success** on merge commit |
-| Cache | `the-hybrid-athlete-blank-v169` |
+| `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
+| Capgo | **1.0.60** on `dogfood` + `live` (still blank-v179 until next ship) |
+| Cache (this fix branch) | `the-hybrid-athlete-blank-v180` |
+| Audit fixes | Honest sync copy · interval RPE break · kg floor · typed Open cond · split UI · stable cond keys · reps 1–79 · handoff truth |
 
-**Next agent:** read this file + the blank-slate spec + the three-module engine spec + `CLAUDE.md`. Do not implement the package until that spec is approved and a plan exists.
+**Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.

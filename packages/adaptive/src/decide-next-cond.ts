@@ -13,32 +13,52 @@ function condBand(
   return 'hold';
 }
 
-function present(n: number | undefined): n is number {
-  return n != null && Number.isFinite(n);
+function baseline(actual: number | undefined, current: number | undefined): number | undefined {
+  if (actual != null && Number.isFinite(actual)) return actual;
+  if (current != null && Number.isFinite(current)) return current;
+  return undefined;
+}
+
+function nextWatts(w: number, band: 'hold' | 'up' | 'down' | 'cut'): CondNextResult {
+  if (band === 'hold') return { ok: true, watts: w };
+  if (band === 'up') return { ok: true, watts: Math.round(w * 1.03) };
+  if (band === 'down') return { ok: true, watts: Math.round(w * 0.95) };
+  return { ok: true, watts: Math.round(w * 0.92) };
+}
+
+function nextSplit(s: number, band: 'hold' | 'up' | 'down' | 'cut'): CondNextResult {
+  if (band === 'hold') return { ok: true, splitSec: s };
+  if (band === 'up') return { ok: true, splitSec: s - 1 };
+  if (band === 'down') return { ok: true, splitSec: s + 1 };
+  return { ok: true, splitSec: s + 3 };
+}
+
+function nextRpm(r: number, band: 'hold' | 'up' | 'down' | 'cut'): CondNextResult {
+  if (band === 'hold') return { ok: true, rpm: r };
+  if (band === 'up') return { ok: true, rpm: Math.round(r * 1.03) };
+  if (band === 'down') return { ok: true, rpm: Math.round(r * 0.95) };
+  return { ok: true, rpm: Math.round(r * 0.92) };
 }
 
 export function decideNextCond(input: CondNextInput): CondNextResult {
   if (input.dayKind !== 'conditioning') return { ok: false, reason: 'wrong_day' };
 
-  const hasWatts = present(input.currentWatts);
-  const hasSplit = present(input.currentSplitSec);
-  if (!hasWatts && !hasSplit) return { ok: true, skipped: true };
-
   const band = condBand(input.actualRpe, input.targetRpe, input.stopped, input.cooked);
-  const useWatts =
-    input.modality === 'watts' ? hasWatts : hasWatts && !hasSplit;
 
-  if (useWatts) {
-    const w = input.currentWatts as number;
-    if (band === 'hold') return { ok: true, watts: w };
-    if (band === 'up') return { ok: true, watts: Math.round(w * 1.03) };
-    if (band === 'down') return { ok: true, watts: Math.round(w * 0.95) };
-    return { ok: true, watts: Math.round(w * 0.92) };
+  // Split modalities never fall back to watts — locked architecture.
+  if (input.modality === 'split') {
+    const split = baseline(input.actualSplitSec, input.currentSplitSec);
+    if (split == null) return { ok: true, skipped: true };
+    return nextSplit(split, band);
   }
 
-  const s = input.currentSplitSec as number;
-  if (band === 'hold') return { ok: true, splitSec: s };
-  if (band === 'up') return { ok: true, splitSec: s - 1 };
-  if (band === 'down') return { ok: true, splitSec: s + 1 };
-  return { ok: true, splitSec: s + 3 };
+  if (input.modality === 'rpm') {
+    const rpm = baseline(input.actualRpm, input.currentRpm);
+    if (rpm == null) return { ok: true, skipped: true };
+    return nextRpm(rpm, band);
+  }
+
+  const watts = baseline(input.actualWatts, input.currentWatts);
+  if (watts == null) return { ok: true, skipped: true };
+  return nextWatts(watts, band);
 }

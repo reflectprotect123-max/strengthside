@@ -13,8 +13,8 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const sw = readFileSync(join(dir, 'service-worker.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v172'"), 'LOCAL_BUILD v168');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-blank-v172'"), 'SW v168');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v187'"), 'LOCAL_BUILD v180');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-blank-v187'"), 'SW v180');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(html), 'athlete app has no TrainHeroic code');
 must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise seed on boot');
 must(!html.includes('function libraryExercisesTab'), 'no Library Exercises tab');
@@ -23,7 +23,7 @@ must(html.includes('x.templates=[];x.sessions=[]'), 'defaultState starts blank')
 must(html.includes('x.exercises=[]'), 'defaultState starts with empty exercises');
 must(html.includes('BLANK_SLATE_VERSION='), 'blank slate migration version');
 must(html.includes('function ensureStarterTemplates'), 'ensure starter templates');
-must(html.includes("STARTER_STRENGTH_NAMES=['Full Body A']"), 'Full Body A in starter list');
+must(html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C']"), 'Full Body A in starter list');
 must(!html.includes('StrengthAdapter'), 'no StrengthAdapter');
 must(!html.includes('EngineAdapter'), 'no EngineAdapter');
 must(!html.includes('BigMacBridge'), 'no BigMacBridge');
