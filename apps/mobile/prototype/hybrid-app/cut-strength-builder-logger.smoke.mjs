@@ -61,4 +61,6 @@ if (failures.length) {
   failures.forEach((f) => console.error(' -', f));
   process.exit(1);
 }
+
+must(!html.includes("go('home')}if(sessionLooksLikeConditioning"), 'enterSessionScreen must not orphan train() after go home');
 console.log('cut-strength-builder-logger.smoke OK');
