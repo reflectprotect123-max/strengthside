@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * Atelier Publish: Save · Save as template · Publish + day-picker sheet.
- * TDD red until Task 6 wires openPublishDaySheet and unified builder actions.
+ * Atelier Publish: Save · Save as template · Publish + day-picker sheet (Engine builder).
  * Run: node apps/mobile/prototype/hybrid-app/atelier-publish.smoke.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -37,21 +36,16 @@ function extractFn(src, name) {
 }
 
 must(html.includes('openPublishDaySheet'), 'openPublishDaySheet missing');
+must(!html.includes('function athleteStrengthBuilder'), 'strength builder removed after cut');
 
-const strengthBuilder = extractFn(html, 'athleteStrengthBuilder');
 const condBuilder = extractFn(html, 'renderCondBuilder');
 
-for (const [label, src] of [
-  ['strength builder', strengthBuilder],
-  ['cond builder', condBuilder],
-]) {
-  must(src.includes('Save'), `${label}: Save action missing`);
-  must(src.includes('Save as template'), `${label}: Save as template action missing`);
-  must(/Publish( to day)?/.test(src), `${label}: Publish action missing`);
-  must(
-    src.includes('openPublishDaySheet'),
-    `${label}: must call openPublishDaySheet for Publish`,
-  );
-}
+must(condBuilder.includes('Save'), 'cond builder: Save action missing');
+must(condBuilder.includes('Save as template'), 'cond builder: Save as template action missing');
+must(/Publish( to day)?/.test(condBuilder), 'cond builder: Publish action missing');
+must(
+  condBuilder.includes('openPublishDaySheet'),
+  'cond builder: must call openPublishDaySheet for Publish',
+);
 
 console.log('atelier-publish.smoke: ok');

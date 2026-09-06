@@ -1,9 +1,9 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 5 September 2026 (audit critical fixes).**
+> **AUTHORITATIVE CHECKPOINT — 6 September 2026 (strength cut).**
 > Chat history before this file is disposable. Start here.
 >
-> Spec: `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`
+> Spec: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
 > Engine (Open / Next / Close): `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
 
@@ -13,13 +13,13 @@
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app only — Home · Library (dumb templates) · Calendar · Settings · manual logger |
-| **Engines** | **`@hybrid/adaptive` only** (Open / Next / Close). Deleted engines stay dead — do not revive strength-engine, Big Mac, adapters. |
-| **Next brain** | `@hybrid/adaptive` in `packages/adaptive` — living spec `2026-09-03-engine-three-module-redesign.md`. HTML doors: lift Log → `decideNextLift`; cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
+| **Product** | Hybrid HTML athlete app — **The Engine + Recovery only** (strength cut 2026-09-06) |
+| **Engines** | **`@hybrid/adaptive` cond-only** (Open / Next / Close for conditioning). Lift adaptive deleted. Do not revive strength-engine, Big Mac, adapters. |
+| **Next brain** | `@hybrid/adaptive` in `packages/adaptive` — cond Open/Next/Close only. HTML doors: cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v180`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Cache** | **`the-hybrid-athlete-blank-v191`** (`LOCAL_BUILD` + SW `CACHE` must match) |
 | **Capgo** | **`dogfood` + `live` @ `1.0.60`** still on blank-v179 until the next OTA ship |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
@@ -66,14 +66,17 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ### Alive
 
-- Hybrid HTML shell + classic manual strength logger (kg × reps × RIR) + conditioning log chrome
+- Hybrid HTML shell + **The Engine** (conditioning builder/logger/analytics) + **Recovery** tab
 - Session chrome / rest / work overlays
-- Exercise search + load-profile **column UI** (metadata only — not an engine)
 - WHOOP + Concept2 + Echo FTMS + Capgo live update
 - Shared Supabase **twelve-table data ledger** (RLS + `embed-coaching-note`) — storage only
-- Library starters (Full Body A, Aerobic, Recovery) as dumb templates
-- `openVolume` field (was `autopilotVolume`) — open vs pinned sets×reps; brain is `@hybrid/adaptive` Open/Next/Close only
-- **`packages/adaptive`** — pure Open / Next / Close for lift + cond (vitest colocated). This is the only product engine.
+- Library starters (**Aerobic Conditioning + Recovery** only; Full Body strength starters removed)
+- **`packages/adaptive`** — pure cond Open / Next / Close (vitest colocated). Lift modules deleted.
+- **`strengthCutV1` migrate** — nuclear wipe of sessions + strength templates/state on first load after cut
+
+### Legacy assets (kept, not product)
+
+- `exercise-search*.js`, `log-columns.js`, `exercise-load-profiles.js` still loaded by index.html for dead/legacy strength helpers — **not** reachable in Engine/Recovery product paths. Safe to delete in a later cleanup pass once grep confirms zero live references.
 
 ### Sync honesty (important)
 
@@ -136,7 +139,7 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
 | Capgo | **1.0.60** on `dogfood` + `live` (still blank-v179 until next ship) |
-| Cache (this fix branch) | `the-hybrid-athlete-blank-v180` |
-| Audit fixes | Honest sync copy · interval RPE break · kg floor · typed Open cond · split UI · stable cond keys · reps 1–79 · handoff truth |
+| Cache (strength cut branch) | `the-hybrid-athlete-blank-v191` |
+| Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
 **Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.
