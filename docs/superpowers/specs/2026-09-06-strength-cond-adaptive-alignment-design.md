@@ -1,7 +1,7 @@
 # Strength ↔ Cond Adaptive Alignment (+ pace anchors)
 
 **Date:** 2026-09-06  
-**Status:** Approved in brainstorm — awaiting human review of this written spec (incl. Analytics)  
+**Status:** Approved (human 2026-09-06) — implementation plan ready  
 **Product surface:** Hybrid HTML athlete app (`apps/mobile/prototype/hybrid-app/`) + `@hybrid/adaptive`  
 **Related:** Instrument / workshop / chassis design; session/template sync contract (Phase M)
 
