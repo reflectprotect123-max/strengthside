@@ -12,7 +12,6 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -85,31 +84,36 @@ function slug(s) {
   return norm(s).replace(/\s+/g, '-').slice(0, 48);
 }
 
+const LIBRARY_120_PATH = join(
+  repoRoot,
+  'evidence-platform/sources/recovered-nested/01-strength/strengthside-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120.json',
+);
+
 function loadExerciseSearch() {
-  const sandbox = { window: {}, console };
-  sandbox.window = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(
-    readFileSync(join(repoRoot, 'apps/mobile/prototype/hybrid-app/exercise-search-index.js'), 'utf8'),
-    sandbox,
-  );
-  vm.runInContext(
-    readFileSync(join(repoRoot, 'apps/mobile/prototype/hybrid-app/exercise-search.js'), 'utf8'),
-    sandbox,
-  );
-  return { ExerciseSearch: sandbox.ExerciseSearch, index: sandbox.EXERCISE_SEARCH_INDEX || [] };
+  const lib = JSON.parse(readFileSync(LIBRARY_120_PATH, 'utf8'));
+  const items = (lib.exercises || []).map((e) => ({
+    exerciseId: e.exercise_id,
+    name: e.name,
+    category: e.category,
+    normName: norm(e.name),
+  }));
+  return {
+    ExerciseSearch: {
+      search(q, limit = 12) {
+        const n = norm(q);
+        if (!n) return [];
+        return items
+          .filter((it) => it.normName.includes(n) || n.includes(it.normName))
+          .slice(0, limit)
+          .map(({ exerciseId, name, category }) => ({ exerciseId, name, category }));
+      },
+    },
+    index: items,
+  };
 }
 
 function loadIndexById() {
-  const lib = JSON.parse(
-    readFileSync(
-      join(
-        repoRoot,
-        'evidence-platform/sources/recovered-nested/01-strength/strengthside-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120.json',
-      ),
-      'utf8',
-    ),
-  );
+  const lib = JSON.parse(readFileSync(LIBRARY_120_PATH, 'utf8'));
   return new Map(lib.exercises.map((e) => [e.exercise_id, { name: e.name, category: e.category }]));
 }
 
