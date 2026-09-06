@@ -28,22 +28,27 @@ export type OpenLiftResult =
 
 export type CondNextInput = {
   dayKind: DayKind;
-  modality: 'watts' | 'split';
+  modality: 'watts' | 'split' | 'rpm';
   targetRpe: RepRange;
   actualRpe: number;
   stopped?: boolean;
   cooked?: boolean;
   currentWatts?: number;
   currentSplitSec?: number;
+  currentRpm?: number;
+  actualWatts?: number;
+  actualSplitSec?: number;
+  actualRpm?: number;
 };
 
 export type CondNextResult =
   | { ok: true; watts: number }
   | { ok: true; splitSec: number }
+  | { ok: true; rpm: number }
   | { ok: true; skipped: true }
   | { ok: false; reason: 'wrong_day' };
 
-export type CloseCondAnchor = { watts?: number | null; splitSec?: number | null };
+export type CloseCondAnchor = { watts?: number | null; splitSec?: number | null; rpm?: number | null };
 
 export type OpenCondInput = {
   dayKind: DayKind;
