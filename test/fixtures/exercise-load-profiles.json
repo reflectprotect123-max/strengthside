@@ -344,7 +344,8 @@
   "profile_rules": {
     "reps_load": [
       "If name/equipment matches TRX/suspension → self_scaled_reps",
-      "If bodyweight calisthenic (pull-up, dip, push-up, nordic, …) without external equipment → bodyweight_reps",
+      "If pull-up / chin-up / dip (incl. assisted) without external equipment → added_load_bw (kg + reps; kg optional)",
+      "If other bodyweight calisthenic (push-up, nordic, handstand, …) without external equipment → bodyweight_reps",
       "If main barbell compound (squat, bench, deadlift, press, oly) → main_pct_wm",
       "Else → accessory_kg_reps (rows, curls, machines, unilateral work)"
     ]
@@ -1211,14 +1212,16 @@
       "name": "Dip",
       "category": "Strength — Horizontal Push",
       "tracking_mode": "reps_load",
-      "profile": "bodyweight_reps",
+      "profile": "added_load_bw",
       "metrics_per_set": [
+        "load",
         "reps"
       ],
       "metrics_last_set": [
         "rir"
       ],
       "log_columns": [
+        "weight_kg",
         "reps"
       ]
     },
@@ -1297,14 +1300,16 @@
       "name": "Strict Bar Dip",
       "category": "Strength — Horizontal Push",
       "tracking_mode": "reps_load",
-      "profile": "bodyweight_reps",
+      "profile": "added_load_bw",
       "metrics_per_set": [
+        "load",
         "reps"
       ],
       "metrics_last_set": [
         "rir"
       ],
       "log_columns": [
+        "weight_kg",
         "reps"
       ]
     },
@@ -1529,14 +1534,16 @@
       "name": "Chin Up",
       "category": "Strength — Vertical Pull",
       "tracking_mode": "reps_load",
-      "profile": "bodyweight_reps",
+      "profile": "added_load_bw",
       "metrics_per_set": [
+        "load",
         "reps"
       ],
       "metrics_last_set": [
         "rir"
       ],
       "log_columns": [
+        "weight_kg",
         "reps"
       ]
     },
@@ -1581,14 +1588,16 @@
       "name": "Pronated Strict Pull Up",
       "category": "Strength — Vertical Pull",
       "tracking_mode": "reps_load",
-      "profile": "bodyweight_reps",
+      "profile": "added_load_bw",
       "metrics_per_set": [
+        "load",
         "reps"
       ],
       "metrics_last_set": [
         "rir"
       ],
       "log_columns": [
+        "weight_kg",
         "reps"
       ]
     },
@@ -1597,14 +1606,16 @@
       "name": "Pull Up",
       "category": "Strength — Vertical Pull",
       "tracking_mode": "reps_load",
-      "profile": "bodyweight_reps",
+      "profile": "added_load_bw",
       "metrics_per_set": [
+        "load",
         "reps"
       ],
       "metrics_last_set": [
         "rir"
       ],
       "log_columns": [
+        "weight_kg",
         "reps"
       ]
     },
@@ -2011,14 +2022,16 @@
       "name": "Assisted Pull-Up",
       "category": "Strength — Vertical Pull",
       "tracking_mode": "reps_load",
-      "profile": "bodyweight_reps",
+      "profile": "added_load_bw",
       "metrics_per_set": [
+        "load",
         "reps"
       ],
       "metrics_last_set": [
         "rir"
       ],
       "log_columns": [
+        "weight_kg",
         "reps"
       ]
     },
@@ -2477,10 +2490,11 @@
   "profile_counts": {
     "accessory_kg_reps": 61,
     "cardio_duration_distance": 7,
-    "bodyweight_reps": 10,
+    "bodyweight_reps": 4,
     "isometric_time_or_reps": 6,
     "carry_distance_load": 7,
-    "main_pct_wm": 29
+    "main_pct_wm": 29,
+    "added_load_bw": 6
   },
   "exercise_count": 120
 }

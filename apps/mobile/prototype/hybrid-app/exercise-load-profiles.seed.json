@@ -193,6 +193,7 @@
     "reps"
   ],
   "core-dip": [
+    "weight_kg",
     "reps"
   ],
   "core-dumbbell-bench-press": [
@@ -211,6 +212,7 @@
     "reps"
   ],
   "core-strict-bar-dip": [
+    "weight_kg",
     "reps"
   ],
   "core-back-squat": [
@@ -262,6 +264,7 @@
     "reps"
   ],
   "core-chin-up": [
+    "weight_kg",
     "reps"
   ],
   "core-lat-pulldown": [
@@ -273,9 +276,11 @@
     "reps"
   ],
   "core-pronated-strict-pull-up": [
+    "weight_kg",
     "reps"
   ],
   "core-pull-up": [
+    "weight_kg",
     "reps"
   ],
   "core-arnold-press": [
@@ -369,6 +374,7 @@
     "time_sec"
   ],
   "library-assisted-pull-up": [
+    "weight_kg",
     "reps"
   ],
   "library-inverted-row": [

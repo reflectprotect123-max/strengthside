@@ -6,6 +6,8 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.62 | 2026-09-06 | Pull-up / chin-up / dip log kg + reps (added load); push-up stays reps-only; cache blank-v191 |
+| 1.0.61 | 2026-09-06 | Merged main OTA: Cond adaptive Actual/RPE→Next + Threshold/rpm Open-Close + Pace anchors + Engine Analytics; OLED shell; exercise suggest close; cache blank-v190 |
 | 1.0.60 | 2026-09-05 | Whoop-style home dials (Sleep/Recovery/Strain); fix sleep stuck at 100%; number over %; cache blank-v179 |
 | 1.0.58 | 2026-09-05 | Exercise suggest closes on pick (blur + lock; no focus reopen); cache blank-v190 |
 | 1.0.57 | 2026-09-05 | Close retired Workout builder; Engine form rebuilt; scrub old builder doors; cache blank-v176 |

@@ -62,8 +62,16 @@ must(byName['Back Squat'].profile === 'main_pct_wm', 'Back Squat → main_pct_wm
 must(byName['Back Squat'].metrics_per_set.includes('load'), 'squat logs load');
 must(byName['Barbell Curl'].profile === 'accessory_kg_reps', 'Barbell Curl → accessory_kg_reps');
 must(byName['Barbell Curl'].metrics_per_set.includes('load'), 'curl logs load');
-must(byName['Pull Up'].profile === 'bodyweight_reps', 'Pull Up → bodyweight_reps');
-must(!byName['Pull Up'].metrics_per_set.includes('load'), 'pull-up no load metric');
+must(byName['Pull Up'].profile === 'added_load_bw', 'Pull Up → added_load_bw');
+must(byName['Pull Up'].metrics_per_set.includes('load'), 'pull-up logs load');
+must(
+  JSON.stringify(byName['Pull Up'].log_columns) === JSON.stringify(['weight_kg', 'reps']),
+  'pull-up columns weight+reps',
+);
+must(byName['Dip'].profile === 'added_load_bw', 'Dip → added_load_bw');
+must(byName['Dip'].metrics_per_set.includes('load'), 'dip logs load');
+must(byName['Push Up'].profile === 'bodyweight_reps', 'Push Up stays bodyweight_reps');
+must(!byName['Push Up'].metrics_per_set.includes('load'), 'push-up no load metric');
 must(byName['Farmer Walk'].profile === 'carry_distance_load', 'Farmer Walk → carry');
 must(byName['Farmer Walk'].metrics_per_set.includes('distance'), 'carry logs distance');
 must(!byName['Farmer Walk'].metrics_per_set.includes('duration'), 'carry is non-timed');

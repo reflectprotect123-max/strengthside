@@ -78,8 +78,26 @@ if (
 }
 
 const pull = ELP.defaultLogColumns('core-pull-up');
-if (!pull || pull.length !== 1 || pull[0].kind !== 'reps') {
-  throw new Error('core-pull-up → reps only');
+if (
+  !pull ||
+  pull.length !== 2 ||
+  pull[0].kind !== 'weight_kg' ||
+  pull[1].kind !== 'reps'
+) {
+  throw new Error('core-pull-up → weight_kg+reps (added load / belt)');
+}
+const dip = ELP.defaultLogColumns('core-dip');
+if (
+  !dip ||
+  dip.length !== 2 ||
+  dip[0].kind !== 'weight_kg' ||
+  dip[1].kind !== 'reps'
+) {
+  throw new Error('core-dip → weight_kg+reps (added load / belt)');
+}
+const pushUp = ELP.defaultLogColumns('core-push-up');
+if (!pushUp || pushUp.length !== 1 || pushUp[0].kind !== 'reps') {
+  throw new Error('core-push-up stays reps-only');
 }
 
 if (ELP.defaultLogColumns('unknown-exercise-id')) {
