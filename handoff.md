@@ -102,7 +102,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 1. Keep `@hybrid/adaptive` pure; HTML is the only athlete UI surface.
 2. Cloud journal / session+template sync: contract is written (Phase M); **implement in Phase S** per `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md` — not a drive-by restore of deleted sync code.
-3. After merging audit fixes: Capgo ship with matching `LOCAL_BUILD` / SW cache / bundle version.
+3. Capgo **1.0.62** shipped 6 Sep 2026 (dogfood + live, blank-v191). Pull-up / chin-up / dip log kg+reps.
 
 **Useful checks**
 
@@ -134,9 +134,9 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 | Ref | Note |
 | --- | --- |
-| `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.60** on `dogfood` + `live` (still blank-v179 until next ship) |
-| Cache (this fix branch) | `the-hybrid-athlete-blank-v180` |
-| Audit fixes | Honest sync copy · interval RPE break · kg floor · typed Open cond · split UI · stable cond keys · reps 1–79 · handoff truth |
+| `main` | Cond adaptive + OLED + suggest-close merged; weighted pull-up/dip columns OTA **1.0.62** / blank-v191 |
+| Capgo | **1.0.62** on `dogfood` + `live` |
+| Cache | `the-hybrid-athlete-blank-v191` |
+| Recent product | Pull-up/chin-up/dip → kg+reps · Cond Actual/RPE→Next · Threshold · Pace anchors · OLED Home/Library |
 
-**Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.
+**Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages. Nutrition stays in `archive/` only.
