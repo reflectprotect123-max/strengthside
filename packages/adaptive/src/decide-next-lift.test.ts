@@ -82,3 +82,9 @@ describe('decideNextLift — middle and under on a range', () => {
     expect(next).not.toHaveProperty('dayKind');
   });
 });
+
+describe('decideNextLift — load floor', () => {
+  it('bodyweight under-min clamps at 0 instead of -2.5', () => {
+    expect(lift(6, 2, r812, 0)).toEqual({ ok: true, loadKg: 0, reps: 8 });
+  });
+});

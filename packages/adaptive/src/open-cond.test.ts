@@ -78,4 +78,36 @@ describe('openCond', () => {
     expect(opened).not.toHaveProperty('rounds');
     expect(opened).not.toHaveProperty('dayKind');
   });
+
+  it('typed rpm wins over last Close rpm', () => {
+    expect(
+      openCond({
+        dayKind: 'conditioning',
+        modality: 'rpm',
+        typedRpm: 75,
+        lastClose: { rpm: 80 },
+      }),
+    ).toEqual({ ok: true, rpm: 75 });
+  });
+
+  it('uses last Close rpm when typed is blank', () => {
+    expect(
+      openCond({
+        dayKind: 'conditioning',
+        modality: 'rpm',
+        typedRpm: null,
+        lastClose: { rpm: 80 },
+      }),
+    ).toEqual({ ok: true, rpm: 80 });
+  });
+
+  it('first-ever rpm is null (do not invent; do not fall back to watts)', () => {
+    expect(
+      openCond({
+        dayKind: 'conditioning',
+        modality: 'rpm',
+        lastClose: { watts: 220 },
+      }),
+    ).toEqual({ ok: true, rpm: null });
+  });
 });

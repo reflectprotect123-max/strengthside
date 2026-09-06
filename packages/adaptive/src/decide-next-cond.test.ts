@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { decideNextCond } from './decide-next-cond';
+import { describe, expect, it } from 'vitest';
 
 describe('decideNextCond', () => {
   const base = {
@@ -68,5 +68,86 @@ describe('decideNextCond', () => {
     expect(next).not.toHaveProperty('dayKind');
     expect(next).not.toHaveProperty('watts');
     expect(next).not.toHaveProperty('splitSec');
+  });
+});
+
+describe('decideNextCond — split seal', () => {
+  it('split modality never falls back to watts', () => {
+    expect(
+      decideNextCond({
+        dayKind: 'conditioning',
+        modality: 'split',
+        targetRpe: { min: 7, max: 8 },
+        actualRpe: 5,
+        currentWatts: 220,
+        currentSplitSec: undefined,
+      }),
+    ).toEqual({ ok: true, skipped: true });
+  });
+});
+
+describe('decideNextCond — actual baseline', () => {
+  it('split Next baselines on actualSplitSec when provided (not plan current)', () => {
+    expect(
+      decideNextCond({
+        dayKind: 'conditioning',
+        modality: 'split',
+        targetRpe: { min: 7, max: 8 },
+        actualRpe: 7, // hold
+        currentSplitSec: 120, // plan 2:00
+        actualSplitSec: 125, // logged 2:05
+      }),
+    ).toEqual({ ok: true, splitSec: 125 });
+  });
+
+  it('split too hard nudges from actual, not plan', () => {
+    expect(
+      decideNextCond({
+        dayKind: 'conditioning',
+        modality: 'split',
+        targetRpe: { min: 7, max: 8 },
+        actualRpe: 9,
+        currentSplitSec: 120,
+        actualSplitSec: 125,
+      }),
+    ).toEqual({ ok: true, splitSec: 126 }); // +1s from actual
+  });
+
+  it('watts too easy nudges from actualWatts', () => {
+    expect(
+      decideNextCond({
+        dayKind: 'conditioning',
+        modality: 'watts',
+        targetRpe: { min: 7, max: 8 },
+        actualRpe: 5,
+        currentWatts: 220,
+        actualWatts: 200,
+      }),
+    ).toEqual({ ok: true, watts: 206 }); // round(200 * 1.03)
+  });
+
+  it('rpm modality nudges from actualRpm (mirror watts %)', () => {
+    expect(
+      decideNextCond({
+        dayKind: 'conditioning',
+        modality: 'rpm',
+        targetRpe: { min: 7, max: 8 },
+        actualRpe: 5,
+        currentRpm: 60,
+        actualRpm: 58,
+      }),
+    ).toEqual({ ok: true, rpm: 60 }); // round(58 * 1.03) = 60
+  });
+
+  it('rpm never falls back to watts', () => {
+    expect(
+      decideNextCond({
+        dayKind: 'conditioning',
+        modality: 'rpm',
+        targetRpe: { min: 7, max: 8 },
+        actualRpe: 7,
+        currentWatts: 220,
+      }),
+    ).toEqual({ ok: true, skipped: true });
   });
 });
