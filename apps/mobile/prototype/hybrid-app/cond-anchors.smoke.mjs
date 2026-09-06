@@ -29,6 +29,8 @@ must(
   open.includes('paintOpenCondFromAnchors'),
   'Open must call paintOpenCondFromAnchors when typed target empty',
 );
+must(open.includes('typedRpm'), 'Open must pass typedRpm for rpm modality');
+must(open.includes('opened.rpm'), 'Open must apply opened.rpm from Close memory');
 
 const paint = slice('paintOpenCondFromAnchors');
 must(paint.includes('mapBandFrom2k'), 'paintOpenCondFromAnchors must use mapBandFrom2k');
@@ -38,6 +40,11 @@ must(paint.includes('whoopRecoveryForOpen'), 'paint must read daily check-in WHO
 const band = slice('condOpenBand');
 must(band.includes("fmt==='threshold'") && band.includes("return'threshold'"), 'condOpenBand must return threshold band');
 
+must(html.includes("{key:'threshold'"), 'COND_FORMATS must include Threshold format');
+must(
+  html.includes("fmt.key==='threshold'") || html.includes("fmt.key==='tempo'||fmt.key==='threshold'"),
+  'Threshold format must use interval fields',
+);
 const complete = slice('completeConditioning');
 must(!complete.includes('race2kSec'), 'completeConditioning must not write race2kSec');
 must(!complete.includes('bikeWattsAnchor'), 'completeConditioning must not write bikeWattsAnchor');
