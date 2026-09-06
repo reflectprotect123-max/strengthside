@@ -25,7 +25,7 @@ must(html.includes('var(--oled-bg)'), 'Home uses --oled-bg');
 must(html.includes('var(--oled-surface)'), 'Home uses --oled-surface');
 must(/Delivery ledger — not the same as Training load below/.test(html), 'recovery debt hint distinguishes delivery ledger from training load');
 must(!/btn primary block/.test(homeBriefingBlock), 'homeTodayPeekHtml has no gold primary brick');
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v190'"), 'LOCAL_BUILD v190');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v191'"), 'LOCAL_BUILD v191');
 
 must(!/radial-gradient\([^\)]*rgba\(212,\s*165,\s*116/.test(html.match(/body\{[\s\S]*?\n\}/)?.[0] || ''), 'body has no copper radial wash');
 must(html.includes('.nav') && html.includes('var(--oled-bg)'), 'nav uses OLED tokens OR body background uses --oled-bg');

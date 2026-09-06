@@ -911,7 +911,7 @@
     return (
       `<div class="ath-ss-lift${letter ? ' ath-ss-lift-' + letter.toLowerCase() : ''}">` +
       letterHtml +
-      `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)" onblur="commitAthleteLiftName(${bi},${ei})">` +
       `<div id="athSuggest_${bi}_${ei}" class="ath-suggest-host">${suggestHtml}</div>` +
       '<div class=hero>' +
       '<div class=hero-label>Sets & reps you paint · session start fills kg</div>' +
@@ -949,7 +949,7 @@
     return (
       `<div class="logger-screen dial-strength ath-builder-twin">` +
       '<div class=eyebrow>Hybrid Strength · builder</div>' +
-      `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
+      `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)" onblur="commitAthleteLiftName(${bi},${ei})">` +
       `<div id="athSuggest_${bi}_${ei}" class="ath-suggest-host">${suggestHtml}</div>` +
       '<div class=hero>' +
       '<div class=hero-label>Sets & reps you paint · session start fills kg</div>' +
