@@ -25,8 +25,11 @@ const library = JSON.parse(readFileSync(libraryPath, 'utf8'));
 
 const MAIN_LIFT =
   /(back squat|front squat|squat|bench press|deadlift|romanian deadlift|rdl|overhead press|shoulder press|strict press|military press|push press|clean|snatch|jerk)/i;
-const BW_REP =
-  /(pull[- ]?up|chin[- ]?up|\bdip\b|push[- ]?up|nordic|handstand|ab wheel|l[- ]?sit)/i;
+/** Pull-up / chin-up / dip family — bodyweight or belt/vest added load. */
+const BW_ADDED_LOAD = /(pull[- ]?up|chin[- ]?up|\bdip\b)/i;
+/** True reps-only calisthenics (no common external load logging). */
+const BW_REP_ONLY =
+  /(push[- ]?up|nordic|handstand|ab wheel|l[- ]?sit)/i;
 const SELF_SCALED = /(trx|suspension)/i;
 const EXTERNAL_LOAD =
   /(barbell|dumbbell|\bdb\b|cable|machine|ez[- ]?bar|e[- ]?z[- ]?bar|kettlebell|\bkb\b|smith|leg press|pec deck|hack squat)/i;
@@ -43,7 +46,13 @@ function resolveProfile(ex) {
 
   if (mode === 'reps_load') {
     if (SELF_SCALED.test(n) || SELF_SCALED.test(equip)) return 'self_scaled_reps';
-    if (BW_REP.test(n) && !EXTERNAL_LOAD.test(n) && !EXTERNAL_LOAD.test(equip)) return 'bodyweight_reps';
+    // Weighted pull-ups / dips: always offer kg + reps (leave kg blank for BW).
+    if (BW_ADDED_LOAD.test(n) && !EXTERNAL_LOAD.test(n) && !EXTERNAL_LOAD.test(equip)) {
+      return 'added_load_bw';
+    }
+    if (BW_REP_ONLY.test(n) && !EXTERNAL_LOAD.test(n) && !EXTERNAL_LOAD.test(equip)) {
+      return 'bodyweight_reps';
+    }
     if (MAIN_LIFT.test(n) && !/(curl|raise|pushdown|row|pulldown|face pull|leg curl)/i.test(n)) {
       return 'main_pct_wm';
     }
@@ -243,7 +252,8 @@ const fixture = {
   profile_rules: {
     reps_load: [
       'If name/equipment matches TRX/suspension → self_scaled_reps',
-      'If bodyweight calisthenic (pull-up, dip, push-up, nordic, …) without external equipment → bodyweight_reps',
+      'If pull-up / chin-up / dip (incl. assisted) without external equipment → added_load_bw (kg + reps; kg optional)',
+      'If other bodyweight calisthenic (push-up, nordic, handstand, …) without external equipment → bodyweight_reps',
       'If main barbell compound (squat, bench, deadlift, press, oly) → main_pct_wm',
       'Else → accessory_kg_reps (rows, curls, machines, unilateral work)',
     ],
