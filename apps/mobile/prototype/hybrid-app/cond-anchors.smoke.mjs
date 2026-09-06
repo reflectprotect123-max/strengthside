@@ -35,6 +35,9 @@ must(paint.includes('mapBandFrom2k'), 'paintOpenCondFromAnchors must use mapBand
 must(paint.includes('softenOpen'), 'paintOpenCondFromAnchors must soften via WHOOP recovery');
 must(paint.includes('whoopRecoveryForOpen'), 'paint must read daily check-in WHOOP recovery');
 
+const band = slice('condOpenBand');
+must(band.includes("fmt==='threshold'") && band.includes("return'threshold'"), 'condOpenBand must return threshold band');
+
 const complete = slice('completeConditioning');
 must(!complete.includes('race2kSec'), 'completeConditioning must not write race2kSec');
 must(!complete.includes('bikeWattsAnchor'), 'completeConditioning must not write bikeWattsAnchor');
