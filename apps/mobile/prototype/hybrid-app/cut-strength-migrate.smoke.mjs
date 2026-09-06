@@ -129,4 +129,9 @@ if (failures.length) {
   failures.forEach((f) => console.error(' -', f));
   process.exit(1);
 }
+
+must(html.includes('function applyStrengthCutImportScrub'), 'import scrub after strength cut');
+must(/function ensureStrengthSchedule\(state\)\{[^}]*delete state\.settings\.strengthSchedule/.test(html.replace(/\n/g,' ')), 'ensureStrengthSchedule deletes schedule');
+must(/function mergeStrengthState\([^)]*\)\{return\{workingMaxEvents:\[\]/.test(html.replace(/\n/g,' ')), 'mergeStrengthState is no-op empty');
+
 console.log('cut-strength-migrate.smoke OK');
