@@ -11,7 +11,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v190'"), 'LOCAL_BUILD v190');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v191'"), 'LOCAL_BUILD v191');
 must(html.includes('function athExerciseSuggestBtn'), 'athExerciseSuggestBtn helper');
 must(html.includes('class="searchpick ath-ex-pick"'), 'delegated athlete pick buttons');
 must(html.includes('class="searchpick ex-sheet-pick"'), 'delegated sheet pick buttons');
@@ -41,10 +41,22 @@ must(
     html.includes('refreshAthleteLiftCard(bi,ei,{restoreFocus:!1})'),
   'pick must not restore focus (which reopens suggest via onfocus)',
 );
+must(html.includes('function commitAthleteLiftName'), 'blur commits typed custom name');
+must(
+  logColumns.includes('onblur="commitAthleteLiftName(') ||
+    logColumns.includes("onblur='commitAthleteLiftName("),
+  'name input blurs into commitAthleteLiftName',
+);
+must(
+  html.includes('ath-ex-custom') || html.includes('Use “') || html.includes("Use '") || html.includes('as custom'),
+  'custom-name affordance in suggest empty/list',
+);
 
 const sandbox = {
   window: {},
   console,
+  setTimeout,
+  Date,
   document: {
     querySelector: () => null,
     createElement: () => ({ innerHTML: '', querySelector: () => null }),
@@ -163,5 +175,48 @@ must(lastSuggestHtml === '', 'pick lock blocks immediate suggest reopen');
 
 const twin = sandbox.LogColumns.builderAthleteTwinHtml(ex, { bi: 0, ei: 0 });
 must(twin.includes('Time (seconds)'), 'plank twin shows Time (seconds)');
+
+// Custom typed name: blur/commit keeps name, registers custom id, clears suggest, logger cols work
+sandbox.registerExercise = (state, lift) => {
+  if (!lift.exerciseId) lift.exerciseId = 'custom-test-lift';
+  return lift;
+};
+sandbox.ensureAthleteLiftShape = (lift) => {
+  if (!lift.logColumns || !lift.logColumns.length) {
+    lift.logColumns = [
+      { id: 'w', kind: 'weight_kg', value: '', values: [] },
+      { id: 'r', kind: 'reps', value: '', values: [] },
+    ];
+  }
+  return lift;
+};
+sandbox.refreshAthleteLiftMetricsOnly = () => {};
+sandbox.persistDraft = () => {};
+lastSuggestHtml = 'STILL_OPEN';
+sandbox.draft.blocks[0].exercises[0] = {
+  id: 'ex2',
+  name: 'Banded Nordic Hold',
+  category: 'Custom',
+  restSec: 90,
+  openVolume: true,
+  logColumns: [],
+};
+const commitSrc = extractFunction(html, 'commitAthleteLiftName');
+must(commitSrc, 'commitAthleteLiftName function body');
+vm.runInContext(commitSrc, sandbox);
+sandbox.athSuggestPickLockUntil = 0;
+sandbox.commitAthleteLiftName(0, 0);
+// allow blur debounce
+await new Promise((r) => setTimeout(r, 220));
+const custom = sandbox.draft.blocks[0].exercises[0];
+must(!!custom.exerciseId, 'custom name gets an exerciseId on commit');
+must(String(custom.name) === 'Banded Nordic Hold', 'typed custom name preserved');
+must(lastSuggestHtml === '', 'suggest cleared after custom commit');
+must(
+  custom.logColumns &&
+    custom.logColumns.some((c) => c.kind === 'weight_kg') &&
+    custom.logColumns.some((c) => c.kind === 'reps'),
+  'custom commit seeds weight_kg + reps for logger',
+);
 
 console.log('athlete-exercise-pick.smoke: ok');
