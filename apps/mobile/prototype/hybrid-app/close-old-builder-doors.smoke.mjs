@@ -24,8 +24,10 @@ const builderIdx = html.indexOf('function builder()');
 must(builderIdx >= 0, 'builder() exists');
 const builderEnd = html.indexOf('\nfunction ', builderIdx + 10);
 const builderFn = html.slice(builderIdx, builderEnd);
-must(builderFn.includes('usesAthleteStrengthBuilder()'), 'builder routes strength');
+must(!builderFn.includes('usesAthleteStrengthBuilder'), 'builder must not route strength');
+must(!builderFn.includes('athleteStrengthBuilder'), 'builder must not call strength workshop');
 must(builderFn.includes('openAthleteConditioningBuilder()'), 'builder routes conditioning to Engine');
+must(builderFn.includes('openAthleteConditioningLibrary()'), 'builder unknown draft returns to Library');
 must(!builderFn.includes('Add block'), 'builder no longer renders Add block UI');
 must(!builderFn.includes('proofcard'), 'builder no longer renders old proof card');
 
