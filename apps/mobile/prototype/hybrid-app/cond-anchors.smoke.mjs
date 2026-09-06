@@ -36,6 +36,12 @@ const paint = slice('paintOpenCondFromAnchors');
 must(paint.includes('mapBandFrom2k'), 'paintOpenCondFromAnchors must use mapBandFrom2k');
 must(paint.includes('softenOpen'), 'paintOpenCondFromAnchors must soften via WHOOP recovery');
 must(paint.includes('whoopRecoveryForOpen'), 'paint must read daily check-in WHOOP recovery');
+must(paint.includes('modalityWantsEcho'), 'bike watts Open must branch on bike/echo machine, not 2k Concept2 watts');
+
+const normalize = slice('normalizeAthleteCondBlock');
+must(normalize.includes('unitLock'), 'normalize must keep unitLock');
+must(normalize.includes('targetRpm'), 'normalize must keep targetRpm');
+must(normalize.includes('targetSplitSec'), 'normalize must keep targetSplitSec');
 
 const band = slice('condOpenBand');
 must(band.includes("fmt==='threshold'") && band.includes("return'threshold'"), 'condOpenBand must return threshold band');
@@ -45,6 +51,14 @@ must(
   html.includes("fmt.key==='threshold'") || html.includes("fmt.key==='tempo'||fmt.key==='threshold'"),
   'Threshold format must use interval fields',
 );
+
+const simpleComplete = slice('completeSimpleCond');
+must(simpleComplete.includes('promptCondWorkRpe'), 'steady Complete must open Feel door');
+must(simpleComplete.includes('runDecideNextCond'), 'steady Complete must call Next after Feel');
+must(simpleComplete.includes('taskNeedsIntervalClock'), 'steady Complete must not double-Feel interval sessions');
+
+const simpleRender = slice('renderSimpleCondLog');
+must(simpleRender.includes('condActualFieldHtml'), 'simple Cond logger must show Actual field');
 const complete = slice('completeConditioning');
 must(!complete.includes('race2kSec'), 'completeConditioning must not write race2kSec');
 must(!complete.includes('bikeWattsAnchor'), 'completeConditioning must not write bikeWattsAnchor');
