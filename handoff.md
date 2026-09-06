@@ -35,14 +35,18 @@
 ## 0.5 Secrets vault (agent recovery)
 
 > **Private repo only.** Prefer Netlify UI for values never pasted in chat.
+>
+> **New agent boot:** Capgo token lives in this vault table. Rematerialize gitignored `.capgo` with
+> `bash scripts/rematerialize-capgo-from-vault.sh` (env `start` + ship scripts do this automatically).
 
 ### Capgo OTA
 
 | Key | Value |
 | --- | --- |
-| Token | repo-root `.capgo` (gitignored) or `CAPGO_TOKEN` |
+| Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.60`** (pre–v180 OTA) |
+| Channels | **`dogfood` + `live`** both @ **`1.0.60`** (pre–v180 OTA; bump on next ship) |
+| Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
 | Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle <ver>` |
