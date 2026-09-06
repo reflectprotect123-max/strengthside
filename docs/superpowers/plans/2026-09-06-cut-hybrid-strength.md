@@ -243,7 +243,7 @@ git commit -m "chore: drop strength-only exercise search/log-columns assets"
 
 - [ ] **Step 2: Fix each failure by deleting obsolete smoke or rewriting to Engine+Recovery**
 
-- [ ] **Step 3: Bump `LOCAL_BUILD` + SW `CACHE` together (e.g. blank-v190 → blank-v191) and update pinning smokes — required so clients drop cached strength shell
+- [ ] **Step 3: Bump `LOCAL_BUILD` + SW `CACHE` together (e.g. blank-v191 → blank-v191) and update pinning smokes — required so clients drop cached strength shell
 
 - [ ] **Step 4: Sync twins**
 
