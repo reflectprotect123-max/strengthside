@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.63 | 2026-09-06 | Cut Hybrid Strength — Engine + Recovery only; nuclear strengthCutV1 wipe; cond-only adaptive; cache blank-v191 |
 | 1.0.60 | 2026-09-05 | Whoop-style home dials (Sleep/Recovery/Strain); fix sleep stuck at 100%; number over %; cache blank-v179 |
 | 1.0.58 | 2026-09-05 | Exercise suggest closes on pick (blur + lock; no focus reopen); cache blank-v191 |
 | 1.0.57 | 2026-09-05 | Close retired Workout builder; Engine form rebuilt; scrub old builder doors; cache blank-v176 |
