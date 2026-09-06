@@ -1153,7 +1153,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v187';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v188';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1947,7 +1947,7 @@ async function resumeAthleteSession(id){let x=ses(id);if(!x)return;if(x.status==
 function makeAdHocConditioningSession(date){return{id:id(),templateId:'adhoc-conditioning',name:'Conditioning',date,status:'scheduled',ephemeral:true,coachInstructions:'',blocks:[{id:id(),type:'conditioning',heading:'Conditioning',conditioningType:'easy',modality:'Run / Row / Bike / Walk',targetDurationMin:30,targetHrZone:'',targetPace:'',targetWatts:'',targetDistance:'',rounds:1,workSec:0,restSec:0,timeCapMin:30,notes:''}],timer:{elapsed:0,on:false,last:null},taskIndex:0,tasks:[],notes:'',summary:null}}
 function nextConditioningSession(){let now=today(),active=activeSession();if(active&&sessionLooksLikeConditioning(active)&&!sessionHasStrengthWork(active))return active;let listed=(S.sessions||[]).filter(x=>sessionLooksLikeConditioning(x)&&!x.ephemeral&&(x.status==='scheduled'||x.status==='active'));let todayHit=listed.find(x=>x.date===now);if(todayHit)return todayHit;let upcoming=listed.filter(x=>x.status==='scheduled'&&x.date>=now).sort((a,b)=>a.date.localeCompare(b.date))[0];if(upcoming)return upcoming;return makeAdHocConditioningSession(now)}
 let simpleCondLog=false;
-let condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,targetWatts:'',targetSplitSec:'',name:'',editId:'',isRecovery:false};
+let condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,unitLock:'watts',targetWatts:'',targetSplitSec:'',targetRpm:'',name:'',editId:'',isRecovery:false};
 function fmtNeedsIntervalFields(fmt){fmt=fmt||condFormatMeta(condBuilder.fmt);return fmt.key==='intervals'||fmt.key==='tempo'||fmt.key==='custom'}
 function patchCondBuilder(patch){
   patch=patch||{};
@@ -2014,16 +2014,12 @@ function renderCondBuilder(){
   let dose=interval
     ? `<div class="eng-builder-interval" style="grid-template-columns:1fr 1fr 1fr"><div class=field><label>Rounds</label><input type=number min=1 step=1 value="${esc(condBuilder.rounds||1)}" onchange="setCondBuilderNum('rounds',this)"></div><div class=field><label>Work</label><input inputmode=numeric placeholder="4:00" value="${esc(formatMmSs(condBuilder.workSec||0))}" onchange="setCondBuilderMmSs('workSec',this)"></div><div class=field><label>Rest</label><input inputmode=numeric placeholder="3:00" value="${esc(formatMmSs(condBuilder.restSec||0))}" onchange="setCondBuilderMmSs('restSec',this)"></div></div><p class=mph-hint>Total ≈ ${condIntervalTotalMin()} min · stored as seconds.</p>`
     : `<div class=field><label>Minutes</label><div class=mph-mins><button type=button class=mph-step aria-label="fewer minutes" onclick="nudgeCondMinutes(-5)">−</button><b aria-live=polite>${esc(condBuilder.minutes==null||condBuilder.minutes===''?'—':condBuilder.minutes)}</b><button type=button class=mph-step aria-label="more minutes" onclick="nudgeCondMinutes(5)">+</button></div></div>`;
-  let watts=modalityWantsEcho(condBuilder.modality)
-    ? `<div class=field><label>Target watts <span class=muted>(optional)</span></label><input type=number min=0 step=5 placeholder="180" value="${esc(condBuilder.targetWatts==null?'':condBuilder.targetWatts)}" onchange="setCondBuilderNum('targetWatts',this)"></div>`
-    : (modalityWantsSplit(condBuilder.modality)
-    ? `<div class=field><label>Target split <span class=muted>(/500m, optional)</span></label><input type=text inputmode=numeric placeholder="1:45" value="${esc(formatSplitSec(condBuilder.targetSplitSec))}" onchange="setCondBuilderSplit(this)"></div>`
-    : '');
-  let card=`<div class="eng-builder-twin dial-engine"><input class=eng-builder-name type=text value="${esc(condBuilder.name||'')}" placeholder="${condBuilder.isRecovery?'Recovery flush':'Easy bike 20'}" aria-label="Session name" oninput="condBuilder.name=this.value"><div class=mph-planline><b>${esc(condPlanLineBuilder())}</b></div><div class=eng-builder-fields><div class="mph-twin-fields"><div class=field><label>Format</label>${condBuilderSelectHtml(COND_FORMATS,'fmt','setCondFmt')}</div><div class=field><label>Modality</label>${condBuilderSelectHtml(COND_MODALITIES,'modality','setCondMod')}</div></div><div class=field style="margin-top:8px"><label>Effort</label></div>${condEffortChipsHtml()}${dose}${watts}</div></div>`;
+  let unitTargets=condBuilderUnitChipsHtml();
+  let card=`<div class="eng-builder-twin dial-engine"><input class=eng-builder-name type=text value="${esc(condBuilder.name||'')}" placeholder="${condBuilder.isRecovery?'Recovery flush':'Easy bike 20'}" aria-label="Session name" oninput="condBuilder.name=this.value"><div class=mph-planline><b>${esc(condPlanLineBuilder())}</b></div><div class=eng-builder-fields><div class="mph-twin-fields"><div class=field><label>Format</label>${condBuilderSelectHtml(COND_FORMATS,'fmt','setCondFmt')}</div><div class=field><label>Modality</label>${condBuilderSelectHtml(COND_MODALITIES,'modality','setCondMod')}</div></div><div class=field style="margin-top:8px"><label>Effort</label></div>${condEffortChipsHtml()}${dose}${unitTargets}</div></div>`;
   $('appScreen').innerHTML=`<div class="eng-builder-shell dial-engine"><div class=eng-builder-head><button type=button class=mph-back onclick="openAthleteConditioningLibrary()" aria-label="Back to Library">← Library</button><span class=eng-builder-kind>${condBuilder.isRecovery?'The Engine · recovery':'The Engine · builder'}</span><button type=button class="btn small primary" onclick="saveCondTemplate()">Save</button></div>${recoveryNote}${card}<div class="ath-sticky dial-engine" style="grid-template-columns:1fr 1fr"><button type=button class="btn" onclick="saveCondTemplate()">Save</button><button type=button class="btn" onclick="saveCondTemplateAsCopy()">Save as template</button><button type=button class="btn primary" style="grid-column:1/-1" onclick="openPublishDaySheet('conditioning')">Publish to day</button></div></div>`;
 }
 function setCondFmt(k){patchCondBuilder({fmt:k})}
-function setCondMod(k){patchCondBuilder({modality:k})}
+function setCondMod(k){let patch={modality:k,targetWatts:'',targetSplitSec:'',targetRpm:''};if(modalityWantsEcho(k))patch.unitLock='watts';else if(modalityWantsSplit(k))patch.unitLock='split';else patch.unitLock='';patchCondBuilder(patch)}
 function setCondEffort(k){patchCondBuilder({effort:k})}
 function athWhoopSampleForEngine(){let c=dailyCheckin(today(),false)||{};let raw=num(c.whoopRecovery);if(!(raw>0)&&!(num(c.restingHr)>0))return null;let w={};if(raw>0)w.recoveryScore=raw;if(num(c.restingHr)>0)w.restingHr=num(c.restingHr);return w}function applyCondBuilderToSession(sess){
   if(!sess)return;
@@ -2033,7 +2029,8 @@ function athWhoopSampleForEngine(){let c=dailyCheckin(today(),false)||{};let raw
     let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
     let z=zones.find(x=>x.key===effort.zoneKey)||zones[0];
     let mins=Math.max(0,num(condBuilder.minutes)||30);
-    patch={heading:fmt.name,conditioningType:fmt.type,modality:condBuilder.modality,targetDurationMin:mins,timeCapMin:mins,targetHrZone:`${z.lo}–${z.hi}`,effort:effort.key,condFmt:fmt.key,rounds:Math.max(1,num(condBuilder.rounds)||fmt.rounds||1),workSec:Math.max(0,num(condBuilder.workSec)||fmt.workSec||0),restSec:Math.max(0,condBuilder.restSec!=null?num(condBuilder.restSec):(fmt.restSec||0)),targetWatts:modalityWantsEcho(condBuilder.modality)?(num(condBuilder.targetWatts)||''):'',targetSplitSec:modalityWantsSplit(condBuilder.modality)?(num(condBuilder.targetSplitSec)||''):'',notes:''};
+    let targets=condBlockTargetsFromBuilder();
+    patch={heading:fmt.name,conditioningType:fmt.type,modality:condBuilder.modality,targetDurationMin:mins,timeCapMin:mins,targetHrZone:`${z.lo}–${z.hi}`,effort:effort.key,condFmt:fmt.key,rounds:Math.max(1,num(condBuilder.rounds)||fmt.rounds||1),workSec:Math.max(0,num(condBuilder.workSec)||fmt.workSec||0),restSec:Math.max(0,condBuilder.restSec!=null?num(condBuilder.restSec):(fmt.restSec||0)),unitLock:targets.unitLock,targetWatts:targets.targetWatts,targetSplitSec:targets.targetSplitSec,targetRpm:targets.targetRpm,notes:''};
   
   (sess.blocks||[]).forEach(b=>{if(b&&b.type==='conditioning')Object.assign(b,patch)});
   if(!(sess.status==='scheduled'||!(sess.tasks||[]).length)){
@@ -2059,7 +2056,7 @@ function openAthleteConditioningBuilder(){
   renderCondBuilder();
 }
 function resetCondBuilder(){
-  condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,targetWatts:'',targetSplitSec:'',name:'',editId:'',isRecovery:false};
+  condBuilder={fmt:'steady',effort:'easy',modality:'Bike',minutes:20,rounds:4,workSec:240,restSec:180,unitLock:'watts',targetWatts:'',targetSplitSec:'',targetRpm:'',name:'',editId:'',isRecovery:false};
 }
 function condBlockFromBuilder(){
   let zones=athZonesForReadiness(athHomeMetrics().recovery);
@@ -2068,7 +2065,8 @@ function condBlockFromBuilder(){
     let fmt=condFormatMeta(condBuilder.fmt),effort=condEffortMeta(condBuilder.effort);
     let z=zones.find(x=>x.key===effort.zoneKey)||zones[0];
     let mins=Math.max(0,num(condBuilder.minutes)||30);
-    patch={heading:fmt.name,conditioningType:fmt.type,modality:condBuilder.modality,targetDurationMin:mins,timeCapMin:mins,targetHrZone:`${z.lo}–${z.hi}`,effort:effort.key,condFmt:fmt.key,rounds:Math.max(1,num(condBuilder.rounds)||fmt.rounds||1),workSec:Math.max(0,num(condBuilder.workSec)||fmt.workSec||0),restSec:Math.max(0,condBuilder.restSec!=null?num(condBuilder.restSec):(fmt.restSec||0)),targetWatts:modalityWantsEcho(condBuilder.modality)?(num(condBuilder.targetWatts)||''):'',targetSplitSec:modalityWantsSplit(condBuilder.modality)?(num(condBuilder.targetSplitSec)||''):'',notes:''};
+    let targets=condBlockTargetsFromBuilder();
+    patch={heading:fmt.name,conditioningType:fmt.type,modality:condBuilder.modality,targetDurationMin:mins,timeCapMin:mins,targetHrZone:`${z.lo}–${z.hi}`,effort:effort.key,condFmt:fmt.key,rounds:Math.max(1,num(condBuilder.rounds)||fmt.rounds||1),workSec:Math.max(0,num(condBuilder.workSec)||fmt.workSec||0),restSec:Math.max(0,condBuilder.restSec!=null?num(condBuilder.restSec):(fmt.restSec||0)),unitLock:targets.unitLock,targetWatts:targets.targetWatts,targetSplitSec:targets.targetSplitSec,targetRpm:targets.targetRpm,notes:''};
   
   let block=Object.assign({id:id(),type:'conditioning'},patch);
   if(condBuilder.isRecovery){
@@ -2231,6 +2229,11 @@ function engineZonesHtml(hr){let m=athHomeMetrics(),zones=athZonesForReadiness(m
 let echoBike={conn:null,live:null,status:'idle',error:'',name:''};
 function modalityWantsEcho(mod){let m=String(mod||'').toLowerCase();return m.includes('bike')||m.includes('echo')||m.includes('air')}
 function modalityWantsSplit(mod){let m=String(mod||'').toLowerCase();return m.includes('row')||m.includes('ski')}
+function condBuilderXorUnits(mod){if(modalityWantsEcho(mod))return[{key:'watts',name:'Watts'},{key:'rpm',name:'RPM'}];if(modalityWantsSplit(mod))return[{key:'split',name:'Split'},{key:'watts',name:'Watts'}];return null}
+function condBuilderResolveUnitLock(b){b=b||condBuilder;let lock=b.unitLock;if(lock==='rpm'||lock==='watts'||lock==='split')return lock;if(num(b.targetRpm))return'rpm';if(num(b.targetWatts))return'watts';if(modalityWantsSplit(b.modality)&&num(b.targetSplitSec))return'split';if(modalityWantsEcho(b.modality))return'watts';if(modalityWantsSplit(b.modality))return'split';return'watts'}
+function setCondBuilderUnitLock(k){let patch={unitLock:k};if(k==='watts'){patch.targetRpm='';if(modalityWantsSplit(condBuilder.modality))patch.targetSplitSec='';}else if(k==='rpm')patch.targetWatts='';else if(k==='split')patch.targetWatts='';patchCondBuilder(patch)}
+function condBuilderUnitChipsHtml(){let units=condBuilderXorUnits(condBuilder.modality);if(!units)return'';let lock=condBuilderResolveUnitLock(),chips=`<div class=field><label>Target unit</label><div class=mph-chips role=group aria-label="Target unit">${units.map(u=>{let on=lock===u.key;return`<button type=button class="mph-chip${on?' on':''}" aria-pressed="${on?'true':'false'}" onclick="setCondBuilderUnitLock('${u.key}')">${esc(u.name)}</button>`}).join('')}</div><p class=mph-hint>One unit for this block — not switchable mid-block.</p></div>`,input='';if(lock==='watts')input=`<div class=field><label>Target watts <span class=muted>(optional)</span></label><input type=number min=0 step=5 placeholder="180" value="${esc(condBuilder.targetWatts==null?'':condBuilder.targetWatts)}" onchange="setCondBuilderNum('targetWatts',this)"></div>`;else if(lock==='rpm')input=`<div class=field><label>Target RPM <span class=muted>(optional)</span></label><input type=number min=0 step=1 placeholder="80" value="${esc(condBuilder.targetRpm==null?'':condBuilder.targetRpm)}" onchange="setCondBuilderNum('targetRpm',this)"></div>`;else if(lock==='split')input=`<div class=field><label>Target split <span class=muted>(/500m, optional)</span></label><input type=text inputmode=numeric placeholder="1:45" value="${esc(formatSplitSec(condBuilder.targetSplitSec))}" onchange="setCondBuilderSplit(this)"></div>`;return chips+input}
+function condBlockTargetsFromBuilder(){let b=condBuilder,lock=condBuilderResolveUnitLock(b),out={targetWatts:'',targetSplitSec:'',targetRpm:'',unitLock:lock};if(modalityWantsEcho(b.modality)){if(lock==='rpm')out.targetRpm=num(b.targetRpm)||'';else out.targetWatts=num(b.targetWatts)||'';}else if(modalityWantsSplit(b.modality)){if(lock==='split')out.targetSplitSec=num(b.targetSplitSec)||'';else out.targetWatts=num(b.targetWatts)||'';}return out}
 function formatSplitSec(sec){sec=Math.max(0,Math.round(num(sec)||0));if(!sec)return'';let m=Math.floor(sec/60),s=sec%60;return m+':'+(s<10?'0':'')+s}
 function parseSplitSec(v){v=String(v||'').trim();if(!v)return'';if(/^\d+$/.test(v))return Math.max(0,num(v));let m=v.match(/^(\d+)\s*[:.]\s*(\d{1,2})$/);if(!m)return'';return Math.max(0,num(m[1])*60+num(m[2]))}
 function setCondBuilderSplit(el){condBuilder.targetSplitSec=parseSplitSec(el&&el.value);renderCondBuilder()}
@@ -2418,6 +2421,8 @@ function loadCondBuilderFromTemplate(t){
     restSec:Math.max(0,num(b.restSec)||0),
     targetWatts:b.targetWatts||'',
     targetSplitSec:b.targetSplitSec||'',
+    targetRpm:b.targetRpm||'',
+    unitLock:b.unitLock||(num(b.targetRpm)?'rpm':(num(b.targetSplitSec)&&!num(b.targetWatts)?'split':'watts')),
     name:t.name||'',
     editId:t.id,
     isRecovery:!!b.recoverySession||isRecoveryTemplate(t),
@@ -2527,7 +2532,7 @@ function applyOpenLiftToEx(ex){if(!ex||!window.HybridAdaptive||!HybridAdaptive.o
 function applyOpenLifts(x){(x.tasks||[]).forEach(t=>{if(t.kind==='strength')applyOpenLiftToEx(t);if(t.kind==='superset')(t.exercises||[]).forEach(applyOpenLiftToEx)})}
 function persistCloseForEx(ex){if(!ex||!window.HybridAdaptive||!HybridAdaptive.closeLift)return;if(isCarryExercise(ex))return;let last=[...(ex.rows||[])].reverse().find(r=>r.done&&!isSealedEffortRow(r));if(!last)return;S.adaptiveClose=S.adaptiveClose||{};S.adaptiveClose[liftCloseKey(ex)]=HybridAdaptive.closeLift({lastLogged:{loadKg:num(last.weight),reps:num(last.reps),rir:last.rir===''?null:num(last.rir)}})}
 function condCloseKey(t){let mod=condAdaptiveModality(t);let stable=(t&&(t.sourceBlockId||t.blockId||t.templateBlockId||t.id))||'';return mod+'::'+String(stable)}
-function persistCloseForCond(t){if(!t||t.kind!=='conditioning'||isRecoveryCondTask(t)||!window.HybridAdaptive||!HybridAdaptive.closeCond)return;let modality=condAdaptiveModality(t);let lastMade=modality==='split'?{splitSec:num(t.targetSplitSec)||undefined}:{watts:num(t.targetWatts)||undefined};if(lastMade.watts==null&&lastMade.splitSec==null)return;S.adaptiveCondClose=S.adaptiveCondClose||{};S.adaptiveCondClose[condCloseKey(t)]=HybridAdaptive.closeCond({lastMade})}
+function persistCloseForCond(t){if(!t||t.kind!=='conditioning'||isRecoveryCondTask(t)||!window.HybridAdaptive||!HybridAdaptive.closeCond)return;let modality=condAdaptiveModality(t);let lastMade=modality==='split'?{splitSec:num(t.targetSplitSec)||undefined}:(modality==='rpm'?{rpm:num(t.targetRpm)||undefined}:{watts:num(t.targetWatts)||undefined});if(lastMade.watts==null&&lastMade.splitSec==null&&lastMade.rpm==null)return;S.adaptiveCondClose=S.adaptiveCondClose||{};S.adaptiveCondClose[condCloseKey(t)]=HybridAdaptive.closeCond({lastMade})}
 function condOpenBand(t){let fmt=String(t&&t.condFmt||'steady'),eff=String(t&&t.effort||'medium');if(eff==='easy'||fmt==='free')return'easy';if(fmt==='threshold')return'threshold';if(fmt==='intervals'||eff==='hard')return'intervals';if(fmt==='tempo')return'tempo';if(fmt==='steady')return'steady';if(eff==='medium')return'steady';return'intervals'}
 function whoopRecoveryForOpen(){let c=dailyCheckin(today(),false),r=num(c&&c.whoopRecovery);return r>0?r:null}
 function paintOpenCondFromAnchors(t,modality){let HA=window.HybridAdaptive;if(!HA||!HA.mapBandFrom2k||!HA.softenOpen)return null;let recovery=whoopRecoveryForOpen(),band=condOpenBand(t),profile=S.profile||{};if(modality==='rpm'){let anchor=num(profile.bikeRpmAnchor);if(!anchor)return null;return{rpm:HA.softenOpen(anchor,'rpm',recovery)}}if(modality==='split'){let race2k=num(profile.race2kSec);if(!race2k)return null;let mapped=HA.mapBandFrom2k(race2k,band);return{splitSec:HA.softenOpen(mapped.splitSec,'split',recovery)}}if(band==='easy'&&num(profile.bikeWattsAnchor))return{watts:HA.softenOpen(num(profile.bikeWattsAnchor),'watts',recovery)};let race2k=num(profile.race2kSec);if(race2k){let mapped=HA.mapBandFrom2k(race2k,band);return{watts:HA.softenOpen(mapped.watts,'watts',recovery)}}if(num(profile.bikeWattsAnchor))return{watts:HA.softenOpen(num(profile.bikeWattsAnchor),'watts',recovery)};return null}
@@ -2624,7 +2629,7 @@ function intervalTask(t){/*removed*/let r=t.result||{},iv=normaliseInterval(t),e
 function toggleIntervals(){let t=current(),iv=normaliseInterval(t),now=Date.now();if(iv.finished)return;if(iv.running){iv.elapsed=intervalElapsed(iv,now);iv.remaining=intervalRemaining(iv,now);iv.running=false;iv.runStartedAt=null;iv.phaseEndsAt=null}else{if(iv.phase==='ready'){iv.phase='work';iv.remaining=num(t.workSec)}iv.running=true;iv.runStartedAt=now;iv.phaseEndsAt=now+Math.max(1,num(iv.remaining))*1000}if(iv.running)ensureCondClockRunning();save();refreshCondLogOrTrain()}
 function isRecoveryCondTask(t){let x=ses(S.active);return !!(t&&(t.recoverySession||(x&&(x.recoverySession||x.templateId==='tpl-recovery'))))}
 function condPaintedRpe(t){let k=(condEffortMeta((t&&t.effort)||'medium')||{}).key;if(k==='easy')return{min:3,max:4};if(k==='hard')return{min:8,max:9.5};return{min:5,max:7}}
-function condAdaptiveModality(t){let m=String((t&&t.modality)||'');if(num(t&&t.targetRpm))return'rpm';if(/rower|ski/i.test(m))return'split';if(/bike|echo|fan/i.test(m))return'watts';if(num(t&&t.targetWatts))return'watts';if(num(t&&t.targetSplitSec))return'split';return'watts'}
+function condAdaptiveModality(t){if(!t)return'watts';let lock=String(t.unitLock||'');if(lock==='rpm'||lock==='split'||lock==='watts')return lock;if(num(t.targetRpm))return'rpm';if(num(t.targetWatts))return'watts';if(num(t.targetSplitSec))return'split';let m=String(t.modality||'');if(/rower|ski/i.test(m))return'split';if(/bike|echo|fan/i.test(m))return'watts';return'watts'}
 function condCurrentWatts(t){let n=num(t&&t.targetWatts);return n||null}
 function condCurrentSplit(t){let n=num(t&&t.targetSplitSec);return n||null}
 function condCurrentRpm(t){let n=num(t&&t.targetRpm);return n||null}
