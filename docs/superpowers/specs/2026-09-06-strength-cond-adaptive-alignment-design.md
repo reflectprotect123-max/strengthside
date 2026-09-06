@@ -1,7 +1,7 @@
 # Strength ↔ Cond Adaptive Alignment (+ pace anchors)
 
 **Date:** 2026-09-06  
-**Status:** Approved in brainstorm — awaiting human review of this written spec  
+**Status:** Approved in brainstorm — awaiting human review of this written spec (incl. Analytics)  
 **Product surface:** Hybrid HTML athlete app (`apps/mobile/prototype/hybrid-app/`) + `@hybrid/adaptive`  
 **Related:** Instrument / workshop / chassis design; session/template sync contract (Phase M)
 
@@ -13,9 +13,9 @@ Keep **strength** and **conditioning** on the **same adaptive shape** so the app
 
 **Open the day → do the work → log what you actually did → say how it felt → Next re-aims remaining work → Close remembers last made.**
 
-Conditioning also gains **Settings race/anchors**, a **band map**, and **WHOOP only for today’s Open** — without a chatty AI coach.
+Conditioning also gains **Settings race/anchors**, a **band map**, **WHOOP only for today’s Open**, and a thin **Analytics** view (work + recovery trends) — without a chatty AI coach.
 
-**Success:** A rower interval session and a fan-bike session behave like logging a lift: overriding the real number + RPE changes the **next** piece; Settings anchors do not get rewritten by one bad piece.
+**Success:** A rower interval session and a fan-bike session behave like logging a lift: overriding the real number + RPE changes the **next** piece; Settings anchors do not get rewritten by one bad piece. Trends are for looking back, not for rewriting the rail.
 
 ---
 
@@ -66,7 +66,25 @@ WHOOP does not rewrite Settings.
 
 ---
 
-## 3. Builder rules
+## 3. Analytics (thin, under conditioning)
+
+Place a small **Analytics** tab (or sub-view) under **conditioning / The Engine** — not a Library-wide Progress rebuild, and not a replacement for Recovery.
+
+**Both charts (locked choice):**
+
+1. **Work output trend** — from logged work: threshold/interval **split** and/or **watts** as the session’s unit recorded them. Prefer the unit that was locked for that block. Do not invent a cross-unit series (no fake RPM↔watts chart glue).
+2. **WHOOP readiness / HRV trend** — recovery/HRV over recent days for glanceable context.
+
+**Rail rules (must not contradict the locked adaptive rail):**
+
+- Analytics is **read-only proof**. It does **not** write Settings anchors, does **not** feed Cond Next, and does **not** replace Open’s WHOOP map.
+- WHOOP on Analytics is **history display**; WHOOP on Open remains **today’s soften/sharpen only**.
+- Empty / missing WHOOP or sparse logs → calm empty state, not guessed points.
+- Stay thin: two charts + short labels. No coach copy, no LLM narrative, no WM/PR Progress resurrection.
+
+---
+
+## 4. Builder rules
 
 - **Machine free:** rower **or** fan bike for easy **or** hard (intervals / threshold / tempo included on either).
 - **One unit per block — not switchable mid-block:**
@@ -76,7 +94,7 @@ WHOOP does not rewrite Settings.
 
 ---
 
-## 4. Logger + Next (the alignment fix)
+## 5. Logger + Next (the alignment fix)
 
 1. Session/task **Open** paints the unit target for today (map × WHOOP / OpenCond memory as designed).
 2. Athlete may **override** the logged actual (e.g. plan `2:00`, truth `2:05`).
@@ -88,40 +106,56 @@ Within a session, guesses improve from piece to piece. Across days, **Close** me
 
 ---
 
-## 5. Out of scope
+## 6. Out of scope
 
 - Genius / LLM coach that proposes or writes targets directly
-- Fake RPM↔watts conversion as adaptive truth
-- Auto-updating 2k from routine interval logs
+- Fake RPM↔watts conversion as adaptive truth (including chart series)
+- Auto-updating 2k from routine interval logs (or from Analytics)
+- Full Library **Progress** rebuild / WM·PR strength Progress resurrection
 - Capgo / store ship unless explicitly requested
-- Rewriting Instrument / workshop / chassis room work except where Cond doors must change
+- Rewriting Instrument / workshop / chassis room work except where Cond doors / thin Analytics must change
 
 ---
 
-## 6. Guard rail (product + engineering)
+## 7. Guard rail (product + engineering)
 
 Ship a short contract mindset (this spec) plus **smokes that fail on drift**, including at least:
 
 - Cond Next input includes **actual** modality value (splitSec / watts / rpm) and RPE; baseline is not plan-only
 - Strength and Cond door story remains Open → log → feel → Next → Close
 - Builder modality enum / wiring: fan bike supports RPM XOR watts; no silent cross-fill
-- Settings anchor fields exist; no logger path writes Settings 2k on interval complete
+- Settings anchor fields exist; no logger path (and no Analytics path) writes Settings 2k on interval complete
+- Cond Analytics surface exists under conditioning with work-output + WHOOP readiness/HRV trends; charts do not call Next or mutate anchors
 
 ---
 
-## 7. Delivery order
+## 8. Delivery order
 
 1. This spec reviewed and approved  
 2. Implementation plan (writing-plans):  
    - Fix Cond Next parity (actual + RPE) in `@hybrid/adaptive` + HTML door  
    - Settings 2k / map / WHOOP Open  
    - Builder unit lock + fan-bike RPM\|watts  
-   - Smokes for the rail  
+   - Thin Cond Analytics tab (work output + WHOOP readiness/HRV)  
+   - Smokes for the rail (+ Analytics read-only / no-anchor-write)  
 3. Human tests the app (Instrument / workshop / chassis already on branch; then this alignment)  
 4. Capgo only on explicit ask  
 
 ---
 
-## 8. Naming note
+## 9. Naming note
 
 Room nickname **Atelier** (French: workshop) was product shorthand for Library + builders. Prefer plain **workshop / Library** in athlete-facing copy. Internal doc titles may keep the old filename for continuity.
+
+---
+
+## 10. Self-review (contradiction check)
+
+| Locked rail | Analytics / this update |
+| --- | --- |
+| Next from **actual + RPE** | Charts do not feed Next |
+| Settings anchors immutable from logs | Analytics read-only; no auto-2k |
+| Modality XOR / no silent unit swap | Work chart uses the logged unit; no RPM↔watts glue |
+| No fake RPM↔watts | Explicitly banned for adaptive truth **and** chart series |
+| No LLM coach | No narrative coach on Analytics |
+| WHOOP for **today’s Open only** (targets) | Analytics WHOOP is separate history display; Open rule unchanged |
