@@ -1691,6 +1691,30 @@ function applyBlankSlatePatch(state){
   state.meta.blankSlateVersion=BLANK_SLATE_VERSION;
   return state;
 }
+function isStrengthCutTemplate(t){
+  if(!t)return false;
+  if(STARTER_STRENGTH_NAMES.includes(String(t.name||'')))return true;
+  if(String(t.templateKind||'').toLowerCase()==='strength')return true;
+  return templateHasStrength(t);
+}
+function applyStrengthCutPatch(state){
+  state=state||{};
+  state.meta=state.meta||{};
+  if(state.meta.strengthCutV1)return state;
+  state.sessions=[];
+  state.active=null;
+  delete state.draft;
+  state.templates=(state.templates||[]).filter(t=>!isStrengthCutTemplate(t));
+  state.strengthState={workingMaxEvents:[],prEvents:[],loadHints:{}};
+  delete state.adaptiveClose;
+  state.settings=state.settings||{};
+  delete state.settings.strengthSchedule;
+  delete state.meta.starterFullBodyAVersion;
+  delete state.meta.starterFullBodyBVersion;
+  delete state.meta.starterFullBodyCVersion;
+  state.meta.strengthCutV1=isoNow();
+  return state;
+}
 const STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C'];
 const STARTER_FULLBODY_A_VERSION='fullbody-a-metric-v2';
 const STARTER_FULLBODY_B_VERSION='fullbody-b-metric-v1';
@@ -1836,9 +1860,6 @@ function upsertNamedStarter(state,name,buildFn,normalizeFn,needsRefresh){
 function ensureStarterTemplates(state){
   state=state||{};
   state.templates=Array.isArray(state.templates)?state.templates:[];
-  ensureFullBodyAStarter(state);
-  ensureFullBodyBStarter(state);
-  ensureFullBodyCStarter(state);
   upsertNamedStarter(state,'Aerobic Conditioning',buildStarterAerobicCondTemplate,normalizeAthleteCondTemplate,starterAerobicNeedsRefresh);
   upsertNamedStarter(state,'Recovery',buildStarterRecoveryTemplate,normalizeAthleteCondTemplate,starterRecoveryNeedsRefresh);
   state.exercises=dedupe(state.exercises||[]);
@@ -2024,7 +2045,7 @@ function applyAthleteBuilderPatch(state){
   return state;
 }
 function applyAthleteShellPatch(state){state=state||{};state.meta=state.meta||{};state.exercises=Array.isArray(state.exercises)?state.exercises:[];state.templates=Array.isArray(state.templates)?state.templates:[];state.sessions=Array.isArray(state.sessions)?state.sessions:[];state.settings=state.settings||{};delete state.settings.showStrengthBuilder;delete state.settings.llmCoachIntent;delete state.settings.llmProgression;delete state.settings.minimalUi;
-  if(state.meta.builderCleanVersion===BUILDER_CLEAN_VERSION){state=purgeEverydayReadiness(purgeStrengthTemplates(state));return ensureProgramTemplates(applyAthleteBuilderPatch(applyCalendarCompletionDatePatch(applyCalendarCleanPatch(ensureStarterTemplates(applyBlankSlatePatch(state))))))}
+  if(state.meta.builderCleanVersion===BUILDER_CLEAN_VERSION){state=purgeEverydayReadiness(purgeStrengthTemplates(state));return ensureProgramTemplates(applyAthleteBuilderPatch(applyCalendarCompletionDatePatch(applyCalendarCleanPatch(ensureStarterTemplates(applyStrengthCutPatch(applyBlankSlatePatch(state)))))))}
   state=purgeEverydayReadiness(state);
   state=purgeStrengthTemplates(state);
   state.programs=[];state.activeProgramId=null;state.settings.activeProgramId=null;state.hiddenProgramIds=[];state.hiddenTemplateIds=[];
@@ -2034,7 +2055,7 @@ function applyAthleteShellPatch(state){state=state||{};state.meta=state.meta||{}
   state.meta.builderCleanVersion=BUILDER_CLEAN_VERSION;
   state.meta.everydayReadinessNetlifyPatch=BUILDER_CLEAN_VERSION;
   state.meta.athleteShellVersion=BUILDER_CLEAN_VERSION;
-  return ensureProgramTemplates(applyAthleteBuilderPatch(applyCalendarCompletionDatePatch(applyCalendarCleanPatch(ensureStarterTemplates(applyBlankSlatePatch(state))))))
+  return ensureProgramTemplates(applyAthleteBuilderPatch(applyCalendarCompletionDatePatch(applyCalendarCleanPatch(ensureStarterTemplates(applyStrengthCutPatch(applyBlankSlatePatch(state)))))))
 }
 function cleanLoadedData(state){state=state||{};state.templates=(state.templates||[]).filter(t=>!legacyTemplate(t));for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');state.exercises=(state.exercises||[]).filter(e=>!new RegExp('^s'+'ump deadlift$','i').test(String(e.name||'')));for(const e of state.exercises||[]){if(new RegExp('^t'+'bar row$','i').test(String(e.name||''))){e.name='T-Bar Row';e.category='Strength — Pull';e.id='core-t-bar-row';e.builtIn=true;e.source='THE-core-100'}}state.exercises=dedupe(state.exercises||[]);return state}
 function applyBundledExerciseHistorySeed(state){if(typeof applyExerciseHistorySeed!=='function'||!window.EXERCISE_HISTORY_SEED)return state;let result=applyExerciseHistorySeed(state,window.EXERCISE_HISTORY_SEED);return result?.state||state}
