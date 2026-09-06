@@ -7,14 +7,12 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const bundle = readFileSync(join(dir, 'adaptive-bundle.js'), 'utf8');
 const ctx = { HybridAdaptive: undefined };
 vm.runInNewContext(bundle, ctx);
-if (!ctx.HybridAdaptive?.decideNextLift) throw new Error('HybridAdaptive.decideNextLift missing');
+if (ctx.HybridAdaptive?.decideNextLift) throw new Error('HybridAdaptive.decideNextLift must be absent');
+if (ctx.HybridAdaptive?.openLift) throw new Error('HybridAdaptive.openLift must be absent');
+if (ctx.HybridAdaptive?.closeLift) throw new Error('HybridAdaptive.closeLift must be absent');
 if (!ctx.HybridAdaptive?.decideNextCond) throw new Error('HybridAdaptive.decideNextCond missing');
-const next = ctx.HybridAdaptive.decideNextLift({
-  dayKind: 'strength',
-  range: { min: 8, max: 12 },
-  logged: { loadKg: 80, reps: 12, rir: 4 },
-});
-if (next.loadKg !== 82.5 || next.reps !== 8) throw new Error('bundle lift Next mismatch');
+if (!ctx.HybridAdaptive?.openCond) throw new Error('HybridAdaptive.openCond missing');
+if (!ctx.HybridAdaptive?.closeCond) throw new Error('HybridAdaptive.closeCond missing');
 const cond = ctx.HybridAdaptive.decideNextCond({
   dayKind: 'conditioning',
   modality: 'watts',

@@ -57,10 +57,10 @@ must(complete.includes('promptCondWorkRpe'), 'complete must open RPE door');
 must(complete.includes('runDecideNextCond'), 'complete must call Next after RPE');
 must(!complete.includes('race2kSec'), 'complete must not write race2kSec anchor');
 
-// Open → log → feel → Next → Close (strength + cond share the shape)
-must(html.includes('HybridAdaptive.openLift'), 'strength Open door');
-must(html.includes('HybridAdaptive.closeLift'), 'strength Close door');
-must(html.includes('HybridAdaptive.decideNextLift'), 'strength Next door');
+// Open → log → feel → Next → Close (cond-only after strength cut)
+must(!html.includes('HybridAdaptive.openLift'), 'lift Open must be absent');
+must(!html.includes('HybridAdaptive.closeLift'), 'lift Close must be absent');
+must(!html.includes('HybridAdaptive.decideNextLift'), 'lift Next must be absent');
 must(html.includes('HybridAdaptive.openCond'), 'cond Open door');
 must(html.includes('HybridAdaptive.closeCond'), 'cond Close door');
 must(html.includes('HybridAdaptive.decideNextCond'), 'cond Next door');

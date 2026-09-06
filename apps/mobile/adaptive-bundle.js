@@ -28,111 +28,13 @@ var HybridAdaptive = (() => {
     BAND_WATTS_RATIO_EASY: () => BAND_WATTS_RATIO_EASY,
     CONCEPT2_WATTS_FACTOR: () => CONCEPT2_WATTS_FACTOR,
     closeCond: () => closeCond,
-    closeLift: () => closeLift,
     decideNextCond: () => decideNextCond,
-    decideNextLift: () => decideNextLift,
-    estimateOneRm: () => estimateOneRm,
     mapBandFrom2k: () => mapBandFrom2k,
     openCond: () => openCond,
-    openLift: () => openLift,
-    parseRepRange: () => parseRepRange,
-    roundToPlate: () => roundToPlate,
     softenOpen: () => softenOpen,
     splitSecFrom2k: () => splitSecFrom2k,
     wattsFromSplitSec: () => wattsFromSplitSec
   });
-
-  // packages/adaptive/src/range.ts
-  function parseRepRange(input) {
-    const raw = (input ?? "").trim();
-    if (!raw) return { min: 8, max: 12 };
-    const m = raw.match(/^(\d+)\s*-\s*(\d+)$/);
-    if (m) {
-      const a = Number(m[1]);
-      const b = Number(m[2]);
-      return { min: Math.min(a, b), max: Math.max(a, b) };
-    }
-    const n = Number(raw);
-    if (Number.isFinite(n) && n > 0) return { min: n, max: n };
-    return { min: 8, max: 12 };
-  }
-
-  // packages/adaptive/src/estimate-one-rm.ts
-  function estimateOneRm(input) {
-    const w = input.loadKg;
-    const r = input.reps;
-    if (!w || !r) return 0;
-    const reserve = input.rir == null || Number.isNaN(Number(input.rir)) ? 0 : Number(input.rir);
-    const effective = Math.max(1, Math.min(20, r + Math.max(0, Math.min(10, reserve))));
-    return Math.round(w * (1 + effective / 30) * 10) / 10;
-  }
-
-  // packages/adaptive/src/plates.ts
-  function roundToPlate(kg) {
-    if (!Number.isFinite(kg)) return 0;
-    return Math.max(0, Math.round(kg / 2.5) * 2.5);
-  }
-
-  // packages/adaptive/src/decide-next-lift.ts
-  function rirValue(rir) {
-    if (rir == null || Number.isNaN(Number(rir))) return 0;
-    return Number(rir);
-  }
-  function mediumBump(range) {
-    if (range.min >= range.max) return range.min;
-    const extra = range.max - range.min >= 4 ? 2 : 1;
-    return Math.min(range.max, range.min + extra);
-  }
-  function decideNextLift(input) {
-    if (input.dayKind !== "strength") return { ok: false, reason: "wrong_day" };
-    const reps = input.logged.reps;
-    if (reps < 1 || reps >= 80) return { ok: false, reason: "reps_out_of_sanity" };
-    const rir = rirValue(input.logged.rir);
-    const kg = input.logged.loadKg;
-    const { min, max } = input.range;
-    const single = min === max;
-    const nextRepsSingle = min;
-    if (reps < min) {
-      return { ok: true, loadKg: roundToPlate(Math.max(0, kg - 2.5)), reps: single ? nextRepsSingle : min };
-    }
-    if (reps >= max) {
-      if (rir >= 3) {
-        return { ok: true, loadKg: roundToPlate(kg + 2.5), reps: single ? nextRepsSingle : min };
-      }
-      if (rir === 2) {
-        return {
-          ok: true,
-          loadKg: roundToPlate(kg + 2.5),
-          reps: single ? nextRepsSingle : mediumBump(input.range)
-        };
-      }
-      return { ok: true, loadKg: kg, reps: single ? nextRepsSingle : max };
-    }
-    if (rir >= 2) {
-      return { ok: true, loadKg: kg, reps };
-    }
-    return { ok: true, loadKg: kg, reps: min };
-  }
-
-  // packages/adaptive/src/open-lift.ts
-  function openLift(input) {
-    if (input.dayKind !== "strength") return { ok: false, reason: "wrong_day" };
-    const range = parseRepRange(input.rangeText);
-    const reps = input.lastClose?.reps ?? range.min;
-    const loadKg = input.lastClose?.loadKg ?? null;
-    return { ok: true, loadKg, reps };
-  }
-
-  // packages/adaptive/src/close-lift.ts
-  function closeLift(input) {
-    const { loadKg, reps, rir } = input.lastLogged;
-    return {
-      ok: true,
-      loadKg,
-      reps,
-      e1rmKg: estimateOneRm({ loadKg, reps, rir })
-    };
-  }
 
   // packages/adaptive/src/decide-next-cond.ts
   function condBand(actual, target, stopped, cooked) {
