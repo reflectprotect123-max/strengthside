@@ -1,5 +1,5 @@
 /**
- * Smoke: blank-slate boot — Engine + Recovery only after strength cut; cache pin.
+ * Smoke: blank-slate boot — no product engines; cache pin; starter shape.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -13,8 +13,8 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const sw = readFileSync(join(dir, 'service-worker.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v194'"), 'LOCAL_BUILD v192');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-blank-v194'"), 'SW v192');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v194'"), 'LOCAL_BUILD v190');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-blank-v194'"), 'SW v190');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(html), 'athlete app has no TrainHeroic code');
 must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise seed on boot');
 must(!html.includes('function libraryExercisesTab'), 'no Library Exercises tab');
@@ -23,12 +23,7 @@ must(html.includes('x.templates=[];x.sessions=[]'), 'defaultState starts blank')
 must(html.includes('x.exercises=[]'), 'defaultState starts with empty exercises');
 must(html.includes('BLANK_SLATE_VERSION='), 'blank slate migration version');
 must(html.includes('function ensureStarterTemplates'), 'ensure starter templates');
-must(html.includes('strengthCutV1'), 'strength cut migrate marker');
-const ensureBlock = html.slice(
-  html.indexOf('function ensureStarterTemplates'),
-  html.indexOf('function applyCalendarCleanPatch'),
-);
-must(!ensureBlock.includes('ensureFullBodyAStarter(state)'), 'no Full Body A seed in ensureStarterTemplates');
+must(html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C']"), 'Full Body A in starter list');
 must(!html.includes('StrengthAdapter'), 'no StrengthAdapter');
 must(!html.includes('EngineAdapter'), 'no EngineAdapter');
 must(!html.includes('BigMacBridge'), 'no BigMacBridge');
