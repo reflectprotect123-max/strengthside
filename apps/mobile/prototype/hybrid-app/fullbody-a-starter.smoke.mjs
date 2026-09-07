@@ -99,7 +99,6 @@ must(sandbox.seed, 'seed parse failed');
 vm.createContext(sandbox);
 vm.runInContext(logColumnsSrc, sandbox);
 vm.runInContext(readFileSync(join(dir, 'exercise-load-profiles.js'), 'utf8'), sandbox);
-vm.runInContext(readFileSync(join(dir, 'strength-adapter.js'), 'utf8'), sandbox);
 vm.runInContext(chunk, sandbox);
 
 const legacy = {

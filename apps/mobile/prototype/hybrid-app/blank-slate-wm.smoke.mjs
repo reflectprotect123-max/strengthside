@@ -13,8 +13,8 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 const sw = readFileSync(join(dir, 'service-worker.js'), 'utf8');
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v193'"), 'LOCAL_BUILD v192');
-must(sw.includes("const CACHE = 'the-hybrid-athlete-blank-v193'"), 'SW v192');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v194'"), 'LOCAL_BUILD v192');
+must(sw.includes("const CACHE = 'the-hybrid-athlete-blank-v194'"), 'SW v192');
 must(!/trainheroic|TrainHeroic|TRAINHEROIC/i.test(html), 'athlete app has no TrainHeroic code');
 must(!html.includes('for(const core of seed.exercises)'), 'no auto core exercise seed on boot');
 must(!html.includes('function libraryExercisesTab'), 'no Library Exercises tab');
