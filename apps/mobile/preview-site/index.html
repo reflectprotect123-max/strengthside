@@ -681,6 +681,9 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .shell-screen--oled{
   background:var(--oled-bg);
   color:var(--oled-text);
+  max-width:100%;
+  min-width:0;
+  overflow-x:hidden;
 }
 .shell-screen--oled > .eyebrow,
 .shell-screen--oled .eyebrow,
@@ -705,34 +708,66 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
   background:var(--oled-surface);
   box-shadow:none;
 }
-/* Dials float on true black — no gray card */
+/* Dials float on true black — no gray card.
+   Stack WHOOP label above dials so three rings use full content width
+   (side label + 110px×3 overflowed the phone and clipped the CTA). */
 .shell-screen--oled .ath-module-whoop{
+  flex-direction:column;
+  align-items:stretch;
+  gap:6px;
   border:0;
   background:transparent;
   box-shadow:none;
   padding:8px 0 4px;
   margin:0 0 8px;
+  max-width:100%;
+  min-width:0;
+  overflow:hidden;
 }
 .shell-screen--oled .ath-module-whoop .ath-label{
+  width:auto;
+  flex-shrink:0;
   color:rgba(255,255,255,.4);
   letter-spacing:.22em;
   font-size:11px;
 }
-.shell-screen--oled .ath-whoop-dials{gap:8px;margin:10px 0 14px}
-.shell-screen--oled .ath-whoop-dial-ring,
-.shell-screen--oled .ath-whoop-dial-ring svg{
-  width:110px;height:110px;
+.shell-screen--oled .ath-module-whoop .ath-chev{display:none}
+.shell-screen--oled .ath-module-whoop .ath-whoop-wrap{
+  width:100%;
+  min-width:0;
+  max-width:100%;
 }
-.shell-screen--oled .ath-whoop-dial-val{font-size:30px;font-weight:700;letter-spacing:-.03em}
-.shell-screen--oled .ath-whoop-dial-val small{font-size:12px;opacity:.9}
+.shell-screen--oled .ath-whoop-dials{
+  gap:clamp(4px,1.6vw,8px);
+  margin:10px 0 14px;
+  max-width:100%;
+  min-width:0;
+}
+.shell-screen--oled .ath-whoop-dial{min-width:0;max-width:100%}
+.shell-screen--oled .ath-whoop-dial-ring{
+  width:min(110px,100%);
+  height:auto;
+  aspect-ratio:1;
+  margin:0 auto;
+  max-width:100%;
+  filter:drop-shadow(0 0 14px rgba(22,242,107,.12));
+}
+.shell-screen--oled .ath-whoop-dial-ring svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+.shell-screen--oled .ath-whoop-dial-val{font-size:clamp(22px,7.2vw,30px);font-weight:700;letter-spacing:-.03em}
+.shell-screen--oled .ath-whoop-dial-val small{font-size:clamp(10px,3vw,12px);opacity:.9}
 .shell-screen--oled .ath-whoop-dial-lab{
   color:rgba(255,255,255,.5);
   letter-spacing:.18em;
   font-size:10px;
   margin-top:2px;
-}
-.shell-screen--oled .ath-whoop-dial-ring{
-  filter:drop-shadow(0 0 14px rgba(22,242,107,.12));
+  text-align:center;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .shell-screen--oled .ath-whoop-dial:nth-child(1) .ath-whoop-dial-ring{
   filter:drop-shadow(0 0 14px rgba(157,180,200,.18));
@@ -767,10 +802,14 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
   box-shadow:none;
   padding:18px 0 8px;
   border-left:0;border-right:0;border-radius:0;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
 }
 .shell-screen--oled .home-brief .eyebrow{color:var(--oled-muted)}
 .shell-screen--oled .home-brief .title{color:var(--oled-text);font-size:22px}
 .shell-screen--oled .home-brief .meta{color:var(--oled-muted)}
+.shell-screen--oled .home-cta{max-width:100%;min-width:0}
 .shell-screen--oled .btn.oled-cta,
 .shell-screen--oled .btn.oled-cta.block{
   border:1px solid rgba(255,255,255,.42);
@@ -779,6 +818,9 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
   box-shadow:none;
   font-weight:700;
   letter-spacing:.02em;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
 }
 @media(hover:hover){
   .shell-screen--oled .ath-module:not(.static):hover{
@@ -1526,7 +1568,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v192';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v193';
 const BACKUP_VERSION=14;
 
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};if(state.settings)delete state.settings.strengthSchedule;return state}
