@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.65 | 2026-09-07 | Home align — stack WHOOP label above dials; Open Library CTA fits phone width; cache blank-v193 |
 | 1.0.64 | 2026-09-07 | Hotfix blank boot — repair strength-cut JS syntax; cache blank-v192 |
 | 1.0.63 | 2026-09-06 | Cut Hybrid Strength — Engine + Recovery only; nuclear strengthCutV1 wipe; cond-only adaptive; cache blank-v191 |
 | 1.0.60 | 2026-09-05 | Whoop-style home dials (Sleep/Recovery/Strain); fix sleep stuck at 100%; number over %; cache blank-v179 |
