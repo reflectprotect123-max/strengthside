@@ -16,7 +16,10 @@ if (r.status !== 0) {
   console.error(r.stderr || r.stdout);
   throw new Error('boot-syntax.smoke: main inline script failed node --check');
 }
-if (html.includes('state.exercises.push(item)}}if(!item&&name)')) {
-  throw new Error('boot-syntax.smoke: orphaned resolveCanonicalExercise remnant still present');
+if (!html.includes('function resolveCanonicalExercise')) {
+  throw new Error('boot-syntax.smoke: resolveCanonicalExercise missing after strength restore');
+}
+if (!html.includes('Hybrid Strength')) {
+  throw new Error('boot-syntax.smoke: Hybrid Strength library tab missing');
 }
 console.log('boot-syntax.smoke: ok');

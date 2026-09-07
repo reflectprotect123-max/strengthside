@@ -88,5 +88,6 @@ if (ELP.defaultLogColumns('unknown-exercise-id')) {
 
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 if (!html.includes('exercise-load-profiles.js')) throw new Error('index.html missing exercise-load-profiles.js');
+if (!html.includes('refreshAthleteLiftMetricsOnly')) throw new Error('refreshAthleteLiftMetricsOnly missing');
 
 console.log('exercise-load-profiles.smoke: ok');

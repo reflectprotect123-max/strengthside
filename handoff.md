@@ -1,9 +1,9 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 6 September 2026 (strength cut).**
+> **AUTHORITATIVE CHECKPOINT — 7 September 2026 (strength restored).**
 > Chat history before this file is disposable. Start here.
 >
-> Spec: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
+> Strength cut (2026-09-06) was reversed on 2026-09-07. Spec of the cut remains historical: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
 > Engine (Open / Next / Close): `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
 
@@ -13,20 +13,20 @@
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app — **The Engine + Recovery only** (strength cut 2026-09-06) |
-| **Engines** | **`@hybrid/adaptive` cond-only** (Open / Next / Close for conditioning). Lift adaptive deleted. Do not revive strength-engine, Big Mac, adapters. |
-| **Next brain** | `@hybrid/adaptive` in `packages/adaptive` — cond Open/Next/Close only. HTML doors: cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
+| **Product** | Hybrid HTML athlete app — **Hybrid Strength + The Engine + Recovery** (strength restored 2026-09-07) |
+| **Engines** | **`@hybrid/adaptive`** — lift + cond Open/Next/Close. Do not revive Big Mac / old adapters. |
+| **Next brain** | `@hybrid/adaptive` in `packages/adaptive`. HTML doors: strength logger → lift Next; cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v192`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.64`** (boot-syntax hotfix / blank-v192)
+| **Cache** | **`the-hybrid-athlete-blank-v194`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.66`** (strength restored / blank-v194)
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Settings → Check for updates → expect **1.0.64** (Settings → Check for updates)
+**Phone:** Settings → Check for updates → expect **1.0.66** (Settings → Check for updates)
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -45,7 +45,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.64`** (boot fix)
+| Channels | **`dogfood` + `live`** both @ **`1.0.66`** (strength restored) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
@@ -138,8 +138,8 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.64** on `dogfood` + `live` (blank-v192 boot fix) |
-| Cache (strength cut branch) | `the-hybrid-athlete-blank-v192` |
+| Capgo | **1.0.66** on `dogfood` + `live` (blank-v194 strength restore) |
+| Cache | `the-hybrid-athlete-blank-v194` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
 **Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.

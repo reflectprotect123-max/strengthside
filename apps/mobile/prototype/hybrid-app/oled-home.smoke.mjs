@@ -25,7 +25,7 @@ must(html.includes('var(--oled-bg)'), 'Home uses --oled-bg');
 must(html.includes('var(--oled-surface)'), 'Home uses --oled-surface');
 must(/Delivery ledger — not the same as Training load below/.test(html), 'recovery debt hint distinguishes delivery ledger from training load');
 must(!/btn primary block/.test(homeBriefingBlock), 'homeTodayPeekHtml has no gold primary brick');
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v192'"), 'LOCAL_BUILD v190');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v194'"), 'LOCAL_BUILD v194');
 
 must(!/radial-gradient\([^\)]*rgba\(212,\s*165,\s*116/.test(html.match(/body\{[\s\S]*?\n\}/)?.[0] || ''), 'body has no copper radial wash');
 must(html.includes('.nav') && html.includes('var(--oled-bg)'), 'nav uses OLED tokens OR body background uses --oled-bg');
@@ -62,9 +62,12 @@ must(html.includes('<small>Athlete</small>'), 'brand subtitle is Athlete (not Tr
 must(!/<small>[^<]*Track Dawn[^<]*<\/small>/.test(html), 'Track Dawn brand line removed');
 must(html.includes('size:110'), 'Home dials enlarged for OLED hierarchy');
 must(html.includes('feGaussianBlur'), 'dial arcs have luminous glow filter');
-must(html.includes('110px;height:110px') || html.includes('width:110px'), 'OLED CSS dial rings are 110px');
+must(html.includes('min(110px') || html.includes('width:110px') || html.includes('110px;height:110px'), 'OLED CSS dial rings cap at 110px and shrink to fit');
+must(html.includes('flex-direction:column') && /ath-module-whoop\{[^}]*flex-direction:column/.test(html), 'WHOOP module stacks label above dials on OLED');
+must(html.includes('.shell-screen--oled .ath-module-whoop .ath-chev{display:none}'), 'WHOOP chevron hidden so dials use full width');
 must(html.includes('background:#fff') && html.includes('.btn.oled-cta'), 'Home CTA is high-contrast white');
 must(html.includes('.shell-screen--oled .ath-module-whoop') && /ath-module-whoop\{[^}]*background:transparent/.test(html), 'WHOOP dials float on true black');
+must(html.includes('.shell-screen--oled .home-cta{max-width:100%'), 'Home CTA cannot overflow content width');
 
 
 
