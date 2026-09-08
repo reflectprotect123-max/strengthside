@@ -55,7 +55,7 @@ const strengthTaskFn = extractFn(html, 'strengthTask');
 must(strengthTaskFn.includes('LogColumns.loggerCellsHtml'), 'strengthTask body must call LogColumns.loggerCellsHtml for its set-row metric cells');
 
 // Builder already wires the same shared renderer — lock the wiring stays in place.
-must(html.includes('LogColumns.builderLiftMetricsHtml'), 'builder still uses LogColumns.builderLiftMetricsHtml');
+must(html.includes('LogColumns.builderLiftHeroMetricsBlockHtml'), 'builder still uses LogColumns.builderLiftHeroMetricsBlockHtml');
 must(html.includes('function setAthleteLiftColumnOptional'), 'optional-column handler wired');
 must(logColumnsSrc.includes('toggleColumnOptional'), 'LogColumns can mark a column optional');
 must(logColumnsSrc.includes('(optional)'), 'builder renders (optional) on metric columns');

@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v195'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v196'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -145,5 +145,29 @@ if (!needKg) throw new Error('live kg must require a weight');
 
 const liveTwin = LC.builderAthleteTwinHtml({ name: 'Bench', restSec: 90, logColumns: opted }, { bi: 0, ei: 0 });
 if (!liveTwin.includes('tracks')) throw new Error('live column shows tracks hint');
+
+if (LC.savedLogColumnsStale({ exerciseId: 'core-back-squat', name: 'Back Squat' }, [{ id: 'c', kind: 'reps' }])) {
+  throw new Error('1-column reps on a squat is a user choice, not stale');
+}
+const oneCol = LC.ensureAthleteLogColumns({
+  name: 'Back Squat',
+  exerciseId: 'core-back-squat',
+  logColumns: [{ id: 'c', kind: 'reps', value: '8', values: ['8'] }],
+});
+if (oneCol.length !== 1) throw new Error('builder must keep a single live column, got ' + oneCol.length);
+const keptKg = LC.ensureAthleteLogColumns({
+  logColumns: [
+    { id: 'a', kind: 'weight_kg', value: '80', values: ['80'] },
+    { id: 'b', kind: 'reps', value: '5', values: ['5'] },
+  ],
+});
+if (String(keptKg[0].value || '') !== '80') throw new Error('builder must keep painted kg, got ' + keptKg[0].value);
+
+if (!pairTwin.includes('id="athLoad_0_0_0"')) throw new Error('live kg column needs a load input');
+if (!pairTwin.includes('aria-label="Add metric"')) throw new Error('builder needs add-metric control');
+if (pairTwin.includes('session start fills kg')) throw new Error('hero must not hard-code kg fill copy');
+const kgOptions = (pairTwin.match(/<select class="builder-metric-select[\s\S]*?<\/select>/g) || [])[1] || '';
+if (!kgOptions.includes('Weight (kg)')) throw new Error('every column dropdown must list all metric kinds');
+if (!html.includes('function setAthleteLiftLoad')) throw new Error('builder must persist painted load');
 
 console.log('log-columns.smoke: ok');

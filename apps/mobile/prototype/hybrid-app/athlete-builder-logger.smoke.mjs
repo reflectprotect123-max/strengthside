@@ -124,15 +124,14 @@ const fenced = LC.builderAthleteTwinHtml(
   },
   { bi: 0, ei: 0 },
 );
-must(fenced.includes('setAthleteLiftEffort'), 'effort input wired');
-must(fenced.includes('setAthleteLiftSets'), 'sets input wired');
+must(fenced.includes('setAthleteLiftLoad'), 'load input wired');
 must(fenced.includes('builder-effort-input'), 'effort uses a dedicated text input');
 must(/builder-effort-input[^>]*value="5-7"/.test(fenced) || /value="5-7"/.test(fenced), 'min-max value is in the effort text input');
 must(fenced.includes('type="text"'), 'effort field is text so 5-7 can be typed');
 must(fenced.includes('placeholder="8 or 5-7"') || fenced.includes('placeholder="5-7"') || fenced.includes('placeholder="8-12"'), 'effort placeholder shows a range example');
 must(/id="athSets_0_0"[^>]*value="4"/.test(fenced) || /value="4"[^>]*id="athSets_0_0"/.test(fenced), 'set count is in the sets input');
-must(fenced.includes('metric-dash'), 'load stays a dash for the engine to fill');
-must(!/id="athLoad_/.test(fenced), 'no kg input in the builder');
+must(fenced.includes('id="athLoad_0_0_0"'), 'kg is a painted load input');
+must(!fenced.includes('session start fills kg'), 'hero is live-metric copy, not kg-fill copy');
 
 const preserved = LC.ensureAthleteLogColumns({
   reps: '5-7',
@@ -142,6 +141,6 @@ const preserved = LC.ensureAthleteLogColumns({
   ],
 });
 must(preserved[1] && preserved[1].value === '5-7', 'ensureAthleteLogColumns keeps the min-max fence');
-must(preserved[0] && String(preserved[0].value || '').trim() === '', 'ensureAthleteLogColumns still blanks kg for the engine');
+must(preserved[0] && String(preserved[0].value || '').trim() === '80', 'ensureAthleteLogColumns keeps painted kg');
 
 console.log('athlete-builder-logger.smoke: ok');

@@ -6,7 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
-| (pending OTA) | 2026-09-08 | Optional metric columns — tap (optional) so the other column is the live tracker; cache blank-v195 |
+| (pending OTA) | 2026-09-08 | Harden strength builder: any metric live/optional, paint kg, 1–3 columns, no stale wipe; cache blank-v196 |
 | 1.0.66 | 2026-09-07 | Restore Hybrid Strength (library/builder/logger + lift adaptive); keep home-align; cache blank-v194 |
 | 1.0.65 | 2026-09-07 | Home align — stack WHOOP label above dials; Open Library CTA fits phone width; cache blank-v193 |
 | 1.0.64 | 2026-09-07 | Hotfix blank boot — repair strength-cut JS syntax; cache blank-v192 |

@@ -282,33 +282,12 @@
     return ex && (ex.exerciseId || ex.id);
   }
 
-  /** Saved reps-only columns that contradict the exercise load profile. */
+  /** Never wipe a user-painted column set. Profiles are defaults on pick only. */
   function savedLogColumnsStale(ex, cols) {
-    if (!cols || !cols.length) return false;
-    var exerciseId = resolveProfileExerciseId(ex);
-    if (global.ExerciseLoadProfiles && ExerciseLoadProfiles.loggerRepOnly) {
-      if (exerciseId) {
-        var repOnly = ExerciseLoadProfiles.loggerRepOnly(exerciseId);
-        if (repOnly === true) return false;
-        if (repOnly === false && cols.length === 1 && cols[0].kind === 'reps') return true;
-        if (repOnly === null && cols.length === 1 && cols[0].kind === 'reps') return true;
-      }
-    }
-    if (cols.length === 1 && cols[0].kind === 'reps' && !exerciseId) return true;
     return false;
   }
 
   function repOnlyAthleteColumns(ex) {
-    var exerciseId = resolveProfileExerciseId(ex);
-    if (
-      exerciseId &&
-      global.ExerciseLoadProfiles &&
-      ExerciseLoadProfiles.loggerRepOnly
-    ) {
-      var profileRepOnly = ExerciseLoadProfiles.loggerRepOnly(exerciseId);
-      if (profileRepOnly === true) return true;
-      if (profileRepOnly === false) return false;
-    }
     return false;
   }
 
@@ -340,14 +319,6 @@
   function ensureAthleteColumnCount() {
     sheet.openVolume = true;
     if (!sheet.columns.length) sheet.columns = defaultAthleteColumns(sheet._exercise || {});
-    while (sheet.columns.length < 2) {
-      sheet.columns.push({
-        id: newId(),
-        kind: 'reps',
-        value: '',
-        values: splitValues('', sheet.sets),
-      });
-    }
     if (sheet.columns.length > 3) sheet.columns = sheet.columns.slice(0, 3);
   }
 
@@ -356,20 +327,14 @@
       ex && Array.isArray(ex.logColumns) && ex.logColumns.length
         ? coachNormalizeColumns(ex)
         : defaultAthleteColumns(ex);
-    const repOnly = repOnlyAthleteColumns(ex);
-    const explicitSingle =
-      cols.length === 1 && ex && Array.isArray(ex.logColumns) && ex.logColumns.length === 1;
-    const minCols = repOnly ? 1 : explicitSingle ? 1 : 2;
-    const maxCols = repOnly ? 1 : Math.min(3, Math.max(minCols, cols.length));
+    const maxCols = 3;
     cols = cols.slice(0, maxCols);
-    while (cols.length < minCols) {
-      cols.push({ id: newId(), kind: 'reps', value: '', values: splitValues('', 3) });
-    }
+    if (!cols.length) cols = defaultAthleteColumns(ex);
     const seededReps = String(ex && ex.reps != null ? ex.reps : '').trim();
-    return cols.slice(0, maxCols).map((c) => {
+    return cols.map((c) => {
       const kind = KIND_MAP[c.kind] ? c.kind : 'reps';
       const fromCol = String((c.values && c.values[0]) ?? c.value ?? '').trim();
-      const raw = isEffortKind(kind) ? fromCol || seededReps : '';
+      const raw = isEffortKind(kind) ? fromCol || seededReps : fromCol;
       return {
         id: c.id || newId(),
         kind,
@@ -860,6 +825,41 @@
     return '3';
   }
 
+  function builderHeroLabel(ex) {
+    const cols = ensureAthleteLogColumns(ex || {});
+    const live = cols.filter((c) => !c.optional);
+    const opt = cols.filter((c) => c.optional);
+    const liveTxt = (live.length ? live : cols)
+      .map((c) => kindMeta(c.kind).label)
+      .join(' · ');
+    if (!opt.length) {
+      return cols.length === 1 ? liveTxt + ' · live' : liveTxt + ' · tap (optional) on extras';
+    }
+    return (
+      liveTxt +
+      ' tracks · ' +
+      opt.map((c) => kindMeta(c.kind).label).join(' · ') +
+      ' optional'
+    );
+  }
+
+  function builderColumnCountHtml(bi, ei, n) {
+    n = Math.max(1, Math.min(3, Number(n) || 1));
+    const minus =
+      n <= 1
+        ? ''
+        : `<button type="button" class="metric-col-count" aria-label="Remove metric" onclick="setAthleteLiftColumnCount(${bi},${ei},${n - 1})">−</button>`;
+    const plus =
+      n >= 3
+        ? ''
+        : `<button type="button" class="metric-col-count" aria-label="Add metric" onclick="setAthleteLiftColumnCount(${bi},${ei},${n + 1})">+</button>`;
+    return '<div class="metric-col-tools">' + minus + plus + '</div>';
+  }
+
+  function builderLoadValue(ex, col) {
+    return String((col && col.values && col.values[0]) ?? (col && col.value) ?? '').trim();
+  }
+
   function builderOptionalFooterHtml(bi, ei, ci, col, colCount, anyOptional) {
     if (colCount < 2) return '';
     const on = !!(col && col.optional);
@@ -878,23 +878,19 @@
     const wrapClass =
       (extraClass ? `metric-col ${extraClass}` : 'metric-col') + (col && col.optional ? ' metric-is-optional' : '');
     const footer = builderOptionalFooterHtml(bi, ei, ci, col, colCount, anyOptional);
-    if (isLoadKind(kind)) {
-      return (
-        `<div class="${wrapClass}"><div class="metric-val metric-dash">—</div>` +
-        `<select class="builder-metric-select logcol-kind" aria-label="Load metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${ci},this.value)">` +
-        loadKindsOptionsHtml(kind) +
-        '</select>' +
-        footer +
-        '</div>'
-      );
-    }
-    const val = builderEffortValue(ex, col);
-    const ph = builderEffortPlaceholder(kind);
+    const load = isLoadKind(kind);
+    const val = load ? builderLoadValue(ex, col) : builderEffortValue(ex, col);
+    const ph = load ? kindMeta(kind).placeholder || '0' : builderEffortPlaceholder(kind);
+    const inputId = load ? `athLoad_${bi}_${ei}_${ci}` : `athEffort_${bi}_${ei}_${ci}`;
+    const oninput = load
+      ? `setAthleteLiftLoad(${bi},${ei},this.value,this,${ci})`
+      : `setAthleteLiftEffort(${bi},${ei},this.value,this,${ci})`;
+    const aria = load ? 'Load target' : 'Effort target';
     return (
       `<div class="${wrapClass}">` +
-      `<input id="athEffort_${bi}_${ei}_${ci}" class="metric-val builder-effort-input" type="text" inputmode="text" autocomplete="off" value="${escTwin(val)}" placeholder="${escTwin(ph)}" aria-label="Effort target" oninput="setAthleteLiftEffort(${bi},${ei},this.value,this,${ci})">` +
-      `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${ci},this.value)">` +
-      effortKindsOptionsHtml(kind) +
+      `<input id="${inputId}" class="metric-val builder-effort-input" type="text" inputmode="decimal" autocomplete="off" value="${escTwin(val)}" placeholder="${escTwin(ph)}" aria-label="${aria}" oninput="${oninput}">` +
+      `<select class="builder-metric-select logcol-kind" aria-label="Metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${ci},this.value)">` +
+      optionsHtml(kind) +
       '</select>' +
       footer +
       '</div>'
@@ -902,38 +898,35 @@
   }
 
   function builderLiftMetricsHtml(ex, bi, ei) {
-    const { cols, loadCol, layout } = columnLayout(ex || {});
-    const effortCol = effortColumn(cols) || cols[0];
-    const effortCi = effortCol ? cols.indexOf(effortCol) : 0;
-    if (layout === 'single') {
+    const { cols } = columnLayout(ex || {});
+    if (!cols.length) return '<div class=hero-metrics></div>';
+    if (cols.length === 1) {
       return (
         '<div class=hero-metrics>' +
-        builderMetricColHtml(ex, bi, ei, effortCol, effortCi, 'metric-col-single') +
+        builderMetricColHtml(ex, bi, ei, cols[0], 0, 'metric-col-single') +
         '</div>'
       );
     }
-    if (layout === 'triple') {
-      let html = '<div class=hero-metrics>';
-      cols.forEach((col, ci) => {
-        if (ci > 0) html += '<div class=metric-sep>·</div>';
-        html += builderMetricColHtml(ex, bi, ei, col, ci);
-      });
-      html += '</div>';
-      return html;
-    }
-    if (!loadCol) {
-      return (
-        '<div class=hero-metrics>' +
-        builderMetricColHtml(ex, bi, ei, effortCol, effortCi, 'metric-col-single') +
-        '</div>'
-      );
-    }
-    const loadCi = cols.indexOf(loadCol);
+    let html = '<div class=hero-metrics>';
+    cols.forEach((col, ci) => {
+      if (ci > 0) {
+        const sep =
+          isLoadKind(cols[ci - 1].kind) && isEffortKind(col.kind) ? '×' : '·';
+        html += `<div class=metric-sep>${sep}</div>`;
+      }
+      html += builderMetricColHtml(ex, bi, ei, col, ci);
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function builderLiftHeroMetricsBlockHtml(ex, bi, ei) {
+    const cols = ensureAthleteLogColumns(ex || {});
     return (
-      '<div class=hero-metrics>' +
-      builderMetricColHtml(ex, bi, ei, loadCol, loadCi) +
-      '<div class=metric-sep>×</div>' +
-      builderMetricColHtml(ex, bi, ei, effortCol, effortCi) +
+      '<div class="hero-metrics-block">' +
+      `<div class=hero-label>${escTwin(builderHeroLabel(ex))}</div>` +
+      builderLiftMetricsHtml(ex, bi, ei) +
+      builderColumnCountHtml(bi, ei, cols.length) +
       '</div>'
     );
   }
@@ -966,8 +959,7 @@
       `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
       `<div id="athSuggest_${bi}_${ei}" class="ath-suggest-host">${suggestHtml}</div>` +
       '<div class=hero>' +
-      '<div class=hero-label>Sets & reps you paint · session start fills kg</div>' +
-      builderLiftMetricsHtml(ex, bi, ei) +
+      builderLiftHeroMetricsBlockHtml(ex, bi, ei) +
       builderSideModeHtml(ex, bi, ei) +
       builderSetsAndRestHtml(ex, bi, ei) +
       '</div>' +
@@ -1004,8 +996,7 @@
       `<input id="athLiftName_${bi}_${ei}" class="ath-builder-ex-name" type="text" value="${name}" autocomplete="off" placeholder="Exercise name" aria-label="Exercise name" oninput="setAthleteLiftName(${bi},${ei},this.value)" onfocus="refreshAthleteLiftSuggest(${bi},${ei},this.value)">` +
       `<div id="athSuggest_${bi}_${ei}" class="ath-suggest-host">${suggestHtml}</div>` +
       '<div class=hero>' +
-      '<div class=hero-label>Sets & reps you paint · session start fills kg</div>' +
-      builderLiftMetricsHtml(ex, bi, ei) +
+      builderLiftHeroMetricsBlockHtml(ex, bi, ei) +
       builderSideModeHtml(ex, bi, ei) +
       builderSetsAndRestHtml(ex, bi, ei) +
       '</div>' +
@@ -1321,6 +1312,7 @@
     builderAthleteTwinHtml,
     builderSupersetTwinHtml,
     builderLiftMetricsHtml,
+    builderLiftHeroMetricsBlockHtml,
     builderSideModeHtml,
     ensureAthleteLogColumns,
     savedLogColumnsStale,
