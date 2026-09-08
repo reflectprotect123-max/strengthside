@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.75 | 2026-09-08 | Exercise catalog starts empty; typing a name adds it; GHR no longer suggests Lateral Raise; cache blank-v210 |
 | 1.0.74 | 2026-09-08 | HPP Monday: Front Squat and GHR are separate lifts (only Dips/Chins and Farmer/Sled supersets); cache blank-v209 |
 | 1.0.73 | 2026-09-08 | One-set Next fills the next set from HybridAdaptive.decideNextLift (100×5 medium → 102.5×5); cache blank-v208 |
 | 1.0.72 | 2026-09-08 | Restore one-set strength logger (hero kg×reps, not old Log/Edit table); cache blank-v207 |
