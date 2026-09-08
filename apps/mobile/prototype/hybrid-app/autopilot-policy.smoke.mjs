@@ -1,5 +1,5 @@
 /**
- * Smoke: blank slate — no product-engine names in athlete index; Full Body A uses open volume.
+ * Smoke: blank slate — no product-engine names in athlete index; HPP days carry painted volume.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v202'")) {
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v203'")) {
   throw new Error('expected cache v168');
 }
 
@@ -51,12 +51,14 @@ for (let j = i; j < html.length; j++) {
   }
 }
 if (!seed) throw new Error('seed parse failed');
-const fullBodyA = (seed.templates || []).find((x) => x && x.name === 'Full Body A');
-if (!fullBodyA) throw new Error('Full Body A missing from seed');
-const bench = (fullBodyA.blocks || []).flatMap((b) => b.exercises || []).find((e) => e.exerciseId === 'core-bench-press');
-if (!bench) throw new Error('Bench missing from Full Body A');
-if (bench.loadExpr) throw new Error('Bench should not hardcode %WM');
-if (bench.sets != null || bench.reps != null) throw new Error('Full Body A bench should use open volume');
-if (bench.openVolume !== true) throw new Error('Full Body A bench should be openVolume');
+if ((seed.templates || []).some((x) => x && /^Full Body [ABC]$/.test(x.name))) {
+  throw new Error('Full Body A/B/C must not remain in seed');
+}
+const hppMon = (seed.templates || []).find((x) => x && x.name === 'HPP Monday');
+if (!hppMon) throw new Error('HPP Monday missing from seed');
+const squat = (hppMon.blocks || []).flatMap((b) => b.exercises || []).find((e) => e.name === 'Front Squat');
+if (!squat) throw new Error('Front Squat missing from HPP Monday');
+if (Number(squat.sets) !== 5 || String(squat.reps) !== '5') throw new Error('Front Squat should be 5×5');
+if (squat.loadExpr) throw new Error('Front Squat should not hardcode %WM');
 
 console.log('autopilot-policy.smoke: ok');
