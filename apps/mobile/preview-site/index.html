@@ -1627,7 +1627,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v208';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v209';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1771,9 +1771,9 @@ function applyBlankSlatePatch(state){
   return state;
 }
 const STARTER_STRENGTH_NAMES=['HPP Monday','HPP Wednesday'];
-const STARTER_HPP_MON_VERSION='hpp-monday-v1';
-const STARTER_HPP_WED_VERSION='hpp-wednesday-v1';
-const HPP_FOLLOW_VERSION='hpp-follow-v1';
+const STARTER_HPP_MON_VERSION='hpp-monday-v2';
+const STARTER_HPP_WED_VERSION='hpp-wednesday-v2';
+const HPP_FOLLOW_VERSION='hpp-follow-v2';
 const STARTER_CONDITIONING_NAMES=['Aerobic Conditioning'];
 const STARTER_RECOVERY_NAMES=['Recovery'];
 const STARTER_AEROBIC_ID='45941abb-5878-4ea8-9023-a21f4ba3d58b';
@@ -1816,8 +1816,8 @@ function starterRecoveryNeedsRefresh(t){
   return !(blocks[0]&&blocks[0].recoverySession);
 }
 function starterStrengthSpec(name){
-  if(name==='HPP Monday')return{version:STARTER_HPP_MON_VERSION,count:6,hpp:true,links:[{exerciseId:'core-strict-bar-dip',superset:true},{exerciseId:'core-farmer-walk',superset:true}]};
-  if(name==='HPP Wednesday')return{version:STARTER_HPP_WED_VERSION,count:6,hpp:true,links:[{exerciseId:'core-bulgarian-split-squat',superset:true},{exerciseId:'core-hip-thrust',superset:true}]};
+  if(name==='HPP Monday')return{version:STARTER_HPP_MON_VERSION,count:6,hpp:true,links:[{exerciseId:'core-front-squat',superset:false},{exerciseId:'core-nordic-curl',superset:false},{exerciseId:'core-strict-bar-dip',superset:true},{exerciseId:'core-chin-up',superset:false},{exerciseId:'core-farmer-walk',superset:true},{exerciseId:'core-sled-push',superset:false}]};
+  if(name==='HPP Wednesday')return{version:STARTER_HPP_WED_VERSION,count:6,hpp:true,links:[{exerciseId:'library-dumbbell-floor-press',superset:false},{exerciseId:'core-dumbbell-row',superset:false},{exerciseId:'core-bulgarian-split-squat',superset:true},{exerciseId:'core-hammer-curl',superset:false},{exerciseId:'core-hip-thrust',superset:true},{exerciseId:'core-cable-tricep-pushdown',superset:false}]};
   return null;
 }
 function buildStarterFullBodyTemplate(name){
@@ -1893,6 +1893,32 @@ function ensureFullBodyStarter(state,name){
 }
 function ensureHppMondayStarter(state){return ensureFullBodyStarter(state,'HPP Monday')}
 function ensureHppWednesdayStarter(state){return ensureFullBodyStarter(state,'HPP Wednesday')}
+function hppNormLiftKey(ex){return String((ex&&(ex.exerciseId||ex.name))||'').toLowerCase().replace(/[^a-z0-9]+/g,'')}
+function hppLegalSupersetKeys(day){
+  if(day==='HPP Monday')return[['weightedbardips','weightedchinups'],['corestrictbardip','corechinup'],['farmercarry','backwardssleddrag'],['corefarmerwalk','coresledpush']];
+  if(day==='HPP Wednesday')return[['dbsplitsquat','dbhammercurls'],['corebulgariansplitsquat','corehammercurl'],['barbellglutehipthrust','bandedpushdowns'],['corehipthrust','corecabletriceppushdown']];
+  return[];
+}
+function hppSupersetIsLegal(day,exercises){
+  if(!exercises||exercises.length!==2)return false;
+  let got=exercises.map(hppNormLiftKey);
+  return hppLegalSupersetKeys(day).some(pair=>pair[0]===got[0]&&pair[1]===got[1]);
+}
+function splitIllegalHppSupersetTasks(s){
+  if(!s||!/^HPP (Monday|Wednesday)$/.test(String(s.name||'')))return;
+  if(!Array.isArray(s.tasks)||!s.tasks.length)return;
+  let next=[];
+  for(const t of s.tasks){
+    if(t.kind!=='superset'){next.push(t);continue}
+    if(hppSupersetIsLegal(s.name,t.exercises||[])){next.push(t);continue}
+    for(const ex of t.exercises||[]){
+      let rows=ex.rows||[];
+      let planned=rows.filter(r=>!r.extra);
+      next.push(Object.assign({},ex,{id:ex.id||id(),kind:'strength',heading:ex.heading||'Strength/Power',complete:!!planned.length&&planned.every(r=>r.done)}));
+    }
+  }
+  s.tasks=next;
+}
 function applyHppFollowPatch(state){
   state=state||{};
   state.meta=state.meta||{};
@@ -1908,6 +1934,7 @@ function applyHppFollowPatch(state){
     if(!s||!/^HPP (Monday|Wednesday)$/.test(String(s.name||'')))continue;
     if(s.status==='completed'||s.status==='abandoned')continue;
     s.blocks=normalizeAthleteStrengthBlocks(s.blocks||[]);
+    splitIllegalHppSupersetTasks(s);
   }
   state.meta.hppFollowVersion=HPP_FOLLOW_VERSION;
   return state;
@@ -2075,6 +2102,7 @@ function normalizeAthleteExercise(ex){
 }
 function strengthBlockLinksSuperset(b){
   if(!b||b.type!=='strength')return false;
+  if((b.exercises||[]).length!==2)return false;
   if(b.superset||b.supersetPartner)return true;
   return isSupersetBlock(b);
 }

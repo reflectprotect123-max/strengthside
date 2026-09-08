@@ -1,4 +1,4 @@
-const CACHE = 'the-hybrid-athlete-blank-v208';
+const CACHE = 'the-hybrid-athlete-blank-v209';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
