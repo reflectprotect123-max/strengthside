@@ -210,4 +210,31 @@ must(
   'follow patch strips Recovery Breathing leak from scheduled HPP',
 );
 
+const mixed = sandbox.normalizeAthleteStrengthBlocks([
+  { type: 'strength', heading: 'Strength', exercises: [{ name: 'Front Squat', sets: 5, reps: '5' }] },
+  { type: 'conditioning', heading: 'Row ERG', conditioningType: 'easy', modality: 'Rower', targetDurationMin: 20, condFmt: 'steady' },
+  { type: 'text', heading: 'Recovery Breathing', notes: '10 Nasal Breaths' },
+]);
+must(
+  !(mixed || []).some((b) => b && b.type === 'conditioning'),
+  'hard line: a lift session never keeps an Engine block',
+);
+must((mixed || []).some((b) => b && b.type === 'strength'), 'hard line keeps lifts');
+must((mixed || []).some((b) => b && b.type === 'text'), 'hard line keeps text notes');
+
+const engineOnly = sandbox.normalizeAthleteStrengthBlocks([
+  {
+    type: 'conditioning',
+    heading: 'Row ERG',
+    conditioningType: 'easy',
+    modality: 'Rower',
+    targetDurationMin: 20,
+    condFmt: 'steady',
+  },
+]);
+must(
+  (engineOnly || []).some((b) => b && b.type === 'conditioning' && !b.recoverySession),
+  'hard line: Engine-only sessions stay Engine',
+);
+
 console.log('fullbody-bc-starters.smoke: ok');

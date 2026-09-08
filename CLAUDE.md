@@ -137,6 +137,10 @@ else is the app.
   after a new model exists.
 - Strength/conditioning today: **manual log + dumb Library templates**. No
   prescription brain, no silent progression, no WM start gate.
+- **Hard line between S and C.** Hybrid Strength sessions are lifts + text
+  notes only. The Engine / Recovery sessions are conditioning only. Never fold
+  an Engine block into a lift day (including Recovery Breathing — that stays a
+  text note). Calendar can hold both on the same date as **separate** sessions.
 
 ## Pain and illness are safety flags, not readiness penalties
 

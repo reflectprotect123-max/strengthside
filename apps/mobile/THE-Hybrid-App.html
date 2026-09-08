@@ -1580,7 +1580,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v204';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v205';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -1936,7 +1936,7 @@ function applyCalendarCompletionDatePatch(state){
   state.meta.calendarCompletionDateVersion=CALENDAR_COMPLETION_DATE_VERSION;
   return state;
 }
-const ATHLETE_BUILDER_VERSION='athlete-builder-v10';
+const ATHLETE_BUILDER_VERSION='athlete-builder-v11';
 function templateHasStrength(t){return(t.blocks||[]).some(b=>b&&b.type==='strength'&&(b.exercises||[]).length)}
 function templateIsStrengthWorkout(t){
   if(!t)return false;
@@ -2049,7 +2049,7 @@ function normalizeAthleteStrengthBlocks(blocks){
   }
   if(exercises.length)exercises[exercises.length-1].supersetWithNext=false;
   let cond=blocks.filter(b=>b&&b.type==='conditioning').map(normalizeAthleteCondBlock).filter(Boolean);
-  if(exercises.length)cond=cond.filter(b=>b&&!b.recoverySession);
+  if(exercises.length)cond=[];
   let primaryCond=cond.length?(cond.find(b=>b.recoverySession)||cond[0]):null;
   let core=[];
   if(exercises.length)core.push({id:blocks.find(b=>b&&b.type==='strength')?.id||id(),type:'strength',heading:'Strength',superset:false,exercises});

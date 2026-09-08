@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.70 | 2026-09-08 | Hard line S vs C — lift sessions drop every Engine block; notes stay notes; cache blank-v205 |
 | 1.0.69 | 2026-09-08 | HPP Monday/Wednesday drop leaked Engine block (Recovery Breathing stays a text note); cache blank-v204 |
 | 1.0.68 | 2026-09-08 | Replace Full Body A/B/C with HPP Monday + Wednesday (30 m carries); cache blank-v203 |
 | 1.0.67 | 2026-09-08 | Logger shows every painted metric (seconds/metres own fields, six columns, wrap set rows); Save keeps Full Body A in place; cache blank-v202 |
