@@ -55,6 +55,9 @@ if (sandbox.WorkOverlay.prescribedSec({ reps: '45', target: '30s' }) !== 45) {
 if (sandbox.WorkOverlay.prescribedSec({ reps: '', target: '30s' }) !== 30) {
   throw new Error('target 30s should prescribe 30');
 }
+if (sandbox.WorkOverlay.prescribedSec({ time: '40', reps: '45', target: '30s' }) !== 40) {
+  throw new Error('time field should win over reps for hold seconds');
+}
 if (sandbox.WorkOverlay.prescribedSec({}) !== 30) {
   throw new Error('empty row defaults to 30');
 }

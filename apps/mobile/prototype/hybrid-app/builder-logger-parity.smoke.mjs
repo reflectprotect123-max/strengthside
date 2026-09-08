@@ -53,9 +53,19 @@ must(html.includes('LogColumns.loggerCellsHtml'), 'index.html references LogColu
 
 const strengthTaskFn = extractFn(html, 'strengthTask');
 must(strengthTaskFn.includes('LogColumns.loggerCellsHtml'), 'strengthTask body must call LogColumns.loggerCellsHtml for its set-row metric cells');
+must(strengthTaskFn.includes('ensureAthleteLogColumns'), 'strengthTask must use builder columns, not default kg×reps normalize');
+must(html.includes('function routeBuilderLiftToLogger'), 'builder→logger flatten helper exists');
+must(extractFn(html, 'flatten').includes('routeBuilderLiftToLogger'), 'flatten routes strength and supersets through builder columns');
+must(extractFn(html, 'validateStrengthRow').includes('return LogColumns.validateAthleteRow'), 'logger validate does not re-require kg×reps');
+must(extractFn(html, 'applyOpenLiftToEx').includes('if(!hasR)row.reps'), 'Open must not overwrite painted reps');
+must(extractFn(html, 'supersetTask').includes('liveTracksKg'), 'superset RIR only when load is live');
+must(extractFn(html, 'autofill').includes('r.target===src.target'), 'autofill keeps per-target reps');
 
 // Builder already wires the same shared renderer — lock the wiring stays in place.
-must(html.includes('LogColumns.builderLiftMetricsHtml'), 'builder still uses LogColumns.builderLiftMetricsHtml');
+must(html.includes('LogColumns.builderLiftHeroMetricsBlockHtml'), 'builder still uses LogColumns.builderLiftHeroMetricsBlockHtml');
+must(html.includes('function setAthleteLiftColumnOptional'), 'optional-column handler wired');
+must(logColumnsSrc.includes('toggleColumnOptional'), 'LogColumns can mark a column optional');
+must(logColumnsSrc.includes('(optional)'), 'builder renders (optional) on metric columns');
 
 // Logger must not hardcode a Weight/Reps-only mini-label pair as the *sole*
 // source of set-row metric cells any more — that path now flows through the

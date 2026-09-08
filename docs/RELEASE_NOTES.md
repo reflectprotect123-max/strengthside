@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.67 | 2026-09-08 | Logger shows every painted metric (seconds/metres own fields, six columns, wrap set rows); Save keeps Full Body A in place; cache blank-v202 |
 | 1.0.66 | 2026-09-07 | Restore Hybrid Strength (library/builder/logger + lift adaptive); keep home-align; cache blank-v194 |
 | 1.0.65 | 2026-09-07 | Home align — stack WHOOP label above dials; Open Library CTA fits phone width; cache blank-v193 |
 | 1.0.64 | 2026-09-07 | Hotfix blank boot — repair strength-cut JS syntax; cache blank-v192 |
