@@ -73,6 +73,8 @@ function num(x){return +x||0}
 function id(){return 'id_'+Math.random().toString(36).slice(2,8)}
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function slugExercise(n){return String(n||'').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
+function findLibraryExercise(state,name){return (state.exercises||[]).find(x=>String(x.name||'').toLowerCase()===String(name||'').toLowerCase())}
+function findLibraryExerciseById(state,exerciseId){return exerciseId?(state.exercises||[]).find(x=>x.id===exerciseId):null}
 function resolveCanonicalExercise(state, exerciseId, name){
   if(exerciseId) return {id:exerciseId,name:name||exerciseId,category:'Strength'};
   return null;
