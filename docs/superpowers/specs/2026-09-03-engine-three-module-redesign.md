@@ -127,7 +127,7 @@ can see both RIR and RPE.
 
 | Route | HTML door (only this) | Package files | Never |
 | --- | --- | --- | --- |
-| **Lift** | `toggleSet` (Next), task finish (Close), first empty row (Open) | `open-lift.ts`, `decide-next-lift.ts`, `close-lift.ts`, `estimate-one-rm.ts` | RPE, watts, split, `WorkOverlay`, rest seconds |
+| **Lift** | One-set logger Next (`StrengthOneSetLogger.nextStrengthSet`) via `adaptive-lift-door.js` — **not** dead `toggleSet`. See `2026-09-08-adaptive-logger-one-door-design.md`. Open on first empty row; Close on Finish. | `open-lift.ts`, `decide-next-lift.ts`, `close-lift.ts`, `estimate-one-rm.ts` | RPE, watts, split, `WorkOverlay`, rest seconds |
 | **Hold** | `startHoldCountdown` → `WorkOverlay.startWork` | **none** | `HybridAdaptive` at all |
 | **Cond** | `advanceInterval` after work; `completeConditioning` for tempo/steady | `open-cond.ts`, `decide-next-cond.ts`, `close-cond.ts` | RIR, kg, reps double-progression, hold clock |
 
