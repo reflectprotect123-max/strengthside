@@ -138,8 +138,8 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.67** on `dogfood` + `live` (blank-v202 metrics on logger) |
-| Cache | `the-hybrid-athlete-blank-v202` |
+| Capgo | **1.0.68** on `dogfood` + `live` (blank-v203 HPP Monday/Wednesday) |
+| Cache | `the-hybrid-athlete-blank-v203` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
 **Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.
