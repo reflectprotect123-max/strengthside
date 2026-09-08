@@ -1935,6 +1935,10 @@ function applyHppFollowPatch(state){
     if(s.status==='completed'||s.status==='abandoned')continue;
     s.blocks=normalizeAthleteStrengthBlocks(s.blocks||[]);
     splitIllegalHppSupersetTasks(s);
+    if(s.status==='active'&&Array.isArray(s.tasks)&&s.tasks.length){
+      let i=s.tasks.findIndex(t=>t&&!t.complete);
+      s.taskIndex=i>=0?i:Math.min(s.taskIndex||0,s.tasks.length-1);
+    }
   }
   state.meta.hppFollowVersion=HPP_FOLLOW_VERSION;
   return state;

@@ -270,6 +270,7 @@ must(repaired.length === 2, `Front Squat / GHR superset must split, got ${repair
 must(repaired[0].kind === 'strength' && repaired[0].name === 'Front Squat', 'Front Squat is its own lift');
 must(repaired[1].kind === 'strength' && repaired[1].name === 'Glute Ham Raise', 'GHR is its own lift');
 must(repaired[0].rows && repaired[0].rows[0] && repaired[0].rows[0].done, 'logged Front Squat sets survive the split');
+must(poisoned.sessions[0].taskIndex === 1, 'active session lands on incomplete GHR after split');
 
 const mixed = sandbox.normalizeAthleteStrengthBlocks([
   { type: 'strength', heading: 'Strength', exercises: [{ name: 'Front Squat', sets: 5, reps: '5' }] },
