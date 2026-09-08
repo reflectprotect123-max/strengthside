@@ -6,7 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
-| 1.0.77 | 2026-09-08 | Wipe leftover HPP/Full Body days even if marked user-saved; cache blank-v212 |
+| 1.0.78 | 2026-09-08 | Warm-up + Cool-down text boxes on strength and Engine builders; cache blank-v213 |
 | 1.0.76 | 2026-09-08 | Unseed HPP Monday/Wednesday — rebuild days in the app; keep Aerobic + Recovery; cache blank-v211 |
 | 1.0.75 | 2026-09-08 | Exercise catalog starts empty; typing a name adds it; GHR no longer suggests Lateral Raise; cache blank-v210 |
 | 1.0.74 | 2026-09-08 | HPP Monday: Front Squat and GHR are separate lifts (only Dips/Chins and Farmer/Sled supersets); cache blank-v209 |
