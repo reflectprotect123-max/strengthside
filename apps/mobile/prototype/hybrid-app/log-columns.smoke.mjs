@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v199'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v200'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -224,6 +224,9 @@ if (pairTwin.includes('session start fills kg')) throw new Error('hero must not 
 const kgOptions = (pairTwin.match(/<select class="builder-metric-select[\s\S]*?<\/select>/g) || [])[1] || '';
 if (!kgOptions.includes('Weight (kg)')) throw new Error('every column dropdown must list all metric kinds');
 if (!html.includes('function setAthleteLiftLoad')) throw new Error('builder must persist painted load');
+if (!html.includes('Number.isFinite(n)&&n>=1?Math.min(12,n):3')) {
+  throw new Error('open-volume lifts with null sets must flatten to 3 logger rows');
+}
 
 const hold90 = LC.validateAthleteRow(
   { logColumns: [{ id: 't', kind: 'time_sec', value: '90', values: ['90'] }] },
@@ -278,5 +281,29 @@ const repsBinds = (clobber.match(/updateSet\(0,'reps'/g) || []).length;
 if (repsBinds !== 1) {
   throw new Error('optional seconds must not share the reps input with live reps, got ' + repsBinds);
 }
+
+const rowerCols = [
+  { id: 't', kind: 'time_sec', value: '60', values: ['60'] },
+  { id: 'd', kind: 'distance_m', value: '500', values: ['500'] },
+];
+const rowerCells = LC.loggerCellsHtml(
+  { n: 1, weight: '', reps: '60', distance: '500', rir: '' },
+  0,
+  rowerCols,
+  false,
+);
+if (!rowerCells.includes('Seconds') || !rowerCells.includes('Metres')) {
+  throw new Error('time+distance must both render, got ' + rowerCells);
+}
+if (!rowerCells.includes("updateSet(0,'distance'")) {
+  throw new Error('metres must use their own row field, not clobber seconds');
+}
+const rowerSeed = LC.seedRowsFromLogColumns({
+  logColumns: rowerCols,
+  rows: [{ n: 1, weight: '', reps: '', distance: '', done: false }],
+});
+if (String(rowerSeed.rows[0].reps) !== '60') throw new Error('rower must seed seconds');
+if (String(rowerSeed.rows[0].distance) !== '500') throw new Error('rower must seed metres into distance, got ' + rowerSeed.rows[0].distance);
+
 
 console.log('log-columns.smoke: ok');

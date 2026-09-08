@@ -1111,8 +1111,8 @@
         if (field === 'weight') {
           if (col.kind !== 'weight_kg') return;
           if (row.weight === '' || row.weight == null) row.weight = painted;
-        } else if (row.reps === '' || row.reps == null) {
-          row.reps = painted;
+        } else if (row[field] === '' || row[field] == null) {
+          row[field] = painted;
         }
       });
     });
@@ -1132,7 +1132,10 @@
       .map((c) => {
         const meta = kindMeta(c.kind);
         const field = rowFieldForKind(c.kind);
-        const val = row[field] == null ? '' : row[field];
+        let val = row[field] == null ? '' : row[field];
+        if ((val === '' || val == null) && field === 'distance' && row.targetKind === 'distance') {
+          val = row.reps == null ? '' : row.reps;
+        }
         const live = anyOptional && !c.optional;
         let label = meta.loggerLabel;
         if (c.optional) label += ' (optional)';
@@ -1149,9 +1152,7 @@
 
   function rowFieldForKind(kind) {
     if (isLoadKind(kind)) return 'weight';
-    // Metres live in `reps` on the strength logger row (same field as hold seconds).
-    // targetKind === 'distance' seals Adaptive and labels Metres.
-    if (kind === 'distance_m') return 'reps';
+    if (kind === 'distance_m') return 'distance';
     return 'reps';
   }
 
@@ -1177,7 +1178,8 @@
 
   function rowMetricValue(row, kind) {
     const field = rowFieldForKind(kind);
-    const val = row && row[field];
+    let val = row && row[field];
+    if ((val == null || val === '') && field === 'distance' && row) val = row.reps;
     return val == null ? '' : String(val);
   }
 
@@ -1321,7 +1323,8 @@
     for (const col of cols) {
       const meta = kindMeta(col.kind);
       const field = rowFieldForKind(col.kind);
-      const raw = row[field];
+      let raw = row[field];
+      if ((raw == null || String(raw).trim() === '') && field === 'distance') raw = row.reps;
       const optional = !!col.optional;
       if (field === 'weight') {
         const weight = String(raw ?? '').trim() === '' ? null : Number(raw);
