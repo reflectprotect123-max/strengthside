@@ -12,14 +12,16 @@ const src = readFileSync(join(dir, 'strength-one-set-logger.js'), 'utf8');
 
 if (!html.includes('strength-one-set-logger.js')) throw new Error('index.html missing strength-one-set-logger.js');
 if (!html.includes('StrengthOneSetLogger.renderTask')) throw new Error('strengthTask must delegate to StrengthOneSetLogger');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v207'")) throw new Error('expected cache v163');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v214'")) throw new Error('expected cache v208');
 if (!html.includes('.logger-screen{')) throw new Error('logger-screen CSS missing');
 if (!html.includes('.hero-metrics{')) throw new Error('hero-metrics CSS missing');
 if (!html.includes('.metric-val{')) throw new Error('metric-val CSS missing');
 if (!html.includes('.slider-card{')) throw new Error('slider-card CSS missing');
 if (!src.includes('logger-screen')) throw new Error('logger-screen missing in JS');
 if (!src.includes('hero-metrics')) throw new Error('hero-metrics missing');
-if (!src.includes('setchip')) throw new Error('setchip missing');
+if (!src.includes('HybridAdaptive') || !src.includes('decideNextLift')) {
+  throw new Error('one-set logger must call HybridAdaptive.decideNextLift');
+}
 
 const sandbox = {
   window: {},
@@ -55,6 +57,7 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(readFileSync(join(dir, 'session-chrome.js'), 'utf8'), sandbox);
 vm.runInContext(readFileSync(join(dir, 'rest-overlay.js'), 'utf8'), sandbox);
+vm.runInContext(readFileSync(join(dir, 'adaptive-bundle.js'), 'utf8'), sandbox);
 vm.runInContext(src, sandbox);
 
 const task = {
@@ -96,7 +99,9 @@ if (task.autoreg.selectedDifficulty !== 'medium') throw new Error('difficulty');
 
 sandbox.StrengthOneSetLogger.nextStrengthSet();
 if (!task.rows[0].done) throw new Error('set 1 not done');
-if (task.rows[1].weight !== 102.5) throw new Error('suggestion missing');
+if (task.rows[1].weight !== 102.5) throw new Error('Adaptive Next missing, got ' + task.rows[1].weight);
+if (String(task.rows[1].reps) !== '5') throw new Error('Adaptive Next reps should stay 5 on a 5×5, got ' + task.rows[1].reps);
+if (!task.rows[1].adaptiveFilled) throw new Error('set 2 should be marked adaptiveFilled');
 const restHtml = sandbox.StrengthOneSetLogger.renderTask(task);
 if (!restHtml.includes('logger-rest') && !restHtml.includes('rest-ring')) {
   throw new Error('rest phase should show rest ring');
@@ -105,6 +110,11 @@ if (!restHtml.includes('Rest · between sets')) throw new Error('rest eyebrow mi
 
 sandbox.StrengthOneSetLogger.finishRest();
 task.autoreg.restPhase = false;
+const set2Html = sandbox.StrengthOneSetLogger.renderTask(task);
+if (!set2Html.includes('102.5')) throw new Error('set 2 hero should show Adaptive load, got no 102.5');
+if (!set2Html.includes('value="5"') && !set2Html.includes("value='5'")) {
+  throw new Error('set 2 hero should show Adaptive reps');
+}
 sandbox.StrengthOneSetLogger.onDifficultySlide('5');
 const missed = sandbox.StrengthOneSetLogger.renderTask(task);
 if (!missed.includes('Did not complete')) throw new Error('missed-rep hero missing');
