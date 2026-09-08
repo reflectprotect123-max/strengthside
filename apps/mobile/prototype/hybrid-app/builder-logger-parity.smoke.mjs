@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Builder <-> logger 1:1 parity: strengthTask must render its metric cells
- * through the same LogColumns renderer the builder already uses
- * (builderLiftMetricsHtml / builderMetricColHtml), not a hardcoded
- * Weight / Reps / RIR mini-label layout.
+ * Builder <-> logger 1:1 parity: session logging uses StrengthOneSetLogger
+ * (one set at a time, logColumns hero metrics). The builder twin still
+ * renders the same KINDS via LogColumns. Old all-sets Log/Edit table
+ * must not come back on strengthTask.
  * Run: node apps/mobile/prototype/hybrid-app/builder-logger-parity.smoke.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -48,12 +48,14 @@ must(logColumnsSrc.includes('KINDS,') && logColumnsSrc.includes('kindMeta,'), 'K
 must(logColumnsSrc.includes('loggerCellsHtml,'), 'loggerCellsHtml exported on LogColumns');
 must(logColumnsSrc.includes('function loggerCellsHtml('), 'loggerCellsHtml implementation present');
 
-// The renderer index.html must reference for the logger row path.
-must(html.includes('LogColumns.loggerCellsHtml'), 'index.html references LogColumns.loggerCellsHtml');
+must(html.includes('strength-one-set-logger.js'), 'index.html loads one-set logger');
+must(html.includes('StrengthOneSetLogger.renderTask'), 'strengthTask delegates to StrengthOneSetLogger');
 
 const strengthTaskFn = extractFn(html, 'strengthTask');
-must(strengthTaskFn.includes('LogColumns.loggerCellsHtml'), 'strengthTask body must call LogColumns.loggerCellsHtml for its set-row metric cells');
-must(strengthTaskFn.includes('ensureAthleteLogColumns'), 'strengthTask must use builder columns, not default kg×reps normalize');
+must(strengthTaskFn.includes('StrengthOneSetLogger.renderTask'), 'strengthTask body must call StrengthOneSetLogger.renderTask');
+must(!strengthTaskFn.includes('setrow'), 'strengthTask must not render the old all-sets table');
+must(!strengthTaskFn.includes('LogColumns.loggerCellsHtml'), 'session logger is one-set, not loggerCellsHtml table');
+must(!html.includes("exerciseLinkHtml(t.name,t.exerciseId,t.category,'Exercise history')"), 'old Exercise history table title must stay gone from session logger');
 must(html.includes('function routeBuilderLiftToLogger'), 'builder→logger flatten helper exists');
 must(extractFn(html, 'flatten').includes('routeBuilderLiftToLogger'), 'flatten routes strength and supersets through builder columns');
 must(extractFn(html, 'validateStrengthRow').includes('return LogColumns.validateAthleteRow'), 'logger validate does not re-require kg×reps');
