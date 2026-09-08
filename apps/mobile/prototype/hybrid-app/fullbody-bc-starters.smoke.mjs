@@ -169,4 +169,45 @@ must(carry && Number(carry.sets) === 5, 'farmer 5 sets');
 const metres = (carry.logColumns || []).find((c) => c.kind === 'distance_m');
 must(metres && String(metres.value || metres.values[0] || '') === '30', 'farmer 30 m not 100 ft');
 
+for (const name of ['HPP Monday', 'HPP Wednesday']) {
+  const t = out.templates.find((x) => x.name === name);
+  const kinds = (t.blocks || []).map((b) => `${b.type}:${b.heading}`).join('|');
+  must(
+    !(t.blocks || []).some((b) => b && b.type === 'conditioning'),
+    `${name} must not gain an Engine/conditioning block (got ${kinds})`,
+  );
+  must(
+    (t.blocks || []).some((b) => b && b.type === 'text' && /recovery breathing/i.test(b.heading || '')),
+    `${name} Recovery Breathing stays a text note`,
+  );
+  const sess = (out.sessions || []).find((s) => s && s.name === name);
+  must(sess, `${name} scheduled`);
+  must(
+    !(sess.blocks || []).some((b) => b && b.type === 'conditioning'),
+    `${name} scheduled session has no conditioning block (got ${(sess.blocks || []).map((b) => b.type).join('|')})`,
+  );
+}
+
+const leaked = {
+  meta: {},
+  templates: [],
+  sessions: [
+    {
+      id: 'hpp-leaked',
+      name: 'HPP Monday',
+      status: 'scheduled',
+      blocks: [
+        { type: 'strength', heading: 'Strength', exercises: [{ name: 'Front Squat', sets: 5, reps: '5' }] },
+        { type: 'conditioning', heading: 'Recovery movement', recoverySession: true, condFmt: 'steady' },
+        { type: 'text', heading: 'Recovery Breathing', notes: '10 Nasal Breaths' },
+      ],
+    },
+  ],
+};
+sandbox.applyHppFollowPatch(leaked);
+must(
+  !(leaked.sessions[0].blocks || []).some((b) => b && b.type === 'conditioning'),
+  'follow patch strips Recovery Breathing leak from scheduled HPP',
+);
+
 console.log('fullbody-bc-starters.smoke: ok');
