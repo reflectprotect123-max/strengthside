@@ -1,6 +1,6 @@
 /**
- * Smoke: Full Body B + C starters use the new athlete open-logger pattern
- * (null sets/reps + metric logColumns), same boot path as Full Body A.
+ * Smoke: Full Body A/B/C are gone. Library follows two Hybrid Power Project days
+ * (Monday squat / Wednesday floor press) with painted sets×reps and 30 m carries.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -15,19 +15,14 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(
-  html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C']"),
-  'STARTER_STRENGTH_NAMES includes A/B/C',
-);
-must(html.includes("STARTER_FULLBODY_B_VERSION='fullbody-b-metric-v1'"), 'B version');
-must(html.includes("STARTER_FULLBODY_C_VERSION='fullbody-c-metric-v1'"), 'C version');
-must(html.includes('function ensureFullBodyBStarter'), 'ensure B');
-must(html.includes('function ensureFullBodyCStarter'), 'ensure C');
-must(html.includes('ensureFullBodyBStarter(state)'), 'B in ensureStarterTemplates');
-must(html.includes('ensureFullBodyCStarter(state)'), 'C in ensureStarterTemplates');
-must(html.includes("'Full Body B':{"), 'PROGRAM_TEXT_DEFAULTS B');
-must(html.includes("'Full Body C':{"), 'PROGRAM_TEXT_DEFAULTS C');
-must(html.includes('STARTER_STRENGTH_NAMES.includes(t.name)'), 'library uses STARTER_STRENGTH_NAMES');
+must(!html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C']"), 'Full Body names gone from starter list');
+must(html.includes("STARTER_STRENGTH_NAMES=['HPP Monday','HPP Wednesday']"), 'HPP two-day starter list');
+must(!html.includes('ensureFullBodyAStarter(state)'), 'no Full Body A ensure');
+must(!html.includes('ensureFullBodyBStarter(state)'), 'no Full Body B ensure');
+must(!html.includes('ensureFullBodyCStarter(state)'), 'no Full Body C ensure');
+must(html.includes('ensureHppMondayStarter(state)'), 'HPP Monday ensure');
+must(html.includes('ensureHppWednesdayStarter(state)'), 'HPP Wednesday ensure');
+must(html.includes("HPP_FOLLOW_VERSION='hpp-follow-v1'"), 'follow-program migrate');
 
 function parseSeed(src) {
   const start = src.indexOf('const seed=');
@@ -67,53 +62,52 @@ function parseSeed(src) {
 
 const seed = parseSeed(html);
 must(seed, 'seed parse');
+must(!(seed.templates || []).some((t) => /^Full Body [ABC]$/.test(t && t.name)), 'seed has no Full Body A/B/C');
 
 function strengthExercises(t) {
   return ((t.blocks || []).find((b) => b && b.type === 'strength') || {}).exercises || [];
 }
 
-function assertSeedOpen(t, name, ids, links) {
+function assertDay(t, name, expected) {
   must(t, `${name} in seed`);
   const exs = strengthExercises(t);
-  must(exs.length === ids.length, `${name} lift count`);
-  must(
-    JSON.stringify(exs.map((e) => e.exerciseId)) === JSON.stringify(ids),
-    `${name} exerciseIds`,
-  );
-  for (const ex of exs) {
-    must(ex.openVolume === true, `${name} seed openVolume`);
-    must(ex.sets == null && ex.reps == null, `${name} seed null volume`);
-  }
-  for (const [i, on] of Object.entries(links)) {
-    must(!!exs[Number(i)].supersetWithNext === on, `${name} seed link ${i}`);
-  }
+  must(exs.length === expected.length, `${name} lift count ${exs.length}`);
+  expected.forEach((want, i) => {
+    const ex = exs[i];
+    must(ex && ex.name === want.name, `${name}[${i}] name ${ex && ex.name}`);
+    must(Number(ex.sets) === want.sets, `${name} ${want.name} sets`);
+    if (want.reps != null) must(String(ex.reps) === String(want.reps), `${name} ${want.name} reps ${ex.reps}`);
+    must(!!ex.supersetWithNext === !!want.ss, `${name} ${want.name} superset`);
+    if (want.metres) {
+      const d = (ex.logColumns || []).find((c) => c.kind === 'distance_m');
+      must(d && String(d.value || (d.values && d.values[0]) || '') === '30', `${name} ${want.name} 30 m`);
+    }
+  });
+  const breath = (t.blocks || []).find((b) => b && b.type === 'text' && /recovery breathing/i.test(b.heading || ''));
+  must(breath, `${name} Recovery Breathing`);
+  must(/10 Nasal Breaths/i.test(breath.notes || ''), `${name} nasal breaths`);
+  must(/5 second inhale/i.test(breath.notes || ''), `${name} inhale`);
+  must(/1-second hold/i.test(breath.notes || ''), `${name} hold`);
+  must(/5 second exhale/i.test(breath.notes || ''), `${name} exhale`);
 }
 
-assertSeedOpen(
-  seed.templates.find((t) => t.name === 'Full Body B'),
-  'Full Body B',
-  [
-    'core-back-squat',
-    'program-supinated-barbell-row',
-    'program-z-press',
-    'program-db-lateral-raise',
-    'program-turkish-weight-plate-sit-up',
-    'program-tuck-l-sit',
-  ],
-  { 2: true, 3: false, 4: true, 5: false },
-);
-assertSeedOpen(
-  seed.templates.find((t) => t.name === 'Full Body C'),
-  'Full Body C',
-  [
-    'core-sumo-deadlift',
-    'program-pronated-strict-pull-up',
-    'program-low-incline-11-4-dumbbell-bench-press',
-    'program-weight-plate-hip-abduction',
-    'program-hand-supported-suitcase-calf-raise',
-  ],
-  { 1: true, 2: false, 3: true, 4: false },
-);
+assertDay(seed.templates.find((t) => t.name === 'HPP Monday'), 'HPP Monday', [
+  { name: 'Front Squat', sets: 5, reps: '5' },
+  { name: 'Glute Ham Raise', sets: 4, reps: '8' },
+  { name: 'Weighted Bar Dips', sets: 3, reps: '10', ss: true },
+  { name: 'Weighted Chin-Ups', sets: 3, reps: '10' },
+  { name: 'Farmer Carry', sets: 5, metres: true, ss: true },
+  { name: 'Backwards Sled Drag', sets: 5, metres: true },
+]);
+
+assertDay(seed.templates.find((t) => t.name === 'HPP Wednesday'), 'HPP Wednesday', [
+  { name: 'Football Bar Floor Press', sets: 5, reps: '5' },
+  { name: '1-Arm DB Row', sets: 4, reps: '8' },
+  { name: 'DB Split Squat', sets: 3, reps: '10', ss: true },
+  { name: 'DB Hammer Curls', sets: 3, reps: '10' },
+  { name: 'Barbell Glute Hip Thrust', sets: 3, reps: '15', ss: true },
+  { name: 'Banded Pushdowns', sets: 3, reps: 'MAX' },
+]);
 
 const chunk = html.slice(
   html.indexOf('const PROGRAM_TEXT_DEFAULTS'),
@@ -151,57 +145,28 @@ vm.runInContext(chunk, sandbox);
 
 const out = sandbox.ensureStarterTemplates({
   meta: {},
-  templates: [],
+  templates: [
+    { id: 'old-a', name: 'Full Body A', source: 'THE-starter', blocks: [] },
+    { id: 'old-b', name: 'Full Body B', source: 'THE-starter', blocks: [] },
+    { id: 'old-c', name: 'Full Body C', source: 'THE-starter', blocks: [] },
+  ],
   exercises: [],
   hiddenTemplateIds: [],
+  sessions: [],
 });
-
-for (const name of ['Full Body A', 'Full Body B', 'Full Body C']) {
-  const t = out.templates.find((x) => x.name === name);
-  must(t, `boots ${name}`);
-  must(t.source === 'THE-starter', `${name} starter source`);
-  const texts = (t.blocks || []).filter((b) => b.type === 'text');
-  must(texts.some((b) => /warm/i.test(b.heading || '')), `${name} warm-up`);
-  must(texts.some((b) => /cool/i.test(b.heading || '')), `${name} cool-down`);
-  const strength = (t.blocks || []).find((b) => b.type === 'strength');
-  must(strength, `${name} strength`);
-  for (const ex of strength.exercises || []) {
-    must(ex.sets == null && ex.reps == null, `${name} ${ex.name} open logger (null sets/reps)`);
-    must(Array.isArray(ex.logColumns) && ex.logColumns.length > 0, `${name} ${ex.name} logColumns`);
-    must(!ex.loadExpr && !ex.load, `${name} ${ex.name} no legacy load`);
-  }
-  must(sandbox.starterStrengthNeedsRefresh(t) === false, `${name} stable after ensure`);
+if (typeof sandbox.applyHppFollowPatch === 'function') {
+  sandbox.applyHppFollowPatch(out);
+  sandbox.ensureStarterTemplates(out);
 }
 
-must(out.templates.filter((t) => /^Full Body [ABC]$/.test(t.name)).length === 3, 'all three present');
+must(!(out.templates || []).some((t) => /^Full Body [ABC]$/.test(t.name)), 'boot drops Full Body A/B/C');
+must((out.templates || []).some((t) => t.name === 'HPP Monday'), 'boots HPP Monday');
+must((out.templates || []).some((t) => t.name === 'HPP Wednesday'), 'boots HPP Wednesday');
 
-const paintedA = sandbox.clone(out.templates.find((t) => t.name === 'Full Body A'));
-const paintedBench = (paintedA.blocks.find((b) => b.type === 'strength').exercises || []).find(
-  (e) => e.exerciseId === 'core-bench-press' || e.name === 'Bench Press',
-);
-must(paintedBench, 'Full Body A bench');
-paintedBench.sets = 3;
-paintedBench.logColumns = (paintedBench.logColumns || []).concat([
-  { id: 'sec', kind: 'time_sec', value: '30', values: ['30'], optional: true },
-]);
-paintedA.source = 'THE-user';
-const kept = sandbox.ensureStarterTemplates({
-  meta: {},
-  templates: [paintedA],
-  exercises: [],
-  hiddenTemplateIds: [],
-});
-const keptBench = (
-  kept.templates.find((t) => t.name === 'Full Body A').blocks.find((b) => b.type === 'strength').exercises || []
-).find((e) => e.exerciseId === 'core-bench-press' || e.name === 'Bench Press');
-must(
-  (keptBench.logColumns || []).some((c) => c.kind === 'time_sec'),
-  'painted seconds on Full Body A must survive boot ensureStarterTemplates',
-);
-
-must(
-  !html.includes('if(isSeedTemplate(draft)||isRetiredStrengthTemplate(draft))'),
-  'Save must write starters in place so Library Full Body A is what you just painted',
-);
+const mon = out.templates.find((t) => t.name === 'HPP Monday');
+const carry = strengthExercises(mon).find((e) => e.name === 'Farmer Carry');
+must(carry && Number(carry.sets) === 5, 'farmer 5 sets');
+const metres = (carry.logColumns || []).find((c) => c.kind === 'distance_m');
+must(metres && String(metres.value || metres.values[0] || '') === '30', 'farmer 30 m not 100 ft');
 
 console.log('fullbody-bc-starters.smoke: ok');
