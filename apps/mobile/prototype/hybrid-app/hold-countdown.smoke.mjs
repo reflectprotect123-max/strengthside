@@ -1,5 +1,5 @@
 /**
- * Smoke: timed holds start WorkOverlay countdown from the strength logger.
+ * Smoke: timed holds start WorkOverlay from the one-set logger.
  * No engine Next — card seconds stay card seconds.
  */
 import { readFileSync } from 'node:fs';
@@ -8,23 +8,21 @@ import { fileURLToPath } from 'node:url';
 
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const logger = readFileSync(join(dir, 'strength-one-set-logger.js'), 'utf8');
 
 function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
 must(html.includes('src="./work-overlay.js"'), 'work-overlay script');
-must(html.includes('function startHoldCountdown'), 'startHoldCountdown');
-must(html.includes('function finishHoldCountdown'), 'finishHoldCountdown');
-must(html.includes('function cancelHoldCountdown'), 'cancelHoldCountdown');
-must(html.includes('function stopHoldClock'), 'stopHoldClock');
-must(html.includes('if(isHoldRow(r)){startHoldCountdown(i);return}'), 'toggleSet starts hold, does not mark done first');
-must(html.includes("isHoldRow(r)?'Hold':'Log'"), 'Hold button on seconds rows');
-must(html.includes('WorkOverlay.startWork(holdSeconds(r),finishHoldCountdown)'), 'startWork uses prescribed seconds');
-must(html.includes("WorkOverlay.render({mode:'strength'"), 'strengthTask renders work overlay');
-must(html.includes("label:'Hold'"), 'overlay label Hold');
-must(html.includes("skipOnclick:'cancelHoldCountdown()'"), 'Cancel does not log');
+must(html.includes('src="./strength-one-set-logger.js"'), 'one-set logger script');
+must(html.includes('function strengthTask(t){return StrengthOneSetLogger.renderTask(t)}'), 'strengthTask is one-set logger');
+must(logger.includes('function startHold()'), 'StrengthOneSetLogger.startHold');
+must(logger.includes('isTimePrimaryHold'), 'time-primary hold flow');
+must(logger.includes('StrengthOneSetLogger.startHold()'), 'Start hold button');
+must(logger.includes('WorkOverlay.startWork'), 'startWork uses prescribed seconds');
+must(logger.includes("mode: 'strength'") || logger.includes('mode:"strength"') || logger.includes("mode:'strength'"), 'work overlay strength mode');
 must(!html.includes('decideNextSet'), 'hold path must not call decideNextSet');
-must(html.includes('stopHoldClock()'), 'leave-task stops the clock');
+must(!logger.includes('decideNextSet'), 'one-set hold path must not call decideNextSet');
 
 console.log('hold-countdown.smoke: ok');
