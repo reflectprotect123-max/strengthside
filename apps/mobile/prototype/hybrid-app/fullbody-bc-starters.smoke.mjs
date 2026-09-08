@@ -25,7 +25,8 @@ must(!html.includes('ensureFullBodyBStarter(state)'), 'no Full Body B ensure');
 must(!html.includes('ensureFullBodyCStarter(state)'), 'no Full Body C ensure');
 must(html.includes('ensureHppMondayStarter(state)'), 'HPP Monday ensure');
 must(html.includes('ensureHppWednesdayStarter(state)'), 'HPP Wednesday ensure');
-must(html.includes("HPP_FOLLOW_VERSION='hpp-follow-v1'"), 'follow-program migrate');
+must(html.includes("HPP_FOLLOW_VERSION='hpp-follow-v2'"), 'follow-program migrate');
+must(html.includes('splitIllegalHppSupersetTasks'), 'HPP illegal superset split (Front Squat ≠ GHR)');
 
 function parseSeed(src) {
   const start = src.indexOf('const seed=');
@@ -212,6 +213,64 @@ must(
   !(leaked.sessions[0].blocks || []).some((b) => b && b.type === 'conditioning'),
   'follow patch strips Recovery Breathing leak from scheduled HPP',
 );
+
+const chainedBlock = sandbox.normalizeAthleteStrengthBlocks([
+  {
+    type: 'strength',
+    heading: 'Strength/Power',
+    superset: true,
+    exercises: [
+      { name: 'Front Squat', exerciseId: 'core-front-squat', sets: 5, reps: '5', supersetWithNext: false },
+      { name: 'Glute Ham Raise', exerciseId: 'core-nordic-curl', sets: 4, reps: '8', supersetWithNext: false },
+      { name: 'Weighted Bar Dips', exerciseId: 'core-strict-bar-dip', sets: 3, reps: '10', supersetWithNext: true },
+      { name: 'Weighted Chin-Ups', exerciseId: 'core-chin-up', sets: 3, reps: '10', supersetWithNext: false },
+      { name: 'Farmer Carry', exerciseId: 'core-farmer-walk', sets: 5, reps: '5', supersetWithNext: true },
+      { name: 'Backwards Sled Drag', exerciseId: 'core-sled-push', sets: 5, reps: '5', supersetWithNext: false },
+    ],
+  },
+]);
+const chainedEx = ((chainedBlock || []).find((b) => b && b.type === 'strength') || {}).exercises || [];
+must(chainedEx[0] && chainedEx[0].name === 'Front Squat' && !chainedEx[0].supersetWithNext, 'block.superset on a 6-lift day must not pair Front Squat with GHR');
+must(chainedEx[2] && chainedEx[2].supersetWithNext, 'Dips stay linked to chins via per-lift flag');
+
+const poisoned = {
+  meta: { hppFollowVersion: 'hpp-follow-v1' },
+  templates: [],
+  sessions: [
+    {
+      id: 'hpp-ss-poison',
+      name: 'HPP Monday',
+      status: 'active',
+      blocks: [
+        {
+          type: 'strength',
+          heading: 'Strength/Power',
+          exercises: [
+            { name: 'Front Squat', exerciseId: 'core-front-squat', supersetWithNext: false, sets: 5, reps: '5' },
+            { name: 'Glute Ham Raise', exerciseId: 'core-nordic-curl', supersetWithNext: false, sets: 4, reps: '8' },
+          ],
+        },
+      ],
+      tasks: [
+        {
+          kind: 'superset',
+          heading: 'Front Squat / Glute Ham Raise',
+          exercises: [
+            { name: 'Front Squat', exerciseId: 'core-front-squat', rows: [{ n: 1, done: true, weight: 100, reps: 5 }] },
+            { name: 'Glute Ham Raise', exerciseId: 'core-nordic-curl', rows: [{ n: 1, done: false }] },
+          ],
+        },
+      ],
+    },
+  ],
+};
+sandbox.applyHppFollowPatch(poisoned);
+const repaired = poisoned.sessions[0].tasks;
+must(repaired.length === 2, `Front Squat / GHR superset must split, got ${repaired.length} tasks`);
+must(repaired[0].kind === 'strength' && repaired[0].name === 'Front Squat', 'Front Squat is its own lift');
+must(repaired[1].kind === 'strength' && repaired[1].name === 'Glute Ham Raise', 'GHR is its own lift');
+must(repaired[0].rows && repaired[0].rows[0] && repaired[0].rows[0].done, 'logged Front Squat sets survive the split');
+must(poisoned.sessions[0].taskIndex === 1, 'active session lands on incomplete GHR after split');
 
 const mixed = sandbox.normalizeAthleteStrengthBlocks([
   { type: 'strength', heading: 'Strength', exercises: [{ name: 'Front Squat', sets: 5, reps: '5' }] },
