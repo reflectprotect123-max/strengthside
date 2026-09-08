@@ -175,4 +175,33 @@ for (const name of ['Full Body A', 'Full Body B', 'Full Body C']) {
 
 must(out.templates.filter((t) => /^Full Body [ABC]$/.test(t.name)).length === 3, 'all three present');
 
+const paintedA = sandbox.clone(out.templates.find((t) => t.name === 'Full Body A'));
+const paintedBench = (paintedA.blocks.find((b) => b.type === 'strength').exercises || []).find(
+  (e) => e.exerciseId === 'core-bench-press' || e.name === 'Bench Press',
+);
+must(paintedBench, 'Full Body A bench');
+paintedBench.sets = 3;
+paintedBench.logColumns = (paintedBench.logColumns || []).concat([
+  { id: 'sec', kind: 'time_sec', value: '30', values: ['30'], optional: true },
+]);
+paintedA.source = 'THE-user';
+const kept = sandbox.ensureStarterTemplates({
+  meta: {},
+  templates: [paintedA],
+  exercises: [],
+  hiddenTemplateIds: [],
+});
+const keptBench = (
+  kept.templates.find((t) => t.name === 'Full Body A').blocks.find((b) => b.type === 'strength').exercises || []
+).find((e) => e.exerciseId === 'core-bench-press' || e.name === 'Bench Press');
+must(
+  (keptBench.logColumns || []).some((c) => c.kind === 'time_sec'),
+  'painted seconds on Full Body A must survive boot ensureStarterTemplates',
+);
+
+must(
+  !html.includes('if(isSeedTemplate(draft)||isRetiredStrengthTemplate(draft))'),
+  'Save must write starters in place so Library Full Body A is what you just painted',
+);
+
 console.log('fullbody-bc-starters.smoke: ok');

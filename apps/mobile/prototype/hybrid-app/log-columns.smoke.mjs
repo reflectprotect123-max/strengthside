@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v201'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v202'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -179,8 +179,8 @@ const seeded = LC.seedRowsFromLogColumns({
 if (String(seeded.rows[0].weight) !== '80') throw new Error('logger route must seed painted kg');
 if (String(seeded.rows[0].reps) !== '5') throw new Error('logger route must seed painted reps');
 
-if (!html.includes('function routeBuilderLiftToLogger')) {
-  throw new Error('flatten must route builder lifts through routeBuilderLiftToLogger');
+if (html.includes('ex.logColumns=(ex.logColumns||[]).slice(0,3)')) {
+  throw new Error('ensureAthleteLiftShape must not cap logColumns at 3');
 }
 if (!html.includes('seedRowsFromLogColumns')) {
   throw new Error('session start must seed logger rows from builder columns');
