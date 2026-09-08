@@ -686,6 +686,20 @@ input:focus,textarea:focus,select:focus{border-color:rgba(212,165,116,.55); box-
 .ath-whoop-meta{display:flex;flex-direction:column;gap:4px}
 .ath-whoop-meta .ath-sleep-hint{margin:0}
 
+.ota-banner{
+  display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  margin:0 0 16px;padding:14px 16px;
+  border:1px solid rgba(212,165,116,.42);
+  border-radius:14px;
+  background:linear-gradient(165deg, rgba(212,165,116,.14), rgba(8,10,12,.96));
+}
+.ota-banner.ota-wait{border-color:rgba(94,196,180,.35);background:linear-gradient(165deg, rgba(94,196,180,.1), rgba(8,10,12,.96))}
+.ota-kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--copper2);font-weight:700}
+.ota-banner.ota-wait .ota-kicker{color:var(--zone)}
+.ota-title{font-family:var(--font-display),system-ui,sans-serif;font-size:20px;font-weight:700;letter-spacing:.02em;margin-top:2px}
+.ota-meta{font-size:13px;line-height:1.35;opacity:.78;margin-top:4px;max-width:42ch}
+.ota-banner .btn{flex-shrink:0;min-height:var(--tap-min)}
+
 /* Room 1 — OLED Home (Whoop-adjacent: color only in dial arcs) */
 .shell-screen--oled{
   background:var(--oled-bg);
@@ -1534,6 +1548,38 @@ function readStorage(){try{return localStorage.getItem(STORAGE)}catch(e){storage
 function writeStorage(v){memoryStore=v;try{localStorage.setItem(STORAGE,v);return true}catch(e){storageBroken=true;return false}}
 function removeStorage(){memoryStore=null;try{localStorage.removeItem(STORAGE)}catch(e){storageBroken=true}}
 function storageNotice(){return storageBroken?`<div class=notice style="margin-bottom:12px"><b>Storage warning.</b><br>This browser/file mode is blocking normal local save. The app will still run, but export a backup before closing.</div>`:''}
+let otaInfo={status:'',current:'',next:'',latest:''};
+function otaBannerHtml(){
+  let s=otaInfo&&otaInfo.status;
+  if(s!=='ready'&&s!=='available')return'';
+  let ver=esc(otaInfo.next||otaInfo.latest||'');
+  if(s==='ready')return`<div class=ota-banner id=otaBanner role=status><div class=ota-copy><div class=ota-kicker>App update</div><div class=ota-title>Version ${ver} is ready</div><div class=ota-meta>Restart to load it. Workouts stay on this phone.</div></div><button type=button class="btn oled-cta" onclick="applyOtaUpdate()">Restart now</button></div>`;
+  return`<div class="ota-banner ota-wait" id=otaBanner role=status><div class=ota-copy><div class=ota-kicker>App update</div><div class=ota-title>Version ${ver} is downloading</div><div class=ota-meta>Restart now appears when the file is on the phone.</div></div></div>`;
+}
+function refreshOtaBanner(){
+  let html=otaBannerHtml();
+  let el=$('otaBanner');
+  if(!html){if(el)el.remove();return}
+  if(el){el.outerHTML=html;return}
+  let h1=document.querySelector('#appScreen h1');
+  if(h1)h1.insertAdjacentHTML('afterend',html);
+}
+async function refreshOtaStatus(force){
+  if(!window.NativeBridge||typeof NativeBridge.probeLiveUpdate!=='function')return;
+  try{otaInfo=await NativeBridge.probeLiveUpdate(force?{refresh:true}:{})||otaInfo}catch(e){return}
+  refreshOtaBanner();
+}
+async function applyOtaUpdate(){
+  if(!window.NativeBridge||typeof NativeBridge.applyLiveUpdate!=='function')return;
+  let r=await NativeBridge.applyLiveUpdate();
+  if(r==='error'||r==='unavailable')alert('Could not restart into the update. Close the app fully and open it again.');
+}
+async function lookForAppUpdate(){
+  await refreshOtaStatus(true);
+  if(otaInfo.status==='ready'||otaInfo.status==='available'){refreshOtaBanner();return}
+  if(otaInfo.status==='browser')return alert('App updates run on the phone install — not in the browser.');
+  alert(`You're on ${otaInfo.current||LOCAL_BUILD}. No new version is ready.`);
+}
 function ensureProgramTemplates(state){state=state||{};state.templates=Array.isArray(state.templates)?state.templates:[];state.archivedTemplates=Array.isArray(state.archivedTemplates)?state.archivedTemplates:[];state.hiddenTemplateIds=state.hiddenTemplateIds||[];return state}
 function readinessProgramTemplateBlueprints(){return []}
 
@@ -1580,7 +1626,7 @@ function removeWeek2Program(state){state.templates=(state.templates||[]).filter(
 function removeWeekPrefix(state){for(const t of state.templates||[])t.name=String(t.name||'').replace(legacyPrefixRegex(),'');for(const sx of state.sessions||[])sx.name=String(sx.name||'').replace(legacyPrefixRegex(),'');return state}
 function localRecordId(prefix='id'){return`${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 function isoNow(){return new Date().toISOString()}
-const LOCAL_BUILD='the-hybrid-athlete-blank-v205';
+const LOCAL_BUILD='the-hybrid-athlete-blank-v206';
 const BACKUP_VERSION=14;
 const STRENGTH_SCHEDULE_DEFAULTS={sessionsPerWeek:3,minutesPerSession:60,splitType:'full_body'};
 function ensureStrengthSchedule(state){state=state||{};state.settings=state.settings||{};let s=state.settings.strengthSchedule||{};state.settings.strengthSchedule={sessionsPerWeek:Math.max(1,Math.min(7,Math.round(num(s.sessionsPerWeek)||STRENGTH_SCHEDULE_DEFAULTS.sessionsPerWeek))),minutesPerSession:Math.max(20,Math.min(180,Math.round(num(s.minutesPerSession)||STRENGTH_SCHEDULE_DEFAULTS.minutesPerSession))),splitType:['full_body','upper_lower','push_pull_legs'].includes(s.splitType)?s.splitType:STRENGTH_SCHEDULE_DEFAULTS.splitType};return state}
@@ -2143,7 +2189,7 @@ function save(reason='auto'){
   /*removed*/
   /*removed*/
   return ok;
-}function dedupe(a){let o=[];(a||[]).forEach(x=>{if(x.name&&!o.some(y=>y.name.toLowerCase()===x.name.toLowerCase()))o.push(x)});return o.sort((a,b)=>a.name.localeCompare(b.name))}function tpl(i){return S.templates.find(x=>x.id===i)}function ses(i){return S.sessions.find(x=>x.id===i)}function activeSession(){let x=ses(S.active)||S.sessions.find(s=>s.status==='active');if(x){S.active=x.id;return x}S.active=null;return null}function nav(show=true){$('bottomNav').classList.toggle('hidden',!show)}function clock(show=false){$('workoutClock').classList.toggle('show',show)}function shell(title,eyebrow,body){var keepScroll=S&&S.tab==='settings'&&title==='Settings';var scrollY=keepScroll?(window.scrollY||document.documentElement.scrollTop||0):0;$('appScreen').innerHTML=`<div class=eyebrow>${esc(eyebrow)}</div><h1>${esc(title)}</h1>${storageNotice()}${body}`;if(keepScroll&&scrollY>0){try{window.scrollTo({top:scrollY,behavior:'auto'})}catch(e){window.scrollTo(0,scrollY)}}else{try{window.scrollTo({top:0,behavior:'auto'})}catch(e){window.scrollTo(0,0)}}}
+}function dedupe(a){let o=[];(a||[]).forEach(x=>{if(x.name&&!o.some(y=>y.name.toLowerCase()===x.name.toLowerCase()))o.push(x)});return o.sort((a,b)=>a.name.localeCompare(b.name))}function tpl(i){return S.templates.find(x=>x.id===i)}function ses(i){return S.sessions.find(x=>x.id===i)}function activeSession(){let x=ses(S.active)||S.sessions.find(s=>s.status==='active');if(x){S.active=x.id;return x}S.active=null;return null}function nav(show=true){$('bottomNav').classList.toggle('hidden',!show)}function clock(show=false){$('workoutClock').classList.toggle('show',show)}function shell(title,eyebrow,body){var keepScroll=S&&S.tab==='settings'&&title==='Settings';var scrollY=keepScroll?(window.scrollY||document.documentElement.scrollTop||0):0;$('appScreen').innerHTML=`<div class=eyebrow>${esc(eyebrow)}</div><h1>${esc(title)}</h1>${storageNotice()}${otaBannerHtml()}${body}`;if(keepScroll&&scrollY>0){try{window.scrollTo({top:scrollY,behavior:'auto'})}catch(e){window.scrollTo(0,scrollY)}}else{try{window.scrollTo({top:0,behavior:'auto'})}catch(e){window.scrollTo(0,0)}}}
 function applyDisplayPrefs(){document.body.classList.toggle('coach-rx-active',athleteHasActiveCoachStrength())}function go(tab){if(tab==='tools'||tab==='coachlock'||tab==='library')tab='programs';S.tab=tab;save();render()}
 function clamp(n,min,max){n=num(n);return Math.max(min,Math.min(max,n))}
 function dailyList(){S.dailyCheckins=Array.isArray(S.dailyCheckins)?S.dailyCheckins:[];return S.dailyCheckins}
@@ -3170,7 +3216,8 @@ function sessionTextBlocks(x){let blocks=(x.tasks||[]).filter(t=>t.kind==='text'
 
 async function refreshStoragePersistence(){try{if(navigator.storage?.persisted){let persisted=await navigator.storage.persisted();S.meta=S.meta||{};S.meta.storagePersisted=!!persisted;save('storage-check');return persisted}}catch(e){}return false}
 async function requestStoragePersistence(){try{if(!navigator.storage?.persist)return alert('This browser does not support protected storage. Autosave still works on this device.');let granted=await navigator.storage.persist();S.meta=S.meta||{};S.meta.storagePersisted=!!granted;save('storage-persist');alert(granted?'Protected storage granted. Your browser is less likely to clear this app data automatically.':'Protected storage was not granted. Autosave still works, but keep occasional backups.');settings()}catch(e){alert('Could not request protected storage. Autosave still works, but keep occasional backups.')}}
-function settings(){let h=dataHealth(),last=h.lastBackup?new Date(h.lastBackup).toLocaleString():'Never on this device',lastComplete=h.lastCompleted?`${dateLabel(h.lastCompleted.date)} · ${h.lastCompleted.name}`:'None yet',persisted=!!S.meta?.storagePersisted,lastSave=S.meta?.lastSavedAt?new Date(S.meta.lastSavedAt).toLocaleString():'Not yet',coachSyncLine='';shell('Settings','Athlete defaults',`<div class="stack shell-screen shell-screen--oled"><div class="settings-group">
+function settings(){let h=dataHealth(),last=h.lastBackup?new Date(h.lastBackup).toLocaleString():'Never on this device',lastComplete=h.lastCompleted?`${dateLabel(h.lastCompleted.date)} · ${h.lastCompleted.name}`:'None yet',persisted=!!S.meta?.storagePersisted,lastSave=S.meta?.lastSavedAt?new Date(S.meta.lastSavedAt).toLocaleString():'Not yet',coachSyncLine='',otaLine=otaInfo.current?`Channel ${esc(otaInfo.current)}`:`Build ${esc(LOCAL_BUILD)}`;shell('Settings','Athlete defaults',`<div class="stack shell-screen shell-screen--oled"><div class="settings-group">
+<div class=card><div class=eyebrow>App</div><div class=title>This phone</div><div class=meta style="margin-bottom:12px">${esc(otaLine)} · ${esc(LOCAL_BUILD)}</div><div class=settings-actions><button type=button class="btn small primary" onclick="lookForAppUpdate()">Look for app update</button></div></div>
 <div class=card><div class=eyebrow>Connections</div><div class=title>Account</div><div class=meta style="margin-bottom:12px">Sign in with the same account on web and phone. Sync refreshes WHOOP recovery and Concept2 Logbook when those are linked — sessions and templates stay on this device for now.${coachSyncLine}</div>${(window.Whoop&&Whoop.cardHtml)?Whoop.cardHtml():''}</div>
 <div class=card><div class=eyebrow>Heart rate</div><div class=title>Zone profile</div><div class=meta>For The Engine load and zone context.</div><div class=two style="margin-top:12px"><div class=field><label>Resting HR</label><input type=number min=30 max=120 value="${esc(S.profile.restingHr)}" onchange="S.profile.restingHr=num(this.value);save()"></div><div class=field><label>Max HR</label><input type=number min=120 max=230 value="${esc(S.profile.maxHr)}" onchange="S.profile.maxHr=num(this.value);save()"></div></div></div>
 <div class=card><div class=eyebrow>Conditioning</div><div class=title>Pace anchors</div><div class=meta>Race / test marks. Logging hard intervals does not change these.</div><div class=two style="margin-top:12px"><div class=field><label>2k race time</label><input inputmode=numeric style="min-height:var(--tap-min)" value="${esc(num(S.profile.race2kSec)?formatMmSs(S.profile.race2kSec):'')}" placeholder="7:20" onchange="setProfileRace2k(this)"></div><div class=field><label>Bike watts anchor</label><input type=number inputmode=numeric min=0 style="min-height:var(--tap-min)" value="${esc(S.profile.bikeWattsAnchor||'')}" onchange="setProfileBikeWatts(this.value)"></div></div><div class=field style="margin-top:12px"><label>Bike RPM anchor</label><input type=number inputmode=numeric min=0 style="min-height:var(--tap-min)" value="${esc(S.profile.bikeRpmAnchor||'')}" onchange="setProfileBikeRpm(this.value)"></div></div>
@@ -3192,7 +3239,7 @@ Import and merge? Matching workout IDs can be updated.`;if(!confirm(message))ret
 
 
 function sheet(content){$('modalRoot').innerHTML=`<div class=modal onclick="if(event.target===this)closeSheet()" role=presentation><div class=sheet role=dialog aria-modal=true aria-label="Details"><button class=close onclick=closeSheet() aria-label="Close">×</button>${content}</div></div>`;growTextAreas();let c=$('modalRoot').querySelector('.close');if(c)try{c.focus()}catch(e){}};
-function closeSheet(){document.body.classList.remove('ath-demo-open');$('modalRoot').innerHTML='';}document.addEventListener('keydown',function hybridSheetEsc(e){if(e.key==='Escape'&&$('modalRoot')&&$('modalRoot').innerHTML)closeSheet();});window.addEventListener('pagehide',()=>{clearWakeReasonsAndHardware();if(S)save('pagehide')});document.addEventListener('visibilitychange',()=>{if(S&&document.visibilityState==='hidden')save('background');if(S&&document.visibilityState==='visible'){refreshStoragePersistence();scheduleCondFinishPrompt();/*removed*/if(bleHr.status==='live')wakeReasons.hr=true;if(simpleCondLog||(activeSession()&&document.querySelector('.task')))wakeReasons.training=true;syncScreenWakeLock()}});if(window.NativeBridge&&NativeBridge.onAppState){NativeBridge.onAppState(function(active){if(active){if(bleHr.status==='live')wakeReasons.hr=true;if(simpleCondLog||(activeSession()&&document.querySelector('.task')))wakeReasons.training=true;syncScreenWakeLock()}else{clearWakeReasonsAndHardware()}})}setInterval(()=>{let active=activeSession();if(active)syncWorkoutClock();tickIntervals();let t=active?current():null;if(t?.blockTimer?.on&&$('blockClock'))$('blockClock').textContent=fmt(blockElapsed(t));if(simpleCondLog&&t?.blockTimer?.on){let mins=$('condMin');if(mins&&document.activeElement!==mins)mins.value=String(Math.round(blockElapsed(t)/60*10)/10)}},1000);refreshStoragePersistence();try{Object.defineProperty(window,'S',{get:()=>S,set:v=>{S=v},configurable:true});window.today=today;}catch(e){}bootstrapCoordinatorSilent();let hybridExercisePickAt=0;function hybridExercisePickEvent(e){let t=e.target;let ath=t&&t.closest?t.closest('.ath-ex-pick'):null;let pick=t&&t.closest?t.closest('.ex-sheet-pick'):null;if(!ath&&!pick)return;e.preventDefault();e.stopPropagation();let now=Date.now();if(now-hybridExercisePickAt<400)return;hybridExercisePickAt=now;if(ath)pickAthleteLiftSuggest(Number(ath.dataset.bi),Number(ath.dataset.ei),ath.dataset.eid||'',ath.dataset.name||'',ath.dataset.cat||'Custom');else pickExerciseSuggest(pick.dataset.eid||'',pick.dataset.name||'',pick.dataset.cat||'Custom')}document.addEventListener('pointerdown',hybridExercisePickEvent,true);document.addEventListener('click',hybridExercisePickEvent,true);/* coach S&C parked */render();
+function closeSheet(){document.body.classList.remove('ath-demo-open');$('modalRoot').innerHTML='';}document.addEventListener('keydown',function hybridSheetEsc(e){if(e.key==='Escape'&&$('modalRoot')&&$('modalRoot').innerHTML)closeSheet();});window.addEventListener('pagehide',()=>{clearWakeReasonsAndHardware();if(S)save('pagehide')});document.addEventListener('visibilitychange',()=>{if(S&&document.visibilityState==='hidden')save('background');if(S&&document.visibilityState==='visible'){refreshStoragePersistence();refreshOtaStatus(true);scheduleCondFinishPrompt();/*removed*/if(bleHr.status==='live')wakeReasons.hr=true;if(simpleCondLog||(activeSession()&&document.querySelector('.task')))wakeReasons.training=true;syncScreenWakeLock()}});if(window.NativeBridge&&NativeBridge.onAppState){NativeBridge.onAppState(function(active){if(active){refreshOtaStatus(true);if(bleHr.status==='live')wakeReasons.hr=true;if(simpleCondLog||(activeSession()&&document.querySelector('.task')))wakeReasons.training=true;syncScreenWakeLock()}else{clearWakeReasonsAndHardware()}})}if(window.NativeBridge&&NativeBridge.onLiveUpdateStatus){NativeBridge.onLiveUpdateStatus(function(info){otaInfo=info||otaInfo;refreshOtaBanner()})}setInterval(()=>{let active=activeSession();if(active)syncWorkoutClock();tickIntervals();let t=active?current():null;if(t?.blockTimer?.on&&$('blockClock'))$('blockClock').textContent=fmt(blockElapsed(t));if(simpleCondLog&&t?.blockTimer?.on){let mins=$('condMin');if(mins&&document.activeElement!==mins)mins.value=String(Math.round(blockElapsed(t)/60*10)/10)}},1000);refreshStoragePersistence();try{Object.defineProperty(window,'S',{get:()=>S,set:v=>{S=v},configurable:true});window.today=today;}catch(e){}bootstrapCoordinatorSilent();let hybridExercisePickAt=0;function hybridExercisePickEvent(e){let t=e.target;let ath=t&&t.closest?t.closest('.ath-ex-pick'):null;let pick=t&&t.closest?t.closest('.ex-sheet-pick'):null;if(!ath&&!pick)return;e.preventDefault();e.stopPropagation();let now=Date.now();if(now-hybridExercisePickAt<400)return;hybridExercisePickAt=now;if(ath)pickAthleteLiftSuggest(Number(ath.dataset.bi),Number(ath.dataset.ei),ath.dataset.eid||'',ath.dataset.name||'',ath.dataset.cat||'Custom');else pickExerciseSuggest(pick.dataset.eid||'',pick.dataset.name||'',pick.dataset.cat||'Custom')}document.addEventListener('pointerdown',hybridExercisePickEvent,true);document.addEventListener('click',hybridExercisePickEvent,true);/* coach S&C parked */render();
 function nativeSeedDelay(){try{if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())return 800}catch(e){}return 0}
 </script>
 
