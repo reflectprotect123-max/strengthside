@@ -375,6 +375,77 @@
     return global.StrengthAdapter ? global.StrengthAdapter.targetRirForExercise(t) : 2;
   }
 
+  function rirFromDifficulty(key, prescribed) {
+    var base = Number(prescribed);
+    if (!Number.isFinite(base)) base = 2;
+    if (key === 'very_easy') return base + 2;
+    if (key === 'easy') return base + 1;
+    if (key === 'medium') return base;
+    if (key === 'hard') return Math.max(0, base - 1);
+    if (key === 'max' || key === 'did_not_complete') return 0;
+    return base;
+  }
+
+  function nextIncompleteRow(rows, afterIndex) {
+    for (var j = afterIndex + 1; j < (rows || []).length; j++) {
+      if (rows[j] && !rows[j].done && !rows[j].extra) return rows[j];
+    }
+    return null;
+  }
+
+  function fillNextFromAdaptive(ex, loggedRow) {
+    if (!ex || !loggedRow) return;
+    var rows = ex.rows || [];
+    var i = rows.indexOf(loggedRow);
+    if (i < 0) return;
+    var nxt = nextIncompleteRow(rows, i);
+    if (!nxt) return;
+    var flow = resolveLoggerFlow(ex);
+    if (flow === 'carry') {
+      if (loggedRow.weight !== '' && loggedRow.weight != null) nxt.weight = loggedRow.weight;
+      if (loggedRow.distance !== '' && loggedRow.distance != null) nxt.distance = loggedRow.distance;
+      return;
+    }
+    if (flow === 'time_primary') return;
+    if (typeof global.isCarryExercise === 'function' && global.isCarryExercise(ex)) return;
+    loggedRow.rir = rirFromDifficulty(loggedRow.difficulty, targetRir(ex));
+    var liveKg = !global.LogColumns || !global.LogColumns.liveTracksKg || global.LogColumns.liveTracksKg(ex);
+    if (!liveKg) {
+      nxt.reps = loggedRow.reps;
+      nxt.adaptiveFilled = true;
+      return;
+    }
+    var load = Number(loggedRow.weight);
+    if (!(load > 0)) {
+      if (loggedRow.reps !== '' && loggedRow.reps != null) nxt.reps = loggedRow.reps;
+      return;
+    }
+    var HA = global.HybridAdaptive;
+    if (HA && HA.decideNextLift) {
+      var rangeText = String(ex.reps || loggedRow.target || '');
+      var range = HA.parseRepRange ? HA.parseRepRange(rangeText) : { min: Number(loggedRow.reps) || 5, max: Number(loggedRow.reps) || 5 };
+      var next = HA.decideNextLift({
+        dayKind: 'strength',
+        range: range,
+        logged: {
+          loadKg: load,
+          reps: Number(loggedRow.reps) || 0,
+          rir: loggedRow.rir == null || loggedRow.rir === '' ? null : Number(loggedRow.rir),
+        },
+      });
+      if (next && next.ok && next.loadKg != null) {
+        nxt.weight = next.loadKg;
+        nxt.reps = String(next.reps);
+        nxt.adaptiveFilled = true;
+        ex.lastSuggestion = { loadKg: next.loadKg, reps: next.reps };
+        return;
+      }
+    }
+    nxt.weight = loggedRow.weight;
+    nxt.reps = loggedRow.reps;
+    nxt.adaptiveFilled = true;
+  }
+
   function strengthWeekLabel() {
     var x = typeof global.activeSession === 'function' ? global.activeSession() : null;
     var w = x && (x.weekIndex || x.week || x.programWeek || (x.meta && x.meta.week));
@@ -835,24 +906,7 @@
     if (!autoreg.sessionAnchorKg && performedLoad) autoreg.sessionAnchorKg = performedLoad;
     var prescribedReps = parseTargetReps(row) || performedReps;
     var nextOrdinal = ordinal + 1;
-    if (nextOrdinal < planned.length && global.StrengthAdapter && global.StrengthAdapter.suggestNextSet) {
-      var suggestion = global.StrengthAdapter.suggestNextSet(global.S, t, {
-        performedLoadKg: performedLoad,
-        performedReps: performedReps,
-        prescribedReps: prescribedReps,
-        prescribedLoadKg: performedLoad,
-        difficulty: autoreg.selectedDifficulty,
-        sessionAnchorKg: autoreg.sessionAnchorKg || performedLoad,
-        ordinal: ordinal + 1,
-      });
-      if (suggestion) {
-        var nextRow = planned[nextOrdinal];
-        nextRow.weight = suggestion.loadKg;
-        nextRow.reps = suggestion.reps;
-        nextRow.target = String(suggestion.reps);
-        t.lastSuggestion = suggestion;
-      }
-    }
+    fillNextFromAdaptive(t, row);
     autoreg.setOrdinal = nextOrdinal;
     autoreg.selectedDifficulty = null;
     if (typeof global.save === 'function') global.save();
@@ -1076,6 +1130,7 @@
     }
     item.row.done = true;
     item.row.difficulty = autoreg.selectedDifficulty;
+    fillNextFromAdaptive(ex, item.row);
     var next = currentSupersetItem(t);
     t.complete = !next;
     autoreg.selectedDifficulty = null;
