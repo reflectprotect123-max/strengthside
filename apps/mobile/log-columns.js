@@ -1095,16 +1095,51 @@
     card.replaceWith(wrap.firstChild);
   }
 
-  function loggerCellsHtml(row, rowIndex, columns, isLast) {
-    const cols = columns && columns.length ? columns : defaultColumns({});
+  function seedRowsFromLogColumns(ex) {
+    if (!ex) return ex;
+    const cols = ensureAthleteLogColumns(ex);
+    const rows = ex.rows || [];
+    rows.forEach((row, i) => {
+      if (!row || row.done) return;
+      cols.forEach((col) => {
+        const field = rowFieldForKind(col.kind);
+        const raw = String(
+          (col.values && (col.values[i] != null ? col.values[i] : col.values[0])) ?? col.value ?? '',
+        ).trim();
+        if (!raw) return;
+        const painted = (raw.match(/^(\d+(?:\.\d+)?)/) || [raw, raw])[1];
+        if (field === 'weight') {
+          if (row.weight === '' || row.weight == null) row.weight = painted;
+        } else if (row.reps === '' || row.reps == null) {
+          row.reps = painted;
+        }
+      });
+    });
+    return ex;
+  }
+
+  function loggerCellsHtml(row, rowIndex, columns, isLast, ex) {
+    const cols =
+      columns && columns.length
+        ? columns
+        : ex
+          ? ensureAthleteLogColumns(ex)
+          : defaultColumns({});
+    const anyOptional = cols.some((c) => c && c.optional);
     const cells = cols
       .map((c) => {
         const meta = kindMeta(c.kind);
-        const field = meta.field;
+        const field = rowFieldForKind(c.kind);
         const val = row[field] == null ? '' : row[field];
-        return `<div><span class="mini">${meta.loggerLabel}</span><input type="number" value="${val}" onchange="updateSet(${rowIndex},'${field}',this.value)"></div>`;
+        const live = anyOptional && !c.optional;
+        let label = meta.loggerLabel;
+        if (c.optional) label += ' (optional)';
+        else if (live) label += ' · tracks';
+        const cls = c.optional ? 'logger-col-optional' : 'logger-col-live';
+        return `<div class="${cls}"><span class="mini">${label}</span><input type="number" value="${val}" onchange="updateSet(${rowIndex},'${field}',this.value)" aria-label="${label}"></div>`;
       })
       .join('');
+    if (!liveTracksKg({ logColumns: cols })) return cells;
     const rirLabel = isLast ? 'RIR · counts' : 'RIR';
     const rir = `<div><span class="mini">${rirLabel}</span><input type="number" min="0" max="10" value="${row.rir || ''}" onchange="updateSet(${rowIndex},'rir',this.value)" aria-label="${isLast ? 'RIR on last set for progression' : 'RIR set ' + row.n}"></div>`;
     return cells + rir;
@@ -1127,6 +1162,7 @@
   function supersetMetricFieldHtml(ex, row, opts) {
     opts = opts || {};
     const layout = columnLayout(ex || {});
+    const anyOptional = (layout.cols || []).some((c) => c && c.optional);
     return layout.cols
       .map((col) => {
         const meta = kindMeta(col.kind);
@@ -1138,15 +1174,17 @@
             : opts.mode === 'completed'
               ? `editCompletedRow('${opts.sessionId}','${opts.taskId}','${opts.exId}','${opts.rowId}','${field}',this.value)`
               : `setSupersetValue('${field}',this.value)`;
+        const extra = col.optional ? ' (optional)' : anyOptional && !col.optional ? ' · tracks' : '';
+        const cls = col.optional ? 'logger-col-optional' : anyOptional ? 'logger-col-live' : '';
         if (opts.legacyCard) {
           return (
-            `<div class=field><label>${escTwin(meta.label)}</label>` +
-            `<input type="number" value="${escTwin(val)}" onchange="${onchange}" aria-label="${escTwin(meta.label)}"></div>`
+            `<div class=field><label>${escTwin(meta.label)}${extra}</label>` +
+            `<input type="number" value="${escTwin(val)}" onchange="${onchange}" aria-label="${escTwin(meta.label)}${extra}"></div>`
           );
         }
         return (
-          `<div><span class=mini>${escTwin(meta.label)}</span>` +
-          `<input type="number" value="${escTwin(val)}" onchange="${onchange}" aria-label="${escTwin(meta.label)}"></div>`
+          `<div class="${cls}"><span class=mini>${escTwin(meta.label)}${extra}</span>` +
+          `<input type="number" value="${escTwin(val)}" onchange="${onchange}" aria-label="${escTwin(meta.label)}${extra}"></div>`
         );
       })
       .join('');
@@ -1169,9 +1207,11 @@
     return (
       `<div class=setrow><div class=setnum>${row.n}<span class=target>${esc(target)}</span></div>` +
       supersetMetricFieldHtml(ex, row, { mode: 'edit', ei: ei, ri: ri }) +
-      `<div><span class=mini>RIR</span><input type="number" min="0" max="10" value="${esc(
-        row.rir || '',
-      )}" onchange="editSupersetValue(${ei},${ri},'rir',this.value)"></div>` +
+      (liveTracksKg(ex)
+        ? `<div><span class=mini>RIR</span><input type="number" min="0" max="10" value="${esc(
+            row.rir || '',
+          )}" onchange="editSupersetValue(${ei},${ri},'rir',this.value)"></div>`
+        : '') +
       `<button class="btn small ${row.done ? '' : 'primary'}" onclick="toggleSupersetDone(${ei},${ri})">${
         row.done ? 'Logged' : 'Log'
       }</button></div>`
@@ -1235,9 +1275,11 @@
               exId: exId,
               rowId: r.id,
             }) +
-            `<div><span class=mini>RIR</span><input type="number" min="0" max="10" value="${esc(
-              r.rir || '',
-            )}" onchange="editCompletedRow('${sessionId}','${taskId}','${exId}','${r.id}','rir',this.value)"></div>` +
+            (liveTracksKg(owner)
+              ? `<div><span class=mini>RIR</span><input type="number" min="0" max="10" value="${esc(
+                  r.rir || '',
+                )}" onchange="editCompletedRow('${sessionId}','${taskId}','${exId}','${r.id}','rir',this.value)"></div>`
+              : '') +
             `<button class="btn small ${r.extra ? 'danger' : ''}" onclick="${
               r.extra
                 ? `deleteCompletedRow('${sessionId}','${taskId}','${exId}','${r.id}')`
@@ -1313,6 +1355,8 @@
     builderSupersetTwinHtml,
     builderLiftMetricsHtml,
     builderLiftHeroMetricsBlockHtml,
+    builderHeroLabel,
+    seedRowsFromLogColumns,
     builderSideModeHtml,
     ensureAthleteLogColumns,
     savedLogColumnsStale,

@@ -35,8 +35,8 @@ function extractFn(src, name) {
   return src.slice(start, i);
 }
 
-must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v196'"), 'LOCAL_BUILD v189');
-must(html.includes('the-hybrid-athlete-blank-v196'), 'service worker cache v189');
+must(html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v197'"), 'LOCAL_BUILD v189');
+must(html.includes('the-hybrid-athlete-blank-v197'), 'service worker cache v189');
 
 must(html.includes('setEngineLibrarySubTab'), 'Engine sub-nav switch missing');
 must(html.includes('>Analytics<'), 'Analytics tab label missing');

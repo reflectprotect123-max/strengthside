@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v196'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v197'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -145,6 +145,43 @@ if (!needKg) throw new Error('live kg must require a weight');
 
 const liveTwin = LC.builderAthleteTwinHtml({ name: 'Bench', restSec: 90, logColumns: opted }, { bi: 0, ei: 0 });
 if (!liveTwin.includes('tracks')) throw new Error('live column shows tracks hint');
+
+const loggerCells = LC.loggerCellsHtml(
+  { n: 1, weight: '', reps: '8', rir: '' },
+  0,
+  opted,
+  true,
+);
+if (!loggerCells.includes('(optional)')) throw new Error('logger must mark optional columns');
+if (!loggerCells.includes('tracks')) throw new Error('logger must mark the live column');
+if (loggerCells.includes('RIR')) throw new Error('RIR is kg-progress only; hide when load is optional');
+
+const seeded = LC.seedRowsFromLogColumns({
+  sets: 3,
+  logColumns: [
+    { id: 'a', kind: 'weight_kg', value: '80', values: ['80', '80', '80'] },
+    { id: 'b', kind: 'reps', value: '5', values: ['5', '5', '5'] },
+  ],
+  rows: [
+    { n: 1, weight: '', reps: '', done: false },
+    { n: 2, weight: '', reps: '', done: false },
+  ],
+});
+if (String(seeded.rows[0].weight) !== '80') throw new Error('logger route must seed painted kg');
+if (String(seeded.rows[0].reps) !== '5') throw new Error('logger route must seed painted reps');
+
+if (!html.includes('function routeBuilderLiftToLogger')) {
+  throw new Error('flatten must route builder lifts through routeBuilderLiftToLogger');
+}
+if (!html.includes('seedRowsFromLogColumns')) {
+  throw new Error('session start must seed logger rows from builder columns');
+}
+if (!/function validateStrengthRow\(r,ex\)\{if\(ex&&window\.LogColumns&&LogColumns\.validateAthleteRow\)return LogColumns\.validateAthleteRow/.test(html)) {
+  throw new Error('validateStrengthRow must not fall through to kg×reps after LogColumns');
+}
+if (!html.includes('LogColumns.liveTracksKg') || !html.includes('applyOpenLiftToEx')) {
+  throw new Error('openLift must stay gated on live kg');
+}
 
 if (LC.savedLogColumnsStale({ exerciseId: 'core-back-squat', name: 'Back Squat' }, [{ id: 'c', kind: 'reps' }])) {
   throw new Error('1-column reps on a squat is a user choice, not stale');

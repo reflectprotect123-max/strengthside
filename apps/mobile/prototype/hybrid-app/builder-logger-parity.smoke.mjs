@@ -53,6 +53,10 @@ must(html.includes('LogColumns.loggerCellsHtml'), 'index.html references LogColu
 
 const strengthTaskFn = extractFn(html, 'strengthTask');
 must(strengthTaskFn.includes('LogColumns.loggerCellsHtml'), 'strengthTask body must call LogColumns.loggerCellsHtml for its set-row metric cells');
+must(strengthTaskFn.includes('ensureAthleteLogColumns'), 'strengthTask must use builder columns, not default kg×reps normalize');
+must(html.includes('function routeBuilderLiftToLogger'), 'builder→logger flatten helper exists');
+must(extractFn(html, 'flatten').includes('routeBuilderLiftToLogger'), 'flatten routes strength and supersets through builder columns');
+must(extractFn(html, 'validateStrengthRow').includes('return LogColumns.validateAthleteRow'), 'logger validate does not re-require kg×reps');
 
 // Builder already wires the same shared renderer — lock the wiring stays in place.
 must(html.includes('LogColumns.builderLiftHeroMetricsBlockHtml'), 'builder still uses LogColumns.builderLiftHeroMetricsBlockHtml');
