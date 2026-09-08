@@ -424,7 +424,7 @@
     if (HA && HA.decideNextLift) {
       var rangeText = String(ex.reps || loggedRow.target || '');
       var range = HA.parseRepRange ? HA.parseRepRange(rangeText) : { min: Number(loggedRow.reps) || 5, max: Number(loggedRow.reps) || 5 };
-      var next = HA.decideNextLift({
+      var next = global.HybridAdaptive.decideNextLift({
         dayKind: 'strength',
         range: range,
         logged: {
