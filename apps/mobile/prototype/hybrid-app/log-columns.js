@@ -1135,7 +1135,7 @@
         let label = meta.loggerLabel;
         if (c.optional) label += ' (optional)';
         else if (live) label += ' · tracks';
-        const cls = c.optional ? 'logger-col-optional' : 'logger-col-live';
+        const cls = c.optional ? 'logger-col-optional' : live ? 'logger-col-live' : '';
         return `<div class="${cls}"><span class="mini">${label}</span><input type="number" value="${val}" onchange="updateSet(${rowIndex},'${field}',this.value)" aria-label="${label}"></div>`;
       })
       .join('');

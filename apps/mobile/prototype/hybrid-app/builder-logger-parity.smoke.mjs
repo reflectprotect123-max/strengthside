@@ -57,6 +57,9 @@ must(strengthTaskFn.includes('ensureAthleteLogColumns'), 'strengthTask must use 
 must(html.includes('function routeBuilderLiftToLogger'), 'builder→logger flatten helper exists');
 must(extractFn(html, 'flatten').includes('routeBuilderLiftToLogger'), 'flatten routes strength and supersets through builder columns');
 must(extractFn(html, 'validateStrengthRow').includes('return LogColumns.validateAthleteRow'), 'logger validate does not re-require kg×reps');
+must(extractFn(html, 'applyOpenLiftToEx').includes('if(!hasR)row.reps'), 'Open must not overwrite painted reps');
+must(extractFn(html, 'supersetTask').includes('liveTracksKg'), 'superset RIR only when load is live');
+must(extractFn(html, 'autofill').includes('r.target===src.target'), 'autofill keeps per-target reps');
 
 // Builder already wires the same shared renderer — lock the wiring stays in place.
 must(html.includes('LogColumns.builderLiftHeroMetricsBlockHtml'), 'builder still uses LogColumns.builderLiftHeroMetricsBlockHtml');

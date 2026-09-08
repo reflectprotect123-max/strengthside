@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v197'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v198'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -155,6 +155,15 @@ const loggerCells = LC.loggerCellsHtml(
 if (!loggerCells.includes('(optional)')) throw new Error('logger must mark optional columns');
 if (!loggerCells.includes('tracks')) throw new Error('logger must mark the live column');
 if (loggerCells.includes('RIR')) throw new Error('RIR is kg-progress only; hide when load is optional');
+const bothLiveCells = LC.loggerCellsHtml(
+  { n: 1, weight: '80', reps: '5', rir: '' },
+  0,
+  pair,
+  true,
+);
+if (bothLiveCells.includes('logger-col-live')) {
+  throw new Error('gold tracks styling is only when a column is optional');
+}
 
 const seeded = LC.seedRowsFromLogColumns({
   sets: 3,
@@ -181,6 +190,15 @@ if (!/function validateStrengthRow\(r,ex\)\{if\(ex&&window\.LogColumns&&LogColum
 }
 if (!html.includes('LogColumns.liveTracksKg') || !html.includes('applyOpenLiftToEx')) {
   throw new Error('openLift must stay gated on live kg');
+}
+if (!html.includes('if(!hasR)row.reps')) {
+  throw new Error('applyOpenLiftToEx must not overwrite painted reps when kg is empty');
+}
+if (!html.includes("LogColumns.liveTracksKg(ex)") || !html.includes('function supersetTask')) {
+  throw new Error('superset logger must hide RIR unless load is live');
+}
+if (!html.includes('if(!r.reps&&src&&r.target===src.target)r.reps=src.reps')) {
+  throw new Error('autofill must not copy reps across different targets');
 }
 
 if (LC.savedLogColumnsStale({ exerciseId: 'core-back-squat', name: 'Back Squat' }, [{ id: 'c', kind: 'reps' }])) {
