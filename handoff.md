@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (Adaptive Next on one-set logger OTA).**
+> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (HPP squat/GHR not a superset).**
 > Chat history before this file is disposable. Start here.
 >
 > Strength cut (2026-09-06) was reversed on 2026-09-07. Spec of the cut remains historical: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
@@ -20,13 +20,13 @@
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
 | **Cache** | **`the-hybrid-athlete-blank-v209`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.73`** (one-set Next → Adaptive) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.74`** (HPP Front Squat ≠ GHR) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.73**.
+**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.74**.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -45,7 +45,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.73`** (one-set Next → Adaptive) |
+| Channels | **`dogfood` + `live`** both @ **`1.0.74`** (HPP Front Squat ≠ GHR) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
