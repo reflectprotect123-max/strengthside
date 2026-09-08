@@ -66,6 +66,7 @@ const requiredIndexHandlers = [
   'setAthleteLiftName',
   'setAthleteLiftRest',
   'setAthleteLiftColumnKind',
+  'setAthleteLiftColumnOptional',
   'setAthleteLiftColumnCount',
   'setAthleteLiftSideMode',
   'setAthleteLiftEffort',

@@ -56,6 +56,9 @@ must(strengthTaskFn.includes('LogColumns.loggerCellsHtml'), 'strengthTask body m
 
 // Builder already wires the same shared renderer — lock the wiring stays in place.
 must(html.includes('LogColumns.builderLiftMetricsHtml'), 'builder still uses LogColumns.builderLiftMetricsHtml');
+must(html.includes('function setAthleteLiftColumnOptional'), 'optional-column handler wired');
+must(logColumnsSrc.includes('toggleColumnOptional'), 'LogColumns can mark a column optional');
+must(logColumnsSrc.includes('(optional)'), 'builder renders (optional) on metric columns');
 
 // Logger must not hardcode a Weight/Reps-only mini-label pair as the *sole*
 // source of set-row metric cells any more — that path now flows through the

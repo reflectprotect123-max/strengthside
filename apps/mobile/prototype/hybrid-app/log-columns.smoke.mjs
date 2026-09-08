@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v194'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v195'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -96,5 +96,54 @@ if (!LC.columnLayout) throw new Error('columnLayout export missing');
 const carryLayout = LC.columnLayout(carryEx);
 if (carryLayout.layout !== 'triple') throw new Error('carry layout should be triple');
 if (carryLayout.cols.length !== 3) throw new Error('carry should have 3 cols');
+
+if (!LC.toggleColumnOptional) throw new Error('toggleColumnOptional export missing');
+if (!LC.liveColumns) throw new Error('liveColumns export missing');
+if (!html.includes('function setAthleteLiftColumnOptional')) {
+  throw new Error('builder must wire setAthleteLiftColumnOptional');
+}
+
+const pair = [
+  { id: 'a', kind: 'weight_kg', value: '', values: [''] },
+  { id: 'b', kind: 'reps', value: '8', values: ['8'] },
+];
+const pairEx = { name: 'Bench Press', restSec: 120, logColumns: pair };
+const pairTwin = LC.builderAthleteTwinHtml(pairEx, { bi: 0, ei: 0 });
+if (!pairTwin.includes('(optional)')) throw new Error('pair columns need (optional) control');
+if (!pairTwin.includes('setAthleteLiftColumnOptional(0,0,0)')) {
+  throw new Error('optional control must target first column');
+}
+if (!pairTwin.includes('setAthleteLiftColumnOptional(0,0,1)')) {
+  throw new Error('optional control must target second column');
+}
+if (plankTwin.includes('(optional)')) throw new Error('single-column lift has no optional control');
+
+const opted = LC.toggleColumnOptional(pair, 0);
+if (!opted[0].optional) throw new Error('selected column becomes optional');
+if (opted[1].optional) throw new Error('other column stays live (not optional)');
+const live = LC.liveColumns({ logColumns: opted });
+if (live.length !== 1 || live[0].kind !== 'reps') throw new Error('live metric is the other column');
+if (!LC.liveTracksKg({ logColumns: opted })) {
+  /* kg is optional — must not drive kg progress */
+} else {
+  throw new Error('optional kg must not live-track kg');
+}
+if (!LC.liveTracksKg({ logColumns: LC.toggleColumnOptional(pair, 1) })) {
+  throw new Error('optional reps leaves kg as the live tracked metric');
+}
+
+const skipKg = LC.validateAthleteRow(
+  { logColumns: opted },
+  { weight: '', reps: 8 },
+);
+if (skipKg) throw new Error('optional kg may be blank: ' + skipKg);
+const needKg = LC.validateAthleteRow(
+  { logColumns: LC.toggleColumnOptional(pair, 1) },
+  { weight: '', reps: 8 },
+);
+if (!needKg) throw new Error('live kg must require a weight');
+
+const liveTwin = LC.builderAthleteTwinHtml({ name: 'Bench', restSec: 90, logColumns: opted }, { bi: 0, ei: 0 });
+if (!liveTwin.includes('tracks')) throw new Error('live column shows tracks hint');
 
 console.log('log-columns.smoke: ok');

@@ -118,7 +118,7 @@
           Array.isArray(c.values) && c.values.length
             ? splitValues(c.values.join(','), setCount)
             : splitValues(value, setCount);
-        return { id: c.id || newId(), kind, value: joinValues(values), values };
+        return { id: c.id || newId(), kind, value: joinValues(values), values, optional: !!c.optional };
       });
     }
     return coachDefaultColumns(ex || {});
@@ -174,7 +174,7 @@
         const kind = KIND_MAP[c.kind] ? c.kind : 'reps';
         const value = c.value == null ? '' : String(c.value);
         const values = Array.isArray(c.values) && c.values.length ? splitValues(c.values.join(','), setCount) : splitValues(value, setCount);
-        return { id: c.id || newId(), kind, value: joinValues(values), values };
+        return { id: c.id || newId(), kind, value: joinValues(values), values, optional: !!c.optional };
       });
     }
     return defaultColumns(ex || {});
@@ -189,7 +189,7 @@
   function syncLegacyFromColumns(ex, columns, setCount) {
     let cols = (columns || coachNormalizeColumns(ex)).map((c) => {
       const values = Array.isArray(c.values) ? c.values : splitValues(c.value, setCount || ex.sets || 1);
-      return { id: c.id || newId(), kind: c.kind, value: joinValues(values), values };
+      return { id: c.id || newId(), kind: c.kind, value: joinValues(values), values, optional: !!c.optional };
     });
     cols = cols.filter((c) => !isLoadKind(c.kind) || hasPinnedLoad([c]) || sheet.athleteMode || sheet.openVolume);
     ex.logColumns = cols;
@@ -375,6 +375,7 @@
         kind,
         value: raw,
         values: splitValues(raw, 3),
+        optional: !!c.optional,
       };
     });
   }
@@ -386,6 +387,38 @@
     if (cols.length === 1) return { cols, loadCol: null, effortCols, layout: 'single' };
     if (cols.length === 3) return { cols, loadCol, effortCols, layout: 'triple' };
     return { cols, loadCol, effortCols, layout: 'load_x_effort' };
+  }
+
+  function toggleColumnOptional(columns, ci) {
+    const cols = (columns || []).map((c) => ({
+      id: c.id,
+      kind: c.kind,
+      value: c.value,
+      values: Array.isArray(c.values) ? c.values.slice() : [],
+      optional: !!c.optional,
+    }));
+    if (cols.length < 2 || !cols[ci]) return cols;
+    if (!cols[ci].optional) {
+      cols.forEach((c, i) => {
+        c.optional = i === ci;
+      });
+    } else {
+      cols[ci].optional = false;
+    }
+    return cols;
+  }
+
+  function liveColumns(ex) {
+    const cols =
+      ex && Array.isArray(ex.logColumns) && ex.logColumns.length
+        ? ex.logColumns
+        : ensureAthleteLogColumns(ex || {});
+    const live = cols.filter((c) => !c.optional);
+    return live.length ? live : cols;
+  }
+
+  function liveTracksKg(ex) {
+    return liveColumns(ex).some((c) => isLoadKind(c.kind));
   }
 
   function athleteColumnOptionsHtml(selected) {
@@ -827,15 +860,32 @@
     return '3';
   }
 
+  function builderOptionalFooterHtml(bi, ei, ci, col, colCount, anyOptional) {
+    if (colCount < 2) return '';
+    const on = !!(col && col.optional);
+    const live = anyOptional && !on;
+    return (
+      `<button type="button" class="metric-optional${on ? ' on' : ''}" aria-pressed="${on ? 'true' : 'false'}" onclick="setAthleteLiftColumnOptional(${bi},${ei},${ci})">(optional)</button>` +
+      (live ? '<div class="metric-tracks">tracks</div>' : '')
+    );
+  }
+
   function builderMetricColHtml(ex, bi, ei, col, ci, extraClass) {
     const kind = (col && col.kind) || 'reps';
-    const wrapClass = extraClass ? `metric-col ${extraClass}` : 'metric-col';
+    const layout = columnLayout(ex || {});
+    const colCount = (layout.cols || []).length;
+    const anyOptional = (layout.cols || []).some((c) => c && c.optional);
+    const wrapClass =
+      (extraClass ? `metric-col ${extraClass}` : 'metric-col') + (col && col.optional ? ' metric-is-optional' : '');
+    const footer = builderOptionalFooterHtml(bi, ei, ci, col, colCount, anyOptional);
     if (isLoadKind(kind)) {
       return (
         `<div class="${wrapClass}"><div class="metric-val metric-dash">—</div>` +
         `<select class="builder-metric-select logcol-kind" aria-label="Load metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${ci},this.value)">` +
         loadKindsOptionsHtml(kind) +
-        '</select></div>'
+        '</select>' +
+        footer +
+        '</div>'
       );
     }
     const val = builderEffortValue(ex, col);
@@ -845,7 +895,9 @@
       `<input id="athEffort_${bi}_${ei}_${ci}" class="metric-val builder-effort-input" type="text" inputmode="text" autocomplete="off" value="${escTwin(val)}" placeholder="${escTwin(ph)}" aria-label="Effort target" oninput="setAthleteLiftEffort(${bi},${ei},this.value,this,${ci})">` +
       `<select class="builder-metric-select logcol-kind" aria-label="Effort metric" onchange="setAthleteLiftColumnKind(${bi},${ei},${ci},this.value)">` +
       effortKindsOptionsHtml(kind) +
-      '</select></div>'
+      '</select>' +
+      footer +
+      '</div>'
     );
   }
 
@@ -1209,17 +1261,25 @@
 
   function validateAthleteRow(ex, row) {
     const layout = columnLayout(ex || {});
+    const anyOptional = layout.cols.some((c) => c && c.optional);
     for (const col of layout.cols) {
       const meta = kindMeta(col.kind);
       const field = rowFieldForKind(col.kind);
       const raw = row[field];
+      const optional = !!col.optional;
       if (field === 'weight') {
         const weight = String(raw ?? '').trim() === '' ? null : Number(raw);
-        if (weight !== null && (!Number.isFinite(weight) || weight < 0 || weight > 2000)) {
+        if (weight === null) {
+          if (optional || !anyOptional) continue;
+          return 'Enter a weight between 0 and 2000 kg.';
+        }
+        if (!Number.isFinite(weight) || weight < 0 || weight > 2000) {
           return 'Enter a weight between 0 and 2000 kg.';
         }
         continue;
       }
+      const blank = String(raw ?? '').trim() === '';
+      if (optional && blank) continue;
       const n = Number(raw);
       const label = (meta.loggerLabel || meta.label || field).toLowerCase();
       if (!Number.isFinite(n) || n <= 0 || n >= 80) {
@@ -1265,6 +1325,9 @@
     ensureAthleteLogColumns,
     savedLogColumnsStale,
     columnLayout,
+    toggleColumnOptional,
+    liveColumns,
+    liveTracksKg,
     athleteColumnOptionsHtml,
     beginSheet,
     beginAthleteSheet,
