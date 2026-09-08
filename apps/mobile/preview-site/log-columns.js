@@ -1109,6 +1109,7 @@
         if (!raw) return;
         const painted = (raw.match(/^(\d+(?:\.\d+)?)/) || [raw, raw])[1];
         if (field === 'weight') {
+          if (col.kind !== 'weight_kg') return;
           if (row.weight === '' || row.weight == null) row.weight = painted;
         } else if (row.reps === '' || row.reps == null) {
           row.reps = painted;
@@ -1119,13 +1120,14 @@
   }
 
   function loggerCellsHtml(row, rowIndex, columns, isLast, ex) {
-    const cols =
+    const cols = columnsForRowFields(columns, ex);
+    const sourceCols =
       columns && columns.length
         ? columns
         : ex
           ? ensureAthleteLogColumns(ex)
           : defaultColumns({});
-    const anyOptional = cols.some((c) => c && c.optional);
+    const anyOptional = sourceCols.some((c) => c && c.optional);
     const cells = cols
       .map((c) => {
         const meta = kindMeta(c.kind);
@@ -1153,6 +1155,26 @@
     return 'reps';
   }
 
+  function columnsForRowFields(columns, ex) {
+    const cols =
+      columns && columns.length
+        ? columns
+        : ex
+          ? ensureAthleteLogColumns(ex)
+          : defaultColumns({});
+    const live = cols.filter((c) => c && !c.optional);
+    const rest = cols.filter((c) => c && c.optional);
+    const picked = [];
+    const used = new Set();
+    live.concat(rest).forEach((c) => {
+      const field = rowFieldForKind(c.kind);
+      if (used.has(field)) return;
+      used.add(field);
+      picked.push(c);
+    });
+    return picked;
+  }
+
   function rowMetricValue(row, kind) {
     const field = rowFieldForKind(kind);
     const val = row && row[field];
@@ -1163,7 +1185,7 @@
     opts = opts || {};
     const layout = columnLayout(ex || {});
     const anyOptional = (layout.cols || []).some((c) => c && c.optional);
-    return layout.cols
+    return columnsForRowFields(layout.cols, ex)
       .map((col) => {
         const meta = kindMeta(col.kind);
         const field = rowFieldForKind(col.kind);
@@ -1295,7 +1317,8 @@
   function validateAthleteRow(ex, row) {
     const layout = columnLayout(ex || {});
     const anyOptional = layout.cols.some((c) => c && c.optional);
-    for (const col of layout.cols) {
+    const cols = columnsForRowFields(layout.cols, ex);
+    for (const col of cols) {
       const meta = kindMeta(col.kind);
       const field = rowFieldForKind(col.kind);
       const raw = row[field];
@@ -1315,17 +1338,19 @@
       if (optional && blank) continue;
       const n = Number(raw);
       const label = (meta.loggerLabel || meta.label || field).toLowerCase();
-      if (!Number.isFinite(n) || n <= 0 || n >= 80) {
-        return `Enter ${label} between 1 and 79.`;
+      const max = col.kind === 'time_sec' || col.kind === 'distance_m' ? 1000 : 79;
+      if (!Number.isFinite(n) || n <= 0 || n > max) {
+        return `Enter ${label} between 1 and ${max}.`;
       }
     }
     return '';
   }
 
   function applyColumnTargetKinds(ex, rows) {
-    const cols = normalizeColumns(ex);
+    const cols = liveColumns(ex);
     // Distance carries are non-timed: prefer distance_m over time_sec when both
     // appear (legacy saved columns). Holds keep time_sec when that is the only effort.
+    // Optional time/distance must not steal targetKind from a live kg×reps lift.
     const effort =
       cols.find((c) => c.kind === 'distance_m') ||
       cols.find((c) => c.kind === 'time_sec') ||

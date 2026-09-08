@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v198'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v199'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -224,5 +224,59 @@ if (pairTwin.includes('session start fills kg')) throw new Error('hero must not 
 const kgOptions = (pairTwin.match(/<select class="builder-metric-select[\s\S]*?<\/select>/g) || [])[1] || '';
 if (!kgOptions.includes('Weight (kg)')) throw new Error('every column dropdown must list all metric kinds');
 if (!html.includes('function setAthleteLiftLoad')) throw new Error('builder must persist painted load');
+
+const hold90 = LC.validateAthleteRow(
+  { logColumns: [{ id: 't', kind: 'time_sec', value: '90', values: ['90'] }] },
+  { weight: '', reps: 90 },
+);
+if (hold90) throw new Error('live seconds must accept 90s (old logger was 1–1000): ' + hold90);
+
+const carry100 = LC.validateAthleteRow(
+  { logColumns: [{ id: 'd', kind: 'distance_m', value: '100', values: ['100'] }] },
+  { weight: '', reps: 100 },
+);
+if (carry100) throw new Error('live metres must accept 100m: ' + carry100);
+
+const kgPlusOptionalTime = {
+  logColumns: [
+    { id: 'a', kind: 'weight_kg', value: '80', values: ['80'] },
+    { id: 'b', kind: 'reps', value: '5', values: ['5'] },
+    { id: 'c', kind: 'time_sec', value: '30', values: ['30'], optional: true },
+  ],
+};
+const kindRows = [{ n: 1, extra: false, targetKind: 'reps' }];
+LC.applyColumnTargetKinds(kgPlusOptionalTime, kindRows);
+if (kindRows[0].targetKind === 'seconds') {
+  throw new Error('optional time must not turn a kg×reps lift into a Hold');
+}
+
+if (LC.liveTracksKg({ logColumns: [{ id: 'p', kind: 'weight_pct_wm', value: '70', values: ['70'] }, { id: 'r', kind: 'reps', value: '5', values: ['5'] }] })) {
+  /* %WM still logs performed kg in the weight box — Adaptive may close on that kg */
+} else {
+  throw new Error('%WM logger still has a weight field; live load should track performed kg');
+}
+const pctSeed = LC.seedRowsFromLogColumns({
+  logColumns: [
+    { id: 'p', kind: 'weight_pct_wm', value: '70', values: ['70'] },
+    { id: 'r', kind: 'reps', value: '5', values: ['5'] },
+  ],
+  rows: [{ n: 1, weight: '', reps: '', done: false }],
+});
+if (String(pctSeed.rows[0].weight) === '70') {
+  throw new Error('%WM prescription 70 must not seed performed kg as 70');
+}
+if (String(pctSeed.rows[0].reps) !== '5') throw new Error('%WM lift must still seed reps');
+
+
+const clobber = LC.loggerCellsHtml(
+  { n: 1, weight: '80', reps: '5', rir: '' },
+  0,
+  kgPlusOptionalTime.logColumns,
+  false,
+);
+const repsBinds = (clobber.match(/updateSet\(0,'reps'/g) || []).length;
+if (repsBinds !== 1) {
+  throw new Error('optional seconds must not share the reps input with live reps, got ' + repsBinds);
+}
 
 console.log('log-columns.smoke: ok');
