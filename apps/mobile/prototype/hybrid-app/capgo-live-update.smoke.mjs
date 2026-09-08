@@ -30,6 +30,13 @@ must(!cfg.server || !cfg.server.url, 'no server.url — bundled assets remain de
 must(bridge.includes('notifyLiveUpdateReady'), 'native-bridge Capgo handshake');
 must(bridge.includes("plugin('CapacitorUpdater')"), 'uses CapacitorUpdater plugin');
 must(bridge.includes("return Promise.resolve('skipped')") || bridge.includes("'skipped'"), 'browser skip path');
+must(bridge.includes('function probeLiveUpdate'), 'probeLiveUpdate for banner');
+must(bridge.includes('function applyLiveUpdate'), 'applyLiveUpdate reloads ready bundle');
+must(bridge.includes("addListener(ev, ping)") || bridge.includes('addListener(ev, ping)'), 'Capgo event listener loop');
+must(bridge.includes('downloadComplete'), 'listens when bundle is ready');
+must(bridge.includes('updateAvailable'), 'listens when Capgo finds a newer bundle');
+must(bridge.includes('getNextBundle'), 'reads pending next bundle');
+must(bridge.includes('getLatest'), 'asks Capgo for channel latest');
 must(gradle.includes("project(':capgo-capacitor-updater')"), 'android gradle wires Capgo');
 must(settings.includes("include ':capgo-capacitor-updater'"), 'settings.gradle includes Capgo');
 must(upload.includes('CAPGO_TOKEN'), 'upload script gated on CAPGO_TOKEN');
@@ -42,6 +49,16 @@ must(ship.includes('exit 1'), 'ship fails hard without token');
 must(readme.includes('Capgo') && readme.includes('autoUpdate'), 'README documents Capgo + opt-in');
 must(readme.includes('Reversible') || readme.includes('reversible'), 'README documents reversible path');
 must(existsSync(join(root, 'scripts/upload-capgo-bundle.sh')), 'upload script exists');
+
+const html = readFileSync(join(dir, 'index.html'), 'utf8');
+must(html.includes('function otaBannerHtml'), 'Home/Settings render an OTA banner');
+must(html.includes('id="otaBanner"') || html.includes("id='otaBanner'") || html.includes('id=otaBanner'), 'otaBanner mount');
+must(html.includes('Restart now'), 'ready state has Restart now');
+must(html.includes('function applyOtaUpdate'), 'applyOtaUpdate from banner');
+must(html.includes('function refreshOtaBanner'), 'refreshOtaBanner after probe');
+must(!html.includes('Check for updates'), 'do not revive coach-pull Check for updates copy');
+must(html.includes('Look for app update'), 'Settings can look for an app update');
+must(html.includes('.ota-banner'), 'OTA banner CSS');
 
 if (failures.length) {
   console.error('capgo-live-update.smoke FAIL');

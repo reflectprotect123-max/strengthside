@@ -14,7 +14,7 @@ function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v9'"), 'migration version');
+must(html.includes("ATHLETE_BUILDER_VERSION='athlete-builder-v11'"), 'migration version');
 must(html.includes('function applyAthleteBuilderPatch'), 'applyAthleteBuilderPatch');
 must(html.includes('function normalizeAthleteExercise'), 'normalizeAthleteExercise');
 must(html.includes('function normalizeAthleteCondBlock'), 'normalizeAthleteCondBlock');
@@ -120,7 +120,7 @@ const strengthState = applyAthleteBuilderPatch({
   ],
   sessions: [],
 });
-must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v9', 'migration stamp');
+must(strengthState.meta.athleteBuilderVersion === 'athlete-builder-v11', 'migration stamp');
 must(strengthState.templates[0].blocks.length === 3, 'warm/strength/cool text blocks preserved');
 must(strengthState.templates[0].blocks[0].type === 'text' && /warm/i.test(strengthState.templates[0].blocks[0].heading), 'warm-up block kept');
 must(strengthState.templates[0].blocks[2].type === 'text' && /cool/i.test(strengthState.templates[0].blocks[2].heading), 'cool-down block kept');
