@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (exercise catalog starts empty).**
+> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (strength days unseeded).**
 > Chat history before this file is disposable. Start here.
 >
 > Strength cut (2026-09-06) was reversed on 2026-09-07. Spec of the cut remains historical: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
@@ -19,14 +19,14 @@
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v210`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.75`** (empty exercise catalog — names you type) |
+| **Cache** | **`the-hybrid-athlete-blank-v211`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.76`** (empty catalog + unseeded HPP days) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.75**.
+**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.76**.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -45,7 +45,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.75`** (empty exercise catalog) |
+| Channels | **`dogfood` + `live`** both @ **`1.0.76`** (empty catalog + unseeded days) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
@@ -138,8 +138,8 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.75** on `dogfood` + `live` (blank-v210 empty exercise catalog) |
-| Cache | `the-hybrid-athlete-blank-v210` |
+| Capgo | **1.0.76** on `dogfood` + `live` (blank-v211 empty catalog + unseeded HPP days) |
+| Cache | `the-hybrid-athlete-blank-v211` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
 **Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.

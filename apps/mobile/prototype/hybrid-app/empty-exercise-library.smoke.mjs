@@ -58,7 +58,7 @@ function parseSeed(src) {
 const seed = parseSeed(html);
 must(seed, 'seed parse');
 must(Array.isArray(seed.exercises) && seed.exercises.length === 0, `bundled exercise catalog must be empty, got ${seed.exercises && seed.exercises.length}`);
-must((seed.templates || []).some((t) => t && t.name === 'HPP Monday'), 'HPP Monday template remains');
+must((seed.templates || []).every((t) => t && t.name !== 'HPP Monday'), 'seed has no HPP Monday');
 
 const emptyChunk = html.slice(
   html.indexOf('const EMPTY_LIBRARY_VERSION'),
