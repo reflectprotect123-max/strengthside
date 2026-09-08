@@ -19,7 +19,7 @@ must(!html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full B
 must(html.includes("STARTER_STRENGTH_NAMES=[]"), 'no seeded strength days');
 must(!html.includes('ensureHppMondayStarter(state)'), 'no HPP Monday ensure');
 must(!html.includes('ensureHppWednesdayStarter(state)'), 'no HPP Wednesday ensure');
-must(html.includes("UNSEED_STRENGTH_DAYS_VERSION='unseed-strength-days-v1'"), 'unseed migrate');
+must(html.includes("UNSEED_STRENGTH_DAYS_VERSION='unseed-strength-days-v2'"), 'unseed migrate');
 must(html.includes('function applyUnseedStrengthDaysPatch'), 'unseed patch');
 must(!html.includes("scheduleFollowSession(state,state.templates.find(t=>t&&t.name==='HPP Monday')"), 'no auto-schedule HPP Monday');
 
@@ -121,7 +121,7 @@ must(!(out.sessions || []).some((s) => s.status === 'scheduled' && /^HPP /.test(
 must((out.sessions || []).some((s) => s.status === 'completed' && s.name === 'HPP Wednesday'), 'keeps completed HPP history');
 
 const keptUser = sandbox.applyUnseedStrengthDaysPatch({
-  meta: {},
+  meta: { unseedStrengthDaysVersion: 'unseed-strength-days-v1' },
   templates: [
     {
       id: 'mine',
@@ -130,13 +130,29 @@ const keptUser = sandbox.applyUnseedStrengthDaysPatch({
       templateKind: 'strength',
       blocks: [{ type: 'strength', exercises: [{ name: 'Front Squat' }] }],
     },
+    {
+      id: 'copy',
+      name: 'Full Body A (2)',
+      source: 'THE-user',
+      templateKind: 'strength',
+      blocks: [],
+    },
+    {
+      id: 'custom',
+      name: 'Lower A',
+      source: 'THE-user',
+      templateKind: 'strength',
+      blocks: [],
+    },
   ],
-  sessions: [],
+  sessions: [
+    { id: 'live', name: 'HPP Monday', status: 'active', templateId: 'mine', blocks: [] },
+  ],
 });
-must(
-  (keptUser.templates || []).some((t) => t.id === 'mine'),
-  'user-rebuilt HPP Monday is not deleted',
-);
+must(!(keptUser.templates || []).some((t) => t.id === 'mine'), 'seeded HPP Monday is deleted even if marked THE-user');
+must(!(keptUser.templates || []).some((t) => t.id === 'copy'), 'Full Body copies are deleted');
+must((keptUser.templates || []).some((t) => t.id === 'custom'), 'custom rebuilt days are kept');
+must(!(keptUser.sessions || []).some((s) => s.id === 'live'), 'active seeded HPP session is dropped');
 
 const mixed = sandbox.normalizeAthleteStrengthBlocks([
   { type: 'strength', heading: 'Strength', exercises: [{ name: 'Front Squat', sets: 5, reps: '5' }] },
