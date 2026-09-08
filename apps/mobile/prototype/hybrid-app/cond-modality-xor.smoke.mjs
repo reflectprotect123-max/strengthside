@@ -15,7 +15,8 @@ function slice(name) {
   return html.slice(i, i + 3200);
 }
 
-must(html.includes('unitLock'), 'cond builder unitLock field missing');
+must(html.includes('function modalityWantsSplit'), 'modalityWantsSplit must exist for Engine builder unit chips');
+must(html.includes('function modalityWantsEcho'), 'modalityWantsEcho helper');
 must(html.includes('targetRpm'), 'cond builder targetRpm field missing');
 must(
   html.includes('One unit for this block'),
