@@ -211,6 +211,9 @@ function route(ex) {
   const binds = (cells.match(/updateSet\(0,'reps'/g) || []).length;
   if (binds !== 1) fail('E-bind', 'reps binds=' + binds, cells);
   else pass('E-bind', 'single reps input');
+  if (!/Weight/.test(cells) || !/Reps/.test(cells) || !/Seconds/.test(cells) || !cells.includes("updateSet(0,'time'")) {
+    fail('E-all', 'logger dropped a metric', cells);
+  } else pass('E-all', 'weight + reps + seconds all shown');
 }
 
 // --- F. %WM profile bench (Full Body A default) ---

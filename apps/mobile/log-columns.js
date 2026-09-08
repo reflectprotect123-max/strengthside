@@ -10,9 +10,10 @@
     { key: 'weight_kg', label: 'Weight (kg)', loggerLabel: 'Weight', field: 'weight', targetKind: 'reps' },
     { key: 'weight_pct_wm', label: 'Weight % (of WM)', loggerLabel: 'Weight', field: 'weight', targetKind: 'reps', placeholder: '70' },
     { key: 'weight_lwp', label: 'Weight (LWP)', loggerLabel: 'Weight', field: 'weight', targetKind: 'reps', placeholder: '+2.5' },
-    { key: 'time_sec', label: 'Time (seconds)', loggerLabel: 'Seconds', field: 'reps', targetKind: 'seconds', placeholder: '30' },
-    { key: 'distance_m', label: 'Distance (metres)', loggerLabel: 'Metres', field: 'reps', targetKind: 'distance', placeholder: '100' },
+    { key: 'time_sec', label: 'Time (seconds)', loggerLabel: 'Seconds', field: 'time', targetKind: 'seconds', placeholder: '30' },
+    { key: 'distance_m', label: 'Distance (metres)', loggerLabel: 'Metres', field: 'distance', targetKind: 'distance', placeholder: '100' },
   ];
+  const MAX_METRIC_COLS = 6;
 
   const KIND_MAP = Object.fromEntries(KINDS.map((k) => [k.key, k]));
 
@@ -319,7 +320,7 @@
   function ensureAthleteColumnCount() {
     sheet.openVolume = true;
     if (!sheet.columns.length) sheet.columns = defaultAthleteColumns(sheet._exercise || {});
-    if (sheet.columns.length > 3) sheet.columns = sheet.columns.slice(0, 3);
+    if (sheet.columns.length > MAX_METRIC_COLS) sheet.columns = sheet.columns.slice(0, MAX_METRIC_COLS);
   }
 
   function ensureAthleteLogColumns(ex) {
@@ -327,8 +328,7 @@
       ex && Array.isArray(ex.logColumns) && ex.logColumns.length
         ? coachNormalizeColumns(ex)
         : defaultAthleteColumns(ex);
-    const maxCols = 3;
-    cols = cols.slice(0, maxCols);
+    cols = cols.slice(0, MAX_METRIC_COLS);
     if (!cols.length) cols = defaultAthleteColumns(ex);
     const seededReps = String(ex && ex.reps != null ? ex.reps : '').trim();
     return cols.map((c) => {
@@ -625,8 +625,8 @@
   }
 
   function addColumn() {
-    if (sheet.columns.length >= 3) {
-      if (global.alert) global.alert('Max 3 log columns.');
+    if (sheet.columns.length >= MAX_METRIC_COLS) {
+      if (global.alert) global.alert('Max ' + MAX_METRIC_COLS + ' log columns.');
       return;
     }
     sheet.columns.push({
@@ -844,13 +844,13 @@
   }
 
   function builderColumnCountHtml(bi, ei, n) {
-    n = Math.max(1, Math.min(3, Number(n) || 1));
+    n = Math.max(1, Math.min(MAX_METRIC_COLS, Number(n) || 1));
     const minus =
       n <= 1
         ? ''
         : `<button type="button" class="metric-col-count" aria-label="Remove metric" onclick="setAthleteLiftColumnCount(${bi},${ei},${n - 1})">−</button>`;
     const plus =
-      n >= 3
+      n >= MAX_METRIC_COLS
         ? ''
         : `<button type="button" class="metric-col-count" aria-label="Add metric" onclick="setAthleteLiftColumnCount(${bi},${ei},${n + 1})">+</button>`;
     return '<div class="metric-col-tools">' + minus + plus + '</div>';
@@ -1136,6 +1136,9 @@
         if ((val === '' || val == null) && field === 'distance' && row.targetKind === 'distance') {
           val = row.reps == null ? '' : row.reps;
         }
+        if ((val === '' || val == null) && field === 'time' && row.targetKind === 'seconds') {
+          val = row.reps == null ? '' : row.reps;
+        }
         const live = anyOptional && !c.optional;
         let label = meta.loggerLabel;
         if (c.optional) label += ' (optional)';
@@ -1151,8 +1154,11 @@
   }
 
   function rowFieldForKind(kind) {
+    const meta = kindMeta(kind);
+    if (meta && meta.field) return meta.field;
     if (isLoadKind(kind)) return 'weight';
     if (kind === 'distance_m') return 'distance';
+    if (kind === 'time_sec') return 'time';
     return 'reps';
   }
 
@@ -1180,6 +1186,7 @@
     const field = rowFieldForKind(kind);
     let val = row && row[field];
     if ((val == null || val === '') && field === 'distance' && row) val = row.reps;
+    if ((val == null || val === '') && field === 'time' && row) val = row.reps;
     return val == null ? '' : String(val);
   }
 
@@ -1325,6 +1332,7 @@
       const field = rowFieldForKind(col.kind);
       let raw = row[field];
       if ((raw == null || String(raw).trim() === '') && field === 'distance') raw = row.reps;
+      if ((raw == null || String(raw).trim() === '') && field === 'time') raw = row.reps;
       const optional = !!col.optional;
       if (field === 'weight') {
         const weight = String(raw ?? '').trim() === '' ? null : Number(raw);
@@ -1420,6 +1428,7 @@
     removeSet,
     resizeSets,
     toggleOverrides,
+    MAX_METRIC_COLS,
     loggerCellsHtml,
     applyColumnTargetKinds,
     rowFieldForKind,

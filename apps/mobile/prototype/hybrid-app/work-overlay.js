@@ -33,7 +33,7 @@
 
   /** Seconds for a timed-hold row: typed value, else first number in the target, else 30. */
   function prescribedSec(row) {
-    var typed = Number(row && row.reps);
+    var typed = Number(row && (row.time != null && String(row.time).trim() !== '' ? row.time : row.reps));
     if (Number.isFinite(typed) && typed > 0) return Math.max(1, Math.round(typed));
     var m = String((row && row.target) || '').match(/(\d+)/);
     return Math.max(1, m ? Number(m[1]) : 30);

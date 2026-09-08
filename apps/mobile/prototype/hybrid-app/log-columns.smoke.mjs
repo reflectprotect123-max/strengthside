@@ -14,7 +14,7 @@ const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');
 if (!coachHtml.includes('Coach is parked')) throw new Error('coach should remain parked');
 if (html.includes('LogColumns.builderPrescriptionHtml({compact:false})')) throw new Error('athlete exerciseSheet must not wire Prescription card');
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v200'")) throw new Error('expected cache v162');
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v201'")) throw new Error('expected cache v162');
 if (!html.includes('athleteLiftEditor') || !html.includes('ath-lift-logger')) throw new Error('athlete lift logger editor missing');
 
 const sandbox = { window: {}, console, document: { getElementById: () => null, querySelector: () => null, createElement: () => ({ innerHTML: '', firstChild: null, replaceWith() {} }) } };
@@ -272,14 +272,43 @@ if (String(pctSeed.rows[0].reps) !== '5') throw new Error('%WM lift must still s
 
 
 const clobber = LC.loggerCellsHtml(
-  { n: 1, weight: '80', reps: '5', rir: '' },
+  { n: 1, weight: '80', reps: '5', time: '30', rir: '' },
   0,
   kgPlusOptionalTime.logColumns,
   false,
 );
+if (!/Weight/.test(clobber) || !/Reps/.test(clobber) || !/Seconds/.test(clobber)) {
+  throw new Error('kg+reps+optional time must show all three logger metrics, got ' + clobber);
+}
 const repsBinds = (clobber.match(/updateSet\(0,'reps'/g) || []).length;
 if (repsBinds !== 1) {
   throw new Error('optional seconds must not share the reps input with live reps, got ' + repsBinds);
+}
+if (!clobber.includes("updateSet(0,'time'")) {
+  throw new Error('seconds must bind a time field, got ' + clobber);
+}
+
+const fourCols = LC.ensureAthleteLogColumns({
+  logColumns: [
+    { id: 'a', kind: 'weight_kg', value: '80', values: ['80'] },
+    { id: 'b', kind: 'reps', value: '5', values: ['5'] },
+    { id: 'c', kind: 'time_sec', value: '30', values: ['30'] },
+    { id: 'd', kind: 'distance_m', value: '100', values: ['100'] },
+  ],
+});
+if (fourCols.length !== 4) {
+  throw new Error('athlete logger must keep four metric columns, got ' + fourCols.length);
+}
+const fourHtml = LC.builderLiftMetricsHtml({ logColumns: fourCols }, 0, 0);
+if ((fourHtml.match(/builder-metric-select/g) || []).length !== 4) {
+  throw new Error('builder must paint all four metric dropdowns, got ' + fourHtml);
+}
+if (html.includes('repeat(4,minmax(48px,1fr))') || html.includes('repeat(4,minmax(44px,1fr))')) {
+  throw new Error('logger .setrow must not hard-cap at four metric slots');
+}
+const countTools = LC.builderLiftHeroMetricsBlockHtml({ logColumns: fourCols }, 0, 0);
+if (!countTools.includes('setAthleteLiftColumnCount(0,0,5)')) {
+  throw new Error('builder + must still add a fifth metric, got ' + countTools);
 }
 
 const rowerCols = [
@@ -287,7 +316,7 @@ const rowerCols = [
   { id: 'd', kind: 'distance_m', value: '500', values: ['500'] },
 ];
 const rowerCells = LC.loggerCellsHtml(
-  { n: 1, weight: '', reps: '60', distance: '500', rir: '' },
+  { n: 1, weight: '', time: '60', distance: '500', rir: '' },
   0,
   rowerCols,
   false,
@@ -298,11 +327,14 @@ if (!rowerCells.includes('Seconds') || !rowerCells.includes('Metres')) {
 if (!rowerCells.includes("updateSet(0,'distance'")) {
   throw new Error('metres must use their own row field, not clobber seconds');
 }
+if (!rowerCells.includes("updateSet(0,'time'")) {
+  throw new Error('seconds must use a time field, got ' + rowerCells);
+}
 const rowerSeed = LC.seedRowsFromLogColumns({
   logColumns: rowerCols,
-  rows: [{ n: 1, weight: '', reps: '', distance: '', done: false }],
+  rows: [{ n: 1, weight: '', reps: '', time: '', distance: '', done: false }],
 });
-if (String(rowerSeed.rows[0].reps) !== '60') throw new Error('rower must seed seconds');
+if (String(rowerSeed.rows[0].time) !== '60') throw new Error('rower must seed seconds into time, got ' + rowerSeed.rows[0].time);
 if (String(rowerSeed.rows[0].distance) !== '500') throw new Error('rower must seed metres into distance, got ' + rowerSeed.rows[0].distance);
 
 

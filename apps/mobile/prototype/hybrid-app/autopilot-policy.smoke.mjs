@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v200'")) {
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v201'")) {
   throw new Error('expected cache v168');
 }
 
