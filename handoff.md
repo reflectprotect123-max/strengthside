@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (OTA update banner).**
+> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (one-set logger OTA).**
 > Chat history before this file is disposable. Start here.
 >
 > Strength cut (2026-09-06) was reversed on 2026-09-07. Spec of the cut remains historical: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
@@ -20,13 +20,13 @@
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
 | **Cache** | **`the-hybrid-athlete-blank-v207`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.71`** (banner when an OTA bundle is ready)
+| **Capgo** | **`dogfood` + `live` @ `1.0.72`** (one-set logger) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.71**.
+**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.72**.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -45,7 +45,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.71`** (OTA ready banner) |
+| Channels | **`dogfood` + `live`** both @ **`1.0.72`** (one-set logger) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
@@ -138,7 +138,7 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.71** on `dogfood` + `live` (blank-v206 banner). One-set logger restore is **blank-v207** (not on Capgo until ship). |
+| Capgo | **1.0.72** on `dogfood` + `live` (blank-v207 one-set logger) |
 | Cache | `the-hybrid-athlete-blank-v207` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
