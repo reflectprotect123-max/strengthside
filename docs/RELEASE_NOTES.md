@@ -6,6 +6,11 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.77 | 2026-09-08 | Wipe leftover HPP/Full Body days even if marked user-saved; cache blank-v212 |
+| 1.0.76 | 2026-09-08 | Unseed HPP Monday/Wednesday — rebuild days in the app; keep Aerobic + Recovery; cache blank-v211 |
+| 1.0.75 | 2026-09-08 | Exercise catalog starts empty; typing a name adds it; GHR no longer suggests Lateral Raise; cache blank-v210 |
+| 1.0.74 | 2026-09-08 | HPP Monday: Front Squat and GHR are separate lifts (only Dips/Chins and Farmer/Sled supersets); cache blank-v209 |
+| 1.0.73 | 2026-09-08 | One-set Next fills the next set from HybridAdaptive.decideNextLift (100×5 medium → 102.5×5); cache blank-v208 |
 | 1.0.72 | 2026-09-08 | Restore one-set strength logger (hero kg×reps, not old Log/Edit table); cache blank-v207 |
 | 1.0.71 | 2026-09-08 | Home/Settings banner when a Capgo update is downloaded and ready; Restart now; cache blank-v206 |
 | 1.0.70 | 2026-09-08 | Hard line S vs C — lift sessions drop every Engine block; notes stay notes; cache blank-v205 |

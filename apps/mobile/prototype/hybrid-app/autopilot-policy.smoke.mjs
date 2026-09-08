@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const dir = dirname(fileURLToPath(import.meta.url));
 const html = readFileSync(join(dir, 'index.html'), 'utf8');
 
-if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v207'")) {
+if (!html.includes("LOCAL_BUILD='the-hybrid-athlete-blank-v212'")) {
   throw new Error('expected cache v168');
 }
 
@@ -54,11 +54,8 @@ if (!seed) throw new Error('seed parse failed');
 if ((seed.templates || []).some((x) => x && /^Full Body [ABC]$/.test(x.name))) {
   throw new Error('Full Body A/B/C must not remain in seed');
 }
-const hppMon = (seed.templates || []).find((x) => x && x.name === 'HPP Monday');
-if (!hppMon) throw new Error('HPP Monday missing from seed');
-const squat = (hppMon.blocks || []).flatMap((b) => b.exercises || []).find((e) => e.name === 'Front Squat');
-if (!squat) throw new Error('Front Squat missing from HPP Monday');
-if (Number(squat.sets) !== 5 || String(squat.reps) !== '5') throw new Error('Front Squat should be 5×5');
-if (squat.loadExpr) throw new Error('Front Squat should not hardcode %WM');
+if ((seed.templates || []).some((x) => x && /^HPP (Monday|Wednesday)$/.test(x.name))) {
+  throw new Error('HPP days must not remain in seed');
+}
 
 console.log('autopilot-policy.smoke: ok');
