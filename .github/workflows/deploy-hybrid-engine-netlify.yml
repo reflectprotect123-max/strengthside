@@ -1,6 +1,6 @@
 # Deploy Hybrid Engine (proxy-only WHOOP/Concept2) to its own Netlify site.
 # Does not deploy to thehybridsystem.
-# Requires: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID_ENGINE (uuid or slug hybrid-engine)
+# Requires: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID_ENGINE (uuid or slug hybrid-engine-athlete — not hybrid-engine.netlify.app which is occupied)
 name: Deploy Hybrid Engine Netlify
 
 on:
@@ -35,7 +35,7 @@ jobs:
           fi
           SITE="$NETLIFY_SITE_ID"
           if [[ "$SITE" == http* || "$SITE" == *netlify.app* || "$SITE" == */* ]]; then
-            SITE=hybrid-engine
+            SITE=hybrid-engine-athlete
           fi
           cd apps/hybrid-engine
           npx --yes netlify-cli@26.2.0 deploy --prod \

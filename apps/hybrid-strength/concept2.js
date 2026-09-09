@@ -9,7 +9,7 @@
   const PRODUCT_SITES = {
     combined: { netlify: 'https://thehybridsystem.netlify.app', appId: 'com.hybrid.athlete' },
     strength: { netlify: 'https://hybrid-strength.netlify.app', appId: 'com.hybrid.strength' },
-    engine: { netlify: 'https://hybrid-engine.netlify.app', appId: 'com.hybrid.engine' },
+    engine: { netlify: 'https://hybrid-engine-athlete.netlify.app', appId: 'com.hybrid.engine' },
   };
   function productKey() {
     try {

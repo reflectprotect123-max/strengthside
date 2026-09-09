@@ -1,8 +1,8 @@
 {
   "appId": "com.hybrid.engine",
   "appName": "Hybrid Engine",
-  "netlifySlug": "hybrid-engine",
-  "netlifyUrl": "https://hybrid-engine.netlify.app",
+  "netlifySlug": "hybrid-engine-athlete",
+  "netlifyUrl": "https://hybrid-engine-athlete.netlify.app",
   "storage": "THE-hybrid-engine-v1",
   "dir": "apps/hybrid-engine",
   "capgoChannels": [

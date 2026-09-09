@@ -8,7 +8,7 @@ Product tree for **Hybrid Engine**. Live mixed athlete stays in `apps/mobile`.
 | Storage | `THE-hybrid-engine-v1` |
 | Android / Capgo | `com.hybrid.engine` |
 | OAuth scheme | `com.hybrid.engine://` |
-| Netlify slug | `hybrid-engine` (https://hybrid-engine.netlify.app) |
+| Netlify slug | `hybrid-engine-athlete` (https://hybrid-engine-athlete.netlify.app) |
 
 WHOOP/Concept2 functions here are **proxy-only** → `thehybridengine1.netlify.app`.
 

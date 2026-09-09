@@ -17,7 +17,7 @@
 ## Shared backend (same Netlify + Supabase)
 
 - **Postgres:** unchanged contract. This repo still owns the twelve strength tables. Hybrid stub owns the rest (including nutrition tables). Neither app writes migrations against the other's tables.
-- **WHOOP / Concept2:** tokens and OAuth stay on `thehybridengine1.netlify.app`. Athlete Netlify sites stay **proxy-only**. New app ids get their own `redirect_uri` / deeplink **when Capacitor is forked** — not in the HTML seed.
+- **WHOOP / Concept2:** tokens and OAuth stay on `thehybridengine1.netlify.app`. Athlete Netlify sites stay **proxy-only**. Native return is an allowlist on the pending record (`docs/hybrid1-native-return-allowlist.md`). Engine web host is `hybrid-engine-athlete.netlify.app` because `hybrid-engine.netlify.app` is occupied.
 - **Athlete session/template state** today is **device `localStorage`**, not those twelve tables. Split apps use **separate storage keys** so they never clobber each other. A shared cloud calendar is a later contract, not this cut.
 
 ## This repo until GitHub spin-out
@@ -44,7 +44,7 @@ Runtime: `HYBRID_PRODUCT` is `strength` | `engine` | `combined`. Combined is the
 ## Out of this cut (still manual)
 
 - Creating GitHub repositories / Play Console listings (this agent cannot)
-- Mapping `appId` → native return scheme on **hybrid1** WHOOP/Concept2 OAuth
+- Deploying the hybrid1 allowlist onto live Netlify (git stub; functions still run in prod)
 - Deleting `apps/mobile` athlete HTML (after both product sites + APKs are live)
 
 Capacitor `applicationId`s, Netlify slugs, Capgo ship scripts, and proxy-only product trees **are in this cut**.

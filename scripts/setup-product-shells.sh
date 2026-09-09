@@ -16,6 +16,10 @@ dest = root / meta["dir"] / "capacitor"
 app_id, app_name = meta["appId"], meta["appName"]
 pkg_path = "/".join(app_id.split("."))
 
+saved_lock = None
+lock_path = dest / "package-lock.json"
+if lock_path.exists():
+    saved_lock = lock_path.read_text()
 if dest.exists():
     shutil.rmtree(dest)
 
@@ -66,6 +70,8 @@ pkg = json.loads((dest / "package.json").read_text())
 pkg["name"] = f"@hybrid/{key}-capacitor"
 pkg["description"] = f"Capacitor Android shell for {app_name}."
 (dest / "package.json").write_text(json.dumps(pkg, indent=2) + "\n")
+if saved_lock and not (dest / "package-lock.json").exists():
+    (dest / "package-lock.json").write_text(saved_lock)
 
 gradle = dest / "android/app/build.gradle"
 text = gradle.read_text()
@@ -80,7 +86,11 @@ st = st.replace(">com.hybrid.athlete<", f">{app_id}<")
 strings.write_text(st)
 
 manifest = dest / "android/app/src/main/AndroidManifest.xml"
-manifest.write_text(manifest.read_text().replace("com.hybrid.athlete://whoop|concept2", f"{app_id}://whoop|concept2"))
+man = manifest.read_text()
+man = man.replace('<data android:scheme="hybridengine" />', '')
+man = man.replace("com.hybrid.athlete://whoop|concept2", f"{app_id}://whoop|concept2")
+man = man.replace("Capacitor custom scheme is com.hybrid.athlete. Register both.", f"Product scheme is {app_id} only (do not register hybridengine).")
+manifest.write_text(man)
 
 old_java = dest / "android/app/src/main/java/com/hybrid/athlete/MainActivity.java"
 new_dir = dest / "android/app/src/main/java" / pkg_path

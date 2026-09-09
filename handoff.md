@@ -22,7 +22,8 @@
 | **Cache** | **`the-hybrid-athlete-blank-v215`** (`LOCAL_BUILD` + SW `CACHE` must match) |
 | **Capgo** | **`dogfood` + `live` @ `1.0.79`** (Warm-up + Cool-down boxes on strength and Engine) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
-| **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
+| **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub; live WHOOP still on that Netlify. Nutrition = `reflectprotect123-max/nutrition`. |
+| **Split seeds** | Strength `com.hybrid.strength` / `hybrid-strength.netlify.app`. Engine `com.hybrid.engine` / `hybrid-engine-athlete.netlify.app` (not occupied `hybrid-engine.netlify.app`). See `SPLIT.md` + `docs/hybrid1-native-return-allowlist.md`. Mixed Capgo stays **1.0.79**. |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 

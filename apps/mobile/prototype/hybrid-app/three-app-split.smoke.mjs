@@ -78,6 +78,10 @@ must(!/delete apps\/mobile/.test(splitDoc.toLowerCase()) || splitDoc.includes('a
 must(splitDoc.includes('com.hybrid.strength'), 'SPLIT.md documents strength applicationId');
 must(splitDoc.includes('com.hybrid.engine'), 'SPLIT.md documents engine applicationId');
 must(splitDoc.includes('hybrid-strength'), 'SPLIT.md documents strength Netlify slug');
+must(splitDoc.includes('hybrid-engine-athlete'), 'SPLIT.md uses hybrid-engine-athlete (hybrid-engine.netlify.app is occupied)');
+const productsJson = read(path.join(root, 'scripts/hybrid-products.json'));
+must(productsJson.includes('hybrid-engine-athlete'), 'engine Netlify slug avoids occupied hybrid-engine.netlify.app');
+must(productsJson.includes('hybrid-strength.netlify.app'), 'strength Netlify slug matches nutrition-style hybrid-<product>');
 
 if (failures.length) {
   console.error('three-app-split.smoke FAIL');

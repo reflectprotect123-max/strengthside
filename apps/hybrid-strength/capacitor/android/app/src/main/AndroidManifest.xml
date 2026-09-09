@@ -22,12 +22,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- WHOOP / Concept2 OAuth return: com.hybrid.strength://whoop|concept2 -->
+            <!-- WHOOP / Concept2 OAuth return. Live hybrid1 NATIVE_RETURN_URL is
+                 hybridengine://whoop (recovered from THE-HYBRID-ENGINE1 pre-gut).
+                 Product scheme is com.hybrid.strength only (do not register hybridengine). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="@string/custom_url_scheme" />
+                
             </intent-filter>
 
         </activity>

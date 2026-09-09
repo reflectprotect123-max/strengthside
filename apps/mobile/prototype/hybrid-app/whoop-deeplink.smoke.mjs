@@ -27,6 +27,9 @@ function checkManifest(label, manifest, strings, scheme) {
   const str = readFileSync(strings, 'utf8');
   must(/custom_url_scheme/.test(str), `${label}: strings.xml must define custom_url_scheme`);
   must(str.includes(scheme), `${label}: custom_url_scheme must be ${scheme}`);
+  if (label === 'mixed') {
+    must(/android:scheme="hybridengine"/.test(xml), 'mixed APK must also register hybridengine:// (live hybrid1 NATIVE_RETURN_URL)');
+  }
   must(/android.intent.action.VIEW/.test(xml), `${label}: VIEW intent-filter for OAuth return`);
   must(/android.intent.category.BROWSABLE/.test(xml), `${label}: VIEW intent-filter must be BROWSABLE`);
   must(

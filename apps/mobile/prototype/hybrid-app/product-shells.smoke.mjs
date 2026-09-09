@@ -20,6 +20,8 @@ must(products.engine.appId === 'com.hybrid.engine', 'engine appId');
 must(products.combined.appId === 'com.hybrid.athlete', 'mixed appId stays com.hybrid.athlete');
 must(products.strength.netlifySlug !== products.combined.netlifySlug, 'strength Netlify is not thehybridsystem');
 must(products.engine.netlifySlug !== products.combined.netlifySlug, 'engine Netlify is not thehybridsystem');
+must(products.engine.netlifySlug === 'hybrid-engine-athlete', 'engine slug avoids occupied hybrid-engine.netlify.app');
+must(products.strength.netlifySlug === 'hybrid-strength', 'strength slug matches nutrition-style hybrid-<product>');
 
 const whoop = fs.readFileSync(path.join(dir, 'whoop.js'), 'utf8');
 const c2 = fs.readFileSync(path.join(dir, 'concept2.js'), 'utf8');
@@ -27,7 +29,7 @@ for (const src of [whoop, c2]) {
   must(src.includes("appId: 'com.hybrid.strength'"), 'client knows strength appId');
   must(src.includes("appId: 'com.hybrid.engine'"), 'client knows engine appId');
   must(src.includes('hybrid-strength.netlify.app'), 'client knows strength Netlify');
-  must(src.includes('hybrid-engine.netlify.app'), 'client knows engine Netlify');
+  must(src.includes('hybrid-engine-athlete.netlify.app'), 'client knows engine Netlify (not occupied hybrid-engine.netlify.app)');
   must(src.includes('thehybridsystem.netlify.app'), 'combined still routes to thehybridsystem');
   must(src.includes("client: 'native', appId: nativeAppId()"), 'native connect forwards product appId');
 }
@@ -54,6 +56,7 @@ function checkShell(key) {
   const xml = fs.existsSync(manifest) ? fs.readFileSync(manifest, 'utf8') : '';
   must(/android.intent.action.VIEW/.test(xml), `${key} VIEW intent`);
   must(/android.intent.category.BROWSABLE/.test(xml), `${key} BROWSABLE`);
+  must(!/android:scheme="hybridengine"/.test(xml), `${key} must not steal mixed hybridengine:// WHOOP return`);
   must(fs.existsSync(java), `${key} MainActivity package ${meta.appId}`);
   const html = fs.readFileSync(path.join(base, 'index.html'), 'utf8');
   must(html.includes(`content="${key}"`), `${key} html stamp`);
