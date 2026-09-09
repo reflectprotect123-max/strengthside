@@ -2,11 +2,11 @@ import * as esbuild from 'esbuild';
 
 await esbuild.build({
   absWorkingDir: new URL('..', import.meta.url).pathname,
-  entryPoints: ['packages/adaptive/src/index.ts'],
+  entryPoints: ['packages/brain/src/index.ts'],
   bundle: true,
   format: 'iife',
-  globalName: 'HybridAdaptive',
-  outfile: 'apps/brain-app/adaptive-bundle.js',
+  globalName: 'HybridBrain',
+  outfile: 'apps/brain-app/brain-bundle.js',
   platform: 'browser',
   target: 'es2022',
 });

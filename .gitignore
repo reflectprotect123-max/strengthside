@@ -17,6 +17,19 @@ apps/mobile/capacitor/android/captures/
 apps/mobile/capacitor/android/*.iml
 apps/mobile/capacitor/android/app/src/main/assets/public/
 
+apps/hybrid-strength/capacitor/android/.gradle/
+apps/hybrid-strength/capacitor/android/**/build/
+apps/hybrid-strength/capacitor/android/local.properties
+apps/hybrid-strength/capacitor/android/.idea/
+apps/hybrid-strength/capacitor/android/app/src/main/assets/public/
+apps/hybrid-strength/capacitor/node_modules/
+apps/hybrid-engine/capacitor/android/.gradle/
+apps/hybrid-engine/capacitor/android/**/build/
+apps/hybrid-engine/capacitor/android/local.properties
+apps/hybrid-engine/capacitor/android/.idea/
+apps/hybrid-engine/capacitor/android/app/src/main/assets/public/
+apps/hybrid-engine/capacitor/node_modules/
+
 apps/mobile/**/.netlify/
 .cursor/
 
@@ -35,6 +48,7 @@ training_data.csv
 tmp/
 supabase/.temp/
 .capgo
+.openrouter
 
 # evidence-platform: never commit local credentials
 evidence-platform/.env

@@ -1,11 +1,11 @@
-# Handoff — TheStrengthEngine
+# Handoff — The Brain (TheStrengthEngine)
 
-> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (one-set logger OTA).**
+> **AUTHORITATIVE CHECKPOINT — 9 September 2026 (The Brain reset).**
 > Chat history before this file is disposable. Start here.
 >
-> Strength cut (2026-09-06) was reversed on 2026-09-07. Spec of the cut remains historical: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
-> Engine (Open / Next / Close): `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`
+> Design spec: `docs/superpowers/specs/2026-09-09-the-brain-design.md`
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
+> Pre-Brain Hybrid HTML was **deleted** — not archived. No restore path in repo.
 
 ---
 
@@ -13,123 +13,104 @@
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app — **Hybrid Strength + The Engine + Recovery** (strength restored 2026-09-07) |
-| **Engines** | **`@hybrid/adaptive`** — lift + cond Open/Next/Close. Do not revive Big Mac / old adapters. |
-| **Next brain** | `@hybrid/adaptive` in `packages/adaptive`. HTML doors: strength logger → lift Next; cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
-| **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
-| **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
+| **Product** | **The Brain** — one shared front page (Strength / Engine / Nutrition rooms as accent switches). Connectors hub + AI coach chat. Training UIs rebuild screen-by-screen. |
+| **Hub logic** | `@hybrid/brain` — readiness, brain packet (pure, no I/O) |
+| **Engine math** | `@hybrid/adaptive` — kept for later wiring; bundled to `apps/brain-app/adaptive-bundle.js` when needed |
+| **Edit athlete app** | `apps/brain-app/` → `bash scripts/sync-brain-app.sh` (runs `pnpm run build:brain`) |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v207`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.72`** (one-set logger) |
-| **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
-| **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
+| **Storage** | **`THE-brain-v1`** — hard blank slate; no import from `THE-builder-clean-v*` or `THE-hybrid-*` |
+| **Cache** | **`the-brain-v1`** (`BRAIN_BUILD` in `app.js` + SW `CACHE` must match) |
+| **Capgo** | `com.hybrid.athlete` — bump on ship after HTML changes |
+| **Web** | https://thehybridsystem.netlify.app/ (Netlify deploy root: `apps/brain-app/`) |
+| **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub; live WHOOP still on that Netlify. Nutrition = separate repo. |
 
-**Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
+**Ship ritual:** edit `apps/brain-app/` → `bash scripts/sync-brain-app.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.72**.
-
-**Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
+**Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted pre-Brain Hybrid HTML or split seeds from git history into active paths.
 
 ---
 
 ## 0.5 Secrets vault (agent recovery)
 
 > **Private repo only.** Prefer Netlify UI for values never pasted in chat.
->
-> **New agent boot:** Capgo token lives in this vault table. Rematerialize gitignored `.capgo` with
-> `bash scripts/rematerialize-capgo-from-vault.sh` (env `start` + ship scripts do this automatically).
 
 ### Capgo OTA
 
 | Key | Value |
 | --- | --- |
-| Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
+| Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — rematerialize to gitignored `.capgo` via `bash scripts/rematerialize-capgo-from-vault.sh` |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.72`** (one-set logger) |
-| Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
-| Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
-| Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
-| Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle <ver>` |
-| CI | Actions → **Capgo ship** workflow (needs repo secret `CAPGO_TOKEN`) |
+| Upload path | `apps/brain-app/` (Capacitor `webDir: ../brain-app`) |
+| Ship | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` |
 
-### OpenRouter · Supabase · WHOOP · Netlify
+### OpenRouter (coach LLM)
 
-Unchanged. Athlete site: **thehybridsystem**. WHOOP ownership stays on hybrid1 Netlify; athlete site proxies.
+| Key | Where |
+| --- | --- |
+| `OPENROUTER_API_KEY` | **Netlify** → site `thehybridsystem` → Environment variables (production). Also **Cursor Cloud environment secrets** for agents. |
+| Local dev | Gitignored repo-root `.openrouter` (one line, `sk-or-v1-…`) — never commit. |
+| Default model | `openrouter/free` (override with Netlify env `OPENROUTER_MODEL`) |
+| Dashboard | https://openrouter.ai/keys |
+| Used by | `apps/brain-app/netlify/functions/brain-coach.mjs` |
 
-### Coach
+GitHub push protection blocks OpenRouter keys in tracked files (unlike Capgo token in this vault). Paste the key into Netlify UI — do not commit it to `handoff.md`.
 
-Parked. No publish/pull. Demo credentials and desktop shell are frozen until coach park lifts.
+### Supabase · WHOOP · Netlify
+
+- **WHOOP / Concept2:** tokens and OAuth on `thehybridengine1.netlify.app`. Athlete site is **proxy-only** (`apps/brain-app/netlify/functions/_hybrid-proxy.mjs`).
+- Athlete Netlify site ID: `thehybridsystem`.
 
 ---
 
-## 1. What exists on `main` / current tree now
+## 1. What exists now
 
 ### Alive
 
-- Hybrid HTML shell + **The Engine** (conditioning builder/logger/analytics) + **Recovery** tab
-- Session chrome / rest / work overlays
-- WHOOP + Concept2 + Echo FTMS + Capgo live update
+- **`apps/brain-app/`** — Home + Settings + Coach chat stub; WHOOP connector; Netlify deploy + functions
+- **`packages/brain/`** — packet + readiness (vitest colocated)
+- **`packages/adaptive/`** — pure cond/lift math (not wired into Brain UI yet)
+- **`apps/mobile/capacitor/`** — Android shell (`com.hybrid.athlete`, `webDir: ../brain-app`)
 - Shared Supabase **twelve-table data ledger** (RLS + `embed-coaching-note`) — storage only
-- Library starters (**Aerobic Conditioning + Recovery** only; Full Body strength starters removed)
-- **`packages/adaptive`** — pure cond Open / Next / Close (vitest colocated). Lift modules deleted.
-- **`strengthCutV1` migrate** — nuclear wipe of sessions + strength templates/state on first load after cut
 
-### Legacy assets (kept, not product)
+### Deleted (gone — no recall path in repo)
 
-- `exercise-search*.js`, `log-columns.js`, `exercise-load-profiles.js` still loaded by index.html for dead/legacy strength helpers — **not** reachable in Engine/Recovery product paths. Safe to delete in a later cleanup pass once grep confirms zero live references.
+- Old Hybrid HTML prototype, split seeds, preview-site, and related scripts
+- `pnpm run check:no-recall` fails CI if any recall path reappears
 
-### Sync honesty (important)
+### Not built yet (v0.1 gaps)
 
-`Whoop.syncAll` refreshes **WHOOP recovery** and **Concept2 Logbook** when linked. It does **not** sync calendar sessions or Library templates. Training state is **localStorage** on device (plus local recovery snapshot). Settings + WHOOP card copy must stay honest about that until Phase S implements the written contract: `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md`.
-
-### Gone for good (do not restore)
-
-| Layer | Deleted |
-| --- | --- |
-| Old packages | No `strength-engine`, `engine`, `shared-core`, `nutrition-engine`, `nutrition-core` — those stay deleted. **`packages/adaptive` is the exception and is live.** |
-| Athlete S&C wiring | adapters, Big Mac, one-set logger, cond autoreg, recovery trio, coordinator, strength AI/cloud sync |
-| Nutrition | UI, sync, food catalog, label scan |
-| Netlify decide | `big-mac-decide`, `ai-strength-progression`, `ai-coach-intent` |
-| Coach S&C | source + stubs; static park page only |
-| Identifiers | Proxy stubs removed; no `StrengthAdapter` / `EngineAdapter` / `BigMacBridge` / `CoachSync` / `Autopilot` globals in live source |
-
-`migrateOpenFields` on load renames legacy `autopilotVolume` → `openVolume` then deletes the old key.
-
-### Evidence-platform
-
-`evidence-platform/` is a separate Python governance tree — **not wired** to the athlete app. Do not treat it as a product engine.
+- Strength / Engine / Nutrition training screens
+- Concept2 UI (proxies copied; connector UI later)
+- Supabase session sync
 
 ---
 
 ## 2. What to do next
 
-1. Keep `@hybrid/adaptive` pure; HTML is the only athlete UI surface.
-2. Cloud journal / session+template sync: contract is written (Phase M); **implement in Phase S** per `docs/superpowers/specs/2026-09-05-session-template-sync-contract.md` — not a drive-by restore of deleted sync code.
-3. After merging audit fixes: Capgo ship with matching `LOCAL_BUILD` / SW cache / bundle version.
+1. Rebuild training UIs room-by-room on the shared Brain home shell.
+2. Wire `@hybrid/adaptive` into Strength/Engine doors when those screens land.
+3. Paste `OPENROUTER_API_KEY` into Netlify `thehybridsystem` (see §0.5) before claiming coach works in production.
 
 **Useful checks**
 
 ```bash
 pnpm run verify
-pnpm run check:hybrid-html-sync
-pnpm run check:adaptive-bundle
-pnpm run check:adaptive-logger
-pnpm run check:adaptive-routes
-node apps/mobile/prototype/hybrid-app/blank-slate-wm.smoke.mjs
-node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + openVolume shape
+pnpm run check:brain-app
+pnpm run check:whoop-ownership
+pnpm run check:whoop-deeplink
+pnpm run check:no-recall
+WHOOP_LIVE_SMOKE=0 node apps/brain-app/checks/whoop-live.smoke.mjs   # skip live hit locally
 ```
 
 ---
 
 ## 3. Rules (do not silently reverse)
 
-- **One product engine:** `@hybrid/adaptive`. Do not revive deleted engines or invent a second brain.
-- **Do not** recreate Expo / Home / PWA / coach portal / ARC.
-- **Do not** move pain/illness into a specialist engine; flags stay unclassified product-wise.
-- Adaptive decision logic stays **pure** (no I/O in the package).
+- **One athlete app:** `apps/brain-app/`. Do not restore `apps/mobile/prototype/` or split seeds into active paths.
+- **Blank slate:** `THE-brain-v1` only — never migrate from old Hybrid storage keys.
+- WHOOP ownership stays on hybrid1 Netlify; athlete site proxies only (`pnpm run check:whoop-ownership`).
+- `@hybrid/brain` and `@hybrid/adaptive` stay **pure** (no I/O in packages).
 - Migration filenames on the shared Supabase ledger are sacred — never rename applied migrations.
-- Neither this repo nor the hybrid stub writes migrations against the other's tables.
-- Cache pins: bump `LOCAL_BUILD` and SW `CACHE` together; Capgo version is a separate ship step.
 
 ---
 
@@ -137,9 +118,8 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 | Ref | Note |
 | --- | --- |
-| `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.72** on `dogfood` + `live` (blank-v207 one-set logger) |
-| Cache | `the-hybrid-athlete-blank-v207` |
-| Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
+| Reset | **The Brain** full product UI delete + archive — branch `cursor/brain-reset-0ae6` |
+| Cache | `the-brain-v1` / `THE-brain-v1` |
+| Pre-Brain | Last Hybrid cache was `the-hybrid-athlete-blank-v215` — obsolete after reset |
 
-**Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.
+**Next agent:** read this file + `docs/superpowers/specs/2026-09-09-the-brain-design.md` + `CLAUDE.md`. Edit `apps/brain-app/` only for athlete UI.
