@@ -41,10 +41,10 @@ Each extract's `index.html` has:
 
 Runtime: `HYBRID_PRODUCT` is `strength` | `engine` | `combined`. Combined is the current mixed app (Recovery still present until mixed UI is retired).
 
-## Out of this cut
+## Out of this cut (still manual)
 
-- Creating GitHub repositories / Play listings / new Capgo apps (manual)
-- Forking Capacitor / new `applicationId`
-- Nutrition repo work
-- Session sync to Supabase
-- Deleting `apps/mobile` athlete HTML (after cutover only)
+- Creating GitHub repositories / Play Console listings (this agent cannot)
+- Mapping `appId` → native return scheme on **hybrid1** WHOOP/Concept2 OAuth
+- Deleting `apps/mobile` athlete HTML (after both product sites + APKs are live)
+
+Capacitor `applicationId`s, Netlify slugs, Capgo ship scripts, and proxy-only product trees **are in this cut**.

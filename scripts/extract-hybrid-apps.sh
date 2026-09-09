@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Copy the live Hybrid HTML prototype into extractable Strength / Engine trees
-# and stamp meta name="hybrid-product". Does not replace apps/mobile (live Capgo).
+# Copy the live Hybrid HTML prototype into extractable Strength / Engine trees,
+# stamp hybrid-product, and fork Capacitor shells. Does not replace apps/mobile.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/apps/mobile/prototype/hybrid-app"
@@ -8,11 +8,10 @@ SRC="$ROOT/apps/mobile/prototype/hybrid-app"
 copy_runtime() {
   local dest="$1"
   mkdir -p "$dest"
-  # Runtime only — smokes stay in this repo's prototype.
   find "$SRC" -maxdepth 1 -type f \( \
       -name '*.js' -o -name '*.html' -o -name '*.json' -o -name '*.toml' \
       -o -name '.netlifyignore' -o -name '*.css' \
-    \) ! -name '*.smoke.mjs' -print0 | while IFS= read -r -d '' f; do
+    \) ! -name '*.smoke.mjs' ! -name 'coach.html' -print0 | while IFS= read -r -d '' f; do
     cp -f "$f" "$dest/"
   done
   if [[ -d "$SRC/netlify" ]]; then
@@ -23,6 +22,7 @@ copy_runtime() {
     rm -rf "$dest/icons"
     cp -a "$SRC/icons" "$dest/icons"
   fi
+  rm -f "$dest/coach.html"
 }
 
 stamp_product() {
@@ -56,31 +56,42 @@ PY
 
 copy_runtime "$ROOT/apps/hybrid-strength"
 stamp_product "$ROOT/apps/hybrid-strength" strength "Hybrid Strength"
-cat > "$ROOT/apps/hybrid-strength/README.md" <<'EOF'
-# Hybrid Strength (seed)
-
-Athlete HTML for **lifts only**. Storage key `THE-hybrid-strength-v1`.
-
-This tree is a copy of `apps/mobile/prototype/hybrid-app` with
-`<meta name="hybrid-product" content="strength" />`.
-
-**Spin-out:** see `/SPLIT.md`. Do not treat this folder as the live Capgo/Netlify
-app — that remains `apps/mobile` until cutover.
-EOF
-
 copy_runtime "$ROOT/apps/hybrid-engine"
 stamp_product "$ROOT/apps/hybrid-engine" engine "Hybrid Engine"
-cat > "$ROOT/apps/hybrid-engine/README.md" <<'EOF'
-# Hybrid Engine (seed)
 
-Athlete HTML for **conditioning only**. Storage key `THE-hybrid-engine-v1`.
-Recovery is not a product here.
+bash "$ROOT/scripts/setup-product-shells.sh"
 
-This tree is a copy of `apps/mobile/prototype/hybrid-app` with
-`<meta name="hybrid-product" content="engine" />`.
+python3 - "$ROOT" <<'PY'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+products = json.loads((root / "scripts/hybrid-products.json").read_text())
+for key in ("strength", "engine"):
+    meta = products[key]
+    dest = root / meta["dir"]
+    (dest / "PRODUCT.json").write_text(json.dumps(meta, indent=2) + "\n")
+    (dest / "README.md").write_text(f"""# {meta["appName"]}
 
-**Spin-out:** see `/SPLIT.md`. Do not treat this folder as the live Capgo/Netlify
-app — that remains `apps/mobile` until cutover.
-EOF
+Product tree for **{meta["appName"]}**. Live mixed athlete stays in `apps/mobile`.
 
-echo "Extracted apps/hybrid-strength (strength) and apps/hybrid-engine (engine)"
+| | |
+| --- | --- |
+| Stamp | `<meta name="hybrid-product" content="{key}" />` |
+| Storage | `{meta["storage"]}` |
+| Android / Capgo | `{meta["appId"]}` |
+| OAuth scheme | `{meta["appId"]}://` |
+| Netlify slug | `{meta["netlifySlug"]}` ({meta["netlifyUrl"]}) |
+
+WHOOP/Concept2 functions here are **proxy-only** → `thehybridengine1.netlify.app`.
+
+```bash
+bash scripts/extract-hybrid-apps.sh
+PRODUCT={key} bash scripts/build-product-apk.sh
+PRODUCT={key} CAPGO_BUNDLE_VERSION=1.0.0 bash scripts/ship-product-capgo.sh
+```
+
+Spin-out: `SPLIT.md`.
+""")
+print("wrote PRODUCT.json + README")
+PY
+
+echo "Extracted apps/hybrid-strength and apps/hybrid-engine (HTML + Capacitor)"

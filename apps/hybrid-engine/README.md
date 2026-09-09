@@ -1,10 +1,21 @@
-# Hybrid Engine (seed)
+# Hybrid Engine
 
-Athlete HTML for **conditioning only**. Storage key `THE-hybrid-engine-v1`.
-Recovery is not a product here.
+Product tree for **Hybrid Engine**. Live mixed athlete stays in `apps/mobile`.
 
-This tree is a copy of `apps/mobile/prototype/hybrid-app` with
-`<meta name="hybrid-product" content="engine" />`.
+| | |
+| --- | --- |
+| Stamp | `<meta name="hybrid-product" content="engine" />` |
+| Storage | `THE-hybrid-engine-v1` |
+| Android / Capgo | `com.hybrid.engine` |
+| OAuth scheme | `com.hybrid.engine://` |
+| Netlify slug | `hybrid-engine` (https://hybrid-engine.netlify.app) |
 
-**Spin-out:** see `/SPLIT.md`. Do not treat this folder as the live Capgo/Netlify
-app — that remains `apps/mobile` until cutover.
+WHOOP/Concept2 functions here are **proxy-only** → `thehybridengine1.netlify.app`.
+
+```bash
+bash scripts/extract-hybrid-apps.sh
+PRODUCT=engine bash scripts/build-product-apk.sh
+PRODUCT=engine CAPGO_BUNDLE_VERSION=1.0.0 bash scripts/ship-product-capgo.sh
+```
+
+Spin-out: `SPLIT.md`.

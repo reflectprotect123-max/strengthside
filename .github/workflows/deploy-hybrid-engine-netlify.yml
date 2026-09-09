@@ -1,0 +1,47 @@
+# Deploy Hybrid Engine (proxy-only WHOOP/Concept2) to its own Netlify site.
+# Does not deploy to thehybridsystem.
+# Requires: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID_ENGINE (uuid or slug hybrid-engine)
+name: Deploy Hybrid Engine Netlify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/hybrid-engine/**'
+      - 'apps/mobile/prototype/hybrid-app/**'
+      - 'scripts/extract-hybrid-apps.sh'
+      - 'scripts/setup-product-shells.sh'
+      - '.github/workflows/deploy-hybrid-engine-netlify.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refresh product tree from prototype
+        run: bash scripts/extract-hybrid-apps.sh
+      - name: WHOOP ownership (product tree stays proxy-only)
+        run: node apps/mobile/prototype/hybrid-app/whoop-ownership.smoke.mjs
+      - name: Deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_ENGINE }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${NETLIFY_AUTH_TOKEN:-}" || -z "${NETLIFY_SITE_ID:-}" ]]; then
+            echo "Skipping Engine Netlify deploy (need NETLIFY_AUTH_TOKEN + NETLIFY_SITE_ID_ENGINE)."
+            exit 0
+          fi
+          SITE="$NETLIFY_SITE_ID"
+          if [[ "$SITE" == http* || "$SITE" == *netlify.app* || "$SITE" == */* ]]; then
+            SITE=hybrid-engine
+          fi
+          cd apps/hybrid-engine
+          npx --yes netlify-cli@26.2.0 deploy --prod \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$SITE" \
+            --dir=. \
+            --functions=netlify/functions \
+            --no-build \
+            --message "hybrid-engine ${GITHUB_SHA::7}"

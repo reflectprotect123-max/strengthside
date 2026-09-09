@@ -1,35 +1,48 @@
-# Splitting Hybrid Strength and Hybrid Engine into their own GitHub repos
+# Splitting Hybrid Strength and Hybrid Engine
 
 This repository (`strengthside`) is the **shared backend** after cutover: twelve-table
 Supabase migrations, Netlify WHOOP/Concept2 **proxy** functions, `@hybrid/adaptive`.
 Nutrition already lives in a **different repo** — do not restore it here.
 
-Until you create the two product repos, seeds live in this tree:
+| Product | Tree | Android / Capgo | Netlify | Storage |
+| --- | --- | --- | --- | --- |
+| Hybrid Strength | `apps/hybrid-strength/` | `com.hybrid.strength` | slug `hybrid-strength` → https://hybrid-strength.netlify.app | `THE-hybrid-strength-v1` |
+| Hybrid Engine | `apps/hybrid-engine/` | `com.hybrid.engine` | slug `hybrid-engine` → https://hybrid-engine.netlify.app | `THE-hybrid-engine-v1` |
+| Live mixed (until cutover) | `apps/mobile/` | `com.hybrid.athlete` | `thehybridsystem` | `THE-builder-clean-v1` |
 
-| Product | Seed | Product stamp |
-| --- | --- | --- |
-| Hybrid Strength | `apps/hybrid-strength/` | `<meta name="hybrid-product" content="strength" />` |
-| Hybrid Engine | `apps/hybrid-engine/` | `<meta name="hybrid-product" content="engine" />` |
-| Live mixed athlete (Capgo + thehybridsystem) | `apps/mobile/` | `content="combined"` |
+**Do not delete `apps/mobile` until both product sites and APKs are live.** Phone/web stay on the mixed app so they do not go dark.
 
-**Do not delete `apps/mobile` in this cut.** Phone and web stay on the mixed app
-until each new repo has its own Netlify site + Capgo app. Cutover is a later
-decision: stop deploying athlete HTML from this repo, then this repo ships
-functions + migrations only.
-
-Refresh the seeds after prototype edits:
+Refresh HTML + Capacitor forks after prototype edits:
 
 ```bash
 bash scripts/extract-hybrid-apps.sh
 ```
 
-## Spin-out with `git subtree` (after you create empty GitHub repos)
-
-This environment cannot create GitHub repositories. After you create them (example
-names `hybrid-strength` and `hybrid-engine`):
+## Ship
 
 ```bash
-# from this repo, on a commit that contains the seeds
+# Android debug APKs (needs ANDROID_HOME)
+PRODUCT=strength bash scripts/build-product-apk.sh
+PRODUCT=engine bash scripts/build-product-apk.sh
+
+# Capgo (needs CAPGO_TOKEN / .capgo). Create Capgo apps first if missing.
+PRODUCT=strength CAPGO_BUNDLE_VERSION=1.0.0 bash scripts/ship-product-capgo.sh
+PRODUCT=engine CAPGO_BUNDLE_VERSION=1.0.0 bash scripts/ship-product-capgo.sh
+```
+
+GitHub Actions: **Deploy Hybrid Strength Netlify**, **Deploy Hybrid Engine Netlify** (skip until `NETLIFY_SITE_ID_STRENGTH` / `NETLIFY_SITE_ID_ENGINE` exist), **Capgo ship products**. Mixed **Capgo ship** / **Deploy athlete Netlify** still target `com.hybrid.athlete` / `thehybridsystem` only.
+
+Best-effort cloud create (no secrets in git):
+
+```bash
+bash scripts/provision-product-clouds.sh
+```
+
+## Spin-out with `git subtree`
+
+This environment cannot create GitHub repositories (`gh` is read-only). After you create empty repos:
+
+```bash
 git subtree split --prefix=apps/hybrid-strength -b split-hybrid-strength
 git push git@github.com:<org>/hybrid-strength.git split-hybrid-strength:main
 
@@ -37,25 +50,16 @@ git subtree split --prefix=apps/hybrid-engine -b split-hybrid-engine
 git push git@github.com:<org>/hybrid-engine.git split-hybrid-engine:main
 ```
 
-Then add Capacitor / Play / Capgo app ids **in those repos**. Do not fork
-`applicationId` `com.hybrid.athlete` in this cut.
-
-## Storage
-
-Sessions and templates are on-device `localStorage`, not the twelve Postgres
-tables. Keys must stay separate:
-
-- combined / live mixed: `THE-builder-clean-v1`
-- Hybrid Strength: `THE-hybrid-strength-v1`
-- Hybrid Engine: `THE-hybrid-engine-v1`
-
-## Recovery
-
-Dropped from the split products. Combined `apps/mobile` still shows Recovery so
-the live app does not go dark before cutover.
-
 ## WHOOP / Concept2
 
-Tokens and OAuth stay on `thehybridengine1.netlify.app`. New athlete sites stay
-proxy-only (`_hybrid-proxy.mjs`). New OAuth `redirect_uri` hosts wait until
-Capacitor is forked per product.
+Tokens and OAuth **callback host** stay `thehybridengine1.netlify.app`. Product sites stay **proxy-only**.
+
+Native connect forwards `appId` (`com.hybrid.strength` / `com.hybrid.engine`) so hybrid1 can return `com.hybrid.strength://` vs `com.hybrid.athlete://`. Until hybrid1 maps those app ids, OAuth return still lands on the mixed scheme — that change is on the hybrid1 repo, not here.
+
+## Recovery / Nutrition
+
+Recovery is dropped from the split products. Combined `apps/mobile` still shows it. Nutrition is not this repo.
+
+## Play Console
+
+Listings and signing keys are account work this agent cannot do. Use `applicationId`s above; do not reuse `com.hybrid.athlete` for the split APKs.

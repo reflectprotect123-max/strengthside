@@ -1,0 +1,12 @@
+{
+  "appId": "com.hybrid.strength",
+  "appName": "Hybrid Strength",
+  "netlifySlug": "hybrid-strength",
+  "netlifyUrl": "https://hybrid-strength.netlify.app",
+  "storage": "THE-hybrid-strength-v1",
+  "dir": "apps/hybrid-strength",
+  "capgoChannels": [
+    "dogfood",
+    "live"
+  ]
+}

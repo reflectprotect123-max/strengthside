@@ -1,0 +1,33 @@
+{
+  "appId": "com.hybrid.strength",
+  "appName": "Hybrid Strength",
+  "webDir": "..",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "Camera": {
+      "permissions": [
+        "camera"
+      ]
+    },
+    "CapacitorUpdater": {
+      "appId": "com.hybrid.strength",
+      "autoUpdate": true,
+      "defaultChannel": "dogfood",
+      "appReadyTimeout": 10000,
+      "responseTimeout": 20
+    },
+    "BluetoothLe": {
+      "displayStrings": {
+        "scanning": "Scanning\u2026",
+        "cancel": "Cancel",
+        "availableDevices": "Available devices",
+        "noDeviceFound": "No device found"
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "combined": {
+    "appId": "com.hybrid.athlete",
+    "appName": "THE Hybrid",
+    "netlifySlug": "thehybridsystem",
+    "netlifyUrl": "https://thehybridsystem.netlify.app",
+    "storage": "THE-builder-clean-v1",
+    "dir": "apps/mobile"
+  },
+  "strength": {
+    "appId": "com.hybrid.strength",
+    "appName": "Hybrid Strength",
+    "netlifySlug": "hybrid-strength",
+    "netlifyUrl": "https://hybrid-strength.netlify.app",
+    "storage": "THE-hybrid-strength-v1",
+    "dir": "apps/hybrid-strength",
+    "capgoChannels": ["dogfood", "live"]
+  },
+  "engine": {
+    "appId": "com.hybrid.engine",
+    "appName": "Hybrid Engine",
+    "netlifySlug": "hybrid-engine",
+    "netlifyUrl": "https://hybrid-engine.netlify.app",
+    "storage": "THE-hybrid-engine-v1",
+    "dir": "apps/hybrid-engine",
+    "capgoChannels": ["dogfood", "live"]
+  }
+}

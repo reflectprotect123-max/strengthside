@@ -142,6 +142,6 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Cache | `the-hybrid-athlete-blank-v214` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
-**Three-product split (in progress):** this repo becomes shared backend only after cutover. Seeds `apps/hybrid-strength` / `apps/hybrid-engine` (`bash scripts/extract-hybrid-apps.sh`). Live Capgo/Netlify still `apps/mobile` combined. Nutrition not in this repo. See `SPLIT.md`.
+**Three-product split:** seeds + Capacitor forks in `apps/hybrid-strength` (`com.hybrid.strength`) and `apps/hybrid-engine` (`com.hybrid.engine`). Live Capgo/Netlify mixed app stays `apps/mobile` / `com.hybrid.athlete`. See `SPLIT.md`. Nutrition not in this repo.
 
 **Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.

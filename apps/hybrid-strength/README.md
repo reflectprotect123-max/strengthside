@@ -1,9 +1,21 @@
-# Hybrid Strength (seed)
+# Hybrid Strength
 
-Athlete HTML for **lifts only**. Storage key `THE-hybrid-strength-v1`.
+Product tree for **Hybrid Strength**. Live mixed athlete stays in `apps/mobile`.
 
-This tree is a copy of `apps/mobile/prototype/hybrid-app` with
-`<meta name="hybrid-product" content="strength" />`.
+| | |
+| --- | --- |
+| Stamp | `<meta name="hybrid-product" content="strength" />` |
+| Storage | `THE-hybrid-strength-v1` |
+| Android / Capgo | `com.hybrid.strength` |
+| OAuth scheme | `com.hybrid.strength://` |
+| Netlify slug | `hybrid-strength` (https://hybrid-strength.netlify.app) |
 
-**Spin-out:** see `/SPLIT.md`. Do not treat this folder as the live Capgo/Netlify
-app — that remains `apps/mobile` until cutover.
+WHOOP/Concept2 functions here are **proxy-only** → `thehybridengine1.netlify.app`.
+
+```bash
+bash scripts/extract-hybrid-apps.sh
+PRODUCT=strength bash scripts/build-product-apk.sh
+PRODUCT=strength CAPGO_BUNDLE_VERSION=1.0.0 bash scripts/ship-product-capgo.sh
+```
+
+Spin-out: `SPLIT.md`.

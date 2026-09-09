@@ -75,6 +75,10 @@ must(splitDoc.includes('subtree-split') || splitDoc.includes('git subtree'), 'SP
 must(splitDoc.includes('apps/mobile'), 'SPLIT.md says mixed apps/mobile stays until cutover');
 must(!/delete apps\/mobile/.test(splitDoc.toLowerCase()) || splitDoc.includes('after cutover'), 'do not delete apps/mobile in this cut');
 
+must(splitDoc.includes('com.hybrid.strength'), 'SPLIT.md documents strength applicationId');
+must(splitDoc.includes('com.hybrid.engine'), 'SPLIT.md documents engine applicationId');
+must(splitDoc.includes('hybrid-strength'), 'SPLIT.md documents strength Netlify slug');
+
 if (failures.length) {
   console.error('three-app-split.smoke FAIL');
   failures.forEach((f) => console.error(' -', f));
