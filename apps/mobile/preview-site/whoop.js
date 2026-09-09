@@ -2,7 +2,29 @@
 (function (global) {
   const SUPABASE_URL = "https://orysjncrksmdfabpuftd.supabase.co";
   const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeXNqbmNya3NtZGZhYnB1ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MTE4NzksImV4cCI6MjA5OTk4Nzg3OX0.GTMBfFtH5O6SikzHo75sXGIZoEhmuJ7TvXiACd7T078";
-  const ATHLETE_NETLIFY = 'https://thehybridsystem.netlify.app';
+  const PRODUCT_SITES = {
+    combined: { netlify: 'https://thehybridsystem.netlify.app', appId: 'com.hybrid.athlete' },
+    strength: { netlify: 'https://hybrid-strength.netlify.app', appId: 'com.hybrid.strength' },
+    engine: { netlify: 'https://hybrid-engine-athlete.netlify.app', appId: 'com.hybrid.engine' }
+  };
+  function productKey() {
+    try {
+      const doc = global.document;
+      const el = doc && doc.querySelector && doc.querySelector('meta[name="hybrid-product"]');
+      const v = el && el.content;
+      if (v === 'strength' || v === 'engine') return v;
+    } catch (_) {}
+    return 'combined';
+  }
+  function productSite() {
+    return PRODUCT_SITES[productKey()] || PRODUCT_SITES.combined;
+  }
+  function athleteNetlify() {
+    return productSite().netlify;
+  }
+  function nativeAppId() {
+    return productSite().appId;
+  }
   const FN = {
     connect: '/.netlify/functions/whoop-connect',
     sync: '/.netlify/functions/whoop-sync',
@@ -10,11 +32,14 @@
     disconnect: '/.netlify/functions/integrations-disconnect'
   };
   function resolveProxyBase() {
+    const ATHLETE_NETLIFY = athleteNetlify();
     try {
       const loc = global.location;
       if (!loc || !loc.hostname) return ATHLETE_NETLIFY;
       const host = String(loc.hostname).toLowerCase();
-      if (host === 'thehybridsystem.netlify.app') return '';
+      let ownHost = '';
+      try { ownHost = new URL(ATHLETE_NETLIFY).hostname.toLowerCase(); } catch (_) {}
+      if (ownHost && host === ownHost) return '';
       if (loc.protocol === 'file:' || loc.protocol === 'capacitor:') return ATHLETE_NETLIFY;
       if (host === 'localhost' || host === '127.0.0.1') return ATHLETE_NETLIFY;
       if (host.endsWith('.github.io')) return ATHLETE_NETLIFY;
@@ -242,7 +267,7 @@
     if (ui.busy) return;
     ui.busy = true; ui.message = 'Opening WHOOP…'; renderPanels();
     try {
-      const body = await api(FN.connect, { query: { client: 'native' } });
+      const body = await api(FN.connect, { query: { client: 'native', appId: nativeAppId() } });
       const url = body && typeof body.authorizeUrl === 'string' ? body.authorizeUrl : '';
       if (!/^https:\/\//i.test(url)) throw new Error('WHOOP connect URL missing');
       global.open(url, '_blank', 'noopener');

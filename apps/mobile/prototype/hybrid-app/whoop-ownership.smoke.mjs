@@ -124,6 +124,10 @@ function assertFnDir(label, fnDir) {
 
 assertFnDir('prototype', protoFn);
 assertFnDir('preview-site', previewFn);
+for (const extra of ['apps/hybrid-strength/netlify/functions', 'apps/hybrid-engine/netlify/functions']) {
+  const extraDir = join(root, extra);
+  if (existsSync(extraDir)) assertFnDir(extra, extraDir);
+}
 
 // package.json must not reintroduce blobs for athlete functions
 for (const pkgPath of [

@@ -1,0 +1,49 @@
+# Manual Capgo OTA for Hybrid Strength / Hybrid Engine. Mixed athlete uses Capgo ship.
+name: Capgo ship products
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: strength or engine
+        required: true
+        type: choice
+        options:
+          - strength
+          - engine
+      version:
+        description: Capgo bundle version (e.g. 1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ship:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Refresh product HTML
+        run: bash scripts/extract-hybrid-apps.sh
+      - name: Require CAPGO_TOKEN
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo "Missing repo secret CAPGO_TOKEN" >&2
+            exit 1
+          fi
+      - name: Ship product Capgo
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+          CAPGO_BUNDLE_VERSION: ${{ inputs.version }}
+          PRODUCT: ${{ inputs.product }}
+        run: bash scripts/ship-product-capgo.sh

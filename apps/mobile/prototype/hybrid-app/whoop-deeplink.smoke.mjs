@@ -10,34 +10,52 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const dir = dirname(fileURLToPath(import.meta.url));
-const manifest = join(dir, '../../capacitor/android/app/src/main/AndroidManifest.xml');
-const strings = join(dir, '../../capacitor/android/app/src/main/res/values/strings.xml');
+const mixedManifest = join(dir, '../../capacitor/android/app/src/main/AndroidManifest.xml');
+const mixedStrings = join(dir, '../../capacitor/android/app/src/main/res/values/strings.xml');
+const root = join(dir, '../../../..');
 
 const failures = [];
 function must(cond, msg) {
   if (!cond) failures.push(msg);
 }
 
-must(existsSync(manifest), 'AndroidManifest.xml missing');
-must(existsSync(strings), 'strings.xml missing');
+function checkManifest(label, manifest, strings, scheme) {
+  must(existsSync(manifest), `${label}: AndroidManifest.xml missing`);
+  must(existsSync(strings), `${label}: strings.xml missing`);
+  if (!existsSync(manifest) || !existsSync(strings)) return;
+  const xml = readFileSync(manifest, 'utf8');
+  const str = readFileSync(strings, 'utf8');
+  must(/custom_url_scheme/.test(str), `${label}: strings.xml must define custom_url_scheme`);
+  must(str.includes(scheme), `${label}: custom_url_scheme must be ${scheme}`);
+  if (label === 'mixed') {
+    must(/android:scheme="hybridengine"/.test(xml), 'mixed APK must also register hybridengine:// (live hybrid1 NATIVE_RETURN_URL)');
+  }
+  must(/android.intent.action.VIEW/.test(xml), `${label}: VIEW intent-filter for OAuth return`);
+  must(/android.intent.category.BROWSABLE/.test(xml), `${label}: VIEW intent-filter must be BROWSABLE`);
+  must(
+    /android:scheme="@string\/custom_url_scheme"/.test(xml) || xml.includes(`android:scheme="${scheme}"`),
+    `${label}: VIEW intent-filter must bind custom_url_scheme`,
+  );
+  must(/android:launchMode="singleTask"/.test(xml), `${label}: MainActivity should be singleTask`);
+}
 
-const xml = readFileSync(manifest, 'utf8');
-const str = readFileSync(strings, 'utf8');
-
-must(/custom_url_scheme/.test(str), 'strings.xml must define custom_url_scheme');
-must(/com\.hybrid\.athlete/.test(str), 'custom_url_scheme must be com.hybrid.athlete');
-
-must(/android.intent.action.VIEW/.test(xml), 'AndroidManifest must have VIEW intent-filter for OAuth return');
-must(/android.intent.category.BROWSABLE/.test(xml), 'VIEW intent-filter must be BROWSABLE');
-must(
-  /android:scheme="@string\/custom_url_scheme"/.test(xml) || /android:scheme="com\.hybrid\.athlete"/.test(xml),
-  'VIEW intent-filter must bind custom_url_scheme',
+checkManifest('mixed', mixedManifest, mixedStrings, 'com.hybrid.athlete');
+checkManifest(
+  'strength',
+  join(root, 'apps/hybrid-strength/capacitor/android/app/src/main/AndroidManifest.xml'),
+  join(root, 'apps/hybrid-strength/capacitor/android/app/src/main/res/values/strings.xml'),
+  'com.hybrid.strength',
 );
-must(/android:launchMode="singleTask"/.test(xml), 'MainActivity should be singleTask for OAuth return');
+checkManifest(
+  'engine',
+  join(root, 'apps/hybrid-engine/capacitor/android/app/src/main/AndroidManifest.xml'),
+  join(root, 'apps/hybrid-engine/capacitor/android/app/src/main/res/values/strings.xml'),
+  'com.hybrid.engine',
+);
 
 if (failures.length) {
   console.error('whoop-deeplink.smoke FAIL');
   for (const f of failures) console.error(' -', f);
   process.exit(1);
 }
-console.log('whoop-deeplink.smoke: ok — com.hybrid.athlete:// intent-filter present');
+console.log('whoop-deeplink.smoke: ok — mixed + product VIEW/BROWSABLE schemes');

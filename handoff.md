@@ -1,6 +1,6 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (one-set logger OTA).**
+> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (strength days unseeded).**
 > Chat history before this file is disposable. Start here.
 >
 > Strength cut (2026-09-06) was reversed on 2026-09-07. Spec of the cut remains historical: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
@@ -13,20 +13,21 @@
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app — **Hybrid Strength + The Engine + Recovery** (strength restored 2026-09-07) |
+| **Product** | Live mixed Hybrid HTML (Strength + Engine + Recovery) until cutover. Split seeds: `apps/hybrid-strength/` + `apps/hybrid-engine/` — see `SPLIT.md`. Nutrition stays in its own repo. |
 | **Engines** | **`@hybrid/adaptive`** — lift + cond Open/Next/Close. Do not revive Big Mac / old adapters. |
 | **Next brain** | `@hybrid/adaptive` in `packages/adaptive`. HTML doors: strength logger → lift Next; cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v207`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.72`** (one-set logger) |
+| **Cache** | **`the-hybrid-athlete-blank-v215`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Capgo** | **`dogfood` + `live` @ `1.0.79`** (Warm-up + Cool-down boxes on strength and Engine) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
-| **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
+| **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub; live WHOOP still on that Netlify. Nutrition = `reflectprotect123-max/nutrition`. |
+| **Split seeds** | Strength `com.hybrid.strength` / `hybrid-strength.netlify.app`. Engine `com.hybrid.engine` / `hybrid-engine-athlete.netlify.app` (not occupied `hybrid-engine.netlify.app`). See `SPLIT.md` + `docs/hybrid1-native-return-allowlist.md`. Mixed Capgo stays **1.0.79**. |
 
 **Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.72**.
+**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.79**.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
 
@@ -45,7 +46,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** both @ **`1.0.72`** (one-set logger) |
+| Channels | **`dogfood` + `live`** both @ **`1.0.79`** (Warm-up + Cool-down boxes) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
@@ -138,8 +139,10 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.72** on `dogfood` + `live` (blank-v207 one-set logger) |
-| Cache | `the-hybrid-athlete-blank-v207` |
+| Capgo | **1.0.79** on `dogfood` + `live` (Warm-up + Cool-down boxes; blank-v213) |
+| Cache | `the-hybrid-athlete-blank-v214` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
+
+**Three-product split:** seeds + Capacitor forks in `apps/hybrid-strength` (`com.hybrid.strength`) and `apps/hybrid-engine` (`com.hybrid.engine`). Live Capgo/Netlify mixed app stays `apps/mobile` / `com.hybrid.athlete`. See `SPLIT.md`. Nutrition not in this repo.
 
 **Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.

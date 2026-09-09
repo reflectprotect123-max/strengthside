@@ -56,6 +56,10 @@ const sandbox = {
   isSupersetBlock: (block) =>
     !!block?.superset ||
     (/superset|pair/i.test(String(block?.heading || '')) && (block.exercises || []).length > 1),
+  HYBRID_PRODUCT: 'combined',
+  productAllowsStrength: () => true,
+  productAllowsEngine: () => true,
+  productAllowsRecovery: () => true,
 };
 sandbox.window = sandbox;
 

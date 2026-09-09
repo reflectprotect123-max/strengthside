@@ -6,6 +6,7 @@ const html = readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'index.h
 function must(c, m) { if (!c) throw new Error(m); }
 must(html.includes('src="./adaptive-bundle.js"'), 'loads adaptive-bundle.js');
 must(html.includes('HybridAdaptive.decideNextLift'), 'Log calls decideNextLift');
+must(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'strength-one-set-logger.js'), 'utf8').includes('HybridAdaptive.decideNextLift'), 'one-set Next calls decideNextLift');
 must(html.includes("if(isHoldRow(r)){startHoldCountdown"), 'holds still start countdown, not Next');
 must(!html.includes('HybridAdaptive.decideNextCond') || html.includes('function advanceInterval'), 'cond Next is not on the lift Log path');
 must(html.includes('liveTracksKg'), 'kg progress gated on live (non-optional) metric');

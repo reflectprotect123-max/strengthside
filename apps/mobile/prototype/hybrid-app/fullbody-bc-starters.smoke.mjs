@@ -1,6 +1,6 @@
 /**
- * Smoke: Full Body A/B/C are gone. Library follows two Hybrid Power Project days
- * (Monday squat / Wednesday floor press) with painted sets×reps and 30 m carries.
+ * Smoke: strength days are unseeded. Library starts empty of HPP Monday/Wednesday
+ * so the athlete rebuilds them. Aerobic + Recovery starters remain.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -14,18 +14,14 @@ const logColumnsSrc = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 function must(cond, msg) {
   if (!cond) throw new Error(msg);
 }
-function clone(x) {
-  return JSON.parse(JSON.stringify(x));
-}
 
-must(!html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C']"), 'Full Body names gone from starter list');
-must(html.includes("STARTER_STRENGTH_NAMES=['HPP Monday','HPP Wednesday']"), 'HPP two-day starter list');
-must(!html.includes('ensureFullBodyAStarter(state)'), 'no Full Body A ensure');
-must(!html.includes('ensureFullBodyBStarter(state)'), 'no Full Body B ensure');
-must(!html.includes('ensureFullBodyCStarter(state)'), 'no Full Body C ensure');
-must(html.includes('ensureHppMondayStarter(state)'), 'HPP Monday ensure');
-must(html.includes('ensureHppWednesdayStarter(state)'), 'HPP Wednesday ensure');
-must(html.includes("HPP_FOLLOW_VERSION='hpp-follow-v1'"), 'follow-program migrate');
+must(!html.includes("STARTER_STRENGTH_NAMES=['Full Body A','Full Body B','Full Body C']"), 'Full Body names gone');
+must(html.includes("STARTER_STRENGTH_NAMES=[]"), 'no seeded strength days');
+must(!html.includes('ensureHppMondayStarter(state)'), 'no HPP Monday ensure');
+must(!html.includes('ensureHppWednesdayStarter(state)'), 'no HPP Wednesday ensure');
+must(html.includes("UNSEED_STRENGTH_DAYS_VERSION='unseed-strength-days-v2'"), 'unseed migrate');
+must(html.includes('function applyUnseedStrengthDaysPatch'), 'unseed patch');
+must(!html.includes("scheduleFollowSession(state,state.templates.find(t=>t&&t.name==='HPP Monday')"), 'no auto-schedule HPP Monday');
 
 function parseSeed(src) {
   const start = src.indexOf('const seed=');
@@ -66,51 +62,8 @@ function parseSeed(src) {
 const seed = parseSeed(html);
 must(seed, 'seed parse');
 must(!(seed.templates || []).some((t) => /^Full Body [ABC]$/.test(t && t.name)), 'seed has no Full Body A/B/C');
-
-function strengthExercises(t) {
-  return ((t.blocks || []).find((b) => b && b.type === 'strength') || {}).exercises || [];
-}
-
-function assertDay(t, name, expected) {
-  must(t, `${name} in seed`);
-  const exs = strengthExercises(t);
-  must(exs.length === expected.length, `${name} lift count ${exs.length}`);
-  expected.forEach((want, i) => {
-    const ex = exs[i];
-    must(ex && ex.name === want.name, `${name}[${i}] name ${ex && ex.name}`);
-    must(Number(ex.sets) === want.sets, `${name} ${want.name} sets`);
-    if (want.reps != null) must(String(ex.reps) === String(want.reps), `${name} ${want.name} reps ${ex.reps}`);
-    must(!!ex.supersetWithNext === !!want.ss, `${name} ${want.name} superset`);
-    if (want.metres) {
-      const d = (ex.logColumns || []).find((c) => c.kind === 'distance_m');
-      must(d && String(d.value || (d.values && d.values[0]) || '') === '30', `${name} ${want.name} 30 m`);
-    }
-  });
-  const breath = (t.blocks || []).find((b) => b && b.type === 'text' && /recovery breathing/i.test(b.heading || ''));
-  must(breath, `${name} Recovery Breathing`);
-  must(/10 Nasal Breaths/i.test(breath.notes || ''), `${name} nasal breaths`);
-  must(/5 second inhale/i.test(breath.notes || ''), `${name} inhale`);
-  must(/1-second hold/i.test(breath.notes || ''), `${name} hold`);
-  must(/5 second exhale/i.test(breath.notes || ''), `${name} exhale`);
-}
-
-assertDay(seed.templates.find((t) => t.name === 'HPP Monday'), 'HPP Monday', [
-  { name: 'Front Squat', sets: 5, reps: '5' },
-  { name: 'Glute Ham Raise', sets: 4, reps: '8' },
-  { name: 'Weighted Bar Dips', sets: 3, reps: '10', ss: true },
-  { name: 'Weighted Chin-Ups', sets: 3, reps: '10' },
-  { name: 'Farmer Carry', sets: 5, metres: true, ss: true },
-  { name: 'Backwards Sled Drag', sets: 5, metres: true },
-]);
-
-assertDay(seed.templates.find((t) => t.name === 'HPP Wednesday'), 'HPP Wednesday', [
-  { name: 'Football Bar Floor Press', sets: 5, reps: '5' },
-  { name: '1-Arm DB Row', sets: 4, reps: '8' },
-  { name: 'DB Split Squat', sets: 3, reps: '10', ss: true },
-  { name: 'DB Hammer Curls', sets: 3, reps: '10' },
-  { name: 'Barbell Glute Hip Thrust', sets: 3, reps: '15', ss: true },
-  { name: 'Banded Pushdowns', sets: 3, reps: 'MAX' },
-]);
+must(!(seed.templates || []).some((t) => t && /^HPP (Monday|Wednesday)$/.test(t.name)), 'seed has no HPP days');
+must((seed.templates || []).some((t) => t && t.name === 'Aerobic Conditioning'), 'Aerobic Conditioning stays in seed');
 
 const chunk = html.slice(
   html.indexOf('const PROGRAM_TEXT_DEFAULTS'),
@@ -135,6 +88,10 @@ const sandbox = {
   condFormatMeta: () => ({ key: 'steady', type: 'easy' }),
   isConditioningTemplate: () => false,
   isSupersetBlock: () => false,
+  HYBRID_PRODUCT: 'combined',
+  productAllowsStrength: () => true,
+  productAllowsEngine: () => true,
+  productAllowsRecovery: () => true,
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
@@ -150,68 +107,56 @@ const out = sandbox.ensureStarterTemplates({
   meta: {},
   templates: [
     { id: 'old-a', name: 'Full Body A', source: 'THE-starter', blocks: [] },
-    { id: 'old-b', name: 'Full Body B', source: 'THE-starter', blocks: [] },
-    { id: 'old-c', name: 'Full Body C', source: 'THE-starter', blocks: [] },
+    { id: 'hpp-mon', name: 'HPP Monday', source: 'THE-starter', templateKind: 'strength', blocks: [] },
+    { id: 'hpp-wed', name: 'HPP Wednesday', source: 'THE-program-core', templateKind: 'strength', blocks: [] },
   ],
   exercises: [],
   hiddenTemplateIds: [],
-  sessions: [],
-});
-if (typeof sandbox.applyHppFollowPatch === 'function') {
-  sandbox.applyHppFollowPatch(out);
-  sandbox.ensureStarterTemplates(out);
-}
-
-must(!(out.templates || []).some((t) => /^Full Body [ABC]$/.test(t.name)), 'boot drops Full Body A/B/C');
-must((out.templates || []).some((t) => t.name === 'HPP Monday'), 'boots HPP Monday');
-must((out.templates || []).some((t) => t.name === 'HPP Wednesday'), 'boots HPP Wednesday');
-
-const mon = out.templates.find((t) => t.name === 'HPP Monday');
-const carry = strengthExercises(mon).find((e) => e.name === 'Farmer Carry');
-must(carry && Number(carry.sets) === 5, 'farmer 5 sets');
-const metres = (carry.logColumns || []).find((c) => c.kind === 'distance_m');
-must(metres && String(metres.value || metres.values[0] || '') === '30', 'farmer 30 m not 100 ft');
-
-for (const name of ['HPP Monday', 'HPP Wednesday']) {
-  const t = out.templates.find((x) => x.name === name);
-  const kinds = (t.blocks || []).map((b) => `${b.type}:${b.heading}`).join('|');
-  must(
-    !(t.blocks || []).some((b) => b && b.type === 'conditioning'),
-    `${name} must not gain an Engine/conditioning block (got ${kinds})`,
-  );
-  must(
-    (t.blocks || []).some((b) => b && b.type === 'text' && /recovery breathing/i.test(b.heading || '')),
-    `${name} Recovery Breathing stays a text note`,
-  );
-  const sess = (out.sessions || []).find((s) => s && s.name === name);
-  must(sess, `${name} scheduled`);
-  must(
-    !(sess.blocks || []).some((b) => b && b.type === 'conditioning'),
-    `${name} scheduled session has no conditioning block (got ${(sess.blocks || []).map((b) => b.type).join('|')})`,
-  );
-}
-
-const leaked = {
-  meta: {},
-  templates: [],
   sessions: [
+    { id: 's1', name: 'HPP Monday', status: 'scheduled', templateId: 'hpp-mon', blocks: [] },
+    { id: 's2', name: 'HPP Wednesday', status: 'completed', templateId: 'hpp-wed', blocks: [] },
+  ],
+});
+must(!(out.templates || []).some((t) => /^HPP (Monday|Wednesday)$/.test(t.name)), 'boot does not install HPP days');
+must(!(out.templates || []).some((t) => /^Full Body [ABC]$/.test(t.name)), 'boot drops Full Body A/B/C');
+must((out.templates || []).some((t) => t.name === 'Aerobic Conditioning'), 'boots Aerobic Conditioning');
+must((out.templates || []).some((t) => t.name === 'Recovery'), 'boots Recovery');
+must(!(out.sessions || []).some((s) => s.status === 'scheduled' && /^HPP /.test(s.name)), 'does not schedule HPP days');
+must((out.sessions || []).some((s) => s.status === 'completed' && s.name === 'HPP Wednesday'), 'keeps completed HPP history');
+
+const keptUser = sandbox.applyUnseedStrengthDaysPatch({
+  meta: { unseedStrengthDaysVersion: 'unseed-strength-days-v1' },
+  templates: [
     {
-      id: 'hpp-leaked',
+      id: 'mine',
       name: 'HPP Monday',
-      status: 'scheduled',
-      blocks: [
-        { type: 'strength', heading: 'Strength', exercises: [{ name: 'Front Squat', sets: 5, reps: '5' }] },
-        { type: 'conditioning', heading: 'Recovery movement', recoverySession: true, condFmt: 'steady' },
-        { type: 'text', heading: 'Recovery Breathing', notes: '10 Nasal Breaths' },
-      ],
+      source: 'THE-user',
+      templateKind: 'strength',
+      blocks: [{ type: 'strength', exercises: [{ name: 'Front Squat' }] }],
+    },
+    {
+      id: 'copy',
+      name: 'Full Body A (2)',
+      source: 'THE-user',
+      templateKind: 'strength',
+      blocks: [],
+    },
+    {
+      id: 'custom',
+      name: 'Lower A',
+      source: 'THE-user',
+      templateKind: 'strength',
+      blocks: [],
     },
   ],
-};
-sandbox.applyHppFollowPatch(leaked);
-must(
-  !(leaked.sessions[0].blocks || []).some((b) => b && b.type === 'conditioning'),
-  'follow patch strips Recovery Breathing leak from scheduled HPP',
-);
+  sessions: [
+    { id: 'live', name: 'HPP Monday', status: 'active', templateId: 'mine', blocks: [] },
+  ],
+});
+must(!(keptUser.templates || []).some((t) => t.id === 'mine'), 'seeded HPP Monday is deleted even if marked THE-user');
+must(!(keptUser.templates || []).some((t) => t.id === 'copy'), 'Full Body copies are deleted');
+must((keptUser.templates || []).some((t) => t.id === 'custom'), 'custom rebuilt days are kept');
+must(!(keptUser.sessions || []).some((s) => s.id === 'live'), 'active seeded HPP session is dropped');
 
 const mixed = sandbox.normalizeAthleteStrengthBlocks([
   { type: 'strength', heading: 'Strength', exercises: [{ name: 'Front Squat', sets: 5, reps: '5' }] },
@@ -225,170 +170,5 @@ must(
 must((mixed || []).some((b) => b && b.type === 'strength'), 'hard line keeps lifts');
 must((mixed || []).some((b) => b && b.type === 'text'), 'hard line keeps text notes');
 
-const engineOnly = sandbox.normalizeAthleteStrengthBlocks([
-  {
-    type: 'conditioning',
-    heading: 'Row ERG',
-    conditioningType: 'easy',
-    modality: 'Rower',
-    targetDurationMin: 20,
-    condFmt: 'steady',
-  },
-]);
-must(
-  (engineOnly || []).some((b) => b && b.type === 'conditioning' && !b.recoverySession),
-  'hard line: Engine-only sessions stay Engine',
-);
-
-// Flatten + log + finish both HPP days (same path startSessionNow uses).
-sandbox.S = { exercises: out.exercises || [] };
-sandbox.registerExercise = function registerExercise(state, ex) {
-  if (!ex || !ex.name) return ex;
-  return Object.assign({}, ex, { exerciseId: ex.exerciseId || 'ex-' + String(ex.name).toLowerCase().replace(/\s+/g, '-') });
-};
-const helperSrc =
-  html.slice(html.indexOf('function targetList(ex){'), html.indexOf('function isSupersetBlock(block){')) +
-  html.slice(html.indexOf('function isSupersetBlock(block){'), html.indexOf('function legacyProgramRegex(){')) +
-  html.slice(html.indexOf('function normalizeWorkoutBlock(b){'), html.indexOf('function sessionCalendarCard(x){')) +
-  html.slice(html.indexOf('function flatten(x){'), html.indexOf('function liftCloseKey(ex){'));
-vm.runInContext(helperSrc, sandbox);
-
-function taskStrengthRows(t) {
-  if (t.kind === 'strength') return t.rows || [];
-  if (t.kind === 'superset') return (t.exercises || []).flatMap((ex) => ex.rows || []);
-  return [];
-}
-
-function logExercise(ex, label) {
-  must(ex && Array.isArray(ex.rows) && ex.rows.length, `${label} has rows`);
-  const planned = ex.rows.filter((r) => !r.extra);
-  planned.forEach((row, i) => {
-    if (row.targetKind === 'distance') {
-      if (row.distance == null || String(row.distance).trim() === '') row.distance = row.reps || '30';
-      if (row.reps == null || String(row.reps).trim() === '') row.reps = String(row.distance);
-      if (row.weight == null || String(row.weight).trim() === '') row.weight = '32';
-    } else {
-      if (row.weight == null || String(row.weight).trim() === '') row.weight = '60';
-      if (row.reps == null || String(row.reps).trim() === '' || String(row.target || '').toUpperCase() === 'MAX') {
-        const m = String(row.target || '').match(/^(\d+)/);
-        row.reps = m ? m[1] : '12';
-      }
-    }
-    const err = sandbox.LogColumns.validateAthleteRow(ex, row);
-    must(!err, `${label} set ${i + 1} validate: ${err}`);
-    row.done = true;
-  });
-}
-
-function runDay(name, expected) {
-  const sess = clone((out.sessions || []).find((s) => s && s.name === name));
-  must(sess, `${name} scheduled session`);
-  must(!(sess.blocks || []).some((b) => b && b.type === 'conditioning'), `${name} blocks have no Engine`);
-  const tasks = sandbox.flatten(sess);
-  sess.tasks = tasks;
-  sess.taskIndex = 0;
-  sess.status = 'active';
-  must(!tasks.some((t) => t.kind === 'conditioning'), `${name} flatten has no conditioning task (${tasks.map((t) => t.kind + ':' + (t.name || t.heading)).join('|')})`);
-  must(tasks.length === expected.length, `${name} task count ${tasks.length} vs ${expected.length}: ${tasks.map((t) => t.kind + ':' + (t.name || t.heading)).join('|')}`);
-  expected.forEach((want, i) => {
-    const t = tasks[i];
-    must(t.kind === want.kind, `${name} task ${i} kind ${t.kind}`);
-    if (want.kind === 'strength') {
-      must(t.name === want.name, `${name} task ${i} name ${t.name}`);
-      must((t.rows || []).filter((r) => !r.extra).length === want.sets, `${name} ${want.name} row count`);
-      logExercise(t, `${name} ${want.name}`);
-    } else if (want.kind === 'superset') {
-      must(want.names.every((n) => (t.exercises || []).some((ex) => ex.name === n)), `${name} superset ${want.names.join('/')}: got ${(t.exercises || []).map((e) => e.name).join('/')}`);
-      must((t.exercises || []).length === want.names.length, `${name} superset lift count`);
-      t.exercises.forEach((ex) => {
-        const spec = want.lifts.find((l) => l.name === ex.name);
-        must(spec, `${name} unexpected lift ${ex.name}`);
-        must((ex.rows || []).filter((r) => !r.extra).length === spec.sets, `${name} ${ex.name} sets`);
-        if (spec.distance) {
-          must(
-            (ex.rows || []).some((r) => r.targetKind === 'distance') || (ex.logColumns || []).some((c) => c.kind === 'distance_m'),
-            `${name} ${ex.name} distance logger`,
-          );
-          (ex.rows || []).forEach((r) => {
-            const metres = String(r.distance || r.reps || '');
-            must(metres === '30', `${name} ${ex.name} metres ${metres}`);
-          });
-        }
-        logExercise(ex, `${name} ${ex.name}`);
-      });
-    } else if (want.kind === 'text') {
-      must(/recovery breathing/i.test(t.heading || ''), `${name} last task is Recovery Breathing`);
-      must(/10 Nasal Breaths/i.test(t.notes || ''), `${name} breathing notes`);
-    }
-    t.complete = true;
-  });
-  must(tasks.every((t) => t.complete), `${name} all tasks complete`);
-  const sets = tasks.flatMap(taskStrengthRows).filter((r) => r.done);
-  must(sets.length === wantSetCount(expected), `${name} logged sets ${sets.length}`);
-  sess.status = 'completed';
-  sess.completedAt = Date.now();
-  sess.summary = {
-    sets: sets.length,
-    tonnage: sets.filter((r) => r.targetKind !== 'distance').reduce((a, r) => a + Number(r.weight) * Number(r.reps), 0),
-    conditioning: [],
-  };
-  must(sess.summary.conditioning.length === 0, `${name} finish has no Engine load cards`);
-  return sess;
-}
-
-function wantSetCount(expected) {
-  return expected.reduce((n, t) => {
-    if (t.kind === 'strength') return n + t.sets;
-    if (t.kind === 'superset') return n + t.lifts.reduce((a, l) => a + l.sets, 0);
-    return n;
-  }, 0);
-}
-
-const mondayDone = runDay('HPP Monday', [
-  { kind: 'strength', name: 'Front Squat', sets: 5 },
-  { kind: 'strength', name: 'Glute Ham Raise', sets: 4 },
-  {
-    kind: 'superset',
-    names: ['Weighted Bar Dips', 'Weighted Chin-Ups'],
-    lifts: [
-      { name: 'Weighted Bar Dips', sets: 3 },
-      { name: 'Weighted Chin-Ups', sets: 3 },
-    ],
-  },
-  {
-    kind: 'superset',
-    names: ['Farmer Carry', 'Backwards Sled Drag'],
-    lifts: [
-      { name: 'Farmer Carry', sets: 5, distance: true },
-      { name: 'Backwards Sled Drag', sets: 5, distance: true },
-    ],
-  },
-  { kind: 'text' },
-]);
-must(mondayDone.summary.sets === 25, 'Monday 25 logged sets');
-
-const wedDone = runDay('HPP Wednesday', [
-  { kind: 'strength', name: 'Football Bar Floor Press', sets: 5 },
-  { kind: 'strength', name: '1-Arm DB Row', sets: 4 },
-  {
-    kind: 'superset',
-    names: ['DB Split Squat', 'DB Hammer Curls'],
-    lifts: [
-      { name: 'DB Split Squat', sets: 3 },
-      { name: 'DB Hammer Curls', sets: 3 },
-    ],
-  },
-  {
-    kind: 'superset',
-    names: ['Barbell Glute Hip Thrust', 'Banded Pushdowns'],
-    lifts: [
-      { name: 'Barbell Glute Hip Thrust', sets: 3 },
-      { name: 'Banded Pushdowns', sets: 3 },
-    ],
-  },
-  { kind: 'text' },
-]);
-must(wedDone.summary.sets === 21, 'Wednesday 21 logged sets');
-
 console.log('fullbody-bc-starters.smoke: ok');
-console.log('hpp-session-run: Monday 25 sets + Wednesday 21 sets, both finished, no Engine');
+console.log('unseed-strength-days: HPP Monday/Wednesday not installed; Aerobic + Recovery remain');
