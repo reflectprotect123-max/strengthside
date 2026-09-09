@@ -2,16 +2,17 @@
 /**
  * Set OPENROUTER env on Netlify via REST API — no netlify link / monorepo cwd.
  *
- * Default target is hybrid1 (thehybridengine1): OpenRouter ownership matches WHOOP.
- * Athlete site (thehybridsystem) proxies `brain-coach` to hybrid1.
- *
- * Requires NETLIFY_AUTH_TOKEN. Key from OPENROUTER_API_KEY or repo-root .openrouter
- * (run scripts/rematerialize-openrouter-from-vault.sh first).
+ * Default target is The Brain owner site (Netlify: thehybridengine1).
+ * Athlete site (thehybridsystem) proxies brain-coach to the owner site.
  */
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import {
+  resolveAthleteSiteId,
+  resolveBrainOwnerSiteId,
+} from './brain-owner-site.mjs';
 
 const API = 'https://api.netlify.com/api/v1';
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -61,30 +62,11 @@ async function listSites() {
   return out;
 }
 
-function resolveSiteId(sites, target) {
-  const rows = Array.isArray(sites) ? sites : [];
-  if (target === 'hybrid1') {
-    return (
-      rows.find((r) => r.name === 'thehybridengine1')?.id ||
-      rows.find((r) => /thehybridengine1/i.test(r.ssl_url || r.url || ''))?.id ||
-      ''
-    );
-  }
-  return (
-    rows.find((r) => r.name === 'thehybridsystem')?.id ||
-    rows.find((r) => /thehybridsystem/i.test(r.ssl_url || r.url || ''))?.id ||
-    ''
-  );
-}
-
 async function upsertEnv(accountId, siteId, key, value, context = 'production') {
-  await api(
-    `/accounts/${accountId}/env/${encodeURIComponent(key)}?site_id=${siteId}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({ context, value }),
-    },
-  );
+  await api(`/accounts/${accountId}/env/${encodeURIComponent(key)}?site_id=${siteId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ context, value }),
+  });
 }
 
 async function verifyKeys(accountId, siteId) {
@@ -96,13 +78,13 @@ async function verifyKeys(accountId, siteId) {
   }
 }
 
-function deployHybrid1Coach(siteId) {
-  const bundle = join(repo, 'scripts/hybrid1-coach');
+function deployBrainOwnerCoach(siteId) {
+  const bundle = join(repo, 'scripts/brain-owner-coach');
   const fnDir = join(bundle, 'netlify/functions');
   if (!existsSync(join(fnDir, 'brain-coach.mjs'))) {
-    fail('missing scripts/hybrid1-coach/netlify/functions/brain-coach.mjs');
+    fail('missing scripts/brain-owner-coach/netlify/functions/brain-coach.mjs');
   }
-  console.log(`Deploying brain-coach function to hybrid1 site=${siteId}`);
+  console.log(`Deploying brain-coach function to Brain owner site=${siteId}`);
   const r = spawnSync(
     'npx',
     [
@@ -120,7 +102,7 @@ function deployHybrid1Coach(siteId) {
       'netlify/functions',
       '--no-build',
       '--message',
-      'brain-coach OpenRouter owner (hybrid1)',
+      'brain-coach OpenRouter owner (Brain repo site)',
     ],
     { cwd: bundle, stdio: 'inherit', env: { ...process.env, NETLIFY_AUTH_TOKEN: token } },
   );
@@ -128,12 +110,13 @@ function deployHybrid1Coach(siteId) {
 }
 
 const args = process.argv.slice(2);
-const target = args.includes('--site=athlete') ? 'athlete' : 'hybrid1';
+const target = args.includes('--site=athlete') ? 'athlete' : 'brain-owner';
 const deployCoach = args.includes('--deploy-coach');
 
 const key = readKey();
 const sites = await listSites();
-const siteId = resolveSiteId(sites, target);
+const siteId =
+  target === 'athlete' ? resolveAthleteSiteId(sites) : resolveBrainOwnerSiteId(sites);
 if (!siteId) fail(`Could not resolve site id for ${target}`);
 
 const site = sites.find((s) => s.id === siteId);
@@ -145,8 +128,8 @@ await upsertEnv(accountId, siteId, 'OPENROUTER_API_KEY', key);
 await upsertEnv(accountId, siteId, 'OPENROUTER_MODEL', 'openrouter/free');
 await verifyKeys(accountId, siteId);
 
-if (deployCoach && target === 'hybrid1') {
-  deployHybrid1Coach(siteId);
+if (deployCoach && target === 'brain-owner') {
+  deployBrainOwnerCoach(siteId);
 }
 
 console.log('set-openrouter-netlify: ok');

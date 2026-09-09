@@ -1,12 +1,12 @@
 /**
- * Same-origin shim onto THE-HYBRID-ENGINE1 Netlify functions.
+ * Same-origin shim onto The Brain owner site Netlify functions (thehybridengine1).
  *
- * The athlete HTML (thehybridsystem) cannot call hybrid cross-origin —
- * those functions do not emit CORS headers. Tokens and WHOOP OAuth still
- * live only on hybrid; we just forward Authorization and the path.
+ * The athlete HTML (thehybridsystem) cannot call the Brain owner cross-origin —
+ * those functions do not emit CORS headers. Tokens, WHOOP OAuth, and OpenRouter
+ * coach still live only on the Brain repo site; we forward Authorization and path.
  *
  * Restored after a bad cutover that copied real WHOOP handlers onto
- * thehybridsystem (env/blobs hell). hybrid1 WHOOP is still live.
+ * thehybridsystem (env/blobs hell). Brain owner WHOOP is still live.
  */
 const HYBRID_ORIGIN = 'https://thehybridengine1.netlify.app';
 

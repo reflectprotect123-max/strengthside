@@ -1,4 +1,4 @@
-/* WHOOP bridge — OAuth tokens stay on THE-HYBRID-ENGINE1; this page proxies + maps. */
+/* WHOOP bridge — OAuth tokens stay on The Brain repo owner site; this page proxies + maps. */
 (function (global) {
   const SUPABASE_URL = "https://orysjncrksmdfabpuftd.supabase.co";
   const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeXNqbmNya3NtZGZhYnB1ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MTE4NzksImV4cCI6MjA5OTk4Nzg3OX0.GTMBfFtH5O6SikzHo75sXGIZoEhmuJ7TvXiACd7T078";

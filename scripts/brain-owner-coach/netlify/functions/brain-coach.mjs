@@ -1,5 +1,5 @@
 /**
- * OpenRouter coach — lives on hybrid1 only (same ownership lane as WHOOP tokens).
+ * OpenRouter coach — lives on The Brain owner site only (same lane as WHOOP tokens).
  * Athlete site proxies here via brain-coach.mjs + _hybrid-proxy.mjs.
  */
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';

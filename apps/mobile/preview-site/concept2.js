@@ -1,5 +1,5 @@
 /**
- * Concept2 Logbook bridge — OAuth tokens stay on THE-HYBRID-ENGINE1.
+ * Concept2 Logbook bridge — OAuth tokens stay on The Brain repo owner site.
  * Same Hybrid Supabase account as WHOOP; this page proxies + imports locally.
  */
 (function (global) {

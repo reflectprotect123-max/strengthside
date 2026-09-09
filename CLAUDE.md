@@ -9,12 +9,10 @@ and all athlete/coach wiring). Blank slate shipped Capgo **1.0.52** / cache
 `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`,
 and `handoff.md`. Do not implement `@hybrid/adaptive` until the
 three-module spec is approved and an implementation plan exists.
-It was split out of `reflectprotect123-max/THE-HYBRID-ENGINE1` on 19 August 2026
+It was split out of **`reflectprotect123-max/the-brain`** (formerly `THE-HYBRID-ENGINE1`) on 19 August 2026
 and still points at the **same Supabase project**.
 
-`THE-HYBRID-ENGINE1` is a **schema stub only** (as of 26 August 2026): no athlete
-app, no coach product, no Expo, no Netlify coach deploy. Coach/ARC UI was deleted
-there on purpose — do not rebuild coaching in either repo.
+**The Brain repo** (`the-brain`, Netlify owner site `thehybridengine1.netlify.app`) holds WHOOP/Concept2 OAuth, OpenRouter coach, and shared-Supabase schema migrations this tree does not own. See `docs/brain-repo-rename.md`.
 
 Read `handoff.md` before making changes — it records where this tree came from, what
 is built, and what is not.
@@ -93,9 +91,11 @@ keeps that from becoming a disaster:
 ## WHOOP / Netlify ownership — do not cut over again
 
 `thehybridsystem.netlify.app` (athlete site in this repo) is **proxy-only** for
-WHOOP and Concept2. Tokens, OAuth pending state, Blobs, and `whoop-callback` live
-on `thehybridengine1.netlify.app`. The athlete functions only forward
-`Authorization` + path via `_hybrid-proxy.mjs`.
+WHOOP, Concept2, and `brain-coach`. Tokens, OAuth pending state, Blobs,
+`whoop-callback`, and `OPENROUTER_API_KEY` live on **The Brain repo** owner site
+`thehybridengine1.netlify.app` (Netlify slug unchanged until OAuth cutover — see
+`docs/brain-repo-rename.md`). Athlete functions only forward `Authorization` +
+path via `_hybrid-proxy.mjs`.
 
 - **Never** ship real WHOOP handlers (`whoop-callback`, `_lib/whoop.mjs`,
   `@netlify/blobs`, etc.) on the athlete site. `pnpm run check:whoop-ownership`

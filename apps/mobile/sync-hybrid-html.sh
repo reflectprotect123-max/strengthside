@@ -35,7 +35,7 @@ for f in concept2.js echo-ftms.js native-bridge.js native-ble.js; do
     cp "$SRC_DIR/$f" "$ROOT/preview-site/$f"
   fi
 done
-# Integration Netlify proxies (WHOOP/Concept2 → hybrid1)
+# Integration Netlify proxies (WHOOP/Concept2/coach → Brain owner site)
 if [[ -d "$SRC_DIR/netlify/functions" ]]; then
  mkdir -p "$ROOT/preview-site/netlify/functions"
  rm -rf "$ROOT/preview-site/netlify/functions"

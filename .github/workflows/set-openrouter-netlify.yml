@@ -1,4 +1,4 @@
-# OpenRouter on hybrid1 (thehybridengine1) via REST API + coach deploy.
+# OpenRouter on The Brain owner site (thehybridengine1) via REST API + coach deploy.
 # Key from handoff vault (rematerialize) — NOT embedded in this yaml.
 name: Set OpenRouter on Netlify
 
@@ -30,7 +30,7 @@ jobs:
             exit 1
           fi
 
-      - name: Set OPENROUTER on hybrid1 + deploy brain-coach
+      - name: Set OPENROUTER on Brain owner site + deploy brain-coach
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
@@ -62,4 +62,4 @@ jobs:
             --dir=. \
             --functions=netlify/functions \
             --no-build \
-            --message "brain-coach proxy to hybrid1 (${GITHUB_SHA::7})"
+            --message "brain-coach proxy to Brain owner (${GITHUB_SHA::7})"
