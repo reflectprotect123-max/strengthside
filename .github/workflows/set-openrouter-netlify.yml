@@ -67,12 +67,22 @@ jobs:
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
             --context production \
-            --force
+            --force 2>&1 | sed -E 's/sk-or-v1-[^ ]+/sk-or-v1-[REDACTED]/g'
           npx --yes netlify-cli env:set OPENROUTER_MODEL "openrouter/free" \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
             --context production \
             --force
+
+          echo "Redeploying athlete site so functions load env"
+          npm install --omit=dev --no-fund --no-audit --prefix .
+          npx --yes netlify-cli deploy --prod \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$TO_SITE" \
+            --dir=. \
+            --functions=netlify/functions \
+            --no-build \
+            --message "OpenRouter env set (${GITHUB_SHA::7})"
           echo "Verifying key names present (not values):"
           npx --yes netlify-cli env:list \
             --auth="$NETLIFY_AUTH_TOKEN" \
