@@ -19,7 +19,7 @@
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
 | **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v214`** (`LOCAL_BUILD` + SW `CACHE` must match) |
+| **Cache** | **`the-hybrid-athlete-blank-v215`** (`LOCAL_BUILD` + SW `CACHE` must match) |
 | **Capgo** | **`dogfood` + `live` @ `1.0.79`** (Warm-up + Cool-down boxes on strength and Engine) |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
 | **Companion** | `THE-HYBRID-ENGINE1` = shared-Supabase schema stub only — no apps |
