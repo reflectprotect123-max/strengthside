@@ -1,0 +1,63 @@
+# One-shot: set OPENROUTER_API_KEY on thehybridsystem Netlify site.
+name: Set OpenRouter on Netlify
+
+on:
+  workflow_dispatch:
+    inputs:
+      openrouter_key:
+        description: OpenRouter API key (sk-or-v1-…)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  set-openrouter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require Netlify token
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "::error::Missing repo secret NETLIFY_AUTH_TOKEN"
+            exit 1
+          fi
+
+      - name: Set OPENROUTER_API_KEY on thehybridsystem
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          OPENROUTER_API_KEY: ${{ inputs.openrouter_key }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          set -euo pipefail
+          SITE="${NETLIFY_SITE_ID:-thehybridsystem}"
+          if [[ "$SITE" == http* || "$SITE" == *netlify.app* || "$SITE" == */* ]]; then
+            SITE=thehybridsystem
+          fi
+          echo "Setting OPENROUTER_API_KEY on site=$SITE (value not printed)"
+          npx --yes netlify-cli@26.2.0 env:set OPENROUTER_API_KEY "$OPENROUTER_API_KEY" \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$SITE" \
+            --context production \
+            --force
+          npx --yes netlify-cli@26.2.0 env:set OPENROUTER_MODEL "openrouter/free" \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$SITE" \
+            --context production \
+            --force
+          echo "Verifying key name present (not value):"
+          npx --yes netlify-cli@26.2.0 env:list \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --site="$SITE" \
+            --context production \
+            --json | node -e "
+              let s=''; process.stdin.on('data',d=>s+=d); process.stdin.on('end',()=>{
+                const keys=Object.keys(JSON.parse(s)||{}).sort();
+                console.log('OPENROUTER_API_KEY:', keys.includes('OPENROUTER_API_KEY') ? 'present' : 'MISSING');
+                console.log('OPENROUTER_MODEL:', keys.includes('OPENROUTER_MODEL') ? 'present' : 'MISSING');
+              });
+            "
