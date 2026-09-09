@@ -1,9 +1,0 @@
-# Athlete product tree. WHOOP/Concept2 stay proxy-only → thehybridengine1.
-# Do not add @netlify/blobs or whoop-callback here.
-[build]
-  base = "."
-  publish = "."
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"

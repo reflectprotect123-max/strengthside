@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Hybrid Strength</string>
-    <string name="title_activity_main">Hybrid Strength</string>
-    <string name="package_name">com.hybrid.strength</string>
-    <string name="custom_url_scheme">com.hybrid.strength</string>
-</resources>
