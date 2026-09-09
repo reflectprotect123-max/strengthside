@@ -35,6 +35,7 @@ training_data.csv
 tmp/
 supabase/.temp/
 .capgo
+.openrouter
 
 # evidence-platform: never commit local credentials
 evidence-platform/.env

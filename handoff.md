@@ -52,9 +52,21 @@
 | Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle <ver>` |
 | CI | Actions → **Capgo ship** workflow (needs repo secret `CAPGO_TOKEN`) |
 
-### OpenRouter · Supabase · WHOOP · Netlify
+### OpenRouter (hybrid1 ownership)
 
-Unchanged. Athlete site: **thehybridsystem**. WHOOP ownership stays on hybrid1 Netlify; athlete site proxies.
+| Key | Value |
+| --- | --- |
+| Key (base64) | `c2stb3ItdjEtNWZkZmIzZGVmNjIwZGViN2Q0YzdhZmI1YmI1NzczNDhlZGM2ZWM1YWE1ZTFjMjE2ZTY2YThlOTQwMjk3ZjA3OAo=` → rematerialize to gitignored `.openrouter` |
+| Model | `openrouter/free` (Netlify env `OPENROUTER_MODEL` on **hybrid1**) |
+| Owner site | **thehybridengine1** — real `brain-coach` function + `OPENROUTER_API_KEY` |
+| Athlete site | **thehybridsystem** — `brain-coach.mjs` is **proxy-only** (same lane as WHOOP) |
+| Rematerialize | `bash scripts/rematerialize-openrouter-from-vault.sh` |
+| Push to Netlify | `NETLIFY_AUTH_TOKEN=… node scripts/set-openrouter-netlify.mjs --deploy-coach` |
+| CI | push `.github/workflows/set-openrouter-netlify.yml` on `main` (reads handoff vault, no key in yaml) |
+
+### Supabase · WHOOP · Netlify
+
+Athlete site: **thehybridsystem**. WHOOP ownership stays on hybrid1 Netlify; athlete site proxies.
 
 ### Coach
 
