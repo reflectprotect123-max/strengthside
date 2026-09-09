@@ -30,31 +30,50 @@ jobs:
       - name: Set OPENROUTER_API_KEY on thehybridsystem
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           # base64(sk-or-v1-…); avoids push-protection literal match
           OPENROUTER_B64: c2stb3ItdjEtNWZkZmIzZGVmNjIwZGViN2Q0YzdhZmI1YmI1NzczNDhlZGM2ZWM1YWE1ZTFjMjE2ZTY2YThlOTQwMjk3ZjA3OAo=
         run: |
           set -euo pipefail
           OPENROUTER_API_KEY="$(printf '%s' "$OPENROUTER_B64" | base64 -d | tr -d '\n\r')"
-          SITE="${NETLIFY_SITE_ID:-thehybridsystem}"
-          if [[ "$SITE" == http* || "$SITE" == *netlify.app* || "$SITE" == */* ]]; then
-            SITE=thehybridsystem
-          fi
-          echo "Setting OPENROUTER_API_KEY on site=$SITE (value not printed)"
+
+          bash apps/mobile/sync-hybrid-html.sh
+          cd apps/mobile/preview-site
+
+          echo "Resolving thehybridsystem site id"
+          npx --yes netlify-cli@26.2.0 api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json
+          node -e '
+            const sites = JSON.parse(require("fs").readFileSync("/tmp/sites.json","utf8"));
+            const rows = (Array.isArray(sites) ? sites : []).map(s => ({
+              name: s.name, url: s.ssl_url || s.url, id: s.id
+            }));
+            const to =
+              rows.find(r => r.name === "thehybridsystem")?.id ||
+              rows.find(r => /thehybridsystem/i.test(r.url || ""))?.id ||
+              "";
+            if (!to) {
+              console.error("Could not resolve thehybridsystem site id.");
+              process.exit(3);
+            }
+            console.log("TO_SITE_RESOLVED=" + to);
+            require("fs").writeFileSync("/tmp/to_site.txt", to);
+          '
+          TO_SITE="$(cat /tmp/to_site.txt)"
+
+          echo "Setting OPENROUTER_API_KEY on site=$TO_SITE (value not printed)"
           npx --yes netlify-cli@26.2.0 env:set OPENROUTER_API_KEY "$OPENROUTER_API_KEY" \
             --auth="$NETLIFY_AUTH_TOKEN" \
-            --site="$SITE" \
+            --site="$TO_SITE" \
             --context production \
             --force
           npx --yes netlify-cli@26.2.0 env:set OPENROUTER_MODEL "openrouter/free" \
             --auth="$NETLIFY_AUTH_TOKEN" \
-            --site="$SITE" \
+            --site="$TO_SITE" \
             --context production \
             --force
           echo "Verifying key names present (not values):"
           npx --yes netlify-cli@26.2.0 env:list \
             --auth="$NETLIFY_AUTH_TOKEN" \
-            --site="$SITE" \
+            --site="$TO_SITE" \
             --context production \
             --json | node -e "
               let s=''; process.stdin.on('data',d=>s+=d); process.stdin.on('end',()=>{
