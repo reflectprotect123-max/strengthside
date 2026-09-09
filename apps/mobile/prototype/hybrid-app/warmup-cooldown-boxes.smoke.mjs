@@ -87,6 +87,9 @@ const sandbox = {
   condFormatMeta: () => ({ key: 'steady', name: 'Steady-state', type: 'easy' }),
   isConditioningTemplate: () => false,
   isSupersetBlock: () => false,
+  productAllowsStrength: () => true,
+  productAllowsEngine: () => true,
+  productAllowsRecovery: () => true,
 };
 sandbox.window = sandbox;
 vm.createContext(sandbox);
