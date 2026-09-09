@@ -40,7 +40,7 @@ jobs:
           cd apps/mobile/preview-site
 
           echo "Resolving thehybridsystem site id"
-          npx --yes netlify-cli@26.2.0 api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json
+          npx --yes netlify-cli api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json
           node -e '
             const sites = JSON.parse(require("fs").readFileSync("/tmp/sites.json","utf8"));
             const rows = (Array.isArray(sites) ? sites : []).map(s => ({
@@ -59,19 +59,22 @@ jobs:
           '
           TO_SITE="$(cat /tmp/to_site.txt)"
 
+          echo "Linking preview-site to site=$TO_SITE"
+          npx --yes netlify-cli link --id "$TO_SITE" --name thehybridsystem --auth="$NETLIFY_AUTH_TOKEN"
+
           echo "Setting OPENROUTER_API_KEY on site=$TO_SITE (value not printed)"
-          npx --yes netlify-cli@26.2.0 env:set OPENROUTER_API_KEY "$OPENROUTER_API_KEY" \
+          npx --yes netlify-cli env:set OPENROUTER_API_KEY "$OPENROUTER_API_KEY" \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
             --context production \
             --force
-          npx --yes netlify-cli@26.2.0 env:set OPENROUTER_MODEL "openrouter/free" \
+          npx --yes netlify-cli env:set OPENROUTER_MODEL "openrouter/free" \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
             --context production \
             --force
           echo "Verifying key names present (not values):"
-          npx --yes netlify-cli@26.2.0 env:list \
+          npx --yes netlify-cli env:list \
             --auth="$NETLIFY_AUTH_TOKEN" \
             --site="$TO_SITE" \
             --context production \
@@ -80,5 +83,6 @@ jobs:
                 const keys=Object.keys(JSON.parse(s)||{}).sort();
                 console.log('OPENROUTER_API_KEY:', keys.includes('OPENROUTER_API_KEY') ? 'present' : 'MISSING');
                 console.log('OPENROUTER_MODEL:', keys.includes('OPENROUTER_MODEL') ? 'present' : 'MISSING');
+                if (!keys.includes('OPENROUTER_API_KEY')) process.exit(1);
               });
             "
