@@ -37,7 +37,7 @@ KEY="$(
 import base64, re, sys
 path = sys.argv[1]
 text = open(path, encoding="utf-8").read()
-m = re.search(r"### OpenRouter\n(.*?)(?:\n### |\n---|\Z)", text, re.S)
+m = re.search(r"### OpenRouter[^\n]*\n(.*?)(?:\n### |\n---|\Z)", text, re.S)
 if not m:
     sys.stderr.write("rematerialize-openrouter: FAIL — no ### OpenRouter section in handoff\n")
     sys.exit(1)
