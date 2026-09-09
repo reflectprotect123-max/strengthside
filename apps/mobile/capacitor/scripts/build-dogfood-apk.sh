@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
 cd "$REPO"
-bash apps/mobile/sync-hybrid-html.sh
+bash scripts/sync-brain-app.sh
 cd "$ROOT"
 if [[ ! -x node_modules/.bin/cap ]]; then
   npm install --no-fund --no-audit

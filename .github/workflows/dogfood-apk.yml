@@ -5,8 +5,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/mobile/**'
-      - 'packages/nutrition-core/**'
+      - 'apps/brain-app/**'
+      - 'apps/mobile/capacitor/**'
+      - 'packages/brain/**'
+      - 'scripts/bundle-brain.mjs'
+      - 'scripts/sync-brain-app.sh'
       - '.github/workflows/dogfood-apk.yml'
 
 permissions:
@@ -70,9 +73,9 @@ jobs:
           APK_SRC="apps/mobile/capacitor/android/app/build/outputs/apk/debug/app-debug.apk"
           APK="apps/mobile/capacitor/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
           cp -f "$APK_SRC" "$APK"
-          BUILD="$(grep -o "LOCAL_BUILD='[^']*'" apps/mobile/prototype/hybrid-app/index.html | head -1 | cut -d"'" -f2)"
+          BUILD="$(grep -o "BRAIN_BUILD = '[^']*'" apps/brain-app/app.js | head -1 | cut -d"'" -f2)"
           SHA="$(git rev-parse --short HEAD)"
-          NOTES="Debug Android shell for THE Hybrid athlete app.
+          NOTES="Debug Android shell for The Brain athlete app.
 
           **Build stamp:** \`${BUILD}\`
           **Commit:** \`${SHA}\`

@@ -31,7 +31,7 @@ if [[ -z "${CAPGO_TOKEN:-}" ]]; then
 fi
 
 cd "$REPO"
-bash apps/mobile/sync-hybrid-html.sh
+bash scripts/sync-brain-app.sh
 
 cd "$ROOT"
 
@@ -39,10 +39,10 @@ if [[ ! -x node_modules/.bin/cap ]]; then
   npm install --no-fund --no-audit
 fi
 
-echo "upload-capgo-bundle: uploading preview-site → channel=$CHANNEL"
+echo "upload-capgo-bundle: uploading brain-app → channel=$CHANNEL"
 npx --yes @capgo/cli@latest bundle upload com.hybrid.athlete \
   --apikey "$CAPGO_TOKEN" \
-  --path ../preview-site \
+  --path ../brain-app \
   --channel "$CHANNEL" \
   ${VERSION:+--bundle "$VERSION"} \
   ${VERSION:+--comment "bundle $VERSION"}

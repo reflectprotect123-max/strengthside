@@ -2,7 +2,7 @@
   "name": "@hybrid/athlete-capacitor",
   "private": true,
   "version": "1.0.63",
-  "description": "Capacitor Android shell wrapping the Hybrid HTML athlete app (preview-site).",
+  "description": "Capacitor Android shell wrapping The Brain athlete app.",
   "scripts": {
     "sync": "bash ../sync-hybrid-html.sh && npx cap sync android",
     "open": "npx cap open android",

@@ -1,7 +1,7 @@
 {
   "appId": "com.hybrid.athlete",
-  "appName": "THE Hybrid",
-  "webDir": "../preview-site",
+  "appName": "The Brain",
+  "webDir": "../brain-app",
   "server": {
     "androidScheme": "https"
   },

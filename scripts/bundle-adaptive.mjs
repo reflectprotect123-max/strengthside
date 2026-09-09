@@ -6,7 +6,7 @@ await esbuild.build({
   bundle: true,
   format: 'iife',
   globalName: 'HybridAdaptive',
-  outfile: 'apps/mobile/prototype/hybrid-app/adaptive-bundle.js',
+  outfile: 'apps/brain-app/adaptive-bundle.js',
   platform: 'browser',
   target: 'es2022',
 });
