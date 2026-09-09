@@ -1,5 +1,5 @@
 {
-  "name": "@hybrid/strength-mobile",
+  "name": "@hybrid/athlete-shell",
   "private": true,
-  "description": "Athlete product is the Hybrid HTML PWA (prototype/hybrid-app). Expo Home was removed."
+  "description": "Capacitor Android shell for The Brain athlete app (apps/brain-app)."
 }

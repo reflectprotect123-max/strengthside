@@ -4,7 +4,7 @@
   "version": "1.0.63",
   "description": "Capacitor Android shell wrapping The Brain athlete app.",
   "scripts": {
-    "sync": "bash ../sync-hybrid-html.sh && npx cap sync android",
+    "sync": "bash ../../../scripts/sync-brain-app.sh && npx cap sync android",
     "open": "npx cap open android",
     "copy": "npx cap copy android"
   },

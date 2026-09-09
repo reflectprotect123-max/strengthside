@@ -5,7 +5,7 @@
 >
 > Design spec: `docs/superpowers/specs/2026-09-09-the-brain-design.md`
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
-> Pre-Brain archive: `archive/pre-brain/` — **do not import into active product**
+> Pre-Brain Hybrid HTML was **deleted** — not archived. No restore path in repo.
 
 ---
 
@@ -26,7 +26,7 @@
 
 **Ship ritual:** edit `apps/brain-app/` → `bash scripts/sync-brain-app.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring pre-Brain Hybrid HTML from `archive/pre-brain/` into active paths.
+**Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted pre-Brain Hybrid HTML or split seeds from git history into active paths.
 
 ---
 
@@ -61,10 +61,10 @@
 - **`apps/mobile/capacitor/`** — Android shell (`com.hybrid.athlete`, `webDir: ../brain-app`)
 - Shared Supabase **twelve-table data ledger** (RLS + `embed-coaching-note`) — storage only
 
-### Archived (frozen)
+### Deleted (gone — no recall path in repo)
 
-- `archive/pre-brain/mobile-prototype/` — old Hybrid HTML app (~3k-line index.html, all smokes)
-- Split seeds `hybrid-strength` / `hybrid-engine` / `preview-site` removed from active tree
+- Old Hybrid HTML prototype, split seeds, preview-site, and related scripts
+- `pnpm run check:no-recall` fails CI if any recall path reappears
 
 ### Not built yet (v0.1 gaps)
 
@@ -87,6 +87,7 @@ pnpm run verify
 pnpm run check:brain-app
 pnpm run check:whoop-ownership
 pnpm run check:whoop-deeplink
+pnpm run check:no-recall
 WHOOP_LIVE_SMOKE=0 node apps/brain-app/checks/whoop-live.smoke.mjs   # skip live hit locally
 ```
 

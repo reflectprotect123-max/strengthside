@@ -1,7 +1,10 @@
-# Athlete app
+# Athlete Android shell
 
-This is the product. There is no Expo Home.
+The athlete product is **The Brain** — edit `apps/brain-app/`, not this folder.
 
-**Edit:** `prototype/hybrid-app/index.html`  
-**Then:** `bash apps/mobile/sync-hybrid-html.sh`  
-**Play:** `THE-Hybrid-App.html` — [PLAY.md](./PLAY.md)
+| Role | Path |
+| --- | --- |
+| **Edit UI** | `apps/brain-app/` |
+| **Sync + bundle** | `bash scripts/sync-brain-app.sh` |
+| **Android shell** | `apps/mobile/capacitor/` (`webDir: ../brain-app`) |
+| **Deploy web** | `apps/brain-app/` → Netlify (`thehybridsystem`) |

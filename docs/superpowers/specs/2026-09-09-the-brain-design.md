@@ -17,13 +17,13 @@ One app: **The Brain** — central hub, all connectors, AI coach chat.
 | `apps/brain-app/` | Athlete UI + Netlify deploy root |
 | `packages/brain/` | Pure hub logic (packet, readiness, coach context) |
 | `apps/mobile/capacitor/` | Android shell → `webDir: ../brain-app` |
-| `archive/pre-brain/` | Frozen old prototype (must not import) |
+| *(deleted)* | Pre-Brain Hybrid HTML removed from repo — not archived |
 | `supabase/` | Shared twelve-table ledger (unchanged) |
 | `packages/adaptive/` | Engine math (unchanged, wire later) |
 
 ## Deleted from active product
 
-- `apps/mobile/prototype/hybrid-app/` (archived)
+- `apps/mobile/prototype/hybrid-app/` (deleted)
 - `apps/hybrid-strength/`, `apps/hybrid-engine/`
 - `apps/mobile/preview-site/`
 - Old verify smokes tied to monolithic index.html

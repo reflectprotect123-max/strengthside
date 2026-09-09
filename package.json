@@ -16,11 +16,12 @@
     "check:whoop-ownership": "node apps/brain-app/checks/whoop-ownership.smoke.mjs",
     "check:whoop-deeplink": "node apps/brain-app/checks/whoop-deeplink.smoke.mjs",
     "check:whoop-live": "node apps/brain-app/checks/whoop-live.smoke.mjs",
+    "check:no-recall": "node apps/brain-app/checks/no-recall.smoke.mjs",
     "check:migrations": "node checks/migrations-apply.mjs",
     "check:boot-syntax": "node apps/brain-app/checks/brain-app.smoke.mjs",
     "rematerialize:capgo": "bash scripts/rematerialize-capgo-from-vault.sh",
     "ship:capgo": "bash apps/mobile/capacitor/scripts/ship-capgo.sh",
-    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:brain-app && pnpm run check:whoop-ownership && pnpm run check:whoop-deeplink"
+    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:brain-app && pnpm run check:no-recall && pnpm run check:whoop-ownership && pnpm run check:whoop-deeplink"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
