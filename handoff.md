@@ -43,9 +43,20 @@
 | Upload path | `apps/brain-app/` (Capacitor `webDir: ../brain-app`) |
 | Ship | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` |
 
-### OpenRouter · Supabase · WHOOP · Netlify
+### OpenRouter (coach LLM)
 
-- **Coach chat:** `brain-coach` Netlify function on athlete site; needs `OPENROUTER_API_KEY` in Netlify env.
+| Key | Where |
+| --- | --- |
+| `OPENROUTER_API_KEY` | **Netlify** → site `thehybridsystem` → Environment variables (production). Also **Cursor Cloud environment secrets** for agents. |
+| Local dev | Gitignored repo-root `.openrouter` (one line, `sk-or-v1-…`) — never commit. |
+| Default model | `openrouter/free` (override with Netlify env `OPENROUTER_MODEL`) |
+| Dashboard | https://openrouter.ai/keys |
+| Used by | `apps/brain-app/netlify/functions/brain-coach.mjs` |
+
+GitHub push protection blocks OpenRouter keys in tracked files (unlike Capgo token in this vault). Paste the key into Netlify UI — do not commit it to `handoff.md`.
+
+### Supabase · WHOOP · Netlify
+
 - **WHOOP / Concept2:** tokens and OAuth on `thehybridengine1.netlify.app`. Athlete site is **proxy-only** (`apps/brain-app/netlify/functions/_hybrid-proxy.mjs`).
 - Athlete Netlify site ID: `thehybridsystem`.
 
@@ -78,7 +89,7 @@
 
 1. Rebuild training UIs room-by-room on the shared Brain home shell.
 2. Wire `@hybrid/adaptive` into Strength/Engine doors when those screens land.
-3. Set `OPENROUTER_API_KEY` on Netlify before claiming coach works in production.
+3. Paste `OPENROUTER_API_KEY` into Netlify `thehybridsystem` (see §0.5) before claiming coach works in production.
 
 **Useful checks**
 
