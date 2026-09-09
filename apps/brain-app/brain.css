@@ -1,0 +1,40 @@
+:root{
+  --bg:#050505;--panel:#111;--text:#f5f5f5;--muted:#9aa3ad;
+  --copper:#d4a574;--teal:#5ec4b7;--nutrition:#9fd356;
+  --tap:44px;--nav-h:64px;
+  --room-accent:var(--copper);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,sans-serif}
+button,input,textarea{font:inherit}
+.app{max-width:560px;margin:0 auto;padding:16px 16px calc(var(--nav-h) + 24px)}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:28px;margin:8px 0 16px}
+.card{background:var(--panel);border:1px solid #222;border-radius:14px;padding:14px;margin:12px 0}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid #333}
+.pill.build{color:#9dff9d;border-color:#2f5}.pill.control{color:#ffd27a;border-color:#553}.pill.minimum{color:#ff9a9a;border-color:#533}
+.rooms{display:flex;gap:8px;margin:12px 0 16px}
+.room{flex:1;border:1px solid #333;background:#0a0a0a;color:var(--muted);border-radius:12px;padding:10px 8px;min-height:var(--tap)}
+.room.active{color:var(--text);border-color:var(--room-accent);box-shadow:inset 0 0 0 1px var(--room-accent)}
+.dials{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.dial{padding:10px 6px;border:1px solid #222;border-radius:12px}
+.dial b{display:block;font-size:22px;color:var(--room-accent)}
+.dial small{color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.coach-log{max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.msg{padding:10px 12px;border-radius:12px;max-width:92%}
+.msg.user{align-self:flex-end;background:#1a2430}
+.msg.assistant{align-self:flex-start;background:#141414;border:1px solid #2a2a2a}
+.field{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.field input,.field textarea{background:#0a0a0a;border:1px solid #333;border-radius:10px;color:var(--text);padding:10px}
+.btn{border:1px solid #444;background:#171717;color:var(--text);border-radius:12px;padding:10px 14px;min-height:var(--tap)}
+.btn.primary{background:var(--room-accent);color:#111;border-color:transparent;font-weight:700}
+.btn.block{width:100%}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#0a0a0a;border-top:1px solid #222;padding:8px 10px env(safe-area-inset-bottom)}
+.navin{max-width:560px;margin:0 auto;display:flex;gap:8px}
+.navin button{flex:1;background:transparent;border:0;color:var(--muted);padding:8px;border-radius:10px;min-height:var(--tap)}
+.navin button.active{color:var(--room-accent)}
+.room-strength{--room-accent:var(--copper)}
+.room-engine{--room-accent:var(--teal)}
+.room-nutrition{--room-accent:var(--nutrition)}
+.stub{color:var(--muted);font-size:14px}

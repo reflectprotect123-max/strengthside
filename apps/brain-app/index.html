@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <title>The Brain</title>
+  <link rel="stylesheet" href="brain.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body class="room-engine">
+  <main id="app" class="app"></main>
+  <nav class="nav" id="bottomNav">
+    <div class="navin">
+      <button data-tab="home" class="active" onclick="setTab('home')">Home</button>
+      <button data-tab="coach" onclick="setTab('coach')">Coach</button>
+      <button data-tab="settings" onclick="setTab('settings')">Settings</button>
+    </div>
+  </nav>
+  <script src="brain-bundle.js"></script>
+  <script src="connectors/whoop.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
