@@ -26,7 +26,7 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 cd "$REPO"
-bash apps/mobile/sync-hybrid-html.sh
+bash scripts/sync-athlete-app.sh
 
 cd "$ROOT"
 if [[ ! -x node_modules/.bin/cap ]]; then
@@ -36,7 +36,7 @@ fi
 echo "ship-capgo: upload $VERSION → $APP_ID channels=$CHANNELS"
 npx --yes @capgo/cli@latest bundle upload "$APP_ID" \
   --apikey "$CAPGO_TOKEN" \
-  --path ../preview-site \
+  --path ../../athlete \
   --channel "$CHANNELS" \
   --bundle "$VERSION" \
   --comment "ship $VERSION"

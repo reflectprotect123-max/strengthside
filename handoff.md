@@ -1,10 +1,11 @@
 # Handoff — TheStrengthEngine
 
-> **AUTHORITATIVE CHECKPOINT — 8 September 2026 (one-set logger OTA).**
+> **AUTHORITATIVE CHECKPOINT — 9 September 2026 (Brain spine reset).**
 > Chat history before this file is disposable. Start here.
 >
-> Strength cut (2026-09-06) was reversed on 2026-09-07. Spec of the cut remains historical: `docs/superpowers/specs/2026-09-06-cut-hybrid-strength-design.md`
-> Engine (Open / Next / Close): `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`
+> **Architecture:** `packages/brain/` = The Brain (pure logic). `apps/athlete/` = athlete UI + Netlify deploy root.
+> Old monolithic `prototype/hybrid-app/` is **deleted** — not archived.
+>
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
 
 ---
@@ -13,22 +14,20 @@
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app — **Hybrid Strength + The Engine + Recovery** (strength restored 2026-09-07) |
-| **Engines** | **`@hybrid/adaptive`** — lift + cond Open/Next/Close. Do not revive Big Mac / old adapters. |
-| **Next brain** | `@hybrid/adaptive` in `packages/adaptive`. HTML doors: strength logger → lift Next; cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
-| **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
-| **Edit athlete app** | `apps/mobile/prototype/hybrid-app/index.html` → `bash apps/mobile/sync-hybrid-html.sh` |
+| **Product** | Hybrid HTML athlete app — Brain hub + Strength / Engine / Nutrition branches (rebuilt screen-by-screen) |
+| **The Brain** | `@hybrid/brain` in `packages/brain/` — readiness, today’s call, coach context. **Not HTML.** |
+| **Athlete UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
+| **Build** | `bash scripts/sync-athlete-app.sh` → bundles brain + adaptive into `apps/athlete/` |
+| **Coach chat** | In-app sheet → `brain-coach` proxy on athlete Netlify → OpenRouter on Brain owner site |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
-| **Cache** | **`the-hybrid-athlete-blank-v207`** (`LOCAL_BUILD` + SW `CACHE` must match) |
-| **Capgo** | **`dogfood` + `live` @ `1.0.72`** (one-set logger) |
+| **Storage** | **`THE-brain-v1`** only — no import from old `THE-builder-clean-v*` |
+| **Capgo** | **`dogfood` + `live`** — bump version on each OTA ship |
 | **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
-| **Companion** | **`the-brain`** (`reflectprotect123-max/the-brain`, renamed from `THE-HYBRID-ENGINE1`) — Brain owner Netlify site + shared Supabase schema stub |
+| **Brain owner** | **`the-brain`** repo (`reflectprotect123-max/the-brain`) — Netlify `thehybridengine1.netlify.app` + shared Supabase stub |
 
-**Ship ritual:** edit HTML → `bash apps/mobile/sync-hybrid-html.sh` → `pnpm run verify` → Capgo upload (`dogfood` then set `live`) → bump this handoff + `docs/RELEASE_NOTES.md`.
+**Ship ritual:** edit `apps/athlete/` → `bash scripts/sync-athlete-app.sh` → `pnpm run verify` → Netlify deploy (auto on `main`) → Capgo upload when native shell unchanged → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Phone:** Home/Settings show an **App update** banner when Capgo has a newer bundle ready. Settings → Look for app update. Expect **1.0.72**.
-
-**Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · pain/illness product work · restoring deleted engine packages or old adapter/Big Mac/nutrition APIs from git history.
+**Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · restoring deleted `prototype/hybrid-app/` · pain/illness product work · old adapter/Big Mac APIs from git history.
 
 ---
 

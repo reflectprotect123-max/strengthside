@@ -43,8 +43,8 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           set -euo pipefail
-          bash apps/mobile/sync-hybrid-html.sh
-          cd apps/mobile/preview-site
+          bash scripts/sync-athlete-app.sh
+          cd apps/athlete
           npx --yes netlify-cli api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json
           TO_SITE="$(node -e '
             const rows = JSON.parse(require("fs").readFileSync("/tmp/sites.json","utf8"));

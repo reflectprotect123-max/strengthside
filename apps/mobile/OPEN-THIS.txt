@@ -1,5 +1,0 @@
-Live app:
-
-https://papaya-cheesecake-059e06.netlify.app/
-
-Local: open THE-Hybrid-App.html (after bash apps/mobile/sync-hybrid-html.sh).

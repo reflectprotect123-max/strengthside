@@ -1,7 +1,7 @@
 {
   "appId": "com.hybrid.athlete",
   "appName": "THE Hybrid",
-  "webDir": "../preview-site",
+  "webDir": "../../athlete",
   "server": {
     "androidScheme": "https"
   },

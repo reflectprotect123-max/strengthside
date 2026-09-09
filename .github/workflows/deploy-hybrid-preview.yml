@@ -41,11 +41,8 @@ jobs:
         if: steps.pages_ok.outputs.enabled == 'true'
         run: |
           mkdir -p _site
-          if [ -f apps/mobile/preview-site/index.html ]; then
-            cp -a apps/mobile/preview-site/. _site/
-          else
-            cp apps/mobile/THE-Hybrid-App.html _site/index.html
-          fi
+          bash scripts/sync-athlete-app.sh
+          cp -a apps/athlete/. _site/
           test -f _site/index.html
 
       - uses: actions/configure-pages@v5

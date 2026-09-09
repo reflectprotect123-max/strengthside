@@ -30,8 +30,8 @@ jobs:
           TO_SITE=thehybridsystem
           APP_BASE_URL=https://thehybridsystem.netlify.app
 
-          bash apps/mobile/sync-hybrid-html.sh
-          cd apps/mobile/preview-site
+          bash scripts/sync-athlete-app.sh
+          cd apps/athlete
 
           echo "Listing Netlify sites visible to this token (name / url / id only)"
           npx --yes netlify-cli api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json

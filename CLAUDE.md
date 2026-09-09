@@ -124,23 +124,16 @@ path via `_hybrid-proxy.mjs`.
 
 ## Athlete app — one surface
 
-**The product athletes use is the Hybrid HTML app we are building now.** Nothing
-else is the app.
+**The product athletes use is the Hybrid HTML app in this repo.** Nothing else is the app.
 
-- Edit **`apps/mobile/prototype/hybrid-app/index.html`**, then
-  `bash apps/mobile/sync-hybrid-html.sh`. Play
-  `apps/mobile/THE-Hybrid-App.html` (or the githack / Update button).
-- Expo Home, `prototype/home.html`, and `prototype/pwa/` were **deleted**.
-  Do not recreate them. Do not run Expo to see the app.
-- Athlete product is the Hybrid HTML app only. Coach is **parked**
-  (`coach.html` static page). No coach S&C publish/pull until explicitly unparked
-  after a new model exists.
-- Strength/conditioning today: **manual log + dumb Library templates**. No
-  prescription brain, no silent progression, no WM start gate.
-- **Hard line between S and C.** Hybrid Strength sessions are lifts + text
-  notes only. The Engine / Recovery sessions are conditioning only. Never fold
-  an Engine block into a lift day (including Recovery Breathing — that stays a
-  text note). Calendar can hold both on the same date as **separate** sessions.
+- **`packages/brain/`** — The Brain: pure hub logic only (`@hybrid/brain`). Not HTML, not an app.
+- **`apps/athlete/`** — Athlete UI + Netlify deploy root (home screen and branches).
+- Edit **`apps/athlete/`** (`index.html`, `app.js`, `home.css`), then
+  `bash scripts/sync-athlete-app.sh` (builds brain/adaptive bundles). Play locally from
+  `apps/athlete/index.html`.
+- **`apps/mobile/capacitor/`** — Android shell only (`webDir: ../../athlete`).
+- Expo Home, `prototype/hybrid-app/`, and `preview-site/` were **deleted**. Do not recreate them.
+- Coach chat in v0.1 is the in-app sheet (`brain-coach` proxy → Brain owner site).
 
 ## Pain and illness are safety flags, not readiness penalties
 

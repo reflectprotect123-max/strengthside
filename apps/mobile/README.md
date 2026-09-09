@@ -1,7 +1,9 @@
 # Athlete app
 
-This is the product. There is no Expo Home.
+This is the product surface. The Brain lives in `packages/brain/` only — not here.
 
-**Edit:** `prototype/hybrid-app/index.html`  
-**Then:** `bash apps/mobile/sync-hybrid-html.sh`  
-**Play:** `THE-Hybrid-App.html` — [PLAY.md](./PLAY.md)
+**Edit:** `apps/athlete/` (`index.html`, `app.js`, `home.css`)  
+**Then:** `bash scripts/sync-athlete-app.sh`  
+**Play:** open `apps/athlete/index.html` locally
+
+**Android:** `apps/mobile/capacitor/` — Capgo OTA wraps the same `apps/athlete/` tree.
