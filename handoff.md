@@ -13,7 +13,7 @@
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app — **Hybrid Strength + The Engine + Recovery** (strength restored 2026-09-07) |
+| **Product** | Live mixed Hybrid HTML (Strength + Engine + Recovery) until cutover. Split seeds: `apps/hybrid-strength/` + `apps/hybrid-engine/` — see `SPLIT.md`. Nutrition stays in its own repo. |
 | **Engines** | **`@hybrid/adaptive`** — lift + cond Open/Next/Close. Do not revive Big Mac / old adapters. |
 | **Next brain** | `@hybrid/adaptive` in `packages/adaptive`. HTML doors: strength logger → lift Next; cond work slider → `decideNextCond`; holds → WorkOverlay only. Bundled to `apps/mobile/prototype/hybrid-app/adaptive-bundle.js` as `HybridAdaptive`. |
 | **Coach** | Parked static page only (`coach.html`) — no S&C publish/pull |
@@ -141,5 +141,7 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Capgo | **1.0.79** on `dogfood` + `live` (Warm-up + Cool-down boxes; blank-v213) |
 | Cache | `the-hybrid-athlete-blank-v214` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
+
+**Three-product split (in progress):** this repo becomes shared backend only after cutover. Seeds `apps/hybrid-strength` / `apps/hybrid-engine` (`bash scripts/extract-hybrid-apps.sh`). Live Capgo/Netlify still `apps/mobile` combined. Nutrition not in this repo. See `SPLIT.md`.
 
 **Next agent:** read this file + `CLAUDE.md` + the adaptive living spec. Prefer fixing HTML doors and `@hybrid/adaptive` contracts over restoring deleted packages.
