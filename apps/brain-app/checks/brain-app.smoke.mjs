@@ -13,6 +13,8 @@ must(existsSync(join(root, 'index.html')), 'index.html');
 must(existsSync(join(root, 'brain-bundle.js')), 'brain-bundle.js — run pnpm run build:brain');
 must(!readFileSync(join(root, 'index.html'), 'utf8').includes('THE-builder-clean'), 'old storage/build id in index');
 must(readFileSync(join(root, 'app.js'), 'utf8').includes('THE-brain-v1'), 'brain storage key');
+must(readFileSync(join(root, 'app.js'), 'utf8').includes('gauge-row'), 'home gauge row');
+must(readFileSync(join(root, 'index.html'), 'utf8').includes('Talk to coach'), 'fab coach action');
 
 if (failures.length) {
   console.error('brain-app.smoke FAIL');
