@@ -6,7 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
-| 1.0.72 | 2026-09-08 | Restore one-set strength logger (hero kg×reps, not old Log/Edit table); cache blank-v207 |
+| 1.0.73 | 2026-09-10 | Brain spine home — OLED dials, WHOOP recovery zones, calendar above dials, Me sign-in blank slate, settings OTA banner; cache THE-brain-v4 |
 | 1.0.71 | 2026-09-08 | Home/Settings banner when a Capgo update is downloaded and ready; Restart now; cache blank-v206 |
 | 1.0.70 | 2026-09-08 | Hard line S vs C — lift sessions drop every Engine block; notes stay notes; cache blank-v205 |
 | 1.0.69 | 2026-09-08 | HPP Monday/Wednesday drop leaked Engine block (Recovery Breathing stays a text note); cache blank-v204 |

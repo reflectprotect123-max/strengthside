@@ -1,5 +1,5 @@
-const CACHE = 'the-brain-v3';
-const ASSETS = ['./', './index.html', './app.js', './home.css', './brain-bundle.js', './connectors/whoop.js', './vendor/supabase.min.js'];
+const CACHE = 'the-brain-v4';
+const ASSETS = ['./', './index.html', './app.js', './home.css', './brain-bundle.js', './native-bridge.js', './connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

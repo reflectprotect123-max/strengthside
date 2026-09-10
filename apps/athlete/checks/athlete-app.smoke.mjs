@@ -25,6 +25,8 @@ must(js.includes('whoopDialSvg'), 'SVG arc dials');
 must(js.includes('function whoopRecoveryColor'), 'WHOOP recovery zone colors');
 must(css.includes('--oled-bg'), 'OLED tokens in home.css');
 must(css.includes('Barlow Condensed'), 'display typography');
+must(html.includes('native-bridge.js'), 'Capgo native bridge');
+must(js.includes('function otaBannerHtml'), 'settings OTA banner');
 must(html.includes('Talk to coach'), 'fab coach action');
 must(!html.includes('data-tab="chat"'), 'no chat tab in bottom nav');
 

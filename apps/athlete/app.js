@@ -1,5 +1,8 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
+const APP_BUILD = 'THE-brain-v4';
+
+let otaInfo = { status: '', current: '', next: '', latest: '' };
 
 const defaultState = () => ({
   build: BRAIN_BUILD,
@@ -360,6 +363,75 @@ function libraryHtml() {
     </div>`;
 }
 
+function meAppSectionHtml() {
+  const otaLine = otaInfo.current ? `Channel ${esc(otaInfo.current)}` : `Build ${esc(APP_BUILD)}`;
+  return `
+    ${otaBannerHtml()}
+    <div class="card account-compact">
+      <div class="eyebrow">App</div>
+      <p class="stub">${otaLine} · ${esc(APP_BUILD)}</p>
+      <div class="account-actions">
+        <button type="button" class="btn" onclick="lookForAppUpdate()">Look for app update</button>
+      </div>
+    </div>`;
+}
+
+function otaBannerHtml() {
+  const s = otaInfo && otaInfo.status;
+  if (s !== 'ready' && s !== 'available') return '';
+  const ver = esc(otaInfo.next || otaInfo.latest || '');
+  if (s === 'ready') {
+    return `
+      <div class="ota-banner" id="otaBanner" role="status">
+        <div class="ota-copy">
+          <div class="ota-kicker">App update</div>
+          <div class="ota-title">Version ${ver} is ready</div>
+          <div class="ota-meta">Restart to load it. Workouts stay on this phone.</div>
+        </div>
+        <button type="button" class="btn oled-cta" onclick="applyOtaUpdate()">Restart now</button>
+      </div>`;
+  }
+  return `
+    <div class="ota-banner ota-wait" id="otaBanner" role="status">
+      <div class="ota-copy">
+        <div class="ota-kicker">App update</div>
+        <div class="ota-title">Version ${ver} is downloading</div>
+        <div class="ota-meta">Restart now appears when the file is on the phone.</div>
+      </div>
+    </div>`;
+}
+
+async function refreshOtaStatus(force) {
+  if (!window.NativeBridge || typeof NativeBridge.probeLiveUpdate !== 'function') return;
+  try {
+    otaInfo = (await NativeBridge.probeLiveUpdate(force ? { refresh: true } : {})) || otaInfo;
+  } catch (_) {
+    return;
+  }
+  if (S.tab === 'me') render();
+}
+
+async function applyOtaUpdate() {
+  if (!window.NativeBridge || typeof NativeBridge.applyLiveUpdate !== 'function') return;
+  const r = await NativeBridge.applyLiveUpdate();
+  if (r === 'error' || r === 'unavailable') {
+    window.alert('Could not restart into the update. Close the app fully and open it again.');
+  }
+}
+
+async function lookForAppUpdate() {
+  await refreshOtaStatus(true);
+  if (otaInfo.status === 'ready' || otaInfo.status === 'available') {
+    if (S.tab === 'me') render();
+    return;
+  }
+  if (otaInfo.status === 'browser') {
+    window.alert('App updates run on the phone install — not in the browser.');
+    return;
+  }
+  window.alert(`You're on ${otaInfo.current || APP_BUILD}. No new version is ready.`);
+}
+
 function meHtml() {
   const w = S.settings.whoop || {};
   if (w.email) {
@@ -367,6 +439,7 @@ function meHtml() {
       <div class="page">
         <div class="eyebrow">Me</div>
         <h1>Profile</h1>
+        ${meAppSectionHtml()}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
           <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p>
@@ -383,6 +456,7 @@ function meHtml() {
     <div class="page page-signin">
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
+      ${meAppSectionHtml()}
       <p class="stub page-lead">Same email and password as THE Hybrid Engine. After sign-in you land on a blank slate — no demo sessions.</p>
       <div id="whoopCard"></div>
     </div>`;
@@ -560,12 +634,21 @@ window.fabAction = fabAction;
 window.openCoachSheet = openCoachSheet;
 window.closeCoachSheet = closeCoachSheet;
 window.askCoach = askCoach;
+window.applyOtaUpdate = applyOtaUpdate;
+window.lookForAppUpdate = lookForAppUpdate;
 window.render = render;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (window.NativeBridge && typeof NativeBridge.onLiveUpdateStatus === 'function') {
+    NativeBridge.onLiveUpdateStatus((info) => {
+      otaInfo = info || otaInfo;
+      if (S.tab === 'me') render();
+    });
+  }
   if (window.Whoop && typeof Whoop.hydrateAuth === 'function') {
     try { await Whoop.hydrateAuth(); } catch (_) { /* offline / SDK */ }
   }
+  await refreshOtaStatus(false);
   render();
 });
 

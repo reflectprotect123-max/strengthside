@@ -897,6 +897,56 @@ button {
   width: 100%;
 }
 
+.ota-banner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(22, 236, 6, 0.35);
+  border-radius: 14px;
+  background: linear-gradient(165deg, rgba(22, 236, 6, 0.08), rgba(18, 18, 18, 0.98));
+}
+
+.ota-banner.ota-wait {
+  border-color: rgba(255, 222, 0, 0.35);
+  background: linear-gradient(165deg, rgba(255, 222, 0, 0.08), rgba(18, 18, 18, 0.98));
+}
+
+.ota-kicker {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--recovery-high);
+  font-weight: 700;
+}
+
+.ota-banner.ota-wait .ota-kicker {
+  color: var(--recovery-mid);
+}
+
+.ota-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+.ota-meta {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--oled-muted);
+  margin-top: 4px;
+  max-width: 42ch;
+}
+
+.ota-banner .btn {
+  flex-shrink: 0;
+}
+
 .card .title {
   margin: 0 0 8px;
   font-family: var(--font-display);
