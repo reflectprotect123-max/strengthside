@@ -57,12 +57,7 @@ const siteId = resolveBrainOwnerSiteId(sites);
 if (!siteId) fail('Could not resolve Brain owner site id (thehybridengine1)');
 
 console.log(`Deploying Brain owner bundle to site=${siteId}`);
-
-const npm = spawnSync('npm', ['install', '--omit=dev', '--no-fund', '--no-audit'], {
-  cwd: bundle,
-  stdio: 'inherit',
-});
-if (npm.status !== 0) process.exit(npm.status ?? 1);
+console.log('Using external_node_modules for @netlify/blobs — not uploading node_modules');
 
 const deploy = spawnSync(
   'npx',
