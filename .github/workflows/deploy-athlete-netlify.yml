@@ -19,7 +19,7 @@ on:
       - 'packages/brain/**'
       - 'packages/adaptive/**'
       - 'apps/mobile/capacitor/android/app/src/main/**'
-      - '.github/workflows/deploy-athlete-netlify.yml'
+      - 'scripts/deploy-athlete.mjs'
 
 jobs:
   deploy:
@@ -50,30 +50,13 @@ jobs:
       - name: Deploy to Netlify
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
           set -euo pipefail
           if [[ -z "${NETLIFY_AUTH_TOKEN:-}" ]]; then
             echo "::warning::NETLIFY_AUTH_TOKEN not set — skipping Netlify deploy"
             exit 0
           fi
-          SITE="${NETLIFY_SITE_ID:-thehybridsystem}"
-          if [[ "$SITE" == http* || "$SITE" == *netlify.app* || "$SITE" == */* ]]; then
-            echo "::warning::NETLIFY_SITE_ID looks like a URL/path ('${SITE:0:32}…'); using slug thehybridsystem"
-            SITE=thehybridsystem
-          fi
-          if [[ -z "$SITE" ]]; then
-            SITE=thehybridsystem
-          fi
-          echo "Deploying to Netlify site: $SITE"
-          cd apps/athlete
-          npx --yes netlify-cli@26.2.0 deploy --prod \
-            --auth="$NETLIFY_AUTH_TOKEN" \
-            --site="$SITE" \
-            --dir=. \
-            --functions=netlify/functions \
-            --no-build \
-            --message "deploy athlete app (${GITHUB_SHA::7})"
+          node scripts/deploy-athlete.mjs
 
       - name: Live WHOOP production smoke (post-deploy)
         if: ${{ success() }}
