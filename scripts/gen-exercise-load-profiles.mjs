@@ -14,11 +14,11 @@ const libraryPath = join(
 const outPath = join(repoRoot, 'test/fixtures/exercise-load-profiles.json');
 const seedJsonPath = join(
   repoRoot,
-  'apps/mobile/prototype/hybrid-app/exercise-load-profiles.seed.json',
+  'apps/coach/exercise-load-profiles.seed.json',
 );
 const runtimeJsPath = join(
   repoRoot,
-  'apps/mobile/prototype/hybrid-app/exercise-load-profiles.js',
+  'apps/coach/exercise-load-profiles.js',
 );
 
 const library = JSON.parse(readFileSync(libraryPath, 'utf8'));
@@ -59,7 +59,7 @@ const fixture = {
   purpose:
     'Reference: which logger columns each exercise uses. Derived from hybrid-engine-exercise-library-120 plus profile rules. Core S&C engines deleted 2026-09-03 — this fixture is UI/column metadata only.',
   sources: [
-    'apps/mobile/prototype/hybrid-app/log-columns.js',
+    'apps/coach/log-columns.js',
     'evidence-platform/.../hybrid-engine-exercise-library-120.json',
     'https://www.strongerbyscience.com/progressive-overload-strategies/',
     'https://doi.org/10.4172/2324-9080.1000184',

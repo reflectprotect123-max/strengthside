@@ -1,5 +1,5 @@
 /**
- * Generate apps/mobile/prototype/hybrid-app/exercise-search-index.js
+ * Generate apps/coach/exercise-search-index.js
  * from hybrid-engine-exercise-library-120.json.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -11,7 +11,7 @@ const libraryPath = join(
   repoRoot,
   'evidence-platform/sources/recovered-nested/01-strength/strengthside-research/strength-adaptive-engine-v2/exercise-library/hybrid-engine-exercise-library-120.json',
 );
-const outPath = join(repoRoot, 'apps/mobile/prototype/hybrid-app/exercise-search-index.js');
+const outPath = join(repoRoot, 'apps/coach/exercise-search-index.js');
 
 const library = JSON.parse(readFileSync(libraryPath, 'utf8'));
 
@@ -121,7 +121,7 @@ const js =
 writeFileSync(outPath, js);
 console.log('Wrote', outPath, '—', entries.length, 'entries');
 
-const catalogPath = join(repoRoot, 'apps/mobile/prototype/hybrid-app/coach-exercise-catalog.js');
+const catalogPath = join(repoRoot, 'apps/coach/coach-exercise-catalog.js');
 const catalog = entries.map((e) => ({
   id: e.id,
   name: e.name,
