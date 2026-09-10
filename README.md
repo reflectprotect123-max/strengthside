@@ -11,6 +11,20 @@
 | **Deploy** | `apps/athlete/` → Netlify (`thehybridsystem.netlify.app`) |
 | **Android** | `apps/mobile/capacitor/` wraps `apps/athlete/` |
 
+## Coach workspace (separate surface)
+
+The Hybrid athlete app (`index.html` / `THE-Hybrid-App.html`) is **not** this and is not edited. Athletes keep logging there. This page is coach-only: Home feed, roster, library, program/session builders, assign-to-team.
+
+```bash
+cd apps/mobile/prototype/hybrid-app
+python3 -m http.server 4173
+# http://localhost:4173/coach.html
+```
+
+Coach demo: `dan@thehybrid.local` / `demo`
+
+Seeded roster (visible on Coach Home, not a login here): team **hybrid S&C**, athletes Dan Veldman, Alex Chen, Jordan Hale, program **Hybrid Strength Base**, one completed session (Dan Veldman, Week 1 Day 1).
+
 ## Brains (not a second app)
 
 - **`packages/brain/`** — hub logic (readiness, today’s call, coach context). Zero I/O.
