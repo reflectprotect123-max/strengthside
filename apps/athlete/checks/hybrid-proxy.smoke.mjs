@@ -61,6 +61,13 @@ if (!proxy.includes('thehybridengine1.netlify.app')) {
   throw new Error('_hybrid-proxy.mjs must forward to Brain owner site');
 }
 
+if (!existsSync(join(fnDir, 'brain-coach.mjs'))) {
+  throw new Error('missing function: brain-coach.mjs');
+}
+const appJs = readFileSync(join(appRoot, 'app.js'), 'utf8');
+if (!appJs.includes("Whoop.fnUrl('/.netlify/functions/brain-coach')")) {
+  throw new Error('askCoach must use Whoop.fnUrl so Capacitor hits athlete Netlify');
+}
 const whoopJs = readFileSync(join(appRoot, 'connectors/whoop.js'), 'utf8');
 if (!whoopJs.includes('resolveProxyBase') || !whoopJs.includes('thehybridsystem.netlify.app')) {
   throw new Error('connectors/whoop.js must route native/offline clients to athlete Netlify');

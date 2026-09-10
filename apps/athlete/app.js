@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v5';
+const APP_BUILD = 'THE-brain-v6';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -564,39 +564,6 @@ function startTrainingSession(letter) {
   if (window.Logger) Logger.open({ date: S.selectedDate, letter, plan: trainingPlanForDate(S.selectedDate) });
 }
 
-function chatHtml() {
-  return `
-    <div class="page page-chat">
-      <div class="eyebrow">Chat</div>
-      <h1>Coach</h1>
-      <p class="stub page-lead">Ask about today’s session. Same coach as the + menu.</p>
-      <div class="coach-log coach-log--page" id="chatPageLog"></div>
-      <div class="coach-compose">
-        <textarea id="chatPageInput" rows="2" placeholder="Ask about today’s training…"></textarea>
-        <button type="button" class="btn primary" onclick="askCoachFromChat()">Send</button>
-      </div>
-      <p class="stub" id="chatPageStatus"></p>
-    </div>`;
-}
-
-async function askCoachFromChat() {
-  const input = document.getElementById('chatPageInput');
-  const sheetInput = document.getElementById('coachSheetInput');
-  if (input && sheetInput) sheetInput.value = input.value;
-  await askCoach();
-  if (input) input.value = '';
-  renderChatPageLog();
-}
-
-function renderChatPageLog() {
-  const log = document.getElementById('chatPageLog');
-  if (!log) return;
-  log.innerHTML = (S.coachHistory || [])
-    .map((m) => `<div class="msg ${m.role}">${esc(m.content)}</div>`)
-    .join('');
-  log.scrollTop = log.scrollHeight;
-}
-
 function libraryHtml() {
   return `
     <div class="page">
@@ -706,7 +673,7 @@ function meHtml() {
 }
 
 function setTab(tab) {
-  S.tab = tab;
+  S.tab = tab === 'chat' ? 'home' : tab;
   S.fabOpen = false;
   save();
   render();
@@ -740,7 +707,7 @@ function closeFab() {
 function syncFab() {
   const layer = document.getElementById('fabLayer');
   if (!layer) return;
-  const show = !S.loggerOpen && (S.tab === 'home' || S.tab === 'training');
+  const show = !S.loggerOpen;
   layer.classList.toggle('hidden', !show);
   layer.classList.toggle('open', !!S.fabOpen);
   layer.classList.toggle('fab-layer--training', S.tab === 'training');
@@ -797,11 +764,11 @@ function render() {
   const map = {
     home: homeHtml,
     training: trainingTabHtml,
-    chat: chatHtml,
     library: libraryHtml,
     me: meHtml,
     settings: meHtml,
   };
+  if (S.tab === 'chat') S.tab = 'home';
   root.innerHTML = (map[S.tab] || homeHtml)();
 
   document.querySelectorAll('[data-tab]').forEach((b) => {
@@ -813,7 +780,6 @@ function render() {
 
   syncFab();
   renderCoachSheetLog();
-  if (S.tab === 'chat') renderChatPageLog();
   if (window.Logger && S.loggerOpen) Logger.paint();
 
   if (window.Whoop) {
@@ -840,7 +806,10 @@ async function askCoach() {
   render();
   renderCoachSheetLog();
   try {
-    const res = await fetch('/.netlify/functions/brain-coach', {
+    const coachUrl = (window.Whoop && typeof Whoop.fnUrl === 'function')
+      ? Whoop.fnUrl('/.netlify/functions/brain-coach')
+      : 'https://thehybridsystem.netlify.app/.netlify/functions/brain-coach';
+    const res = await fetch(coachUrl, {
       method: 'POST',
       headers: {
         authorization: 'Bearer ' + (await Whoop.token()),
@@ -849,12 +818,14 @@ async function askCoach() {
       body: JSON.stringify({
         message,
         packet: HybridBrain.coachContextFromPacket(packet()),
-        history: S.coachHistory.slice(-8),
+        history: S.coachHistory.filter((m) => m.content !== '(empty reply)').slice(-8),
       }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || 'Coach request failed');
-    S.coachHistory.push({ role: 'assistant', content: body.reply || '(empty reply)' });
+    const reply = String(body.reply || '').trim();
+    if (!reply) throw new Error('Coach returned no text. Try again.');
+    S.coachHistory.push({ role: 'assistant', content: reply });
     if (status) status.textContent = '';
     S.chatUnread = Math.max(0, (S.chatUnread || 0) - 1);
   } catch (err) {

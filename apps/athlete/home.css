@@ -1329,11 +1329,6 @@ button {
   opacity: 1;
 }
 
-.page-chat .coach-log--page {
-  min-height: 200px;
-  max-height: 50dvh;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

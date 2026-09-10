@@ -430,6 +430,6 @@
   global.Whoop = {
     cardHtml, metaLine, renderPanels, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
-    client, token, email, waitForSupabase
+    client, token, email, waitForSupabase, fnUrl, resolveProxyBase
   };
 })(window);

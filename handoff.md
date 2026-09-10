@@ -150,9 +150,9 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
 | Capgo | still **1.0.74** (no OTA this ship) |
-| Dogfood APK | rest-timer zoo + stacked F1/F2 logger on `main`; cache **the-brain-v7**; Home OLED unchanged |
+| Dogfood APK | rest timer + coach on **+** only (no Chat tab); coach fetch uses athlete Netlify from Capacitor; cache **the-brain-v8** |
 | Engine vs Strength log | Strength = kg/reps + rest-timer zoo. Engine (later) = splits + watts/RPM; the same timer chrome is the **duration** clock for the piece, not only rest. Do not mix those loggers. |
-| Cache | `the-brain-v7` |
+| Cache | `the-brain-v8` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
 **Next agent:** Library / on-phone builder. Do not Capgo unless the owner marks **IMPORTANT**.
