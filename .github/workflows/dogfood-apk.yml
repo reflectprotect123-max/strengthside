@@ -9,6 +9,7 @@ on:
       - 'apps/mobile/**'
       - 'packages/brain/**'
       - 'packages/adaptive/**'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/dogfood-apk.yml'
 
 permissions:
