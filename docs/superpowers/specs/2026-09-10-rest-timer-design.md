@@ -95,6 +95,17 @@ Short beep on: each count-in number, GO, rest/work boundary, timer complete. No 
 
 Session logging stays in `session.js`. Timer does not write sets.
 
+## Later: Engine (not this build)
+
+The same athlete family will also serve **Engine**. Engine logging is a **separate contract** — do not implement it in this Strength overlay.
+
+Noted for when that spec opens:
+
+- Engine logs **splits** and **watts / RPM** (erg / bike / row / ski style), not Strength’s kg/reps tables.
+- This rest-timer chrome becomes the **work-duration** clock for that piece: depending on the format (AMRAP, For Time, EMOM, interval, etc.), the timer *is* the piece, not only the gap between sets.
+
+This Strength build still treats the seven modes as TrainHeroic-shaped rest / interval tools beside the set log.
+
 ## Non-goals
 
 - Auto-rest from `Rest 60s` notes.

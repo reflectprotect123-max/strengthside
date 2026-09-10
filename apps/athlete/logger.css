@@ -510,6 +510,7 @@
   display: flex;
   flex-direction: column;
   padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  font-family: "Space Grotesk", system-ui, sans-serif;
 }
 
 .tm-head {
@@ -518,8 +519,15 @@
   align-items: center;
   margin-bottom: 8px;
 }
-.tm-head h2 { margin: 0; font-size: 20px; }
-.tm-head button { color: #1ba3ff; font-weight: 600; }
+.tm-head h2 { margin: 0; font-size: 22px; font-weight: 600; }
+.tm-switch {
+  color: #1ba3ff;
+  font-weight: 600;
+  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
 .tm-x {
   position: absolute;
@@ -529,37 +537,57 @@
   height: 44px;
   font-size: 28px;
   color: #fff;
+  z-index: 1;
 }
 
 .tm-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 28px 12px;
-  padding: 48px 8px 24px;
+  padding: 36px 8px 24px;
   align-content: start;
 }
-.tm-tile:last-child { grid-column: 1 / -1; justify-self: center; width: 50%; }
+.tm-tile:last-child { grid-column: 1 / -1; justify-self: center; }
 .tm-tile {
   background: transparent;
   color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 14px;
 }
-.tm-ico {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 3px solid #c8ff3a;
-  box-shadow: inset 0 0 0 2px #c8ff3a;
-}
+.tm-ico { width: 72px; height: 72px; }
 
-.tm-setup { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 12px; }
-.tm-kicker { letter-spacing: 0.08em; font-size: 13px; color: rgba(255,255,255,.55); margin: 8px 0 0; }
-.tm-quick { display: flex; flex-direction: column; gap: 8px; }
-.tm-quick button { color: #1ba3ff; font-size: 18px; background: none; min-height: 36px; }
+.tm-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-top: 8px;
+  overflow-y: auto;
+}
+.tm-kicker {
+  letter-spacing: 0.06em;
+  font-size: 13px;
+  color: rgba(255,255,255,.55);
+  margin: 4px 0 0;
+}
+.tm-quick { display: flex; flex-direction: column; gap: 4px; }
+.tm-quick button {
+  color: #1ba3ff;
+  font-size: 20px;
+  background: none;
+  min-height: 40px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 600;
+}
+.tm-rule {
+  width: 72%;
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,.18);
+  margin: 4px 0;
+}
 .tm-custom { display: flex; align-items: center; gap: 12px; }
 .tm-custom > button {
   width: 44px;
@@ -568,6 +596,7 @@
   border: 2px solid #1ba3ff;
   color: #1ba3ff;
   font-size: 22px;
+  background: none;
 }
 .tm-ms {
   width: 64px;
@@ -578,33 +607,71 @@
   place-items: center;
   line-height: 1;
 }
-.tm-ms b { font-size: 22px; }
+.tm-ms b { font-size: 22px; font-family: "Barlow Condensed", sans-serif; }
 .tm-ms span { font-size: 11px; color: rgba(255,255,255,.5); }
-.tm-start, .tm-giant {
-  width: 88px;
-  height: 88px;
+.tm-start {
+  width: 92px;
+  height: 92px;
   border-radius: 50%;
   border: 4px solid #16ec06;
-  background: #0b2a0a;
+  background: radial-gradient(circle at 50% 45%, #145c14, #062406);
   color: #16ec06;
   font-weight: 700;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+  line-height: 1.1;
   margin-top: 8px;
 }
-.tm-giant { width: 168px; height: 168px; font-size: 64px; }
-.tm-field { display: flex; flex-direction: column; gap: 4px; color: rgba(255,255,255,.6); font-size: 13px; }
-.tm-field input {
-  width: 88px;
-  min-height: 44px;
+.tm-start span { display: block; font-size: 22px; }
+.tm-giant {
+  width: 176px;
+  height: 176px;
+  border-radius: 50%;
+  border: 6px solid #16ec06;
+  background: #000;
+  color: #16ec06;
+  font-size: 72px;
+  display: grid;
+  place-items: center;
+}
+.tm-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,.7);
+  font-size: 14px;
+}
+.tm-field input, .tm-pair input {
+  width: 72px;
+  min-height: 48px;
   border: 2px solid #1ba3ff;
   border-radius: 10px;
   background: #000;
   color: #fff;
   text-align: center;
-  font-size: 20px;
+  font-size: 22px;
+  font-family: "Barlow Condensed", sans-serif;
 }
-.tm-blurb { text-align: center; max-width: 280px; }
-.tm-run { flex: 1; display: grid; place-items: center; }
-.tm-ring { width: min(72vw, 280px); height: min(72vw, 280px); }
+.tm-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,.7);
+}
+.tm-pair i { font-style: normal; font-size: 22px; }
+.tm-blurb { text-align: center; max-width: 280px; line-height: 1.35; }
+.tm-countin {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(42px, 16vw, 72px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.tm-run { flex: 1; display: grid; place-items: center; position: relative; }
+.tm-ring { width: min(78vw, 300px); height: min(78vw, 300px); }
 .tm-run .tm-face, .tm-dock-run span {
   position: absolute;
   inset: 0;
@@ -613,16 +680,22 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  font-family: "Barlow Condensed", sans-serif;
 }
-.tm-run { position: relative; }
-.tm-face strong, .tm-dock-copy { font-size: 42px; font-weight: 600; }
-.tm-face small { opacity: 0.7; }
-.tm-run-btns { display: flex; gap: 16px; justify-content: center; padding-bottom: 12px; }
-.tm-run-btns button {
-  width: 72px;
-  height: 72px;
+.tm-face strong, .tm-dock-copy {
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.tm-face small { opacity: 0.75; font-size: 16px; }
+.tm-face em { font-style: normal; font-size: 18px; opacity: 0.9; margin-top: 4px; }
+.tm-run-btns { display: flex; gap: 20px; justify-content: center; padding-bottom: 16px; }
+.tm-reset, .tm-pause {
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: #2c2c2e;
+  font-size: 13px;
 }
 .tm-pause { color: #ff4d4d; border: 2px solid #ff4d4d; background: #1a0000; }
 
@@ -632,11 +705,16 @@
   font-size: 13px;
   background: none;
   min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 .tm-dock-copy {
   text-align: center;
   font-size: 22px;
   font-weight: 700;
+  font-family: "Barlow Condensed", sans-serif;
 }
 .tm-dock-run {
   width: 64px;
@@ -647,7 +725,7 @@
   place-items: center;
 }
 .tm-dock-run .tm-ring { width: 64px; height: 64px; }
-.tm-dock-run span { font-size: 12px; font-weight: 700; }
+.tm-dock-run span { font-size: 13px; font-weight: 700; }
 
 .tm-stop {
   position: absolute;

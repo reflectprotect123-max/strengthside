@@ -169,7 +169,7 @@
       return `<button type="button" class="tm-dock-run" id="logTimerDock" onclick="Logger.timerTapDock()">${ringSvg(snap.progress, `<span>${esc(snap.clock)}</span>`)}</button>`;
     }
     if (snap.chrome === 'select') {
-      return `<button type="button" class="tm-select" onclick="Logger.timerOpen()" aria-label="Select Timer">⏱ Select Timer</button>`;
+      return `<button type="button" class="tm-select" onclick="Logger.timerOpen()" aria-label="Select Timer">${icoSwitch()} Select Timer</button>`;
     }
     return `<button type="button" class="log-play" onclick="Logger.timerPlay()" aria-label="Start last timer">▶</button>`;
   }
@@ -187,14 +187,65 @@
       </div>`;
   }
 
+  function switchBtn() {
+    return `<button type="button" class="tm-switch" onclick="Logger.timerSwitch()">${icoSwitch()} Switch</button>`;
+  }
+
+  function modeTitle(mode) {
+    if (mode === 'tabata') return 'Tabata Timer';
+    if (mode === 'emom') return 'EMOM Timer';
+    return (HybridTimer.PICKER.find((p) => p.id === mode) || {}).label || mode;
+  }
+
+  function pickerIcon(id) {
+    const g = '#16ec06';
+    const w = '#fff';
+    if (id === 'rest') {
+      return `<svg viewBox="0 0 72 72" class="tm-ico">${circ()}<text x="36" y="44" text-anchor="middle" fill="${g}" font-size="22" font-weight="700" font-family="Barlow Condensed,sans-serif">Zzz</text></svg>`;
+    }
+    if (id === 'stopwatch') {
+      return `<svg viewBox="0 0 72 72" class="tm-ico">${circ()}<circle cx="36" cy="38" r="16" fill="none" stroke="${w}" stroke-width="2.5"/><path d="M36 38 L36 26" stroke="${g}" stroke-width="2.5" stroke-linecap="round"/><rect x="32" y="12" width="8" height="6" rx="1" fill="${w}"/></svg>`;
+    }
+    if (id === 'amrap') {
+      return `<svg viewBox="0 0 72 72" class="tm-ico"><path d="M14 50 A24 24 0 1 1 58 50" fill="none" stroke="${w}" stroke-width="2.5"/><path d="M36 50 L52 28" stroke="${g}" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    }
+    if (id === 'forTime') {
+      return `<svg viewBox="0 0 72 72" class="tm-ico">${circ()}<path d="M36 20 A16 16 0 1 1 20 36" fill="none" stroke="${g}" stroke-width="8"/><circle cx="36" cy="36" r="3" fill="${w}"/></svg>`;
+    }
+    if (id === 'tabata') {
+      return `<svg viewBox="0 0 72 72" class="tm-ico"><text x="36" y="46" text-anchor="middle" fill="${g}" font-size="28" font-weight="700" font-family="Barlow Condensed,sans-serif">:20</text></svg>`;
+    }
+    if (id === 'custom') {
+      return `<svg viewBox="0 0 72 72" class="tm-ico">${circ()}<path d="M36 20 A16 16 0 0 1 52 36 L36 36 Z" fill="${g}"/></svg>`;
+    }
+    return `<svg viewBox="0 0 72 72" class="tm-ico"><text x="36" y="46" text-anchor="middle" fill="${g}" font-size="22" font-weight="700" font-family="Barlow Condensed,sans-serif">1:00</text></svg>`;
+  }
+
+  function circ() {
+    return `<circle cx="36" cy="36" r="26" fill="none" stroke="#fff" stroke-width="2.5"/>`;
+  }
+
+  function icoSwitch() {
+    return `<svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="11" r="6" fill="none" stroke="#1ba3ff" stroke-width="1.6"/><path d="M10 7 v4" stroke="#1ba3ff" stroke-width="1.6"/></svg>`;
+  }
+
   function fieldBox(key, value, label) {
-    return `<label class="tm-field">${esc(label)}<input inputmode="numeric" value="${esc(value)}" onchange="Logger.timerField('${esc(key)}', this.value)"></label>`;
+    return `<label class="tm-field"><span>${esc(label)}</span><input inputmode="numeric" value="${esc(value)}" onchange="Logger.timerField('${esc(key)}', this.value)"></label>`;
+  }
+
+  function pairBoxes(aKey, aVal, bKey, bVal, label) {
+    return `<div class="tm-pair">
+      <input inputmode="numeric" value="${esc(aVal)}" onchange="Logger.timerField('${esc(aKey)}', this.value)">
+      <i>:</i>
+      <input inputmode="numeric" value="${esc(bVal)}" onchange="Logger.timerField('${esc(bKey)}', this.value)">
+      <span>${esc(label)}</span>
+    </div>`;
   }
 
   function setupHtml(snap) {
     const mode = snap.mode;
     const c = snap.config || {};
-    const title = (HybridTimer.PICKER.find((p) => p.id === mode) || {}).label || mode;
+    const title = modeTitle(mode);
     let body = '';
     if (mode === 'rest') {
       const m = Math.floor((c.restMs || 0) / 60000);
@@ -205,6 +256,7 @@
           const clock = HybridTimer.formatClock(ms, false);
           return `<button type="button" onclick="Logger.timerQuick(${ms})">${clock}</button>`;
         }).join('')}</div>
+        <hr class="tm-rule">
         <p class="tm-kicker">Customize</p>
         <div class="tm-custom">
           <button type="button" onclick="Logger.timerNudge(-1)">−</button>
@@ -212,21 +264,20 @@
           <div class="tm-ms"><b>${String(s).padStart(2, '0')}</b><span>s</span></div>
           <button type="button" onclick="Logger.timerNudge(1)">+</button>
         </div>
-        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+        <button type="button" class="tm-start" onclick="Logger.timerStart()"><span>▶</span>Start</button>`;
     } else if (mode === 'stopwatch' || mode === 'forTime') {
       body = `
         <button type="button" class="tm-giant" onclick="Logger.timerStart()">▶</button>
-        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
+        <div class="tm-countin-row">${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In')}</div>
         <div class="tm-run-btns">
-          <button type="button" onclick="Logger.timerReset()">Reset</button>
+          <button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>
           <button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>
         </div>`;
     } else if (mode === 'amrap') {
       body = `
-        ${fieldBox('totalMin', Math.floor((c.totalMs || 0) / 60000), 'Total min')}
-        ${fieldBox('totalSec', Math.floor(((c.totalMs || 0) % 60000) / 1000), 'Total sec')}
-        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
-        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+        ${pairBoxes('totalMin', Math.floor((c.totalMs || 0) / 60000), 'totalSec', String(Math.floor(((c.totalMs || 0) % 60000) / 1000)).padStart(2, '0'), 'Total Time')}
+        <div class="tm-countin-row">${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In')}</div>
+        <button type="button" class="tm-start" onclick="Logger.timerStart()"><span>▶</span>Start</button>`;
     } else if (mode === 'tabata' || mode === 'custom') {
       const work = c.workMs || 0;
       const rest = c.restMs || 0;
@@ -236,30 +287,31 @@
       body = `
         <p class="tm-blurb">${esc(blurb)}</p>
         ${fieldBox('rounds', c.rounds, 'Rounds')}
-        ${fieldBox('workSec', Math.round(work / 1000), 'Work s')}
-        ${fieldBox('restSec', Math.round(rest / 1000), 'Rest s')}
-        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
-        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+        ${mode === 'tabata'
+          ? `${fieldBox('workSec', Math.round(work / 1000), 'Work')}${fieldBox('restSec', Math.round(rest / 1000), 'Rest')}`
+          : `${pairBoxes('workMin', Math.floor(work / 60000), 'workSec', String(Math.floor((work % 60000) / 1000)).padStart(2, '0'), 'Work')}
+             ${pairBoxes('restMin', Math.floor(rest / 60000), 'restSec', String(Math.floor((rest % 60000) / 1000)).padStart(2, '0'), 'Rest')}`}
+        <div class="tm-countin-row">${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In')}</div>
+        <button type="button" class="tm-start" onclick="Logger.timerStart()"><span>▶</span>Start</button>`;
     } else if (mode === 'emom') {
       body = `
-        ${fieldBox('everyMin', Math.floor((c.everyMs || 0) / 60000), 'Every min')}
-        ${fieldBox('everySec', Math.floor(((c.everyMs || 0) % 60000) / 1000), 'Every sec')}
+        ${pairBoxes('everyMin', Math.floor((c.everyMs || 0) / 60000), 'everySec', String(Math.floor(((c.everyMs || 0) % 60000) / 1000)).padStart(2, '0'), 'Every')}
         ${fieldBox('rounds', c.rounds, 'Rounds')}
-        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
-        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+        <div class="tm-countin-row">${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In')}</div>
+        <button type="button" class="tm-start" onclick="Logger.timerStart()"><span>▶</span>Start</button>`;
     }
     return `
       <div class="tm-full" id="logTimerFull">
         <div class="tm-head">
           <h2>${esc(title)}</h2>
-          <button type="button" onclick="Logger.timerSwitch()">⏱ Switch</button>
+          ${switchBtn()}
         </div>
         <div class="tm-setup">${body}</div>
       </div>`;
   }
 
   function pickerHtml() {
-    const tiles = HybridTimer.PICKER.map((m) => `<button type="button" class="tm-tile" onclick="Logger.timerChoose('${m.id}')"><span class="tm-ico"></span>${esc(m.label)}</button>`).join('');
+    const tiles = HybridTimer.PICKER.map((m) => `<button type="button" class="tm-tile" onclick="Logger.timerChoose('${m.id}')">${pickerIcon(m.id)}<span>${esc(m.label)}</span></button>`).join('');
     return `<div class="tm-full tm-picker" id="logTimerFull">
       <button type="button" class="tm-x" onclick="Logger.timerClosePicker()" aria-label="Close">×</button>
       <div class="tm-grid">${tiles}</div>
@@ -267,18 +319,22 @@
   }
 
   function runHtml(snap) {
+    const title = modeTitle(snap.mode);
+    if (snap.view === 'countIn') {
+      return `<div class="tm-full" id="logTimerFull">
+        <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
+        <div class="tm-countin">${esc(snap.countInLabel)}</div>
+      </div>`;
+    }
     const inner = `<div class="tm-face">
       ${snap.roundFraction ? `<small>${esc(snap.roundFraction)}</small>` : ''}
-      <strong>${esc(snap.countInLabel || snap.clock || '')}</strong>
-      ${snap.roundLabel ? `<span>${esc(snap.roundLabel)}</span>` : ''}
+      <strong>${esc(snap.clock || '')}</strong>
+      ${snap.roundLabel ? `<em>${esc(snap.roundLabel)}</em>` : ''}
     </div>`;
     return `<div class="tm-full" id="logTimerFull">
-      <div class="tm-head">
-        <h2>${esc((HybridTimer.PICKER.find((p) => p.id === snap.mode) || {}).label || '')}</h2>
-        <button type="button" onclick="Logger.timerSwitch()">⏱ Switch</button>
-      </div>
+      <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
       <div class="tm-run">${ringSvg(snap.progress == null ? 1 : snap.progress, inner)}</div>
-      ${snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : ''}
+      ${snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : ''}
     </div>`;
   }
 
@@ -668,8 +724,16 @@
       const c = { ...(t.config || {}) };
       if (key === 'countInSec') c.countInMs = Math.max(0, n) * 1000;
       if (key === 'rounds') c.rounds = Math.max(1, n);
-      if (key === 'workSec') c.workMs = Math.max(1, n) * 1000;
-      if (key === 'restSec') c.restMs = Math.max(0, n) * 1000;
+      if (key === 'workMin') c.workMs = Math.max(0, n) * 60000 + ((c.workMs || 0) % 60000);
+      if (key === 'restMin') c.restMs = Math.max(0, n) * 60000 + ((c.restMs || 0) % 60000);
+      if (key === 'workSec') {
+        c.workMs = t.mode === 'tabata' ? Math.max(1, n) * 1000
+          : Math.floor((c.workMs || 0) / 60000) * 60000 + Math.max(0, n) * 1000;
+      }
+      if (key === 'restSec') {
+        c.restMs = t.mode === 'tabata' ? Math.max(0, n) * 1000
+          : Math.floor((c.restMs || 0) / 60000) * 60000 + Math.max(0, n) * 1000;
+      }
       if (key === 'totalMin') c.totalMs = n * 60000 + ((c.totalMs || 0) % 60000);
       if (key === 'totalSec') c.totalMs = Math.floor((c.totalMs || 0) / 60000) * 60000 + n * 1000;
       if (key === 'everyMin') c.everyMs = n * 60000 + ((c.everyMs || 0) % 60000);
