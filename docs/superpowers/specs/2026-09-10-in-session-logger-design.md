@@ -12,6 +12,7 @@ Hybrid Athlete Training tab already shows the day’s roster (HPP Heavy Lower de
 - Screen recordings:
   - `Screen_Recording_20260910_182102_TrainHeroic` — start, coach, A complete, B kg pad, Goal Pro / Working Max, timer zoo (**timer zoo is out of this spec**).
   - `Screen_Recording_20260910_184610_TrainHeroic` — F reps-only, F2 MAX, live rest (**out of this spec**), G complete, Done Training, feel, summary.
+  - `Screen_Recording_20260910_191216_TrainHeroic` — full pager walk A→Done (9 dots), tap-in from the list at B, F1 then F2 as consecutive pages.
 
 Match **look and motion**. Swap logos, Goal Pro art, and Done Training fist for Hybrid/HPP.
 
@@ -50,7 +51,9 @@ S.session = {
 }
 ```
 
-Chevron on a log page exits to the Training list. Session stays. Opening Start Session (or an in-progress entry) resumes the same card.
+Chevron on a log page exits to the Training list. Session stays. Opening Start Session resumes the current card.
+
+**Tap-in:** tapping a roster row (B, F1, …) opens the logger on that page — same overlay as Start Session, not a second UI. Clip 3 starts this way.
 
 ## Day order (do not skip)
 
@@ -63,13 +66,15 @@ Walk **every roster block in list order**. Clip 2 skipped C–E; we do not.
 3. **C** — Barbell Lateral Squat (kg table)
 4. **D** — Goblet Box Squat (kg table)
 5. **E** — Reverse Hypers (kg table)
-6. **F1 + F2** — Double Leg Banded Leg Curls (reps-only) then Garhammer Raises (MAX). Two pages. Swap arrows on the title. Next/Back between them.
+6. **F1** then **F2** — list groups them under one STRENGTH/POWER header; logger is still **two pager pages** (dots 6 and 7). Curls (reps-only) → Next → Garhammer (MAX).
 7. **G** — Recovery Breathing (complete)
-8. Done Training hub → feel → summary
+8. Done Training hub (dot 9) → feel → summary
 
-**Pairing rule:** whenever the roster writes a pair (`F1`+`F2`, or another day `D1`+`D2` then `E1`+`E2`, then a single `F`), those are **consecutive logger pages**, not one stacked screen. Same chrome as the F1/F2 clip. Unpaired letters are one page each.
+**Nine pager pages on this demo day:** A, B, C, D, E, F1, F2, G, Done.
 
-Dots at the top: one dot per logger page (A, B, C, D, E, F1, F2, G, then the Done hub).
+**Pairing rule:** roster letters like `F1`+`F2` (or another day `D1`+`D2`, `E1`+`E2`, then a single `F`) are consecutive pager pages. They are not one stacked screen. Unpaired letters (B, C, D, E here) are one page each.
+
+**Title ⇄** on C/D/E/F is **substitute exercise**, not “jump to the pair.” Substitute is not a slice of this logger; omit or no-op the icon until a later pass.
 
 ## Block types
 
@@ -120,7 +125,7 @@ Rest-timer subsystem is **not** a slice of this list.
 
 - Colocated unit tests for session transitions and log math. No `--passWithNoTests`.
 - Athlete smoke: overlay markup hooks exist; Home HTML (`trainingHomeHtml` / `ath-whoop-dials`) unchanged.
-- Manual: Start → walk A…G → Done; chevron resume; Home tab still OLED home.
+- Manual: Start → walk A…G → Done; tap B on the list jumps to that page; chevron resume; Home tab still OLED home.
 
 ## Non-goals
 
