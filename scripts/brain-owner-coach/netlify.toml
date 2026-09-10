@@ -4,9 +4,3 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  # Netlify installs this into each function bundle at deploy time.
-  external_node_modules = ["@netlify/blobs"]
-
-[functions."*"]
-  node_bundler = "esbuild"
-  external_node_modules = ["@netlify/blobs"]

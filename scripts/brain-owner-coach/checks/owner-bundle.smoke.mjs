@@ -27,9 +27,10 @@ if (existsSync(join(fnDir, '_hybrid-proxy.mjs'))) {
   throw new Error('_hybrid-proxy must not ship on Brain owner — athlete site only');
 }
 
-const netlifyignore = join(root, '.netlifyignore');
-if (!existsSync(netlifyignore) || !readFileSync(netlifyignore, 'utf8').includes('node_modules')) {
-  throw new Error('.netlifyignore must exclude node_modules (external @netlify/blobs at runtime)');
+const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+const blobs = pkg?.dependencies?.['@netlify/blobs'] || '';
+if (!/^7\./.test(String(blobs))) {
+  throw new Error(`@netlify/blobs must stay on 7.x for Lambda (got ${blobs})`);
 }
 
 const store = readFileSync(join(fnDir, '_lib/store.mjs'), 'utf8');

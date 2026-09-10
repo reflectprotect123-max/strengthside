@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 /**
  * Deploy WHOOP/Concept2/coach functions to The Brain owner site (thehybridengine1).
+ *
+ * Stages a flat bundle (no monorepo path prefix in Lambda) and pins @netlify/blobs
+ * to a Lambda-compatible major version.
  */
-import { existsSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -10,7 +14,7 @@ import { resolveBrainOwnerSiteId } from './brain-owner-site.mjs';
 
 const API = 'https://api.netlify.com/api/v1';
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
-const bundle = join(repo, 'scripts/brain-owner-coach');
+const source = join(repo, 'scripts/brain-owner-coach');
 const token = process.env.NETLIFY_AUTH_TOKEN;
 
 function fail(msg) {
@@ -29,7 +33,7 @@ const requiredFns = [
 ];
 
 for (const name of requiredFns) {
-  if (!existsSync(join(bundle, 'netlify/functions', name))) {
+  if (!existsSync(join(source, 'netlify/functions', name))) {
     fail(`missing netlify/functions/${name}`);
   }
 }
@@ -79,18 +83,23 @@ async function upsertEnv(key, value, context = 'production') {
   }
 }
 
-// WHOOP OAuth redirect_uri is derived from APP_BASE_URL in _lib/config.mjs.
 await upsertEnv('APP_BASE_URL', 'https://thehybridengine1.netlify.app');
 console.log('APP_BASE_URL set on Brain owner site');
 
-console.log(`Deploying Brain owner bundle to site=${siteId}`);
+const stage = mkdtempSync(join(tmpdir(), 'brain-owner-'));
+console.log(`Staging flat deploy bundle at ${stage}`);
+for (const rel of ['netlify.toml', 'package.json', 'package-lock.json', 'index.html', 'netlify', 'checks']) {
+  const from = join(source, rel);
+  if (existsSync(from)) cpSync(from, join(stage, rel), { recursive: true });
+}
 
 const npm = spawnSync('npm', ['ci', '--omit=dev', '--no-fund', '--no-audit'], {
-  cwd: bundle,
+  cwd: stage,
   stdio: 'inherit',
 });
 if (npm.status !== 0) process.exit(npm.status ?? 1);
 
+console.log(`Deploying Brain owner bundle to site=${siteId}`);
 const deploy = spawnSync(
   'npx',
   [
@@ -106,11 +115,16 @@ const deploy = spawnSync(
     '.',
     '--functions',
     'netlify/functions',
+    '--no-build',
     '--message',
     `Brain owner WHOOP + coach (${process.env.GITHUB_SHA?.slice(0, 7) || 'local'})`,
   ],
-  { cwd: bundle, stdio: 'inherit', env: { ...process.env, NETLIFY_AUTH_TOKEN: token } },
+  { cwd: stage, stdio: 'inherit', env: { ...process.env, NETLIFY_AUTH_TOKEN: token } },
 );
-if (deploy.status !== 0) process.exit(deploy.status ?? 1);
 
+try {
+  rmSync(stage, { recursive: true, force: true });
+} catch (_) {}
+
+if (deploy.status !== 0) process.exit(deploy.status ?? 1);
 console.log('deploy-brain-owner: ok');
