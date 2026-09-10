@@ -471,10 +471,15 @@
 }
 
 .trn-start-bar {
-  position: sticky;
-  bottom: 0;
-  padding: 12px 0 8px;
-  background: linear-gradient(180deg, transparent, #000 30%);
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  bottom: calc(var(--nav-h) + 10px);
+  padding: 0 88px 8px 16px;
+  z-index: 18;
+  background: linear-gradient(180deg, transparent, #000 28%);
 }
 
 .trn-start-bar .log-primary { margin-top: 0; }
