@@ -36,6 +36,8 @@ must(css.includes('.trn-scroll'), 'training scroll container');
 must(html.includes('id="logger"'), 'logger overlay host');
 must(html.includes('logger.css'), 'logger stylesheet');
 must(html.includes('session.js'), 'session model script');
+must(readFileSync(join(root, 'session.js'), 'utf8').includes("logMode: 'superset'"), 'F1/F2 same-page pairing');
+must(readFileSync(join(root, 'logger.js'), 'utf8').includes('log-ss-member'), 'stacked superset paint');
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 
 if (failures.length) {

@@ -12,7 +12,7 @@ Hybrid Athlete Training tab already shows the day’s roster (HPP Heavy Lower de
 - Screen recordings:
   - `Screen_Recording_20260910_182102_TrainHeroic` — start, coach, A complete, B kg pad, Goal Pro / Working Max, timer zoo (**timer zoo is out of this spec**).
   - `Screen_Recording_20260910_184610_TrainHeroic` — F reps-only, F2 MAX, live rest (**out of this spec**), G complete, Done Training, feel, summary.
-  - `Screen_Recording_20260910_191216_TrainHeroic` — full pager walk A→Done (9 dots), tap-in from the list at B, F1 then F2 as consecutive pages.
+  - `Screen_Recording_20260910_191216_TrainHeroic` — full pager walk A→Done, tap-in from the list at B, F1+F2 stacked on one scroll page.
 
 Match **look and motion**. Swap logos, Goal Pro art, and Done Training fist for Hybrid/HPP.
 
@@ -66,13 +66,13 @@ Walk **every roster block in list order**. Clip 2 skipped C–E; we do not.
 3. **C** — Barbell Lateral Squat (kg table)
 4. **D** — Goblet Box Squat (kg table)
 5. **E** — Reverse Hypers (kg table)
-6. **F1** then **F2** — list groups them under one STRENGTH/POWER header; logger is still **two pager pages** (dots 6 and 7). Curls (reps-only) → Next → Garhammer (MAX).
+6. **F** — **F1** and **F2** on the **same pager page**, stacked and scrollable (list already groups them under one STRENGTH/POWER header). Curls (reps-only) above Garhammer (MAX). Next from F goes to **G**, not a second F page. Tapping F1 or F2 on the list opens this same pair page.
 7. **G** — Recovery Breathing (complete)
-8. Done Training hub (dot 9) → feel → summary
+8. Done Training hub → feel → summary
 
-**Nine pager pages on this demo day:** A, B, C, D, E, F1, F2, G, Done.
+**Eight pager pages on this demo day:** A, B, C, D, E, F, G, Done.
 
-**Pairing rule:** roster letters like `F1`+`F2` (or another day `D1`+`D2`, `E1`+`E2`, then a single `F`) are consecutive pager pages. They are not one stacked screen. Unpaired letters (B, C, D, E here) are one page each.
+**Pairing rule:** consecutive roster letters like `F1`+`F2` (or another day `D1`+`D2`, `E1`+`E2`) are **one stacked screen**, one pager slot. Logs stay keyed by `F1` / `F2`. Unpaired letters (B, C, D, E here) are one page each.
 
 **Title ⇄** on C/D/E/F is **substitute exercise**, not “jump to the pair.” Substitute is not a slice of this logger; omit or no-op the icon until a later pass.
 
@@ -114,7 +114,7 @@ Build in this order. Each slice: failing tests on `session.js` first, then paint
 2. A Mark As Completed + Next/Back + persist.
 3. B kg table + pad + totals + checks (+ 3RM toast if cheap).
 4. C, D, E as kg lifts (same component as B).
-5. F1 reps-only + F2 MAX (pair pages).
+5. F1 reps-only + F2 MAX stacked on one pair page.
 6. Working Max + Goal Pro sheets (Hybrid marks).
 7. G complete.
 8. Done hub + feel + summary.

@@ -67,7 +67,7 @@
 ### Task 3: Kg / reps / MAX pad, C–E, F1/F2, Working Max, Goal Pro
 
 - [ ] Custom pad (Kg/Lb, Log, Autofill, Miss). Circle logs. Header totals.
-- [ ] F1 no kg column; F2 MAX placeholder.
+- [x] F1 and F2 stacked on one pager page (reps-only above MAX). Next from F goes to G.
 - [ ] Working Max sheet (HPP, Save). Goal Pro sheet (HPP, dismiss).
 - [ ] Commit.
 

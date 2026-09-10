@@ -19,7 +19,7 @@
   }
 
   function emptySets(page) {
-    if (page.logMode === 'complete' || page.logMode === 'doneHub') return [];
+    if (page.logMode === 'complete' || page.logMode === 'doneHub' || page.logMode === 'superset') return [];
     const rows = [];
     for (let i = 0; i < page.setCount; i++) {
       rows.push({
@@ -32,8 +32,36 @@
     return rows;
   }
 
+  function letterParts(letter) {
+    const m = String(letter || '').match(/^([A-Za-z]+)(\d+)$/);
+    if (!m) return null;
+    return { base: m[1].toUpperCase(), n: Number(m[2]) };
+  }
+
+  function logIdsForPage(page) {
+    if (page && page.logMode === 'superset') return (page.members || []).map((m) => m.id);
+    return page ? [page.id] : [];
+  }
+
+  function memberOf(page, memberId) {
+    if (!page || page.logMode !== 'superset') return page;
+    return (page.members || []).find((m) => m.id === memberId || m.letter === memberId) || page.members[0];
+  }
+
   function ensureLog(session, page) {
     session.logs = session.logs || {};
+    if (page.logMode === 'superset') {
+      for (const m of page.members || []) {
+        if (!session.logs[m.id]) {
+          session.logs[m.id] = {
+            completed: false,
+            sets: emptySets(m),
+            note: '',
+          };
+        }
+      }
+      return session.logs[(page.members && page.members[0] && page.members[0].id) || page.id];
+    }
     if (!session.logs[page.id]) {
       session.logs[page.id] = {
         completed: false,
@@ -44,33 +72,76 @@
     return session.logs[page.id];
   }
 
+  function getLog(session, page, memberId) {
+    ensureLog(session, page);
+    if (page.logMode === 'superset') {
+      const m = memberOf(page, memberId);
+      return session.logs[m.id];
+    }
+    return session.logs[page.id];
+  }
+
   function clone(session) {
     return JSON.parse(JSON.stringify(session));
   }
 
+  function pageFromBlock(block) {
+    const rx = parseRx(block.prescription);
+    const mode = logModeFor(block, rx);
+    return {
+      id: block.letter || block.title,
+      letter: block.letter || '',
+      title: block.title || '',
+      kind: block.kind,
+      logMode: mode,
+      prescription: block.prescription || '',
+      notes: block.notes || [],
+      items: block.items || [],
+      bullets: block.bullets || [],
+      note: block.note || '',
+      goal: block.goal || '',
+      footer: block.footer || '',
+      section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
+      setCount: mode === 'complete' ? 0 : rx.setCount,
+      targetReps: rx.targetReps,
+    };
+  }
+
   function pagesFromPlan(plan) {
-    const pages = [];
+    const members = [];
     for (const block of (plan && plan.blocks) || []) {
       if (!block || block.kind === 'section') continue;
-      const rx = parseRx(block.prescription);
-      const mode = logModeFor(block, rx);
-      pages.push({
-        id: block.letter || block.title,
-        letter: block.letter || '',
-        title: block.title || '',
-        kind: block.kind,
-        logMode: mode,
-        prescription: block.prescription || '',
-        notes: block.notes || [],
-        items: block.items || [],
-        bullets: block.bullets || [],
-        note: block.note || '',
-        goal: block.goal || '',
-        footer: block.footer || '',
-        section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
-        setCount: mode === 'complete' ? 0 : rx.setCount,
-        targetReps: rx.targetReps,
-      });
+      members.push(pageFromBlock(block));
+    }
+    const pages = [];
+    for (let i = 0; i < members.length; i++) {
+      const a = members[i];
+      const b = members[i + 1];
+      const pa = letterParts(a.letter);
+      const pb = b ? letterParts(b.letter) : null;
+      if (pa && pb && pa.base === pb.base && pa.n === 1 && pb.n === 2) {
+        pages.push({
+          id: pa.base,
+          letter: pa.base,
+          title: `${a.title} / ${b.title}`,
+          kind: 'lift',
+          logMode: 'superset',
+          prescription: '',
+          notes: [],
+          items: [],
+          bullets: [],
+          note: '',
+          goal: '',
+          footer: '',
+          section: a.section,
+          setCount: 0,
+          targetReps: null,
+          members: [a, b],
+        });
+        i += 1;
+      } else {
+        pages.push(a);
+      }
     }
     pages.push({
       id: 'done',
@@ -108,7 +179,7 @@
       unit: 'kg',
     });
     if (letter) {
-      const idx = pages.findIndex((p) => p.id === letter || p.letter === letter);
+      const idx = pages.findIndex((p) => pageMatchesLetter(p, letter));
       session.blockIndex = idx >= 0 ? idx : 0;
     }
     return session;
@@ -145,9 +216,15 @@
     return s;
   }
 
+  function pageMatchesLetter(page, letter) {
+    if (!page) return false;
+    if (page.id === letter || page.letter === letter) return true;
+    return (page.members || []).some((m) => m.id === letter || m.letter === letter);
+  }
+
   function goToLetter(session, letter) {
     const s = clone(session);
-    const idx = s.pages.findIndex((p) => p.id === letter || p.letter === letter);
+    const idx = s.pages.findIndex((p) => pageMatchesLetter(p, letter));
     if (idx >= 0) s.blockIndex = idx;
     s.phase = 'block';
     return s;
@@ -161,10 +238,10 @@
     return s;
   }
 
-  function logSet(session, setIndex, patch) {
+  function logSet(session, setIndex, patch, memberId) {
     const s = clone(session);
     const page = currentPage(s);
-    const log = ensureLog(s, page);
+    const log = getLog(s, page, memberId);
     const row = log.sets[setIndex];
     if (!row) return s;
     if (patch.reps != null) row.reps = Number(patch.reps);
@@ -174,20 +251,20 @@
     return s;
   }
 
-  function toggleLogged(session, setIndex) {
+  function toggleLogged(session, setIndex, memberId) {
     const s = clone(session);
     const page = currentPage(s);
-    const log = ensureLog(s, page);
+    const log = getLog(s, page, memberId);
     const row = log.sets[setIndex];
     if (!row) return s;
     row.logged = !row.logged;
     return s;
   }
 
-  function autofillFrom(session, setIndex) {
+  function autofillFrom(session, setIndex, memberId) {
     const s = clone(session);
     const page = currentPage(s);
-    const log = ensureLog(s, page);
+    const log = getLog(s, page, memberId);
     const src = log.sets[setIndex];
     if (!src) return s;
     for (let i = setIndex + 1; i < log.sets.length; i++) {
@@ -202,12 +279,14 @@
     let reps = 0;
     let kg = 0;
     for (const page of session.pages) {
-      const log = (session.logs || {})[page.id];
-      if (!log) continue;
-      for (const row of log.sets || []) {
-        if (!row.logged) continue;
-        reps += Number(row.reps) || 0;
-        kg += Number(row.kg) || 0;
+      for (const id of logIdsForPage(page)) {
+        const log = (session.logs || {})[id];
+        if (!log) continue;
+        for (const row of log.sets || []) {
+          if (!row.logged) continue;
+          reps += Number(row.reps) || 0;
+          kg += Number(row.kg) || 0;
+        }
       }
     }
     return { reps, kg };
@@ -249,20 +328,29 @@
     let blocksDone = 0;
     const workPages = session.pages.filter((p) => p.logMode !== 'doneHub');
     for (const page of workPages) {
-      const log = (session.logs || {})[page.id];
-      if (!log) continue;
       if (page.logMode === 'complete') {
-        if (log.completed) {
+        const log = (session.logs || {})[page.id];
+        if (log && log.completed) {
           exercises += 1;
           blocksDone += 1;
         }
-      } else {
+        continue;
+      }
+      let pageSets = 0;
+      let pageExercises = 0;
+      for (const id of logIdsForPage(page)) {
+        const log = (session.logs || {})[id];
+        if (!log) continue;
         const logged = (log.sets || []).filter((r) => r.logged).length;
         if (logged) {
-          exercises += 1;
-          sets += logged;
-          blocksDone += 1;
+          pageExercises += 1;
+          pageSets += logged;
         }
+      }
+      if (pageExercises) {
+        exercises += pageExercises;
+        sets += pageSets;
+        blocksDone += 1;
       }
     }
     return {
@@ -290,6 +378,8 @@
     logSet,
     toggleLogged,
     autofillFrom,
+    logIdsForPage,
+    memberOf,
     totals,
     setWorkingMax,
     openFeel,

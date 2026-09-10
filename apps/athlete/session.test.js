@@ -24,16 +24,18 @@ const demoPlan = {
 
 test('pagesFromPlan walks A–G plus done hub and skips sections', () => {
   const pages = HybridSession.pagesFromPlan(demoPlan);
-  assert.equal(pages.length, 9);
-  assert.deepEqual(pages.map((p) => p.id), ['A', 'B', 'C', 'D', 'E', 'F1', 'F2', 'G', 'done']);
+  assert.equal(pages.length, 8);
+  assert.deepEqual(pages.map((p) => p.id), ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'done']);
   assert.equal(pages[0].logMode, 'complete');
   assert.equal(pages[1].logMode, 'kg');
   assert.equal(pages[1].setCount, 6);
   assert.equal(pages[1].targetReps, 3);
-  assert.equal(pages[5].logMode, 'reps');
-  assert.equal(pages[6].logMode, 'max');
-  assert.equal(pages[7].logMode, 'complete');
-  assert.equal(pages[8].logMode, 'doneHub');
+  assert.equal(pages[5].logMode, 'superset');
+  assert.deepEqual(pages[5].members.map((m) => m.id), ['F1', 'F2']);
+  assert.equal(pages[5].members[0].logMode, 'reps');
+  assert.equal(pages[5].members[1].logMode, 'max');
+  assert.equal(pages[6].logMode, 'complete');
+  assert.equal(pages[7].logMode, 'doneHub');
 });
 
 test('startSession opens on quote then coach then first block', () => {
@@ -53,13 +55,20 @@ test('goToLetter tap-in skips quote and lands on that page', () => {
   assert.equal(s.pages[s.blockIndex].id, 'B');
 });
 
-test('next and prev walk nine pages including done hub', () => {
+test('next and prev walk eight pages including done hub', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'A' });
-  for (let i = 0; i < 8; i++) s = HybridSession.nextPage(s);
+  for (let i = 0; i < 7; i++) s = HybridSession.nextPage(s);
   assert.equal(s.pages[s.blockIndex].id, 'done');
   s = HybridSession.nextPage(s);
   assert.equal(s.pages[s.blockIndex].id, 'done');
   s = HybridSession.prevPage(s);
+  assert.equal(s.pages[s.blockIndex].id, 'G');
+});
+
+test('next from F pair lands on G not a second F page', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'F1' });
+  assert.equal(s.pages[s.blockIndex].id, 'F');
+  s = HybridSession.nextPage(s);
   assert.equal(s.pages[s.blockIndex].id, 'G');
 });
 
@@ -80,11 +89,13 @@ test('logSet kg updates totals and check', () => {
   assert.equal(t.kg, 60);
 });
 
-test('logSet MAX writes reps', () => {
+test('logSet MAX writes reps on the F2 member of the pair page', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'F2' });
-  s = HybridSession.logSet(s, 0, { reps: 12 });
+  assert.equal(s.pages[s.blockIndex].id, 'F');
+  s = HybridSession.logSet(s, 0, { reps: 12 }, 'F2');
   assert.equal(s.logs.F2.sets[0].reps, 12);
   assert.equal(s.logs.F2.sets[0].logged, true);
+  assert.equal(s.logs.F1.sets[0].logged, false);
   assert.equal(HybridSession.totals(s).reps, 12);
 });
 
@@ -96,7 +107,7 @@ test('autofill copies kg down empty rows', () => {
   assert.equal(s.logs.B.sets[5].logged, false);
 });
 
-test('D1 D2 pairing is consecutive pages', () => {
+test('D1 D2 pairing is one stacked page', () => {
   const plan = {
     blocks: [
       { kind: 'lift', letter: 'D1', title: 'One', prescription: '3 x 8' },
@@ -104,9 +115,11 @@ test('D1 D2 pairing is consecutive pages', () => {
     ],
   };
   const pages = HybridSession.pagesFromPlan(plan);
-  assert.equal(pages[0].id, 'D1');
-  assert.equal(pages[1].id, 'D2');
-  assert.equal(pages[2].id, 'done');
+  assert.equal(pages.length, 2);
+  assert.equal(pages[0].id, 'D');
+  assert.equal(pages[0].logMode, 'superset');
+  assert.deepEqual(pages[0].members.map((m) => m.id), ['D1', 'D2']);
+  assert.equal(pages[1].id, 'done');
 });
 
 test('feel then finish lands on summary', () => {
