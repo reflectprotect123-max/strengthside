@@ -29,9 +29,15 @@ cd "$ROOT/android"
 chmod +x ./gradlew
 ./gradlew assembleDebug --no-daemon
 
-APK="$(find app/build/outputs/apk/debug -name '*.apk' | head -1)"
-echo "Built: $APK"
-if [[ -d /opt/cursor/artifacts && -n "$APK" ]]; then
-  cp "$APK" /opt/cursor/artifacts/the-hybrid-athlete-dogfood-debug.apk
+APK="$ROOT/android/app/build/outputs/apk/debug/app-debug.apk"
+if [[ ! -f "$APK" ]]; then
+  echo "Missing $APK" >&2
+  exit 1
+fi
+NAMED="$ROOT/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
+cp -f "$APK" "$NAMED"
+echo "Built: $NAMED"
+if [[ -d /opt/cursor/artifacts ]]; then
+  cp -f "$NAMED" /opt/cursor/artifacts/the-hybrid-athlete-dogfood-debug.apk
   echo "Copied to /opt/cursor/artifacts/the-hybrid-athlete-dogfood-debug.apk"
 fi
