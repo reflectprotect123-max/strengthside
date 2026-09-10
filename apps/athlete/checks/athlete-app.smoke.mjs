@@ -28,7 +28,12 @@ must(css.includes('Barlow Condensed'), 'display typography');
 must(html.includes('native-bridge.js'), 'Capgo native bridge');
 must(js.includes('function otaBannerHtml'), 'settings OTA banner');
 must(html.includes('Talk to coach'), 'fab coach action');
-must(!html.includes('data-tab="chat"'), 'no chat tab in bottom nav');
+must(html.includes('data-tab="chat"'), 'chat tab in bottom nav');
+must(js.includes('function trainingTabHtml'), 'training tab screen');
+must(js.includes('TRAINING_DEMO'), 'HPP training demo plan');
+must(css.includes('.shell-screen--training'), 'training screen styles');
+must(css.includes('.trn-scroll'), 'training scroll container');
+must(js.includes('training: trainingTabHtml'), 'training tab wired in render()');
 
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');

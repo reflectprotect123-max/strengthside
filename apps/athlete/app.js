@@ -354,6 +354,235 @@ function trainingHomeHtml() {
     </div>`;
 }
 
+const homeHtml = trainingHomeHtml;
+
+/** Reference plan from HPP training screen (screenshot match). */
+const TRAINING_DEMO = {
+  dots: { '2026-09-07': true, '2026-09-09': true, '2026-09-11': true },
+  blocks: [
+    {
+      kind: 'warmup',
+      letter: 'A',
+      title: 'Deadlift Warm-Up',
+      items: [
+        { n: 1, text: 'Foam Roll Hamstrings x 60s each side – small 1-2” motion', note: 'All foam rolling should be non-painful so remove pressure as needed' },
+        { n: 2, text: 'Active Straight Leg Raises x 10 reps each side' },
+        { n: 3, text: 'Bird Dogs: 3 x 3-5 each' },
+        { n: 4, text: 'BW Glute Bridge: 3 x 5 with a 1 count at top of each rep. Rest as needed.' },
+        { n: 5, text: 'KB RDLs: 3 x 5. Rest 60s.' },
+        { n: 6, text: 'Box Jump Variation (your choice): 3 x 3. Rest 45-60s.', note: 'Jump for maximal height to a moderate height box.' },
+      ],
+      footer: 'For Completion',
+    },
+    {
+      kind: 'section',
+      label: 'STRENGTH/POWER',
+      badge: { icon: 'trophy', text: 'For Weight' },
+    },
+    { kind: 'lift', letter: 'B', title: 'Snatch Grip Rack Deadlift', prescription: '6 x 3' },
+    { kind: 'section', label: 'STRENGTH/POWER' },
+    { kind: 'lift', letter: 'C', title: 'Barbell Lateral Squat', prescription: '3 x 8' },
+    { kind: 'section', label: 'STRENGTH/POWER' },
+    { kind: 'lift', letter: 'D', title: 'Goblet Box Squat', prescription: '3 x 12' },
+    { kind: 'section', label: 'STRENGTH/POWER' },
+    { kind: 'lift', letter: 'E', title: 'Reverse Hypers', prescription: '4 x 25' },
+    { kind: 'section', label: 'STRENGTH/POWER' },
+    { kind: 'lift', letter: 'F1', title: 'Double Leg Banded Leg Curls', prescription: '4 x 25' },
+    { kind: 'lift', letter: 'F2', title: 'Garhammer Raises', prescription: '4 x MAX' },
+    { kind: 'section', label: 'STRENGTH/POWER' },
+    {
+      kind: 'recovery',
+      letter: 'G',
+      title: 'Recovery Breathing',
+      bullets: [
+        '10 Nasal Breaths',
+        '5 second inhale',
+        '1-second hold at the top',
+        '5 second exhale',
+        '1-second pause at the bottom',
+      ],
+      note: 'Turn off the music and make sure you’re in a relaxing state.',
+      goal: 'The goal is to start the recovery process before leaving the gym',
+      footer: 'For Completion',
+    },
+  ],
+};
+
+function trainingPlanForDate(iso) {
+  if (S.trainingPlans && S.trainingPlans[iso]) return S.trainingPlans[iso];
+  if (iso >= '2026-09-07' && iso <= '2026-09-13') return TRAINING_DEMO;
+  return null;
+}
+
+function trainingTopBarHtml() {
+  const badge = S.notifications || 7;
+  return `
+    <header class="trn-top">
+      <div class="trn-top-left">
+        <img class="trn-logo" src="assets/hpp-logo.jpg" width="36" height="36" alt="Hybrid Power Project">
+        <button type="button" class="trn-icon-btn" aria-label="Program menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button type="button" class="trn-icon-btn" aria-label="Filter">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M6 12h12M9 17h6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+      </div>
+      <div class="trn-top-right">
+        <button type="button" class="trn-month" aria-label="Month">
+          <span>${esc(monthLabel(S.selectedDate))}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button type="button" class="today-btn trn-today" onclick="goToday()">Today</button>
+        <button type="button" class="bell-btn trn-bell" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a5 5 0 0 0-5 5v2.6c0 .8-.3 1.6-.8 2.2L4.5 15.5h15l-1.7-2.7a3.5 3.5 0 0 1-.8-2.2V8a5 5 0 0 0-5-5z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg>
+          ${badge ? `<em class="bell-badge trn-bell-badge">${badge}</em>` : ''}
+        </button>
+      </div>
+    </header>`;
+}
+
+function trainingCalendarHtml() {
+  const days = weekDays(S.selectedDate);
+  const plan = trainingPlanForDate(S.selectedDate);
+  const dotMap = (plan && plan.dots) || TRAINING_DEMO.dots;
+  return `
+    <div class="cal-strip cal-strip--training" role="tablist" aria-label="Training calendar">
+      ${days
+        .map((iso) => {
+          const d = parseDate(iso);
+          const active = iso === S.selectedDate ? ' active' : '';
+          const dot = dotMap[iso] ? '<span class="cal-dot"></span>' : '';
+          return `
+            <button type="button" class="cal-day${active}" onclick="selectDate('${iso}')" aria-selected="${iso === S.selectedDate}">
+              <b>${d.getDate()}</b>
+              <div class="cal-dots">${dot}</div>
+            </button>`;
+        })
+        .join('')}
+    </div>`;
+}
+
+function trnWarmupHtml(block) {
+  const items = (block.items || [])
+    .map((item) => {
+      const note = item.note
+        ? `<p class="trn-note"><em>*${esc(item.note)}</em></p>`
+        : '';
+      return `<li><span class="trn-num">${item.n}</span><span class="trn-item-text">${esc(item.text)}${note}</span></li>`;
+    })
+    .join('');
+  return `
+    <article class="trn-block trn-block--warmup">
+      <div class="trn-block-head">
+        <span class="trn-letter">${esc(block.letter)}</span>
+        <h2 class="trn-block-title">${esc(block.title)}</h2>
+      </div>
+      <ol class="trn-warmup-list">${items}</ol>
+      ${block.footer ? `<button type="button" class="trn-link">${esc(block.footer)}</button>` : ''}
+    </article>`;
+}
+
+function trnSectionHtml(block) {
+  const badge = block.badge
+    ? `<span class="trn-section-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l1 3 3 1v6l-3 1-1 3H8l-1-3-3-1V8l3-1 1-3z"/></svg>${esc(block.badge.text)}</span>`
+    : '';
+  return `
+    <div class="trn-section">
+      <span class="trn-section-label">${esc(block.label)}</span>
+      ${badge}
+    </div>`;
+}
+
+function trnLiftHtml(block) {
+  return `
+    <article class="trn-block trn-block--lift">
+      <span class="trn-letter">${esc(block.letter)}</span>
+      <div class="trn-lift-body">
+        <h3 class="trn-lift-title">${esc(block.title)}</h3>
+        <p class="trn-lift-rx">${esc(block.prescription)}</p>
+      </div>
+    </article>`;
+}
+
+function trnRecoveryHtml(block) {
+  const bullets = (block.bullets || []).map((b) => `<li>${esc(b)}</li>`).join('');
+  return `
+    <article class="trn-block trn-block--recovery">
+      <div class="trn-block-head">
+        <span class="trn-letter">${esc(block.letter)}</span>
+        <h2 class="trn-block-title">${esc(block.title)}</h2>
+      </div>
+      <ul class="trn-recovery-list">${bullets}</ul>
+      ${block.note ? `<p class="trn-note"><em>*${esc(block.note)}</em></p>` : ''}
+      ${block.goal ? `<p class="trn-recovery-goal">${esc(block.goal)}</p>` : ''}
+      ${block.footer ? `<button type="button" class="trn-link">${esc(block.footer)}</button>` : ''}
+    </article>`;
+}
+
+function trainingBlocksHtml(iso) {
+  const plan = trainingPlanForDate(iso);
+  if (!plan || !plan.blocks || !plan.blocks.length) {
+    return `<p class="trn-empty">Nothing scheduled for this day yet.</p>`;
+  }
+  const body = plan.blocks
+    .map((block) => {
+      if (block.kind === 'warmup') return trnWarmupHtml(block);
+      if (block.kind === 'section') return trnSectionHtml(block);
+      if (block.kind === 'lift') return trnLiftHtml(block);
+      if (block.kind === 'recovery') return trnRecoveryHtml(block);
+      return '';
+    })
+    .join('');
+  return `
+    ${body}
+    <button type="button" class="trn-add-exercise" onclick="fabAction('session')">
+      <span class="trn-add-icon" aria-hidden="true">+</span>
+      <span>Add Exercise</span>
+    </button>`;
+}
+
+function trainingTabHtml() {
+  return `
+    <div class="shell-screen shell-screen--training">
+      ${trainingTopBarHtml()}
+      ${trainingCalendarHtml()}
+      <div class="trn-scroll">${trainingBlocksHtml(S.selectedDate)}</div>
+    </div>`;
+}
+
+function chatHtml() {
+  return `
+    <div class="page page-chat">
+      <div class="eyebrow">Chat</div>
+      <h1>Coach</h1>
+      <p class="stub page-lead">Ask about today’s session. Same coach as the + menu.</p>
+      <div class="coach-log coach-log--page" id="chatPageLog"></div>
+      <div class="coach-compose">
+        <textarea id="chatPageInput" rows="2" placeholder="Ask about today’s training…"></textarea>
+        <button type="button" class="btn primary" onclick="askCoachFromChat()">Send</button>
+      </div>
+      <p class="stub" id="chatPageStatus"></p>
+    </div>`;
+}
+
+async function askCoachFromChat() {
+  const input = document.getElementById('chatPageInput');
+  const sheetInput = document.getElementById('coachSheetInput');
+  if (input && sheetInput) sheetInput.value = input.value;
+  await askCoach();
+  if (input) input.value = '';
+  renderChatPageLog();
+}
+
+function renderChatPageLog() {
+  const log = document.getElementById('chatPageLog');
+  if (!log) return;
+  log.innerHTML = (S.coachHistory || [])
+    .map((m) => `<div class="msg ${m.role}">${esc(m.content)}</div>`)
+    .join('');
+  log.scrollTop = log.scrollHeight;
+}
+
 function libraryHtml() {
   return `
     <div class="page">
@@ -463,7 +692,6 @@ function meHtml() {
 }
 
 function setTab(tab) {
-  if (tab === 'chat') tab = 'home';
   S.tab = tab;
   S.fabOpen = false;
   save();
@@ -501,6 +729,7 @@ function syncFab() {
   const show = S.tab === 'home' || S.tab === 'training';
   layer.classList.toggle('hidden', !show);
   layer.classList.toggle('open', !!S.fabOpen);
+  layer.classList.toggle('fab-layer--training', S.tab === 'training');
 }
 
 function fabAction(kind) {
@@ -550,23 +779,27 @@ function renderCoachSheetLog() {
 }
 
 function render() {
-  if (S.tab === 'chat') S.tab = 'home';
   const root = document.getElementById('app');
   const map = {
-    home: trainingHomeHtml,
-    training: trainingHomeHtml,
+    home: homeHtml,
+    training: trainingTabHtml,
+    chat: chatHtml,
     library: libraryHtml,
     me: meHtml,
     settings: meHtml,
   };
-  root.innerHTML = (map[S.tab] || trainingHomeHtml)();
+  root.innerHTML = (map[S.tab] || homeHtml)();
 
   document.querySelectorAll('[data-tab]').forEach((b) => {
     b.classList.toggle('active', b.dataset.tab === S.tab);
   });
 
+  const shell = document.getElementById('shell');
+  if (shell) shell.classList.toggle('shell--training', S.tab === 'training');
+
   syncFab();
   renderCoachSheetLog();
+  if (S.tab === 'chat') renderChatPageLog();
 
   if (window.Whoop) {
     if (S.tab === 'me' && !(S.settings.whoop && S.settings.whoop.email)) {
