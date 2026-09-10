@@ -18,10 +18,14 @@ must(existsSync(join(root, 'home.css')), 'home.css');
 must(!html.includes('THE-builder-clean'), 'old storage/build id in index');
 must(js.includes('THE-brain-v1'), 'brain storage key');
 must(js.includes('ath-whoop-dials'), 'OLED WHOOP dial row');
+must(js.includes('${calendarHtml()}') && js.indexOf('${calendarHtml()}') < js.indexOf('${gaugeRowHtml()}'), 'calendar week above WHOOP dials');
+must(existsSync(join(root, 'vendor/supabase.min.js')), 'vendor/supabase.min.js');
+must(html.includes('vendor/supabase.min.js'), 'local Supabase bundle');
 must(js.includes('whoopDialSvg'), 'SVG arc dials');
 must(css.includes('--oled-bg'), 'OLED tokens in home.css');
 must(css.includes('Barlow Condensed'), 'display typography');
 must(html.includes('Talk to coach'), 'fab coach action');
+must(!html.includes('data-tab="chat"'), 'no chat tab in bottom nav');
 
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');

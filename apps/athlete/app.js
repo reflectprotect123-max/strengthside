@@ -1,43 +1,34 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
 
-const defaultState = () => {
-  const t = today();
-  return {
-    build: BRAIN_BUILD,
-    tab: 'home',
-    selectedDate: t,
-    checkin: {
-      [t]: {
-        date: t,
-        whoopRecovery: 72,
-        whoopStrain: 8.4,
-        whoopSleepPerformance: 84,
-        hrv: 68,
-        restingHr: 52,
-      },
-    },
-    settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
-    coachHistory: [],
-    published: seedPublished(),
-    goals: [],
-    fabOpen: false,
-    notifications: 5,
-    chatUnread: 14,
-  };
-};
+const defaultState = () => ({
+  build: BRAIN_BUILD,
+  tab: 'home',
+  selectedDate: today(),
+  checkin: {},
+  settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
+  coachHistory: [],
+  published: {},
+  goals: [],
+  fabOpen: false,
+  notifications: 0,
+  chatUnread: 0,
+});
 
-function seedPublished() {
-  const t = today();
-  const d = (offset) => addDays(t, offset);
-  return {
-    [d(-6)]: [{ id: '1', type: 'strength', title: 'Upper Push' }],
-    [d(-2)]: [{ id: '2', type: 'engine', title: 'Aerobic Row 20:00' }],
-    [d(0)]: [
-      { id: '3', type: 'strength', title: 'Lower Strength' },
-      { id: '4', type: 'recovery', title: 'Recovery Breathing' },
-    ],
-  };
+function resetBlankSlate(keepAuth = true) {
+  const whoop = keepAuth && S.settings?.whoop
+    ? { ...S.settings.whoop }
+    : { connected: false, lastSyncAt: null, email: null };
+  S.published = {};
+  S.goals = [];
+  S.coachHistory = [];
+  S.checkin = {};
+  S.notifications = 0;
+  S.chatUnread = 0;
+  S.fabOpen = false;
+  S.selectedDate = today();
+  S.settings = { whoop };
+  save();
 }
 
 let S = load();
@@ -51,7 +42,7 @@ function load() {
     return {
       ...defaultState(),
       ...parsed,
-      published: parsed.published || seedPublished(),
+      published: parsed.published || {},
       settings: { ...defaultState().settings, ...parsed.settings },
     };
   } catch {
@@ -335,9 +326,9 @@ function trainingHomeHtml() {
     <div class="shell-screen shell-screen--oled">
       ${topBarHtml()}
       <div class="ath-date">${esc(longDateLabel(S.selectedDate))}</div>
+      ${calendarHtml()}
       ${athleteRowHtml()}
       ${gaugeRowHtml()}
-      ${calendarHtml()}
       <section class="home-brief">
         <div class="home-brief-header">
           <p class="eyebrow">Scheduled</p>
@@ -348,21 +339,6 @@ function trainingHomeHtml() {
           <button type="button" class="btn oled-cta create-session-btn" onclick="fabAction('session')">Create session</button>
         </div>
       </section>
-    </div>
-    <div id="whoopCard" class="hidden"></div>`;
-}
-
-function chatHtml() {
-  return `
-    <div class="page">
-      <div class="eyebrow">Chat</div>
-      <h1>Coach</h1>
-      <div class="card">
-        <div class="coach-log" id="coachLog">${(S.coachHistory || []).map((m) => `<div class="msg ${m.role}">${esc(m.content)}</div>`).join('')}</div>
-        <div class="field"><textarea id="coachInput" rows="3" placeholder="Ask about today’s training…"></textarea></div>
-        <button type="button" class="btn primary" style="width:100%" onclick="askCoach(false)">Send</button>
-        <p class="stub" id="coachStatus"></p>
-      </div>
     </div>`;
 }
 
@@ -377,20 +353,34 @@ function libraryHtml() {
 
 function meHtml() {
   const w = S.settings.whoop || {};
+  if (w.email) {
+    return `
+      <div class="page">
+        <div class="eyebrow">Me</div>
+        <h1>Profile</h1>
+        <div class="card account-compact">
+          <p class="account-email">${esc(w.email)}</p>
+          <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p>
+          <div class="account-actions">
+            ${w.connected
+              ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button>'
+              : '<button type="button" class="btn" onclick="Whoop.connect()">Connect WHOOP</button>'}
+            <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
+          </div>
+        </div>
+      </div>`;
+  }
   return `
-    <div class="page">
-      <div class="eyebrow">Me</div>
-      <h1>Profile</h1>
-      <div class="card">
-        <p><b>WHOOP</b> · ${w.connected ? 'Connected' : 'Not connected'}</p>
-        <p class="stub">${esc(w.email || 'Sign in below')}</p>
-        <div id="whoopCard"></div>
-      </div>
-      <div class="card stub">Goals: ${S.goals.length ? S.goals.length : 'none yet'}</div>
+    <div class="page page-signin">
+      <div class="eyebrow">Account</div>
+      <h1>Sign in</h1>
+      <p class="stub page-lead">Same email and password as THE Hybrid Engine. After sign-in you land on a blank slate — no demo sessions.</p>
+      <div id="whoopCard"></div>
     </div>`;
 }
 
 function setTab(tab) {
+  if (tab === 'chat') tab = 'home';
   S.tab = tab;
   S.fabOpen = false;
   save();
@@ -477,11 +467,11 @@ function renderCoachSheetLog() {
 }
 
 function render() {
+  if (S.tab === 'chat') S.tab = 'home';
   const root = document.getElementById('app');
   const map = {
     home: trainingHomeHtml,
     training: trainingHomeHtml,
-    chat: chatHtml,
     library: libraryHtml,
     me: meHtml,
     settings: meHtml,
@@ -492,21 +482,20 @@ function render() {
     b.classList.toggle('active', b.dataset.tab === S.tab);
   });
 
-  const chatBadge = document.getElementById('chatBadge');
-  if (chatBadge) chatBadge.textContent = String(S.chatUnread || 0);
-
   syncFab();
   renderCoachSheetLog();
 
   if (window.Whoop) {
-    Whoop.renderPanels();
+    if (S.tab === 'me' && !(S.settings.whoop && S.settings.whoop.email)) {
+      Whoop.renderPanels();
+    }
     if (S.tab === 'home' || S.tab === 'training') Whoop.autoSyncIfPossible();
   }
 }
 
-async function askCoach(fromSheet) {
-  const input = document.getElementById(fromSheet ? 'coachSheetInput' : 'coachInput');
-  const status = document.getElementById(fromSheet ? 'coachSheetStatus' : 'coachStatus');
+async function askCoach() {
+  const input = document.getElementById('coachSheetInput');
+  const status = document.getElementById('coachSheetStatus');
   const message = (input && input.value || '').trim();
   if (!message) return;
   if (!window.Whoop || !(await Whoop.token())) {
@@ -552,6 +541,7 @@ window.dailyCheckin = dailyCheckin;
 window.readinessScore = readinessScore;
 window.touchRecord = function () {};
 window.num = num;
+window.resetBlankSlate = resetBlankSlate;
 window.setTab = setTab;
 window.selectDate = selectDate;
 window.goToday = goToday;
@@ -563,7 +553,10 @@ window.closeCoachSheet = closeCoachSheet;
 window.askCoach = askCoach;
 window.render = render;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.Whoop && typeof Whoop.hydrateAuth === 'function') {
+    try { await Whoop.hydrateAuth(); } catch (_) { /* offline / SDK */ }
+  }
   render();
 });
 

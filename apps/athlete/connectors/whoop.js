@@ -43,6 +43,21 @@
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+  function waitForSupabase(maxMs) {
+    maxMs = maxMs || 8000;
+    return new Promise(function (resolve, reject) {
+      if (global.supabase && global.supabase.createClient) return resolve();
+      const started = Date.now();
+      const tick = function () {
+        if (global.supabase && global.supabase.createClient) return resolve();
+        if (Date.now() - started >= maxMs) {
+          return reject(new Error('Supabase SDK failed to load — check your connection and reload'));
+        }
+        global.setTimeout(tick, 50);
+      };
+      tick();
+    });
+  }
   function client() {
     if (sb) return sb;
     if (!global.supabase || !global.supabase.createClient) throw new Error('Supabase SDK failed to load');
@@ -50,6 +65,32 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: global.localStorage }
     });
     return sb;
+  }
+  async function syncAuthEmail() {
+    try {
+      await waitForSupabase();
+      const em = await email();
+      const w = st();
+      if (em && w.email !== em) {
+        w.email = em;
+        if (typeof global.save === 'function') global.save();
+        return true;
+      }
+      if (!em && w.email) {
+        w.email = null;
+        w.connected = false;
+        w.lastSyncAt = null;
+        w.sampleDate = null;
+        if (typeof global.save === 'function') global.save();
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+  async function hydrateAuth() {
+    const changed = await syncAuthEmail();
+    if (changed && typeof global.render === 'function') global.render();
+    return changed;
   }
   async function token() {
     const { data, error } = await client().auth.getSession();
@@ -166,30 +207,28 @@
   function cardHtml() {
     const w = st();
     const busy = ui.busy ? ' disabled' : '';
-    const msg = ui.message ? '<div class=meta style="margin-top:8px">' + esc(ui.message) + '</div>' : '';
-    if (!w.email) {
-      return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Sign in & sync</div>' +
-        '<div class=meta>Sign in with the same account on web and phone. Sync refreshes WHOOP recovery and Concept2 Logbook when linked — sessions and templates stay on this device for now.</div>' +
-        '<div class=field style="margin-top:12px"><label>Email</label><input id=whoopEmail type=email autocomplete=username placeholder="you@email.com"></div>' +
-        '<div class=field><label>Password</label><input id=whoopPassword type=password autocomplete=current-password></div>' +
-        '<div class=btns style="margin-top:12px"><button class="btn primary block" onclick="Whoop.signIn()"' + busy + '>Sign in & sync</button></div>' + msg + '</div>';
-    }
-    const whoopBtn = w.connected
-      ? '<button class="btn" onclick="Whoop.disconnect()"' + busy + '>Disconnect WHOOP</button>'
-      : '<button class="btn" onclick="Whoop.connect()"' + busy + '>Connect WHOOP</button>';
-    return '<div class=card id=whoopCard><div class=eyebrow>Account</div><div class=title>Signed in</div>' +
-      '<div class=meta>' + esc(w.email) + '</div>' +
-      cloudStatusLines() +
-      '<div class=btns style="margin-top:12px">' +
-      '<button class="btn primary block" onclick="Whoop.syncAll()"' + busy + '>Sync WHOOP & Concept2</button>' +
-      whoopBtn +
-      '<button class="btn" onclick="Whoop.signOut()"' + busy + '>Sign out</button></div>' +
-      msg +
-      '<div class=meta style="margin-top:10px">Live workout HR still uses Bluetooth. WHOOP fills recovery / HRV / resting HR.</div></div>';
+    const msg = ui.message ? '<p class="stub signin-msg">' + esc(ui.message) + '</p>' : '';
+    if (w.email) return '';
+    return '<div class="card signin-card" id="whoopCard">' +
+      '<div class="field"><label for="whoopEmail">Email</label>' +
+      '<input id="whoopEmail" type="email" autocomplete="username" placeholder="you@email.com"></div>' +
+      '<div class="field"><label for="whoopPassword">Password</label>' +
+      '<input id="whoopPassword" type="password" autocomplete="current-password"></div>' +
+      '<div class="account-actions">' +
+      '<button type="button" class="btn oled-cta block" onclick="Whoop.signIn()"' + busy + '>Sign in</button>' +
+      '</div>' + msg + '</div>';
   }
   function renderPanels() {
     const card = document.getElementById('whoopCard');
-    if (card) { const wrap = document.createElement('div'); wrap.innerHTML = cardHtml(); card.replaceWith(wrap.firstChild); }
+    if (!card) return;
+    const html = cardHtml();
+    if (!html) {
+      card.remove();
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    card.replaceWith(wrap.firstChild);
     const line = document.getElementById('whoopSleepLine');
     if (line) line.textContent = metaLine();
   }
@@ -338,34 +377,49 @@
   async function signIn() {
     const em = ((document.getElementById('whoopEmail') && document.getElementById('whoopEmail').value) || '').trim();
     const pw = (document.getElementById('whoopPassword') && document.getElementById('whoopPassword').value) || '';
-    if (!em || !pw) { global.alert('Enter the same email + password you use on THE Hybrid Engine'); return; }
-    ui.busy = true; ui.message = 'Signing in…'; renderPanels();
+    if (!em || !pw) {
+      global.alert('Enter the same email + password you use on THE Hybrid Engine');
+      return;
+    }
+    ui.busy = true;
+    ui.message = 'Signing in…';
+    renderPanels();
     try {
-      const { error } = await client().auth.signInWithPassword({ email: em, password: pw });
+      await waitForSupabase();
+      const { data, error } = await client().auth.signInWithPassword({ email: em, password: pw });
       if (error) throw error;
-      st().email = em;
+      st().email = (data.user && data.user.email) || em;
       if (typeof global.save === 'function') global.save();
+      ui.message = '';
       ui.busy = false;
-      await syncAll();
+      if (typeof global.resetBlankSlate === 'function') global.resetBlankSlate(true);
+      try { await syncAll(); } catch (_) { /* sync is optional immediately after sign-in */ }
+      if (typeof global.setTab === 'function') global.setTab('home');
+      else if (typeof global.render === 'function') global.render();
     } catch (err) {
       ui.message = err.message || 'Sign-in failed';
       ui.busy = false;
       renderPanels();
+      global.alert(ui.message);
     }
   }
   async function signOut() {
     try { await client().auth.signOut(); } catch (_) {}
     st().email = null;
+    st().connected = false;
+    st().lastSyncAt = null;
+    st().sampleDate = null;
+    st().lastNormalized = null;
     if (typeof global.save === 'function') global.save();
-    ui.message = 'Signed out';
-    renderPanels();
+    ui.message = '';
+    if (typeof global.setTab === 'function') global.setTab('me');
+    else renderPanels();
   }
   async function autoSyncIfPossible() {
     try {
+      await syncAuthEmail();
       if (!(await token())) return;
-      st().email = await email();
       await refreshStatus();
-      renderPanels();
       if (!st().connected) return;
       const last = st().lastSyncAt ? Date.parse(st().lastSyncAt) : 0;
       // Status already applied last normalized sample; only hit WHOOP every 5 min.
@@ -373,16 +427,9 @@
       await sync();
     } catch (_) {}
   }
-  (async function hydrate() {
-    try {
-      const em = await email();
-      if (em) { st().email = em; if (typeof global.save === 'function') global.save(); }
-    } catch (_) {}
-  })();
-
   global.Whoop = {
-    cardHtml, metaLine, renderPanels, autoSyncIfPossible,
+    cardHtml, metaLine, renderPanels, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
-    client, token, email
+    client, token, email, waitForSupabase
   };
 })(window);
