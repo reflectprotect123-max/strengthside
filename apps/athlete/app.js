@@ -156,6 +156,15 @@ function athClamp(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));
 }
 
+/** WHOOP recovery zones — green ≥67, yellow 34–66, red ≤33 (brand guidelines). */
+function whoopRecoveryColor(recovery) {
+  const v = num(recovery);
+  if (!v) return '#16ec06';
+  if (v >= 67) return '#16ec06';
+  if (v >= 34) return '#ffde00';
+  return '#ff0026';
+}
+
 function whoopDialSvg(opts = {}) {
   const size = opts.size || 104;
   const stroke = size >= 100 ? 7 : 6;
@@ -241,7 +250,7 @@ function gaugeRowHtml() {
       <div class="ath-whoop-wrap">
         <div class="ath-whoop-dials gauge-row">
           ${whoopDialSvg({ label: 'Sleep', value: m.sleepScore, max: 100, color: '#9db4c8', unit: '%', size: 104 })}
-          ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: '#16f26b', unit: '%', size: 104 })}
+          ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: whoopRecoveryColor(m.recovery), unit: '%', size: 104 })}
           ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
         </div>
         ${todayCallHtml()}

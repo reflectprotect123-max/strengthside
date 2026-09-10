@@ -8,7 +8,10 @@
   --oled-muted: #8e8e93;
   --oled-line: rgba(255, 255, 255, 0.1);
   --sleep: #9db4c8;
-  --recovery: #16f26b;
+  --recovery-high: #16ec06;
+  --recovery-mid: #ffde00;
+  --recovery-low: #ff0026;
+  --recovery: var(--recovery-high);
   --strain: #1ba3ff;
   --strength: #d4a574;
   --engine: #5ec4b7;

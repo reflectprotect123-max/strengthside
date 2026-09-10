@@ -22,6 +22,7 @@ must(js.includes('${calendarHtml()}') && js.indexOf('${calendarHtml()}') < js.in
 must(existsSync(join(root, 'vendor/supabase.min.js')), 'vendor/supabase.min.js');
 must(html.includes('vendor/supabase.min.js'), 'local Supabase bundle');
 must(js.includes('whoopDialSvg'), 'SVG arc dials');
+must(js.includes('function whoopRecoveryColor'), 'WHOOP recovery zone colors');
 must(css.includes('--oled-bg'), 'OLED tokens in home.css');
 must(css.includes('Barlow Condensed'), 'display typography');
 must(html.includes('Talk to coach'), 'fab coach action');

@@ -1,4 +1,4 @@
-const CACHE = 'the-brain-v2';
+const CACHE = 'the-brain-v3';
 const ASSETS = ['./', './index.html', './app.js', './home.css', './brain-bundle.js', './connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {
