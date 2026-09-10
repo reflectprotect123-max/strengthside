@@ -1,19 +1,31 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
 
-const defaultState = () => ({
-  build: BRAIN_BUILD,
-  tab: 'home',
-  selectedDate: today(),
-  checkin: {},
-  settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
-  coachHistory: [],
-  published: seedPublished(),
-  goals: [],
-  fabOpen: false,
-  notifications: 5,
-  chatUnread: 14,
-});
+const defaultState = () => {
+  const t = today();
+  return {
+    build: BRAIN_BUILD,
+    tab: 'home',
+    selectedDate: t,
+    checkin: {
+      [t]: {
+        date: t,
+        whoopRecovery: 72,
+        whoopStrain: 8.4,
+        whoopSleepPerformance: 84,
+        hrv: 68,
+        restingHr: 52,
+      },
+    },
+    settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
+    coachHistory: [],
+    published: seedPublished(),
+    goals: [],
+    fabOpen: false,
+    notifications: 5,
+    chatUnread: 14,
+  };
+};
 
 function seedPublished() {
   const t = today();
@@ -149,36 +161,80 @@ function weekDays(centerIso) {
   return out;
 }
 
-function gaugeHtml(label, cls, value, suffix, max) {
-  const pct = value != null && max ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
-  const display = value != null && value !== '' ? `${value}${suffix || ''}` : '—';
+function athClamp(v, lo, hi) {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+function whoopDialSvg(opts = {}) {
+  const size = opts.size || 104;
+  const stroke = size >= 100 ? 7 : 6;
+  const c = size / 2;
+  const r = c - stroke / 2 - 1.5;
+  const max = num(opts.max) || 100;
+  const raw = opts.value;
+  const has = raw != null && raw !== '' && Number.isFinite(Number(raw));
+  const prog = has ? athClamp(num(raw) / max, 0, 1) : 0;
+  const circ = 2 * Math.PI * r;
+  const color = opts.color || '#9db4c8';
+  const label = opts.label || '';
+  const unit = opts.unit || '';
+  const fid = `wg${Math.round(c)}${String(color).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}`;
+  const valHtml = has
+    ? unit === '%'
+      ? `<span class="ath-whoop-n">${Math.round(num(raw))}</span><small>%</small>`
+      : Math.abs(num(raw) % 1) > 0.001
+        ? num(raw).toFixed(1)
+        : String(Math.round(num(raw)))
+    : '—';
+  const glow = has
+    ? `<defs><filter id="${fid}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`
+    : '';
+  const arc = has
+    ? `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${circ * (1 - prog)}" filter="url(#${fid})" style="filter:drop-shadow(0 0 6px ${color})"/>`
+    : '';
   return `
-    <div class="gauge ${cls}">
-      <div class="gauge-ring" style="--pct:${pct}">
-        <div><b>${esc(display)}</b></div>
+    <div class="ath-whoop-dial">
+      <div class="ath-whoop-dial-ring">
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+          ${glow}
+          <g transform="rotate(-90 ${c} ${c})">
+            <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#111113" stroke-width="${stroke}"/>
+            ${arc}
+          </g>
+        </svg>
+        <div class="ath-whoop-dial-val">${valHtml}</div>
       </div>
-      <label>${esc(label)}</label>
+      <div class="ath-whoop-dial-lab">${esc(label)}</div>
     </div>`;
+}
+
+function longDateLabel(iso) {
+  return parseDate(iso).toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 function topBarHtml() {
   return `
-    <header class="topbar">
-      <button type="button" class="brand-btn" aria-label="Brand">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#888" stroke-width="1"/><path d="M8 12h8M12 8v8" stroke="#ccc" stroke-width="1.2"/></svg>
-        </span>
-        <span class="chev" aria-hidden="true"></span>
-      </button>
-      <button type="button" class="month-btn" aria-label="Month">
-        <span class="filter-icon" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span>${esc(monthLabel(S.selectedDate))}</span>
-        <span class="chev" aria-hidden="true"></span>
-      </button>
-      <div class="topbar-actions">
-        <button type="button" class="today-btn" onclick="goToday()">TODAY</button>
+    <header class="home-top">
+      <div class="home-brand">
+        <span class="home-mark" aria-hidden="true">TH</span>
+        <div class="home-brand-text">
+          <b>HYBRID</b>
+          <small>Athlete</small>
+        </div>
+      </div>
+      <div class="home-top-actions">
+        <button type="button" class="month-btn" aria-label="Month">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
+          <span>${esc(monthLabel(S.selectedDate))}</span>
+        </button>
+        <button type="button" class="today-btn" onclick="goToday()">Today</button>
         <button type="button" class="bell-btn" aria-label="Notifications">
-          <svg viewBox="0 0 24 24"><path d="M12 3a5 5 0 0 0-5 5v2.6c0 .8-.3 1.6-.8 2.2L4.5 15.5h15l-1.7-2.7a3.5 3.5 0 0 1-.8-2.2V8a5 5 0 0 0-5-5z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a5 5 0 0 0-5 5v2.6c0 .8-.3 1.6-.8 2.2L4.5 15.5h15l-1.7-2.7a3.5 3.5 0 0 1-.8-2.2V8a5 5 0 0 0-5-5z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg>
           <em class="bell-badge">${S.notifications || 0}</em>
         </button>
       </div>
@@ -189,11 +245,43 @@ function gaugeRowHtml() {
   const c = dailyCheckin(S.selectedDate, false) || dailyCheckin(today(), false) || {};
   const m = metricsFromCheckin(c);
   return `
-    <section class="gauge-row" aria-label="WHOOP">
-      ${gaugeHtml('Recovery', 'recovery', m.recovery, '%', 100)}
-      ${gaugeHtml('Strain', 'strain', m.strain, '', 21)}
-      ${gaugeHtml('Sleep', 'sleep', m.sleepScore, '%', 100)}
+    <section class="ath-module-whoop" aria-label="WHOOP">
+      <span class="ath-label">WHOOP</span>
+      <div class="ath-whoop-wrap">
+        <div class="ath-whoop-dials gauge-row">
+          ${whoopDialSvg({ label: 'Sleep', value: m.sleepScore, max: 100, color: '#9db4c8', unit: '%', size: 104 })}
+          ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: '#16f26b', unit: '%', size: 104 })}
+          ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
+        </div>
+        ${todayCallHtml()}
+      </div>
     </section>`;
+}
+
+function todayCallHtml() {
+  const p = packet();
+  return `
+    <div class="today-call">
+      <p class="eyebrow">${esc(p.label || 'Today')}</p>
+      <p class="title">${esc(p.todayCall || 'Train with intent')}</p>
+      <p class="meta">${esc(p.reason || 'Connect WHOOP under Me for live readiness.')}</p>
+    </div>`;
+}
+
+function athleteRowHtml() {
+  const items = S.published[S.selectedDate] || S.published[today()] || [];
+  const first = items[0];
+  const workout = first ? first.title : 'No session scheduled';
+  return `
+    <div class="ath-athlete">
+      <div class="ath-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+      </div>
+      <div>
+        <p class="ath-name">Today</p>
+        <p class="ath-workout">${esc(workout)}</p>
+      </div>
+    </div>`;
 }
 
 function calendarHtml() {
@@ -221,34 +309,46 @@ function calendarHtml() {
 function publishedListHtml() {
   const items = S.published[S.selectedDate] || [];
   if (!items.length) {
-    return `<p class="empty-day">Nothing published for this day yet.</p>`;
+    return `<p class="empty-day">Nothing scheduled for this day yet.</p>`;
   }
   return `
     <div class="published-list">
       ${items
         .map(
           (p) => `
-        <div class="published-item">
-          <span class="pub-dot ${esc(p.type)}"></span>
+        <button type="button" class="published-item" onclick="fabAction('session')">
+          <span class="pub-dot ${esc(p.type)}" aria-hidden="true"></span>
           <div>
             <strong>${esc(p.title)}</strong>
             <small>${esc(p.type)}</small>
           </div>
-        </div>`,
+          <span class="chev" aria-hidden="true">›</span>
+        </button>`,
         )
         .join('')}
     </div>`;
 }
 
 function trainingHomeHtml() {
+  const count = (S.published[S.selectedDate] || []).length;
   return `
-    ${topBarHtml()}
-    ${gaugeRowHtml()}
-    ${calendarHtml()}
-    <section class="home-body">
-      ${publishedListHtml()}
-      <button type="button" class="create-session-btn" onclick="fabAction('session')">Create Session</button>
-    </section>
+    <div class="shell-screen shell-screen--oled">
+      ${topBarHtml()}
+      <div class="ath-date">${esc(longDateLabel(S.selectedDate))}</div>
+      ${athleteRowHtml()}
+      ${gaugeRowHtml()}
+      ${calendarHtml()}
+      <section class="home-brief">
+        <div class="home-brief-header">
+          <p class="eyebrow">Scheduled</p>
+          ${count ? `<span class="home-pill">${count} session${count === 1 ? '' : 's'}</span>` : ''}
+        </div>
+        ${publishedListHtml()}
+        <div class="home-cta">
+          <button type="button" class="btn oled-cta create-session-btn" onclick="fabAction('session')">Create session</button>
+        </div>
+      </section>
+    </div>
     <div id="whoopCard" class="hidden"></div>`;
 }
 
