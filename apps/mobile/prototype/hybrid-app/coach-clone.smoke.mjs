@@ -22,8 +22,8 @@ must(src.includes('Analytics'), 'Analytics chrome');
 must(src.includes('Nutrition'), 'Nutrition remains in chrome');
 
 must(src.includes('--coach-main-bg:#f4f6f8') || src.includes('--coach-main-bg:#ffffff'), 'light content pane like reference shots');
-must(src.includes('coach-rail-slim') || src.includes('--coach-rail-width:64px'), 'slim icon rail');
-must(src.includes('#0057ff') || src.includes('#2563eb') || src.includes('#1d4ed8'), 'saturated primary CTA like reference');
+must(src.includes('coach-rail-slim') || src.includes('--coach-rail-width:64px') || src.includes('--coach-rail-width:72px'), 'slim icon rail');
+must(src.includes('#0057ff') || src.includes('#2563eb') || src.includes('#1d4ed8') || src.includes('#0a0eff'), 'saturated primary CTA like reference');
 must(src.includes('data-table') || src.includes('th-table'), 'data-table list pattern');
 must(src.includes('Circuits'), 'Library Circuits tab');
 must(src.includes('Prescriptions'), 'Library Prescriptions tab');

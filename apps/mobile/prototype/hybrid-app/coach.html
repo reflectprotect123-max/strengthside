@@ -10,7 +10,8 @@
 <style>
 /* Screenshot-clone chrome — Hybrid labels only */
 :root{
-  --th-blue:#2563eb;--th-blue-hover:#1d4ed8;--th-blue-deep:#1e40af;
+  /* Extracted from coach screenshot dump: Session Comment / Create Program ≈ rgb(10,14,255) */
+  --th-blue:#0a0eff;--th-blue-hover:#2a2eff;--th-blue-deep:#0808cc;
   --color-copper:#d4a574;--color-copper-bright:#e8c49a;
   --color-bg-deep:#000000;--color-bg-panel:#ffffff;--line:#e6e8eb;
   --bg:#ffffff;--panel:#ffffff;--panel2:#f4f6f8;--panel3:#ffffff;
@@ -20,15 +21,15 @@
   --coach-nav-bg:#000000;--coach-header-bg:#000000;
   --coach-main-bg:#f4f6f8;--coach-main-text:#111418;--coach-main-muted:#5c6570;
   --coach-card-bg:#ffffff;--coach-card-border:#e6e8eb;
-  --coach-nav-active:rgba(255,255,255,.12);--coach-link:var(--th-blue);
-  --coach-rail-width:64px;
+  --coach-nav-active:rgba(255,255,255,.14);--coach-link:var(--th-blue);
+  --coach-rail-width:72px;
   --font-body:"Inter",ui-sans-serif,system-ui,sans-serif;
   --font-display:"Inter",ui-sans-serif,system-ui,sans-serif;
-  --tap:40px;--r:8px;--r-lg:10px;--ease:160ms ease;
+  --tap:40px;--r:8px;--r-lg:12px;--ease:160ms ease;
   --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;
-  --focus:0 0 0 2px #fff,0 0 0 4px rgba(37,99,235,.45);
+  --focus:0 0 0 2px #fff,0 0 0 4px rgba(10,14,255,.45);
   --shadow:0 8px 24px rgba(17,20,24,.08);
-  --zone:#2563eb;
+  --zone:#0a0eff;
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -78,25 +79,26 @@ a{color:var(--coach-link)}
 #gate .muted{color:var(--muted);font-size:13px;line-height:1.45}
 #gate .gate-title{margin-top:28px;font-family:var(--font-display);font-size:clamp(34px,6vw,42px);font-weight:600;letter-spacing:.01em;line-height:1.05}
 
-/* shell — slim black icon rail + black header + light canvas */
-#coachApp.coach-shell{display:grid;grid-template-columns:var(--coach-rail-width) 1fr;min-height:100vh;background:var(--coach-main-bg)}
-.coach-side.coach-rail-slim,.coach-side{display:flex;flex-direction:column;padding:12px 8px;background:var(--coach-nav-bg);color:#fff;min-height:100vh;width:var(--coach-rail-width)}
-.coach-brand{display:grid;place-items:center;padding:8px 0 16px}
-.coach-brand b,.coach-brand .sub{display:none}
-.coach-side nav{display:grid;gap:4px;flex:1;margin-top:4px}
-.coach-side nav button,.coach-side .nav-soon{display:grid;place-items:center;width:100%;min-height:44px;padding:8px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.55);font-size:0;text-align:center}
-.coach-side nav button .nav-label,.coach-side .nav-soon .nav-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+/* shell — full-bleed black header, then slim labeled rail + light canvas (photo dump) */
+#coachApp.coach-shell{display:grid;grid-template-columns:var(--coach-rail-width) minmax(0,1fr);grid-template-rows:auto 1fr;min-height:100vh;background:var(--coach-main-bg)}
+.coach-header{grid-column:1/-1;grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:0 16px 0 12px;min-height:56px;background:var(--coach-header-bg);color:#fff}
+.coach-header-lead{display:flex;align-items:center;gap:12px;min-width:0}
+.coach-header .mark{width:28px;height:28px;border-radius:4px;background:#fff;color:#111;font-size:13px}
+.coach-side.coach-rail-slim,.coach-side{grid-column:1;grid-row:2;display:flex;flex-direction:column;padding:8px 6px 12px;background:var(--coach-nav-bg);color:#fff;min-height:0;width:var(--coach-rail-width)}
+.coach-brand{display:none}
+.coach-side nav{display:grid;gap:2px;flex:1;margin-top:4px}
+.coach-side nav button,.coach-side .nav-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;min-height:56px;padding:8px 2px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.72);font-size:8px;font-weight:650;line-height:1.15;text-align:center;letter-spacing:.01em}
+.coach-side nav button .nav-label,.coach-side .nav-soon .nav-label{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:normal}
 .coach-side nav button.on{background:var(--coach-nav-active);color:#fff}
 .coach-side nav button:hover:not(.on):not(:disabled){background:rgba(255,255,255,.08);color:#fff}
 .coach-side nav button:disabled,.coach-side .nav-soon{opacity:.42;cursor:not-allowed}
 .nav-ico{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 .coach-side-foot{margin-top:auto;padding-top:10px;display:grid;gap:4px}
-.coach-side-foot button,.coach-side-foot a.btn{display:grid;place-items:center;width:100%;min-height:36px;padding:6px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.45);font-size:9px;text-align:center}
-.coach-side-foot button:hover,.coach-side-foot a.btn:hover{color:#fff;background:rgba(255,255,255,.08)}
+.coach-side-foot .nav-soon.support-soon{color:#fff;opacity:1;min-height:56px;border-radius:8px}
+.coach-side-foot .support-dot{display:grid;place-items:center;width:22px;height:22px;border-radius:999px;background:#f5c518;color:#111;font-weight:800;font-size:13px}
+.coach-workspace{grid-column:2;grid-row:2;display:flex;flex-direction:column;min-width:0;min-height:0}
 
-.coach-workspace{display:flex;flex-direction:column;min-width:0;min-height:100vh}
-.coach-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;min-height:56px;background:var(--coach-header-bg);color:#fff}
-.coach-header-title{font-size:15px;font-weight:600;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.coach-header-title{font-size:14px;font-weight:600;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
 .coach-header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .coach-header-actions .btn-assist{min-height:36px;padding:8px 14px;border:0;border-radius:6px;background:var(--th-blue);color:#fff;font-size:12px;font-weight:650;opacity:1;cursor:not-allowed}
 .icon-btn{position:relative;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.7);cursor:not-allowed;opacity:1}
@@ -119,7 +121,7 @@ a{color:var(--coach-link)}
 .btn.primary{border-color:var(--th-blue);background:var(--th-blue);color:#fff}
 .btn.primary:hover:not(:disabled){background:var(--th-blue-hover);border-color:var(--th-blue-hover)}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--th-blue)}
-.btn.ghost:hover:not(:disabled){background:rgba(37,99,235,.06);border-color:transparent}
+.btn.ghost:hover:not(:disabled){background:rgba(10,14,255,.06);border-color:transparent}
 .btn.danger,.btn.ghost.danger{color:var(--bad)}
 .btn.block{width:100%}
 .btn.small{min-height:var(--tap);min-width:var(--tap);padding:10px 12px;font-size:13px}
@@ -136,14 +138,27 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .card.interactive:hover,.feed-card:hover{border-color:#d0d4d8;box-shadow:var(--shadow)}
 .th-table,.data-table{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
 .th-table th,.data-table th,.th-table td,.data-table td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;color:var(--text)}
-.th-table th,.data-table th{color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.04em}
+.th-table th,.data-table th{color:#6b7280;font-size:11px;font-weight:600;letter-spacing:.04em;background:#f3f3f3;text-transform:none}
 .th-table tbody tr:hover,.data-table tbody tr:hover{background:#f7f9fb}
 .th-table tbody tr.selected,.data-table tbody tr.selected{background:#eff6ff}
 .table-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:0}
 .table-foot{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1px solid var(--line);border-top:0;color:var(--muted);font-size:12px}
 .session-comment-bar{display:block;width:100%;margin-top:14px;min-height:44px;border:0;border-radius:4px;background:var(--th-blue);color:#fff;font-weight:650;letter-spacing:.02em}
 .session-comment-bar:hover{background:var(--th-blue-hover)}
-.filter-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;min-height:40px}
+.btn-latest{min-height:32px;padding:6px 12px;border:0;border-radius:4px;background:#111;color:#fff;font-size:12px;font-weight:700}
+.filter-pill{display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--line);border-radius:10px;background:#fff;min-height:48px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.expand-all-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:4px 0 8px;color:var(--muted);font-size:13px}
+.lib-subnav{flex-basis:100%;display:flex;align-items:center;gap:4px;padding:0 4px 0 52px;margin:0 -16px 0 -12px;border-top:1px solid rgba(255,255,255,.12);background:#000}
+.lib-subnav .lib-tabs{border-bottom:0;margin:0;padding:0}
+.lib-subnav .lib-tabs button{color:rgba(255,255,255,.55);border-bottom-color:transparent;min-height:40px}
+.lib-subnav .lib-tabs button.on{color:#fff;border-bottom-color:#fff}
+.lib-subnav .lib-tabs button:hover{color:#fff}
+.avatar-menu{position:relative}
+.avatar-menu summary{list-style:none;cursor:pointer}
+.avatar-menu summary::-webkit-details-marker{display:none}
+.avatar-menu .menu{position:absolute;right:0;top:calc(100% + 6px);min-width:200px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);box-shadow:var(--shadow);z-index:20;display:grid;gap:2px}
+.avatar-menu .menu button,.avatar-menu .menu a{display:block;width:100%;text-align:left;padding:8px 10px;border:0;border-radius:6px;background:transparent;color:var(--text);font-size:13px;text-decoration:none}
+.avatar-menu .menu button:hover,.avatar-menu .menu a:hover{background:#f4f4f5}
 .welcome-h{font-size:13px;font-weight:600;color:#fff}
 .pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.03)}
 .pill.ok{border-color:rgba(125,186,154,.45);color:var(--ok)}
@@ -350,9 +365,11 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
   .feed-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:980px){
-  #coachApp.coach-shell{grid-template-columns:1fr}
-  .coach-side{flex-direction:row;flex-wrap:wrap;min-height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  #coachApp.coach-shell{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+  .coach-header{grid-column:1;grid-row:1}
+  .coach-side{grid-column:1;grid-row:2;flex-direction:row;flex-wrap:wrap;min-height:auto;width:auto;border-right:0;border-bottom:1px solid var(--line)}
   .coach-side nav{display:flex;flex-wrap:wrap;margin:0}
+  .coach-workspace{grid-column:1;grid-row:3}
   .coach-body.has-rail{grid-template-columns:1fr}
   .coach-rail{display:none}
   .coach-main{padding:18px 16px 40px}
@@ -716,13 +733,15 @@ function feedHtml(){
     const open = ui.expandAll || ui.expanded[s.id];
     const title = s.sessionTitle || s.name;
     const notePreview = s.comment?.text ? `<div class="muted" style="margin-top:8px">${esc(s.comment.text.slice(0,120))}${s.comment.text.length>120?'…':''}</div>` : '';
-    const statusPill = s.status === 'completed' ? 'pill ok' : (s.status === 'active' ? 'pill warn' : 'pill');
     return `<div class="card feed-card interactive">
-      <div class="row"><div><div class="eyebrow">${esc(c.athlete?.name||'Athlete')}</div><h2 style="font-size:20px;margin-top:4px">${esc(s.name)}</h2><div class="muted">${esc(title)}</div></div><span class="${statusPill}">${esc(s.status)}</span></div>
+      <div class="row"><div>
+        <button type="button" class="linkish" onclick="go('athlete',{athleteId:'${esc(c.athlete?.id||'')}'} )">${esc(c.athlete?.name||'Athlete')}</button>
+        <div class="muted">${esc(title)}</div>
+      </div></div>
       ${metricRow(c.metrics)}
       ${notePreview}
       <div class="row" style="margin-top:12px;justify-content:flex-start;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button>
+        <button type="button" class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See Less':'See More'}</button>
       </div>
       <button type="button" class="session-comment-bar" onclick="openCommentDrawer('${s.id}')">Session Comment</button>
       ${open?blockDetail(s):''}
@@ -734,8 +753,8 @@ function feedHtml(){
       <option value="all" ${ui.filterAthlete==='all'?'selected':''}>All Athletes</option>
       <option value="1to1" ${ui.filterAthlete==='1to1'?'selected':''}>1:1 Athletes</option>
       ${opts}</select></div>
-      <div class="row" style="gap:8px"><button type="button" class="btn small">Latest</button></div></div>
-    <label class="check-row"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()"> Expand all cards</label>
+      <div class="row" style="gap:8px"><button type="button" class="btn-latest">Latest</button></div></div>
+    <div class="expand-all-row"><span>Expand all cards</span><label class="check-row" style="margin:0"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()" aria-label="Expand all cards"></label></div>
     <div class="stack">${cards}</div>
     ${commentDrawerHtml()}</div>`;
 }
@@ -809,7 +828,6 @@ function programsListHtml(){
 }
 
 function libraryHtml(){
-  const tabs = libraryTabs();
   if (ui.lib === 'sessions') {
     const rows = (S.templates||[]).map(t => {
       const n = (t.blocks||[]).length;
@@ -818,16 +836,15 @@ function libraryHtml(){
         <div><b>${esc(t.name)}</b><div class="muted">${n} block${n===1?'':'s'}${kinds?' · '+esc(kinds):''}</div></div>
         <span class="pill">Edit</span></button>`;
     }).join('');
-    return `${tabs}
-      <div class="toolbar-row"><p class="lede" style="margin:0;flex:1">Session templates — same block shape the athlete app logs.</p>
+    return `<div class="toolbar-row"><p class="lede" style="margin:0;flex:1">Session templates — same block shape the athlete app logs.</p>
       <button type="button" class="btn primary small" onclick="newTemplate()">New session</button></div>
       <div class="stack">${rows || '<div class="empty-panel"><div class="eyebrow">Sessions</div><h2>No templates yet</h2><p class="muted">Create a session, then drop it into a program grid.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="newTemplate()">New session</button></div></div>'}</div>`;
   }
   if (ui.lib === 'exercises') {
-    return `${tabs}${exercisesCatalogHtml()}`;
+    return `${exercisesCatalogHtml()}`;
   }
   ui.lib = 'programs';
-  return `${tabs}${programsListHtml()}`;
+  return `${programsListHtml()}`;
 }
 
 function exercisesCatalogHtml(){
@@ -1620,28 +1637,37 @@ function coachChrome(body){
   const initials = String(S.coach?.name||'D').slice(0,1).toUpperCase();
   const hasRail = ui.view === 'home';
   const welcome = S.coach?.name ? `Welcome back, Coach ${esc(S.coach.name)}` : 'Welcome back';
-  return `<aside class="coach-side coach-rail-slim" aria-label="Coach navigation">
-    <div class="coach-brand"><div class="mark">H</div><div><b>THE Hybrid</b><div class="sub">hybrid S&C · coach workspace</div></div></div>
+  const headerLabel = ui.view === 'home' ? welcome : esc(headerTitle());
+  const libNav = ui.view === 'library' ? `<div class="lib-subnav">${libraryTabs()}</div>` : '';
+  return `<header class="coach-header">
+    <div class="coach-header-lead">
+      <div class="mark">H</div>
+      <div class="coach-header-title"><span class="welcome-h">${headerLabel}</span></div>
+    </div>
+    <div class="coach-header-actions">
+      <button type="button" class="btn-assist" disabled title="Coming soon">Manage Assistants</button>
+      <span class="icon-btn" title="Coming soon">${icon('msg')}<span class="badge">·</span></span>
+      <span class="icon-btn" title="Coming soon">${icon('bell')}</span>
+      <details class="avatar-menu">
+        <summary class="coach-avatar" title="Coach profile">${initials}</summary>
+        <div class="menu">
+          <a href="https://thehybridsystem.netlify.app/" target="_blank" rel="noopener noreferrer">Open athlete app</a>
+          <button type="button" onclick="pushCloudNow()">Push cloud now</button>
+          <button type="button" onclick="exportBridgeFile()">Export bridge file</button>
+          <button type="button" onclick="resetDemo()">Reset demo data</button>
+          <button type="button" onclick="signOut()">Sign out</button>
+        </div>
+      </details>
+    </div>
+    ${libNav}
+  </header>
+  <aside class="coach-side coach-rail-slim" aria-label="Coach navigation">
     <nav>${navHtml}</nav>
     <div class="coach-side-foot">
-      <span class="nav-soon" title="Coming soon">${icon('support')}<span class="nav-label">Support</span></span>
-      <a class="btn small block" href="https://thehybridsystem.netlify.app/" target="_blank" rel="noopener noreferrer" title="Open athlete app">Open athlete app</a>
-      <button type="button" onclick="pushCloudNow()" title="Push cloud now">Push cloud now</button>
-      <button type="button" onclick="exportBridgeFile()" title="Export bridge file">Export bridge file</button>
-      <button type="button" onclick="resetDemo()" title="Reset demo data">Reset demo</button>
-      <button type="button" onclick="signOut()" title="Sign out">Sign out</button>
+      <span class="nav-soon support-soon" title="Coming soon"><span class="support-dot">?</span><span class="nav-label">Support</span></span>
     </div>
   </aside>
   <div class="coach-workspace">
-    <header class="coach-header">
-      <div class="coach-header-title"><span class="welcome-h">${welcome}</span> · ${esc(headerTitle())}</div>
-      <div class="coach-header-actions">
-        <button type="button" class="btn-assist" disabled title="Coming soon">Manage Assistants</button>
-        <span class="icon-btn" title="Coming soon">${icon('msg')}<span class="badge">·</span></span>
-        <span class="icon-btn" title="Coming soon">${icon('bell')}</span>
-        <div class="coach-avatar" title="Coach profile">${initials}</div>
-      </div>
-    </header>
     <div class="coach-body ${hasRail?'has-rail':''}">
       <main class="coach-main">${body}</main>
       ${hasRail?`<aside class="coach-rail" aria-label="Programming status">${needsHtml()}</aside>`:''}
