@@ -1,0 +1,43 @@
+# Deploy WHOOP/Concept2/coach to The Brain owner site (thehybridengine1).
+# Athlete site proxies here — see deploy-athlete-netlify.yml.
+name: Deploy Brain owner Netlify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/brain-owner-coach/**'
+      - 'scripts/deploy-brain-owner.mjs'
+      - 'scripts/brain-owner-site.mjs'
+      - '.github/workflows/deploy-brain-owner-netlify.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Brain owner bundle smoke
+        run: node scripts/brain-owner-coach/checks/owner-bundle.smoke.mjs
+
+      - name: Deploy Brain owner (WHOOP + coach)
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${NETLIFY_AUTH_TOKEN:-}" ]]; then
+            echo "::warning::NETLIFY_AUTH_TOKEN not set — skipping Brain owner deploy"
+            exit 0
+          fi
+          node scripts/deploy-brain-owner.mjs
+
+      - name: Live WHOOP production smoke (post-deploy)
+        if: ${{ success() }}
+        env:
+          WHOOP_LIVE_RETRIES: '5'
+          WHOOP_LIVE_RETRY_MS: '5000'
+        run: node apps/athlete/checks/whoop-live.smoke.mjs
