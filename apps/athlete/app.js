@@ -14,6 +14,8 @@ const defaultState = () => ({
   published: {},
   goals: [],
   fabOpen: false,
+  session: null,
+  loggerOpen: false,
   notifications: 0,
   chatUnread: 0,
 });
@@ -29,6 +31,8 @@ function resetBlankSlate(keepAuth = true) {
   S.notifications = 0;
   S.chatUnread = 0;
   S.fabOpen = false;
+  S.session = null;
+  S.loggerOpen = false;
   S.selectedDate = today();
   S.settings = { whoop };
   save();
@@ -379,7 +383,7 @@ const TRAINING_DEMO = {
       label: 'STRENGTH/POWER',
       badge: { icon: 'trophy', text: 'For Weight' },
     },
-    { kind: 'lift', letter: 'B', title: 'Snatch Grip Rack Deadlift', prescription: '6 x 3' },
+    { kind: 'lift', letter: 'B', title: 'Snatch Grip Rack Deadlift', prescription: '6 x 3', notes: ['increase weight each set', 'set at mid shin', 'straps are acceptable'] },
     { kind: 'section', label: 'STRENGTH/POWER' },
     { kind: 'lift', letter: 'C', title: 'Barbell Lateral Squat', prescription: '3 x 8' },
     { kind: 'section', label: 'STRENGTH/POWER' },
@@ -472,7 +476,7 @@ function trnWarmupHtml(block) {
     })
     .join('');
   return `
-    <article class="trn-block trn-block--warmup">
+    <article class="trn-block trn-block--warmup" onclick="startTrainingSession('${esc(block.letter)}')">
       <div class="trn-block-head">
         <span class="trn-letter">${esc(block.letter)}</span>
         <h2 class="trn-block-title">${esc(block.title)}</h2>
@@ -495,7 +499,7 @@ function trnSectionHtml(block) {
 
 function trnLiftHtml(block) {
   return `
-    <article class="trn-block trn-block--lift">
+    <article class="trn-block trn-block--lift" onclick="startTrainingSession('${esc(block.letter)}')">
       <span class="trn-letter">${esc(block.letter)}</span>
       <div class="trn-lift-body">
         <h3 class="trn-lift-title">${esc(block.title)}</h3>
@@ -507,7 +511,7 @@ function trnLiftHtml(block) {
 function trnRecoveryHtml(block) {
   const bullets = (block.bullets || []).map((b) => `<li>${esc(b)}</li>`).join('');
   return `
-    <article class="trn-block trn-block--recovery">
+    <article class="trn-block trn-block--recovery" onclick="startTrainingSession('${esc(block.letter)}')">
       <div class="trn-block-head">
         <span class="trn-letter">${esc(block.letter)}</span>
         <h2 class="trn-block-title">${esc(block.title)}</h2>
@@ -546,8 +550,16 @@ function trainingTabHtml() {
     <div class="shell-screen shell-screen--training">
       ${trainingTopBarHtml()}
       ${trainingCalendarHtml()}
-      <div class="trn-scroll">${trainingBlocksHtml(S.selectedDate)}</div>
+      <div class="trn-scroll">${trainingBlocksHtml(S.selectedDate)}
+        <div class="trn-start-bar">
+          <button type="button" class="log-primary" onclick="startTrainingSession()">Start Session</button>
+        </div>
+      </div>
     </div>`;
+}
+
+function startTrainingSession(letter) {
+  if (window.Logger) Logger.open({ date: S.selectedDate, letter, plan: trainingPlanForDate(S.selectedDate) });
 }
 
 function chatHtml() {
@@ -726,7 +738,7 @@ function closeFab() {
 function syncFab() {
   const layer = document.getElementById('fabLayer');
   if (!layer) return;
-  const show = S.tab === 'home' || S.tab === 'training';
+  const show = !S.loggerOpen && (S.tab === 'home' || S.tab === 'training');
   layer.classList.toggle('hidden', !show);
   layer.classList.toggle('open', !!S.fabOpen);
   layer.classList.toggle('fab-layer--training', S.tab === 'training');
@@ -800,6 +812,7 @@ function render() {
   syncFab();
   renderCoachSheetLog();
   if (S.tab === 'chat') renderChatPageLog();
+  if (window.Logger && S.loggerOpen) Logger.paint();
 
   if (window.Whoop) {
     if (S.tab === 'me' && !(S.settings.whoop && S.settings.whoop.email)) {
@@ -869,6 +882,8 @@ window.closeCoachSheet = closeCoachSheet;
 window.askCoach = askCoach;
 window.applyOtaUpdate = applyOtaUpdate;
 window.lookForAppUpdate = lookForAppUpdate;
+window.startTrainingSession = startTrainingSession;
+window.trainingPlanForDate = trainingPlanForDate;
 window.render = render;
 
 document.addEventListener('DOMContentLoaded', async () => {

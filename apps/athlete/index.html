@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#000000">
   <title>Hybrid Athlete</title>
   <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="logger.css">
   <script src="vendor/supabase.min.js"></script>
 </head>
 <body>
@@ -35,6 +36,7 @@
         <p class="stub" id="coachSheetStatus"></p>
       </div>
     </div>
+    <div id="logger" class="hidden"></div>
     <nav class="bottom-nav" id="bottomNav">
       <button type="button" data-tab="home" onclick="setTab('home')">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z"/></svg>
@@ -61,6 +63,8 @@
   <script src="brain-bundle.js"></script>
   <script src="native-bridge.js"></script>
   <script src="connectors/whoop.js"></script>
+  <script src="session.js"></script>
+  <script src="logger.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

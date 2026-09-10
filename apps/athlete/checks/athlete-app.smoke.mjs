@@ -33,7 +33,10 @@ must(js.includes('function trainingTabHtml'), 'training tab screen');
 must(js.includes('TRAINING_DEMO'), 'HPP training demo plan');
 must(css.includes('.shell-screen--training'), 'training screen styles');
 must(css.includes('.trn-scroll'), 'training scroll container');
-must(js.includes('training: trainingTabHtml'), 'training tab wired in render()');
+must(html.includes('id="logger"'), 'logger overlay host');
+must(html.includes('logger.css'), 'logger stylesheet');
+must(html.includes('session.js'), 'session model script');
+must(js.includes('function startTrainingSession'), 'Start Session entry');
 
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');
