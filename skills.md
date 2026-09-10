@@ -51,7 +51,7 @@ a statement about what it needs, not about how important it is.
 
 ## VENDORED — committed to this repo at `vendor/…`
 
-27 skill directories under `vendor/skills/`, plus 3 subagents under
+42 skill directories under `vendor/skills/`, plus 3 subagents under
 `vendor/agents/` and 5 commands (`.md` + `.toml` each) under
 `vendor/commands/`, plus 4 hook source files under `vendor/hooks/`.
 `.gitignore` excludes `.claude/skills/`, `.claude/agents/`,
@@ -123,6 +123,18 @@ local database (styles, palettes, font pairings) and is the largest thing in
 `vendor/skills/` (~1.9 MB).
 Removal: `rm -rf .claude/skills/{frontend-design,install-skill,ui-ux-pro-max}`.
 
+### taste-skill + image-to-code + DESIGN.md catalog — 15 skills (10 September 2026)
+
+| | |
+|---|---|
+| **What / why** | Anti-slop frontend packs (`taste-skill` / `image-to-code-skill` and siblings), Vercel web-interface guideline review, and 74 brand `DESIGN.md` files. Used when cloning a screenshot UI or matching a named product look. |
+| **Source** | https://github.com/leonxlnx/taste-skill (`ccbc156`), https://github.com/vercel-labs/agent-skills (`063bee9`, skill `web-design-guidelines`), https://github.com/voltagent/awesome-design-md (`8147538`) |
+| **Install method** | VENDORED at `vendor/skills/`, materialised into `.claude/skills/` and gitignored `.cursor/skills/` by `bash scripts/ensure-skills.sh` when those copies are missing. |
+| **Verify path** | `vendor/skills/taste-skill/SKILL.md`, `vendor/skills/image-to-code-skill/SKILL.md`, `vendor/skills/web-design-guidelines/SKILL.md`, `vendor/skills/awesome-design-md/SKILL.md` |
+| **Writes outside its own directory** | Nothing. Markdown only. `web-design-guidelines` fetches https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md at review time. |
+| **Caveats** | Taste v2 (`design-taste-frontend`) is marked experimental upstream. Pin `taste-skill-v1` if you need the old defaults. |
+| **Removal** | `rm -rf .claude/skills/{taste-skill,taste-skill-v1,gpt-tasteskill,image-to-code-skill,redesign-skill,soft-skill,output-skill,minimalist-skill,brutalist-skill,stitch-skill,brandkit,imagegen-frontend-web,imagegen-frontend-mobile,web-design-guidelines,awesome-design-md}` |
+
 ---
 
 ## INSTALLED — needs a real toolchain, cannot be vendored
@@ -181,7 +193,7 @@ file lists knows why.
 
 | Bucket | Count | Survives a container recycle? |
 |---|---|---|
-| VENDORED skills | **27** directories: 14 superpowers + 7 caveman + 2 supabase + 1 session-start-hook + 3 pre-existing | Yes — committed at `vendor/skills/` |
+| VENDORED skills | **42** directories: 14 superpowers + 7 caveman + 2 supabase + 1 session-start-hook + 3 pre-existing + 13 taste-skill packs + `web-design-guidelines` + `awesome-design-md` | Yes — committed at `vendor/skills/` |
 | VENDORED agents / commands | 3 agents, 5 commands (`.md` + `.toml` each) | Yes — committed at `vendor/agents/`, `vendor/commands/` |
 | VENDORED hook source | 4 files at `vendor/hooks/` — the `caveman-stats` tracker and its deps | Source yes — committed. The user-scope install of it does not; the script re-does it. |
 | INSTALLED | **2** — graphify, claude-obsidian | No — `scripts/ensure-skills.sh` restores both |
@@ -190,7 +202,7 @@ file lists knows why.
 | Platform-managed | 6 — `~/.claude/skills/synced/` | Handled by the platform, not by us |
 | Cursor (see below) | `.cursor/skills/` + Claude Mem hooks | Skills yes if committed; Mem worker/key **no** |
 
-The `VENDORED_SKILLS` array in `scripts/ensure-skills.sh` has 27 entries;
+The `VENDORED_SKILLS` array in `scripts/ensure-skills.sh` has 42 entries;
 agents and commands are restored as whole directories rather than file by
 file.
 
@@ -212,9 +224,13 @@ working this repo. They live at visible repo paths and are committed on
 | `frontend-design` | `npx skills add anthropics/skills --skill frontend-design` | Distinctive UI direction. Also mirrored under `.agents/skills/frontend-design`. |
 | `caveman` | `npx skills add juliusbrussee/caveman@caveman` | Terse communication mode. Invoke `/caveman`; off with `stop caveman` / `normal mode`. |
 | `mem-search` | `npx skills add thedotmack/claude-mem@mem-search` | Search Claude Mem DB across sessions. |
+| `taste-skill` (+ siblings) | https://github.com/leonxlnx/taste-skill | Anti-slop frontend; install name `design-taste-frontend`. |
+| `image-to-code-skill` | same repo, `skills/image-to-code-skill` | Image-first website clone pipeline. |
+| `web-design-guidelines` | https://github.com/vercel-labs/agent-skills | UI/a11y/UX review against Vercel web interface guidelines. |
+| `awesome-design-md` | https://github.com/voltagent/awesome-design-md | 74 brand DESIGN.md files + index SKILL.md. |
 
 `skills-lock.json` at repo root records the skills CLI pins for
-`frontend-design`, `caveman`, `mem-search`.
+`frontend-design`, `caveman`, `mem-search`. Durable copies of the 2026-09-10 design packs live in `vendor/skills/` (`.cursor/` is gitignored; `ensure-skills.sh` restores them).
 
 ### Claude Mem (persistent memory) — INSTALLED, not fully vendored
 
@@ -234,7 +250,7 @@ working this repo. They live at visible repo paths and are committed on
 
 | Bucket | Count | Survives recycle? |
 |---|---|---|
-| Cursor skills under `.cursor/skills/` | 24 directories (14 superpowers + ui-ux-pro-max suite + frontend-design + caveman + mem-search) | Yes if committed |
+| Cursor skills under `.cursor/skills/` | working copies (gitignored); durable set is `vendor/skills/` including taste / image-to-code / web-design-guidelines / awesome-design-md | Yes via `vendor/skills/` |
 | Claude Mem hooks + context rule | project + user hooks | Project yes; user hooks + built tree + API key **no** |
 
 ## Rules of thumb
