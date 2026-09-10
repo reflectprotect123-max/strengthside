@@ -16,7 +16,7 @@
 The Hybrid athlete app (`index.html` / `THE-Hybrid-App.html`) is **not** this and is not edited. Athletes keep logging there. This page is coach-only: Home feed, roster, library, program/session builders, assign-to-team.
 
 ```bash
-cd apps/mobile/prototype/hybrid-app
+cd apps/coach
 python3 -m http.server 4173
 # http://localhost:4173/coach.html
 ```

@@ -90,11 +90,11 @@ function loadExerciseSearch() {
   sandbox.window = sandbox;
   vm.createContext(sandbox);
   vm.runInContext(
-    readFileSync(join(repoRoot, 'apps/mobile/prototype/hybrid-app/exercise-search-index.js'), 'utf8'),
+    readFileSync(join(repoRoot, 'apps/coach/exercise-search-index.js'), 'utf8'),
     sandbox,
   );
   vm.runInContext(
-    readFileSync(join(repoRoot, 'apps/mobile/prototype/hybrid-app/exercise-search.js'), 'utf8'),
+    readFileSync(join(repoRoot, 'apps/coach/exercise-search.js'), 'utf8'),
     sandbox,
   );
   return { ExerciseSearch: sandbox.ExerciseSearch, index: sandbox.EXERCISE_SEARCH_INDEX || [] };

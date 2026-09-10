@@ -1,6 +1,6 @@
 /**
  * End-to-end coach V1 flow — assign → publish → bridge → athlete pull.
- * Run: node apps/mobile/prototype/hybrid-app/coach-v1-e2e.smoke.mjs
+ * Run: node apps/coach/coach-v1-e2e.smoke.mjs
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

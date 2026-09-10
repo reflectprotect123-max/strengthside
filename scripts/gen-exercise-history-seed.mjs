@@ -5,7 +5,7 @@
  *   node scripts/gen-exercise-history-seed.mjs
  *   node scripts/gen-exercise-history-seed.mjs path/to/THE-trainheroic-import.json
  *
- * Output: apps/mobile/prototype/hybrid-app/exercise-history-seed.js
+ * Output: apps/coach/exercise-history-seed.js
  * The app auto-merges this on boot — no Settings import step.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -17,7 +17,7 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const defaultImport = join(repoRoot, 'THE-trainheroic-import.json');
 const sampleImport = join(repoRoot, 'test/fixtures/trainheroic-import-sample-out.json');
 const minImport = join(repoRoot, 'test/fixtures/exercise-history-seed-min.json');
-const outPath = join(repoRoot, 'apps/mobile/prototype/hybrid-app/exercise-history-seed.js');
+const outPath = join(repoRoot, 'apps/coach/exercise-history-seed.js');
 
 function pickSourcePath(argPath) {
   if (argPath && existsSync(argPath)) return argPath;
