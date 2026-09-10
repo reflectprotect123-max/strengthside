@@ -56,8 +56,40 @@ const sites = await listSites();
 const siteId = resolveBrainOwnerSiteId(sites);
 if (!siteId) fail('Could not resolve Brain owner site id (thehybridengine1)');
 
+const site = sites.find((s) => s.id === siteId);
+const accountId = site?.account_id;
+if (!accountId) fail(`No account_id for site ${siteId}`);
+
+async function upsertEnv(key, value, context = 'production') {
+  const res = await fetch(
+    `${API}/accounts/${accountId}/env/${encodeURIComponent(key)}?site_id=${siteId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ context, value }),
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`env ${key} ${res.status}: ${text.slice(0, 200)}`);
+  }
+}
+
+// WHOOP OAuth redirect_uri is derived from APP_BASE_URL in _lib/config.mjs.
+await upsertEnv('APP_BASE_URL', 'https://thehybridengine1.netlify.app');
+console.log('APP_BASE_URL set on Brain owner site');
+
 console.log(`Deploying Brain owner bundle to site=${siteId}`);
-console.log('Using external_node_modules for @netlify/blobs — not uploading node_modules');
+
+const npm = spawnSync('npm', ['ci', '--omit=dev', '--no-fund', '--no-audit'], {
+  cwd: bundle,
+  stdio: 'inherit',
+});
+if (npm.status !== 0) process.exit(npm.status ?? 1);
 
 const deploy = spawnSync(
   'npx',
@@ -74,7 +106,6 @@ const deploy = spawnSync(
     '.',
     '--functions',
     'netlify/functions',
-    '--no-build',
     '--message',
     `Brain owner WHOOP + coach (${process.env.GITHUB_SHA?.slice(0, 7) || 'local'})`,
   ],
