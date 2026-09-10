@@ -77,24 +77,31 @@
   }
 
   function persistTimer(next) {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      next.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
     root.S.timer = next;
     if (typeof root.save === 'function') root.save();
     paint();
   }
 
+  let audioCtx = null;
   function beep(kind) {
     if (lastBeep === kind) return;
     lastBeep = kind;
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audioCtx = audioCtx || new AC();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
       o.connect(g);
-      g.connect(ctx.destination);
+      g.connect(audioCtx.destination);
       o.frequency.value = kind === 'go' || kind === 'done' ? 880 : 660;
       g.gain.value = 0.06;
       o.start();
-      o.stop(ctx.currentTime + 0.08);
+      o.stop(audioCtx.currentTime + 0.08);
     } catch (_) { /* no audio */ }
   }
 
@@ -104,19 +111,41 @@
       const clock = document.getElementById('logClock');
       if (clock) clock.textContent = elapsed();
       const t = timerState();
-      const snap = HybridTimer.snapshot(t, Date.now());
-      if (t.view === 'running' && snap.done) {
-        beep('done');
-        persistTimer(HybridTimer.stop(t));
+      const now = Date.now();
+      const next = HybridTimer.tick(t, now);
+      if (next !== t) {
+        if (next.view === 'idle' && t.view !== 'idle') beep('done');
+        lastBeep = '';
+        persistTimer(next);
         return;
       }
-      if (snap.countInLabel && snap.countInLabel !== lastBeep) beep(snap.countInLabel === 'GO!' ? 'go' : snap.countInLabel);
-      if (snap.view === 'countIn' || snap.view === 'running') {
-        const dock = document.getElementById('logTimerDock');
-        const full = document.getElementById('logTimerFull');
-        if (dock || full) paint();
+      const snap = HybridTimer.snapshot(t, now);
+      if (snap.countInLabel && snap.countInLabel !== lastBeep) {
+        beep(snap.countInLabel === 'GO!' ? 'go' : snap.countInLabel);
+      } else if (snap.roundLabel && snap.roundLabel !== lastBeep) {
+        beep(snap.roundLabel);
       }
+      patchLiveTimer(snap);
     }, 100);
+  }
+
+  function patchLiveTimer(snap) {
+    if (snap.view !== 'countIn' && snap.view !== 'running') return;
+    if (snap.display === 'docked') {
+      const dock = document.getElementById('logTimerDock');
+      if (!dock) return;
+      const wrap = document.createElement('div');
+      wrap.innerHTML = timerDockHtml();
+      const node = wrap.firstElementChild;
+      if (node) dock.replaceWith(node);
+      return;
+    }
+    const full = document.getElementById('logTimerFull');
+    if (!full) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = runHtml(snap);
+    const node = wrap.firstElementChild;
+    if (node) full.replaceWith(node);
   }
 
   function stopClock() {
@@ -571,6 +600,7 @@
     else if (s.phase === 'summary') inner = summaryHtml(s);
     else inner = blockHtml(s);
     el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
+    startClock();
     if (s.phase === 'quote') {
       el.querySelector('.log-quote')?.addEventListener('click', () => Logger.gotQuote());
       if (!Logger._quoteTimer) {

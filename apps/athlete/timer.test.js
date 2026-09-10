@@ -88,6 +88,34 @@ test('play replays last rest with docked GET READY then GO then remaining', () =
   assert.ok(run.remainingMs > 119000);
 });
 
+test('tick commits play rest from count-in into running then idle play when done', () => {
+  let t = HybridTimer.create();
+  t = HybridTimer.choose(HybridTimer.openPicker(t), 'rest');
+  t = HybridTimer.quickStart(t, 120000);
+  t = HybridTimer.start(t, 0);
+  t = HybridTimer.stop(t);
+  t = HybridTimer.play(t, 10_000);
+  assert.equal(t.view, 'countIn');
+  t = HybridTimer.tick(t, 16_700);
+  assert.equal(t.view, 'running');
+  assert.equal(t.display, 'docked');
+  assert.ok(t.startedAt);
+  t = HybridTimer.tick(t, t.startedAt + 120000);
+  assert.equal(t.view, 'idle');
+  assert.equal(HybridTimer.snapshot(t, t.startedAt + 120000).chrome, 'play');
+});
+
+test('reduced motion count-in is digits only then running', () => {
+  let t = HybridTimer.create();
+  t.reducedMotion = true;
+  t = HybridTimer.choose(HybridTimer.openPicker(t), 'forTime');
+  t = HybridTimer.start(t, 0);
+  assert.equal(HybridTimer.snapshot(t, 0).countInLabel, '5');
+  assert.equal(HybridTimer.snapshot(t, 400).countInLabel, '5');
+  t = HybridTimer.tick(t, 5000);
+  assert.equal(t.view, 'running');
+});
+
 test('stop sheet cancel keeps running; stop returns idle play', () => {
   let t = HybridTimer.create();
   t = HybridTimer.choose(HybridTimer.openPicker(t), 'rest');

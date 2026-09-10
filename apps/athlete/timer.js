@@ -40,18 +40,26 @@
       pausedAt: null,
       pauseAccum: 0,
       stopSheet: false,
+      reducedMotion: false,
     };
   }
 
-  function countInTotal(cfg) {
+  function countInTotal(cfg, reduced) {
     const sec = Math.round((cfg.countInMs || 0) / 1000);
     if (sec <= 0) return 0;
+    if (reduced) return sec * DIGIT_MS;
     return READY_MS + sec * DIGIT_MS + GO_MS;
   }
 
-  function countInLabelAt(cfg, elapsed) {
+  function countInLabelAt(cfg, elapsed, reduced) {
     const sec = Math.round((cfg.countInMs || 0) / 1000);
     if (sec <= 0) return null;
+    if (reduced) {
+      if (elapsed < sec * DIGIT_MS) {
+        return String(sec - Math.floor(elapsed / DIGIT_MS));
+      }
+      return null;
+    }
     if (elapsed < READY_MS) return 'GET READY!';
     const after = elapsed - READY_MS;
     if (after < sec * DIGIT_MS) {
@@ -89,8 +97,8 @@
     if (t.view === 'countIn') {
       const cfg = t.config || {};
       const elapsed = now - t.countInAt;
-      const label = countInLabelAt(cfg, elapsed);
-      const total = countInTotal(cfg);
+      const label = countInLabelAt(cfg, elapsed, !!t.reducedMotion);
+      const total = countInTotal(cfg, !!t.reducedMotion);
       if (label) {
         return {
           view: 'countIn',
@@ -328,6 +336,28 @@
     return s;
   }
 
+  function tick(t, now) {
+    const reduced = !!t.reducedMotion;
+    if (t.view === 'countIn') {
+      const cfg = t.config || {};
+      const elapsed = now - t.countInAt;
+      const label = countInLabelAt(cfg, elapsed, reduced);
+      if (label) return t;
+      const s = clone(t);
+      s.view = 'running';
+      s.startedAt = t.countInAt + countInTotal(cfg, reduced);
+      s.countInAt = null;
+      s.pauseAccum = 0;
+      s.pausedAt = null;
+      t = s;
+    }
+    if (t.view === 'running') {
+      const snap = snapshot(t, now);
+      if (snap.done) return stop(t);
+    }
+    return t;
+  }
+
   function togglePause(t, now) {
     const s = clone(t);
     if (s.pausedAt != null) {
@@ -359,6 +389,7 @@
     cancelStopSheet,
     stop,
     reset,
+    tick,
     togglePause,
     formatClock,
   };
