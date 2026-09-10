@@ -149,7 +149,7 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.73** APK shipped; OTA upload blocked by Capgo plan (bundled HTML in APK is current) |
+| Capgo | **1.0.74** Training list + in-session logger (rest timer later); Home OLED unchanged |
 | Cache | `the-hybrid-athlete-blank-v207` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
