@@ -11,12 +11,38 @@ const src = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 const html = readFileSync(join(dir, 'coach.html'), 'utf8');
 
 if (!html.includes('coach-loop.js')) throw new Error('coach.html missing coach-loop.js');
+if (!html.includes('coach-nutrition.js')) throw new Error('coach.html missing coach-nutrition.js');
 if (!html.includes('Coach Home')) throw new Error('coach.html missing Coach Home');
 if (!html.includes('hybrid S&C')) throw new Error('coach.html missing team name');
+if (!html.includes('Nutrition')) throw new Error('coach.html missing Nutrition nav (greyed until N*)');
+if (!html.includes('coach-shell')) throw new Error('coach.html missing R0 coach-shell layout');
+if (!html.includes('--coach-main-bg:#07090b')) throw new Error('coach.html missing dark main pane tokens');
+if (!html.includes('Manage Assistants')) throw new Error('coach.html missing header actions');
+if (!html.includes('My Athletes')) throw new Error('coach.html missing athletes nav label');
+if (!html.includes('Analytics')) throw new Error('coach.html missing deferred Analytics nav');
 if (/TrainHeroic|Train HYBRD|trainheroic/i.test(html)) {
   throw new Error('coach.html must not use third-party brand/copy');
 }
-if (!html.includes('Session note')) throw new Error('coach.html missing Session note');
+if (!html.includes('Session comment') && !html.includes('Session note')) {
+  throw new Error('coach.html missing Session comment');
+}
+if (!html.includes('prog-days')) throw new Error('coach.html missing R4 program grid');
+if (!html.includes('Export bridge file')) throw new Error('coach.html missing bridge export');
+if (!html.includes('exercisesCatalogHtml') && !html.includes('Search exercises')) {
+  throw new Error('coach.html missing exercises catalog');
+}
+if (!html.includes('Session comment')) throw new Error('coach.html missing session comment drawer');
+if (!html.includes('function gateHtml')) throw new Error('coach.html missing gateHtml');
+if (!html.includes('ensureCoachAccount')) throw new Error('coach.html missing ensureCoachAccount');
+if (!html.includes('signInWithPassword')) {
+  throw new Error('coach.html must use Supabase signInWithPassword for real coach accounts');
+}
+if (!html.includes('same email + password')) {
+  throw new Error('coach.html gate must tell coaches to use athlete account credentials');
+}
+if (!html.includes('empty-panel')) throw new Error('coach.html missing empty-panel polish pattern');
+if (!html.includes('page-intro')) throw new Error('coach.html missing page-intro polish pattern');
+if (!html.includes('--ease')) throw new Error('coach.html missing motion token --ease');
 if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html.includes('Athlete ·')) {
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }
@@ -31,7 +57,7 @@ const store = L.memoryStorage();
 let S = L.buildSeed({ startMonday: '2026-08-24' });
 L.saveState(store, S);
 
-if (S.athletes.length < 3) throw new Error('need 2–3 athletes');
+if (S.athletes.length !== 1) throw new Error('seed should have Dan Veldman only');
 if (S.athletes[0].name !== 'Dan Veldman') throw new Error('Dan Veldman must be a test athlete');
 if (S.teams[0].name !== 'hybrid S&C') throw new Error('team name');
 if (S.programs[0].cells['1-1'] !== L.IDS.tplStrength) throw new Error('week×day cell');
@@ -66,9 +92,9 @@ L.completeBlock(today, condBlock.id, true);
 if (!L.blockIsComplete(condBlock)) throw new Error('completeBlock');
 
 const strengthDay = S.sessions.find(
-  (s) => s.athleteId === L.IDS.athleteAlex && s.date === '2026-08-24' && s.templateId === L.IDS.tplStrength,
+  (s) => s.athleteId === L.IDS.athleteDan && s.date === '2026-08-28' && s.templateId === L.IDS.tplStrength,
 );
-if (!strengthDay) throw new Error('Alex should have assigned Mon session');
+if (!strengthDay) throw new Error('Dan should have assigned Fri strength session');
 const squat = strengthDay.blocks.find((b) => (b.exercises || []).some((e) => e.exerciseId === 'core-back-squat'));
 const squatEx = squat.exercises.find((e) => e.exerciseId === 'core-back-squat');
 L.logSetArrays(strengthDay, squat.id, squatEx.id, '5,5,4', '100,105,110');
@@ -98,7 +124,7 @@ S.programs.push(prog);
 const before = S.sessions.length;
 L.assignProgram(S, {
   programId: prog.id,
-  athleteIds: [L.IDS.athleteJordan],
+  athleteIds: [L.IDS.athleteDan],
   startDate: '2026-08-24',
 });
 if (S.sessions.length <= before) throw new Error('individual assign created nothing');

@@ -13,6 +13,7 @@
   const STORAGE = 'THE-coach-loop-v1';
   const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const BLOCK_CATEGORIES = [
+    'Uncategorized',
     'Prep',
     'Speed/Agility',
     'Skill/Tech',
@@ -22,13 +23,27 @@
   ];
   const SCORING = ['completion', 'weight'];
   const METRICS = ['Reps', 'Weight', 'Time', 'Distance', 'RPE', 'Watts'];
+  const COND_FORMATS = [
+    { key: 'steady', name: 'Steady-state', type: 'easy' },
+    { key: 'intervals', name: 'Intervals', type: 'intervals', rounds: 4, workSec: 240, restSec: 180 },
+    { key: 'tempo', name: 'Tempo', type: 'intervals', rounds: 10, workSec: 15, restSec: 60 },
+    { key: 'free', name: 'Free run', type: 'easy' },
+    { key: 'custom', name: 'Custom', type: 'custom', rounds: 6, workSec: 40, restSec: 80 },
+  ];
+  const COND_MODALITIES = ['Run', 'Walk', 'Bike', 'Rower', 'Ski erg', 'Circuit', 'Other'];
+  const COND_EFFORTS = [
+    { key: 'easy', name: 'Easy', zoneKey: 'recovery', rpe: '3–4', cue: 'full sentences' },
+    { key: 'medium', name: 'Medium', zoneKey: 'aerobic', rpe: '5–7', cue: 'short sentences' },
+    { key: 'hard', name: 'Hard', zoneKey: 'anaerobic', rpe: '8–9.5', cue: 'a few words at a time' },
+  ];
+
+  const REMOVED_DEMO_ATHLETE_IDS = ['ath-alex-chen', 'ath-jordan-hale'];
+  const REMOVED_DEMO_ACCOUNT_IDS = ['acct-alex', 'acct-jordan'];
 
   const IDS = {
     coachAccount: 'acct-dan',
     coach: 'coach-dan',
     athleteDan: 'ath-dan-veldman',
-    athleteAlex: 'ath-alex-chen',
-    athleteJordan: 'ath-jordan-hale',
     team: 'team-hybrid-sc',
     program: 'prog-hybrid-base',
     tplStrength: 'tpl-full-body-strength',
@@ -156,23 +171,58 @@
   function letterBlocks(blocks) {
     let next = 0;
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-    return (blocks || []).map((b) => {
-      const block = clone(b);
+    const out = [];
+    let i = 0;
+    while (i < (blocks || []).length) {
+      const block = clone(blocks[i]);
+      delete block.supersetPartner;
+
       if (!isWorkBlock(block) && block.type === 'text') {
         block.letter = '';
-        return block;
+        out.push(block);
+        i += 1;
+        continue;
       }
+
       const ch = letters[next] || String(next + 1);
-      next += 1;
+
       if (block.superset && (block.exercises || []).length > 1) {
-        block.letters = (block.exercises || []).map((_, i) => ch + (i + 1));
+        block.letters = (block.exercises || []).map((_, j) => ch + (j + 1));
         block.letter = block.letters.join('/');
-      } else {
-        block.letter = ch;
-        block.letters = [ch];
+        out.push(block);
+        next += 1;
+        i += 1;
+        continue;
       }
-      return block;
-    });
+
+      const nextBlock = blocks[i + 1];
+      const nextIsStrength =
+        nextBlock &&
+        nextBlock.type === 'strength' &&
+        !nextBlock.recoverySession;
+
+      if (block.superset && block.type === 'strength' && nextIsStrength) {
+        block.letter = ch + '1';
+        block.letters = [ch + '1'];
+        out.push(block);
+
+        const partner = clone(nextBlock);
+        partner.letter = ch + '2';
+        partner.letters = [ch + '2'];
+        partner.supersetPartner = true;
+        out.push(partner);
+        next += 1;
+        i += 2;
+        continue;
+      }
+
+      block.letter = ch;
+      block.letters = [ch];
+      out.push(block);
+      next += 1;
+      i += 1;
+    }
+    return out;
   }
 
   function categoryForBlock(block) {
@@ -192,12 +242,68 @@
     return block.type === 'strength' ? 'weight' : 'completion';
   }
 
+  /** Keep strength / conditioning / recovery / prep text distinct for athlete flatten. */
+  function normalizeBlockType(block) {
+    if (!block) return block;
+    const cat = String(block.category || '').toLowerCase();
+    const heading = String(block.heading || '').toLowerCase();
+    const hasEx = (block.exercises || []).length > 0;
+    const isRecovery =
+      !!block.recoverySession || cat === 'recovery' || /recover|debt repay|easy flush/.test(heading);
+    const hasCond =
+      block.type === 'conditioning' ||
+      !!block.condFmt ||
+      !!block.conditioningType ||
+      !!block.effort ||
+      (!!block.modality && !hasEx);
+
+    if (block.type === 'text' && !hasEx) return block;
+
+    if (isRecovery || (hasCond && !hasEx)) {
+      block.type = 'conditioning';
+      block.scoring = 'completion';
+      if (isRecovery) {
+        block.recoverySession = true;
+        block.category = block.category || 'Recovery';
+        block.effort = block.effort || 'easy';
+        block.condFmt = block.condFmt || 'steady';
+        block.modality = block.modality || 'Mixed';
+        if (!block.baselineDurationMin) {
+          block.baselineDurationMin = num(block.targetDurationMin) || 30;
+        }
+        if (!block.targetDurationMin) block.targetDurationMin = block.baselineDurationMin;
+      }
+      delete block.exercises;
+      applyCondBuilderToBlock(block);
+      if (isRecovery) {
+        block.recoverySession = true;
+        block.category = 'Recovery';
+      }
+      return block;
+    }
+
+    if (hasEx || block.type === 'strength') {
+      delete block.recoverySession;
+      block.type = 'strength';
+      block.scoring = block.scoring || 'weight';
+      return block;
+    }
+
+    if (block.modality || block.targetDurationMin) {
+      block.type = 'conditioning';
+      block.scoring = 'completion';
+      applyCondBuilderToBlock(block);
+    }
+    return block;
+  }
+
   function decorateBlocks(blocks) {
     return letterBlocks(blocks).map((b) => {
+      normalizeBlockType(b);
       b.category = categoryForBlock(b);
       b.scoring = scoringForBlock(b);
       b.complete = !!b.complete;
-      (b.exercises || []).forEach(ensureRows);
+      if (b.type === 'strength') (b.exercises || []).forEach(ensureRows);
       return b;
     });
   }
@@ -311,23 +417,158 @@
     return sessionRows(session).some((r) => r.done || num(r.weight) || num(r.reps));
   }
 
+  function isAutopilotVolume(partial) {
+    if (partial && partial.autopilotVolume === true) return true;
+    if (partial && partial.autopilotVolume === false) return false;
+    const hasSets = partial && partial.sets != null && partial.sets !== '';
+    const hasReps = partial && partial.reps != null && String(partial.reps).trim() !== '';
+    return !hasSets && !hasReps;
+  }
+
   function makeExercise(partial) {
+    partial = partial || {};
+    const autopilotVol = isAutopilotVolume(partial);
     const ex = {
       id: partial.id || uid('ex'),
       name: partial.name,
       exerciseId: partial.exerciseId || '',
       category: partial.category || '',
-      sets: partial.sets == null ? 3 : partial.sets,
-      reps: partial.reps == null ? '8' : String(partial.reps),
+      autopilotVolume: autopilotVol,
+      sets: autopilotVol ? null : (partial.sets == null ? 3 : partial.sets),
+      reps: autopilotVol ? null : (partial.reps == null ? '8' : String(partial.reps)),
       load: partial.load == null ? '' : String(partial.load),
       metric: partial.metric || 'Weight',
       restSec: partial.restSec == null ? 90 : partial.restSec,
       coachNote: partial.coachNote || '',
       athleteNote: partial.athleteNote || '',
       swappedFrom: partial.swappedFrom || null,
+      logColumns: partial.logColumns || null,
+      loadExpr: partial.loadExpr || null,
     };
-    ensureRows(ex);
+    if (partial.targetRir != null && partial.targetRir !== '' && Number.isFinite(Number(partial.targetRir))) {
+      ex.targetRir = Math.max(0, Math.min(10, Math.round(Number(partial.targetRir))));
+    }
+    if (!autopilotVol) ensureRows(ex);
     return ex;
+  }
+
+  /** Parse reps like "6-8" for in-session very_easy rep bumps. */
+  function parseRepRange(reps) {
+    const s = String(reps || '').trim();
+    const m = s.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+    if (!m) return null;
+    const lo = Number(m[1]);
+    const hi = Number(m[2]);
+    if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo) return null;
+    return { lo, hi };
+  }
+
+  function formatMmSs(sec) {
+    sec = Math.max(0, Math.round(num(sec) || 0));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function parseMmSs(raw) {
+    raw = String(raw == null ? '' : raw).trim();
+    if (!raw) return 0;
+    if (/^\d+$/.test(raw)) return Math.max(0, num(raw));
+    const m = raw.match(/^(\d+)\s*:\s*(\d{1,2})$/);
+    if (m) return Math.max(0, num(m[1]) * 60 + Math.min(59, num(m[2])));
+    return Math.max(0, Math.round(num(raw) || 0));
+  }
+
+  function condFormatMeta(key) {
+    return COND_FORMATS.find((f) => f.key === key) || COND_FORMATS[0];
+  }
+
+  function condEffortMeta(key) {
+    return COND_EFFORTS.find((e) => e.key === key) || COND_EFFORTS[0];
+  }
+
+  function fmtNeedsIntervalFields(fmt) {
+    fmt = typeof fmt === 'string' ? condFormatMeta(fmt) : fmt || condFormatMeta('steady');
+    return fmt.key === 'intervals' || fmt.key === 'tempo' || fmt.key === 'custom';
+  }
+
+  function condIntervalTotalMin(b) {
+    const rounds = Math.max(1, num(b.rounds) || 1);
+    const work = Math.max(0, num(b.workSec) || 0);
+    const rest = Math.max(0, num(b.restSec) || 0);
+    return Math.round(((rounds * (work + rest)) / 60) * 10) / 10;
+  }
+
+  function condPlanLineFromParts(opts) {
+    opts = opts || {};
+    const mod = opts.modality || '—';
+    const effort = condEffortMeta(opts.effort || 'easy');
+    const fmtKey = opts.fmt || opts.condFmt || 'steady';
+    const fmt = condFormatMeta(fmtKey);
+    const intervalish =
+      fmtNeedsIntervalFields(fmt) ||
+      (num(opts.workSec) > 0 &&
+        (num(opts.rounds) > 1 || fmtKey === 'intervals' || fmtKey === 'tempo' || fmtKey === 'custom'));
+    if (intervalish) {
+      return `${mod} · ${opts.rounds || 1}×${formatMmSs(opts.workSec)} / ${formatMmSs(opts.restSec)} · ${effort.name}`;
+    }
+    const mins =
+      opts.minutes != null && opts.minutes !== ''
+        ? opts.minutes
+        : opts.targetDurationMin || opts.timeCapMin || '—';
+    return `${mod} · ${mins} min · ${effort.name}`;
+  }
+
+  function condPlanLineBlock(block) {
+    if (!block) return '';
+    return condPlanLineFromParts({
+      modality: block.modality,
+      effort: block.effort || 'easy',
+      fmt: block.condFmt || 'steady',
+      rounds: block.rounds,
+      workSec: block.workSec,
+      restSec: block.restSec,
+      minutes: block.targetDurationMin || block.timeCapMin,
+      targetDurationMin: block.targetDurationMin,
+      timeCapMin: block.timeCapMin,
+    });
+  }
+
+  function applyCondBuilderToBlock(block, patch) {
+    patch = patch || {};
+    const fmt = condFormatMeta(patch.condFmt || block.condFmt || 'steady');
+    const effort = condEffortMeta(patch.effort || block.effort || 'easy');
+    const modality = patch.modality != null ? patch.modality : block.modality || 'Bike';
+    const interval = fmtNeedsIntervalFields(fmt);
+    let minutes = patch.targetDurationMin != null ? num(patch.targetDurationMin) : num(block.targetDurationMin) || 20;
+    let rounds = patch.rounds != null ? num(patch.rounds) : num(block.rounds) || fmt.rounds || 1;
+    let workSec = patch.workSec != null ? num(patch.workSec) : num(block.workSec) || fmt.workSec || 0;
+    let restSec = patch.restSec != null ? num(patch.restSec) : num(block.restSec) || fmt.restSec || 0;
+    if (interval && !workSec) workSec = fmt.workSec || 240;
+    if (interval && restSec == null) restSec = fmt.restSec || 180;
+    if (interval) minutes = condIntervalTotalMin({ rounds, workSec, restSec });
+    const keepRecovery = !!block.recoverySession;
+    block.type = 'conditioning';
+    block.category = keepRecovery ? 'Recovery' : 'Conditioning';
+    block.scoring = 'completion';
+    if (keepRecovery) block.recoverySession = true;
+    block.heading = patch.heading != null ? patch.heading : block.heading || fmt.name;
+    block.condFmt = fmt.key;
+    block.conditioningType = fmt.type;
+    block.effort = effort.key;
+    block.modality = modality;
+    block.targetDurationMin = minutes;
+    block.timeCapMin = minutes;
+    block.rounds = Math.max(1, rounds || 1);
+    block.workSec = Math.max(0, workSec || 0);
+    block.restSec = Math.max(0, restSec || 0);
+    if (patch.targetWatts != null) {
+      if (patch.targetWatts === '' || num(patch.targetWatts) === 0) delete block.targetWatts;
+      else block.targetWatts = patch.targetWatts;
+    }
+    if (patch.notes != null) block.notes = patch.notes;
+    block.planLine = condPlanLineBlock(block);
+    return block;
   }
 
   function makeBlock(partial) {
@@ -344,8 +585,19 @@
       conditioningType: partial.conditioningType || '',
       modality: partial.modality || '',
       targetDurationMin: partial.targetDurationMin || 0,
+      timeCapMin: partial.timeCapMin || partial.targetDurationMin || 0,
+      effort: partial.effort || '',
+      condFmt: partial.condFmt || '',
+      rounds: partial.rounds == null ? 1 : partial.rounds,
+      workSec: partial.workSec || 0,
+      restSec: partial.restSec || 0,
+      targetWatts: partial.targetWatts == null ? '' : partial.targetWatts,
+      planLine: partial.planLine || '',
+      recoverySession: !!partial.recoverySession,
+      baselineDurationMin: partial.baselineDurationMin == null ? 0 : num(partial.baselineDurationMin),
     };
-    return block;
+    if (block.type === 'conditioning') applyCondBuilderToBlock(block);
+    return normalizeBlockType(block);
   }
 
   function makeTemplate(partial) {
@@ -376,6 +628,8 @@
       week: opts.week || null,
       day: opts.day || null,
       status: opts.status || 'scheduled',
+      published: opts.published === true,
+      publishedAt: opts.published ? new Date().toISOString() : null,
       coachInstructions: template.coachInstructions || '',
       blocks,
       notes: '',
@@ -482,6 +736,23 @@
     return program;
   }
 
+  /** Move template from one grid cell to another; swap if target is occupied. */
+  function moveProgramCell(program, fromWeek, fromDay, toWeek, toDay) {
+    const fromKey = cellKey(fromWeek, fromDay);
+    const toKey = cellKey(toWeek, toDay);
+    const moving = (program.cells || {})[fromKey];
+    if (!moving) return program;
+    const displaced = (program.cells || {})[toKey] || null;
+    if (displaced) {
+      program.cells[toKey] = moving;
+      program.cells[fromKey] = displaced;
+    } else {
+      program.cells[toKey] = moving;
+      delete program.cells[fromKey];
+    }
+    return program;
+  }
+
   function addProgramWeek(program) {
     program.weeks = num(program.weeks) + 1;
     return program;
@@ -505,10 +776,28 @@
       if (!template) continue;
       const date = addDays(start, (week - 1) * 7 + (day - 1));
       for (const athleteId of athleteIds) {
-        const exists = (state.sessions || []).some(
-          (s) => s.athleteId === athleteId && s.date === date && s.templateId === templateId,
+        const existsIdx = (state.sessions || []).findIndex(
+          (s) =>
+            s.athleteId === athleteId &&
+            s.date === date &&
+            s.templateId === templateId,
         );
-        if (exists) continue;
+        if (existsIdx >= 0) {
+          const cur = state.sessions[existsIdx];
+          if (cur.status === 'active' || cur.status === 'completed' || cur.published) continue;
+          const refreshed = instantiateSession(template, {
+            athleteId,
+            date,
+            programId: program.id,
+            week,
+            day,
+            name: week && day ? `Week ${week} Day ${day}` : template.name,
+          });
+          refreshed.sessionTitle = template.name;
+          refreshed.id = cur.id;
+          state.sessions[existsIdx] = refreshed;
+          continue;
+        }
         const session = instantiateSession(template, {
           athleteId,
           date,
@@ -534,16 +823,145 @@
     return { state, created, start };
   }
 
-  function needsProgramming(state) {
-    const assigned = new Set();
-    for (const a of state.assignments || []) {
-      (a.athleteIds || []).forEach((id) => assigned.add(id));
-    }
-    const missingAthletes = (state.athletes || []).filter((a) => !assigned.has(a.id));
-    const missingTeams = (state.teams || []).filter((t) =>
-      (t.athleteIds || []).some((id) => !assigned.has(id)),
+  function publishSession(session) {
+    if (!session) return session;
+    session.published = true;
+    session.publishedAt = new Date().toISOString();
+    return session;
+  }
+
+  function unpublishSession(session) {
+    if (!session) return session;
+    session.published = false;
+    session.publishedAt = null;
+    return session;
+  }
+
+  function publishAllSessions(sessions) {
+    (sessions || []).forEach(publishSession);
+    return sessions;
+  }
+
+  function hasUnpublished(sessions) {
+    return (sessions || []).some((s) => !s.published && s.status !== 'completed');
+  }
+
+  function athleteAccountEmail(state, athleteId) {
+    const acct = (state.accounts || []).find((a) => a.athleteId === athleteId);
+    return acct ? acct.email : null;
+  }
+
+  function addCalendarSession(state, opts) {
+    const template = (state.templates || []).find((t) => t.id === opts.templateId);
+    if (!template) throw new Error('template not found');
+    const exists = (state.sessions || []).some(
+      (s) =>
+        s.athleteId === opts.athleteId &&
+        s.date === opts.date &&
+        s.templateId === opts.templateId,
     );
-    return { athletes: missingAthletes, teams: missingTeams };
+    if (exists) return null;
+    const session = instantiateSession(template, {
+      athleteId: opts.athleteId,
+      date: opts.date,
+      name: opts.name || template.name,
+      status: 'scheduled',
+      published: false,
+    });
+    session.sessionTitle = template.name;
+    state.sessions.push(session);
+    return session;
+  }
+
+  function monthDays(monthKey) {
+    const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
+    const y = parts[0];
+    const m = parts[1];
+    const last = new Date(y, m, 0).getDate();
+    const pad = (n) => String(n).padStart(2, '0');
+    const days = [];
+    for (let d = 1; d <= last; d++) days.push(`${y}-${pad(m)}-${pad(d)}`);
+    return days;
+  }
+
+  /** Mon–Sun grid cells; null = padding before/after month. */
+  function monthGridCells(monthKey) {
+    const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
+    let y = parts[0];
+    let m = parts[1];
+    if (!y || !m || m < 1 || m > 12) {
+      const fb = today().slice(0, 7).split('-').map(Number);
+      y = fb[0];
+      m = fb[1];
+    }
+    const pad = (n) => String(n).padStart(2, '0');
+    const first = new Date(y, m - 1, 1);
+    const startOffset = (first.getDay() + 6) % 7;
+    const last = new Date(y, m, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < startOffset; i++) cells.push(null);
+    for (let d = 1; d <= last; d++) cells.push(`${y}-${pad(m)}-${pad(d)}`);
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }
+
+  function shiftMonth(monthKey, delta) {
+    const parts = String(monthKey || today().slice(0, 7)).split('-').map(Number);
+    const d = new Date(parts[0], parts[1] - 1 + num(delta), 1);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  }
+
+  function monthLabel(monthKey) {
+    const parts = String(monthKey || '').split('-').map(Number);
+    try {
+      return new Date(parts[0], parts[1] - 1, 1).toLocaleDateString(undefined, {
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return monthKey;
+    }
+  }
+
+  function sessionsOnDate(state, athleteId, date) {
+    return (state.sessions || []).filter((s) => s.athleteId === athleteId && s.date === date);
+  }
+
+  function needsProgramming(state) {
+    const start = today();
+    const horizon = addDays(start, 21);
+    const athletes = state.athletes || [];
+    const needAthletes = athletes.filter((a) => {
+      const inHorizon = (state.sessions || []).filter(
+        (s) =>
+          s.athleteId === a.id &&
+          s.date >= start &&
+          s.date <= horizon &&
+          s.status !== 'completed',
+      );
+      if (!inHorizon.length) {
+        const hasFuturePublished = (state.sessions || []).some(
+          (s) =>
+            s.athleteId === a.id &&
+            s.date >= start &&
+            s.published &&
+            s.status !== 'completed',
+        );
+        if (hasFuturePublished) return false;
+        const hasCompletedInHorizon = (state.sessions || []).some(
+          (s) =>
+            s.athleteId === a.id &&
+            s.date >= start &&
+            s.date <= horizon &&
+            s.status === 'completed',
+        );
+        if (hasCompletedInHorizon) return false;
+        return true;
+      }
+      return inHorizon.some((s) => !s.published);
+    });
+    return { athletes: needAthletes, teams: [] };
   }
 
   function calendarFor(state, athleteId, monthKey) {
@@ -588,9 +1006,61 @@
     return (state.accounts || []).find((a) => a.id === state.currentUserId) || null;
   }
 
+  /* ---------- exercise catalog (120-library) ---------- */
+
+  function catalogEntries() {
+    try {
+      const g = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : null;
+      if (g && Array.isArray(g.COACH_EXERCISE_CATALOG) && g.COACH_EXERCISE_CATALOG.length) {
+        return g.COACH_EXERCISE_CATALOG;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return null;
+  }
+
+  function catalogVersion() {
+    try {
+      const g = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : null;
+      return (g && g.COACH_EXERCISE_CATALOG_VERSION) || 'core-120-v1';
+    } catch (e) {
+      return 'core-120-v1';
+    }
+  }
+
+  function mergeExerciseCatalog(state) {
+    const catalog = catalogEntries();
+    if (!catalog || !catalog.length) return state;
+    state.exercises = state.exercises || [];
+    const byId = {};
+    for (const ex of state.exercises) {
+      if (ex && ex.id) byId[ex.id] = ex;
+    }
+    for (const row of catalog) {
+      if (!row || !row.id) continue;
+      const cur = byId[row.id];
+      if (!cur) {
+        const next = { ...row };
+        state.exercises.push(next);
+        byId[row.id] = next;
+      } else if (row.builtIn) {
+        cur.name = row.name;
+        cur.category = row.category;
+        cur.builtIn = true;
+        cur.source = row.source || 'THE-core-120';
+      }
+    }
+    state.meta = state.meta || {};
+    state.meta.coachExerciseCatalogVersion = catalogVersion();
+    return state;
+  }
+
   /* ---------- seed (this product's own sessions, not a third-party program) ---------- */
 
   function coreExercises() {
+    const catalog = catalogEntries();
+    if (catalog && catalog.length) return catalog.map((e) => ({ ...e }));
     return [
       { id: 'core-back-squat', name: 'Back Squat', category: 'Strength — Squat' },
       { id: 'core-bench-press', name: 'Bench Press', category: 'Strength — Push' },
@@ -710,23 +1180,25 @@
       blocks: [
         makeBlock({
           type: 'conditioning',
-          heading: 'Row Erg',
+          heading: 'Steady-state',
           category: 'Conditioning',
           scoring: 'completion',
-          conditioningType: 'easy',
+          condFmt: 'steady',
+          effort: 'easy',
           modality: 'Rower',
           targetDurationMin: 20,
-          notes: '20:00 easy aerobic row. Smooth first 2 minutes, then a pace you could hold while talking. Log duration, metres, and average watts.',
+          notes: 'Smooth first 2 minutes, then a pace you could hold while talking. Log duration, metres, and average watts.',
         }),
         makeBlock({
           type: 'conditioning',
-          heading: 'Fan Bike',
+          heading: 'Steady-state',
           category: 'Conditioning',
           scoring: 'completion',
-          conditioningType: 'easy',
+          condFmt: 'steady',
+          effort: 'easy',
           modality: 'Bike',
           targetDurationMin: 10,
-          notes: '10:00 easy fan bike to flush. Nasal breathing if possible.',
+          notes: 'Easy fan bike to flush. Nasal breathing if possible.',
         }),
       ],
     });
@@ -734,14 +1206,23 @@
     const recovery = makeTemplate({
       id: IDS.tplRecovery,
       name: 'Recovery Session',
+      templateKind: 'conditioning',
       coachInstructions: 'Optional movement. Skip any drill that aggravates something.',
       blocks: [
         makeBlock({
-          type: 'text',
-          heading: 'Recovery circuit',
+          type: 'conditioning',
+          heading: 'Recovery movement',
           category: 'Recovery',
           scoring: 'completion',
-          notes: '20–30 min: walk, easy bike, or mobility. Box breathing 4-4-4-4 × 5. Log how you felt, not output.',
+          recoverySession: true,
+          condFmt: 'steady',
+          effort: 'easy',
+          modality: 'Mixed',
+          baselineDurationMin: 30,
+          targetDurationMin: 30,
+          timeCapMin: 30,
+          notes:
+            'Mixed modal — your choice: walk, easy bike, row, mobility. Box breathing 4-4-4-4 × 5. Log time and feel, not output.',
         }),
       ],
     });
@@ -778,11 +1259,7 @@
     opts = opts || {};
     const startMonday = opts.startMonday || '2026-08-24';
     const templates = seedTemplates();
-    const athletes = [
-      { id: IDS.athleteDan, name: 'Dan Veldman', initials: 'DV' },
-      { id: IDS.athleteAlex, name: 'Alex Chen', initials: 'AC' },
-      { id: IDS.athleteJordan, name: 'Jordan Hale', initials: 'JH' },
-    ];
+    const athletes = [{ id: IDS.athleteDan, name: 'Dan Veldman', initials: 'DV' }];
     const state = {
       version: 1,
       currentUserId: null,
@@ -803,22 +1280,6 @@
           name: 'Dan Veldman',
           athleteId: IDS.athleteDan,
         },
-        {
-          id: 'acct-alex',
-          email: 'alex@thehybrid.local',
-          password: 'demo',
-          role: 'athlete',
-          name: 'Alex Chen',
-          athleteId: IDS.athleteAlex,
-        },
-        {
-          id: 'acct-jordan',
-          email: 'jordan@thehybrid.local',
-          password: 'demo',
-          role: 'athlete',
-          name: 'Jordan Hale',
-          athleteId: IDS.athleteJordan,
-        },
       ],
       coach: { id: IDS.coach, name: 'Dan' },
       athletes,
@@ -826,11 +1287,16 @@
         {
           id: IDS.team,
           name: 'hybrid S&C',
-          athleteIds: [IDS.athleteDan, IDS.athleteAlex, IDS.athleteJordan],
+          athleteIds: [IDS.athleteDan],
         },
       ],
       exercises: coreExercises(),
       templates,
+      nutrition: {
+        targetsByAthlete: {},
+        mealDays: [],
+        checkInReviews: [],
+      },
       programs: [
         {
           id: IDS.program,
@@ -883,18 +1349,36 @@
     };
   }
 
+  function pruneRemovedDemoAthletes(state) {
+    if (!state) return state;
+    state.athletes = (state.athletes || []).filter((a) => !REMOVED_DEMO_ATHLETE_IDS.includes(a.id));
+    state.accounts = (state.accounts || []).filter((a) => !REMOVED_DEMO_ACCOUNT_IDS.includes(a.id));
+    for (const team of state.teams || []) {
+      team.athleteIds = (team.athleteIds || []).filter((id) => !REMOVED_DEMO_ATHLETE_IDS.includes(id));
+    }
+    state.sessions = (state.sessions || []).filter((s) => !REMOVED_DEMO_ATHLETE_IDS.includes(s.athleteId));
+    return state;
+  }
+
   function loadState(storage, opts) {
     storage = storage || defaultStorage();
     try {
       const raw = storage.getItem(STORAGE);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.version === 1 && Array.isArray(parsed.accounts)) return parsed;
+        if (parsed && parsed.version === 1 && Array.isArray(parsed.accounts)) {
+          parsed.nutrition = parsed.nutrition || {
+            targetsByAthlete: {},
+            mealDays: [],
+            checkInReviews: [],
+          };
+          return mergeExerciseCatalog(pruneRemovedDemoAthletes(parsed));
+        }
       }
     } catch (e) {
       /* fall through to seed */
     }
-    const state = buildSeed(opts);
+    const state = mergeExerciseCatalog(buildSeed(opts));
     saveState(storage, state);
     return state;
   }
@@ -907,7 +1391,7 @@
 
   function resetState(storage, opts) {
     storage = storage || defaultStorage();
-    const state = buildSeed(opts);
+    const state = mergeExerciseCatalog(buildSeed(opts));
     saveState(storage, state);
     return state;
   }
@@ -922,11 +1406,25 @@
   }
 
   function prescriptionLine(ex) {
+    const rir =
+      ex.targetRir != null && Number.isFinite(Number(ex.targetRir))
+        ? ` · target ${Math.round(Number(ex.targetRir))} RIR`
+        : '';
+    const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
+    if (ex.autopilotVolume || (ex.sets == null && !String(ex.reps || '').trim())) {
+      return `autopilot${rest}${rir}`;
+    }
+    if (ex.loadExpr && ex.loadExpr.exprKind === 'pct_of_max') {
+      const pct = Math.round(Number(ex.loadExpr.exprArg) * 100);
+      return `${ex.sets} × ${ex.reps} · ${pct}% WM${rest}${rir}`;
+    }
+    if (ex.loadExpr && ex.loadExpr.exprKind === 'lwp_delta') {
+      return `${ex.sets} × ${ex.reps} · LWP ${ex.loadExpr.exprArg}${rest}${rir}`;
+    }
     const load = String(ex.load || '').trim();
     const metric = ex.metric || 'Weight';
-    const rest = ex.restSec ? ` · rest ${ex.restSec}s` : '';
-    const loadBit = load ? ` @ ${load}${metric === 'Weight' ? 'kg' : ''}` : '';
-    return `${ex.sets} × ${ex.reps}${loadBit}${rest}`;
+    const loadBit = load ? ` @ ${load}${metric === 'Weight' ? 'kg' : ''}` : ' · autopilot load';
+    return `${ex.sets} × ${ex.reps}${loadBit}${rest}${rir}`;
   }
 
   function actualLine(ex) {
@@ -939,12 +1437,37 @@
     return hasLoad ? `${reps} @ ${loads}kg` : reps;
   }
 
+  /** Superset leader + partner move as one chunk. */
+  function blockMoveSpan(blocks, from) {
+    const list = blocks || [];
+    const b = list[from];
+    if (!b) return { start: from, len: 0 };
+    if (b.supersetPartner && from > 0) return { start: from - 1, len: 2 };
+    if (b.superset && list[from + 1]?.supersetPartner) return { start: from, len: 2 };
+    return { start: from, len: 1 };
+  }
+
+  function reorderBlocks(blocks, from, to) {
+    const list = clone(blocks || []);
+    if (from === to || from < 0 || to < 0) return list;
+    const { start, len } = blockMoveSpan(list, from);
+    if (!len || (to >= start && to < start + len)) return list;
+    const chunk = list.splice(start, len);
+    let insertAt = to > start ? to - len : to;
+    insertAt = Math.max(0, Math.min(insertAt, list.length));
+    list.splice(insertAt, 0, ...chunk);
+    return list;
+  }
+
   return {
     STORAGE,
     DAY_NAMES,
     BLOCK_CATEGORIES,
     SCORING,
     METRICS,
+    COND_FORMATS,
+    COND_MODALITIES,
+    COND_EFFORTS,
     IDS,
     uid,
     clone,
@@ -964,6 +1487,18 @@
     isWorkBlock,
     letterBlocks,
     decorateBlocks,
+    blockMoveSpan,
+    reorderBlocks,
+    normalizeBlockType,
+    formatMmSs,
+    parseMmSs,
+    condFormatMeta,
+    condEffortMeta,
+    fmtNeedsIntervalFields,
+    condIntervalTotalMin,
+    condPlanLineFromParts,
+    condPlanLineBlock,
+    applyCondBuilderToBlock,
     volumeKg,
     volumeFromRows,
     prescribedTonnage,
@@ -985,8 +1520,20 @@
     setSessionComment,
     emptyProgram,
     setProgramCell,
+    moveProgramCell,
     addProgramWeek,
     assignProgram,
+    publishSession,
+    unpublishSession,
+    publishAllSessions,
+    hasUnpublished,
+    athleteAccountEmail,
+    addCalendarSession,
+    monthDays,
+    monthGridCells,
+    shiftMonth,
+    monthLabel,
+    sessionsOnDate,
     needsProgramming,
     calendarFor,
     teamCalendar,
@@ -995,6 +1542,7 @@
     logout,
     currentAccount,
     coreExercises,
+    mergeExerciseCatalog,
     seedTemplates,
     buildSeed,
     memoryStorage,
@@ -1002,6 +1550,7 @@
     saveState,
     resetState,
     prescriptionLine,
+    parseRepRange,
     actualLine,
     sessionRows,
   };

@@ -23,7 +23,7 @@ python3 -m http.server 4173
 
 Coach demo: `dan@thehybrid.local` / `demo`
 
-Seeded roster (visible on Coach Home, not a login here): team **hybrid S&C**, athletes Dan Veldman, Alex Chen, Jordan Hale, program **Hybrid Strength Base**, one completed session (Dan Veldman, Week 1 Day 1).
+Seeded roster (visible on Coach Home, not a login here): team **hybrid S&C**, athlete Dan Veldman, program **Hybrid Strength Base**, one completed session (Dan Veldman, Week 1 Day 1). This is the last good coach suite from `848074a` (parent of the park-coach commit).
 
 ## Brains (not a second app)
 
