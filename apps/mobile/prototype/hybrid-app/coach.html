@@ -6,28 +6,30 @@
 <title>THE Hybrid — Coach</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-/* Track Dawn — coach workspace polish (Dashboard as north star) */
+/* Screenshot-clone chrome — Hybrid labels only */
 :root{
-  --color-copper:#d4a574;--color-copper-bright:#e8c49a;--color-copper-dim:rgba(212,165,116,.22);
-  --color-bg-deep:#07090b;--color-bg-panel:#12161a;--line:rgba(255,255,255,.08);
-  --bg:var(--color-bg-deep);--panel:var(--color-bg-panel);--panel2:#181d22;--panel3:#0d1114;
-  --text:#eef2f4;--muted:#9aa3ab;--dim:#6f7881;
-  --copper:var(--color-copper);--copper2:var(--color-copper-bright);
-  --ok:#7dba9a;--warn:#d4a35b;--bad:#d0897d;
-  --coach-nav-bg:var(--color-bg-deep);--coach-header-bg:#0a0c0e;
-  --coach-main-bg:#07090b;--coach-main-text:var(--text);--coach-main-muted:var(--muted);
-  --coach-card-bg:var(--panel);--coach-card-border:var(--line);
-  --coach-nav-active:rgba(212,165,116,.14);--coach-link:var(--copper2);
-  --font-body:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
-  --font-display:"Barlow Condensed",ui-sans-serif,system-ui,sans-serif;
-  --tap:44px;--r:16px;--r-lg:22px;--ease:180ms cubic-bezier(.22,.7,.28,1);
+  --th-blue:#2563eb;--th-blue-hover:#1d4ed8;--th-blue-deep:#1e40af;
+  --color-copper:#d4a574;--color-copper-bright:#e8c49a;
+  --color-bg-deep:#000000;--color-bg-panel:#ffffff;--line:#e6e8eb;
+  --bg:#ffffff;--panel:#ffffff;--panel2:#f4f6f8;--panel3:#ffffff;
+  --text:#111418;--muted:#5c6570;--dim:#8a9299;
+  --copper:var(--th-blue);--copper2:var(--th-blue-hover);
+  --ok:#16a34a;--warn:#d97706;--bad:#dc2626;
+  --coach-nav-bg:#000000;--coach-header-bg:#000000;
+  --coach-main-bg:#f4f6f8;--coach-main-text:#111418;--coach-main-muted:#5c6570;
+  --coach-card-bg:#ffffff;--coach-card-border:#e6e8eb;
+  --coach-nav-active:rgba(255,255,255,.12);--coach-link:var(--th-blue);
+  --coach-rail-width:64px;
+  --font-body:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --font-display:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --tap:40px;--r:8px;--r-lg:10px;--ease:160ms ease;
   --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;
-  --focus:0 0 0 2px var(--bg),0 0 0 4px rgba(232,196,154,.55);
-  --shadow:0 16px 40px rgba(0,0,0,.35);
-  --zone:#5ec4b4;
-  color-scheme:dark;
+  --focus:0 0 0 2px #fff,0 0 0 4px rgba(37,99,235,.45);
+  --shadow:0 8px 24px rgba(17,20,24,.08);
+  --zone:#2563eb;
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 html,body{margin:0;font-family:var(--font-body);min-height:100%;background:var(--bg);color:var(--text)}
@@ -62,12 +64,12 @@ a{color:var(--coach-link)}
 
 /* gate */
 #gate{max-width:440px;margin:0 auto;padding:48px 20px;background:var(--bg);color:var(--text);min-height:100vh}
-.mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--copper);border-radius:11px;color:var(--copper2);font-weight:800;letter-spacing:.12em;font-size:12px;flex-shrink:0}
+.mark{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:8px;background:#fff;color:#111;font-weight:800;letter-spacing:.04em;font-size:14px;flex-shrink:0}
 .acct{display:grid;gap:8px;margin-top:18px}
 .acct button{text-align:left;color:var(--text)}
 #gate .btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);font-weight:650;color:var(--text);transition:border-color var(--ease),background var(--ease),color var(--ease),transform var(--ease)}
 #gate .btn:hover{border-color:rgba(212,165,116,.35)}
-#gate .btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
+#gate .btn.primary{border-color:var(--th-blue);background:var(--th-blue);color:#fff}
 #gate .btn.primary:hover{background:var(--copper2);border-color:var(--copper2)}
 #gate .field{margin-top:12px}
 #gate label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
@@ -76,62 +78,73 @@ a{color:var(--coach-link)}
 #gate .muted{color:var(--muted);font-size:13px;line-height:1.45}
 #gate .gate-title{margin-top:28px;font-family:var(--font-display);font-size:clamp(34px,6vw,42px);font-weight:600;letter-spacing:.01em;line-height:1.05}
 
-/* shell */
-#coachApp.coach-shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh;background:var(--coach-main-bg)}
-.coach-side{display:flex;flex-direction:column;padding:16px 10px;background:var(--coach-nav-bg);border-right:1px solid var(--line);color:var(--text);min-height:100vh}
-.coach-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 12px}
-.coach-brand b{font-size:14px;letter-spacing:.02em}
-.coach-brand .sub{color:var(--dim);font-size:11px;margin-top:2px}
-.coach-side nav{display:grid;gap:2px;flex:1;margin-top:8px}
-.coach-side nav button,.coach-side .nav-soon{display:flex;align-items:center;gap:10px;width:100%;min-height:var(--tap);padding:10px 12px;border:0;border-radius:10px;background:transparent;color:var(--dim);text-align:left;font-size:13px;font-weight:500;transition:background var(--ease),color var(--ease)}
-.coach-side nav button.on{background:var(--coach-nav-active);color:var(--copper2)}
-.coach-side nav button:hover:not(.on):not(:disabled){background:rgba(255,255,255,.04);color:var(--text)}
+/* shell — slim black icon rail + black header + light canvas */
+#coachApp.coach-shell{display:grid;grid-template-columns:var(--coach-rail-width) 1fr;min-height:100vh;background:var(--coach-main-bg)}
+.coach-side.coach-rail-slim,.coach-side{display:flex;flex-direction:column;padding:12px 8px;background:var(--coach-nav-bg);color:#fff;min-height:100vh;width:var(--coach-rail-width)}
+.coach-brand{display:grid;place-items:center;padding:8px 0 16px}
+.coach-brand b,.coach-brand .sub{display:none}
+.coach-side nav{display:grid;gap:4px;flex:1;margin-top:4px}
+.coach-side nav button,.coach-side .nav-soon{display:grid;place-items:center;width:100%;min-height:44px;padding:8px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.55);font-size:0;text-align:center}
+.coach-side nav button .nav-label,.coach-side .nav-soon .nav-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.coach-side nav button.on{background:var(--coach-nav-active);color:#fff}
+.coach-side nav button:hover:not(.on):not(:disabled){background:rgba(255,255,255,.08);color:#fff}
 .coach-side nav button:disabled,.coach-side .nav-soon{opacity:.42;cursor:not-allowed}
-.nav-ico{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
-.coach-side-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:6px}
-.coach-side-foot button{display:flex;align-items:center;gap:8px;width:100%;min-height:var(--tap);padding:8px 12px;border:0;border-radius:10px;background:transparent;color:var(--dim);font-size:12px;text-align:left;transition:background var(--ease),color var(--ease)}
-.coach-side-foot button:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-ico{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.coach-side-foot{margin-top:auto;padding-top:10px;display:grid;gap:4px}
+.coach-side-foot button,.coach-side-foot a.btn{display:grid;place-items:center;width:100%;min-height:36px;padding:6px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.45);font-size:9px;text-align:center}
+.coach-side-foot button:hover,.coach-side-foot a.btn:hover{color:#fff;background:rgba(255,255,255,.08)}
 
 .coach-workspace{display:flex;flex-direction:column;min-width:0;min-height:100vh}
-.coach-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;min-height:56px;background:var(--coach-header-bg);border-bottom:1px solid var(--line);color:var(--text)}
-.coach-header-title{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.coach-header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.coach-header-actions .btn-assist{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--dim);font-size:12px;font-weight:650;opacity:.5;cursor:not-allowed}
-.icon-btn{position:relative;display:grid;place-items:center;width:var(--tap);height:var(--tap);border:0;border-radius:10px;background:transparent;color:var(--dim);cursor:not-allowed;opacity:.4}
+.coach-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;min-height:56px;background:var(--coach-header-bg);color:#fff}
+.coach-header-title{font-size:15px;font-weight:600;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.coach-header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.coach-header-actions .btn-assist{min-height:36px;padding:8px 14px;border:0;border-radius:6px;background:var(--th-blue);color:#fff;font-size:12px;font-weight:650;opacity:1;cursor:not-allowed}
+.icon-btn{position:relative;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.7);cursor:not-allowed;opacity:1}
 .icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75}
-.icon-btn .badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--panel2);color:var(--dim);font-size:9px;font-weight:800;line-height:16px;text-align:center;border:1px solid var(--line)}
-.coach-avatar{width:32px;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--copper2)}
+.icon-btn .badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#fff;color:#111;font-size:9px;font-weight:800;line-height:16px;text-align:center}
+.coach-avatar{width:32px;height:32px;border-radius:999px;border:0;background:#3f3f46;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
 
-.coach-body{display:grid;flex:1;grid-template-columns:1fr}
+.coach-body{display:grid;flex:1;grid-template-columns:1fr;background:var(--coach-main-bg)}
 .coach-body.has-rail{grid-template-columns:1fr 280px}
-.coach-main{padding:24px 28px 48px;color:var(--coach-main-text);min-width:0}
-.coach-rail{padding:24px 16px;border-left:1px solid var(--line);background:var(--coach-main-bg);min-width:0}
+.coach-main{padding:20px 28px 48px;color:var(--coach-main-text);min-width:0;background:var(--coach-main-bg)}
+.coach-rail{padding:20px 16px;border-left:1px solid var(--line);background:#fff;min-width:0}
 
 /* main primitives */
 .eyebrow{color:var(--copper);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
 .muted{color:var(--coach-main-muted);font-size:13px;line-height:1.45}
 .coach-main h1,.coach-main h2{color:var(--coach-main-text)}
 .coach-main h1{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.01em}
-.btn{min-height:var(--tap);padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);font-weight:650;color:var(--text);transition:border-color var(--ease),background var(--ease),color var(--ease),opacity var(--ease);touch-action:manipulation}
-.btn:hover:not(:disabled){border-color:rgba(212,165,116,.35);background:#1c2228}
-.btn.primary{border-color:var(--copper);background:var(--copper);color:#14110d}
-.btn.primary:hover:not(:disabled){background:var(--copper2);border-color:var(--copper2)}
-.btn.ghost{background:transparent;border-color:transparent;color:var(--copper2)}
-.btn.ghost:hover:not(:disabled){background:rgba(212,165,116,.08);border-color:transparent}
+.btn{min-height:var(--tap);padding:8px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;font-weight:600;color:var(--text);transition:border-color var(--ease),background var(--ease),color var(--ease),opacity var(--ease);touch-action:manipulation}
+.btn:hover:not(:disabled){border-color:#c5c9ce;background:#fafbfc}
+.btn.primary{border-color:var(--th-blue);background:var(--th-blue);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--th-blue-hover);border-color:var(--th-blue-hover)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--th-blue)}
+.btn.ghost:hover:not(:disabled){background:rgba(37,99,235,.06);border-color:transparent}
 .btn.danger,.btn.ghost.danger{color:var(--bad)}
 .btn.block{width:100%}
 .btn.small{min-height:var(--tap);min-width:var(--tap);padding:10px 12px;font-size:13px}
 .btn:disabled,.btn[disabled]{opacity:.42;cursor:not-allowed}
-input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--text);transition:border-color var(--ease)}
-input:hover,select:hover,textarea:hover{border-color:rgba(255,255,255,.14)}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);transition:border-color var(--ease)}
+input:hover,select:hover,textarea:hover{border-color:#c5c9ce}
 textarea{min-height:88px;resize:vertical}
 .prep-textarea,.block-card.block-text textarea{min-height:200px;resize:vertical;line-height:1.45}
 label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .field{margin-top:12px}
 .stack{display:grid;gap:12px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
-.card{padding:16px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);transition:border-color var(--ease),box-shadow var(--ease)}
-.card.interactive:hover,.feed-card:hover{border-color:rgba(212,165,116,.28);box-shadow:var(--shadow)}
+.card{padding:16px;border:1px solid var(--line);border-radius:var(--r);background:#fff;transition:border-color var(--ease),box-shadow var(--ease)}
+.card.interactive:hover,.feed-card:hover{border-color:#d0d4d8;box-shadow:var(--shadow)}
+.th-table,.data-table{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+.th-table th,.data-table th,.th-table td,.data-table td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;color:var(--text)}
+.th-table th,.data-table th{color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.04em}
+.th-table tbody tr:hover,.data-table tbody tr:hover{background:#f7f9fb}
+.th-table tbody tr.selected,.data-table tbody tr.selected{background:#eff6ff}
+.table-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:0}
+.table-foot{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:10px 14px;background:#fff;border:1px solid var(--line);border-top:0;color:var(--muted);font-size:12px}
+.session-comment-bar{display:block;width:100%;margin-top:14px;min-height:44px;border:0;border-radius:4px;background:var(--th-blue);color:#fff;font-weight:650;letter-spacing:.02em}
+.session-comment-bar:hover{background:var(--th-blue-hover)}
+.filter-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;min-height:40px}
+.welcome-h{font-size:13px;font-weight:600;color:#fff}
 .pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.03)}
 .pill.ok{border-color:rgba(125,186,154,.45);color:var(--ok)}
 .pill.warn{border-color:rgba(212,163,91,.45);color:var(--warn)}
@@ -157,17 +170,18 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .presc{text-decoration:line-through;color:var(--dim)}
 .actual{color:var(--copper2);font-weight:600}
 .grid7{display:grid;grid-template-columns:88px repeat(7,1fr);gap:6px;align-items:stretch}
-.cell{min-height:72px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;font-size:12px;color:var(--text)}
+.cell{min-height:72px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;text-align:left;font-size:12px;color:var(--text)}
 .cell.empty{color:var(--dim)}
 .wk{display:grid;place-items:center;color:var(--muted);font-size:12px}
 .cal{display:grid;gap:8px}
 .item{padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);text-align:left;width:100%;color:var(--text)}
 
 /* session builder */
-.lib-tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:16px}
-.lib-tabs button{min-height:var(--tap);padding:10px 14px;border:0;border-radius:10px 10px 0 0;background:transparent;color:var(--muted);font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-9px;transition:color var(--ease),border-color var(--ease);touch-action:manipulation}
+.lib-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0;margin-bottom:16px}
+.lib-tabs button{min-height:var(--tap);padding:10px 14px;border:0;border-radius:0;background:transparent;color:var(--muted);font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--ease),border-color var(--ease);touch-action:manipulation}
 .lib-tabs button:hover{color:var(--text)}
-.lib-tabs button.on{color:var(--copper2);border-bottom-color:var(--copper)}
+.lib-tabs button.on{color:var(--th-blue);border-bottom-color:var(--th-blue)}
+.lib-tabs button:disabled{opacity:.4;cursor:not-allowed}
 .builder-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
 .builder-title{font-family:var(--font-display);font-size:28px;font-weight:600;background:transparent;border:0;border-bottom:1px solid transparent;padding:4px 0;width:min(100%,520px);color:var(--text)}
 .builder-title:focus{border-bottom-color:var(--copper);outline:none}
@@ -176,7 +190,7 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .instructions-box{position:relative}
 .instructions-box textarea{min-height:120px}
 .char-count{position:absolute;top:8px;right:10px;font-size:11px;color:var(--dim)}
-.block-card{margin-top:16px;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);overflow:hidden;transition:border-color var(--ease),box-shadow var(--ease)}
+.block-card{margin-top:16px;padding:0;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden;transition:border-color var(--ease),box-shadow var(--ease)}
 .block-card.dragging{opacity:.55;border-color:rgba(212,165,116,.45)}
 .block-card.drop-target{border-color:var(--copper);box-shadow:0 0 0 1px rgba(212,165,116,.25)}
 .block-drag-handle{display:grid;place-items:center;min-width:var(--tap);min-height:var(--tap);padding:0 6px;border:1px solid var(--line);border-radius:10px;background:var(--panel3);color:var(--muted);cursor:grab;font-size:14px;line-height:1;letter-spacing:-2px;flex-shrink:0;touch-action:none}
@@ -270,8 +284,8 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .prog-week-label{font-family:var(--font-display);font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
 .prog-days{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:8px;overflow-x:auto;padding-bottom:4px}
 .prog-day-h{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:0 4px 6px}
-.prog-cell{position:relative;min-height:120px;padding:0;border:1px solid var(--line);border-radius:10px;background:#0e1216;text-align:left;color:var(--text);overflow:visible;transition:border-color var(--ease)}
-.prog-cell.empty{cursor:pointer;background-image:linear-gradient(135deg,transparent 48%,rgba(255,255,255,.03) 50%,transparent 52%);background-size:10px 10px}
+.prog-cell{position:relative;min-height:120px;padding:0;border:1px solid var(--line);border-radius:4px;background:#fff;text-align:left;color:var(--text);overflow:visible;transition:border-color var(--ease)}
+.prog-cell.empty{cursor:pointer;background:#fff}
 .prog-cell.empty:hover{border-color:rgba(212,165,116,.35);border-style:dashed}
 .prog-cell.empty::after{content:"+";position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-size:18px;opacity:0;transition:opacity var(--ease);pointer-events:none}
 .prog-cell.empty:hover::after{opacity:.7}
@@ -303,7 +317,7 @@ label{display:block;margin:0 0 6px;color:var(--muted);font-size:10px;font-weight
 .cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
 .cal-dow{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:center}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.cal-day{min-height:88px;border:1px solid var(--line);border-radius:10px;background:#0e1216;padding:6px;position:relative;transition:border-color var(--ease),background var(--ease)}
+.cal-day{min-height:88px;border:1px solid var(--line);border-radius:4px;background:#fff;padding:6px;position:relative;transition:border-color var(--ease),background var(--ease)}
 .cal-day:hover{border-color:rgba(212,165,116,.28)}
 .cal-day.has-sessions{border-color:rgba(212,165,116,.22)}
 .cal-day.has-sessions .cal-day-num{color:var(--text)}
@@ -709,17 +723,18 @@ function feedHtml(){
       ${notePreview}
       <div class="row" style="margin-top:12px;justify-content:flex-start;gap:8px;flex-wrap:wrap">
         <button type="button" class="btn ghost small" onclick="toggleCard('${s.id}')">${open?'See less':'See more'}</button>
-        <button type="button" class="btn small" onclick="openCommentDrawer('${s.id}')">Session comment</button>
       </div>
+      <button type="button" class="session-comment-bar" onclick="openCommentDrawer('${s.id}')">Session Comment</button>
       ${open?blockDetail(s):''}
     </div>`;
   }).join('')).join('') || `<div class="empty-panel"><div class="eyebrow">Latest feed</div><h2>No sessions yet</h2><p class="muted">When athletes log work, cards land here. Assign and publish from Library to get started.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="go('library',{lib:'programs'})">Open library</button></div></div>`;
   const opts = athletes.map(a => `<option value="${a.id}" ${ui.filterAthlete===a.id?'selected':''}>${esc(a.name)}</option>`).join('');
-  return `<div class="fade-in"><div class="topbar"><div class="page-intro" style="margin:0"><div class="eyebrow">Latest feed</div><p class="lede" style="margin-top:4px">Logged sessions from your roster.</p></div>
-    <select onchange="ui.filterAthlete=this.value;render()" aria-label="Filter athletes">
+  return `<div class="fade-in"><div class="topbar"><div class="filter-pill"><span class="muted">All Athletes (${athletes.length})</span>
+    <select onchange="ui.filterAthlete=this.value;render()" aria-label="Filter athletes" style="border:0;width:auto;min-width:140px">
       <option value="all" ${ui.filterAthlete==='all'?'selected':''}>All Athletes</option>
       <option value="1to1" ${ui.filterAthlete==='1to1'?'selected':''}>1:1 Athletes</option>
       ${opts}</select></div>
+      <div class="row" style="gap:8px"><button type="button" class="btn small">Latest</button></div></div>
     <label class="check-row"><input type="checkbox" ${ui.expandAll?'checked':''} onchange="ui.expandAll=this.checked;render()"> Expand all cards</label>
     <div class="stack">${cards}</div>
     ${commentDrawerHtml()}</div>`;
@@ -750,7 +765,7 @@ function commentDrawerHtml(){
 function needsHtml(){
   const n = L.needsProgramming(S);
   if (!n.athletes.length && !n.teams.length) {
-    return `<div class="empty-panel"><div class="eyebrow">Needs programming</div><h2>All clear</h2><p class="muted">No teams or athletes need programming right now.</p></div>`;
+    return `<div class="empty-panel"><div class="eyebrow">Needs Programming</div><h2>All Clear</h2><p class="muted">There are currently no teams or athletes in need of programming.</p></div>`;
   }
   return `<div class="card interactive"><div class="eyebrow">Needs programming</div><h2 style="font-size:20px;margin-top:6px">${n.athletes.length} athlete${n.athletes.length===1?'':'s'}</h2><p class="muted" style="margin-top:8px">${n.athletes.map(a=>esc(a.name)).join(', ')}</p></div>`;
 }
@@ -765,32 +780,32 @@ function assignHtml(){ return CoachViews.assignHtml(); }
 function nutritionHtml(){ return CoachViews.nutritionHtml(); }
 
 function libraryTabs(){
-  const tabs = [['programs','Programs'],['sessions','Sessions'],['exercises','Exercises']];
-  return `<div class="lib-tabs" role="tablist">${tabs.map(([k,l]) => `<button type="button" role="tab" aria-selected="${ui.lib===k?'true':'false'}" class="${ui.lib===k?'on':''}" onclick="ui.lib='${k}';ui.cellMenu=null;render()">${l}</button>`).join('')}</div>`;
+  const tabs = [['programs','Programs'],['sessions','Sessions'],['exercises','Exercises'],['circuits','Circuits'],['prescriptions','Prescriptions']];
+  return `<div class="lib-tabs" role="tablist">${tabs.map(([k,l]) => {
+    const off = k==='circuits' || k==='prescriptions';
+    return `<button type="button" role="tab" ${off?'disabled':''} aria-selected="${ui.lib===k?'true':'false'}" class="${ui.lib===k?'on':''}" onclick="${off?'':'ui.lib=\''+k+'\';ui.cellMenu=null;render()'}">${l}</button>`;
+  }).join('')}<button type="button" disabled>More</button></div>`;
 }
 
 function programsListHtml(){
   const q = String(ui.progSearch||'').trim().toLowerCase();
   const list = (S.programs||[]).filter(p => !q || String(p.name).toLowerCase().includes(q));
   const rows = list.map(p => {
-    const filled = Object.keys(p.cells||{}).length;
     const weeks = Number(p.weeks)||1;
-    return `<div class="prog-row">
-      <button type="button" class="prog-row-main" onclick="openProgram('${p.id}')">
-        <div><b>${esc(p.name)}</b><div class="muted">${weeks} week${weeks===1?'':'s'} · ${filled} session${filled===1?'':'s'} placed</div></div>
-        <span class="pill">Open grid</span>
-      </button>
-      <div class="prog-row-actions">
-        <button type="button" class="btn small" onclick="go('assign',{programId:'${p.id}'})">Assign</button>
-      </div>
-    </div>`;
+    return `<tr>
+      <td><button type="button" class="linkish" onclick="openProgram('${p.id}')">${esc(p.name)}</button><div class="muted">${weeks} week${weeks===1?'':'s'}</div></td>
+      <td class="muted">—</td>
+      <td class="muted">hybrid S&C</td>
+      <td><button type="button" class="linkish" onclick="go('assign',{programId:'${p.id}'})">Assign</button></td>
+      <td><button type="button" class="btn small" onclick="openProgram('${p.id}')">Open grid</button></td>
+    </tr>`;
   }).join('');
   return `<div class="toolbar-row">
       <div class="field"><label>Search programs</label>
         <input value="${esc(ui.progSearch)}" oninput="ui.progSearch=this.value;render()" placeholder="Hybrid Strength…"></div>
       <button type="button" class="btn primary small" onclick="newProgram()">Create program</button>
     </div>
-    <div class="prog-list">${rows || '<div class="empty-panel"><div class="eyebrow">Programs</div><h2>No programs yet</h2><p class="muted">Build a week×day grid, then assign it to a team.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="newProgram()">Create program</button></div></div>'}</div>`;
+    ${rows ? `<div class="table-wrap"><table class="th-table data-table"><thead><tr><th>Title</th><th>Difficulty</th><th>Focus</th><th></th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div><div class="table-foot"><span class="rows-per-page">Rows per page: 100</span><span>1–${list.length} of ${list.length}</span></div>` : '<div class="empty-panel"><div class="eyebrow">Programs</div><h2>No programs yet</h2><p class="muted">Build a week×day grid, then assign it to a team.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="newProgram()">Create program</button></div></div>'}`;
 }
 
 function libraryHtml(){
@@ -818,19 +833,14 @@ function libraryHtml(){
 function exercisesCatalogHtml(){
   const q = String(ui.exCatalogSearch||'').trim().toLowerCase();
   const list = (S.exercises||[]).filter(e => !q || String(e.name).toLowerCase().includes(q) || String(e.category||'').toLowerCase().includes(q));
-  const cats = {};
-  list.forEach(e => { const c = e.category || 'Other'; (cats[c]=cats[c]||[]).push(e); });
-  const blocks = Object.keys(cats).sort().map(cat => {
-    const rows = cats[cat].map(e => `<div class="ex-cat-row"><b>${esc(e.name)}</b><span class="muted">${e.builtIn?'Core':'Custom'}</span></div>`).join('');
-    return `<div class="card" style="margin-top:10px"><div class="eyebrow">${esc(cat)}</div><div class="stack" style="margin-top:10px;gap:6px">${rows}</div></div>`;
-  }).join('');
+  const rows = list.map(e => `<tr><td><b>${esc(e.name)}</b></td><td class="muted">${e.builtIn?'EXERCISE':'CUSTOM'}</td><td class="muted">${esc(e.category||'—')}</td><td class="muted">—</td><td class="muted">—</td></tr>`).join('');
   return `<div class="toolbar-row">
       <div class="field"><label>Search exercises</label>
         <input value="${esc(ui.exCatalogSearch||'')}" oninput="ui.exCatalogSearch=this.value;render()" placeholder="Squat, row…"></div>
       <button type="button" class="btn primary small" onclick="addCustomExercise()">New exercise</button>
     </div>
     <p class="muted" style="margin-bottom:8px">${list.length} exercise${list.length===1?'':'s'} · 120-library variant search in session builder</p>
-    ${blocks || '<div class="empty-panel"><div class="eyebrow">Exercises</div><h2>No matches</h2><p class="muted">Try another search, or add a custom exercise.</p></div>'}`;
+    ${rows ? `<div class="table-wrap"><table class="th-table data-table"><thead><tr><th>Title</th><th>Type</th><th>Tags</th><th>Video</th><th>Created By</th></tr></thead><tbody>${rows}</tbody></table></div><div class="table-foot"><span class="rows-per-page">Rows per page: 100</span><span>1–${list.length} of ${list.length}</span></div>` : '<div class="empty-panel"><div class="eyebrow">Exercises</div><h2>No matches</h2><p class="muted">Try another search, or add a custom exercise.</p></div>'}`;
 }
 
 function addCustomExercise(){
@@ -1604,26 +1614,27 @@ function coachChrome(body){
     ['gym','Gym Tools','gym',true],
   ];
   const navHtml = nav.map(([k,l,ic,off]) => {
-    if (off) return `<span class="nav-soon" title="Coming soon">${icon(ic)}${esc(l)}</span>`;
-    return `<button type="button" class="${navActive(k)?'on':''}" data-nav="${k}" onclick="go('${k}')">${icon(ic)}${esc(l)}</button>`;
+    if (off) return `<span class="nav-soon" title="${esc(l)}">${icon(ic)}<span class="nav-label">${esc(l)}</span></span>`;
+    return `<button type="button" class="${navActive(k)?'on':''}" data-nav="${k}" title="${esc(l)}" onclick="go('${k}')">${icon(ic)}<span class="nav-label">${esc(l)}</span></button>`;
   }).join('');
   const initials = String(S.coach?.name||'D').slice(0,1).toUpperCase();
   const hasRail = ui.view === 'home';
-  return `<aside class="coach-side" aria-label="Coach navigation">
-    <div class="coach-brand"><div class="mark">TH</div><div><b>THE Hybrid</b><div class="sub">hybrid S&C · coach workspace</div></div></div>
+  const welcome = S.coach?.name ? `Welcome back, Coach ${esc(S.coach.name)}` : 'Welcome back';
+  return `<aside class="coach-side coach-rail-slim" aria-label="Coach navigation">
+    <div class="coach-brand"><div class="mark">H</div><div><b>THE Hybrid</b><div class="sub">hybrid S&C · coach workspace</div></div></div>
     <nav>${navHtml}</nav>
     <div class="coach-side-foot">
-      <span class="nav-soon" title="Coming soon">${icon('support')}Support</span>
-      <a class="btn small block" href="https://thehybridsystem.netlify.app/" target="_blank" rel="noopener noreferrer">Open athlete app</a>
-      <button type="button" onclick="pushCloudNow()">Push cloud now</button>
-      <button type="button" onclick="exportBridgeFile()">Export bridge file</button>
-      <button type="button" onclick="resetDemo()">Reset demo data</button>
-      <button type="button" onclick="signOut()">Sign out</button>
+      <span class="nav-soon" title="Coming soon">${icon('support')}<span class="nav-label">Support</span></span>
+      <a class="btn small block" href="https://thehybridsystem.netlify.app/" target="_blank" rel="noopener noreferrer" title="Open athlete app">Open athlete app</a>
+      <button type="button" onclick="pushCloudNow()" title="Push cloud now">Push cloud now</button>
+      <button type="button" onclick="exportBridgeFile()" title="Export bridge file">Export bridge file</button>
+      <button type="button" onclick="resetDemo()" title="Reset demo data">Reset demo</button>
+      <button type="button" onclick="signOut()" title="Sign out">Sign out</button>
     </div>
   </aside>
   <div class="coach-workspace">
     <header class="coach-header">
-      <div class="coach-header-title">${esc(headerTitle())}</div>
+      <div class="coach-header-title"><span class="welcome-h">${welcome}</span> · ${esc(headerTitle())}</div>
       <div class="coach-header-actions">
         <button type="button" class="btn-assist" disabled title="Coming soon">Manage Assistants</button>
         <span class="icon-btn" title="Coming soon">${icon('msg')}<span class="badge">·</span></span>

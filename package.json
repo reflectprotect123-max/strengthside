@@ -21,6 +21,7 @@
     "check:whoop-live": "node apps/athlete/checks/whoop-live.smoke.mjs",
     "check:coach-ai": "node apps/mobile/prototype/hybrid-app/coach-ai.smoke.mjs",
     "check:coach-loop": "node apps/mobile/prototype/hybrid-app/coach-loop.smoke.mjs",
+    "check:coach-clone": "node apps/mobile/prototype/hybrid-app/coach-clone.smoke.mjs",
     "check:coach-session-builder": "node apps/mobile/prototype/hybrid-app/coach-session-builder.smoke.mjs",
     "check:coach-library": "node apps/mobile/prototype/hybrid-app/coach-library.smoke.mjs",
     "check:coach-nutrition": "node apps/mobile/prototype/hybrid-app/coach-nutrition.smoke.mjs",
@@ -39,7 +40,7 @@
     "rematerialize:openrouter": "bash scripts/rematerialize-openrouter-from-vault.sh",
     "set:openrouter-netlify": "bash scripts/rematerialize-openrouter-from-vault.sh && node scripts/set-openrouter-netlify.mjs --deploy-coach",
     "ship:capgo": "bash apps/mobile/capacitor/scripts/ship-capgo.sh",
-    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:athlete-app && pnpm run check:no-recall && pnpm run check:whoop-ownership && pnpm run check:openrouter-ownership && pnpm run check:whoop-deeplink && pnpm run check:coach-ai && pnpm run check:log-columns && pnpm run check:exercise-search && pnpm run check:coach-loop && pnpm run check:coach-session-builder && pnpm run check:coach-library && pnpm run check:coach-nutrition && pnpm run check:coach-program-grid && pnpm run check:coach-bridge && pnpm run check:coach-calendars && pnpm run check:coach-v1-e2e && pnpm run check:coach-cloud && pnpm run check:coach-portal-athlete && pnpm run check:coach-block-types"
+    "verify": "pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:athlete-app && pnpm run check:no-recall && pnpm run check:whoop-ownership && pnpm run check:openrouter-ownership && pnpm run check:whoop-deeplink && pnpm run check:coach-ai && pnpm run check:log-columns && pnpm run check:exercise-search && pnpm run check:coach-loop && pnpm run check:coach-clone && pnpm run check:coach-session-builder && pnpm run check:coach-library && pnpm run check:coach-nutrition && pnpm run check:coach-program-grid && pnpm run check:coach-bridge && pnpm run check:coach-calendars && pnpm run check:coach-v1-e2e && pnpm run check:coach-cloud && pnpm run check:coach-portal-athlete && pnpm run check:coach-block-types"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

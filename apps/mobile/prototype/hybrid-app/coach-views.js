@@ -162,7 +162,7 @@
           a.id +
           '\',this.value)"></div>';
         return (
-          '<tr><td><button type="button" class="linkish" onclick="go(\'athlete\',{athleteId:\'' +
+          '<tr><td><input type="checkbox" aria-label="Select ' + esc(a.name) + '"></td><td><button type="button" class="linkish" onclick="go(\'athlete\',{athleteId:\'' +
           a.id +
           '\'})">' +
           esc(a.name) +
@@ -187,13 +187,16 @@
         );
       })
       .join('');
+    var n = (S().athletes || []).length;
     return (
-      '<div class="fade-in"><div class="page-intro"><div class="eyebrow">My Athletes</div><h1>Roster</h1>' +
-      '<p class="lede">Link an athlete to your signed-in Supabase user (dogfood) or paste their auth user id, then publish on their calendar.</p></div>' +
+      '<div class="fade-in"><div class="toolbar-row">' +
+      '<div class="filter-pill"><label>GROUP</label><select aria-label="GROUP"><option>All Athletes (' + n + ')</option></select></div>' +
+      '<div class="filter-pill"><label>STATUS</label><select aria-label="STATUS"><option>Active</option><option>Invited</option><option>Archived</option></select></div>' +
+      '<button type="button" class="btn primary small">Invite Athletes</button></div>' +
       (rows
-        ? '<div class="card" style="overflow-x:auto;padding:0"><table class="roster-table"><thead><tr><th>Athlete</th><th>Type</th><th>Team</th><th>Actions</th></tr></thead><tbody>' +
+        ? '<div class="table-wrap"><table class="th-table data-table roster-table"><thead><tr><th></th><th>Athlete Name</th><th>Athlete Type</th><th>Teams</th><th>Actions</th></tr></thead><tbody>' +
           rows +
-          '</tbody></table></div>'
+          '</tbody></table></div><div class="table-foot"><span class="rows-per-page">Rows per page: 100</span><span>1–' + n + ' of ' + n + '</span></div>'
         : '<div class="empty-panel"><div class="eyebrow">Roster</div><h2>No athletes yet</h2><p class="muted">Reset demo data to load the seeded roster, or add athletes from your workflow.</p></div>') +
       '</div>'
     );
@@ -216,20 +219,42 @@
       })
       .join('');
     return (
-      '<div class="fade-in"><div class="page-intro"><div class="eyebrow">My Teams</div><h1>Teams</h1>' +
-      '<p class="lede">Group athletes for calendar assign and publish-all.</p></div>' +
-      '<div class="toolbar-row"><div></div><button type="button" class="btn primary small" onclick="CoachViews.openCreateTeam()">Create team</button></div>' +
+      '<div class="fade-in"><div class="toolbar-row"><h1 style="margin:0;font-size:18px">My Teams</h1>' +
+      '<button type="button" class="btn primary small" onclick="CoachViews.openCreateTeam()">Create Team</button></div>' +
       (rows
-        ? '<div class="card" style="overflow-x:auto;padding:0"><table class="roster-table"><thead><tr><th>Team</th><th>Athletes</th><th>Actions</th></tr></thead><tbody>' +
+        ? '<div class="table-wrap"><table class="th-table data-table roster-table"><thead><tr><th>Title</th><th>Athletes</th><th>Actions</th></tr></thead><tbody>' +
           rows +
-          '</tbody></table></div>'
-        : '<div class="empty-panel"><div class="eyebrow">Teams</div><h2>No teams yet</h2><p class="muted">Create a team, then open its calendar to assign programs.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="CoachViews.openCreateTeam()">Create team</button></div></div>') +
+          '</tbody></table></div><div class="table-foot"><span class="rows-per-page">Rows per page: 100</span><span>1–' + (S().teams || []).length + ' of ' + (S().teams || []).length + '</span></div>'
+        : '<div class="empty-panel"><div class="eyebrow">Teams</div><h2>No teams yet</h2><p class="muted">Create a team, then open its calendar to assign programs.</p><div class="empty-actions"><button type="button" class="btn primary small" onclick="CoachViews.openCreateTeam()">Create Team</button></div></div>') +
+      (ui().createTeam ? teamCreateDialog() : '') +
       '</div>'
     );
   }
 
-  function openCreateTeam() {
-    var name = prompt('Team name');
+  function teamCreateDialog() {
+    return (
+      '<div class="picker-overlay" onclick="if(event.target===this){ui().createTeam=false;ctx.render()}">' +
+      '<div class="picker-panel team-create-dialog" role="dialog" aria-label="Create Team">' +
+      '<h2>Create Team</h2>' +
+      '<div class="field"><label>Team Name</label><input id="team-name-in" maxlength="75" oninput="CoachViews.teamNameCount(this)" placeholder="Team name">' +
+      '<div class="muted" id="team-name-count">0/75</div></div>' +
+      '<div class="row" style="margin-top:16px"><button type="button" class="btn" onclick="ui().createTeam=false;ctx.render()">Cancel</button>' +
+      '<button type="button" class="btn primary" id="team-create-save" disabled onclick="CoachViews.saveCreateTeam()">Create Team</button></div>' +
+      '</div></div>'
+    );
+  }
+
+  function teamNameCount(el) {
+    var n = String(el.value || '').length;
+    var c = document.getElementById('team-name-count');
+    if (c) c.textContent = n + '/75';
+    var b = document.getElementById('team-create-save');
+    if (b) b.disabled = n < 1;
+  }
+
+  function saveCreateTeam() {
+    var el = document.getElementById('team-name-in');
+    var name = el && el.value;
     if (!name || !String(name).trim()) return;
     S().teams.push({
       id: L().uid('team'),
@@ -238,7 +263,13 @@
         return a.id;
       }),
     });
+    ui().createTeam = false;
     persist();
+    ctx.render();
+  }
+
+  function openCreateTeam() {
+    ui().createTeam = true;
     ctx.render();
   }
 
@@ -278,7 +309,7 @@
         : '<span class="pill ' +
           (s.published ? 'ok' : 'warn') +
           '">' +
-          (s.published ? 'Published' : 'Unpublished') +
+          (s.published ? 'Published' : 'UNPUBLISHED') +
           '</span>';
     var macroPill = s.hasNutritionBundle ? ' · <span class="pill">Macros</span>' : '';
     return (
@@ -820,6 +851,8 @@
     teamCalHtml: teamCalHtml,
     nutritionHtml: nutritionHtml,
     openCreateTeam: openCreateTeam,
+    teamNameCount: teamNameCount,
+    saveCreateTeam: saveCreateTeam,
     toggleChipMenu: toggleChipMenu,
     publishChip: publishChip,
     unpublishChip: unpublishChip,
