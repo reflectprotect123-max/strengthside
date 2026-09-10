@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.74 | 2026-09-10 | Training tab HPP list + in-session logger (A–Done, kg pad); Home OLED unchanged; rest timer not yet; cache the-brain-v6 |
 | 1.0.73 | 2026-09-10 | Brain spine home — OLED dials, WHOOP recovery zones, calendar above dials, Me sign-in blank slate, settings OTA banner; cache THE-brain-v4 |
 | 1.0.71 | 2026-09-08 | Home/Settings banner when a Capgo update is downloaded and ready; Restart now; cache blank-v206 |
 | 1.0.70 | 2026-09-08 | Hard line S vs C — lift sessions drop every Engine block; notes stay notes; cache blank-v205 |
