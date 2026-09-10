@@ -61,6 +61,7 @@ VENDOR="$ROOT/vendor"
 # machine-wide rather than repo-local. Conflating the two once already wrote
 # all 27 vendored skills into user scope by mistake — keep them separate.
 CLAUDE_SKILLS="$ROOT/.claude/skills"
+CURSOR_SKILLS="$ROOT/.cursor/skills"
 USER_SKILLS="${HOME}/.claude/skills"
 FAILURES=0
 
@@ -115,6 +116,24 @@ VENDORED_SKILLS=(
   frontend-design
   install-skill
   ui-ux-pro-max
+  # taste-skill (Leonxlnx) + image-to-code + sibling packs — 2026-09-10
+  taste-skill
+  taste-skill-v1
+  gpt-tasteskill
+  image-to-code-skill
+  redesign-skill
+  soft-skill
+  output-skill
+  minimalist-skill
+  brutalist-skill
+  stitch-skill
+  brandkit
+  imagegen-frontend-web
+  imagegen-frontend-mobile
+  # vercel-labs/agent-skills
+  web-design-guidelines
+  # VoltAgent DESIGN.md catalog
+  awesome-design-md
 )
 
 echo "Vendored skills (committed in this repo — restored from vendor/skills/)"
@@ -141,6 +160,30 @@ for name in "${VENDORED_SKILLS[@]}"; do
 done
 ok "skills" "${skills_ok} healthy, ${skills_restored} restored, ${skills_failed} failed ($((skills_ok + skills_restored))/${#VENDORED_SKILLS[@]})"
 [ "$skills_failed" -eq 0 ] || FAILURES=$((FAILURES + 1))
+
+echo "Cursor skills (gitignored .cursor/skills/ — restored from vendor/skills/ when missing)"
+cursor_restored=0 cursor_ok=0 cursor_failed=0
+for name in "${VENDORED_SKILLS[@]}"; do
+  src="$VENDOR/skills/$name"
+  dest="$CURSOR_SKILLS/$name"
+  if [ ! -d "$src" ]; then
+    cursor_failed=$((cursor_failed + 1))
+    continue
+  fi
+  if [ -f "$dest/SKILL.md" ]; then
+    cursor_ok=$((cursor_ok + 1))
+    continue
+  fi
+  mkdir -p "$CURSOR_SKILLS"
+  if cp -r "$src" "$CURSOR_SKILLS/"; then
+    cursor_restored=$((cursor_restored + 1))
+  else
+    fail "$name" "cp -r vendor/skills/$name → .cursor/skills failed"
+    cursor_failed=$((cursor_failed + 1))
+  fi
+done
+ok "cursor-skills" "${cursor_ok} healthy, ${cursor_restored} restored, ${cursor_failed} failed ($((cursor_ok + cursor_restored))/${#VENDORED_SKILLS[@]})"
+[ "$cursor_failed" -eq 0 ] || FAILURES=$((FAILURES + 1))
 
 # --- cavecrew agents + caveman commands -------------------------------------
 CLAUDE_AGENTS="$ROOT/.claude/agents"
