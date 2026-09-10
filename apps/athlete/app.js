@@ -15,6 +15,7 @@ const defaultState = () => ({
   goals: [],
   fabOpen: false,
   session: null,
+  timer: null,
   loggerOpen: false,
   notifications: 0,
   chatUnread: 0,
@@ -32,6 +33,7 @@ function resetBlankSlate(keepAuth = true) {
   S.chatUnread = 0;
   S.fabOpen = false;
   S.session = null;
+  S.timer = null;
   S.loggerOpen = false;
   S.selectedDate = today();
   S.settings = { whoop };

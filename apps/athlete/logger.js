@@ -7,6 +7,7 @@
   let toast = '';
   let toastTimer = 0;
   let clockTimer = 0;
+  let lastBeep = '';
 
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -70,12 +71,52 @@
     if (typeof root.render === 'function') root.render();
   }
 
+  function timerState() {
+    if (!root.S.timer) root.S.timer = HybridTimer.create();
+    return root.S.timer;
+  }
+
+  function persistTimer(next) {
+    root.S.timer = next;
+    if (typeof root.save === 'function') root.save();
+    paint();
+  }
+
+  function beep(kind) {
+    if (lastBeep === kind) return;
+    lastBeep = kind;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.frequency.value = kind === 'go' || kind === 'done' ? 880 : 660;
+      g.gain.value = 0.06;
+      o.start();
+      o.stop(ctx.currentTime + 0.08);
+    } catch (_) { /* no audio */ }
+  }
+
   function startClock() {
     stopClock();
     clockTimer = setInterval(() => {
       const clock = document.getElementById('logClock');
       if (clock) clock.textContent = elapsed();
-    }, 1000);
+      const t = timerState();
+      const snap = HybridTimer.snapshot(t, Date.now());
+      if (t.view === 'running' && snap.done) {
+        beep('done');
+        persistTimer(HybridTimer.stop(t));
+        return;
+      }
+      if (snap.countInLabel && snap.countInLabel !== lastBeep) beep(snap.countInLabel === 'GO!' ? 'go' : snap.countInLabel);
+      if (snap.view === 'countIn' || snap.view === 'running') {
+        const dock = document.getElementById('logTimerDock');
+        const full = document.getElementById('logTimerFull');
+        if (dock || full) paint();
+      }
+    }, 100);
   }
 
   function stopClock() {
@@ -98,7 +139,7 @@
     const t = HybridSession.totals(s);
     return `
       <div class="log-top">
-        <button type="button" class="log-back-x" onclick="Logger.close()" aria-label="Close">⌄</button>
+        <button type="button" class="log-back-x" onclick="Logger.chevron()" aria-label="Close">⌄</button>
         <div class="log-dots">${dotsHtml(s)}</div>
         <div class="log-clock" id="logClock">${elapsed()}</div>
       </div>
@@ -108,15 +149,155 @@
       </div>`;
   }
 
+  function ringSvg(progress, inner) {
+    const c = 2 * Math.PI * 46;
+    const off = c * (1 - Math.max(0, Math.min(1, progress || 0)));
+    return `<svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5"
+        stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
+        transform="rotate(-90 50 50)"/>
+    </svg>${inner}`;
+  }
+
+  function timerDockHtml() {
+    const snap = HybridTimer.snapshot(timerState(), Date.now());
+    if (snap.view === 'countIn' && snap.display === 'docked') {
+      return `<div class="tm-dock-copy" id="logTimerDock">${esc(snap.countInLabel)}</div>`;
+    }
+    if (snap.view === 'running' && snap.display === 'docked') {
+      return `<button type="button" class="tm-dock-run" id="logTimerDock" onclick="Logger.timerTapDock()">${ringSvg(snap.progress, `<span>${esc(snap.clock)}</span>`)}</button>`;
+    }
+    if (snap.chrome === 'select') {
+      return `<button type="button" class="tm-select" onclick="Logger.timerOpen()" aria-label="Select Timer">⏱ Select Timer</button>`;
+    }
+    return `<button type="button" class="log-play" onclick="Logger.timerPlay()" aria-label="Start last timer">▶</button>`;
+  }
+
   function barHtml(s) {
     const atStart = s.blockIndex === 0;
     const atEnd = s.blockIndex === s.pages.length - 1;
+    const snap = HybridTimer.snapshot(timerState(), Date.now());
+    const hideSides = snap.stopSheet;
     return `
       <div class="log-bar">
-        <button type="button" class="log-bar-btn" onclick="Logger.prev()" ${atStart ? 'disabled' : ''}>← Back</button>
-        <button type="button" class="log-play" aria-label="Rest timer coming later">▶</button>
-        <button type="button" class="log-bar-btn" onclick="Logger.next()" ${atEnd ? 'disabled style="opacity:.35"' : ''}>Next →</button>
+        <button type="button" class="log-bar-btn" onclick="Logger.prev()" ${atStart || hideSides ? 'disabled' : ''}>← Back</button>
+        ${timerDockHtml()}
+        <button type="button" class="log-bar-btn" onclick="Logger.next()" ${atEnd || hideSides ? 'disabled style="opacity:.35"' : ''}>Next →</button>
       </div>`;
+  }
+
+  function fieldBox(key, value, label) {
+    return `<label class="tm-field">${esc(label)}<input inputmode="numeric" value="${esc(value)}" onchange="Logger.timerField('${esc(key)}', this.value)"></label>`;
+  }
+
+  function setupHtml(snap) {
+    const mode = snap.mode;
+    const c = snap.config || {};
+    const title = (HybridTimer.PICKER.find((p) => p.id === mode) || {}).label || mode;
+    let body = '';
+    if (mode === 'rest') {
+      const m = Math.floor((c.restMs || 0) / 60000);
+      const s = Math.floor(((c.restMs || 0) % 60000) / 1000);
+      body = `
+        <p class="tm-kicker">Quick Start</p>
+        <div class="tm-quick">${[30000, 45000, 60000, 90000, 120000].map((ms) => {
+          const clock = HybridTimer.formatClock(ms, false);
+          return `<button type="button" onclick="Logger.timerQuick(${ms})">${clock}</button>`;
+        }).join('')}</div>
+        <p class="tm-kicker">Customize</p>
+        <div class="tm-custom">
+          <button type="button" onclick="Logger.timerNudge(-1)">−</button>
+          <div class="tm-ms"><b>${m}</b><span>m</span></div>
+          <div class="tm-ms"><b>${String(s).padStart(2, '0')}</b><span>s</span></div>
+          <button type="button" onclick="Logger.timerNudge(1)">+</button>
+        </div>
+        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+    } else if (mode === 'stopwatch' || mode === 'forTime') {
+      body = `
+        <button type="button" class="tm-giant" onclick="Logger.timerStart()">▶</button>
+        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
+        <div class="tm-run-btns">
+          <button type="button" onclick="Logger.timerReset()">Reset</button>
+          <button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>
+        </div>`;
+    } else if (mode === 'amrap') {
+      body = `
+        ${fieldBox('totalMin', Math.floor((c.totalMs || 0) / 60000), 'Total min')}
+        ${fieldBox('totalSec', Math.floor(((c.totalMs || 0) % 60000) / 1000), 'Total sec')}
+        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
+        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+    } else if (mode === 'tabata' || mode === 'custom') {
+      const work = c.workMs || 0;
+      const rest = c.restMs || 0;
+      const blurb = mode === 'tabata'
+        ? `${c.rounds} rounds of ${Math.round(work / 1000)} seconds work, ${Math.round(rest / 1000)} seconds rest`
+        : `${c.rounds} rounds of: ${HybridTimer.formatClock(work, false)} work / ${HybridTimer.formatClock(rest, false)} rest`;
+      body = `
+        <p class="tm-blurb">${esc(blurb)}</p>
+        ${fieldBox('rounds', c.rounds, 'Rounds')}
+        ${fieldBox('workSec', Math.round(work / 1000), 'Work s')}
+        ${fieldBox('restSec', Math.round(rest / 1000), 'Rest s')}
+        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
+        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+    } else if (mode === 'emom') {
+      body = `
+        ${fieldBox('everyMin', Math.floor((c.everyMs || 0) / 60000), 'Every min')}
+        ${fieldBox('everySec', Math.floor(((c.everyMs || 0) % 60000) / 1000), 'Every sec')}
+        ${fieldBox('rounds', c.rounds, 'Rounds')}
+        ${fieldBox('countInSec', Math.round((c.countInMs || 0) / 1000), 'Count In s')}
+        <button type="button" class="tm-start" onclick="Logger.timerStart()">▶ Start</button>`;
+    }
+    return `
+      <div class="tm-full" id="logTimerFull">
+        <div class="tm-head">
+          <h2>${esc(title)}</h2>
+          <button type="button" onclick="Logger.timerSwitch()">⏱ Switch</button>
+        </div>
+        <div class="tm-setup">${body}</div>
+      </div>`;
+  }
+
+  function pickerHtml() {
+    const tiles = HybridTimer.PICKER.map((m) => `<button type="button" class="tm-tile" onclick="Logger.timerChoose('${m.id}')"><span class="tm-ico"></span>${esc(m.label)}</button>`).join('');
+    return `<div class="tm-full tm-picker" id="logTimerFull">
+      <button type="button" class="tm-x" onclick="Logger.timerClosePicker()" aria-label="Close">×</button>
+      <div class="tm-grid">${tiles}</div>
+    </div>`;
+  }
+
+  function runHtml(snap) {
+    const inner = `<div class="tm-face">
+      ${snap.roundFraction ? `<small>${esc(snap.roundFraction)}</small>` : ''}
+      <strong>${esc(snap.countInLabel || snap.clock || '')}</strong>
+      ${snap.roundLabel ? `<span>${esc(snap.roundLabel)}</span>` : ''}
+    </div>`;
+    return `<div class="tm-full" id="logTimerFull">
+      <div class="tm-head">
+        <h2>${esc((HybridTimer.PICKER.find((p) => p.id === snap.mode) || {}).label || '')}</h2>
+        <button type="button" onclick="Logger.timerSwitch()">⏱ Switch</button>
+      </div>
+      <div class="tm-run">${ringSvg(snap.progress == null ? 1 : snap.progress, inner)}</div>
+      ${snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : ''}
+    </div>`;
+  }
+
+  function timerOverlayHtml() {
+    const t = timerState();
+    const snap = HybridTimer.snapshot(t, Date.now());
+    let extra = '';
+    if (snap.view === 'picker') extra = pickerHtml();
+    else if (snap.view === 'setup') extra = setupHtml(snap);
+    else if ((snap.view === 'running' || snap.view === 'countIn') && snap.display === 'fullscreen') extra = runHtml(snap);
+    if (snap.stopSheet) {
+      extra += `<div class="tm-stop" onclick="if(event.target===this)Logger.timerCancelStop()">
+        <div class="tm-stop-card">
+          <button type="button" class="tm-stop-go" onclick="Logger.timerStop()">Stop Timer</button>
+          <button type="button" onclick="Logger.timerCancelStop()">Cancel</button>
+        </div>
+      </div>`;
+    }
+    return extra;
   }
 
   function quoteHtml() {
@@ -314,7 +495,7 @@
         ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
         ${tableHtml(s, page, log)}`;
     }
-    return `${headerHtml(s)}<div class="log-body">${body}</div>${barHtml(s)}${padHtml()}${sheetHtml(s)}`;
+    return `${headerHtml(s)}<div class="log-body">${body}</div>${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
   }
 
   function paint() {
@@ -459,6 +640,42 @@
     },
     feelNote(v) { persist(HybridSession.setFeel(session(), { note: v })); },
     finish() { persist(HybridSession.finishToSummary(session())); },
+    chevron() {
+      const t = timerState();
+      const snap = HybridTimer.snapshot(t, Date.now());
+      if ((snap.view === 'running' || snap.view === 'countIn') && snap.display === 'fullscreen') persistTimer(HybridTimer.collapse(t));
+      else if (snap.view === 'picker') persistTimer(HybridTimer.closePicker(t));
+      else if (snap.view === 'setup') persistTimer(HybridTimer.stop(t));
+      else close();
+    },
+    timerOpen() { persistTimer(HybridTimer.openPicker(timerState())); },
+    timerPlay() { persistTimer(HybridTimer.play(timerState(), Date.now())); },
+    timerChoose(id) { persistTimer(HybridTimer.choose(timerState(), id)); },
+    timerClosePicker() { persistTimer(HybridTimer.closePicker(timerState())); },
+    timerSwitch() { persistTimer(HybridTimer.openPicker(HybridTimer.stop(timerState()))); },
+    timerQuick(ms) { persistTimer(HybridTimer.quickStart(timerState(), ms)); },
+    timerNudge(dir) { persistTimer(HybridTimer.nudgeRest(timerState(), dir)); },
+    timerStart() { persistTimer(HybridTimer.start(timerState(), Date.now())); },
+    timerReset() { persistTimer(HybridTimer.reset(timerState(), Date.now())); },
+    timerPause() { persistTimer(HybridTimer.togglePause(timerState(), Date.now())); },
+    timerTapDock() { persistTimer(HybridTimer.openStopSheet(timerState())); },
+    timerStop() { persistTimer(HybridTimer.stop(timerState())); },
+    timerCancelStop() { persistTimer(HybridTimer.cancelStopSheet(timerState())); },
+    timerField(key, raw) {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return;
+      const t = timerState();
+      const c = { ...(t.config || {}) };
+      if (key === 'countInSec') c.countInMs = Math.max(0, n) * 1000;
+      if (key === 'rounds') c.rounds = Math.max(1, n);
+      if (key === 'workSec') c.workMs = Math.max(1, n) * 1000;
+      if (key === 'restSec') c.restMs = Math.max(0, n) * 1000;
+      if (key === 'totalMin') c.totalMs = n * 60000 + ((c.totalMs || 0) % 60000);
+      if (key === 'totalSec') c.totalMs = Math.floor((c.totalMs || 0) / 60000) * 60000 + n * 1000;
+      if (key === 'everyMin') c.everyMs = n * 60000 + ((c.everyMs || 0) % 60000);
+      if (key === 'everySec') c.everyMs = Math.floor((c.everyMs || 0) / 60000) * 60000 + n * 1000;
+      persistTimer(HybridTimer.patch(t, c));
+    },
   };
 
   root.Logger = Logger;
