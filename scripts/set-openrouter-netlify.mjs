@@ -78,34 +78,11 @@ async function verifyKeys(accountId, siteId) {
   }
 }
 
-function deployBrainOwnerCoach(siteId) {
-  const bundle = join(repo, 'scripts/brain-owner-coach');
-  const fnDir = join(bundle, 'netlify/functions');
-  if (!existsSync(join(fnDir, 'brain-coach.mjs'))) {
-    fail('missing scripts/brain-owner-coach/netlify/functions/brain-coach.mjs');
-  }
-  console.log(`Deploying brain-coach function to Brain owner site=${siteId}`);
-  const r = spawnSync(
-    'npx',
-    [
-      '--yes',
-      'netlify-cli@26.2.0',
-      'deploy',
-      '--prod',
-      '--auth',
-      token,
-      '--site',
-      siteId,
-      '--dir',
-      bundle,
-      '--functions',
-      'netlify/functions',
-      '--no-build',
-      '--message',
-      'brain-coach OpenRouter owner (Brain repo site)',
-    ],
-    { cwd: bundle, stdio: 'inherit', env: { ...process.env, NETLIFY_AUTH_TOKEN: token } },
-  );
+function deployBrainOwnerCoach() {
+  const r = spawnSync('node', [join(repo, 'scripts/deploy-brain-owner.mjs')], {
+    stdio: 'inherit',
+    env: { ...process.env, NETLIFY_AUTH_TOKEN: token },
+  });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
@@ -129,7 +106,7 @@ await upsertEnv(accountId, siteId, 'OPENROUTER_MODEL', 'openrouter/free');
 await verifyKeys(accountId, siteId);
 
 if (deployCoach && target === 'brain-owner') {
-  deployBrainOwnerCoach(siteId);
+  deployBrainOwnerCoach();
 }
 
 console.log('set-openrouter-netlify: ok');
