@@ -6,7 +6,8 @@ description: Strength and Engine are two products and two repos
 # Two products, two repos
 
 Strength is this repo (`apps/athlete/`). The Engine is a **sibling GitHub repo**
-(`engineside`), same as `nutrition`.
+(`reflectprotect123-max/Engine-side-`, trailing hyphen), same as `nutrition`.
+First push recipe: `README.md`. Do not recreate `engineside` as a second empty repo.
 
 Do not add `apps/engine/`, `packages/adaptive/`, or `apps/hybrid-engine/`.
 Do not mix Engine splits/watts/RPM into the Strength TRACK logger.

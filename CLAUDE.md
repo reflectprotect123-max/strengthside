@@ -1,7 +1,7 @@
 # Claude Code operating contract — TheStrengthEngine
 
 This repository is **Strength** (`apps/athlete/`). Conditioning is a **sibling
-repo** (`engineside`), same class as `nutrition` — not a folder here. WHOOP/Concept2/Echo and
+repo** (`reflectprotect123-max/Engine-side-`), same class as `nutrition` — not a folder here. WHOOP/Concept2/Echo and
 Capgo/dogfood ship on Strength. **All product engines were deleted 2026-09-03** (S&C + nutrition packages
 and all athlete/coach wiring). Blank slate shipped Capgo **1.0.52** / cache
 **v168** on 4 September 2026. See
@@ -133,10 +133,12 @@ splits/watts/RPM into the Strength logger. Spec:
 - **`apps/athlete/`** — Strength product (TrainHeroic-style logger). Storage
   `THE-brain-v1`. Plan sync domain `strength_side`. Netlify
   `thehybridsystem.netlify.app`. Android `com.hybrid.athlete`.
-- **The Engine** — sibling GitHub repo (`reflectprotect123-max/engineside`), same
+- **The Engine** — sibling GitHub repo
+  (`reflectprotect123-max/Engine-side-`; trailing hyphen is the live name), same
   pattern as `nutrition`. Own storage `THE-hybrid-engine-v1`. `@hybrid/adaptive`
   lives there. Do **not** add `apps/engine/` or `packages/adaptive/` here
-  (`no-recall.smoke.mjs` forbids both, plus `apps/hybrid-engine/`).
+  (`no-recall.smoke.mjs` forbids both, plus `apps/hybrid-engine/`). First push:
+  see `README.md` (empty dest, no force-push, flatten `f29d205` `apps/engine/`).
 - Edit Strength in `apps/athlete/`, then `bash scripts/sync-athlete-app.sh`.
   Play from `apps/athlete/index.html`.
 - **`apps/mobile/capacitor/`** — Android shell for Strength (`webDir: ../../athlete`).

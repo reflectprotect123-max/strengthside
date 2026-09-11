@@ -14,7 +14,7 @@
 
 | | |
 | --- | --- |
-| **Products** | **Two repos.** Strength = this tree (`apps/athlete/`, `THE-brain-v1`). Engine = sibling `engineside`. Nutrition = `nutrition`. Spec `docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`. |
+| **Products** | **Two repos.** Strength = this tree (`apps/athlete/`, `THE-brain-v1`). Engine = sibling [`Engine-side-`](https://github.com/reflectprotect123-max/Engine-side-) (trailing hyphen). Nutrition = `nutrition`. Spec `docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`. First Engine push: `README.md`. |
 | **The Brain** | `@hybrid/brain` in `packages/brain/` — readiness, today’s call, coach context. **Not HTML.** |
 | **Strength UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
 | **Build** | `bash scripts/sync-athlete-app.sh` → brain bundle → athlete |
@@ -77,7 +77,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ### Alive
 
-- Hybrid HTML shell + **The Engine** (conditioning builder/logger/analytics) + **Recovery** tab
+- Hybrid HTML Strength shell (`apps/athlete/`) + Recovery helpers that still live in this tree
 - Session chrome / rest / work overlays
 - WHOOP + Concept2 + Echo FTMS + Capgo live update
 - Shared Supabase **twelve-table data ledger** (RLS + `embed-coaching-note`) — storage only
