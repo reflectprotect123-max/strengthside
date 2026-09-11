@@ -1,14 +1,14 @@
 # Claude Code operating contract — TheStrengthEngine
 
-This repository is **the product**: the Hybrid HTML athlete app (manual
-logging + Library templates + calendar), WHOOP/Concept2/Echo, and Capgo/dogfood
-ship. **All product engines were deleted 2026-09-03** (S&C + nutrition packages
+This repository is **Strength** (`apps/athlete/`). Conditioning is a **sibling
+repo** (`reflectprotect123-max/Engine-side-`), same class as `nutrition` — not a folder here. WHOOP/Concept2/Echo and
+Capgo/dogfood ship on Strength. **All product engines were deleted 2026-09-03** (S&C + nutrition packages
 and all athlete/coach wiring). Blank slate shipped Capgo **1.0.52** / cache
 **v168** on 4 September 2026. See
 `docs/superpowers/specs/2026-09-03-blank-slate-zero-engines.md`,
 `docs/superpowers/specs/2026-09-03-engine-three-module-redesign.md`,
-and `handoff.md`. Do not implement `@hybrid/adaptive` until the
-three-module spec is approved and an implementation plan exists.
+`docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`,
+and `handoff.md`. Do not copy Engine into `apps/engine/` or `apps/hybrid-engine/`.
 It was split out of **`reflectprotect123-max/the-brain`** (formerly `THE-HYBRID-ENGINE1`) on 19 August 2026
 and still points at the **same Supabase project**.
 
@@ -122,16 +122,27 @@ path via `_hybrid-proxy.mjs`.
 - Shared Supabase strength tables remain a **data ledger** (see twelve-table
   contract). They do not imply a decision engine exists in this repo.
 
-## Athlete app — one surface
+## Two products — Strength and Engine stay separate
 
-**The product athletes use is the Hybrid HTML app in this repo.** Nothing else is the app.
+**Locked 11 September 2026.** Strength and conditioning are **two products and two
+repos**, not two tabs and not two folders in this tree. Do not mix Engine
+splits/watts/RPM into the Strength logger. Spec:
+`docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`.
 
 - **`packages/brain/`** — The Brain: pure hub logic only (`@hybrid/brain`). Not HTML, not an app.
-- **`apps/athlete/`** — Athlete UI + Netlify deploy root (home screen and branches).
-- Edit **`apps/athlete/`** (`index.html`, `app.js`, `home.css`), then
-  `bash scripts/sync-athlete-app.sh` (builds brain/adaptive bundles). Play locally from
-  `apps/athlete/index.html`.
-- **`apps/mobile/capacitor/`** — Android shell only (`webDir: ../../athlete`).
+- **`apps/athlete/`** — Strength product (TrainHeroic-style logger). Storage
+  `THE-brain-v1`. Plan sync domain `strength_side`. Netlify
+  `thehybridsystem.netlify.app`. Android `com.hybrid.athlete`.
+- **The Engine** — sibling GitHub repo
+  (`reflectprotect123-max/Engine-side-`; trailing hyphen is the live name), same
+  pattern as `nutrition`. Own storage `THE-hybrid-engine-v1`. `@hybrid/adaptive`
+  lives there. Do **not** add `apps/engine/` or `packages/adaptive/` here
+  (`no-recall.smoke.mjs` forbids both, plus `apps/hybrid-engine/`). First push:
+  see `README.md` (empty dest, no force-push, flatten `f29d205` `apps/engine/`).
+- Edit Strength in `apps/athlete/`, then `bash scripts/sync-athlete-app.sh`.
+  Play from `apps/athlete/index.html`.
+- **`apps/mobile/capacitor/`** — Android shell for Strength (`webDir: ../../athlete`).
+  Engine does not share that shell.
 - Expo Home, `prototype/hybrid-app/`, and `preview-site/` were **deleted**. Do not recreate them.
 - Coach chat in v0.1 is the in-app sheet (`brain-coach` proxy → Brain owner site).
 

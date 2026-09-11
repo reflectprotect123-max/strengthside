@@ -48,9 +48,11 @@ if (!siteId) fail('Could not resolve athlete site id (thehybridsystem)');
 const stage = mkdtempSync(join(tmpdir(), 'athlete-deploy-'));
 console.log(`Staging flat athlete bundle at ${stage}`);
 for (const rel of [
-  'index.html', 'app.js', 'home.css', 'brain-bundle.js', 'adaptive-bundle.js',
+  'index.html', 'app.js', 'home.css', 'logger.css', 'library.css',
+  'brain-bundle.js', 'session.js',
+  'library.js', 'library-ui.js', 'logger.js', 'timer.js', 'plan-sync.js',
   'native-bridge.js', 'service-worker.js', 'netlify.toml', 'package.json',
-  'connectors', 'vendor', 'netlify',
+  'connectors', 'vendor', 'netlify', 'assets',
 ]) {
   const from = join(source, rel);
   if (existsSync(from)) cpSync(from, join(stage, rel), { recursive: true });
