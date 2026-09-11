@@ -92,12 +92,15 @@
     return (state.templates || []).find((t) => t.id === tid) || null;
   }
 
-  function createTemplate(state, { title, instructions } = {}) {
+  function createTemplate(state, { title, instructions, lane } = {}) {
     const st = clone(ensure(state));
+    const kind = lane === 'engine' ? 'engine' : 'strength';
     st.templates.unshift({
       id: nid('tpl'),
-      title: String(title || 'Session Template').trim() || 'Session Template',
+      title: String(title || (kind === 'engine' ? 'Engine session' : 'Session Template')).trim()
+        || (kind === 'engine' ? 'Engine session' : 'Session Template'),
       instructions: String(instructions || ''),
+      lane: kind,
       blocks: [],
     });
     return st;
@@ -108,6 +111,30 @@
     const t = st.templates.find((x) => x.id === tid);
     if (!t) return st;
     Object.assign(t, patch);
+    return st;
+  }
+
+  function addEnginePiece(state, tid, piece = {}) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t || t.lane !== 'engine') return st;
+    const machine = piece.machine || 'row';
+    const Eng = root.HybridEngine;
+    const title = piece.title || (Eng && Eng.machineTitle(machine)) || machine;
+    t.blocks.push({
+      id: nid('blk'),
+      kind: 'engine',
+      title,
+      machine,
+      structure: piece.structure || 'intervals',
+      effort: piece.effort || 'medium',
+      workSec: Math.max(1, Number(piece.workSec) || 15),
+      restSec: Math.max(0, Number(piece.restSec) || 45),
+      rounds: Math.max(1, Number(piece.rounds) || 8),
+      typedWatts: piece.typedWatts == null || piece.typedWatts === '' ? null : Number(piece.typedWatts),
+      typedSplitSec: piece.typedSplitSec == null || piece.typedSplitSec === '' ? null : Number(piece.typedSplitSec),
+      typedRpm: piece.typedRpm == null || piece.typedRpm === '' ? null : Number(piece.typedRpm),
+    });
     return st;
   }
 
@@ -138,6 +165,7 @@
     const st = clone(ensure(state));
     const t = st.templates.find((x) => x.id === tid);
     if (!t) return st;
+    if (t.lane === 'engine') return st;
     let cols = Array.isArray(columns) && columns.length ? columns.slice() : ['reps', 'weight_kg'];
     let name = title || 'Exercise';
     if (catalogId) {
@@ -262,6 +290,7 @@
   }
 
   function sectionFor(block) {
+    if (block.kind === 'engine') return 'The Engine';
     if (block.kind === 'circuit') {
       if (/recover|cool/i.test(block.title || '')) return 'Recovery';
       return 'Conditioning';
@@ -278,7 +307,25 @@
         blocks.push({ kind: 'section', label: section.toUpperCase() });
         lastSection = section;
       }
-      if (b.kind === 'circuit') {
+      if (b.kind === 'engine') {
+        const Eng = root.HybridEngine;
+        blocks.push({
+          kind: 'engine',
+          letter: b.letter,
+          title: b.title,
+          machine: b.machine,
+          structure: b.structure,
+          effort: b.effort,
+          workSec: b.workSec,
+          restSec: b.restSec,
+          rounds: b.rounds,
+          typedWatts: b.typedWatts,
+          typedSplitSec: b.typedSplitSec,
+          typedRpm: b.typedRpm,
+          prescription: Eng ? Eng.rxText(b) : `${b.rounds} rounds`,
+          section,
+        });
+      } else if (b.kind === 'circuit') {
         const recovery = /recover|cool/i.test(b.title || '');
         blocks.push({
           kind: recovery ? 'recovery' : 'warmup',
@@ -388,6 +435,7 @@
     patchTemplate,
     deleteTemplate,
     addCircuit,
+    addEnginePiece,
     addExercise,
     removeBlock,
     moveBlock,

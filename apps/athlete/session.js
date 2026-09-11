@@ -12,6 +12,7 @@
   }
 
   function logModeFor(block, rx) {
+    if (block.kind === 'engine') return 'engine';
     if (block.kind === 'warmup' || block.kind === 'recovery') return 'complete';
     if (rx.isMax) return 'max';
     if (/^F\d/i.test(block.letter || '')) return 'reps';
@@ -19,7 +20,7 @@
   }
 
   function emptySets(page) {
-    if (page.logMode === 'complete' || page.logMode === 'doneHub' || page.logMode === 'superset') return [];
+    if (page.logMode === 'complete' || page.logMode === 'doneHub' || page.logMode === 'superset' || page.logMode === 'engine') return [];
     const rows = [];
     for (let i = 0; i < page.setCount; i++) {
       rows.push({
@@ -70,6 +71,11 @@
         note: '',
       };
     }
+    if (page.logMode === 'engine' && !session.logs[page.id].engine && root.HybridEngine) {
+      const anchors = session.engineAnchors || {};
+      const ready = root.HybridEngine.readyLog(page, root.HybridAdaptive, anchors[page.machine] || null);
+      session.logs[page.id] = { ...session.logs[page.id], ...ready };
+    }
     return session.logs[page.id];
   }
 
@@ -106,9 +112,18 @@
       goal: block.goal || '',
       footer: block.footer || '',
       section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
-      setCount: mode === 'complete' ? 0 : (Number(block.setCount) || rx.setCount),
+      setCount: mode === 'complete' || mode === 'engine' ? 0 : (Number(block.setCount) || rx.setCount),
       targetReps: rx.targetReps,
       columns: cols,
+      machine: block.machine,
+      structure: block.structure,
+      effort: block.effort,
+      workSec: block.workSec,
+      restSec: block.restSec,
+      rounds: block.rounds,
+      typedWatts: block.typedWatts,
+      typedSplitSec: block.typedSplitSec,
+      typedRpm: block.typedRpm,
     };
   }
 
@@ -192,6 +207,9 @@
       pages,
       logs: {},
       workingMax: {},
+      engineAnchors: (existing && existing.engineAnchors)
+        || (root.S && root.S.engineAnchors)
+        || {},
       feel: { intensity: null, durationMin: 0, note: '' },
       unit: 'kg',
     });
@@ -348,7 +366,7 @@
     let blocksDone = 0;
     const workPages = session.pages.filter((p) => p.logMode !== 'doneHub');
     for (const page of workPages) {
-      if (page.logMode === 'complete') {
+      if (page.logMode === 'complete' || page.logMode === 'engine') {
         const log = (session.logs || {})[page.id];
         if (log && log.completed) {
           exercises += 1;

@@ -9,4 +9,7 @@ await esbuild.build({
   outfile: 'apps/athlete/adaptive-bundle.js',
   platform: 'browser',
   target: 'es2022',
+  footer: {
+    js: 'if (typeof globalThis !== "undefined") globalThis.HybridAdaptive = HybridAdaptive;',
+  },
 });

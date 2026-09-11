@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v9';
+const APP_BUILD = 'THE-brain-v10';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -20,6 +20,7 @@ const defaultState = () => ({
   library: null,
   sessions: {},
   planSync: { acks: { template: {}, session: {} }, snapshotRev: 0, lastPlan: null },
+  engineAnchors: {},
   libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,
   chatUnread: 0,
@@ -531,6 +532,18 @@ function trnLiftHtml(block, opts = {}) {
     </article>${ss}`;
 }
 
+function trnEngineHtml(block) {
+  return `
+    <article class="trn-block trn-block--engine" onclick="startTrainingSession('${esc(block.letter)}')">
+      <span class="trn-letter trn-letter--engine">${esc(block.letter)}</span>
+      <div class="trn-lift-body">
+        <p class="trn-engine-kicker">The Engine</p>
+        <h3 class="trn-lift-title">${esc(block.title)}</h3>
+        <p class="trn-lift-rx">${esc(block.prescription)}</p>
+      </div>
+    </article>`;
+}
+
 function trnRecoveryHtml(block) {
   const bullets = (block.bullets || []).map((b) => `<li>${esc(b)}</li>`).join('');
   return `
@@ -569,6 +582,7 @@ function trainingBlocksHtml(iso) {
         const superset = !!(a && b && a[1] === b[1] && Number(b[2]) === Number(a[2]) + 1);
         return trnLiftHtml(block, { superset });
       }
+      if (block.kind === 'engine') return trnEngineHtml(block);
       if (block.kind === 'recovery') return trnRecoveryHtml(block);
       return '';
     })
