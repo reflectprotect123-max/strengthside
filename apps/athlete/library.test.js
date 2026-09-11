@@ -8,6 +8,51 @@ const require = createRequire(import.meta.url);
 require(join(dirname(fileURLToPath(import.meta.url)), 'library.js'));
 const Lib = globalThis.HybridLibrary;
 
+test('empty library has no templates or catalog items', () => {
+  const st = Lib.emptyState();
+  assert.deepEqual(st.templates, []);
+  assert.deepEqual(st.catalog.exercises, []);
+  assert.deepEqual(st.catalog.circuits, []);
+});
+
+test('ensure does not reseed a blank catalog', () => {
+  const st = Lib.ensure({ templates: [], catalog: { exercises: [], circuits: [] }, assignments: {} });
+  assert.equal(st.catalog.exercises.length, 0);
+  assert.equal(st.catalog.circuits.length, 0);
+});
+
+test('ensure strips seeded catalog titles so Library starts blank', () => {
+  const st = Lib.ensure({
+    templates: [],
+    catalog: {
+      exercises: [{ id: 'ex_1', title: 'Bench Press', columns: ['reps'] }],
+      circuits: [{ id: 'ci_1', title: 'Deadlift Warm-Up', track: 'for_completion' }],
+    },
+    assignments: {},
+  });
+  assert.equal(st.catalog.exercises.length, 0);
+  assert.equal(st.catalog.circuits.length, 0);
+});
+
+test('ensure keeps athlete-created catalog items', () => {
+  const st = Lib.ensure({
+    catalog: {
+      exercises: [{ id: 'ex_x', title: 'My Sled', columns: ['reps', 'meters'] }],
+      circuits: [{ id: 'ci_x', title: 'My openers', track: 'for_completion', role: 'warmup' }],
+    },
+  });
+  assert.equal(st.catalog.exercises[0].title, 'My Sled');
+  assert.equal(st.catalog.circuits[0].title, 'My openers');
+});
+
+test('searchCatalog filters circuits by warmup and cooldown role', () => {
+  let st = Lib.emptyState();
+  st = Lib.createCatalogCircuit(st, { title: 'Hip openers', role: 'warmup' });
+  st = Lib.createCatalogCircuit(st, { title: '90/90', role: 'cooldown' });
+  assert.deepEqual(Lib.searchCatalog(st, 'circuits', '', { role: 'warmup' }).map((x) => x.title), ['Hip openers']);
+  assert.deepEqual(Lib.searchCatalog(st, 'circuits', '', { role: 'cooldown' }).map((x) => x.title), ['90/90']);
+});
+
 test('track lock includes reps kg meters and for completion', () => {
   const keys = Lib.TRACK.map((t) => t.key);
   assert.ok(keys.includes('reps'));
