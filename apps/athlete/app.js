@@ -697,11 +697,8 @@ function meHtml() {
             ${w.connected
               ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button>'
               : '<button type="button" class="btn" onclick="Whoop.connect()">Connect WHOOP</button>'}
-            <button type="button" class="btn" onclick="copyTraining()">Copy training</button>
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
-          <p class="stub">${typeof PlanSync !== 'undefined' ? PlanSync.statusLine() : ''}</p>
-          <p class="stub">Copy training is Library + sessions. Sync WHOOP is recovery only.</p>
         </div>
       </div>`;
   }
@@ -710,7 +707,7 @@ function meHtml() {
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
       ${meAppSectionHtml()}
-      <p class="stub page-lead">Same email and password as THE Hybrid Engine. Library and logged sessions copy after you sign in.</p>
+      <p class="stub page-lead">Same email and password as THE Hybrid Engine. After sign-in you land on a blank slate — no demo sessions.</p>
       <div id="whoopCard"></div>
     </div>`;
 }
@@ -888,13 +885,6 @@ window.dailyCheckin = dailyCheckin;
 window.readinessScore = readinessScore;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
-};
-window.copyTraining = async function copyTraining() {
-  if (!window.PlanSync) return;
-  const result = await PlanSync.syncNow();
-  if (typeof render === 'function') render();
-  if (!result.ok && result.reason === 'auth_required') window.alert('Sign in to copy training.');
-  else if (!result.ok) window.alert(result.reason === 'STALE_REV' ? 'Another phone changed training. Tap Copy training again.' : 'Could not copy training.');
 };
 window.num = num;
 window.resetBlankSlate = resetBlankSlate;

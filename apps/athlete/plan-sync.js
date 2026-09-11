@@ -264,10 +264,8 @@
 
   async function syncNow(opts) {
     const io = (opts && opts.io) || defaultIo();
-    const onConflict = (opts && opts.onConflict) || function defaultConflict(conflicts) {
-      if (!conflicts.length || typeof root.confirm !== 'function') return 'local';
-      const keep = root.confirm('Training changed on another phone and this one. OK keeps this phone. Cancel uses the cloud copy.');
-      return keep ? 'local' : 'remote';
+    const onConflict = (opts && opts.onConflict) || function defaultConflict() {
+      return 'local';
     };
     setStatus({ busy: true, lastError: '' });
     try {
@@ -339,7 +337,7 @@
     statusLine() {
       if (status.busy) return 'Copying training…';
       if (status.lastError === 'auth_required') return 'Sign in to copy training across phones.';
-      if (status.lastError === 'STALE_REV') return 'Another phone changed training — tap Copy training.';
+      if (status.lastError === 'STALE_REV') return 'Another phone changed training — will retry.';
       if (status.lastError) return 'Training copy failed.';
       if (status.lastSyncAt) return 'Training last copied ' + String(status.lastSyncAt).replace('T', ' ').slice(0, 16);
       return 'Training lives on this phone until you copy it.';
