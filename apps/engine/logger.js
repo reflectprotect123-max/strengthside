@@ -112,6 +112,23 @@
       if (clock) clock.textContent = elapsed();
       const t = timerState();
       const now = Date.now();
+      const s = session();
+      if (s && s.phase === 'block' && root.HybridEngine) {
+        const page = HybridSession.currentPage(s);
+        const log = page && s.logs[page.id];
+        if (page && page.logMode === 'engine' && log && log.engine) {
+          const next = HybridEngine.tick(log, now);
+          if (next !== log) {
+            persistEngine(next);
+            return;
+          }
+          const clock = document.getElementById('engClock');
+          if (clock) {
+            const ends = log.engine.phase === 'work' ? log.engine.workEndsAt : log.engine.restEndsAt;
+            if (ends) clock.textContent = remainLabel(ends, now);
+          }
+        }
+      }
       const next = HybridTimer.tick(t, now);
       if (next !== t) {
         if (next.view === 'idle' && t.view !== 'idle') beep('done');
@@ -156,7 +173,8 @@
   function dotsHtml(s) {
     return s.pages.map((p, i) => {
       const ids = HybridSession.logIdsForPage(p);
-      const done = p.logMode === 'complete' ? !!(s.logs[p.id] && s.logs[p.id].completed)
+      const done = p.logMode === 'complete' || p.logMode === 'engine'
+        ? !!(s.logs[p.id] && s.logs[p.id].completed)
         : p.logMode === 'doneHub' ? false
         : ids.some((id) => s.logs[id] && s.logs[id].sets && s.logs[id].sets.some((r) => r.logged));
       const cur = s.phase === 'block' && i === s.blockIndex;
@@ -165,6 +183,18 @@
   }
 
   function headerHtml(s) {
+    const page = s.phase === 'block' ? HybridSession.currentPage(s) : null;
+    if (page && page.logMode === 'engine') {
+      return `
+      <div class="log-top">
+        <button type="button" class="log-back-x" onclick="Logger.chevron()" aria-label="Close">⌄</button>
+        <div class="log-dots">${dotsHtml(s)}</div>
+        <div class="log-clock" id="logClock">${elapsed()}</div>
+      </div>
+      <div class="log-totals log-totals--engine">
+        <div class="eng-eyebrow">The Engine</div>
+      </div>`;
+    }
     const t = HybridSession.totals(s);
     return `
       <div class="log-top">
@@ -400,6 +430,77 @@
       </div>`;
   }
 
+  function remainLabel(endsAt, now) {
+    const sec = Math.max(0, Math.ceil(((endsAt || now) - now) / 1000));
+    const m = Math.floor(sec / 60);
+    const r = sec % 60;
+    return `${m}:${String(r).padStart(2, '0')}`;
+  }
+
+  function persistEngine(nextLog) {
+    const s = JSON.parse(JSON.stringify(session()));
+    const page = HybridSession.currentPage(s);
+    s.logs[page.id] = nextLog;
+    if (nextLog.engine && nextLog.engine.phase === 'done' && root.HybridEngine) {
+      const closed = HybridEngine.closePiece(nextLog, root.HybridAdaptive);
+      s.engineAnchors = s.engineAnchors || {};
+      if (page.machine) s.engineAnchors[page.machine] = closed;
+      root.S.engineAnchors = { ...(root.S.engineAnchors || {}), ...(s.engineAnchors || {}) };
+    }
+    persist(s);
+  }
+
+  function engineHtml(s, page, log) {
+    const e = log.engine;
+    if (!e || !root.HybridEngine) return `<p class="log-kicker">Engine bundle missing</p>`;
+    const now = Date.now();
+    const target = HybridEngine.formatTarget(e.target, e.modality) || (e.skipped ? 'No invented pace' : 'Type the first number');
+    const shown = Math.min(e.rounds, e.phase === 'ready' || e.phase === 'rest' ? e.roundIndex + 1 : e.roundIndex + 1);
+    const kicker = `${page.letter}. The Engine · ${(e.structure || 'intervals').toUpperCase()}`;
+    let stage = '';
+    if (e.phase === 'ready') {
+      stage = `
+        <p class="eng-target" id="engTarget">${esc(target)}</p>
+        ${e.skipped ? '' : `<label class="eng-first">First number
+          <input inputmode="decimal" value="${esc(e.modality === 'split' ? (e.target.splitSec || '') : e.modality === 'rpm' ? (e.target.rpm || '') : (e.target.watts || ''))}" onchange="Logger.engineTyped(this.value)">
+        </label>`}
+        <button type="button" class="log-primary eng-go" onclick="Logger.engineStart()">Start work</button>`;
+    } else if (e.phase === 'work') {
+      stage = `
+        <p class="eng-phase">Work ${shown}/${e.rounds}</p>
+        <p class="eng-clock" id="engClock">${esc(remainLabel(e.workEndsAt, now))}</p>
+        <p class="eng-target">${esc(target)}</p>
+        <button type="button" class="eng-early" onclick="Logger.engineEnd()">End interval early</button>`;
+    } else if (e.phase === 'rate') {
+      const rpe = e.slider || 5;
+      stage = `
+        <p class="eng-phase">How hard was that?</p>
+        <p class="eng-target">${esc(target)}</p>
+        <label class="eng-rpe">RPE ${rpe}
+          <input type="range" min="1" max="10" step="1" value="${esc(rpe)}" oninput="Logger.engineSlider(this.value)">
+        </label>
+        <p class="eng-hint">1 conversation · 7 short phrases · 10 cannot speak</p>
+        <button type="button" class="log-primary" onclick="Logger.engineRate(false)">Log bout</button>
+        <button type="button" class="eng-stop" onclick="Logger.engineRate(true)">Stopped</button>`;
+    } else if (e.phase === 'rest') {
+      stage = `
+        <p class="eng-phase">Rest ${e.restSec}s</p>
+        <p class="eng-clock" id="engClock">${esc(remainLabel(e.restEndsAt, now))}</p>
+        <p class="eng-up">Up next work ${Math.min(e.rounds, e.roundIndex + 1)}/${e.rounds} · ${esc(target)}</p>
+        <button type="button" class="log-primary" onclick="Logger.engineSkipRest()">Skip · start work</button>`;
+    } else {
+      stage = `
+        <p class="eng-phase">Piece done</p>
+        <p class="eng-target">${esc(target)}</p>
+        <button type="button" class="log-complete is-done" onclick="Logger.next()">Next</button>`;
+    }
+    return `
+      <p class="log-kicker">${esc(kicker)}</p>
+      <h2 class="log-title">${esc(page.title)}</h2>
+      <p class="log-rx">${esc(page.prescription || '')}</p>
+      <div class="eng-stage">${stage}</div>`;
+  }
+
   function completeHtml(s, page, log) {
     const items = (page.items || []).map((it) => `
       <li><strong>${it.n}.</strong> ${esc(it.text)}
@@ -586,6 +687,7 @@
     const log = s.logs[page.id] || { completed: false, sets: [], note: '' };
     let body = '';
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
+    else if (page.logMode === 'engine') body = engineHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
     else if (page.logMode === 'superset') {
       const members = (page.members || []).map((m) => `
@@ -649,6 +751,49 @@
     next() { pad = null; persist(HybridSession.nextPage(session())); },
     prev() { pad = null; persist(HybridSession.prevPage(session())); },
     complete() { persist(HybridSession.completeCurrent(session())); },
+    engineStart() {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      persistEngine(HybridEngine.startWork(s.logs[page.id], Date.now()));
+    },
+    engineEnd() {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      persistEngine(HybridEngine.endWork(s.logs[page.id], Date.now()));
+    },
+    engineSlider(v) {
+      const s = JSON.parse(JSON.stringify(session()));
+      const page = HybridSession.currentPage(s);
+      s.logs[page.id].engine.slider = Number(v);
+      persist(s);
+    },
+    engineRate(stopped) {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      const log = s.logs[page.id];
+      persistEngine(HybridEngine.rateWork(log, {
+        actualRpe: log.engine.slider,
+        stopped: !!stopped,
+        now: Date.now(),
+      }, root.HybridAdaptive));
+    },
+    engineSkipRest() {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      persistEngine(HybridEngine.skipRest(s.logs[page.id]));
+    },
+    engineTyped(raw) {
+      const n = Number(raw);
+      const s = JSON.parse(JSON.stringify(session()));
+      const page = HybridSession.currentPage(s);
+      const e = s.logs[page.id].engine;
+      if (!Number.isFinite(n) || n <= 0) return;
+      if (e.modality === 'split') e.target.splitSec = n;
+      else if (e.modality === 'rpm') e.target.rpm = n;
+      else e.target.watts = n;
+      e.skipped = false;
+      persist(s);
+    },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);

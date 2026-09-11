@@ -6,7 +6,7 @@ await esbuild.build({
   bundle: true,
   format: 'iife',
   globalName: 'HybridAdaptive',
-  outfile: 'apps/athlete/adaptive-bundle.js',
+  outfile: 'apps/engine/adaptive-bundle.js',
   platform: 'browser',
   target: 'es2022',
   footer: {

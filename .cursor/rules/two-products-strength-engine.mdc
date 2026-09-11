@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+description: Strength and Engine are two products, not two tabs
+---
+
+# Two products
+
+Strength (`apps/athlete/`) and The Engine (`apps/engine/`) are **separate
+products**. Do not mix loggers, storage keys, or Library CTAs.
+
+- Strength = kg/reps TRACK, `THE-brain-v1`, silent `PlanSync`.
+- Engine = splits/watts/RPM, `THE-hybrid-engine-v1`, `@hybrid/adaptive` cond APIs.
+- Do not put Engine UI in the Strength app. Do not create `apps/hybrid-engine/`.
+---

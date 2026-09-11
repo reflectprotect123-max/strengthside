@@ -3,7 +3,7 @@
 > **AUTHORITATIVE CHECKPOINT — 9 September 2026 (Brain spine reset).**
 > Chat history before this file is disposable. Start here.
 >
-> **Architecture:** `packages/brain/` = The Brain (pure logic). `apps/athlete/` = athlete UI + Netlify deploy root.
+> **Architecture:** `packages/brain/` = The Brain (pure logic). **Two HTML products:** Strength `apps/athlete/` and Engine `apps/engine/`. Do not mix them.
 > Old monolithic `prototype/hybrid-app/` is **deleted** — not archived.
 >
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
@@ -14,10 +14,11 @@
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app — Brain hub + Strength / Engine / Nutrition branches (rebuilt screen-by-screen) |
+| **Products** | **Two apps.** Strength = `apps/athlete/` (`THE-brain-v1`). Engine = `apps/engine/` (`THE-hybrid-engine-v1`). Not tabs. Spec `docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`. |
 | **The Brain** | `@hybrid/brain` in `packages/brain/` — readiness, today’s call, coach context. **Not HTML.** |
-| **Athlete UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
-| **Build** | `bash scripts/sync-athlete-app.sh` → bundles brain + adaptive into `apps/athlete/` |
+| **Strength UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
+| **Engine UI** | `apps/engine/` — cond logger via `@hybrid/adaptive` Open/Next/Close |
+| **Build** | `bash scripts/sync-athlete-app.sh` → brain → athlete (+ copy to engine); adaptive → engine only |
 | **Coach chat** | In-app sheet → `brain-coach` proxy on athlete Netlify → OpenRouter on Brain owner site |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
 | **Storage** | **`THE-brain-v1`** only — no import from old `THE-builder-clean-v*` |

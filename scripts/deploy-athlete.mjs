@@ -49,7 +49,7 @@ const stage = mkdtempSync(join(tmpdir(), 'athlete-deploy-'));
 console.log(`Staging flat athlete bundle at ${stage}`);
 for (const rel of [
   'index.html', 'app.js', 'home.css', 'logger.css', 'library.css',
-  'brain-bundle.js', 'adaptive-bundle.js', 'engine.js', 'session.js',
+  'brain-bundle.js', 'session.js',
   'library.js', 'library-ui.js', 'logger.js', 'timer.js', 'plan-sync.js',
   'native-bridge.js', 'service-worker.js', 'netlify.toml', 'package.json',
   'connectors', 'vendor', 'netlify', 'assets',

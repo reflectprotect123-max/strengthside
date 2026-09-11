@@ -72,42 +72,6 @@ test('reps plus meters compiles a metres prescription', () => {
   assert.deepEqual(lift.columns, ['reps', 'meters']);
 });
 
-test('engine template rejects lifts and compiles The Engine pieces not kg grids', () => {
-  require(join(dirname(fileURLToPath(import.meta.url)), 'engine.js'));
-  let st = Lib.emptyState();
-  st = Lib.createTemplate(st, { title: 'Row 15/45', lane: 'engine' });
-  const tid = st.templates[0].id;
-  assert.equal(st.templates[0].lane, 'engine');
-  st = Lib.addExercise(st, tid, { title: 'Bench Press', columns: ['reps', 'weight_kg'] });
-  assert.equal(st.templates[0].blocks.length, 0);
-  st = Lib.addEnginePiece(st, tid, {
-    machine: 'row',
-    structure: 'intervals',
-    effort: 'hard',
-    workSec: 15,
-    restSec: 45,
-    rounds: 8,
-    typedSplitSec: 136,
-  });
-  assert.equal(st.templates[0].blocks[0].kind, 'engine');
-  const plan = Lib.compile(st.templates[0]);
-  const piece = plan.blocks.find((b) => b.kind === 'engine');
-  assert.ok(piece);
-  assert.equal(piece.machine, 'row');
-  assert.equal(piece.restSec, 45);
-  assert.match(piece.prescription, /2:16/);
-  assert.doesNotMatch(piece.prescription, /\bkg\b/i);
-  assert.equal(plan.blocks.some((b) => b.kind === 'lift'), false);
-});
-
-test('strength template rejects engine pieces', () => {
-  let st = Lib.emptyState();
-  st = Lib.createTemplate(st, { title: 'Lower' });
-  const tid = st.templates[0].id;
-  st = Lib.addEnginePiece(st, tid, { machine: 'bike', typedWatts: 220 });
-  assert.equal(st.templates[0].blocks.length, 0);
-});
-
 test('create catalog exercise with reps + meters is searchable', () => {
   let st = Lib.emptyState();
   st = Lib.createCatalogExercise(st, { title: 'Bendh', columns: ['reps', 'meters'] });

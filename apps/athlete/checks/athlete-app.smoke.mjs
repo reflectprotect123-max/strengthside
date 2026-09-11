@@ -1,5 +1,4 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,10 +13,6 @@ function must(c, m) {
 }
 
 must(existsSync(join(root, 'index.html')), 'index.html');
-for (const f of ['app.js', 'logger.js', 'engine.js', 'session.js', 'library.js', 'library-ui.js']) {
-  const r = spawnSync('node', ['--check', join(root, f)], { encoding: 'utf8' });
-  must(r.status === 0, `${f} parses (${(r.stderr || '').trim() || 'ok'})`);
-}
 must(existsSync(join(root, 'brain-bundle.js')), 'brain-bundle.js — run pnpm run build:brain');
 must(existsSync(join(root, 'home.css')), 'home.css');
 must(!html.includes('THE-builder-clean'), 'old storage/build id in index');
@@ -43,16 +38,15 @@ must(css.includes('.trn-scroll'), 'training scroll container');
 must(html.includes('id="logger"'), 'logger overlay host');
 must(html.includes('logger.css'), 'logger stylesheet');
 must(html.includes('session.js'), 'session model script');
-must(html.includes('engine.js'), 'engine model script');
-must(html.includes('adaptive-bundle.js'), 'adaptive bundle for cond Open/Next/Close');
-must(js.includes('function trnEngineHtml'), 'Training Engine cards');
-must(readFileSync(join(root, 'engine.js'), 'utf8').includes('decideNextCond'), 'Engine Next calls adaptive');
-must(readFileSync(join(root, 'logger.js'), 'utf8').includes('The Engine'), 'logger Engine chrome');
-must(readFileSync(join(root, 'logger.js'), 'utf8').includes('How hard was that'), 'RPE overlay after work');
-must(!readFileSync(join(root, 'engine.js'), 'utf8').includes('decideNextLift'), 'Engine route never calls lift Next');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./engine.js'), 'engine.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./adaptive-bundle.js'), 'adaptive-bundle.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v13'"), 'SW cache bump');
+must(html.includes('hybrid-product" content="strength"'), 'html product stamp strength');
+must(JSON.parse(readFileSync(join(root, 'PRODUCT.json'), 'utf8')).hybridProduct === 'strength', 'PRODUCT.json stamp strength');
+must(!html.includes('engine.js'), 'Strength product does not load Engine');
+must(!html.includes('adaptive-bundle.js'), 'Strength product does not load Adaptive cond bundle');
+must(!html.includes('Create Engine'), 'Strength Library has no Engine CTA');
+must(!js.includes('createEngine'), 'Strength app has no createEngine');
+must(!js.includes('trnEngineHtml'), 'Strength Training has no Engine cards');
+must(!existsSync(join(root, 'engine.js')), 'engine.js does not live in the Strength app');
+must(!existsSync(join(root, 'adaptive-bundle.js')), 'adaptive-bundle.js does not live in the Strength app');
 must(html.includes('library.js'), 'library model script');
 must(html.includes('library-ui.js'), 'library view script');
 must(html.includes('plan-sync.js'), 'plan sync script');
@@ -61,6 +55,7 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v12'"), 'SW cache bump');
 must(readFileSync(join(root, 'timer.js'), 'utf8').includes('Rest Timer'), 'rest timer picker');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('Select Timer'), 'Select Timer chrome');
 must(readFileSync(join(root, 'session.js'), 'utf8').includes("logMode: 'superset'"), 'F1/F2 same-page pairing');

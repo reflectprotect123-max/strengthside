@@ -146,36 +146,3 @@ test('feel then finish lands on summary', () => {
   assert.equal(s.phase, 'summary');
   assert.equal(s.feel.durationMin, 28);
 });
-
-test('engine piece is a cond logger page, not a strength set grid', () => {
-  require(join(dirname(fileURLToPath(import.meta.url)), 'adaptive-bundle.js'));
-  require(join(dirname(fileURLToPath(import.meta.url)), 'engine.js'));
-  const plan = {
-    title: 'Row 15/45',
-    blocks: [
-      {
-        kind: 'engine',
-        letter: 'A',
-        title: 'Row',
-        machine: 'row',
-        structure: 'intervals',
-        effort: 'hard',
-        workSec: 15,
-        restSec: 45,
-        rounds: 8,
-        typedSplitSec: 136,
-        prescription: '8 × 15s / 45s · Hard · 2:16/500m',
-        section: 'The Engine',
-      },
-    ],
-  };
-  const s = HybridSession.startSession({ date: '2026-09-11', plan, letter: 'A' });
-  const page = s.pages[s.blockIndex];
-  assert.equal(page.logMode, 'engine');
-  assert.equal(page.machine, 'row');
-  assert.equal(page.restSec, 45);
-  assert.equal(page.setCount, 0);
-  assert.equal(s.logs.A.engine.phase, 'ready');
-  assert.equal(s.logs.A.engine.target.splitSec, 136);
-  assert.equal(s.logs.A.sets.length, 0);
-});

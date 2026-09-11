@@ -1147,6 +1147,28 @@ button {
   margin-top: 2px;
 }
 
+.trn-block--engine {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-color: rgba(94, 196, 183, 0.35);
+}
+
+.trn-letter--engine {
+  background: #143834;
+  color: var(--engine);
+  margin-top: 2px;
+}
+
+.trn-engine-kicker {
+  margin: 0 0 2px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--engine);
+  font-weight: 600;
+}
+
 .trn-block-title,
 .trn-lift-title {
   margin: 0;

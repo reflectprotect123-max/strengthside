@@ -98,6 +98,27 @@
   flex: none;
 }
 
+.lib-create--engine .lib-plus {
+  border-color: var(--engine);
+  color: var(--engine);
+}
+
+.lib-lane {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.lib-lane--engine {
+  background: #143834;
+  color: var(--engine);
+}
+
 .lib-empty {
   text-align: center;
   color: var(--oled-muted);

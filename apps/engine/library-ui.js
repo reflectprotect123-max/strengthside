@@ -58,13 +58,14 @@
     const q = String(ui().q || '').toLowerCase();
     const rows = st.templates.filter((t) => !q || t.title.toLowerCase().includes(q) || t.blocks.some((b) => (b.title || '').toLowerCase().includes(q)));
     if (!rows.length) {
-      return `<div class="lib-empty"><b>No session templates yet</b><p>Create one, then drop it on a Training day.</p></div>`;
+      return `<div class="lib-empty"><b>No Engine sessions yet</b><p>Create a piece, then drop it on a Training day.</p></div>`;
     }
     return rows.map((t) => {
       const names = root.HybridLibrary.lettered(t).map((b) => b.title).join(', ') || 'Empty template';
+      const lane = t.lane === 'engine' ? '<span class="lib-lane lib-lane--engine">Engine</span>' : '';
       return `<article class="lib-card">
           <button type="button" style="text-align:left;width:100%" onclick="LibraryView.open('${esc(t.id)}')">
-            <h2>${esc(t.title)}</h2>
+            <h2>${lane}${esc(t.title)}</h2>
             <p>${esc(names)}</p>
           </button>
           <div class="lib-card-actions">
@@ -79,13 +80,13 @@
     return `
       <div class="shell-screen shell-screen--library">
         <div class="lib-top">
-          <p class="lib-kicker">Library</p>
+          <p class="lib-kicker">The Engine</p>
           <h1 class="lib-title">Sessions</h1>
         </div>
         <div class="lib-search">
           <input value="${esc(ui().q || '')}" placeholder="Search sessions" oninput="LibraryView.search(this.value)" aria-label="Search sessions">
         </div>
-        <button type="button" class="lib-create" onclick="LibraryView.create()"><span class="lib-plus">+</span> Create Session Template</button>
+        <button type="button" class="lib-create lib-create--engine" onclick="LibraryView.createEngine()"><span class="lib-plus">+</span> Create Engine session</button>
         <div id="libResults">${listCardsHtml()}</div>
       </div>`;
   }
@@ -101,7 +102,12 @@
       if (prev && prev.kind === 'lift' && b.kind === 'lift' && prev.groupId && prev.groupId === b.groupId) {
         body += `<div class="lib-ss">− Superset</div>`;
       }
-      const meta = b.kind === 'circuit' ? 'For Completion' : `${b.setCount || 3} sets`;
+      const engine = b.kind === 'engine';
+      const meta = b.kind === 'circuit'
+        ? 'For Completion'
+        : engine
+          ? (root.HybridEngine ? HybridEngine.rxText(b) : 'Engine')
+          : `${b.setCount || 3} sets`;
       body += `<article class="lib-block">
         <div class="lib-block-top">
           <span class="lib-letter">${esc(b.letter)}</span>
@@ -131,8 +137,10 @@
         </div>
         ${body}
         <div class="lib-row-btns">
-          <button type="button" onclick="LibraryView.picker('exercises')">+ Add Exercise</button>
-          <button type="button" onclick="LibraryView.picker('circuits')">+ Add Circuit</button>
+          <button type="button" onclick="LibraryView.addEngine()">+ Add Engine piece</button>
+        </div>
+        <div style="padding:0 16px 24px">
+          <button type="button" class="lib-primary" onclick="LibraryView.calendar('${esc(t.id)}')">Add to calendar</button>
         </div>
         ${editSheetHtml()}
       </div>`;
@@ -144,6 +152,51 @@
     const t = root.HybridLibrary.template(lib(), u.tid);
     const b = t && t.blocks.find((x) => x.id === u.bid);
     if (!b) return '';
+    if (b.kind === 'engine') {
+      const machines = root.HybridEngine
+        ? Object.entries(HybridEngine.MACHINES).map(([id, m]) => `<option value="${esc(id)}" ${b.machine === id ? 'selected' : ''}>${esc(m.title)}</option>`).join('')
+        : '';
+      return `<div class="lib-sheet" onclick="if(event.target===this)LibraryView.closeSheet()">
+        <div class="lib-sheet-card">
+          <h2>Engine piece</h2>
+          <div class="lib-field"><label>Machine</label>
+            <select onchange="LibraryView.patchBlock({machine:this.value,title:(HybridEngine&&HybridEngine.machineTitle(this.value))||this.value})">${machines}</select>
+          </div>
+          <div class="lib-field"><label>Structure</label>
+            <select onchange="LibraryView.patchBlock({structure:this.value})">
+              <option value="intervals" ${b.structure === 'intervals' ? 'selected' : ''}>Intervals</option>
+              <option value="tempo" ${b.structure === 'tempo' ? 'selected' : ''}>Tempo</option>
+              <option value="steady" ${b.structure === 'steady' ? 'selected' : ''}>Steady</option>
+            </select>
+          </div>
+          <div class="lib-field"><label>Work effort</label>
+            <select onchange="LibraryView.patchBlock({effort:this.value})">
+              <option value="easy" ${b.effort === 'easy' ? 'selected' : ''}>Easy 3–4</option>
+              <option value="medium" ${b.effort === 'medium' ? 'selected' : ''}>Medium 5–7</option>
+              <option value="hard" ${b.effort === 'hard' ? 'selected' : ''}>Hard 8–9.5</option>
+            </select>
+          </div>
+          <div class="lib-field"><label>Rounds</label>
+            <input type="number" min="1" max="40" value="${esc(b.rounds || 8)}" onchange="LibraryView.patchBlock({rounds:Number(this.value)})">
+          </div>
+          <div class="lib-field"><label>Work seconds</label>
+            <input type="number" min="1" value="${esc(b.workSec || 15)}" onchange="LibraryView.patchBlock({workSec:Number(this.value)})">
+          </div>
+          <div class="lib-field"><label>Rest seconds</label>
+            <input type="number" min="0" value="${esc(b.restSec || 45)}" onchange="LibraryView.patchBlock({restSec:Number(this.value)})">
+          </div>
+          <div class="lib-field"><label>First watts (bike/Echo)</label>
+            <input inputmode="numeric" value="${esc(b.typedWatts == null ? '' : b.typedWatts)}" placeholder="You type the first one" onchange="LibraryView.patchBlock({typedWatts:this.value===''?null:Number(this.value)})">
+          </div>
+          <div class="lib-field"><label>First split sec /500m (row/ski)</label>
+            <input inputmode="numeric" value="${esc(b.typedSplitSec == null ? '' : b.typedSplitSec)}" placeholder="e.g. 136" onchange="LibraryView.patchBlock({typedSplitSec:this.value===''?null:Number(this.value)})">
+          </div>
+          <div class="lib-field"><label>First RPM (fan bike)</label>
+            <input inputmode="numeric" value="${esc(b.typedRpm == null ? '' : b.typedRpm)}" onchange="LibraryView.patchBlock({typedRpm:this.value===''?null:Number(this.value)})">
+          </div>
+          <button type="button" class="lib-primary" onclick="LibraryView.closeSheet()">Done</button>
+        </div></div>`;
+    }
     if (b.kind === 'circuit') {
       return `<div class="lib-sheet" onclick="if(event.target===this)LibraryView.closeSheet()">
         <div class="lib-sheet-card">
@@ -287,9 +340,19 @@
     },
     goList() { go('list', { tid: null, q: '', selected: [], bid: null }); },
     create() {
-      const next = root.HybridLibrary.createTemplate(lib(), {});
+      LibraryView.createEngine();
+    },
+    createEngine() {
+      const next = root.HybridLibrary.createTemplate(lib(), { lane: 'engine' });
       root.S.library = next;
       go('edit', { tid: next.templates[0].id, bid: null });
+    },
+    addEngine() {
+      const st = root.HybridLibrary.addEnginePiece(lib(), ui().tid, { machine: 'row', structure: 'intervals', effort: 'hard', workSec: 15, restSec: 45, rounds: 8 });
+      const t = root.HybridLibrary.template(st, ui().tid);
+      const bid = t.blocks[t.blocks.length - 1].id;
+      root.S.library = st;
+      go('edit', { tid: ui().tid, bid });
     },
     open(tid) { go('edit', { tid, bid: null, q: '' }); },
     patchTpl(patch) { setLib(root.HybridLibrary.patchTemplate(lib(), ui().tid, patch)); },
