@@ -44,7 +44,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** — target **1.0.74** (Training list + in-session logger; Home OLED unchanged) |
+| Channels | **`dogfood` + `live`** — target **1.0.80** (Library headings, blank catalog; Home OLED unchanged) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
@@ -149,13 +149,12 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | still **1.0.74** (no OTA this ship) |
-| Dogfood APK | rest timer + coach on **+** only (no Chat tab); native coach hits athlete Netlify; cache **the-brain-v9** |
+| Capgo | **1.0.80** Library headings (Sessions / Exercises / Circuits + Warm up / Cool down), blank seed catalog |
+| Dogfood APK | rest timer + coach on **+** only (no Chat tab); native coach hits athlete Netlify; cache **the-brain-v13** |
 | Engine vs Strength log | Strength **tracks the locked column catalog** in `docs/superpowers/specs/2026-09-11-strength-track-lock.md` (Sets + picker columns + For Completion). Watts/metres on a lift is a Strength column, not The Engine. Engine (later) = splits + Concept2/RPM; the same timer chrome is the **duration** clock for the piece. Do not mix those loggers. |
-| Cache | `the-brain-v9` |
+| Cache | `the-brain-v13` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
 **Track lock (11 Sep 2026):** Strength log columns frozen — `docs/superpowers/specs/2026-09-11-strength-track-lock.md`. Calendar door: Library template → Add to Calendar (self + date) → Training Start Session.
 
-**Library Sessions (11 Sep 2026):** On-phone builder is live in `apps/athlete/library.js` + `library-ui.js`. Persist on-device. No Capgo unless **IMPORTANT**.
-**Next agent:** Library / on-phone builder against that lock. Do not Capgo unless the owner marks **IMPORTANT**.
+**Library headings OTA (11 Sep 2026):** Capgo **1.0.80** — Library Sessions / Exercises / Circuits with Warm up / Cool down; seeded catalog stripped. Home OLED unchanged.
