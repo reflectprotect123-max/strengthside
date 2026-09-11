@@ -1286,7 +1286,25 @@ button {
   line-height: 1;
 }
 
-.trn-empty {
+.trn-ss {
+  text-align: center;
+  color: var(--trn-blue);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 2px 24px 10px;
+  border: 1px solid var(--trn-blue);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.trn-session-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 0 12px;
+}
   color: var(--oled-muted);
   text-align: center;
   padding: 40px 12px;

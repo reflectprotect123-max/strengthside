@@ -150,9 +150,12 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
 | Capgo | still **1.0.74** (no OTA this ship) |
-| Dogfood APK | rest timer + coach on **+** only (no Chat tab); coach fetch uses athlete Netlify from Capacitor; cache **the-brain-v8** |
-| Engine vs Strength log | Strength = kg/reps + rest-timer zoo. Engine (later) = splits + watts/RPM; the same timer chrome is the **duration** clock for the piece, not only rest. Do not mix those loggers. |
-| Cache | `the-brain-v8` |
+| Dogfood APK | rest timer + coach on **+** only (no Chat tab); native coach hits athlete Netlify; cache **the-brain-v9** |
+| Engine vs Strength log | Strength **tracks the locked column catalog** in `docs/superpowers/specs/2026-09-11-strength-track-lock.md` (Sets + picker columns + For Completion). Watts/metres on a lift is a Strength column, not The Engine. Engine (later) = splits + Concept2/RPM; the same timer chrome is the **duration** clock for the piece. Do not mix those loggers. |
+| Cache | `the-brain-v9` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
 
-**Next agent:** Library / on-phone builder. Do not Capgo unless the owner marks **IMPORTANT**.
+**Track lock (11 Sep 2026):** Strength log columns frozen — `docs/superpowers/specs/2026-09-11-strength-track-lock.md`. Calendar door: Library template → Add to Calendar (self + date) → Training Start Session.
+
+**Library Sessions (11 Sep 2026):** On-phone builder is live in `apps/athlete/library.js` + `library-ui.js`. Persist on-device. No Capgo unless **IMPORTANT**.
+**Next agent:** Library / on-phone builder against that lock. Do not Capgo unless the owner marks **IMPORTANT**.

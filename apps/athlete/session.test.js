@@ -107,6 +107,21 @@ test('autofill copies kg down empty rows', () => {
   assert.equal(s.logs.B.sets[5].logged, false);
 });
 
+test('B1 B2 B3 is one three-lift superset page', () => {
+  const plan = {
+    blocks: [
+      { kind: 'lift', letter: 'B1', title: 'Bench Press', prescription: '3 x 8' },
+      { kind: 'lift', letter: 'B2', title: 'Lat Pull Downs', prescription: '3 x 8' },
+      { kind: 'lift', letter: 'B3', title: 'Back Squat', prescription: '3 x 8' },
+    ],
+  };
+  const pages = HybridSession.pagesFromPlan(plan);
+  assert.equal(pages.length, 2);
+  assert.equal(pages[0].id, 'B');
+  assert.equal(pages[0].logMode, 'superset');
+  assert.deepEqual(pages[0].members.map((m) => m.id), ['B1', 'B2', 'B3']);
+});
+
 test('D1 D2 pairing is one stacked page', () => {
   const plan = {
     blocks: [
