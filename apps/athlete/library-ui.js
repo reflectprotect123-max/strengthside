@@ -144,6 +144,9 @@
             : `<button type="button" onclick="LibraryView.picker('exercises')">+ Add Exercise</button>
                <button type="button" onclick="LibraryView.picker('circuits')">+ Add Circuit</button>`}
         </div>
+        <div style="padding:0 16px 24px">
+          <button type="button" class="lib-primary" onclick="LibraryView.calendar('${esc(t.id)}')">Add to calendar</button>
+        </div>
         ${editSheetHtml()}
       </div>`;
   }

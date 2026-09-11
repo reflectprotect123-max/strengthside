@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,6 +14,10 @@ function must(c, m) {
 }
 
 must(existsSync(join(root, 'index.html')), 'index.html');
+for (const f of ['app.js', 'logger.js', 'engine.js', 'session.js', 'library.js', 'library-ui.js']) {
+  const r = spawnSync('node', ['--check', join(root, f)], { encoding: 'utf8' });
+  must(r.status === 0, `${f} parses (${(r.stderr || '').trim() || 'ok'})`);
+}
 must(existsSync(join(root, 'brain-bundle.js')), 'brain-bundle.js — run pnpm run build:brain');
 must(existsSync(join(root, 'home.css')), 'home.css');
 must(!html.includes('THE-builder-clean'), 'old storage/build id in index');

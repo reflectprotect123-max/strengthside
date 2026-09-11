@@ -500,6 +500,8 @@
       <p class="log-rx">${esc(page.prescription || '')}</p>
       <div class="eng-stage">${stage}</div>`;
   }
+
+  function completeHtml(s, page, log) {
     const items = (page.items || []).map((it) => `
       <li><strong>${it.n}.</strong> ${esc(it.text)}
         ${it.note ? `<p class="log-note"><em>*${esc(it.note)}</em></p>` : ''}

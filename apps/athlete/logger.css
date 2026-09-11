@@ -819,6 +819,14 @@
   min-height: 44px;
 }
 
+.eng-first input {
+  background: #1c1c1e;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
 .eng-hint {
   margin: -8px 0 16px;
   font-size: 13px;
