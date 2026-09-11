@@ -11,7 +11,7 @@ folder pair inside `strengthside`. Same pattern as `nutrition`.
 | Product | Repo | Storage | Logger |
 | --- | --- | --- | --- |
 | Strength | `reflectprotect123-max/strengthside` (`apps/athlete/`) | `THE-brain-v1` | TRACK kg/reps + silent `PlanSync` |
-| The Engine | `reflectprotect123-max/the-engine` | `THE-hybrid-engine-v1` | splits / watts / RPM |
+| The Engine | `reflectprotect123-max/engineside` | `THE-hybrid-engine-v1` | splits / watts / RPM |
 | Nutrition | `reflectprotect123-max/nutrition` | (own) | food / expenditure |
 
 `@hybrid/adaptive` lives in the Engine repo. Strength does not load it.

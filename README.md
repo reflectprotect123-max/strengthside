@@ -1,13 +1,13 @@
 # THE Hybrid System — Strength (strengthside)
 
-**Two products, two repos.** Strength is this tree. Conditioning is `the-engine`.
+**Two products, two repos.** Strength is this tree. Conditioning is `engineside`.
 Nutrition is `nutrition`. Do not fold Engine into `apps/athlete/` or `apps/engine/`.
 
 | Role | Path |
 | --- | --- |
 | **Brain (logic only)** | `packages/brain/` → bundled to `apps/athlete/brain-bundle.js` |
 | **Strength UI** | `apps/athlete/` — kg/reps TRACK logger, `THE-brain-v1` |
-| **Engine** | sibling repo `the-engine` — not this tree |
+| **Engine** | sibling repo `engineside` — not this tree |
 | **Sync / build** | `bash scripts/sync-athlete-app.sh` |
 | **Play Strength** | `python3 -m http.server --directory apps/athlete` |
 | **Deploy Strength** | `apps/athlete/` → Netlify (`thehybridsystem.netlify.app`) |

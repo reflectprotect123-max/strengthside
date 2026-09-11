@@ -14,7 +14,7 @@
 
 | | |
 | --- | --- |
-| **Products** | **Two repos.** Strength = this tree (`apps/athlete/`, `THE-brain-v1`). Engine = sibling `the-engine`. Nutrition = `nutrition`. Spec `docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`. |
+| **Products** | **Two repos.** Strength = this tree (`apps/athlete/`, `THE-brain-v1`). Engine = sibling `engineside`. Nutrition = `nutrition`. Spec `docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`. |
 | **The Brain** | `@hybrid/brain` in `packages/brain/` — readiness, today’s call, coach context. **Not HTML.** |
 | **Strength UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
 | **Build** | `bash scripts/sync-athlete-app.sh` → brain bundle → athlete |
