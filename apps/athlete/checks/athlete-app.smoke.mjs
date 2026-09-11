@@ -40,15 +40,22 @@ must(html.includes('logger.css'), 'logger stylesheet');
 must(html.includes('session.js'), 'session model script');
 must(html.includes('library.js'), 'library model script');
 must(html.includes('library-ui.js'), 'library view script');
+must(html.includes('plan-sync.js'), 'plan sync script');
 must(html.includes('library.css'), 'library stylesheet');
 must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px calc(var(--fab-size) + 24px)'), 'library Add Circuit row clears the FAB');
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v10'"), 'SW cache bump');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v11'"), 'SW cache bump');
 must(readFileSync(join(root, 'timer.js'), 'utf8').includes('Rest Timer'), 'rest timer picker');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('Select Timer'), 'Select Timer chrome');
 must(readFileSync(join(root, 'session.js'), 'utf8').includes("logMode: 'superset'"), 'F1/F2 same-page pairing');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('log-ss-member'), 'stacked superset paint');
+must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes('strength_side'), 'plan domain strength_side');
+must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes('upsert_athlete_domain_snapshot'), 'plan uses snapshot RPC not a new table');
+must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes('STALE_REV'), 'stale revision handling');
+must(!readFileSync(join(root, 'plan-sync.js'), 'utf8').includes('whoop-sync'), 'plan sync is not the WHOOP proxy');
+must(js.includes('copyTraining'), 'Me Copy training action');
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 
 if (failures.length) {

@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v8';
+const APP_BUILD = 'THE-brain-v9';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -18,6 +18,8 @@ const defaultState = () => ({
   timer: null,
   loggerOpen: false,
   library: null,
+  sessions: {},
+  planSync: { acks: { template: {}, session: {} }, snapshotRev: 0, lastPlan: null },
   libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,
   chatUnread: 0,
@@ -37,7 +39,6 @@ function resetBlankSlate(keepAuth = true) {
   S.session = null;
   S.timer = null;
   S.loggerOpen = false;
-  S.library = window.HybridLibrary ? HybridLibrary.emptyState() : { templates: [], catalog: { exercises: [], circuits: [] }, assignments: {} };
   S.libUi = { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null };
   S.selectedDate = today();
   S.settings = { whoop };
@@ -64,8 +65,13 @@ function load() {
 }
 
 function save() {
+  if (S.session && S.session.date) {
+    S.sessions = S.sessions || {};
+    S.sessions[S.session.date] = S.session;
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
   window.S = S;
+  if (window.PlanSync && typeof PlanSync.schedulePush === 'function') PlanSync.schedulePush();
 }
 
 function today() {
@@ -691,8 +697,11 @@ function meHtml() {
             ${w.connected
               ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button>'
               : '<button type="button" class="btn" onclick="Whoop.connect()">Connect WHOOP</button>'}
+            <button type="button" class="btn" onclick="copyTraining()">Copy training</button>
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
+          <p class="stub">${typeof PlanSync !== 'undefined' ? PlanSync.statusLine() : ''}</p>
+          <p class="stub">Copy training is Library + sessions. Sync WHOOP is recovery only.</p>
         </div>
       </div>`;
   }
@@ -701,7 +710,7 @@ function meHtml() {
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
       ${meAppSectionHtml()}
-      <p class="stub page-lead">Same email and password as THE Hybrid Engine. After sign-in you land on a blank slate — no demo sessions.</p>
+      <p class="stub page-lead">Same email and password as THE Hybrid Engine. Library and logged sessions copy after you sign in.</p>
       <div id="whoopCard"></div>
     </div>`;
 }
@@ -877,7 +886,16 @@ window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
 window.readinessScore = readinessScore;
-window.touchRecord = function () {};
+window.touchRecord = function () {
+  if (window.PlanSync) PlanSync.schedulePush();
+};
+window.copyTraining = async function copyTraining() {
+  if (!window.PlanSync) return;
+  const result = await PlanSync.syncNow();
+  if (typeof render === 'function') render();
+  if (!result.ok && result.reason === 'auth_required') window.alert('Sign in to copy training.');
+  else if (!result.ok) window.alert(result.reason === 'STALE_REV' ? 'Another phone changed training. Tap Copy training again.' : 'Could not copy training.');
+};
 window.num = num;
 window.resetBlankSlate = resetBlankSlate;
 window.setTab = setTab;
@@ -905,6 +923,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   if (window.Whoop && typeof Whoop.hydrateAuth === 'function') {
     try { await Whoop.hydrateAuth(); } catch (_) { /* offline / SDK */ }
+  }
+  if (window.PlanSync && typeof PlanSync.syncNow === 'function') {
+    try { await PlanSync.syncNow(); } catch (_) { /* offline / unsigned */ }
   }
   await refreshOtaStatus(false);
   render();

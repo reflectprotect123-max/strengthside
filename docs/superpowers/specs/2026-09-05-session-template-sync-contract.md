@@ -1,7 +1,7 @@
 # Session + template sync contract (Chassis Phase M)
 
 **Date:** 2026-09-05  
-**Status:** Contract only — **not implemented** (Phase S)  
+**Status:** Phase S in Strength Side athlete app (`apps/athlete/plan-sync.js`) — contract still binds. Domain key `strength_side`.  
 **Parent:** [Instrument · Atelier · Chassis design](./2026-09-05-instrument-atelier-chassis-design.md) §4 Phase M  
 **Product surface:** Hybrid HTML athlete app (`apps/mobile/prototype/hybrid-app/index.html`)
 

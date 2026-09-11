@@ -394,6 +394,9 @@
       ui.busy = false;
       if (typeof global.resetBlankSlate === 'function') global.resetBlankSlate(true);
       try { await syncAll(); } catch (_) { /* sync is optional immediately after sign-in */ }
+      if (global.PlanSync && typeof global.PlanSync.syncNow === 'function') {
+        try { await global.PlanSync.syncNow(); } catch (_) { /* plan copy is optional immediately after sign-in */ }
+      }
       if (typeof global.setTab === 'function') global.setTab('home');
       else if (typeof global.render === 'function') global.render();
     } catch (err) {

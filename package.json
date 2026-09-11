@@ -12,7 +12,7 @@
     "build": "node scripts/bundle-adaptive.mjs && node scripts/bundle-brain.mjs",
     "build:brain": "node scripts/bundle-brain.mjs",
     "sync:athlete": "bash scripts/sync-athlete-app.sh",
-    "check:athlete-app": "node scripts/bundle-brain.mjs && node --test apps/athlete/session.test.js apps/athlete/timer.test.js apps/athlete/library.test.js apps/athlete/library-ui.test.js && node apps/athlete/checks/athlete-app.smoke.mjs && node apps/athlete/checks/recovery-dial.smoke.mjs && node apps/athlete/checks/capgo-live-update.smoke.mjs",
+    "check:athlete-app": "node scripts/bundle-brain.mjs && node --test apps/athlete/session.test.js apps/athlete/timer.test.js apps/athlete/library.test.js apps/athlete/library-ui.test.js apps/athlete/plan-sync.test.js && node apps/athlete/checks/athlete-app.smoke.mjs && node apps/athlete/checks/recovery-dial.smoke.mjs && node apps/athlete/checks/capgo-live-update.smoke.mjs",
     "check:boot-syntax": "node apps/athlete/checks/athlete-app.smoke.mjs",
     "check:no-recall": "node apps/athlete/checks/no-recall.smoke.mjs",
     "check:whoop-ownership": "node apps/athlete/checks/whoop-ownership.smoke.mjs",
