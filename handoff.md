@@ -3,7 +3,7 @@
 > **AUTHORITATIVE CHECKPOINT — 9 September 2026 (Brain spine reset).**
 > Chat history before this file is disposable. Start here.
 >
-> **Architecture:** `packages/brain/` = The Brain (pure logic). **Two HTML products:** Strength `apps/athlete/` and Engine `apps/engine/`. Do not mix them.
+> **Architecture:** `packages/brain/` = The Brain (pure logic). **This repo is Strength only** (`apps/athlete/`). The Engine is a sibling GitHub repo, same as nutrition. Do not mix them.
 > Old monolithic `prototype/hybrid-app/` is **deleted** — not archived.
 >
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
@@ -14,11 +14,10 @@
 
 | | |
 | --- | --- |
-| **Products** | **Two apps.** Strength = `apps/athlete/` (`THE-brain-v1`). Engine = `apps/engine/` (`THE-hybrid-engine-v1`). Not tabs. Spec `docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`. |
+| **Products** | **Two repos.** Strength = this tree (`apps/athlete/`, `THE-brain-v1`). Engine = sibling `the-engine`. Nutrition = `nutrition`. Spec `docs/superpowers/specs/2026-09-11-two-products-strength-engine.md`. |
 | **The Brain** | `@hybrid/brain` in `packages/brain/` — readiness, today’s call, coach context. **Not HTML.** |
 | **Strength UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
-| **Engine UI** | `apps/engine/` — cond logger via `@hybrid/adaptive` Open/Next/Close |
-| **Build** | `bash scripts/sync-athlete-app.sh` → brain → athlete (+ copy to engine); adaptive → engine only |
+| **Build** | `bash scripts/sync-athlete-app.sh` → brain bundle → athlete |
 | **Coach chat** | In-app sheet → `brain-coach` proxy on athlete Netlify → OpenRouter on Brain owner site |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
 | **Storage** | **`THE-brain-v1`** only — no import from old `THE-builder-clean-v*` |
@@ -83,7 +82,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 - WHOOP + Concept2 + Echo FTMS + Capgo live update
 - Shared Supabase **twelve-table data ledger** (RLS + `embed-coaching-note`) — storage only
 - Library starters (**Aerobic Conditioning + Recovery** only; Full Body strength starters removed)
-- **`packages/adaptive`** — pure cond Open / Next / Close (vitest colocated). Lift modules deleted.
+- **The Engine** lives in a sibling repo, not this tree
 - **`strengthCutV1` migrate** — nuclear wipe of sessions + strength templates/state on first load after cut
 
 ### Legacy assets (kept, not product)
@@ -98,7 +97,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 | Layer | Deleted |
 | --- | --- |
-| Old packages | No `strength-engine`, `engine`, `shared-core`, `nutrition-engine`, `nutrition-core` — those stay deleted. **`packages/adaptive` is the exception and is live.** |
+| Old packages | No `strength-engine`, `engine`, `shared-core`, `nutrition-engine`, `nutrition-core`, `adaptive` — Engine math is the Engine repo |
 | Athlete S&C wiring | adapters, Big Mac, one-set logger, cond autoreg, recovery trio, coordinator, strength AI/cloud sync |
 | Nutrition | UI, sync, food catalog, label scan |
 | Netlify decide | `big-mac-decide`, `ai-strength-progression`, `ai-coach-intent` |

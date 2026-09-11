@@ -1,40 +1,36 @@
 # Strength and Engine are two products
 
 **Date:** 2026-09-11  
-**Status:** LOCKED — owner freeze. Do not merge them into one HTML app.
+**Status:** LOCKED — owner freeze. Two products, **two GitHub repos**.
 
 ## Rule
 
-Strength and conditioning are **two different products**. Not two tabs. Not two
-packages. Decision math for Engine stays in `@hybrid/adaptive`
-(`packages/adaptive/`). Products are **apps**.
+Strength and conditioning are **two different products**. Not two tabs. Not a
+folder pair inside `strengthside`. Same pattern as `nutrition`.
 
-| Product | Path | Storage | Logger | Cloud |
-| --- | --- | --- | --- | --- |
-| Strength | `apps/athlete/` | `THE-brain-v1` | TRACK kg/reps | `PlanSync` / `strength_side` |
-| The Engine | `apps/engine/` | `THE-hybrid-engine-v1` | splits / watts / RPM | none (no `PlanSync`) |
+| Product | Repo | Storage | Logger |
+| --- | --- | --- | --- |
+| Strength | `reflectprotect123-max/strengthside` (`apps/athlete/`) | `THE-brain-v1` | TRACK kg/reps + silent `PlanSync` |
+| The Engine | `reflectprotect123-max/the-engine` | `THE-hybrid-engine-v1` | splits / watts / RPM |
+| Nutrition | `reflectprotect123-max/nutrition` | (own) | food / expenditure |
 
-Stamp: `<meta name="hybrid-product">` + `PRODUCT.json`. Engine Android id
-`com.hybrid.engine` is reserved; Strength stays `com.hybrid.athlete`.
+`@hybrid/adaptive` lives in the Engine repo. Strength does not load it.
 
-Do **not** create `apps/hybrid-engine/` or `apps/hybrid-strength/` —
-`apps/athlete/checks/no-recall.smoke.mjs` forbids those paths.
+Do **not** create `apps/engine/`, `apps/hybrid-engine/`, `apps/hybrid-strength/`,
+or `packages/adaptive/` in this tree.
 
 ## In
 
-- Engine Library: **Create Engine session** only
-- Engine Next: `decideNextCond` only — never `decideNextLift`
 - Strength Library: **Create Session Template** only
-- Silent plan sync stays Strength-only; Me stays WHOOP (both products)
+- Silent plan sync stays Strength-only; Me stays WHOOP
 
 ## Out
 
 - Engine UI inside `apps/athlete/`
-- Strength TRACK / HPP demo / `strength_side` inside `apps/engine/`
-- Mixing splits/watts/RPM onto a lift page, or kg/reps onto an Engine interval
+- A 1:1 copy of the Strength HTML shell kept here “as Engine”
+- Mixing splits/watts/RPM onto a lift page
 
 ## Guard
 
-- `apps/athlete/checks/athlete-app.smoke.mjs` — no `engine.js`, no Adaptive bundle, no Create Engine
-- `apps/engine/checks/engine-app.smoke.mjs` — own storage, no PlanSync, Strength still separate
-- `pnpm run check:engine-app` is on `verify`
+- `apps/athlete/checks/athlete-app.smoke.mjs` — no `engine.js`, no Adaptive bundle, no `apps/engine/`
+- `apps/athlete/checks/no-recall.smoke.mjs` — `apps/engine` and `packages/adaptive` must not exist

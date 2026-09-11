@@ -4,4 +4,4 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 pnpm run build
-echo "Strength app ready at apps/athlete/; Engine app ready at apps/engine/"
+echo "Strength app ready at apps/athlete/"

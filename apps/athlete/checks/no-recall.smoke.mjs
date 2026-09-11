@@ -14,6 +14,8 @@ const forbiddenPaths = [
   'apps/mobile/preview-site',
   'apps/hybrid-strength',
   'apps/hybrid-engine',
+  'apps/engine',
+  'packages/adaptive',
   'scripts/archive-pre-brain.sh',
   'scripts/extract-hybrid-apps.sh',
   'scripts/hybrid-products.json',

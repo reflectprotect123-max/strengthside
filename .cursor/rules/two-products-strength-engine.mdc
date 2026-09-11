@@ -1,14 +1,13 @@
 ---
 alwaysApply: true
-description: Strength and Engine are two products, not two tabs
+description: Strength and Engine are two products and two repos
 ---
 
-# Two products
+# Two products, two repos
 
-Strength (`apps/athlete/`) and The Engine (`apps/engine/`) are **separate
-products**. Do not mix loggers, storage keys, or Library CTAs.
+Strength is this repo (`apps/athlete/`). The Engine is a **sibling GitHub repo**
+(`the-engine`), same as `nutrition`.
 
-- Strength = kg/reps TRACK, `THE-brain-v1`, silent `PlanSync`.
-- Engine = splits/watts/RPM, `THE-hybrid-engine-v1`, `@hybrid/adaptive` cond APIs.
-- Do not put Engine UI in the Strength app. Do not create `apps/hybrid-engine/`.
+Do not add `apps/engine/`, `packages/adaptive/`, or `apps/hybrid-engine/`.
+Do not mix Engine splits/watts/RPM into the Strength TRACK logger.
 ---

@@ -45,8 +45,8 @@ must(!html.includes('adaptive-bundle.js'), 'Strength product does not load Adapt
 must(!html.includes('Create Engine'), 'Strength Library has no Engine CTA');
 must(!js.includes('createEngine'), 'Strength app has no createEngine');
 must(!js.includes('trnEngineHtml'), 'Strength Training has no Engine cards');
-must(!existsSync(join(root, 'engine.js')), 'engine.js does not live in the Strength app');
-must(!existsSync(join(root, 'adaptive-bundle.js')), 'adaptive-bundle.js does not live in the Strength app');
+must(!existsSync(join(root, '..', 'engine')), 'Engine product is not a folder in this repo');
+must(!existsSync(join(root, '..', '..', 'packages', 'adaptive')), 'adaptive lives in the Engine repo, not Strength');
 must(html.includes('library.js'), 'library model script');
 must(html.includes('library-ui.js'), 'library view script');
 must(html.includes('plan-sync.js'), 'plan sync script');
