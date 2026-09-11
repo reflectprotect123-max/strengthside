@@ -15,9 +15,22 @@
     return root.S.libUi;
   }
 
-  function save() {
+  function save(opts) {
     if (typeof root.save === 'function') root.save();
+    if (opts && opts.paint === false) {
+      refreshResults();
+      return;
+    }
     if (typeof root.render === 'function') root.render();
+  }
+
+  function refreshResults() {
+    const doc = typeof document !== 'undefined' ? document : root.document;
+    const el = doc && doc.getElementById && doc.getElementById('libResults');
+    if (!el) return;
+    const screen = ui().screen;
+    if (screen === 'picker' || screen === 'newEx' || screen === 'newCirc') el.innerHTML = pickerRowsHtml();
+    else if (screen === 'list') el.innerHTML = listCardsHtml();
   }
 
   function setLib(next) {
@@ -40,14 +53,16 @@
       .join('');
   }
 
-  function listHtml() {
+  function listCardsHtml() {
     const st = lib();
     const q = String(ui().q || '').toLowerCase();
     const rows = st.templates.filter((t) => !q || t.title.toLowerCase().includes(q) || t.blocks.some((b) => (b.title || '').toLowerCase().includes(q)));
-    const cards = rows.length
-      ? rows.map((t) => {
-        const names = root.HybridLibrary.lettered(t).map((b) => b.title).join(', ') || 'Empty template';
-        return `<article class="lib-card">
+    if (!rows.length) {
+      return `<div class="lib-empty"><b>No session templates yet</b><p>Create one, then drop it on a Training day.</p></div>`;
+    }
+    return rows.map((t) => {
+      const names = root.HybridLibrary.lettered(t).map((b) => b.title).join(', ') || 'Empty template';
+      return `<article class="lib-card">
           <button type="button" style="text-align:left;width:100%" onclick="LibraryView.open('${esc(t.id)}')">
             <h2>${esc(t.title)}</h2>
             <p>${esc(names)}</p>
@@ -57,8 +72,10 @@
             <button type="button" class="lib-danger" onclick="LibraryView.removeTpl('${esc(t.id)}')">Delete</button>
           </div>
         </article>`;
-      }).join('')
-      : `<div class="lib-empty"><b>No session templates yet</b><p>Create one, then drop it on a Training day.</p></div>`;
+    }).join('');
+  }
+
+  function listHtml() {
     return `
       <div class="shell-screen shell-screen--library">
         <div class="lib-top">
@@ -69,7 +86,7 @@
           <input value="${esc(ui().q || '')}" placeholder="Search sessions" oninput="LibraryView.search(this.value)" aria-label="Search sessions">
         </div>
         <button type="button" class="lib-create" onclick="LibraryView.create()"><span class="lib-plus">+</span> Create Session Template</button>
-        ${cards}
+        <div id="libResults">${listCardsHtml()}</div>
       </div>`;
   }
 
@@ -163,16 +180,10 @@
   function pickerHtml() {
     const u = ui();
     const tab = u.tab || 'exercises';
-    const hits = root.HybridLibrary.searchCatalog(lib(), tab, u.q);
     const selected = new Set(u.selected || []);
     const create = tab === 'circuits'
       ? `<button type="button" class="lib-create" onclick="LibraryView.newCirc()"><span class="lib-plus">+</span> Create New Circuit</button>`
       : `<button type="button" class="lib-create" onclick="LibraryView.newEx()"><span class="lib-plus">+</span> Create New Exercise</button>`;
-    const rows = hits.map((h) => `
-      <button type="button" class="lib-pick-row" onclick="LibraryView.togglePick('${esc(h.id)}')">
-        <b>${esc(h.title)}</b>
-        <span class="lib-radio${selected.has(h.id) ? ' on' : ''}"></span>
-      </button>`).join('') || `<div class="lib-empty">No results. Create something new.</div>`;
     const n = selected.size;
     return `
       <div class="shell-screen shell-screen--library">
@@ -188,9 +199,21 @@
           <button type="button" class="${tab === 'circuits' ? 'on' : ''}" onclick="LibraryView.picker('circuits')">Circuits</button>
         </div>
         ${create}
-        ${rows}
+        <div id="libResults">${pickerRowsHtml()}</div>
         ${createSheetHtml()}
       </div>`;
+  }
+
+  function pickerRowsHtml() {
+    const u = ui();
+    const tab = u.tab || 'exercises';
+    const hits = root.HybridLibrary.searchCatalog(lib(), tab, u.q);
+    const selected = new Set(u.selected || []);
+    return hits.map((h) => `
+      <button type="button" class="lib-pick-row" onclick="LibraryView.togglePick('${esc(h.id)}')">
+        <b>${esc(h.title)}</b>
+        <span class="lib-radio${selected.has(h.id) ? ' on' : ''}"></span>
+      </button>`).join('') || `<div class="lib-empty">No results. Create something new.</div>`;
   }
 
   function createSheetHtml() {
@@ -258,7 +281,10 @@
 
   const LibraryView = {
     html,
-    search(q) { root.S.libUi.q = q; save(); },
+    search(q) {
+      root.S.libUi.q = String(q || '');
+      save({ paint: false });
+    },
     goList() { go('list', { tid: null, q: '', selected: [], bid: null }); },
     create() {
       const next = root.HybridLibrary.createTemplate(lib(), {});
