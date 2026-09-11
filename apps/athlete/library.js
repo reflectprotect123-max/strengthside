@@ -254,12 +254,10 @@
   function rxFor(block) {
     const sets = Math.max(1, Number(block.setCount) || 3);
     const cols = block.columns || ['reps'];
-    if (cols[0] === 'reps' || cols[0] === 'reps_range') {
-      const target = cols[0] === 'reps_range' ? '8-12' : 8;
-      return `${sets} x ${target}`;
-    }
+    const repBit = cols[0] === 'reps_range' ? '8-12' : cols[0] === 'reps' ? '8' : '';
+    if (cols.includes('meters')) return repBit ? `${sets} x ${repBit} m` : `${sets} x m`;
+    if (cols[0] === 'reps' || cols[0] === 'reps_range') return `${sets} x ${repBit}`;
     if (cols[0] === 'seconds' || cols[0] === 'time_mmss') return `${sets} x time`;
-    if (cols.includes('meters')) return `${sets} x m`;
     return `${sets} sets`;
   }
 

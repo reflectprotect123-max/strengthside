@@ -2,7 +2,7 @@
 .shell-screen--library {
   min-height: 100dvh;
   background: var(--oled-bg);
-  padding-bottom: 24px;
+  padding-bottom: calc(var(--fab-size) + 48px);
 }
 
 .lib-top {

@@ -62,6 +62,16 @@ test('assign template to date wins over fallback demo', () => {
   assert.equal(plan.blocks.some((b) => b.title === 'Front Squat'), true);
 });
 
+test('reps plus meters compiles a metres prescription', () => {
+  let st = Lib.emptyState();
+  st = Lib.createTemplate(st, { title: 'Sled day' });
+  const tid = st.templates[0].id;
+  st = Lib.addExercise(st, tid, { title: 'Sled', setCount: 3, columns: ['reps', 'meters'] });
+  const lift = Lib.compile(st.templates[0]).blocks.find((b) => b.kind === 'lift');
+  assert.match(lift.prescription, /m/);
+  assert.deepEqual(lift.columns, ['reps', 'meters']);
+});
+
 test('create catalog exercise with reps + meters is searchable', () => {
   let st = Lib.emptyState();
   st = Lib.createCatalogExercise(st, { title: 'Bendh', columns: ['reps', 'meters'] });

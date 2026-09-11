@@ -511,7 +511,10 @@ function trnSectionHtml(block) {
     </div>`;
 }
 
-function trnLiftHtml(block) {
+function trnLiftHtml(block, opts = {}) {
+  const ss = opts.superset
+    ? `<div class="trn-ss">− Superset</div>`
+    : '';
   return `
     <article class="trn-block trn-block--lift" onclick="startTrainingSession('${esc(block.letter)}')">
       <span class="trn-letter">${esc(block.letter)}</span>
@@ -519,7 +522,7 @@ function trnLiftHtml(block) {
         <h3 class="trn-lift-title">${esc(block.title)}</h3>
         <p class="trn-lift-rx">${esc(block.prescription)}</p>
       </div>
-    </article>`;
+    </article>${ss}`;
 }
 
 function trnRecoveryHtml(block) {
@@ -550,10 +553,16 @@ function trainingBlocksHtml(iso) {
     ? `<div class="trn-session-name">${esc(plan.title)}</div>`
     : '';
   const body = plan.blocks
-    .map((block) => {
+    .map((block, i) => {
       if (block.kind === 'warmup') return trnWarmupHtml(block);
       if (block.kind === 'section') return trnSectionHtml(block);
-      if (block.kind === 'lift') return trnLiftHtml(block);
+      if (block.kind === 'lift') {
+        const next = plan.blocks[i + 1];
+        const a = String(block.letter || '').match(/^([A-Za-z]+)(\d+)$/);
+        const b = next && String(next.letter || '').match(/^([A-Za-z]+)(\d+)$/);
+        const superset = !!(a && b && a[1] === b[1] && Number(b[2]) === Number(a[2]) + 1);
+        return trnLiftHtml(block, { superset });
+      }
       if (block.kind === 'recovery') return trnRecoveryHtml(block);
       return '';
     })
