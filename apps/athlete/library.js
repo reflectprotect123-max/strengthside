@@ -21,7 +21,7 @@
     { key: 'for_completion', label: 'For Completion' },
   ];
 
-  const SEED_EXERCISES = [
+  const SEED_EXERCISE_TITLES = new Set([
     'Bench Press',
     'Lat Pull Downs',
     'Back Squat',
@@ -34,14 +34,14 @@
     'Garhammer Raises',
     'Farmer Carry',
     'Backwards Sled Drag',
-  ];
+  ]);
 
-  const SEED_CIRCUITS = [
-    { title: 'Deadlift Warm-Up', instructions: 'Foam roll hamstrings\nActive straight leg raises' },
-    { title: 'Bench Press Warm-Up', instructions: 'Foam roll pecs\nBiphasic pec stretch' },
-    { title: 'Recovery Breathing', instructions: '10 nasal breaths\n5s inhale · 1s hold · 5s exhale' },
-    { title: 'Cooldown', instructions: 'Worlds Greatest Stretch\nRecovery breathing' },
-  ];
+  const SEED_CIRCUIT_TITLES = new Set([
+    'Deadlift Warm-Up',
+    'Bench Press Warm-Up',
+    'Recovery Breathing',
+    'Cooldown',
+  ]);
 
   function nid(prefix) {
     return prefix + '_' + Math.random().toString(36).slice(2, 9);
@@ -51,41 +51,39 @@
     return JSON.parse(JSON.stringify(v));
   }
 
-  function seedCatalog() {
-    return {
-      exercises: SEED_EXERCISES.map((title) => ({
-        id: nid('ex'),
-        title,
-        columns: title === 'Garhammer Raises' ? ['reps'] : ['reps', 'weight_kg'],
-      })),
-      circuits: SEED_CIRCUITS.map((c) => ({
-        id: nid('ci'),
-        title: c.title,
-        track: 'for_completion',
-        instructions: c.instructions,
-      })),
-    };
+  function emptyCatalog() {
+    return { exercises: [], circuits: [] };
   }
 
   function emptyState() {
     return {
       templates: [],
-      catalog: seedCatalog(),
+      catalog: emptyCatalog(),
       assignments: {},
+    };
+  }
+
+  function circuitRole(item) {
+    if (item && (item.role === 'cooldown' || item.role === 'warmup')) return item.role;
+    if (item && /recover|cool/i.test(item.title || '')) return 'cooldown';
+    return 'warmup';
+  }
+
+  function stripSeededCatalog(catalog) {
+    const src = catalog && typeof catalog === 'object' ? catalog : emptyCatalog();
+    return {
+      exercises: (Array.isArray(src.exercises) ? src.exercises : []).filter((x) => !SEED_EXERCISE_TITLES.has(x.title)),
+      circuits: (Array.isArray(src.circuits) ? src.circuits : []).filter((x) => !SEED_CIRCUIT_TITLES.has(x.title)),
     };
   }
 
   function ensure(state) {
     if (!state || typeof state !== 'object') return emptyState();
-    const next = {
+    return {
       templates: Array.isArray(state.templates) ? state.templates : [],
-      catalog: state.catalog && Array.isArray(state.catalog.exercises)
-        ? state.catalog
-        : seedCatalog(),
+      catalog: stripSeededCatalog(state.catalog),
       assignments: state.assignments && typeof state.assignments === 'object' ? state.assignments : {},
     };
-    if (!next.catalog.exercises.length && !next.catalog.circuits.length) next.catalog = seedCatalog();
-    return next;
   }
 
   function template(state, tid) {
@@ -117,11 +115,13 @@
     if (!t) return st;
     let instr = instructions || '';
     let name = title || 'Circuit';
+    let role = 'warmup';
     if (catalogId) {
       const hit = st.catalog.circuits.find((c) => c.id === catalogId);
       if (hit) {
         name = hit.title;
         instr = hit.instructions || instr;
+        role = circuitRole(hit);
       }
     }
     t.blocks.push({
@@ -130,6 +130,7 @@
       title: name,
       instructions: instr,
       track: 'for_completion',
+      role,
     });
     return st;
   }
@@ -263,8 +264,7 @@
 
   function sectionFor(block) {
     if (block.kind === 'circuit') {
-      if (/recover|cool/i.test(block.title || '')) return 'Recovery';
-      return 'Conditioning';
+      return circuitRole(block) === 'cooldown' ? 'Recovery' : 'Conditioning';
     }
     return 'Strength/Power';
   }
@@ -279,7 +279,7 @@
         lastSection = section;
       }
       if (b.kind === 'circuit') {
-        const recovery = /recover|cool/i.test(b.title || '');
+        const recovery = circuitRole(b) === 'cooldown';
         blocks.push({
           kind: recovery ? 'recovery' : 'warmup',
           letter: b.letter,
@@ -346,21 +346,25 @@
     return st;
   }
 
-  function createCatalogCircuit(state, { title, instructions } = {}) {
+  function createCatalogCircuit(state, { title, instructions, role } = {}) {
     const st = clone(ensure(state));
     st.catalog.circuits.unshift({
       id: nid('ci'),
       title: String(title || 'Circuit').trim() || 'Circuit',
       track: 'for_completion',
       instructions: instructions || '',
+      role: role === 'cooldown' ? 'cooldown' : 'warmup',
     });
     return st;
   }
 
-  function searchCatalog(state, tab, q) {
+  function searchCatalog(state, tab, q, opts) {
     const st = ensure(state);
     const needle = String(q || '').trim().toLowerCase();
-    const list = tab === 'circuits' ? st.catalog.circuits : st.catalog.exercises;
+    let list = tab === 'circuits' ? st.catalog.circuits : st.catalog.exercises;
+    if (tab === 'circuits' && opts && opts.role) {
+      list = list.filter((x) => circuitRole(x) === opts.role);
+    }
     if (!needle) return list.slice();
     return list.filter((x) => x.title.toLowerCase().includes(needle));
   }
@@ -395,6 +399,7 @@
     linkSuperset,
     unlinkSuperset,
     lettered,
+    circuitRole,
     compile,
     assignDate,
     unassignDate,

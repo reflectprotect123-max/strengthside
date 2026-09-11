@@ -6,7 +6,7 @@
   function lib() {
     const Lib = root.HybridLibrary;
     root.S.library = Lib.ensure(root.S.library);
-    root.S.libUi = root.S.libUi || { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null };
+    root.S.libUi = root.S.libUi || { screen: 'list', tid: null, heading: 'sessions', circuitKind: 'warmup', tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null };
     return root.S.library;
   }
 
@@ -29,8 +29,9 @@
     const el = doc && doc.getElementById && doc.getElementById('libResults');
     if (!el) return;
     const screen = ui().screen;
-    if (screen === 'picker' || screen === 'newEx' || screen === 'newCirc') el.innerHTML = pickerRowsHtml();
-    else if (screen === 'list') el.innerHTML = listCardsHtml();
+    if (screen === 'picker' || ((screen === 'newEx' || screen === 'newCirc') && ui().tid)) el.innerHTML = pickerRowsHtml();
+    else if (heading() !== 'sessions') el.innerHTML = catalogRowsHtml();
+    else el.innerHTML = listCardsHtml();
   }
 
   function setLib(next) {
@@ -75,18 +76,78 @@
     }).join('');
   }
 
+  function heading() {
+    const h = ui().heading;
+    return h === 'exercises' || h === 'circuits' ? h : 'sessions';
+  }
+
+  function circuitKind() {
+    return ui().circuitKind === 'cooldown' ? 'cooldown' : 'warmup';
+  }
+
+  function headingsHtml() {
+    const h = heading();
+    return `<div class="lib-headings" role="tablist" aria-label="Library">
+        <button type="button" role="tab" aria-selected="${h === 'sessions'}" class="${h === 'sessions' ? 'on' : ''}" onclick="LibraryView.setHeading('sessions')">Sessions</button>
+        <button type="button" role="tab" aria-selected="${h === 'exercises'}" class="${h === 'exercises' ? 'on' : ''}" onclick="LibraryView.setHeading('exercises')">Exercises</button>
+        <button type="button" role="tab" aria-selected="${h === 'circuits'}" class="${h === 'circuits' ? 'on' : ''}" onclick="LibraryView.setHeading('circuits')">Circuits</button>
+      </div>`;
+  }
+
+  function subheadsHtml() {
+    const k = circuitKind();
+    return `<div class="lib-subheads" role="tablist" aria-label="Circuit kind">
+        <button type="button" role="tab" aria-selected="${k === 'warmup'}" class="${k === 'warmup' ? 'on' : ''}" onclick="LibraryView.setCircuitKind('warmup')">Warm up</button>
+        <button type="button" role="tab" aria-selected="${k === 'cooldown'}" class="${k === 'cooldown' ? 'on' : ''}" onclick="LibraryView.setCircuitKind('cooldown')">Cool down</button>
+      </div>`;
+  }
+
+  function catalogRowsHtml() {
+    const q = ui().q;
+    if (heading() === 'exercises') {
+      const hits = root.HybridLibrary.searchCatalog(lib(), 'exercises', q);
+      if (!hits.length) {
+        return `<div class="lib-empty"><b>No exercises yet</b><p>Create one, then add it to a session.</p></div>`;
+      }
+      return hits.map((h) => {
+        const track = (h.columns || []).map((k) => root.HybridLibrary.trackLabel(k)).join(' · ');
+        return `<div class="lib-pick-row"><b>${esc(h.title)}</b><span class="lib-track">${esc(track)}</span></div>`;
+      }).join('');
+    }
+    const role = circuitKind();
+    const hits = root.HybridLibrary.searchCatalog(lib(), 'circuits', q, { role });
+    const label = role === 'cooldown' ? 'cool down' : 'warm up';
+    if (!hits.length) {
+      return `<div class="lib-empty"><b>No ${esc(label)} yet</b><p>Create one, then add it to a session.</p></div>`;
+    }
+    return hits.map((h) => `<div class="lib-pick-row"><b>${esc(h.title)}</b><span class="lib-track">For Completion</span></div>`).join('');
+  }
+
   function listHtml() {
+    const h = heading();
+    const title = h === 'exercises' ? 'Exercises' : h === 'circuits' ? 'Circuits' : 'Sessions';
+    const kind = circuitKind();
+    const searchPh = h === 'exercises' ? 'Search exercises' : h === 'circuits' ? (kind === 'cooldown' ? 'Search cool down' : 'Search warm up') : 'Search sessions';
+    const create = h === 'exercises'
+      ? `<button type="button" class="lib-create" onclick="LibraryView.newEx()"><span class="lib-plus">+</span> Create New Exercise</button>`
+      : h === 'circuits'
+        ? `<button type="button" class="lib-create" onclick="LibraryView.newCirc()"><span class="lib-plus">+</span> Create ${kind === 'cooldown' ? 'Cool Down' : 'Warm Up'}</button>`
+        : `<button type="button" class="lib-create" onclick="LibraryView.create()"><span class="lib-plus">+</span> Create Session Template</button>`;
+    const results = h === 'sessions' ? listCardsHtml() : catalogRowsHtml();
     return `
       <div class="shell-screen shell-screen--library">
         <div class="lib-top">
           <p class="lib-kicker">Library</p>
-          <h1 class="lib-title">Sessions</h1>
+          <h1 class="lib-title">${title}</h1>
         </div>
+        ${headingsHtml()}
+        ${h === 'circuits' ? subheadsHtml() : ''}
         <div class="lib-search">
-          <input value="${esc(ui().q || '')}" placeholder="Search sessions" oninput="LibraryView.search(this.value)" aria-label="Search sessions">
+          <input value="${esc(ui().q || '')}" placeholder="${esc(searchPh)}" oninput="LibraryView.search(this.value)" aria-label="${esc(searchPh)}">
         </div>
-        <button type="button" class="lib-create" onclick="LibraryView.create()"><span class="lib-plus">+</span> Create Session Template</button>
-        <div id="libResults">${listCardsHtml()}</div>
+        ${create}
+        <div id="libResults">${results}</div>
+        ${!ui().tid ? createSheetHtml() : ''}
       </div>`;
   }
 
@@ -237,7 +298,7 @@
       const d = u.draft || {};
       return `<div class="lib-sheet" onclick="if(event.target===this)LibraryView.closeCreate()">
         <div class="lib-sheet-card">
-          <h2>New Circuit</h2>
+          <h2>${ui().tid ? 'New Circuit' : (circuitKind() === 'cooldown' ? 'New Cool Down' : 'New Warm Up')}</h2>
           <div class="lib-field"><label>Title</label><input id="libNewTitle" value="${esc(d.title || '')}"></div>
           <div class="lib-field"><label>What do you want to track?</label>
             <select disabled><option>For Completion</option></select>
@@ -274,13 +335,19 @@
   function html() {
     const s = ui().screen;
     if (s === 'edit' || s === 'editBlock') return editorHtml();
-    if (s === 'picker' || s === 'newEx' || s === 'newCirc') return pickerHtml();
+    if (s === 'picker' || ((s === 'newEx' || s === 'newCirc') && ui().tid)) return pickerHtml();
     if (s === 'calendar') return calendarHtml();
     return listHtml();
   }
 
   const LibraryView = {
     html,
+    setHeading(heading) {
+      go('list', { heading, q: '', selected: [], tid: null, bid: null });
+    },
+    setCircuitKind(kind) {
+      go('list', { heading: 'circuits', circuitKind: kind === 'cooldown' ? 'cooldown' : 'warmup', q: '' });
+    },
     search(q) {
       root.S.libUi.q = String(q || '');
       save({ paint: false });
@@ -325,26 +392,40 @@
     },
     newEx() { go('newEx', { draft: { c1: 'reps', c2: 'none' } }); },
     newCirc() { go('newCirc', { draft: {} }); },
-    closeCreate() { go('picker'); },
+    closeCreate() {
+      if (ui().tid) go('picker');
+      else go('list');
+    },
     saveNewEx() {
       const title = (document.getElementById('libNewTitle') || {}).value;
       const c1 = (document.getElementById('libNewC1') || {}).value || 'reps';
       const c2 = (document.getElementById('libNewC2') || {}).value || 'none';
       const cols = [c1, c2].filter((k) => k && k !== 'none');
       let st = root.HybridLibrary.createCatalogExercise(lib(), { title, columns: cols });
-      const id = st.catalog.exercises[0].id;
-      st = root.HybridLibrary.addExercise(st, ui().tid, { catalogId: id });
+      if (ui().tid) {
+        const id = st.catalog.exercises[0].id;
+        st = root.HybridLibrary.addExercise(st, ui().tid, { catalogId: id });
+        root.S.library = st;
+        go('edit', { tid: ui().tid, bid: null });
+        return;
+      }
       root.S.library = st;
-      go('edit', { tid: ui().tid, bid: null });
+      go('list', { heading: 'exercises', bid: null });
     },
     saveNewCirc() {
       const title = (document.getElementById('libNewTitle') || {}).value;
       const instructions = (document.getElementById('libNewInstr') || {}).value;
-      let st = root.HybridLibrary.createCatalogCircuit(lib(), { title, instructions });
-      const id = st.catalog.circuits[0].id;
-      st = root.HybridLibrary.addCircuit(st, ui().tid, { catalogId: id });
+      const role = circuitKind();
+      let st = root.HybridLibrary.createCatalogCircuit(lib(), { title, instructions, role });
+      if (ui().tid) {
+        const id = st.catalog.circuits[0].id;
+        st = root.HybridLibrary.addCircuit(st, ui().tid, { catalogId: id });
+        root.S.library = st;
+        go('edit', { tid: ui().tid, bid: null });
+        return;
+      }
       root.S.library = st;
-      go('edit', { tid: ui().tid, bid: null });
+      go('list', { heading: 'circuits', circuitKind: role, bid: null });
     },
     editBlock(bid) { root.S.libUi.bid = bid; save(); },
     closeSheet() { root.S.libUi.bid = null; save(); },
