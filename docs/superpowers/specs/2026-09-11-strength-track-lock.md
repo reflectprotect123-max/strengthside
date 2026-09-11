@@ -94,3 +94,12 @@ Exact labels from the TrainHeroic “What do you want to track?” sheet.
 `apps/coach/log-columns.js` `KINDS` is a **subset** (reps, range, kg, % WM, LWP, seconds, metres).
 
 When Library / logger work starts, expand `KINDS` to this lock. Do not ship a picker that offers anything else.
+
+## Gaps plugged from later clips (11 Sep)
+
+- Letter groups of **3+** (B1/B2/B3) are one logger page.
+- Coach instructions on the template become the **Got It** page.
+- **MAX** reps and **reps-only** lifts (no kg column).
+- Training list greens completed letters (existing logger complete).
+- Session title on Training after calendar assign.
+- Empty catalog search still offers **Create New**.

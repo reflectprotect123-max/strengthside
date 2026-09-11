@@ -390,10 +390,12 @@
   }
 
   function coachHtml() {
+    const s = session();
+    const copy = (s && s.instructions && String(s.instructions).trim()) ? s.instructions : COACH;
     return `
       <div class="log-coach">
         <h1>Coach Instructions</h1>
-        <p>${esc(COACH)}</p>
+        <p>${esc(copy).replace(/\n/g, '<br>')}</p>
         <button type="button" class="log-primary" onclick="Logger.gotCoach()">Got It</button>
       </div>`;
   }
@@ -423,32 +425,54 @@
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
         <div class="log-side">
-          <div class="log-side-row"><span>GOAL <small>PRO</small></span><button type="button" class="log-add" onclick="Logger.sheet('goal')">Add</button></div>
           <div class="log-side-row"><span>WORKING MAX</span><button type="button" class="log-add" onclick="Logger.sheet('wm')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
           <div class="log-side-row"><span>LAST</span><span>${wm ? esc(wm) : 'None'}</span></div>
         </div>
       </div>`;
   }
 
+  function colField(key) {
+    if (key === 'reps' || key === 'reps_range') return 'reps';
+    if (key === 'weight_kg' || key === 'weight_lb' || key === 'weight_pct' || key === 'lwp') return 'kg';
+    return key;
+  }
+
+  function columnsFor(page) {
+    if (page.columns && page.columns.length) return page.columns;
+    if (page.logMode === 'kg') return ['reps', 'weight_kg'];
+    return ['reps'];
+  }
+
+  function cellVal(row, field) {
+    if (field === 'reps') return row.reps == null ? 'MAX' : row.reps;
+    if (field === 'kg') return row.kg == null || row.kg === '' ? '' : row.kg;
+    const v = row.cells && row.cells[field];
+    return v == null ? '' : v;
+  }
+
   function tableHtml(s, page, log) {
-    const kgCol = page.logMode === 'kg';
+    const cols = columnsFor(page);
     const mid = esc(page.id);
+    const heads = cols.map((k) => `<th>${esc((root.HybridLibrary && HybridLibrary.trackLabel(k)) || k)}</th>`).join('');
     const rows = (log.sets || []).map((row, i) => {
-      const focusKg = pad && pad.memberId === page.id && pad.setIndex === i && pad.field === 'kg';
-      const focusReps = pad && pad.memberId === page.id && pad.setIndex === i && pad.field === 'reps';
-      const repsLabel = row.reps == null ? 'MAX' : row.reps;
+      const tds = cols.map((k) => {
+        const field = colField(k);
+        const focus = pad && pad.memberId === page.id && pad.setIndex === i && pad.field === field;
+        const val = cellVal(row, field);
+        const ph = field === 'reps' && row.reps == null;
+        return `<td><button type="button" class="log-cell${focus ? ' focus' : ''}${ph ? ' ph' : ''}" onclick="Logger.focusPad('${mid}',${i},'${esc(field)}')">${esc(val)}</button></td>`;
+      }).join('');
       return `<tr>
         <td>${i + 1}</td>
-        <td><button type="button" class="log-cell${focusReps ? ' focus' : ''}${row.reps == null ? ' ph' : ''}" onclick="Logger.focusPad('${mid}',${i},'reps')">${esc(repsLabel)}</button></td>
-        ${kgCol ? `<td><button type="button" class="log-cell${focusKg ? ' focus' : ''}" onclick="Logger.focusPad('${mid}',${i},'kg')">${row.kg == null ? '' : esc(row.kg)}</button></td>` : ''}
+        ${tds}
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
       </tr>`;
     }).join('');
     return `
-      <p class="log-rx">${esc(page.prescription)}${page.notes && page.notes.length ? '' : ''}</p>
+      <p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <table class="log-table">
-        <thead><tr><th>Sets</th><th>Reps</th>${kgCol ? '<th>Kg</th>' : ''}<th></th></tr></thead>
+        <thead><tr><th>Sets</th>${heads}<th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="log-set-ctrl">
@@ -518,7 +542,7 @@
             ${pad.field === 'kg' ? `<span class="log-unit">
               <button type="button" class="${unit === 'kg' ? 'on' : ''}" onclick="Logger.unit('kg')">Kg</button>
               <button type="button" class="${unit === 'lb' ? 'on' : ''}" onclick="Logger.unit('lb')">Lb</button>
-            </span>` : `<span style="margin-left:8px;opacity:.6">REPS</span>`}
+            </span>` : `<span style="margin-left:8px;opacity:.6">${esc((root.HybridLibrary && HybridLibrary.trackLabel(pad.field)) || pad.field).toUpperCase()}</span>`}
           </div>
           <button type="button" onclick="Logger.closePad()">⌄</button>
         </div>
@@ -637,7 +661,7 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[setIndex];
-      const seed = field === 'kg' ? row.kg : row.reps;
+      const seed = field === 'kg' ? row.kg : field === 'reps' ? row.reps : (row.cells && row.cells[field]);
       pad = { memberId: lift.id, setIndex, field, buffer: seed == null ? '' : String(seed), miss: !!row.miss };
       paint();
     },
@@ -654,7 +678,8 @@
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
       if (pad.field === 'kg') patch.kg = n;
-      else patch.reps = n;
+      else if (pad.field === 'reps') patch.reps = n;
+      else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), pad.setIndex, patch, pad.memberId);
       if (pad.field === 'kg' && n > 0) {
         const page = HybridSession.currentPage(s);
@@ -675,7 +700,8 @@
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
       if (pad.field === 'kg') patch.kg = n;
-      else patch.reps = n;
+      else if (pad.field === 'reps') patch.reps = n;
+      else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), idx, patch, pad.memberId);
       s = HybridSession.autofillFrom(s, idx, pad.memberId);
       pad = null;
@@ -703,6 +729,7 @@
         log.sets.push({
           reps: lift.logMode === 'max' ? null : lift.targetReps,
           kg: null,
+          cells: {},
           logged: false,
           miss: false,
         });
@@ -718,7 +745,10 @@
       paint();
     },
     doneTraining() { pad = null; persist(HybridSession.openFeel(session())); },
-    addExercise() { window.alert('Add Exercise — builder lands in a later slice.'); },
+    addExercise() {
+      close();
+      if (typeof root.openLibraryForDay === 'function') root.openLibraryForDay();
+    },
     feelIntensity(n) { persist(HybridSession.setFeel(session(), { intensity: n })); },
     feelMins(d) {
       const cur = (session().feel && session().feel.durationMin) || 1;

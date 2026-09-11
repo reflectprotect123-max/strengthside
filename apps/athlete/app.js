@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v6';
+const APP_BUILD = 'THE-brain-v7';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -17,6 +17,8 @@ const defaultState = () => ({
   session: null,
   timer: null,
   loggerOpen: false,
+  library: null,
+  libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,
   chatUnread: 0,
 });
@@ -35,6 +37,8 @@ function resetBlankSlate(keepAuth = true) {
   S.session = null;
   S.timer = null;
   S.loggerOpen = false;
+  S.library = window.HybridLibrary ? HybridLibrary.emptyState() : { templates: [], catalog: { exercises: [], circuits: [] }, assignments: {} };
+  S.libUi = { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null };
   S.selectedDate = today();
   S.settings = { whoop };
   save();
@@ -415,6 +419,11 @@ const TRAINING_DEMO = {
 };
 
 function trainingPlanForDate(iso) {
+  if (window.HybridLibrary) {
+    S.library = HybridLibrary.ensure(S.library);
+    const fromLib = HybridLibrary.planForDate(S.library, iso, null);
+    if (fromLib) return fromLib;
+  }
   if (S.trainingPlans && S.trainingPlans[iso]) return S.trainingPlans[iso];
   if (iso >= '2026-09-07' && iso <= '2026-09-13') return TRAINING_DEMO;
   return null;
@@ -450,7 +459,10 @@ function trainingTopBarHtml() {
 function trainingCalendarHtml() {
   const days = weekDays(S.selectedDate);
   const plan = trainingPlanForDate(S.selectedDate);
-  const dotMap = (plan && plan.dots) || TRAINING_DEMO.dots;
+  const libDots = (S.library && S.library.assignments)
+    ? Object.fromEntries(Object.keys(S.library.assignments).map((d) => [d, true]))
+    : {};
+  const dotMap = { ...((TRAINING_DEMO && TRAINING_DEMO.dots) || {}), ...libDots, ...((plan && plan.dots) || {}) };
   return `
     <div class="cal-strip cal-strip--training" role="tablist" aria-label="Training calendar">
       ${days
@@ -528,8 +540,15 @@ function trnRecoveryHtml(block) {
 function trainingBlocksHtml(iso) {
   const plan = trainingPlanForDate(iso);
   if (!plan || !plan.blocks || !plan.blocks.length) {
-    return `<p class="trn-empty">Nothing scheduled for this day yet.</p>`;
+    return `<p class="trn-empty">Nothing scheduled for this day yet.</p>
+    <button type="button" class="trn-add-exercise" onclick="openLibraryForDay()">
+      <span class="trn-add-icon" aria-hidden="true">+</span>
+      <span>Add Exercise</span>
+    </button>`;
   }
+  const head = plan.title
+    ? `<div class="trn-session-name">${esc(plan.title)}</div>`
+    : '';
   const body = plan.blocks
     .map((block) => {
       if (block.kind === 'warmup') return trnWarmupHtml(block);
@@ -540,8 +559,9 @@ function trainingBlocksHtml(iso) {
     })
     .join('');
   return `
+    ${head}
     ${body}
-    <button type="button" class="trn-add-exercise" onclick="fabAction('session')">
+    <button type="button" class="trn-add-exercise" onclick="openLibraryForDay()">
       <span class="trn-add-icon" aria-hidden="true">+</span>
       <span>Add Exercise</span>
     </button>`;
@@ -565,12 +585,17 @@ function startTrainingSession(letter) {
 }
 
 function libraryHtml() {
-  return `
-    <div class="page">
-      <div class="eyebrow">Library</div>
-      <h1>Programs</h1>
-      <div class="card stub">Strength, conditioning, and recovery templates rebuild here.</div>
-    </div>`;
+  if (window.LibraryView) return LibraryView.html();
+  return `<div class="page"><h1>Library</h1></div>`;
+}
+
+function openLibraryForDay() {
+  S.tab = 'library';
+  S.library = window.HybridLibrary ? HybridLibrary.ensure(S.library) : S.library;
+  const tid = S.library && S.library.assignments && S.library.assignments[S.selectedDate];
+  if (tid && window.LibraryView) LibraryView.open(tid);
+  else if (window.LibraryView) LibraryView.create();
+  else render();
 }
 
 function meAppSectionHtml() {
@@ -727,7 +752,9 @@ function fabAction(kind) {
     return;
   }
   if (kind === 'session') {
-    window.alert('Create session — builder lands in the next slice.');
+    S.tab = 'library';
+    if (window.LibraryView) LibraryView.create();
+    else render();
     return;
   }
   if (kind === 'coach') {
@@ -857,6 +884,7 @@ window.applyOtaUpdate = applyOtaUpdate;
 window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;
 window.trainingPlanForDate = trainingPlanForDate;
+window.openLibraryForDay = openLibraryForDay;
 window.render = render;
 
 document.addEventListener('DOMContentLoaded', async () => {

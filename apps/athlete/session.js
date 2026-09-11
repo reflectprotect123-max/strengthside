@@ -25,6 +25,7 @@
       rows.push({
         reps: page.logMode === 'max' ? null : page.targetReps,
         kg: null,
+        cells: {},
         logged: false,
         miss: false,
       });
@@ -87,7 +88,10 @@
 
   function pageFromBlock(block) {
     const rx = parseRx(block.prescription);
-    const mode = logModeFor(block, rx);
+    const cols = Array.isArray(block.columns) ? block.columns.filter(Boolean) : [];
+    const mode = cols.length && !cols.includes('weight_kg') && !cols.includes('weight_lb') && !cols.includes('weight_pct') && !cols.includes('lwp')
+      ? (rx.isMax ? 'max' : 'reps')
+      : logModeFor(block, rx);
     return {
       id: block.letter || block.title,
       letter: block.letter || '',
@@ -102,8 +106,9 @@
       goal: block.goal || '',
       footer: block.footer || '',
       section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
-      setCount: mode === 'complete' ? 0 : rx.setCount,
+      setCount: mode === 'complete' ? 0 : (Number(block.setCount) || rx.setCount),
       targetReps: rx.targetReps,
+      columns: cols,
     };
   }
 
@@ -116,14 +121,24 @@
     const pages = [];
     for (let i = 0; i < members.length; i++) {
       const a = members[i];
-      const b = members[i + 1];
       const pa = letterParts(a.letter);
-      const pb = b ? letterParts(b.letter) : null;
-      if (pa && pb && pa.base === pb.base && pa.n === 1 && pb.n === 2) {
+      if (!pa) {
+        pages.push(a);
+        continue;
+      }
+      const group = [a];
+      let j = i + 1;
+      while (j < members.length) {
+        const pb = letterParts(members[j].letter);
+        if (!pb || pb.base !== pa.base || pb.n !== pa.n + (j - i)) break;
+        group.push(members[j]);
+        j += 1;
+      }
+      if (group.length >= 2) {
         pages.push({
           id: pa.base,
           letter: pa.base,
-          title: `${a.title} / ${b.title}`,
+          title: group.map((m) => m.title).join(' / '),
           kind: 'lift',
           logMode: 'superset',
           prescription: '',
@@ -136,9 +151,9 @@
           section: a.section,
           setCount: 0,
           targetReps: null,
-          members: [a, b],
+          members: group,
         });
-        i += 1;
+        i = j - 1;
       } else {
         pages.push(a);
       }
@@ -169,6 +184,8 @@
     }
     const session = attachLogs({
       date,
+      title: (plan && plan.title) || '',
+      instructions: (plan && plan.instructions) || '',
       phase: letter ? 'block' : 'quote',
       blockIndex: 0,
       startedAt: Date.now(),
@@ -246,6 +263,9 @@
     if (!row) return s;
     if (patch.reps != null) row.reps = Number(patch.reps);
     if (patch.kg != null) row.kg = Number(patch.kg);
+    if (patch.cells && typeof patch.cells === 'object') {
+      row.cells = { ...(row.cells || {}), ...patch.cells };
+    }
     if (patch.miss != null) row.miss = !!patch.miss;
     row.logged = true;
     return s;
