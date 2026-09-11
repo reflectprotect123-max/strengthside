@@ -38,12 +38,14 @@ jobs:
           bash scripts/rematerialize-openrouter-from-vault.sh
           node scripts/set-openrouter-netlify.mjs --deploy-coach
 
-      - name: Sync athlete proxy + redeploy thehybridsystem
+      # Athlete HTML+proxy already deploys via "Deploy athlete Netlify" (pnpm + ownership smokes).
+      # This job only refreshes thehybridsystem functions so brain-coach still proxies to owner.
+      # Do not call sync-athlete-app.sh here — that script needs pnpm, which this job does not install.
+      - name: Redeploy thehybridsystem brain-coach proxy
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           set -euo pipefail
-          bash scripts/sync-athlete-app.sh
           cd apps/athlete
           npx --yes netlify-cli api listSites --auth="$NETLIFY_AUTH_TOKEN" > /tmp/sites.json
           TO_SITE="$(node -e '
