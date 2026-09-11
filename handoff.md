@@ -91,7 +91,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 ### Sync honesty (important)
 
-`Whoop.syncAll` refreshes **WHOOP recovery** and **Concept2 Logbook** when linked. **PlanSync** (`strength_side`) copies Library templates + calendar/logger sessions in the background when signed in — no extra Me chrome. Device stays source of truth until ack. The Brain can pull the same domain later.
+`Whoop.syncAll` refreshes **WHOOP recovery** and **Concept2 Logbook** when linked. **PlanSync** (`strength_side`) copies Library templates + calendar/logger sessions in the background when signed in — no extra Me chrome. Owner lock: `docs/superpowers/specs/2026-09-11-plan-sync-silent.md`. Device stays source of truth until ack. The Brain can pull the same domain later.
 
 ### Gone for good (do not restore)
 

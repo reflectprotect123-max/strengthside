@@ -115,14 +115,12 @@ Do not route session/template payloads through WHOOP/Concept2 proxy handlers. Do
 
 Phase S implements the contract above. Before Capgo ship:
 
-- [ ] **`SessionTemplateSync` module** (IIFE or small module): queue, debounced push, pull on sign-in + manual sync, status for Settings UI
-- [ ] **Wire `_meta` → `rev`** on every mutating save path (`save`, publish, template upsert, session complete)
-- [ ] **Server storage + RPC** with `409 STALE_REV` enforcement (snapshot or per-entity — document choice in Phase S plan)
-- [ ] **Merge + conflict UI** when local dirty and server ahead (keep local default; offer “use cloud copy”)
-- [ ] **Honest copy update**: Settings / sync card distinguishes integration sync vs plan sync; remove “device only” caveat only when plan sync acks work
-- [ ] **Smokes**: module exists, uses auth client, handles stale rev; extend `account-sync-checkin.smoke.mjs` or add dedicated smoke
-- [ ] **CI**: new check in `verify` + `.github/workflows/ci.yml` if a guard is added
-- [ ] **`pnpm run verify`** green; manual dogfood: edit template on A, pull on B, conflict on simultaneous edit
+- [x] **`PlanSync` module**: queue, debounced push, pull on sign-in + boot
+- [x] **Wire rev** on pack of Library templates + sessions
+- [x] **Server storage + RPC** via `upsert_athlete_domain_snapshot` (`strength_side`); `STALE_REV` on stale envelope
+- [x] **Conflict**: keep this phone; no Me UI
+- [x] **Me stays quiet** — see `docs/superpowers/specs/2026-09-11-plan-sync-silent.md` (overrides the old “honest Settings card” idea)
+- [x] **Smokes**: `athlete-app.smoke.mjs` + `plan-sync.test.js` in `check:athlete-app` / `verify`
 
 ---
 

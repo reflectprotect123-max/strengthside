@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+description: Plan sync is silent; Me stays WHOOP-only
+---
+
+# Plan sync is silent
+
+Library templates and logged sessions copy in the background **when signed in**.
+
+Me is **not** a sync dashboard. Do not add Copy training, last-copied status,
+or copy that explains plan sync vs WHOOP.
+
+WHOOP button = WHOOP only. Training copy has no extra chrome.
+---

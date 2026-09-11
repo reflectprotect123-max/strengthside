@@ -135,6 +135,28 @@ path via `_hybrid-proxy.mjs`.
 - Expo Home, `prototype/hybrid-app/`, and `preview-site/` were **deleted**. Do not recreate them.
 - Coach chat in v0.1 is the in-app sheet (`brain-coach` proxy → Brain owner site).
 
+## Plan sync is silent — Me does not explain it
+
+**Locked 11 September 2026.** Same class of rule as “no Chat tab” and Home OLED: do not
+re-open it as a UX cleanup.
+
+Library templates and calendar/logger sessions copy in the **background when the
+athlete is signed in** (`PlanSync`, domain `strength_side`). The photocopier is
+not a screen.
+
+- **Me stays WHOOP + Sign out.** No “Copy training” button, no last-copied line,
+  no “Library vs WHOOP” explainer, no plan-sync status chip.
+- **Do not** add a Settings/Me sync card to “make it honest.” Honesty is: WHOOP
+  button syncs WHOOP; training copy has no extra chrome.
+- Unsigned: stay on device only. Signed in: `schedulePush` on save + `syncNow`
+  after sign-in / boot. No extra tap.
+- The Brain may **read** `strength_side` later. This app does not grow Brain UI
+  to show that.
+
+Guard: `apps/athlete/checks/athlete-app.smoke.mjs` (Me HTML must not mention plan
+sync; `PlanSync.schedulePush` / `syncNow` must still exist). Spec:
+`docs/superpowers/specs/2026-09-11-plan-sync-silent.md`.
+
 ## Pain and illness are safety flags, not readiness penalties
 
 Carried from the hybrid repo, and it binds here because this repo now holds the

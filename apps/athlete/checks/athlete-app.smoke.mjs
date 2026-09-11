@@ -57,6 +57,15 @@ must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes('STALE_REV'), 'st
 must(!readFileSync(join(root, 'plan-sync.js'), 'utf8').includes('whoop-sync'), 'plan sync is not the WHOOP proxy');
 must(!js.includes('copyTraining'), 'Me has no Copy training button — plan sync is silent when signed in');
 must(!html.includes('Copy training'), 'no Copy training chrome');
+{
+  const meStart = js.indexOf('function meHtml()');
+  const meEnd = js.indexOf('\nfunction setTab(', meStart);
+  const meFn = meStart >= 0 && meEnd > meStart ? js.slice(meStart, meEnd) : '';
+  must(meFn.includes('Whoop.syncAll') || meFn.includes('Whoop.connect'), 'Me still has WHOOP actions');
+  must(!/Copy training|PlanSync|statusLine|last copied|Library \+ sessions/i.test(meFn), 'Me HTML does not mention plan sync');
+}
+must(js.includes('PlanSync.schedulePush'), 'plan sync still runs on save');
+must(js.includes('PlanSync.syncNow'), 'plan sync still runs when signed in');
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 
 if (failures.length) {
