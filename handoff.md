@@ -44,7 +44,7 @@
 | --- | --- |
 | Token | `292f04bd-a0a6-490c-8b7d-03c234eb4915` — **source of truth** in this table → rematerialize to gitignored `.capgo` (or `CAPGO_TOKEN`) |
 | App ID | `com.hybrid.athlete` |
-| Channels | **`dogfood` + `live`** — target **1.0.75** (Library Sessions + rest timer + silent plan sync; cache the-brain-v13) |
+| Channels | **`dogfood` + `live`** — target **1.0.83** (Library Sessions + rest timer + silent plan sync; cache the-brain-v13) |
 | Rematerialize | `bash scripts/rematerialize-capgo-from-vault.sh` |
 | Upload dogfood | `CAPGO_CHANNEL=dogfood CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/upload-capgo-bundle.sh` |
 | Ship dogfood + live | `CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh` (fails hard without token) |
@@ -116,7 +116,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 1. Keep `@hybrid/adaptive` pure; HTML is the only athlete UI surface.
 2. Cloud journal: Strength Side `PlanSync` (`strength_side`) is live — The Brain consumes that domain later. Do not restore deleted `StrengthSync`.
-3. Capgo **1.0.75** / SW `the-brain-v13` / `APP_BUILD` `THE-brain-v13` shipped 12 Sep 2026. Next OTA only when the owner marks **IMPORTANT**.
+3. Capgo **1.0.83** / SW `the-brain-v13` / `APP_BUILD` `THE-brain-v13` shipped 12 Sep 2026. Next OTA only when the owner marks **IMPORTANT**.
 
 **Useful checks**
 
@@ -149,8 +149,8 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | Ref | Note |
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
-| Capgo | **1.0.75** on dogfood + live (Library Sessions, rest timer, silent plan sync) |
-| Dogfood APK | rest timer + coach on **+** only (no Chat tab); native coach hits athlete Netlify; OTA **1.0.75** |
+| Capgo | **1.0.83** on dogfood + live (Library Sessions, rest timer, silent plan sync) |
+| Dogfood APK | rest timer + coach on **+** only (no Chat tab); native coach hits athlete Netlify; OTA **1.0.83** |
 | Engine vs Strength log | Strength **tracks the locked column catalog** in `docs/superpowers/specs/2026-09-11-strength-track-lock.md` (Sets + picker columns + For Completion). Watts/metres on a lift is a Strength column, not The Engine. Engine (later) = splits + Concept2/RPM; the same timer chrome is the **duration** clock for the piece. Do not mix those loggers. |
 | Cache | `the-brain-v13` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |
@@ -158,4 +158,4 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 **Track lock (11 Sep 2026):** Strength log columns frozen — `docs/superpowers/specs/2026-09-11-strength-track-lock.md`. Calendar door: Library template → Add to Calendar (self + date) → Training Start Session.
 
 **Library Sessions (11 Sep 2026):** On-phone builder is live in `apps/athlete/library.js` + `library-ui.js`. Persist on-device.
-**Shipped 12 Sep 2026:** Capgo **1.0.75** / cache **the-brain-v13** — Library, rest timer, silent plan sync. Next Capgo only when the owner marks **IMPORTANT**.
+**Shipped 12 Sep 2026:** Capgo **1.0.83** / cache **the-brain-v13** — Library, rest timer, silent plan sync. Next Capgo only when the owner marks **IMPORTANT**.
