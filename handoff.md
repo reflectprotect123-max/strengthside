@@ -116,7 +116,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 
 1. Keep `@hybrid/adaptive` pure; HTML is the only athlete UI surface.
 2. Cloud journal: Strength Side `PlanSync` (`strength_side`) is live — The Brain consumes that domain later. Do not restore deleted `StrengthSync`.
-3. After merging audit fixes: Capgo ship with matching `LOCAL_BUILD` / SW cache / bundle version.
+3. Capgo **1.0.75** / SW `the-brain-v13` / `APP_BUILD` `THE-brain-v13` shipped 12 Sep 2026. Next OTA only when the owner marks **IMPORTANT**.
 
 **Useful checks**
 
