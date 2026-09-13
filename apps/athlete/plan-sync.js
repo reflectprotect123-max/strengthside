@@ -76,6 +76,11 @@
       circuits: (lib.catalog && lib.catalog.circuits) || [],
     }, prev.session[catalogId]);
     sessions.push(catalogEnt);
+    sessions.push(touch({
+      id: 'lift_memory',
+      kind: 'lift_memory',
+      memory: (state && state.liftMemory) || {},
+    }, prev.session.lift_memory));
 
     const prevTpls = new Set(Object.keys(prev.template));
     const liveTpls = new Set(templates.map((t) => t.id));
@@ -170,6 +175,7 @@
       if (row.kind === 'assignment' && row.date) assignments[row.date] = row.templateId;
       else if (row.kind === 'log' && row.date) sessions[row.date] = row.payload;
       else if (row.kind === 'catalog') catalog = { exercises: row.exercises || [], circuits: row.circuits || [] };
+      else if (row.kind === 'lift_memory') next.liftMemory = row.memory || {};
     });
     next.library = {
       templates: plan.templates || [],
