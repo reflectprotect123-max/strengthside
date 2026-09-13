@@ -5,7 +5,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
+const here = dirname(fileURLToPath(import.meta.url));
+require(join(here, 'brain-kernel.js'));
+require(join(here, 'session.js'));
 const HybridSession = globalThis.HybridSession;
 
 const demoPlan = {
@@ -80,7 +82,7 @@ test('completeCurrent marks warmup done', () => {
 
 test('logSet kg updates totals and check', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
-  s = HybridSession.logSet(s, 0, { kg: 60 });
+  s = HybridSession.logSet(s, 0, { kg: 60, effort: 'medium' });
   assert.equal(s.logs.B.sets[0].logged, true);
   assert.equal(s.logs.B.sets[0].kg, 60);
   assert.equal(s.logs.B.sets[0].reps, 3);
@@ -92,7 +94,7 @@ test('logSet kg updates totals and check', () => {
 test('logSet MAX writes reps on the F2 member of the pair page', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'F2' });
   assert.equal(s.pages[s.blockIndex].id, 'F');
-  s = HybridSession.logSet(s, 0, { reps: 12 }, 'F2');
+  s = HybridSession.logSet(s, 0, { reps: 12, effort: 'medium' }, 'F2');
   assert.equal(s.logs.F2.sets[0].reps, 12);
   assert.equal(s.logs.F2.sets[0].logged, true);
   assert.equal(s.logs.F1.sets[0].logged, false);
@@ -101,7 +103,7 @@ test('logSet MAX writes reps on the F2 member of the pair page', () => {
 
 test('autofill copies kg down empty rows', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
-  s = HybridSession.logSet(s, 0, { kg: 60 });
+  s = HybridSession.logSet(s, 0, { kg: 60, effort: 'medium' });
   s = HybridSession.autofillFrom(s, 0);
   assert.equal(s.logs.B.sets[5].kg, 60);
   assert.equal(s.logs.B.sets[5].logged, false);
@@ -137,12 +139,36 @@ test('D1 D2 pairing is one stacked page', () => {
   assert.equal(pages[1].id, 'done');
 });
 
+test('logSet without effort does not mark logged', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
+  s = HybridSession.logSet(s, 0, { kg: 60, effort: null });
+  assert.equal(s.logs.B.sets[0].logged, false);
+});
+
+test('logSet with effort marks logged', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
+  s = HybridSession.logSet(s, 0, { kg: 60, effort: 'medium' });
+  assert.equal(s.logs.B.sets[0].logged, true);
+  assert.equal(s.logs.B.sets[0].effort, 'medium');
+});
+
+test('doneTraining skips feel phase', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'done' });
+  s = HybridSession.openFeel(s);
+  assert.equal(s.phase, 'summary');
+});
+
 test('feel then finish lands on summary', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'done' });
   s = HybridSession.openFeel(s);
-  assert.equal(s.phase, 'feel');
-  s = HybridSession.setFeel(s, { intensity: 3, durationMin: 28, note: 'heavy' });
-  s = HybridSession.finishToSummary(s);
   assert.equal(s.phase, 'summary');
-  assert.equal(s.feel.durationMin, 28);
+});
+
+test('logged easy set writes brain nextKg onto the following row', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
+  s = HybridSession.logSet(s, 0, { kg: 100, effort: 'easy' });
+  assert.equal(s.logs.B.sets[0].logged, true);
+  assert.equal(s.logs.B.nextKg, 102.5);
+  assert.equal(s.logs.B.sets[1].kg, 102.5);
+  assert.equal(s.strengthClose.lastKg, 100);
 });

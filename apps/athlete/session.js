@@ -255,20 +255,67 @@
     return s;
   }
 
+  function effortLabel(effort) {
+    return effort === 'easy' || effort === 'medium' || effort === 'hard';
+  }
+
+  function canLogRow(row, liftPage) {
+    if (row.miss) return true;
+    if (!effortLabel(row.effort)) return false;
+    const hasReps = row.reps != null && row.reps !== '';
+    const hasKg = row.kg != null && row.kg !== '';
+    const isMax = liftPage && liftPage.logMode === 'max';
+    return hasReps && (hasKg || isMax);
+  }
+
   function logSet(session, setIndex, patch, memberId) {
     const s = clone(session);
     const page = currentPage(s);
     const log = getLog(s, page, memberId);
     const row = log.sets[setIndex];
     if (!row) return s;
+    const liftPage = page.logMode === 'superset' ? memberOf(page, memberId) : page;
     if (patch.reps != null) row.reps = Number(patch.reps);
     if (patch.kg != null) row.kg = Number(patch.kg);
     if (patch.cells && typeof patch.cells === 'object') {
       row.cells = { ...(row.cells || {}), ...patch.cells };
     }
     if (patch.miss != null) row.miss = !!patch.miss;
-    row.logged = true;
+    if (patch.effort !== undefined) row.effort = patch.effort;
+    row.logged = canLogRow(row, liftPage);
+    if (row.logged) applyStrengthBrain(s, setIndex, memberId, liftPage);
     return s;
+  }
+
+  function brainKernel() {
+    return root.HybridBrainKernel;
+  }
+
+  function applyStrengthBrain(session, setIndex, memberId, liftPage) {
+    const K = brainKernel();
+    if (!K || typeof K.decideNext !== 'function') return;
+    const log = getLog(session, currentPage(session), memberId);
+    const row = log.sets[setIndex];
+    const suggested = row.suggestedKg != null ? row.suggestedKg : row.kg;
+    const out = K.decideNext({
+      kind: 'strength',
+      intendedEffort: (liftPage && liftPage.intendedEffort) || 'medium',
+      reportedEffort: row.effort,
+      suggestedKg: suggested,
+      actualKg: row.kg,
+      miss: row.miss,
+      completedReps: row.reps,
+      targetReps: liftPage && liftPage.targetReps,
+      equipmentStepKg: 2.5,
+    });
+    log.nextKg = out.nextKg;
+    log.ruleVersion = out.ruleVersion;
+    const nxt = log.sets[setIndex + 1];
+    if (nxt && !nxt.logged && nxt.kg == null && out.nextKg != null) {
+      nxt.kg = out.nextKg;
+      nxt.suggestedKg = out.nextKg;
+    }
+    session.strengthClose = K.close({ kind: 'strength', actualKg: row.kg });
   }
 
   function toggleLogged(session, setIndex, memberId) {
@@ -321,11 +368,11 @@
 
   function openFeel(session) {
     const s = clone(session);
-    s.phase = 'feel';
     const started = s.startedAt || Date.now();
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     s.feel = s.feel || {};
     if (!s.feel.durationMin) s.feel.durationMin = mins;
+    s.phase = 'summary';
     return s;
   }
 
