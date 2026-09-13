@@ -16,6 +16,7 @@ test('track lock includes reps kg meters and for completion', () => {
   assert.ok(keys.includes('for_completion'));
   assert.equal(keys.filter((k) => k === 'inches').length, 1);
   assert.ok(!keys.includes('none'));
+  assert.ok(!keys.includes('rpe'));
 });
 
 test('create session template starts empty then letters A warmup B1 B2 B3 C', () => {

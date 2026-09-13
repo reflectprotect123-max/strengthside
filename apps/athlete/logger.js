@@ -4,6 +4,7 @@
 
   let pad = null;
   let sheet = null;
+  let effortOpen = null;
   let toast = '';
   let toastTimer = 0;
   let clockTimer = 0;
@@ -450,6 +451,25 @@
     return v == null ? '' : v;
   }
 
+  function effortShort(effort) {
+    if (effort === 'easy') return 'Easy';
+    if (effort === 'hard') return 'Hard';
+    if (effort === 'medium') return 'Med';
+    return '—';
+  }
+
+  function effortPopHtml() {
+    if (!effortOpen) return '';
+    return `<div class="effort-pop" id="effortPop">
+      <p>Effort</p>
+      <div class="log-intensity">
+        <button type="button" onclick="Logger.effortPick('easy')">Easy</button>
+        <button type="button" onclick="Logger.effortPick('medium')">Medium</button>
+        <button type="button" onclick="Logger.effortPick('hard')">Hard</button>
+      </div>
+    </div>`;
+  }
+
   function tableHtml(s, page, log) {
     const cols = columnsFor(page);
     const mid = esc(page.id);
@@ -462,9 +482,11 @@
         const ph = field === 'reps' && row.reps == null;
         return `<td><button type="button" class="log-cell${focus ? ' focus' : ''}${ph ? ' ph' : ''}" onclick="Logger.focusPad('${mid}',${i},'${esc(field)}')">${esc(val)}</button></td>`;
       }).join('');
+      const effortTap = effortOpen && effortOpen.memberId === page.id && effortOpen.setIndex === i;
       return `<tr>
         <td>${i + 1}</td>
         ${tds}
+        <td><button type="button" class="log-cell${effortTap ? ' tap' : ''}" data-effort-cell="${mid}:${i}" onclick="Logger.effortPop('${mid}',${i})">${esc(effortShort(row.effort))}</button></td>
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
       </tr>`;
     }).join('');
@@ -472,7 +494,7 @@
       <p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <table class="log-table">
-        <thead><tr><th>Sets</th>${heads}<th></th></tr></thead>
+        <thead><tr><th>Sets</th>${heads}<th>Effort</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="log-set-ctrl">
@@ -604,7 +626,7 @@
         ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
         ${tableHtml(s, page, log)}`;
     }
-    return `${headerHtml(s)}<div class="log-body">${body}</div>${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
+    return `${headerHtml(s)}<div class="log-body">${body}${effortPopHtml()}</div>${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
   }
 
   function paint() {
@@ -620,7 +642,6 @@
     let inner = '';
     if (s.phase === 'quote') inner = quoteHtml();
     else if (s.phase === 'coach') inner = coachHtml();
-    else if (s.phase === 'feel') inner = feelHtml(s);
     else if (s.phase === 'summary') inner = summaryHtml(s);
     else inner = blockHtml(s);
     el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
@@ -646,8 +667,8 @@
       persist(HybridSession.ackQuote(session()));
     },
     gotCoach() { persist(HybridSession.ackCoach(session())); },
-    next() { pad = null; persist(HybridSession.nextPage(session())); },
-    prev() { pad = null; persist(HybridSession.prevPage(session())); },
+    next() { pad = null; effortOpen = null; persist(HybridSession.nextPage(session())); },
+    prev() { pad = null; effortOpen = null; persist(HybridSession.prevPage(session())); },
     complete() { persist(HybridSession.completeCurrent(session())); },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
@@ -712,8 +733,31 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) persist(HybridSession.logSet(s, i, {}, lift.id));
-      else persist(HybridSession.toggleLogged(s, i, lift.id));
+      if (!row.logged) {
+        if (!row.effort && !row.miss) return;
+        persist(HybridSession.logSet(s, i, {}, lift.id));
+      } else persist(HybridSession.toggleLogged(s, i, lift.id));
+    },
+    effortPop(memberId, setIndex) {
+      effortOpen = { memberId, setIndex };
+      paint();
+      requestAnimationFrame(() => {
+        const cell = document.querySelector(`[data-effort-cell="${memberId}:${setIndex}"]`);
+        const pop = document.getElementById('effortPop');
+        if (!cell || !pop) return;
+        const body = cell.closest('.log-body');
+        if (!body) return;
+        const bodyRect = body.getBoundingClientRect();
+        const cellRect = cell.getBoundingClientRect();
+        pop.style.top = `${cellRect.bottom - bodyRect.top + body.scrollTop + 4}px`;
+        pop.style.left = `${Math.max(8, cellRect.left - bodyRect.left)}px`;
+      });
+    },
+    effortPick(effort) {
+      if (!effortOpen) return;
+      const { memberId, setIndex } = effortOpen;
+      effortOpen = null;
+      persist(HybridSession.logSet(session(), setIndex, { effort }, memberId));
     },
     unit(u) {
       const s = JSON.parse(JSON.stringify(session()));

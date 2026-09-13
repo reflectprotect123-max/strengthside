@@ -13,7 +13,6 @@
     { key: 'meters', label: 'Meters' },
     { key: 'feet', label: 'Feet' },
     { key: 'watts', label: 'Watts' },
-    { key: 'rpe', label: 'RPE' },
     { key: 'calories', label: 'Calories' },
     { key: 'inches', label: 'Inches' },
     { key: 'velocity', label: 'Velocity (m/s)' },
