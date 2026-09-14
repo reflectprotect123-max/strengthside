@@ -8,7 +8,6 @@ on:
       - 'apps/athlete/**'
       - 'apps/mobile/**'
       - 'packages/brain/**'
-      - 'packages/adaptive/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/dogfood-apk.yml'
 
