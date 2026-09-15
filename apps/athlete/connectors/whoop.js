@@ -496,14 +496,12 @@
           renderPanels();
           await sync({ quiet: true });
           bits.push('WHOOP');
-        } else {
-          bits.push('WHOOP (connect under Me)');
         }
       } catch (err) {
         bits.push('WHOOP: ' + ((err && err.message) || 'failed'));
       }
 
-      ui.message = 'Synced: ' + bits.join(' · ');
+      ui.message = bits.length ? ('Synced: ' + bits.join(' · ')) : '';
       ui.busy = false;
       refreshVisibleUi();
     } catch (err) {

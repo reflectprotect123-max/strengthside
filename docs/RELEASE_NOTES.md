@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.92 | 2026-09-15 | Quiet Me when WHOOP is not linked yet (no red “connect under Me” after boot sync) |
 | 1.0.91 | 2026-09-15 | WHOOP connects on-device via Totem-lite iOS API (email + password + SMS) — bypasses broken Edge; Home adds Steps dial; cache the-brain-v20 / the-engine-v8 |
 | 1.0.90 | 2026-09-15 | WHOOP fetch no longer goes through the service worker; Failed to fetch / BOOT_ERROR maps to a clear down message; cache the-brain-v19 / the-engine-v7 |
 | 1.0.89 | 2026-09-15 | Plan sync works on hosted Postgres without the ecosystem migration — write `strength_side`/`engine_side` first, fall back to admitted `strength`/`conditioning`; calendar occupancy peeks both; cache the-brain-v18 / the-engine-v6 |
