@@ -47,6 +47,7 @@ function resetBlankSlate(keepAuth = true) {
 }
 
 let S = load();
+if (window.HybridIntegrations) HybridIntegrations.mergeIntoState(S);
 refreshHybridOccupancy();
 
 function load() {
@@ -953,11 +954,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (S.tab === 'me') render();
     });
   }
-  if (window.Whoop && typeof Whoop.hydrateAuth === 'function') {
-    try { await Whoop.hydrateAuth(); } catch (_) { /* offline / SDK */ }
-  }
-  if (window.PlanSync && typeof PlanSync.syncNow === 'function') {
-    try { await PlanSync.syncNow(); } catch (_) { /* offline / unsigned */ }
+  if (window.HybridIntegrations) {
+    HybridIntegrations.bindForegroundSync();
+    try { await HybridIntegrations.bootSync(); } catch (_) { /* offline */ }
+    if (window.HybridIntegrations.mergeIntoState) HybridIntegrations.mergeIntoState(S);
   }
   refreshHybridOccupancy();
   peekEngineOccupancy().then(() => {

@@ -1,11 +1,15 @@
-/* WHOOP bridge — tokens stay on the shared Supabase Edge store (strength owner prefix s:). */
+/* WHOOP bridge — one connection per HYBRID S&C login (Supabase user u:). */
 (function (global) {
   function cfg() {
-    return global.STRENGTH_CONFIG || {};
+    return global.STRENGTH_CONFIG || global.ENGINE_CONFIG || {};
+  }
+  function hybridProduct() {
+    const c = cfg();
+    return c.hybridProduct || 'strength';
   }
   const SUPABASE_URL = cfg().supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co';
   const SUPABASE_ANON = cfg().supabaseAnon || '';
-  const NATIVE_APP_ID = 'com.hybrid.athlete';
+  const NATIVE_APP_ID = 'com.hybrid.athlete'; // one Capacitor install for both houses
   function nativeAppId() {
     return NATIVE_APP_ID;
   }
@@ -24,7 +28,7 @@
   }
   function fnUrl(path, query) {
     const name = functionName(path);
-    const params = Object.assign({ product: 'strength' }, query || {});
+    const params = Object.assign({ product: hybridProduct() }, query || {});
     const q = '?' + new URLSearchParams(params);
     return resolveProxyBase() + '/' + name + q;
   }
@@ -108,7 +112,7 @@
       headers: {
         authorization: 'Bearer ' + t,
         apikey: SUPABASE_ANON,
-        'x-hybrid-product': 'strength',
+        'x-hybrid-product': hybridProduct(),
         accept: 'application/json',
       },
       cache: 'no-store'
@@ -118,7 +122,7 @@
     if (!res.ok) {
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
       const friendly = (res.status === 401 || raw === 'unauthorized')
-        ? 'Sign in again in TRACK, then tap Connect WHOOP'
+        ? 'Sign in again in HYBRID S&C, then tap Connect WHOOP'
         : raw;
       const e = new Error(friendly);
       e.status = res.status; e.body = body; throw e;
@@ -186,6 +190,10 @@
     w.sampleDate = n.date || meta.sampleDate || w.sampleDate || null;
     w.lastNormalized = n;
     if (typeof global.save === 'function') global.save();
+    if (global.HybridIntegrations && typeof global.HybridIntegrations.persistWhoop === 'function') {
+      const S = appState();
+      if (S) global.HybridIntegrations.persistWhoop(S, todayIso());
+    }
     return changed;
   }
   function metaLine() {
@@ -474,10 +482,7 @@
       if (!(await token())) return;
       await refreshStatus();
       if (!st().connected) return;
-      const last = st().lastSyncAt ? Date.parse(st().lastSyncAt) : 0;
-      // Status already applied last normalized sample; only hit WHOOP every 5 min.
-      if (last && Number.isFinite(last) && Date.now() - last < 5 * 60 * 1000) return;
-      await sync();
+      await sync({ quiet: true });
     } catch (_) {}
   }
   global.Whoop = {

@@ -46,9 +46,13 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v16'"), 'SW cache bump v16');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v17'"), 'SW cache bump v17');
 must(html.includes('hybrid-sc.js'), 'hybrid-sc.js in index.html');
+must(html.includes('hybrid-integrations.js'), 'hybrid-integrations.js in index.html');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-sc.js'), 'hybrid-sc.js in SW cache');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-integrations.js'), 'hybrid-integrations.js in SW cache');
+must(js.includes('HybridIntegrations.bootSync'), 'boot runs full sync on open');
+must(js.includes('HybridIntegrations.mergeIntoState'), 'shared WHOOP merges on load');
 must(html.includes('HYBRID S&amp;C') || html.includes('HYBRID S&C'), 'HYBRID S&C title');
 must(js.includes('HybridSc.brandHtml') && js.includes("HybridSc.brandHtml('strength')"), 'Home brand uses HybridSc');
 must(js.includes('HybridSc.dotsHtml') && js.includes('S.hybridOccupancy'), 'calendar dots from hybrid occupancy');
@@ -73,7 +77,7 @@ must(!html.includes('Copy training'), 'no Copy training chrome');
   must(!/Copy training|PlanSync|statusLine|last copied|Library \+ sessions/i.test(meFn), 'Me HTML does not mention plan sync');
 }
 must(js.includes('PlanSync.schedulePush'), 'plan sync still runs on save');
-must(js.includes('PlanSync.syncNow'), 'plan sync still runs when signed in');
+must(readFileSync(join(root, 'hybrid-integrations.js'), 'utf8').includes('PlanSync.syncNow'), 'plan sync runs on boot');
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 
 {
@@ -91,8 +95,13 @@ must(js.includes('function startTrainingSession'), 'Start Session entry');
   must(engineJs.includes('switchHybridLocker'), 'Engine locker switch handler');
   must(engineJs.includes('strength_side'), 'Engine peek strength_side occupancy snapshot');
   must(readFileSync(join(engineRoot, 'engine-config.js'), 'utf8').includes("strengthOrigin: '../'"), 'engine-config strengthOrigin');
+  must(engineHtml.includes('../connectors/whoop.js'), 'engine uses shared parent whoop.js');
+  must(engineHtml.includes('hybrid-integrations.js'), 'engine hybrid-integrations.js in index.html');
+  must(engineJs.includes('HybridIntegrations.bootSync'), 'Engine boot runs full sync on open');
   must(engineSw.includes('./hybrid-sc.js'), 'engine hybrid-sc.js in SW cache');
-  must(engineSw.includes("CACHE = 'the-engine-v4'"), 'engine SW cache bump v4');
+  must(engineSw.includes('./hybrid-integrations.js'), 'engine hybrid-integrations.js in SW cache');
+  must(engineSw.includes('../connectors/whoop.js'), 'engine SW caches shared whoop.js');
+  must(engineSw.includes("CACHE = 'the-engine-v5'"), 'engine SW cache bump v5');
   must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
 }
 
