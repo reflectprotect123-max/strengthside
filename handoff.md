@@ -28,7 +28,7 @@
 
 **Ship ritual:** edit `apps/athlete/` → `bash scripts/sync-athlete-app.sh` → `pnpm run check:athlete-app` → Capgo upload (`CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
-**Hosted Supabase (shared):** apply `THE-HYBRID-ENGINE1` migrations `20260915_hybrid_sc_domains.sql` + `20260915_ecosystem_grant_hardening.sql` before plan sync can write `strength_side` / `engine_side`.
+**Hosted Supabase (shared):** apply `the-hybrid-engine1` migrations `20260915_*` (or run `scripts/hosted-ecosystem-hybrid-sc-domains.sql` in SQL editor) before plan sync can write `strength_side` / `engine_side`.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · restoring deleted `prototype/hybrid-app/` · pain/illness product work · old adapter/Big Mac APIs from git history.
 
