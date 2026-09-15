@@ -1,6 +1,6 @@
-const BRAIN_BUILD = 'THE-brain-v1';
-const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v9';
+const BRAIN_BUILD = 'THE-hybrid-engine-v1';
+const STORAGE_KEY = 'THE-hybrid-engine-v1';
+const APP_BUILD = 'engine-apk-1.0.5';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -18,8 +18,9 @@ const defaultState = () => ({
   timer: null,
   loggerOpen: false,
   library: null,
-  liftMemory: {},
   sessions: {},
+  engineAnchors: {},
+  liftMemory: {},
   planSync: { acks: { template: {}, session: {} }, snapshotRev: 0, lastPlan: null },
   libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,
@@ -68,11 +69,11 @@ function load() {
 
 function refreshHybridOccupancy() {
   if (!window.HybridSc) return;
-  const engineDates = (S.hybridOccupancy && S.hybridOccupancy.engine) || {};
-  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
+  const strengthDates = (S.hybridOccupancy && S.hybridOccupancy.strength) || {};
+  HybridSc.applyOccupancyToState(S, strengthDates, HybridSc.datesFromState(S));
 }
 
-async function peekEngineOccupancy() {
+async function peekStrengthOccupancy() {
   if (!window.HybridSc || !window.Whoop || typeof Whoop.client !== 'function') return;
   try {
     const sb = Whoop.client();
@@ -83,11 +84,11 @@ async function peekEngineOccupancy() {
       .from('athlete_domain_snapshots')
       .select('snapshot')
       .eq('user_id', uid)
-      .eq('domain', 'engine_side')
+      .eq('domain', 'strength_side')
       .maybeSingle();
     if (error || !data) return;
-    const engineDates = HybridSc.datesFromSnapshot(data.snapshot);
-    HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
+    const strengthDates = HybridSc.datesFromSnapshot(data.snapshot);
+    HybridSc.applyOccupancyToState(S, strengthDates, HybridSc.datesFromState(S));
     window.S = S;
   } catch (_) {
     /* offline / unsigned */
@@ -95,12 +96,12 @@ async function peekEngineOccupancy() {
 }
 
 function save() {
-  if (S.session && S.session.liftMemory) {
-    S.liftMemory = Object.assign({}, S.liftMemory || {}, S.session.liftMemory);
-  }
   if (S.session && S.session.date) {
     S.sessions = S.sessions || {};
     S.sessions[S.session.date] = S.session;
+  }
+  if (S.session && S.session.engineAnchors) {
+    S.engineAnchors = Object.assign({}, S.engineAnchors || {}, S.session.engineAnchors);
   }
   refreshHybridOccupancy();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
@@ -275,8 +276,8 @@ function topBarHtml() {
     <header class="home-top">
       <div class="home-brand">
         <span class="home-mark" aria-hidden="true">TH</span>
-        <div class="home-brand-text" aria-label="HYBRID S&C, Strength">
-          ${HybridSc.brandHtml('strength')}
+        <div class="home-brand-text" aria-label="HYBRID S&C, Engine">
+          ${HybridSc.brandHtml('engine')}
         </div>
       </div>
       <div class="home-top-actions">
@@ -307,6 +308,44 @@ function gaugeRowHtml() {
         </div>
         ${todayCallHtml()}
       </div>
+    </section>
+    ${zonesCardHtml(c)}`;
+}
+
+function zoneProfile() {
+  const z = S.settings?.zones || {};
+  const c = dailyCheckin(S.selectedDate, false) || dailyCheckin(today(), false) || {};
+  return {
+    hrMax: num(z.hrMax) || 190,
+    rhr28: num(z.rhr28) || num(c.restingHr) || 60,
+    bgBase: num(z.bgBase) || 138,
+    grBase: num(z.grBase) || 170.5,
+  };
+}
+
+function zonesCardHtml(checkin) {
+  if (!globalThis.HybridBrainKernel || typeof HybridBrainKernel.dailyZones !== 'function') return '';
+  const profile = zoneProfile();
+  const recovery = metricsFromCheckin(checkin || {}).recovery;
+  const connected = !!S.settings?.whoop?.connected;
+  const freshness = connected && recovery != null ? 'current' : 'missing';
+  const zones = HybridBrainKernel.dailyZones({
+    recovery,
+    freshness,
+    hrMax: profile.hrMax,
+    rhr28: profile.rhr28,
+    bgBase: profile.bgBase,
+    grBase: profile.grBase,
+  });
+  const note = freshness === 'current' ? '' : ' · no WHOOP adjustment today';
+  return `
+    <section class="ath-zones" aria-label="Heart rate zones">
+      <span class="ath-label">Today's zones</span>
+      <p class="ath-zone-est">Estimated from baseline${note}</p>
+      <ul>
+        <li>Blue → ${Math.round(zones.bgToday)} bpm</li>
+        <li>Green → ${Math.round(zones.grToday)} bpm</li>
+      </ul>
     </section>`;
 }
 
@@ -402,58 +441,6 @@ function trainingHomeHtml() {
 
 const homeHtml = trainingHomeHtml;
 
-/** Reference plan from HPP training screen (screenshot match). */
-const TRAINING_DEMO = {
-  dots: { '2026-09-07': true, '2026-09-09': true, '2026-09-11': true },
-  blocks: [
-    {
-      kind: 'warmup',
-      letter: 'A',
-      title: 'Deadlift Warm-Up',
-      items: [
-        { n: 1, text: 'Foam Roll Hamstrings x 60s each side – small 1-2” motion', note: 'All foam rolling should be non-painful so remove pressure as needed' },
-        { n: 2, text: 'Active Straight Leg Raises x 10 reps each side' },
-        { n: 3, text: 'Bird Dogs: 3 x 3-5 each' },
-        { n: 4, text: 'BW Glute Bridge: 3 x 5 with a 1 count at top of each rep. Rest as needed.' },
-        { n: 5, text: 'KB RDLs: 3 x 5. Rest 60s.' },
-        { n: 6, text: 'Box Jump Variation (your choice): 3 x 3. Rest 45-60s.', note: 'Jump for maximal height to a moderate height box.' },
-      ],
-      footer: 'For Completion',
-    },
-    {
-      kind: 'section',
-      label: 'STRENGTH/POWER',
-      badge: { icon: 'trophy', text: 'For Weight' },
-    },
-    { kind: 'lift', letter: 'B', title: 'Snatch Grip Rack Deadlift', prescription: '6 x 3', notes: ['increase weight each set', 'set at mid shin', 'straps are acceptable'] },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'C', title: 'Barbell Lateral Squat', prescription: '3 x 8' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'D', title: 'Goblet Box Squat', prescription: '3 x 12' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'E', title: 'Reverse Hypers', prescription: '4 x 25' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'F1', title: 'Double Leg Banded Leg Curls', prescription: '4 x 25' },
-    { kind: 'lift', letter: 'F2', title: 'Garhammer Raises', prescription: '4 x MAX' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    {
-      kind: 'recovery',
-      letter: 'G',
-      title: 'Recovery Breathing',
-      bullets: [
-        '10 Nasal Breaths',
-        '5 second inhale',
-        '1-second hold at the top',
-        '5 second exhale',
-        '1-second pause at the bottom',
-      ],
-      note: 'Turn off the music and make sure you’re in a relaxing state.',
-      goal: 'The goal is to start the recovery process before leaving the gym',
-      footer: 'For Completion',
-    },
-  ],
-};
-
 function trainingPlanForDate(iso) {
   if (window.HybridLibrary) {
     S.library = HybridLibrary.ensure(S.library);
@@ -461,7 +448,6 @@ function trainingPlanForDate(iso) {
     if (fromLib) return fromLib;
   }
   if (S.trainingPlans && S.trainingPlans[iso]) return S.trainingPlans[iso];
-  if (iso >= '2026-09-07' && iso <= '2026-09-13') return TRAINING_DEMO;
   return null;
 }
 
@@ -556,6 +542,18 @@ function trnLiftHtml(block, opts = {}) {
     </article>${ss}`;
 }
 
+function trnEngineHtml(block) {
+  return `
+    <article class="trn-block trn-block--engine" onclick="startTrainingSession('${esc(block.letter)}')">
+      <span class="trn-letter trn-letter--engine">${esc(block.letter)}</span>
+      <div class="trn-lift-body">
+        <p class="trn-engine-kicker">The Engine</p>
+        <h3 class="trn-lift-title">${esc(block.title)}</h3>
+        <p class="trn-lift-rx">${esc(block.prescription)}</p>
+      </div>
+    </article>`;
+}
+
 function trnRecoveryHtml(block) {
   const bullets = (block.bullets || []).map((b) => `<li>${esc(b)}</li>`).join('');
   return `
@@ -594,6 +592,7 @@ function trainingBlocksHtml(iso) {
         const superset = !!(a && b && a[1] === b[1] && Number(b[2]) === Number(a[2]) + 1);
         return trnLiftHtml(block, { superset });
       }
+      if (block.kind === 'engine') return trnEngineHtml(block);
       if (block.kind === 'recovery') return trnRecoveryHtml(block);
       return '';
     })
@@ -634,7 +633,7 @@ function openLibraryForDay() {
   S.library = window.HybridLibrary ? HybridLibrary.ensure(S.library) : S.library;
   const tid = S.library && S.library.assignments && S.library.assignments[S.selectedDate];
   if (tid && window.LibraryView) LibraryView.open(tid);
-  else if (window.LibraryView) LibraryView.create();
+  else if (window.LibraryView) LibraryView.createEngine();
   else render();
 }
 
@@ -708,7 +707,7 @@ async function lookForAppUpdate() {
 }
 
 async function switchHybridLocker(next) {
-  if (next === 'strength') return;
+  if (next === 'engine') return;
   try {
     if (window.Whoop && typeof Whoop.client === 'function') {
       await Whoop.client().auth.updateUser({ data: { hybrid_sc: next } });
@@ -716,7 +715,7 @@ async function switchHybridLocker(next) {
   } catch (_) {
     /* offline — still walk the hallway */
   }
-  location.assign(HybridSc.origins(location.href)[next === 'engine' ? 'engine' : 'strength']);
+  location.assign(HybridSc.origins(location.href)[next === 'strength' ? 'strength' : 'engine']);
 }
 
 function meHtml() {
@@ -726,11 +725,14 @@ function meHtml() {
       <div class="page">
         <div class="eyebrow">Me</div>
         <h1>Profile</h1>
-        ${HybridSc.lockerCardHtml('strength')}
+        ${HybridSc.lockerCardHtml('engine')}
         ${meAppSectionHtml()}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
-          <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p>
+          <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'} · ${esc(APP_BUILD)}</p>
+          ${window.Whoop && typeof Whoop.uiMessage === 'function' && Whoop.uiMessage()
+            ? `<p class="stub signin-msg">${esc(Whoop.uiMessage())}</p>`
+            : ''}
           <div class="account-actions">
             ${w.connected
               ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button>'
@@ -744,7 +746,7 @@ function meHtml() {
     <div class="page page-signin">
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
-      ${HybridSc.lockerCardHtml('strength')}
+      ${HybridSc.lockerCardHtml('engine')}
       ${meAppSectionHtml()}
       <p class="stub page-lead">One email and password for HYBRID S&amp;C. After sign-in you land on Strength — blank slate, no demo sessions.</p>
       <div id="whoopCard"></div>
@@ -807,7 +809,7 @@ function fabAction(kind) {
   }
   if (kind === 'session') {
     S.tab = 'library';
-    if (window.LibraryView) LibraryView.create();
+    if (window.LibraryView) LibraryView.createEngine();
     else render();
     return;
   }
@@ -889,13 +891,12 @@ async function askCoach() {
   try {
     const coachUrl = (window.Whoop && typeof Whoop.fnUrl === 'function')
       ? Whoop.fnUrl('brain-coach')
-      : String((window.STRENGTH_CONFIG && STRENGTH_CONFIG.supabaseUrl) || 'https://orysjncrksmdfabpuftd.supabase.co').replace(/\/$/, '') + '/functions/v1/brain-coach';
+      : String((window.ENGINE_CONFIG && ENGINE_CONFIG.supabaseUrl) || 'https://orysjncrksmdfabpuftd.supabase.co').replace(/\/$/, '') + '/functions/v1/brain-coach';
     const res = await fetch(coachUrl, {
       method: 'POST',
       headers: {
         authorization: 'Bearer ' + (await Whoop.token()),
-        apikey: (window.STRENGTH_CONFIG && STRENGTH_CONFIG.supabaseAnon) || '',
-        'x-hybrid-product': 'strength',
+        apikey: (window.ENGINE_CONFIG && ENGINE_CONFIG.supabaseAnon) || '',
         'content-type': 'application/json',
       },
       body: JSON.stringify({
@@ -960,13 +961,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { await PlanSync.syncNow(); } catch (_) { /* offline / unsigned */ }
   }
   refreshHybridOccupancy();
-  peekEngineOccupancy().then(() => {
+  peekStrengthOccupancy().then(() => {
     if (S.tab === 'home' || S.tab === 'training') render();
   });
   await refreshOtaStatus(false);
   render();
 });
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && !/\/functions\/v1\//.test(location.pathname || '')) {
   navigator.serviceWorker.register('./service-worker.js').catch(() => {});
 }

@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.87 | 2026-09-15 | HYBRID S&C hallway — one install, Strength cold boot, Me toggle to Engine house (`apps/athlete/engine/`); bidirectional calendar dots; native label HYBRID S&C; cache the-brain-v16 / the-engine-v4 |
 | dogfood APK | 2026-09-10 | Coach under + only (removed Chat tab); native coach hits thehybridsystem brain-coach proxy; cache the-brain-v8 |
 | 1.0.74 | 2026-09-10 | Training tab HPP list + in-session logger (A–Done, kg pad); Home OLED unchanged; rest timer not yet; cache the-brain-v6 |
 | 1.0.73 | 2026-09-10 | Brain spine home — OLED dials, WHOOP recovery zones, calendar above dials, Me sign-in blank slate, settings OTA banner; cache THE-brain-v4 |
