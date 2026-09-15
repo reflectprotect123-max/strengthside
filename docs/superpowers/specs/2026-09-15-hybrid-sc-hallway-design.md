@@ -1,7 +1,7 @@
 # HYBRID S&C — one install, two lockers
 
 **Date:** 2026-09-15  
-**Status:** Draft for owner review (chrome + hallway approved in chat; calendar both-ways locked)  
+**Status:** Approved and shipped (Capgo 1.0.87, PR #219)  
 **Product name:** **HYBRID S&C**  
 **Approach:** One Capacitor install, two HTML houses, Me hallway toggle. Do not merge loggers.
 

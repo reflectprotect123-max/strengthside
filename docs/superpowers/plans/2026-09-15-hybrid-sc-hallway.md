@@ -46,15 +46,15 @@
 **Interfaces:**
 - Produces: `global.HybridSc` with `PRODUCT` `'HYBRID S&C'`, `datesFromState(state)`, `datesFromSnapshot(snapshot)`, `occupancy(strengthDates, engineDates)`, `dotsHtml(iso, occ)`, `lockerCardHtml(active)`, `origins(locationHref)`, `brandHtml(active)`, `applyOccupancyToState(S, strengthDates, engineDates)`
 
-- [ ] **Step 1: Write failing tests** in `apps/athlete/hybrid-sc.test.js` using `node:test` + `createRequire` like `library.test.js`. Cover: dates from assignments + session keys; snapshot session dates; occupancy merge; dotsHtml includes both classes on same iso; origins for athlete root vs `/engine/`; lockerCardHtml marks Strength primary when active strength.
+- [x] **Step 1: Write failing tests** in `apps/athlete/hybrid-sc.test.js` using `node:test` + `createRequire` like `library.test.js`. Cover: dates from assignments + session keys; snapshot session dates; occupancy merge; dotsHtml includes both classes on same iso; origins for athlete root vs `/engine/`; lockerCardHtml marks Strength primary when active strength.
 
-- [ ] **Step 2:** `node --test apps/athlete/hybrid-sc.test.js` — FAIL (no module)
+- [x] **Step 2:** `node --test apps/athlete/hybrid-sc.test.js` — FAIL (no module)
 
-- [ ] **Step 3:** Implement `hybrid-sc.js` as IIFE on `globalThis`/`window`. `datesFromState` uses `library.assignments` keys and `sessions` object keys (ISO dates). `datesFromSnapshot` walks `snapshot.sessions[].date`. `dotsHtml` emits zero, one, or two spans `.cal-dot.strength` / `.cal-dot.engine`. `origins`: if href path contains `/engine`, strength is `../`, engine is `./`; else strength `./`, engine `./engine/`.
+- [x] **Step 3:** Implement `hybrid-sc.js` as IIFE on `globalThis`/`window`. `datesFromState` uses `library.assignments` keys and `sessions` object keys (ISO dates). `datesFromSnapshot` walks `snapshot.sessions[].date`. `dotsHtml` emits zero, one, or two spans `.cal-dot.strength` / `.cal-dot.engine`. `origins`: if href path contains `/engine`, strength is `../`, engine is `./`; else strength `./`, engine `./engine/`.
 
-- [ ] **Step 4:** Tests pass.
+- [x] **Step 4:** Tests pass.
 
-- [ ] **Step 5:** Commit `feat: HybridSc occupancy and locker helpers`
+- [x] **Step 5:** Commit `feat: HybridSc occupancy and locker helpers`
 
 ---
 
@@ -64,14 +64,14 @@
 
 **Interfaces:** Consumes `HybridSc`. Home `topBarHtml` uses `HybridSc.brandHtml('strength')`. `calendarHtml` and training week use `HybridSc.dotsHtml(iso, S.hybridOccupancy)`. `meHtml` prepends `HybridSc.lockerCardHtml('strength')`. `switchHybridLocker('engine')` sets user_metadata `hybrid_sc` when Whoop.client exists, then `location.assign(HybridSc.origins(location.href).engine)`.
 
-- [ ] Wire `index.html` `<title>HYBRID S&C</title>` and `<script src="hybrid-sc.js">` before `app.js`.
-- [ ] `strength-config.js` add `engineOrigin: './engine/'`.
-- [ ] CSS: `.home-lockers` / `.locker-switch` matching throwaway preview (two-column Me buttons, 44px min-height).
-- [ ] After save/load, `S.hybridOccupancy = HybridSc.occupancy(HybridSc.datesFromState(S), (S.hybridOccupancy && S.hybridOccupancy.engine) || {})`.
-- [ ] Peek other domain: if `Whoop.client`, select `athlete_domain_snapshots` domain `engine_side` and merge `datesFromSnapshot`. Never apply Engine snapshot into `S.library`.
-- [ ] Sign-in lead: one email for HYBRID S&C; land Strength blank slate.
-- [ ] Smoke: must include `HYBRID S&C`, `hybrid-sc.js`, `lockerCardHtml` or `HYBRID S&amp;C`; keep PlanSync Me silence; bump SW `the-brain-v16` and list `./hybrid-sc.js`.
-- [ ] Commit `feat: HYBRID S&C Strength chrome and Me locker switch`
+- [x] Wire `index.html` `<title>HYBRID S&C</title>` and `<script src="hybrid-sc.js">` before `app.js`.
+- [x] `strength-config.js` add `engineOrigin: './engine/'`.
+- [x] CSS: `.home-lockers` / `.locker-switch` matching throwaway preview (two-column Me buttons, 44px min-height).
+- [x] After save/load, `S.hybridOccupancy = HybridSc.occupancy(HybridSc.datesFromState(S), (S.hybridOccupancy && S.hybridOccupancy.engine) || {})`.
+- [x] Peek other domain: if `Whoop.client`, select `athlete_domain_snapshots` domain `engine_side` and merge `datesFromSnapshot`. Never apply Engine snapshot into `S.library`.
+- [x] Sign-in lead: one email for HYBRID S&C; land Strength blank slate.
+- [x] Smoke: must include `HYBRID S&C`, `hybrid-sc.js`, `lockerCardHtml` or `HYBRID S&amp;C`; keep PlanSync Me silence; bump SW `the-brain-v16` and list `./hybrid-sc.js`.
+- [x] Commit `feat: HYBRID S&C Strength chrome and Me locker switch`
 
 ---
 
@@ -81,10 +81,10 @@
 
 **Interfaces:** Engine `index.html` loads `../hybrid-sc.js` or a copied `hybrid-sc.js` in `engine/`. Prefer copy `hybrid-sc.js` into `engine/` so Engine SW stays self-contained, keep in sync.
 
-- [ ] Copy files. Engine `app.js` brand `HybridSc.brandHtml('engine')`, Me `lockerCardHtml('engine')`, calendar dots from occupancy with local engine dates + peeked `strength_side` dates. Toggle Strength → `../` or `HybridSc.origins().strength`.
-- [ ] Engine `engine-config.js` add `strengthOrigin`.
-- [ ] Engine smoke: optional `apps/athlete/engine/checks` or extend athlete smoke to require `apps/athlete/engine/index.html` contains `hybrid-product` engine and HYBRID S&C after edit.
-- [ ] Commit `feat: bundle Engine HTML house under athlete/engine`
+- [x] Copy files. Engine `app.js` brand `HybridSc.brandHtml('engine')`, Me `lockerCardHtml('engine')`, calendar dots from occupancy with local engine dates + peeked `strength_side` dates. Toggle Strength → `../` or `HybridSc.origins().strength`.
+- [x] Engine `engine-config.js` add `strengthOrigin`.
+- [x] Engine smoke: optional `apps/athlete/engine/checks` or extend athlete smoke to require `apps/athlete/engine/index.html` contains `hybrid-product` engine and HYBRID S&C after edit.
+- [x] Commit `feat: bundle Engine HTML house under athlete/engine`
 
 ---
 
@@ -92,9 +92,9 @@
 
 **Files:** `apps/mobile/capacitor/capacitor.config.json` `appName`: `HYBRID S&C`; `strings.xml` `app_name` and `title_activity_main` `HYBRID S&amp;C`.
 
-- [ ] Run `pnpm run check:athlete-app`
-- [ ] Screenshot Strength Home, Strength Me, Engine Home, Engine Me (phone 390×844)
-- [ ] Commit `feat: native HYBRID S&C label`
+- [x] Run `pnpm run check:athlete-app`
+- [x] Screenshot Strength Home, Strength Me, Engine Home, Engine Me (phone 390×844)
+- [x] Commit `feat: native HYBRID S&C label`
 
 ---
 
@@ -102,6 +102,6 @@
 
 Use `ui-ux-pro-max` (`--domain ux` touch targets, contrast) + `frontend-design` against locked OLED shell. Fix only hallway chrome issues (tap 44px, contrast on muted locker, focus/aria-pressed on Me switch). Do not restyle Training/logger.
 
-- [ ] Audit screenshots vs spec chrome
-- [ ] Fix gaps
-- [ ] Commit `fix: HYBRID S&C chrome a11y` if needed
+- [x] Audit screenshots vs spec chrome
+- [x] Fix gaps
+- [x] Commit `fix: HYBRID S&C chrome a11y` if needed
