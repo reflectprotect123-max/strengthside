@@ -12,6 +12,9 @@
     "Camera": {
       "permissions": ["camera"]
     },
+    "CapacitorHttp": {
+      "enabled": true
+    },
     "CapacitorUpdater": {
       "appId": "com.hybrid.athlete",
       "autoUpdate": true,

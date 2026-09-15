@@ -1,5 +1,5 @@
-const CACHE = 'the-brain-v19';
-const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './timer.js', './brain-bundle.js', './brain-kernel.js', './native-bridge.js', './strength-config.js', './hybrid-sc.js', './hybrid-integrations.js', './connectors/whoop.js', './vendor/supabase.min.js'];
+const CACHE = 'the-brain-v20';
+const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './timer.js', './brain-bundle.js', './brain-kernel.js', './native-bridge.js', './strength-config.js', './hybrid-sc.js', './hybrid-integrations.js', './connectors/whoop-ios.js', './connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
