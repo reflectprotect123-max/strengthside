@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.88 | 2026-09-15 | Sync on every open — auth hydrate, plan pull, full WHOOP; one shared WHOOP recovery across Strength + Engine (`hybrid-integrations.js`); auth redirect `com.hybrid.athlete://auth`; cache the-brain-v17 / the-engine-v5 |
 | 1.0.87 | 2026-09-15 | HYBRID S&C hallway — one install, Strength cold boot, Me toggle to Engine house (`apps/athlete/engine/`); bidirectional calendar dots; native label HYBRID S&C; cache the-brain-v16 / the-engine-v4 |
 | dogfood APK | 2026-09-10 | Coach under + only (removed Chat tab); native coach hits thehybridsystem brain-coach proxy; cache the-brain-v8 |
 | 1.0.74 | 2026-09-10 | Training tab HPP list + in-session logger (A–Done, kg pad); Home OLED unchanged; rest timer not yet; cache the-brain-v6 |
