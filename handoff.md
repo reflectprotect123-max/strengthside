@@ -22,10 +22,13 @@
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
 | **Storage** | **`THE-brain-v1`** only — no import from old `THE-builder-clean-v*` |
 | **Capgo** | **`dogfood` + `live`** — bump version on each OTA ship |
-| **Web** | https://thehybridsystem.netlify.app/ (auto-deployed from `main`) |
+| **Ship** | Capgo OTA + dogfood APK only — **Netlify is retired** |
+| **One login** | Supabase auth + WHOOP (`u:{userId}`) + plan sync domains `strength_side` / `engine_side` |
 | **Brain owner** | **`the-brain`** repo (`reflectprotect123-max/the-brain`) — Netlify `thehybridengine1.netlify.app` + shared Supabase stub |
 
-**Ship ritual:** edit `apps/athlete/` → `bash scripts/sync-athlete-app.sh` → `pnpm run verify` → Netlify deploy (auto on `main`) → Capgo upload when native shell unchanged → bump this handoff + `docs/RELEASE_NOTES.md`.
+**Ship ritual:** edit `apps/athlete/` → `bash scripts/sync-athlete-app.sh` → `pnpm run check:athlete-app` → Capgo upload (`CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh`) → bump this handoff + `docs/RELEASE_NOTES.md`.
+
+**Hosted Supabase (shared):** apply `THE-HYBRID-ENGINE1` migrations `20260915_hybrid_sc_domains.sql` + `20260915_ecosystem_grant_hardening.sql` before plan sync can write `strength_side` / `engine_side`.
 
 **Do not revisit (owner lock):** ARC / multi-coach · Expo / second athlete shell · restoring deleted `prototype/hybrid-app/` · pain/illness product work · old adapter/Big Mac APIs from git history.
 
