@@ -80,14 +80,19 @@ async function peekEngineOccupancy() {
     const { data: sessionData } = await sb.auth.getSession();
     const uid = sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.id;
     if (!uid) return;
-    const { data, error } = await sb
-      .from('athlete_domain_snapshots')
-      .select('snapshot')
-      .eq('user_id', uid)
-      .eq('domain', 'engine_side')
-      .maybeSingle();
-    if (error || !data) return;
-    const engineDates = HybridSc.datesFromSnapshot(data.snapshot);
+    const domains = (HybridSc.SNAPSHOT_DOMAINS && HybridSc.SNAPSHOT_DOMAINS.engine) || ['engine_side', 'conditioning'];
+    let snapshot = null;
+    for (const domain of domains) {
+      const { data, error } = await sb
+        .from('athlete_domain_snapshots')
+        .select('snapshot')
+        .eq('user_id', uid)
+        .eq('domain', domain)
+        .maybeSingle();
+      if (!error && data) { snapshot = data.snapshot; break; }
+    }
+    if (!snapshot) return;
+    const engineDates = HybridSc.datesFromSnapshot(snapshot);
     HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
     window.S = S;
   } catch (_) {

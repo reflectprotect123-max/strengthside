@@ -121,3 +121,15 @@ test('stale snapshot revision is a conflict from the transport', async () => {
   assert.equal(result.ok, false);
   assert.equal(result.reason, 'STALE_REV');
 });
+
+test('hosted fallback domains stay ordered preferred then admitted', () => {
+  assert.equal(P.DOMAIN, 'strength_side');
+  assert.equal(P.DOMAIN_FALLBACK, 'strength');
+  assert.deepEqual(P.DOMAINS, ['strength_side', 'strength']);
+});
+
+test('isInvalidDomain matches hosted RPC reject', () => {
+  assert.equal(P.isInvalidDomain({ message: 'invalid domain' }), true);
+  assert.equal(P.isInvalidDomain({ details: 'invalid domain' }), true);
+  assert.equal(P.isInvalidDomain({ message: 'not authenticated' }), false);
+});

@@ -1,11 +1,14 @@
 /**
  * Strength Side plan sync — Library templates + calendar/logger sessions.
- * Domain `strength_side` is the copy The Brain can pull later.
+ * Domain `strength_side` is preferred; hosted Postgres currently admits
+ * `strength` so push/pull fall back there until the ecosystem migration lands.
  * Uses existing upsert_athlete_domain_snapshot (no new table in this repo).
  * WHOOP/Concept2 stay on their own buttons — this is not that path.
  */
 (function (root) {
   const DOMAIN = 'strength_side';
+  const DOMAIN_FALLBACK = 'strength';
+  const DOMAINS = [DOMAIN, DOMAIN_FALLBACK];
   const WRITER = 'strengthside-athlete';
   const SCHEMA = 1;
   const DEBOUNCE_MS = 2500;
@@ -205,6 +208,11 @@
     return { ok: true, revision: result.revision };
   }
 
+  function isInvalidDomain(err) {
+    const text = String((err && (err.message || err.details || err.hint)) || err || '');
+    return /invalid domain/i.test(text);
+  }
+
   function defaultIo() {
     function sb() {
       if (root.Whoop && typeof root.Whoop.client === 'function') return root.Whoop.client();
@@ -223,27 +231,40 @@
       async pull() {
         const uid = await this.userId();
         if (!uid) return null;
-        const { data, error } = await sb()
-          .from('athlete_domain_snapshots')
-          .select('revision,snapshot')
-          .eq('user_id', uid)
-          .eq('domain', DOMAIN)
-          .maybeSingle();
-        if (error) throw error;
-        if (!data) return null;
-        return { revision: Math.max(0, Number(data.revision) || 0), snapshot: data.snapshot };
+        let lastError = null;
+        for (const domain of DOMAINS) {
+          const { data, error } = await sb()
+            .from('athlete_domain_snapshots')
+            .select('revision,snapshot')
+            .eq('user_id', uid)
+            .eq('domain', domain)
+            .maybeSingle();
+          if (error) {
+            lastError = error;
+            continue;
+          }
+          if (!data) continue;
+          return { revision: Math.max(0, Number(data.revision) || 0), snapshot: data.snapshot, domain };
+        }
+        if (lastError) throw lastError;
+        return null;
       },
       async push(revision, plan) {
-        const { data: wrote, error } = await sb().rpc('upsert_athlete_domain_snapshot', {
-          p_domain: DOMAIN,
-          p_schema_version: SCHEMA,
-          p_revision: revision,
-          p_writer: WRITER,
-          p_client_updated_at: new Date().toISOString(),
-          p_snapshot: plan,
-        });
-        if (error) throw error;
-        return { wrote: wrote !== false, revision };
+        let lastError = null;
+        for (const domain of DOMAINS) {
+          const { data: wrote, error } = await sb().rpc('upsert_athlete_domain_snapshot', {
+            p_domain: domain,
+            p_schema_version: SCHEMA,
+            p_revision: revision,
+            p_writer: WRITER,
+            p_client_updated_at: new Date().toISOString(),
+            p_snapshot: plan,
+          });
+          if (!error) return { wrote: wrote !== false, revision, domain };
+          lastError = error;
+          if (!isInvalidDomain(error)) throw error;
+        }
+        throw lastError || new Error('invalid domain');
       },
     };
   }
@@ -332,6 +353,9 @@
 
   const PlanSync = {
     DOMAIN,
+    DOMAIN_FALLBACK,
+    DOMAINS,
+    isInvalidDomain,
     WRITER,
     pack,
     mergePlan,
