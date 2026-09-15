@@ -20,7 +20,7 @@ const bridge = readFileSync(join(appRoot, 'native-bridge.js'), 'utf8');
 must(cfg.includes("functionsProvider: 'supabase'"), 'STRENGTH_CONFIG uses supabase');
 must(html.includes('strength-config.js'), 'index loads strength-config');
 must(whoopJs.includes("functions/v1"), 'whoop hits Edge functions');
-must(whoopJs.includes("x-hybrid-product': 'strength'") || whoopJs.includes('x-hybrid-product": "strength"'), 'whoop sends strength product');
+must(whoopJs.includes('x-hybrid-product') && whoopJs.includes('hybridProduct()'), 'whoop sends hybrid product header');
 must(whoopJs.includes('Browser.open'), 'native WHOOP opens Capacitor Browser');
 must(whoopJs.includes('appUrlOpen'), 'native WHOOP listens for deep link');
 must(!whoopJs.includes('thehybridsystem.netlify.app'), 'whoop must not call dead athlete Netlify WHOOP');

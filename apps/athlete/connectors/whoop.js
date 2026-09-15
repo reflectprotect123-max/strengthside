@@ -107,23 +107,32 @@
     const t = await token();
     if (!t) { const e = new Error('Sign in to sync WHOOP'); e.code = 'auth_required'; throw e; }
     const url = fnUrl(path, opts.query);
-    const res = await fetch(url, {
-      method,
-      headers: {
-        authorization: 'Bearer ' + t,
-        apikey: SUPABASE_ANON,
-        'x-hybrid-product': hybridProduct(),
-        accept: 'application/json',
-      },
-      cache: 'no-store'
-    });
+    let res;
+    try {
+      res = await fetch(url, {
+        method,
+        headers: {
+          authorization: 'Bearer ' + t,
+          apikey: SUPABASE_ANON,
+          'x-hybrid-product': hybridProduct(),
+          accept: 'application/json',
+        },
+        cache: 'no-store'
+      });
+    } catch (err) {
+      const e = new Error('WHOOP service is down — try again in a minute');
+      e.cause = err;
+      e.code = 'whoop_unreachable';
+      throw e;
+    }
     let body = null;
     try { body = await res.json(); } catch (_) { body = null; }
     if (!res.ok) {
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
+      const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
       const friendly = (res.status === 401 || raw === 'unauthorized')
         ? 'Sign in again in HYBRID S&C, then tap Connect WHOOP'
-        : raw;
+        : (boot ? 'WHOOP service is down — try again in a minute' : raw);
       const e = new Error(friendly);
       e.status = res.status; e.body = body; throw e;
     }

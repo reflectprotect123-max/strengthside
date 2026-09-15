@@ -1,4 +1,4 @@
-const CACHE = 'the-engine-v6';
+const CACHE = 'the-engine-v7';
 const ASSETS = ['./', './index.html', './engine-config.js', './app.js', './home.css', './logger.css', './library.css', './session.js', './engine.js', './library.js', './library-ui.js', './logger.js', './timer.js', './brain-bundle.js', './brain-kernel.js', './adaptive-bundle.js', './native-bridge.js', './plan-sync.js', './hybrid-sc.js', './hybrid-integrations.js', '../connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {
@@ -13,6 +13,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.includes('/functions/v1/')) return;
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request).catch(() => cached))
   );
