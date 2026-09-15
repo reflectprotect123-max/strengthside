@@ -81,14 +81,19 @@ async function peekStrengthOccupancy() {
     const { data: sessionData } = await sb.auth.getSession();
     const uid = sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.id;
     if (!uid) return;
-    const { data, error } = await sb
-      .from('athlete_domain_snapshots')
-      .select('snapshot')
-      .eq('user_id', uid)
-      .eq('domain', 'strength_side')
-      .maybeSingle();
-    if (error || !data) return;
-    const strengthDates = HybridSc.datesFromSnapshot(data.snapshot);
+    const domains = (HybridSc.SNAPSHOT_DOMAINS && HybridSc.SNAPSHOT_DOMAINS.strength) || ['strength_side', 'strength'];
+    let snapshot = null;
+    for (const domain of domains) {
+      const { data, error } = await sb
+        .from('athlete_domain_snapshots')
+        .select('snapshot')
+        .eq('user_id', uid)
+        .eq('domain', domain)
+        .maybeSingle();
+      if (!error && data) { snapshot = data.snapshot; break; }
+    }
+    if (!snapshot) return;
+    const strengthDates = HybridSc.datesFromSnapshot(snapshot);
     HybridSc.applyOccupancyToState(S, strengthDates, HybridSc.datesFromState(S));
     window.S = S;
   } catch (_) {

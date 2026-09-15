@@ -1,5 +1,9 @@
 (function (root) {
   const PRODUCT = 'HYBRID S&C';
+  const SNAPSHOT_DOMAINS = {
+    strength: ['strength_side', 'strength'],
+    engine: ['engine_side', 'conditioning'],
+  };
 
   function dateMap(keys) {
     const out = {};
@@ -81,6 +85,7 @@
 
   const HybridSc = {
     PRODUCT,
+    SNAPSHOT_DOMAINS,
     datesFromState,
     datesFromSnapshot,
     occupancy,

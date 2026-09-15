@@ -46,7 +46,8 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v17'"), 'SW cache bump v17');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v18'"), 'SW cache bump v18');
+must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'strength'"), 'plan sync falls back to hosted strength domain');
 must(html.includes('hybrid-sc.js'), 'hybrid-sc.js in index.html');
 must(html.includes('hybrid-integrations.js'), 'hybrid-integrations.js in index.html');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-sc.js'), 'hybrid-sc.js in SW cache');
@@ -101,7 +102,8 @@ must(js.includes('function startTrainingSession'), 'Start Session entry');
   must(engineSw.includes('./hybrid-sc.js'), 'engine hybrid-sc.js in SW cache');
   must(engineSw.includes('./hybrid-integrations.js'), 'engine hybrid-integrations.js in SW cache');
   must(engineSw.includes('../connectors/whoop.js'), 'engine SW caches shared whoop.js');
-  must(engineSw.includes("CACHE = 'the-engine-v5'"), 'engine SW cache bump v5');
+  must(engineSw.includes("CACHE = 'the-engine-v6'"), 'engine SW cache bump v6');
+  must(readFileSync(join(engineRoot, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'conditioning'"), 'engine plan sync falls back to hosted conditioning domain');
   must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
 }
 

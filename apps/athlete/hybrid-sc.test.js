@@ -102,3 +102,8 @@ test('applyOccupancyToState sets hybridOccupancy on state', () => {
     engine: { '2026-09-12': true },
   });
 });
+
+test('SNAPSHOT_DOMAINS prefers locker names then hosted-admitted aliases', () => {
+  assert.deepEqual(H.SNAPSHOT_DOMAINS.strength, ['strength_side', 'strength']);
+  assert.deepEqual(H.SNAPSHOT_DOMAINS.engine, ['engine_side', 'conditioning']);
+});
