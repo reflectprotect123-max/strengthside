@@ -77,6 +77,8 @@ test('lockerCardHtml marks Strength primary when active strength', () => {
   assert.match(html, /class="btn primary"[^>]*>Strength/);
   assert.match(html, /class="btn"[^>]*>Engine/);
   assert.match(html, /aria-pressed="true"/);
+  assert.match(html, /onclick="switchHybridLocker\('strength'\)"/);
+  assert.match(html, /onclick="switchHybridLocker\('engine'\)"/);
   assert.ok(!/PlanSync/i.test(html));
   assert.ok(!/Copy training/i.test(html));
 });

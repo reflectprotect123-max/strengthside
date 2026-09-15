@@ -46,7 +46,15 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v14'"), 'SW cache bump');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v16'"), 'SW cache bump v16');
+must(html.includes('hybrid-sc.js'), 'hybrid-sc.js in index.html');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-sc.js'), 'hybrid-sc.js in SW cache');
+must(html.includes('HYBRID S&amp;C') || html.includes('HYBRID S&C'), 'HYBRID S&C title');
+must(js.includes('HybridSc.brandHtml') && js.includes("HybridSc.brandHtml('strength')"), 'Home brand uses HybridSc');
+must(js.includes('HybridSc.dotsHtml') && js.includes('S.hybridOccupancy'), 'calendar dots from hybrid occupancy');
+must(js.includes('HybridSc.lockerCardHtml') && js.includes("HybridSc.lockerCardHtml('strength')"), 'Me locker card');
+must(js.includes('switchHybridLocker'), 'locker switch handler');
+must(js.includes('engine_side'), 'peek engine_side occupancy snapshot');
 must(readFileSync(join(root, 'timer.js'), 'utf8').includes('Rest Timer'), 'rest timer picker');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('Select Timer'), 'Select Timer chrome');
 must(readFileSync(join(root, 'session.js'), 'utf8').includes("logMode: 'superset'"), 'F1/F2 same-page pairing');

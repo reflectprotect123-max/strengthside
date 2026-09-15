@@ -54,8 +54,8 @@
       <div class="eyebrow">HYBRID S&amp;C</div>
       <p class="stub">One login. Strength and Engine stay in their own lockers.</p>
       <div class="locker-switch" role="group" aria-label="Locker">
-        <button type="button" class="btn${sOn}" aria-pressed="${active === 'strength'}">Strength</button>
-        <button type="button" class="btn${eOn}" aria-pressed="${active === 'engine'}">Engine</button>
+        <button type="button" class="btn${sOn}" aria-pressed="${active === 'strength'}" onclick="switchHybridLocker('strength')">Strength</button>
+        <button type="button" class="btn${eOn}" aria-pressed="${active === 'engine'}" onclick="switchHybridLocker('engine')">Engine</button>
       </div>
     </div>`;
   }

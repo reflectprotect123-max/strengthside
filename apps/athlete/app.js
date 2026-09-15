@@ -47,6 +47,7 @@ function resetBlankSlate(keepAuth = true) {
 }
 
 let S = load();
+refreshHybridOccupancy();
 
 function load() {
   try {
@@ -65,6 +66,34 @@ function load() {
   }
 }
 
+function refreshHybridOccupancy() {
+  if (!window.HybridSc) return;
+  const engineDates = (S.hybridOccupancy && S.hybridOccupancy.engine) || {};
+  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
+}
+
+async function peekEngineOccupancy() {
+  if (!window.HybridSc || !window.Whoop || typeof Whoop.client !== 'function') return;
+  try {
+    const sb = Whoop.client();
+    const { data: sessionData } = await sb.auth.getSession();
+    const uid = sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.id;
+    if (!uid) return;
+    const { data, error } = await sb
+      .from('athlete_domain_snapshots')
+      .select('snapshot')
+      .eq('user_id', uid)
+      .eq('domain', 'engine_side')
+      .maybeSingle();
+    if (error || !data) return;
+    const engineDates = HybridSc.datesFromSnapshot(data.snapshot);
+    HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
+    window.S = S;
+  } catch (_) {
+    /* offline / unsigned */
+  }
+}
+
 function save() {
   if (S.session && S.session.liftMemory) {
     S.liftMemory = Object.assign({}, S.liftMemory || {}, S.session.liftMemory);
@@ -73,6 +102,7 @@ function save() {
     S.sessions = S.sessions || {};
     S.sessions[S.session.date] = S.session;
   }
+  refreshHybridOccupancy();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
   window.S = S;
   if (window.PlanSync && typeof PlanSync.schedulePush === 'function') PlanSync.schedulePush();
@@ -246,8 +276,7 @@ function topBarHtml() {
       <div class="home-brand">
         <span class="home-mark" aria-hidden="true">TH</span>
         <div class="home-brand-text">
-          <b>HYBRID</b>
-          <small>Athlete</small>
+          ${HybridSc.brandHtml('strength')}
         </div>
       </div>
       <div class="home-top-actions">
@@ -314,11 +343,8 @@ function calendarHtml() {
       ${days
         .map((iso) => {
           const d = parseDate(iso);
-          const published = S.published[iso] || [];
           const active = iso === S.selectedDate ? ' active' : '';
-          const dots = published
-            .map((p) => `<span class="cal-dot ${esc(p.type)}" title="${esc(p.title)}"></span>`)
-            .join('');
+          const dots = HybridSc.dotsHtml(iso, S.hybridOccupancy);
           return `
             <button type="button" class="cal-day${active}" onclick="selectDate('${iso}')" aria-selected="${iso === S.selectedDate}">
               <b>${d.getDate()}</b>
@@ -468,22 +494,17 @@ function trainingTopBarHtml() {
 
 function trainingCalendarHtml() {
   const days = weekDays(S.selectedDate);
-  const plan = trainingPlanForDate(S.selectedDate);
-  const libDots = (S.library && S.library.assignments)
-    ? Object.fromEntries(Object.keys(S.library.assignments).map((d) => [d, true]))
-    : {};
-  const dotMap = { ...((TRAINING_DEMO && TRAINING_DEMO.dots) || {}), ...libDots, ...((plan && plan.dots) || {}) };
   return `
     <div class="cal-strip cal-strip--training" role="tablist" aria-label="Training calendar">
       ${days
         .map((iso) => {
           const d = parseDate(iso);
           const active = iso === S.selectedDate ? ' active' : '';
-          const dot = dotMap[iso] ? '<span class="cal-dot"></span>' : '';
+          const dots = HybridSc.dotsHtml(iso, S.hybridOccupancy);
           return `
             <button type="button" class="cal-day${active}" onclick="selectDate('${iso}')" aria-selected="${iso === S.selectedDate}">
               <b>${d.getDate()}</b>
-              <div class="cal-dots">${dot}</div>
+              <div class="cal-dots">${dots}</div>
             </button>`;
         })
         .join('')}
@@ -686,6 +707,18 @@ async function lookForAppUpdate() {
   window.alert(`You're on ${otaInfo.current || APP_BUILD}. No new version is ready.`);
 }
 
+async function switchHybridLocker(next) {
+  if (next === 'strength') return;
+  try {
+    if (window.Whoop && typeof Whoop.client === 'function') {
+      await Whoop.client().auth.updateUser({ data: { hybrid_sc: next } });
+    }
+  } catch (_) {
+    /* offline — still walk the hallway */
+  }
+  location.assign(HybridSc.origins(location.href)[next === 'engine' ? 'engine' : 'strength']);
+}
+
 function meHtml() {
   const w = S.settings.whoop || {};
   if (w.email) {
@@ -693,6 +726,7 @@ function meHtml() {
       <div class="page">
         <div class="eyebrow">Me</div>
         <h1>Profile</h1>
+        ${HybridSc.lockerCardHtml('strength')}
         ${meAppSectionHtml()}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
@@ -710,8 +744,9 @@ function meHtml() {
     <div class="page page-signin">
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
+      ${HybridSc.lockerCardHtml('strength')}
       ${meAppSectionHtml()}
-      <p class="stub page-lead">Same email and password as THE Hybrid Engine. After sign-in you land on a blank slate — no demo sessions.</p>
+      <p class="stub page-lead">One email and password for HYBRID S&amp;C. After sign-in you land on Strength — blank slate, no demo sessions.</p>
       <div id="whoopCard"></div>
     </div>`;
 }
@@ -908,6 +943,7 @@ window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;
 window.trainingPlanForDate = trainingPlanForDate;
 window.openLibraryForDay = openLibraryForDay;
+window.switchHybridLocker = switchHybridLocker;
 window.render = render;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -923,6 +959,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.PlanSync && typeof PlanSync.syncNow === 'function') {
     try { await PlanSync.syncNow(); } catch (_) { /* offline / unsigned */ }
   }
+  refreshHybridOccupancy();
+  peekEngineOccupancy().then(() => {
+    if (S.tab === 'home' || S.tab === 'training') render();
+  });
   await refreshOtaStatus(false);
   render();
 });
