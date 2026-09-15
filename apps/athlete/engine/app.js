@@ -276,7 +276,7 @@ function topBarHtml() {
     <header class="home-top">
       <div class="home-brand">
         <span class="home-mark" aria-hidden="true">TH</span>
-        <div class="home-brand-text">
+        <div class="home-brand-text" aria-label="HYBRID S&C, Engine">
           ${HybridSc.brandHtml('engine')}
         </div>
       </div>

@@ -126,6 +126,7 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: 10px;
 }
 
 .home-lockers span {
@@ -142,6 +143,10 @@ button {
   opacity: 0.5;
 }
 
+.locker-card {
+  margin-bottom: 14px;
+}
+
 .locker-switch {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -150,7 +155,7 @@ button {
 }
 
 .locker-switch .btn {
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .home-top-actions {

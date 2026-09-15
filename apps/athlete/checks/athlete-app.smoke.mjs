@@ -93,6 +93,7 @@ must(js.includes('function startTrainingSession'), 'Start Session entry');
   must(readFileSync(join(engineRoot, 'engine-config.js'), 'utf8').includes("strengthOrigin: '../'"), 'engine-config strengthOrigin');
   must(engineSw.includes('./hybrid-sc.js'), 'engine hybrid-sc.js in SW cache');
   must(engineSw.includes("CACHE = 'the-engine-v4'"), 'engine SW cache bump v4');
+  must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
 }
 
 if (failures.length) {
