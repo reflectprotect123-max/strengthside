@@ -76,6 +76,25 @@ must(js.includes('PlanSync.schedulePush'), 'plan sync still runs on save');
 must(js.includes('PlanSync.syncNow'), 'plan sync still runs when signed in');
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 
+{
+  const engineRoot = join(root, 'engine');
+  const engineHtml = readFileSync(join(engineRoot, 'index.html'), 'utf8');
+  const engineJs = readFileSync(join(engineRoot, 'app.js'), 'utf8');
+  const engineSw = readFileSync(join(engineRoot, 'service-worker.js'), 'utf8');
+  must(existsSync(join(engineRoot, 'index.html')), 'apps/athlete/engine/index.html');
+  must(engineHtml.includes('hybrid-product" content="engine"'), 'engine index hybrid-product engine');
+  must(engineHtml.includes('HYBRID S&amp;C') || engineHtml.includes('HYBRID S&C'), 'engine HYBRID S&C title');
+  must(engineHtml.includes('hybrid-sc.js'), 'engine hybrid-sc.js in index.html');
+  must(engineJs.includes("HybridSc.brandHtml('engine')"), 'Engine brand uses HybridSc');
+  must(engineJs.includes("HybridSc.lockerCardHtml('engine')"), 'Engine Me locker card');
+  must(engineJs.includes('HybridSc.dotsHtml') && engineJs.includes('S.hybridOccupancy'), 'Engine calendar dots from hybrid occupancy');
+  must(engineJs.includes('switchHybridLocker'), 'Engine locker switch handler');
+  must(engineJs.includes('strength_side'), 'Engine peek strength_side occupancy snapshot');
+  must(readFileSync(join(engineRoot, 'engine-config.js'), 'utf8').includes("strengthOrigin: '../'"), 'engine-config strengthOrigin');
+  must(engineSw.includes('./hybrid-sc.js'), 'engine hybrid-sc.js in SW cache');
+  must(engineSw.includes("CACHE = 'the-engine-v4'"), 'engine SW cache bump v4');
+}
+
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');
   failures.forEach((f) => console.error(' -', f));
