@@ -29,8 +29,8 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://thehybridsystem.netlify.app"
-additional_redirect_urls = ["https://thehybridsystem.netlify.app", "capacitor://localhost"]
+site_url = "com.hybrid.athlete://auth"
+additional_redirect_urls = ["com.hybrid.athlete://auth", "capacitor://localhost"]
 
 [functions]
 enabled = true
