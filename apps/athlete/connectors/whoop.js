@@ -231,14 +231,15 @@
   }
   function connectFormHtml() {
     const w = st();
-    const prefill = w.iosEmail || '';
+    const prefill = w.iosEmail || w.email || '';
     const mfa = !!ui.mfaSession;
     const busy = ui.busy ? ' disabled' : '';
     return '<div class="whoop-ios-form">' +
-      '<div class="field"><label for="whoopIosEmail">WHOOP email</label>' +
-      '<input id="whoopIosEmail" type="email" autocomplete="username" placeholder="you@email.com" value="' + esc(prefill) + '"' + busy + '></div>' +
-      '<div class="field"><label for="whoopIosPassword">WHOOP password</label>' +
-      '<input id="whoopIosPassword" type="password" autocomplete="current-password" placeholder="WHOOP password"' + busy + '></div>' +
+      '<p class="stub">Type the email and password that open the <b>WHOOP</b> app. Not the HYBRID S&amp;C password. Not a web SQL page.</p>' +
+      '<div class="field"><label for="whoopIosEmail">WHOOP app email</label>' +
+      '<input id="whoopIosEmail" type="email" autocomplete="username" placeholder="WHOOP app email" value="' + esc(prefill) + '"' + busy + '></div>' +
+      '<div class="field"><label for="whoopIosPassword">WHOOP app password</label>' +
+      '<input id="whoopIosPassword" type="password" autocomplete="current-password" placeholder="WHOOP app password"' + busy + '></div>' +
       (mfa
         ? '<div class="field"><label for="whoopIosMfa">SMS code</label>' +
           '<input id="whoopIosMfa" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code"' + busy + '></div>'
@@ -419,8 +420,12 @@
       global.alert(ui.message);
       return;
     }
-    const em = ((document.getElementById('whoopIosEmail') && document.getElementById('whoopIosEmail').value) || st().iosEmail || '').trim();
-    const pw = (document.getElementById('whoopIosPassword') && document.getElementById('whoopIosPassword').value) || '';
+    const em = ((document.getElementById('whoopIosEmail') && document.getElementById('whoopIosEmail').value)
+      || (document.getElementById('whoopEmail') && document.getElementById('whoopEmail').value)
+      || st().iosEmail || st().email || '').trim();
+    const pw = (document.getElementById('whoopIosPassword') && document.getElementById('whoopIosPassword').value)
+      || (document.getElementById('whoopPassword') && document.getElementById('whoopPassword').value)
+      || '';
     const code = ((document.getElementById('whoopIosMfa') && document.getElementById('whoopIosMfa').value) || '').trim();
     if (!em || (!pw && !ui.mfaSession)) {
       ui.message = 'Enter your WHOOP email and password';

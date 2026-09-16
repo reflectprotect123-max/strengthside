@@ -91,7 +91,7 @@ test('cognito NotAuthorizedException becomes a clear password error', async () =
   }));
   await assert.rejects(
     () => Ios.login({ email: 'a@b.com', password: 'nope' }),
-    /Wrong WHOOP email or password/,
+    /WHOOP rejected the password for a@b.com/,
   );
 });
 

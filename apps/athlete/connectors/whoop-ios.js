@@ -106,16 +106,26 @@
     const body = opts.body;
     const CapHttp = global.Capacitor && global.Capacitor.Plugins && global.Capacitor.Plugins.CapacitorHttp;
     if (CapHttp && typeof CapHttp.request === 'function') {
+      let data = body;
+      if (typeof body === 'string') {
+        try { data = JSON.parse(body); } catch (_) { data = body; }
+      }
+      const nativeHeaders = Object.assign({
+        'User-Agent': headers['user-agent'] || headers['User-Agent'] || USER_AGENT,
+        'x-cap-user-agent': headers['user-agent'] || headers['User-Agent'] || USER_AGENT,
+      }, headers);
       const res = await CapHttp.request({
         url: String(url),
         method,
-        headers,
-        data: body == null ? undefined : body,
+        headers: nativeHeaders,
+        data,
+        dataType: typeof data === 'string' ? 'text' : undefined,
         connectTimeout: 30000,
         readTimeout: 30000,
+        disableRedirects: true,
       });
-      const data = res && res.data;
-      const text = typeof data === 'string' ? data : (data == null ? '' : JSON.stringify(data));
+      const payload = res && res.data;
+      const text = typeof payload === 'string' ? payload : (payload == null ? '' : JSON.stringify(payload));
       const status = Number(res && res.status) || 0;
       return { status, ok: status >= 200 && status < 300, text };
     }
@@ -133,12 +143,13 @@
     if (!text) return {};
     try { return JSON.parse(text); } catch (_) { return { raw: text }; }
   }
-  function cognitoErrorMessage(parsed, fallback) {
+  function cognitoErrorMessage(parsed, fallback, email) {
     const type = String((parsed && parsed.__type) || '');
     const msg = String((parsed && parsed.message) || fallback || '');
     const blob = (type + ' ' + msg).toLowerCase();
     if (/notauthorized|incorrect username|incorrect password|user not found/.test(blob)) {
-      return 'Wrong WHOOP email or password — use the same login as the WHOOP app, not HYBRID S&C';
+      const who = email ? (' for ' + email) : '';
+      return 'WHOOP rejected the password' + who + '. Use the password that opens the WHOOP app — not HYBRID S&C. Apple or Google WHOOP sign-in will not work here.';
     }
     if (/passwordresetrequired/.test(blob)) {
       return 'Reset your password in the WHOOP app, then connect here';
@@ -169,7 +180,7 @@
     });
     const parsed = parseBody(res.text);
     if (!res.ok) {
-      const e = new Error(cognitoErrorMessage(parsed, parsed.error || res.text.slice(0, 160)));
+      const e = new Error(cognitoErrorMessage(parsed, parsed.error || res.text.slice(0, 160), body && body.AuthParameters && body.AuthParameters.USERNAME));
       e.status = res.status;
       e.body = parsed;
       throw e;
@@ -178,7 +189,7 @@
   }
   async function login(input) {
     input = input || {};
-    const email = String(input.email || '').trim().toLowerCase();
+    const email = String(input.email || '').trim();
     const init = await callCognito('InitiateAuth', {
       AuthFlow: 'USER_PASSWORD_AUTH',
       AuthParameters: { USERNAME: email, PASSWORD: input.password },
@@ -201,7 +212,7 @@
       ChallengeName: challenge,
       Session: input.session,
       ChallengeResponses: {
-        USERNAME: String(input.email || '').trim().toLowerCase(),
+        USERNAME: String(input.email || '').trim(),
         [codeKey]: String(input.code || '').trim(),
       },
     });
