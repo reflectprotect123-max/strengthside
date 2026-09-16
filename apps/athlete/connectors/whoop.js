@@ -291,15 +291,14 @@
       '<div class="whoop-ios-form">' +
       '<p class="stub">' + (stepsOn
         ? 'Steps are on this phone — Sync pulls them too.'
-        : 'Steps also run on this Android phone. Use the password that opens the WHOOP app here — not Apple, Google, or HYBRID S&amp;C.') + '</p>' +
+        : 'Steps also run on this Android phone. Use the password that opens the WHOOP app here — not Apple, Google, or HYBRID S&amp;C. A 6-digit text only comes after that password works. Apple or Google never gets a code — tap Connect WHOOP.') + '</p>' +
       '<div class="field"><label for="whoopIosEmail">WHOOP app email</label>' +
       '<input id="whoopIosEmail" type="email" autocomplete="username" placeholder="WHOOP app email" value="' + esc(prefill) + '"' + busy + '></div>' +
       '<div class="field"><label for="whoopIosPassword">WHOOP app password</label>' +
       '<input id="whoopIosPassword" type="password" autocomplete="current-password" placeholder="WHOOP app password"' + busy + '></div>' +
-      (mfa
-        ? '<div class="field"><label for="whoopIosMfa">SMS code</label>' +
-          '<input id="whoopIosMfa" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code"' + busy + '></div>'
-        : '') +
+      '<div class="field"><label for="whoopIosMfa">SMS code</label>' +
+      '<input id="whoopIosMfa" inputmode="numeric" autocomplete="one-time-code" placeholder="' +
+        (mfa ? '6-digit code WHOOP just texted' : 'stays empty until WHOOP texts you') + '"' + busy + '></div>' +
       '</div>';
   }
   async function connectTotem() {
