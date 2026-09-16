@@ -361,6 +361,70 @@
       throw err;
     } finally { ui.busy = false; paint(); }
   }
+  function hcPlugin() {
+    try {
+      return global.Capacitor && global.Capacitor.Plugins && global.Capacitor.Plugins.HealthConnectSteps;
+    } catch (_) {
+      return null;
+    }
+  }
+  function formatHealthConnectPoke(out) {
+    if (!out || out.available === false) {
+      return (out && out.reason) ? String(out.reason) : 'Health Connect is not on this phone';
+    }
+    if (!out.granted) return 'Allow Steps (Read) for HYBRID S&C, then tap Poke Health Connect again';
+    const today = Number(out.stepsToday) || 0;
+    const d3 = Number(out.steps3d) || 0;
+    const origins = Array.isArray(out.origins) ? out.origins.map(function (o) {
+      const pkg = o && o.packageName ? String(o.packageName) : 'app';
+      const n = o && o.count != null ? String(o.count) : '';
+      return n ? (pkg + ' ' + n) : pkg;
+    }).filter(Boolean).join(', ') : '';
+    const whoop = /whoop/i.test(origins);
+    if (today > 0) {
+      return 'Health Connect today ' + today + (origins ? ' · ' + origins : '') + (whoop ? '' : ' · no WHOOP source yet');
+    }
+    if (d3 > 0) {
+      return 'Health Connect today 0 (WHOOP often lags 1–2 days). Last 3 days ' + d3 + (origins ? ' · ' + origins : '');
+    }
+    return whoop
+      ? 'WHOOP is a Health Connect source, but step counts are still 0'
+      : 'Health Connect has no steps — WHOOP write may not be on, or it has not landed yet';
+  }
+  async function pokeHealthConnect() {
+    if (ui.busy) return;
+    const native = global.Capacitor && typeof global.Capacitor.isNativePlatform === 'function' && global.Capacitor.isNativePlatform();
+    if (!native) {
+      ui.message = 'Health Connect poke only runs in the Android install';
+      paint();
+      global.alert(ui.message);
+      return;
+    }
+    const plugin = hcPlugin();
+    if (!plugin || typeof plugin.pokeToday !== 'function') {
+      ui.message = 'This APK cannot see Health Connect — install dogfood 1.0.101';
+      paint();
+      global.alert(ui.message);
+      return;
+    }
+    ui.busy = true;
+    ui.message = 'Poking Health Connect…';
+    paint();
+    try {
+      const out = await plugin.pokeToday();
+      ui.message = formatHealthConnectPoke(out);
+      const today = out && Number(out.stepsToday);
+      if (today > 0) {
+        applyNormalized({ steps: today, date: todayIso() }, { syncedAt: new Date().toISOString(), sampleDate: todayIso() });
+        refreshVisibleUi();
+      }
+      paint();
+    } catch (err) {
+      ui.message = err.message || 'Health Connect poke failed';
+      paint();
+      global.alert(ui.message);
+    } finally { ui.busy = false; paint(); }
+  }
   function cardHtml() {
     const w = st();
     const busy = ui.busy ? ' disabled' : '';
@@ -662,7 +726,7 @@
     } catch (_) {}
   }
   global.Whoop = {
-    cardHtml, metaLine, renderPanels, connectFormHtml, connectTotem, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
+    cardHtml, metaLine, renderPanels, connectFormHtml, connectTotem, pokeHealthConnect, formatHealthConnectPoke, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
     uiMessage: function () { return ui.message || ''; },
     client, token, email, waitForSupabase, fnUrl, resolveProxyBase

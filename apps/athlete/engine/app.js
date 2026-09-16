@@ -749,6 +749,7 @@ function meHtml() {
                 '<button type="button" class="btn" onclick="Whoop.disconnect()">Disconnect WHOOP</button>'
               : '<button type="button" class="btn oled-cta block" onclick="Whoop.connect()">Connect WHOOP</button>'}
             <button type="button" class="btn" onclick="Whoop.connectTotem()">Pull steps</button>
+            <button type="button" class="btn" onclick="Whoop.pokeHealthConnect()">Poke Health Connect</button>
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
         </div>

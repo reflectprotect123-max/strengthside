@@ -42,8 +42,11 @@ must(whoopJs.includes('WHOOP Allow is down on the server'), '503 BOOT_ERROR says
 must(!whoopJs.includes('thehybridsystem.netlify.app'), 'whoop must not call dead athlete Netlify WHOOP');
 must(app.includes('Whoop.connect()'), 'Me Connect WHOOP');
 must(app.includes('Whoop.connectTotem()'), 'Me Pull steps Totem');
+must(app.includes('Whoop.pokeHealthConnect()'), 'Me Poke Health Connect');
 must(engineApp.includes('Whoop.connect()'), 'Engine Me Connect WHOOP');
 must(engineApp.includes('Whoop.connectTotem()'), 'Engine Me Pull steps Totem');
+must(engineApp.includes('Whoop.pokeHealthConnect()'), 'Engine Me Poke Health Connect');
+must(whoopJs.includes('HealthConnectSteps'), 'whoop pokes native HealthConnectSteps plugin');
 must(!app.includes('Whoop.applyManual'), 'Me has no Save WHOOP numbers');
 must(!engineApp.includes('Whoop.applyManual'), 'Engine Me has no Save WHOOP numbers');
 must(app.includes("Whoop.fnUrl('brain-coach')"), 'coach uses Edge via Whoop.fnUrl');
