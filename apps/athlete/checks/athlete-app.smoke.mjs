@@ -46,7 +46,7 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v20'"), 'SW cache bump v20');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v21'"), 'SW cache bump v21');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./connectors/whoop-ios.js'), 'whoop-ios.js in SW cache');
 must(html.includes('connectors/whoop-ios.js'), 'index loads whoop-ios');
 must(js.includes("label: 'Steps'"), 'Home shows Steps dial');
@@ -78,7 +78,8 @@ must(!html.includes('Copy training'), 'no Copy training chrome');
   const meStart = js.indexOf('function meHtml()');
   const meEnd = js.indexOf('\nfunction setTab(', meStart);
   const meFn = meStart >= 0 && meEnd > meStart ? js.slice(meStart, meEnd) : '';
-  must(meFn.includes('Whoop.applyManual') || meFn.includes('Whoop.connect'), 'Me still has WHOOP actions');
+  must(meFn.includes('Whoop.connect'), 'Me has Connect WHOOP');
+  must(!meFn.includes('Whoop.applyManual'), 'Me does not ask for typed WHOOP numbers');
   must(!/Copy training|PlanSync|statusLine|last copied|Library \+ sessions/i.test(meFn), 'Me HTML does not mention plan sync');
 }
 must(js.includes('PlanSync.schedulePush'), 'plan sync still runs on save');
@@ -109,7 +110,7 @@ must(js.includes('function startTrainingSession'), 'Start Session entry');
   must(engineSw.includes('./hybrid-integrations.js'), 'engine hybrid-integrations.js in SW cache');
   must(engineSw.includes('../connectors/whoop-ios.js'), 'engine SW caches shared whoop-ios.js');
   must(engineSw.includes('../connectors/whoop.js'), 'engine SW caches shared whoop.js');
-  must(engineSw.includes("CACHE = 'the-engine-v8'"), 'engine SW cache bump v8');
+  must(engineSw.includes("CACHE = 'the-engine-v9'"), 'engine SW cache bump v9');
   must(readFileSync(join(engineRoot, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'conditioning'"), 'engine plan sync falls back to hosted conditioning domain');
   must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
 }

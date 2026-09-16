@@ -744,10 +744,10 @@ function meHtml() {
             : ''}
           ${window.Whoop && typeof Whoop.connectFormHtml === 'function' ? Whoop.connectFormHtml() : ''}
           <div class="account-actions">
-            <button type="button" class="btn" onclick="Whoop.applyManual()">Save WHOOP numbers</button>
             ${w.connected
-              ? '<button type="button" class="btn" onclick="Whoop.disconnect()">Clear WHOOP</button>'
-              : ''}
+              ? '<button type="button" class="btn oled-cta block" onclick="Whoop.sync()">Sync WHOOP</button>' +
+                '<button type="button" class="btn" onclick="Whoop.disconnect()">Disconnect WHOOP</button>'
+              : '<button type="button" class="btn oled-cta block" onclick="Whoop.connect()">Connect WHOOP</button>'}
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
         </div>
