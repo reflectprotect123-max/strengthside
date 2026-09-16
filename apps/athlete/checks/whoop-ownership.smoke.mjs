@@ -38,6 +38,7 @@ must(whoopJs.includes('CapacitorHttp'), 'whoop skips WebView CORS via CapacitorH
 must(whoopJs.includes('functions/v1'), 'whoop routes to Edge functions/v1');
 must(whoopJs.includes('x-hybrid-product') && whoopJs.includes('hybridProduct()'), 'whoop sends hybrid product header');
 must(!whoopJs.includes('applyManual'), 'whoop does not take typed WHOOP numbers');
+must(whoopJs.includes('WHOOP Allow is down on the server'), '503 BOOT_ERROR says Allow is down on the server, not this phone');
 must(!whoopJs.includes('thehybridsystem.netlify.app'), 'whoop must not call dead athlete Netlify WHOOP');
 must(app.includes('Whoop.connect()'), 'Me Connect WHOOP');
 must(app.includes('Whoop.connectTotem()'), 'Me Pull steps Totem');

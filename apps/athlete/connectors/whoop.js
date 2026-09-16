@@ -157,7 +157,7 @@
       const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
       const friendly = (res.status === 401 || raw === 'unauthorized')
         ? 'Sign in again in HYBRID S&C, then tap Connect WHOOP'
-        : (boot ? 'WHOOP service is down — try again in a minute' : raw);
+        : (boot ? 'WHOOP Allow is down on the server — not this phone' : raw);
       const e = new Error(friendly);
       e.status = res.status; e.body = body; e.code = boot ? 'whoop_boot' : ''; throw e;
     }

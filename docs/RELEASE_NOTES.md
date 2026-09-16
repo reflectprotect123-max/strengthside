@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.100 | 2026-09-16 | Connect WHOOP 503 says Allow is down on the server, not this phone. cache the-brain-v25 / the-engine-v13 |
 | 1.0.99 | 2026-09-16 | Me always shows SMS code field — code only after WHOOP password; Apple/Google never get one. cache the-brain-v24 / the-engine-v12 |
 | 1.0.98 | 2026-09-16 | Me copy is Android — Allow + steps run on this phone, no iPhone. cache the-brain-v23 / the-engine-v11 |
 | 1.0.97 | 2026-09-16 | Totem back on Me for steps (WHOOP app password). Allow stays for Apple/Google. cache the-brain-v22 / the-engine-v10 |
