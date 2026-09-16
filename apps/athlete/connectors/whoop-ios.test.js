@@ -80,6 +80,21 @@ test('projectTodaySnapshot pulls sleep / recovery / strain / steps / HRV / RHR',
   assert.equal(n.restingHr, 49);
 });
 
+test('cognito NotAuthorizedException becomes a clear password error', async () => {
+  const Ios = loadIos(async () => ({
+    ok: false,
+    status: 400,
+    text: async () => JSON.stringify({
+      __type: 'NotAuthorizedException',
+      message: 'Incorrect username or password.',
+    }),
+  }));
+  await assert.rejects(
+    () => Ios.login({ email: 'a@b.com', password: 'nope' }),
+    /Wrong WHOOP email or password/,
+  );
+});
+
 test('cognito login without MFA returns tokens', async () => {
   const Ios = loadIos(async () => ({
     ok: true,

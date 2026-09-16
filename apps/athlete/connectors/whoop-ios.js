@@ -133,6 +133,27 @@
     if (!text) return {};
     try { return JSON.parse(text); } catch (_) { return { raw: text }; }
   }
+  function cognitoErrorMessage(parsed, fallback) {
+    const type = String((parsed && parsed.__type) || '');
+    const msg = String((parsed && parsed.message) || fallback || '');
+    const blob = (type + ' ' + msg).toLowerCase();
+    if (/notauthorized|incorrect username|incorrect password|user not found/.test(blob)) {
+      return 'Wrong WHOOP email or password — use the same login as the WHOOP app, not HYBRID S&C';
+    }
+    if (/passwordresetrequired/.test(blob)) {
+      return 'Reset your password in the WHOOP app, then connect here';
+    }
+    if (/usernotconfirmed/.test(blob)) {
+      return 'Confirm your WHOOP email in the WHOOP app, then connect here';
+    }
+    if (/code mismatch|expiredcode|invalid.*code/.test(blob)) {
+      return 'That WHOOP code is wrong or expired — try again';
+    }
+    if (/limitexceeded|toomanyrequests|attempt/.test(blob)) {
+      return 'WHOOP locked the login for a minute — wait and try again';
+    }
+    return msg ? ('WHOOP login failed: ' + (type || msg)) : 'WHOOP login failed';
+  }
   async function callCognito(target, body) {
     const res = await httpRequest(COGNITO, {
       method: 'POST',
@@ -148,8 +169,7 @@
     });
     const parsed = parseBody(res.text);
     if (!res.ok) {
-      const detail = parsed.__type || parsed.message || parsed.error || res.text.slice(0, 160);
-      const e = new Error('WHOOP login failed: ' + detail);
+      const e = new Error(cognitoErrorMessage(parsed, parsed.error || res.text.slice(0, 160)));
       e.status = res.status;
       e.body = parsed;
       throw e;
@@ -158,14 +178,15 @@
   }
   async function login(input) {
     input = input || {};
+    const email = String(input.email || '').trim().toLowerCase();
     const init = await callCognito('InitiateAuth', {
       AuthFlow: 'USER_PASSWORD_AUTH',
-      AuthParameters: { USERNAME: input.email, PASSWORD: input.password },
+      AuthParameters: { USERNAME: email, PASSWORD: input.password },
       ClientId: '',
     });
     if (init.AuthenticationResult) return tokensFromAuth(init.AuthenticationResult);
     if (init.ChallengeName && init.Session) {
-      return { challenge: init.ChallengeName, session: init.Session, email: input.email };
+      return { challenge: init.ChallengeName, session: init.Session, email: email };
     }
     throw new Error('WHOOP login did not return tokens');
   }
@@ -180,7 +201,7 @@
       ChallengeName: challenge,
       Session: input.session,
       ChallengeResponses: {
-        USERNAME: input.email,
+        USERNAME: String(input.email || '').trim().toLowerCase(),
         [codeKey]: String(input.code || '').trim(),
       },
     });
