@@ -893,10 +893,11 @@
 
 .eng-up {
   margin: 0;
-  color: var(--oled-muted, #8e8e93);
-  font-size: 13px;
+  color: #b0b8bf;
+  font-size: 16px;
   font-family: var(--font-body, "Space Grotesk", sans-serif);
   text-align: center;
+  font-weight: 500;
 }
 
 .eng-head {
@@ -904,9 +905,9 @@
 }
 
 .eng-kicker {
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: 15px;
   color: var(--engine, #5ec4b7);
   font-family: var(--font-display, "Barlow Condensed", sans-serif);
   font-weight: 600;
@@ -915,7 +916,7 @@
 .eng-title {
   font-family: var(--font-display, "Barlow Condensed", sans-serif);
   font-weight: 700;
-  font-size: clamp(34px, 10vw, 44px);
+  font-size: clamp(36px, 11vw, 48px);
   letter-spacing: -0.03em;
   line-height: 0.95;
   margin: 2px 0 6px;
@@ -923,16 +924,18 @@
 
 .eng-rx {
   color: var(--oled-muted, #8e8e93);
-  font-size: 13px;
+  font-size: 16px;
   margin: 0 0 8px;
+  line-height: 1.35;
 }
 
 .eng-done-line {
   margin: 8px 0 0;
   text-align: center;
   color: var(--oled-muted, #8e8e93);
-  font-size: 13px;
+  font-size: 16px;
   font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 500;
 }
 
 .eng-stage--live {
@@ -1012,11 +1015,11 @@
 }
 
 .eng-ring-label {
-  fill: color-mix(in srgb, var(--oled-muted, #8e8e93) 90%, #fff);
-  font-size: 5.5px;
+  fill: #c8d0d6;
+  font-size: 9px;
   font-family: var(--font-display, "Barlow Condensed", sans-serif);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .eng-morph-face {
@@ -1042,21 +1045,21 @@
 }
 
 .eng-morph-unit {
-  margin-top: 6px;
-  font-size: 12px;
-  letter-spacing: 0.22em;
+  margin-top: 8px;
+  font-size: 17px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--eng-ring) 70%, #fff);
+  color: color-mix(in srgb, var(--eng-ring) 75%, #fff);
   font-family: var(--font-body, "Space Grotesk", sans-serif);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .eng-morph-cap,
 .eng-morph-sub {
   margin-top: 10px;
   font-family: var(--font-display, "Barlow Condensed", sans-serif);
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--eng-ring) 85%, #fff);
 }
@@ -1066,7 +1069,7 @@
   display: grid;
   grid-template-columns: 1fr 1.15fr 1fr;
   gap: 8px;
-  padding: 10px 4px 2px;
+  padding: 12px 4px 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -1077,7 +1080,7 @@
 .eng-rail-cell strong {
   display: block;
   font-family: var(--font-display, "Barlow Condensed", sans-serif);
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -1086,18 +1089,19 @@
 }
 
 .eng-rail-cell--mid strong {
-  font-size: 30px;
+  font-size: 34px;
   color: var(--eng-ring);
 }
 
 .eng-rail-cell span {
   display: block;
-  margin-top: 5px;
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  margin-top: 6px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--oled-muted, #8e8e93);
+  color: #b0b8bf;
   font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 600;
 }
 
 .eng-rest-tap {
@@ -1146,12 +1150,12 @@
 }
 
 .eng-rest-tap small {
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 15px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--zone-blue, #5aa7c7) 80%, #fff);
   font-family: var(--font-body, "Space Grotesk", sans-serif);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .eng-rest-tap:active .eng-rest-tap-disc {
@@ -1220,10 +1224,11 @@
 
 .eng-rest-hint {
   margin: 8px 0 0;
-  color: var(--oled-muted, #8e8e93);
-  font-size: 13px;
-  letter-spacing: 0.04em;
+  color: #b0b8bf;
+  font-size: 16px;
+  letter-spacing: 0.02em;
   font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 500;
 }
 
 .eng-rest-overlay .eng-morph {
@@ -1289,20 +1294,20 @@
   .eng-emh button:active { transform: none; }
 }
 
-.eng-emh-easy {
+.log-intensity.eng-emh button.eng-emh-easy {
   color: #eaf7fc;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--zone-blue, #6eb8d6) 42%, #12161a), color-mix(in srgb, var(--zone-blue, #6eb8d6) 22%, #0c1216));
-  border-color: color-mix(in srgb, var(--zone-blue, #6eb8d6) 70%, transparent);
+  background: linear-gradient(180deg, #3a7a92, #1e4a5c);
+  border: 1px solid #6eb8d6;
 }
-.eng-emh-med {
+.log-intensity.eng-emh button.eng-emh-med {
   color: #e7fbf7;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--zone-green, #5ec4b4) 42%, #12161a), color-mix(in srgb, var(--zone-green, #5ec4b4) 22%, #0c1216));
-  border-color: color-mix(in srgb, var(--zone-green, #5ec4b4) 70%, transparent);
+  background: linear-gradient(180deg, #3a8f84, #1a524c);
+  border: 1px solid #5ec4b4;
 }
-.eng-emh-hard {
+.log-intensity.eng-emh button.eng-emh-hard {
   color: #fcedea;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--zone-red, #e0a090) 42%, #12161a), color-mix(in srgb, var(--zone-red, #e0a090) 22%, #0c1216));
-  border-color: color-mix(in srgb, var(--zone-red, #e0a090) 70%, transparent);
+  background: linear-gradient(180deg, #9a655c, #5a322c);
+  border: 1px solid #e0a090;
 }
 
 .eng-skip {
@@ -1331,11 +1336,15 @@
 }
 
 .log-emh-label {
-  margin: 0 0 2px;
-  color: rgba(238, 242, 244, 0.72);
-  font-size: 13px;
+  margin: 0 0 4px;
+  color: rgba(238, 242, 244, 0.85);
+  font-size: 16px;
   font-weight: 600;
   font-family: var(--font-body, "Space Grotesk", sans-serif);
   text-align: center;
   width: 100%;
+}
+
+.log-intensity.eng-emh button {
+  font-size: 17px;
 }

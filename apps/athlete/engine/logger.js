@@ -510,8 +510,8 @@
         stroke="url(#engArcGrad)" stroke-linecap="round"
         stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
         transform="rotate(135 50 50)"/>
-      <text x="18" y="88" class="eng-ring-label">${esc(bg)}</text>
-      <text x="82" y="88" class="eng-ring-label" text-anchor="end">${esc(gr)}</text>
+      <text x="16" y="92" class="eng-ring-label">${esc(bg)}</text>
+      <text x="84" y="92" class="eng-ring-label" text-anchor="end">${esc(gr)}</text>
     </svg>`;
   }
 
