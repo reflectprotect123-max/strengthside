@@ -34,3 +34,22 @@ additional_redirect_urls = ["com.hybrid.athlete://auth", "capacitor://localhost"
 
 [functions]
 enabled = true
+
+# Official WHOOP OAuth. whoop-callback must be public — WHOOP redirects here with ?code=.
+[functions.whoop-callback]
+verify_jwt = false
+
+[functions.whoop-connect]
+verify_jwt = true
+
+[functions.whoop-sync]
+verify_jwt = true
+
+[functions.whoop-health]
+verify_jwt = false
+
+[functions.integrations-status]
+verify_jwt = true
+
+[functions.integrations-disconnect]
+verify_jwt = true
