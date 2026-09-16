@@ -1,7 +1,7 @@
 (function (global) {
   const STORAGE_KEY = 'HYBRID_SC_integrations_v1';
   const WHOOP_CHECKIN_KEYS = [
-    'whoopRecovery', 'hrv', 'restingHr', 'whoopSleepPerformance', 'whoopStrain',
+    'whoopRecovery', 'hrv', 'restingHr', 'whoopSleepPerformance', 'whoopStrain', 'whoopSteps',
     'whoopSyncedAt', 'whoopSampleDate', 'sleepQuality', 'readinessColor', 'mainLimiter',
     'backgroundLoad', 'recoveryPenalty', 'wearablePenalty', 'updatedAt',
   ];

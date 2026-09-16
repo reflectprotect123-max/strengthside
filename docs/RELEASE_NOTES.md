@@ -6,6 +6,16 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.100 | 2026-09-16 | Connect WHOOP 503 says Allow is down on the server, not this phone. cache the-brain-v25 / the-engine-v13 |
+| 1.0.99 | 2026-09-16 | Me always shows SMS code field — code only after WHOOP password; Apple/Google never get one. cache the-brain-v24 / the-engine-v12 |
+| 1.0.98 | 2026-09-16 | Me copy is Android — Allow + steps run on this phone, no iPhone. cache the-brain-v23 / the-engine-v11 |
+| 1.0.97 | 2026-09-16 | Totem back on Me for steps (WHOOP app password). Allow stays for Apple/Google. cache the-brain-v22 / the-engine-v10 |
+| 1.0.96 | 2026-09-16 | Connect WHOOP is official Allow again (Apple/Google). Drop typed numbers. Edge whoopCallbackUrl fix for BOOT_ERROR; CapacitorHttp skips CORS. cache the-brain-v21 / the-engine-v9 |
+| 1.0.95 | 2026-09-16 | WHOOP on Me is typed numbers from the WHOOP app (sleep / recovery / strain / steps); password login moved to Advanced |
+| 1.0.94 | 2026-09-16 | WHOOP login form names the WHOOP app password; reject message includes the email; native HTTP sends a JSON object body |
+| 1.0.93 | 2026-09-16 | WHOOP NotAuthorizedException maps to “wrong WHOOP email or password” |
+| 1.0.92 | 2026-09-15 | Quiet Me when WHOOP is not linked yet (no red “connect under Me” after boot sync) |
+| 1.0.91 | 2026-09-15 | WHOOP connects on-device via Totem-lite iOS API (email + password + SMS) — bypasses broken Edge; Home adds Steps dial; cache the-brain-v20 / the-engine-v8 |
 | 1.0.90 | 2026-09-15 | WHOOP fetch no longer goes through the service worker; Failed to fetch / BOOT_ERROR maps to a clear down message; cache the-brain-v19 / the-engine-v7 |
 | 1.0.89 | 2026-09-15 | Plan sync works on hosted Postgres without the ecosystem migration — write `strength_side`/`engine_side` first, fall back to admitted `strength`/`conditioning`; calendar occupancy peeks both; cache the-brain-v18 / the-engine-v6 |
 | 1.0.88 | 2026-09-15 | Sync on every open — auth hydrate, plan pull, full WHOOP; one shared WHOOP recovery across Strength + Engine (`hybrid-integrations.js`); auth redirect `com.hybrid.athlete://auth`; cache the-brain-v17 / the-engine-v5 |
