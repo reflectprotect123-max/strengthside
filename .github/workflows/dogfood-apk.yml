@@ -3,7 +3,7 @@ name: Dogfood APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'cursor/**']
     paths:
       - 'apps/athlete/**'
       - 'apps/mobile/**'
@@ -66,6 +66,7 @@ jobs:
         run: bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
 
       - name: Publish dogfood-latest release
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
