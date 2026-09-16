@@ -4,6 +4,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 ## Capgo (dogfood + live channels)
 
+| 1.0.102 | 2026-09-16 | Drop Totem, Health Connect poke, and Home steps. Official WHOOP Allow only. cache the-brain-v27 / the-engine-v15 |
 | 1.0.101 | 2026-09-16 | Native Health Connect poke on Me (new APK). Reads today + 3-day steps and origin packages. cache the-brain-v26 / the-engine-v14 |
 | 1.0.99 | 2026-09-16 | Me always shows SMS code field — code only after WHOOP password; Apple/Google never get one. cache the-brain-v24 / the-engine-v12 |
 | 1.0.98 | 2026-09-16 | Me copy is Android — Allow + steps run on this phone, no iPhone. cache the-brain-v23 / the-engine-v11 |

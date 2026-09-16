@@ -1,5 +1,6 @@
 /**
- * WHOOP ownership — official Allow on shared Supabase Edge (not typed numbers).
+ * WHOOP ownership — official Allow on shared Supabase Edge.
+ * No Totem password login, Health Connect poke, or typed numbers.
  */
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -24,16 +25,17 @@ const bridge = readFileSync(join(appRoot, 'native-bridge.js'), 'utf8');
 must(cfg.includes("functionsProvider: 'supabase'"), 'STRENGTH_CONFIG uses supabase');
 must(html.includes('strength-config.js'), 'index loads strength-config');
 must(html.includes('connectors/whoop.js'), 'index loads WHOOP bridge');
-must(html.includes('connectors/whoop-ios.js'), 'index loads Totem-lite WHOOP client');
+must(!html.includes('whoop-ios.js'), 'index does not load Totem-lite WHOOP client');
 must(whoopJs.includes('authorizeUrl'), 'whoop opens official Allow URL');
 must(whoopJs.includes("client: 'native'"), 'whoop requests native Allow');
-must(whoopJs.includes('connectTotem'), 'whoop keeps steps login for Android');
+must(!whoopJs.includes('connectTotem'), 'whoop has no Totem steps login');
+must(!whoopJs.includes('WhoopIos'), 'whoop has no Totem iOS client');
+must(!whoopJs.includes('HealthConnectSteps'), 'whoop does not poke Health Connect');
+must(!whoopJs.includes('pokeHealthConnect'), 'whoop has no Health Connect poke');
+must(!whoopJs.includes('syncIosSteps'), 'whoop does not merge Totem steps');
+must(!whoopJs.includes('whoopIos'), 'whoop has no Totem email/password fields');
 must(whoopJs.includes('Android'), 'Me copy says this is the Android app');
 must(!/iPhone|iOS app/i.test(whoopJs), 'Me copy does not tell the athlete to use iPhone');
-must(whoopJs.includes('id="whoopIosMfa"'), 'Me always shows the SMS code field');
-must(whoopJs.includes('6-digit text only comes after'), 'Me says a code only comes after the WHOOP password works');
-must(whoopJs.includes('never gets a code'), 'Me says Apple/Google never get an SMS code');
-must(whoopJs.includes('syncIosSteps'), 'whoop merges Totem steps after official sync');
 must(whoopJs.includes('CapacitorHttp'), 'whoop skips WebView CORS via CapacitorHttp');
 must(whoopJs.includes('functions/v1'), 'whoop routes to Edge functions/v1');
 must(whoopJs.includes('x-hybrid-product') && whoopJs.includes('hybridProduct()'), 'whoop sends hybrid product header');
@@ -41,12 +43,13 @@ must(!whoopJs.includes('applyManual'), 'whoop does not take typed WHOOP numbers'
 must(whoopJs.includes('WHOOP Allow is down on the server'), '503 BOOT_ERROR says Allow is down on the server, not this phone');
 must(!whoopJs.includes('thehybridsystem.netlify.app'), 'whoop must not call dead athlete Netlify WHOOP');
 must(app.includes('Whoop.connect()'), 'Me Connect WHOOP');
-must(app.includes('Whoop.connectTotem()'), 'Me Pull steps Totem');
-must(app.includes('Whoop.pokeHealthConnect()'), 'Me Poke Health Connect');
+must(!app.includes('Whoop.connectTotem()'), 'Me has no Pull steps');
+must(!app.includes('Whoop.pokeHealthConnect()'), 'Me has no Poke Health Connect');
+must(!app.includes("label: 'Steps'"), 'Home has no Steps dial');
 must(engineApp.includes('Whoop.connect()'), 'Engine Me Connect WHOOP');
-must(engineApp.includes('Whoop.connectTotem()'), 'Engine Me Pull steps Totem');
-must(engineApp.includes('Whoop.pokeHealthConnect()'), 'Engine Me Poke Health Connect');
-must(whoopJs.includes('HealthConnectSteps'), 'whoop pokes native HealthConnectSteps plugin');
+must(!engineApp.includes('Whoop.connectTotem()'), 'Engine Me has no Pull steps');
+must(!engineApp.includes('Whoop.pokeHealthConnect()'), 'Engine Me has no Poke Health Connect');
+must(!engineApp.includes("label: 'Steps'"), 'Engine Home has no Steps dial');
 must(!app.includes('Whoop.applyManual'), 'Me has no Save WHOOP numbers');
 must(!engineApp.includes('Whoop.applyManual'), 'Engine Me has no Save WHOOP numbers');
 must(app.includes("Whoop.fnUrl('brain-coach')"), 'coach uses Edge via Whoop.fnUrl');

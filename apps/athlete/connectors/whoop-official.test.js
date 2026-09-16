@@ -17,18 +17,18 @@ ctx.window = ctx;
 ctx.globalThis = ctx;
 runInContext(src, ctx);
 
-test('formatHealthConnectPoke reports WHOOP lag when today is empty', () => {
-  const msg = ctx.Whoop.formatHealthConnectPoke({
-    available: true,
-    granted: true,
-    stepsToday: 0,
-    steps3d: 9000,
-    origins: [{ packageName: 'com.whoop.android', count: 9000 }],
-  });
-  assert.match(msg, /lags 1–2 days/);
-  assert.match(msg, /com\.whoop\.android/);
-});
-
-test('formatHealthConnectPoke asks for a new APK path via missing plugin copy in pokeHealthConnect', () => {
-  assert.match(src, /install dogfood 1\.0\.101/);
+test('WHOOP keeps official Allow and drops Totem + Health Connect', () => {
+  assert.equal(typeof ctx.Whoop.connect, 'function');
+  assert.equal(typeof ctx.Whoop.sync, 'function');
+  assert.equal(ctx.Whoop.connectTotem, undefined);
+  assert.equal(ctx.Whoop.pokeHealthConnect, undefined);
+  assert.equal(ctx.Whoop.formatHealthConnectPoke, undefined);
+  assert.match(src, /authorizeUrl/);
+  assert.doesNotMatch(src, /HealthConnectSteps/);
+  assert.doesNotMatch(src, /WhoopIos/);
+  assert.doesNotMatch(src, /whoopIosEmail/);
+  const form = ctx.Whoop.connectFormHtml();
+  assert.doesNotMatch(form, /WHOOP app password/);
+  assert.doesNotMatch(form, /Pull steps/);
+  assert.match(form, /Connect WHOOP/);
 });

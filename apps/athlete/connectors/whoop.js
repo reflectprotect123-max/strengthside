@@ -1,4 +1,4 @@
-/* WHOOP bridge — official Allow (Apple/Google) + optional Totem-lite steps. */
+/* WHOOP bridge — official Allow (Apple/Google). No Totem, Health Connect, or steps. */
 (function (global) {
   function cfg() {
     return global.STRENGTH_CONFIG || global.ENGINE_CONFIG || {};
@@ -186,55 +186,6 @@
     S.settings.whoop = S.settings.whoop || { connected: false, lastSyncAt: null, sampleDate: null, email: null };
     return S.settings.whoop;
   }
-  function iosApi() {
-    return global.WhoopIos || null;
-  }
-  function hasIosTokens() {
-    const ios = st().ios;
-    return !!(ios && ios.refreshToken);
-  }
-  function saveIosTokens(tokens, whoopEmail) {
-    const w = st();
-    const prev = w.ios || {};
-    w.ios = {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken || prev.refreshToken || '',
-      idToken: tokens.idToken || prev.idToken || '',
-      expiresAt: tokens.expiresAt || 0,
-      installationId: prev.installationId || (iosApi() && iosApi().newInstallationId()) || '',
-      whoopEmail: whoopEmail || prev.whoopEmail || null,
-    };
-    w.iosEmail = w.ios.whoopEmail;
-    if (typeof global.save === 'function') global.save();
-  }
-  function clearIosTokens() {
-    const w = st();
-    w.ios = null;
-    w.iosEmail = null;
-  }
-  async function ensureIosAccess() {
-    const Ios = iosApi();
-    if (!Ios) throw new Error('WHOOP client missing — reload the app');
-    const ios = st().ios;
-    if (!ios || !ios.refreshToken) {
-      const e = new Error('Connect WHOOP under Me');
-      e.code = 'whoop_not_linked';
-      throw e;
-    }
-    if (ios.accessToken && ios.expiresAt && ios.expiresAt - Date.now() > 60 * 1000) return ios;
-    const fresh = await Ios.refresh(ios.refreshToken);
-    saveIosTokens(fresh, ios.whoopEmail);
-    return st().ios;
-  }
-  async function syncIosSteps() {
-    const Ios = iosApi();
-    if (!Ios || !hasIosTokens()) return null;
-    const sess = await ensureIosAccess();
-    return Ios.syncToday({
-      accessToken: sess.accessToken,
-      installationId: sess.installationId,
-    });
-  }
   function applyNormalized(n, meta) {
     meta = meta || {};
     if (!n || typeof n !== 'object') return false;
@@ -248,8 +199,6 @@
     if (rhr != null && rhr > 0) { c.restingHr = Math.round(rhr); changed = true; }
     if (sleepPerf != null && sleepPerf > 0) { c.whoopSleepPerformance = Math.round(sleepPerf); c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
     if (strain != null && strain > 0) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
-    const steps = finiteNum(n.steps);
-    if (steps != null && steps > 0) { c.whoopSteps = Math.round(steps); changed = true; }
     if (changed) {
       c.updatedAt = Date.now();
       c.whoopSyncedAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
@@ -282,148 +231,7 @@
     return 'Connected · sample ' + (w.sampleDate || '—') + ' · synced ' + when;
   }
   function connectFormHtml() {
-    const w = st();
-    const prefill = w.iosEmail || w.email || '';
-    const mfa = !!ui.mfaSession;
-    const busy = ui.busy ? ' disabled' : '';
-    const stepsOn = hasIosTokens();
-    return '<p class="stub">This is the Android app. Connect WHOOP opens Allow in Chrome on this phone — Apple or Google is fine. Official WHOOP has no steps.</p>' +
-      '<div class="whoop-ios-form">' +
-      '<p class="stub">' + (stepsOn
-        ? 'Steps are on this phone — Sync pulls them too.'
-        : 'Steps also run on this Android phone. Use the password that opens the WHOOP app here — not Apple, Google, or HYBRID S&amp;C. A 6-digit text only comes after that password works. Apple or Google never gets a code — tap Connect WHOOP.') + '</p>' +
-      '<div class="field"><label for="whoopIosEmail">WHOOP app email</label>' +
-      '<input id="whoopIosEmail" type="email" autocomplete="username" placeholder="WHOOP app email" value="' + esc(prefill) + '"' + busy + '></div>' +
-      '<div class="field"><label for="whoopIosPassword">WHOOP app password</label>' +
-      '<input id="whoopIosPassword" type="password" autocomplete="current-password" placeholder="WHOOP app password"' + busy + '></div>' +
-      '<div class="field"><label for="whoopIosMfa">SMS code</label>' +
-      '<input id="whoopIosMfa" inputmode="numeric" autocomplete="one-time-code" placeholder="' +
-        (mfa ? '6-digit code WHOOP just texted' : 'stays empty until WHOOP texts you') + '"' + busy + '></div>' +
-      '</div>';
-  }
-  async function connectTotem() {
-    if (ui.busy) return;
-    const Ios = iosApi();
-    if (!Ios) {
-      ui.message = 'WHOOP client missing — reload the app';
-      paint();
-      global.alert(ui.message);
-      return;
-    }
-    const em = ((document.getElementById('whoopIosEmail') && document.getElementById('whoopIosEmail').value)
-      || st().iosEmail || st().email || '').trim();
-    const pw = (document.getElementById('whoopIosPassword') && document.getElementById('whoopIosPassword').value) || '';
-    const code = ((document.getElementById('whoopIosMfa') && document.getElementById('whoopIosMfa').value) || '').trim();
-    if (!em || (!pw && !ui.mfaSession)) {
-      ui.message = 'Enter the WHOOP app email and password to pull steps';
-      paint();
-      global.alert(ui.message);
-      return;
-    }
-    ui.busy = true;
-    ui.message = ui.mfaSession ? 'Verifying WHOOP code…' : 'Pulling steps…';
-    paint();
-    try {
-      let tokens;
-      if (ui.mfaSession && code) {
-        tokens = await Ios.verifyMfa({
-          email: em,
-          session: ui.mfaSession,
-          challenge: ui.mfaChallenge || 'SMS_MFA',
-          code: code,
-        });
-      } else {
-        const out = await Ios.login({ email: em, password: pw });
-        if (out && out.challenge) {
-          ui.mfaSession = out.session;
-          ui.mfaChallenge = out.challenge;
-          ui.message = 'Enter the code WHOOP just texted you, then tap Pull steps again';
-          ui.busy = false;
-          paint();
-          return;
-        }
-        tokens = out;
-      }
-      ui.mfaSession = null;
-      ui.mfaChallenge = null;
-      saveIosTokens(tokens, em);
-      const n = await syncIosSteps();
-      if (n) applyNormalized(n, { syncedAt: n.capturedAt, sampleDate: n.date });
-      st().connected = true;
-      st().source = 'ios';
-      ui.message = 'Steps connected — Home updated on this phone';
-      paint();
-      refreshVisibleUi();
-    } catch (err) {
-      ui.message = err.message || 'Totem login failed';
-      paint();
-      global.alert(ui.message);
-      throw err;
-    } finally { ui.busy = false; paint(); }
-  }
-  function hcPlugin() {
-    try {
-      return global.Capacitor && global.Capacitor.Plugins && global.Capacitor.Plugins.HealthConnectSteps;
-    } catch (_) {
-      return null;
-    }
-  }
-  function formatHealthConnectPoke(out) {
-    if (!out || out.available === false) {
-      return (out && out.reason) ? String(out.reason) : 'Health Connect is not on this phone';
-    }
-    if (!out.granted) return 'Allow Steps (Read) for HYBRID S&C, then tap Poke Health Connect again';
-    const today = Number(out.stepsToday) || 0;
-    const d3 = Number(out.steps3d) || 0;
-    const origins = Array.isArray(out.origins) ? out.origins.map(function (o) {
-      const pkg = o && o.packageName ? String(o.packageName) : 'app';
-      const n = o && o.count != null ? String(o.count) : '';
-      return n ? (pkg + ' ' + n) : pkg;
-    }).filter(Boolean).join(', ') : '';
-    const whoop = /whoop/i.test(origins);
-    if (today > 0) {
-      return 'Health Connect today ' + today + (origins ? ' · ' + origins : '') + (whoop ? '' : ' · no WHOOP source yet');
-    }
-    if (d3 > 0) {
-      return 'Health Connect today 0 (WHOOP often lags 1–2 days). Last 3 days ' + d3 + (origins ? ' · ' + origins : '');
-    }
-    return whoop
-      ? 'WHOOP is a Health Connect source, but step counts are still 0'
-      : 'Health Connect has no steps — WHOOP write may not be on, or it has not landed yet';
-  }
-  async function pokeHealthConnect() {
-    if (ui.busy) return;
-    const native = global.Capacitor && typeof global.Capacitor.isNativePlatform === 'function' && global.Capacitor.isNativePlatform();
-    if (!native) {
-      ui.message = 'Health Connect poke only runs in the Android install';
-      paint();
-      global.alert(ui.message);
-      return;
-    }
-    const plugin = hcPlugin();
-    if (!plugin || typeof plugin.pokeToday !== 'function') {
-      ui.message = 'This APK cannot see Health Connect — install dogfood 1.0.101';
-      paint();
-      global.alert(ui.message);
-      return;
-    }
-    ui.busy = true;
-    ui.message = 'Poking Health Connect…';
-    paint();
-    try {
-      const out = await plugin.pokeToday();
-      ui.message = formatHealthConnectPoke(out);
-      const today = out && Number(out.stepsToday);
-      if (today > 0) {
-        applyNormalized({ steps: today, date: todayIso() }, { syncedAt: new Date().toISOString(), sampleDate: todayIso() });
-        refreshVisibleUi();
-      }
-      paint();
-    } catch (err) {
-      ui.message = err.message || 'Health Connect poke failed';
-      paint();
-      global.alert(ui.message);
-    } finally { ui.busy = false; paint(); }
+    return '<p class="stub">This is the Android app. Connect WHOOP opens Allow in Chrome on this phone — Apple or Google is fine.</p>';
   }
   function cardHtml() {
     const w = st();
@@ -456,25 +264,15 @@
   async function refreshStatus() {
     const w = st();
     w.email = await email();
-    try {
-      const body = await api(FN.status);
-      const whoop = (body && body.whoop) || {};
-      w.connected = !!whoop.connected || hasIosTokens();
-      w.source = whoop.connected ? 'oauth' : (hasIosTokens() ? 'ios' : null);
-      w.lastSyncAt = whoop.lastSyncAt || w.lastSyncAt;
-      w.sampleDate = whoop.sampleDate || w.sampleDate;
-      if (whoop.normalized) applyNormalized(whoop.normalized, { syncedAt: whoop.lastSyncAt, sampleDate: whoop.sampleDate });
-      if (typeof global.save === 'function') global.save();
-      return body;
-    } catch (err) {
-      if (hasIosTokens()) {
-        w.connected = true;
-        w.source = 'ios';
-        if (typeof global.save === 'function') global.save();
-        return { whoop: w };
-      }
-      throw err;
-    }
+    const body = await api(FN.status);
+    const whoop = (body && body.whoop) || {};
+    w.connected = !!whoop.connected;
+    w.source = whoop.connected ? 'oauth' : null;
+    w.lastSyncAt = whoop.lastSyncAt || w.lastSyncAt;
+    w.sampleDate = whoop.sampleDate || w.sampleDate;
+    if (whoop.normalized) applyNormalized(whoop.normalized, { syncedAt: whoop.lastSyncAt, sampleDate: whoop.sampleDate });
+    if (typeof global.save === 'function') global.save();
+    return body;
   }
   function refreshVisibleUi() {
     renderPanels();
@@ -503,23 +301,9 @@
     if (ui.busy && !opts.quiet) return;
     if (!opts.quiet) { ui.busy = true; ui.message = 'Syncing WHOOP…'; renderPanels(); }
     try {
-      let applied = false;
-      let officialOk = false;
-      try {
-        const out = await syncOfficial(opts);
-        applied = !!out.applied;
-        officialOk = true;
-        st().source = 'oauth';
-      } catch (err) {
-        if (!hasIosTokens()) throw err;
-      }
-      try {
-        const ios = await syncIosSteps();
-        if (ios) {
-          applied = !!applyNormalized(ios, { syncedAt: ios.capturedAt, sampleDate: ios.date }) || applied;
-          if (!officialOk) st().source = 'ios';
-        }
-      } catch (_) { /* steps are extra */ }
+      const out = await syncOfficial(opts);
+      const applied = !!out.applied;
+      st().source = 'oauth';
       if (!opts.quiet) {
         ui.message = applied
           ? 'WHOOP synced — Home sleep / recovery / strain updated'
@@ -596,7 +380,7 @@
       try { await api(FN.disconnect, { method: 'POST', query: { provider: 'whoop' } }); } catch (_) {}
       const w = st();
       w.connected = false; w.lastSyncAt = null; w.sampleDate = null; w.lastNormalized = null; w.source = null;
-      clearIosTokens();
+      w.ios = null; w.iosEmail = null;
       if (typeof global.save === 'function') global.save();
       if (global.HybridIntegrations && typeof global.HybridIntegrations.persistWhoop === 'function') {
         const S = appState();
@@ -669,7 +453,8 @@
     try { await client().auth.signOut(); } catch (_) {}
     st().email = null;
     st().connected = false;
-    clearIosTokens();
+    st().ios = null;
+    st().iosEmail = null;
     if (typeof global.save === 'function') global.save();
     ui.message = '';
     if (typeof global.setTab === 'function') global.setTab('me');
@@ -726,7 +511,7 @@
     } catch (_) {}
   }
   global.Whoop = {
-    cardHtml, metaLine, renderPanels, connectFormHtml, connectTotem, pokeHealthConnect, formatHealthConnectPoke, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
+    cardHtml, metaLine, renderPanels, connectFormHtml, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
     uiMessage: function () { return ui.message || ''; },
     client, token, email, waitForSupabase, fnUrl, resolveProxyBase

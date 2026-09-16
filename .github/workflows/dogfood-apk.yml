@@ -81,7 +81,7 @@ jobs:
           NOTES="Debug Android shell for THE Hybrid athlete app.
 
           **Built:** \`${STAMP}\`
-          **Version:** \`1.0.101\` (Health Connect poke)
+          **Version:** \`1.0.102\` (WHOOP Allow only)
           **Build stamp:** \`${BUILD}\`
           **Commit:** \`${SHA}\`
 
