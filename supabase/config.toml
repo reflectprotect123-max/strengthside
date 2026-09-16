@@ -32,10 +32,8 @@ enabled = true
 site_url = "com.hybrid.athlete://auth"
 additional_redirect_urls = ["com.hybrid.athlete://auth", "capacitor://localhost"]
 
-[functions]
-enabled = true
-
 # Official WHOOP OAuth. whoop-callback must be public — WHOOP redirects here with ?code=.
+# Do not set [functions].enabled — older CLI treats [functions] as the per-function map.
 [functions.whoop-callback]
 verify_jwt = false
 
