@@ -592,12 +592,16 @@
       : `Last bout · ${page.title}`;
     return `
       <div class="eng-rest-overlay" role="dialog" aria-modal="true" aria-label="Rest">
-        <p class="eng-rest-banner">Rest</p>
-        <p class="eng-rest-hint">${esc(restHint)}</p>
+        <div class="eng-rest-head">
+          <p class="eng-rest-banner">Rest</p>
+          <p class="eng-rest-hint">${esc(restHint)}</p>
+        </div>
         ${dial}
-        ${upNext}
-        ${effortBlock}
-        ${skipBtn}
+        <div class="eng-rest-actions">
+          ${upNext}
+          ${effortBlock}
+          ${skipBtn}
+        </div>
       </div>`;
   }
 

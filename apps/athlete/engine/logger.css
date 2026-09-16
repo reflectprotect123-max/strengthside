@@ -373,6 +373,7 @@
   color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
   font-weight: 600;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
 }
 .log-dur { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
 .log-dur button {
