@@ -81,7 +81,7 @@ jobs:
           NOTES="Debug Android shell for THE Hybrid athlete app.
 
           **Built:** \`${STAMP}\`
-          **Version:** \`1.0.103\`
+          **Version:** \`1.0.104\`
           **Build stamp:** \`${BUILD}\`
           **Commit:** \`${SHA}\`
 

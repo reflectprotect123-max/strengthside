@@ -46,7 +46,7 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v27'"), 'SW cache bump v27');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v28'"), 'SW cache bump v28');
 must(!readFileSync(join(root, 'service-worker.js'), 'utf8').includes('whoop-ios.js'), 'whoop-ios.js not in SW cache');
 must(!html.includes('whoop-ios.js'), 'index does not load whoop-ios');
 must(!js.includes("label: 'Steps'"), 'Home has no Steps dial');
@@ -114,7 +114,7 @@ must(js.includes('function startTrainingSession'), 'Start Session entry');
   must(engineSw.includes('./hybrid-integrations.js'), 'engine hybrid-integrations.js in SW cache');
   must(!engineSw.includes('whoop-ios.js'), 'engine SW does not cache whoop-ios.js');
   must(engineSw.includes('../connectors/whoop.js'), 'engine SW caches shared whoop.js');
-  must(engineSw.includes("CACHE = 'the-engine-v16'"), 'engine SW cache bump v16');
+  must(engineSw.includes("CACHE = 'the-engine-v17'"), 'engine SW cache bump v17');
   must(readFileSync(join(engineRoot, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'conditioning'"), 'engine plan sync falls back to hosted conditioning domain');
   must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
 }

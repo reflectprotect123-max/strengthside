@@ -196,14 +196,16 @@
               <option value="hard" ${b.effort === 'hard' ? 'selected' : ''}>Hard 8–9.5</option>
             </select>
           </div>
-          <div class="lib-field"><label>Rounds</label>
-            <input type="number" min="1" max="40" value="${esc(b.rounds || 8)}" onchange="LibraryView.patchBlock({rounds:Number(this.value)})">
-          </div>
-          <div class="lib-field"><label>Work seconds</label>
-            <input type="number" min="1" value="${esc(b.workSec || 15)}" onchange="LibraryView.patchBlock({workSec:Number(this.value)})">
-          </div>
-          <div class="lib-field"><label>Rest seconds</label>
-            <input type="number" min="0" value="${esc(b.restSec || 45)}" onchange="LibraryView.patchBlock({restSec:Number(this.value)})">
+          <div class="lib-cols lib-cols-3">
+            <div class="lib-field"><label>Rounds</label>
+              <input type="number" min="1" max="40" value="${esc(b.rounds || 8)}" onchange="LibraryView.patchBlock({rounds:Number(this.value)})">
+            </div>
+            <div class="lib-field"><label>Work sec</label>
+              <input type="number" min="1" value="${esc(b.workSec || 15)}" onchange="LibraryView.patchBlock({workSec:Number(this.value)})">
+            </div>
+            <div class="lib-field"><label>Rest sec</label>
+              <input type="number" min="0" value="${esc(b.restSec || 45)}" onchange="LibraryView.patchBlock({restSec:Number(this.value)})">
+            </div>
           </div>
           ${engineBaselineFieldHtml(b)}
           <button type="button" class="lib-primary" onclick="LibraryView.closeSheet()">Done</button>
