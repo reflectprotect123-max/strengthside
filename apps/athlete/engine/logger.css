@@ -1290,19 +1290,19 @@
 }
 
 .eng-emh-easy {
-  color: #d7f0fa;
-  background: color-mix(in srgb, var(--zone-blue, #5aa7c7) 22%, #0c1216);
-  border-color: color-mix(in srgb, var(--zone-blue, #5aa7c7) 55%, transparent);
+  color: #eaf7fc;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--zone-blue, #6eb8d6) 42%, #12161a), color-mix(in srgb, var(--zone-blue, #6eb8d6) 22%, #0c1216));
+  border-color: color-mix(in srgb, var(--zone-blue, #6eb8d6) 70%, transparent);
 }
 .eng-emh-med {
-  color: #d8f7f2;
-  background: color-mix(in srgb, var(--zone-green, #5ec4b7) 22%, #0c1216);
-  border-color: color-mix(in srgb, var(--zone-green, #5ec4b7) 55%, transparent);
+  color: #e7fbf7;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--zone-green, #5ec4b4) 42%, #12161a), color-mix(in srgb, var(--zone-green, #5ec4b4) 22%, #0c1216));
+  border-color: color-mix(in srgb, var(--zone-green, #5ec4b4) 70%, transparent);
 }
 .eng-emh-hard {
-  color: #f6e4df;
-  background: color-mix(in srgb, var(--zone-red, #d0897d) 22%, #0c1216);
-  border-color: color-mix(in srgb, var(--zone-red, #d0897d) 55%, transparent);
+  color: #fcedea;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--zone-red, #e0a090) 42%, #12161a), color-mix(in srgb, var(--zone-red, #e0a090) 22%, #0c1216));
+  border-color: color-mix(in srgb, var(--zone-red, #e0a090) 70%, transparent);
 }
 
 .eng-skip {
