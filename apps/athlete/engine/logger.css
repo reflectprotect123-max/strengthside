@@ -22,6 +22,10 @@
   min-height: 100dvh;
   background: #000;
   position: relative;
+  overscroll-behavior: contain;
+  --zone-blue: #5aa7c7;
+  --zone-green: var(--engine, #5ec4b7);
+  --zone-red: #d0897d;
 }
 
 .log-top {
@@ -843,61 +847,111 @@
 .eng-go,
 .eng-early,
 .eng-stop {
-  min-height: 48px;
+  min-height: var(--tap, 44px);
   width: 100%;
   border-radius: 12px;
   font-weight: 700;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  touch-action: manipulation;
 }
 
 .eng-early,
 .eng-stop {
-  margin-top: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  margin-top: 16px;
+  min-height: 48px;
+  border: 1px solid var(--oled-line, rgba(255, 255, 255, 0.1));
+  background: transparent;
+  color: var(--oled-muted, #8e8e93);
+}
+
+.eng-early:active,
+.eng-stop:active {
+  opacity: 0.72;
+}
+
+.eng-early:focus-visible,
+.eng-stop:focus-visible,
+.eng-rest-tap:focus-visible,
+.eng-emh button:focus-visible,
+.eng-skip:focus-visible {
+  outline: 2px solid var(--engine, #5ec4b7);
+  outline-offset: 2px;
 }
 
 .eng-up {
-  margin: 0 0 16px;
-  color: #fff;
+  margin: 0 0 12px;
+  color: var(--oled-muted, #8e8e93);
+  font-size: 14px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
 }
 
+.eng-title {
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.eng-done-line {
+  margin: 4px 0 0;
+  text-align: center;
+  color: var(--oled-muted, #8e8e93);
+  font-size: 14px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+}
+
+/* Track Dawn zone accents — no acid WHOOP green on Engine dial */
 .eng-morph {
+  --eng-ring: var(--zone-green, var(--engine, #5ec4b7));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  margin: 8px 0 18px;
+  gap: 16px;
+  margin: 4px 0 8px;
+  color: var(--eng-ring);
 }
+
+.eng-morph[data-tone="blue"] { --eng-ring: var(--zone-blue); }
+.eng-morph[data-tone="green"] { --eng-ring: var(--zone-green); }
+.eng-morph[data-tone="red"] { --eng-ring: var(--zone-red); }
 
 .eng-morph-top {
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 0 4px;
+  gap: 16px;
+  padding: 0 2px;
 }
 
-.eng-morph-top strong {
+.eng-morph-stat strong {
   display: block;
-  font-family: "Barlow Condensed", var(--font-display, sans-serif);
-  font-size: 28px;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
+  color: var(--oled-text, #fff);
+  font-variant-numeric: tabular-nums;
 }
 
-.eng-morph-top span {
+.eng-morph-stat span {
   display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--oled-muted, #8e8e93);
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+}
+
+.eng-morph-stat--end {
+  text-align: right;
 }
 
 .eng-morph-dial {
   position: relative;
-  width: min(78vw, 300px);
-  height: min(78vw, 300px);
+  width: min(72vw, 280px);
+  height: min(72vw, 280px);
   display: grid;
   place-items: center;
 }
@@ -905,17 +959,32 @@
 .eng-ring {
   width: 100%;
   height: 100%;
+  color: var(--eng-ring);
+}
+
+.eng-ring-track {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.eng-ring-arc {
+  stroke: currentColor;
+  transition: stroke-dashoffset 90ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eng-ring-arc { transition: none; }
 }
 
 .eng-ring-label {
-  fill: rgba(255, 255, 255, 0.45);
-  font-size: 5px;
-  font-family: "Barlow Condensed", sans-serif;
+  fill: var(--oled-muted, #8e8e93);
+  font-size: 5.5px;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-weight: 600;
 }
 
 .eng-morph-face {
   position: absolute;
-  inset: 18%;
+  inset: 20%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -925,83 +994,74 @@
 }
 
 .eng-morph-num {
-  font-family: "Barlow Condensed", var(--font-display, sans-serif);
-  font-size: clamp(52px, 18vw, 72px);
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: clamp(56px, 17vw, 76px);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 0.9;
+  color: var(--oled-text, #fff);
+  font-variant-numeric: tabular-nums;
 }
 
 .eng-morph-unit {
-  margin-top: 4px;
-  font-size: 13px;
-  letter-spacing: 0.16em;
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--oled-muted, #8e8e93);
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
 }
 
 .eng-morph-sub {
-  margin-top: 6px;
-  font-family: "Barlow Condensed", sans-serif;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--engine, #5ec4b7);
-}
-
-.eng-morph-zones {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px 14px;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.eng-morph-zones .z-blue { color: #1ba3ff; }
-.eng-morph-zones .z-green { color: #16ec06; }
-.eng-morph-zones .z-red { color: #ff3b30; }
-
-.eng-target--chip {
-  text-align: center;
+  margin-top: 8px;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
   font-size: 20px;
-  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--eng-ring);
 }
 
 .eng-rest-tap {
   pointer-events: auto;
-  width: 100%;
-  height: 100%;
+  width: min(100%, 220px);
+  min-height: 120px;
+  margin: 0 auto;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--oled-text, #fff);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  animation: eng-rest-pulse 1.4s ease-in-out infinite;
+  gap: 8px;
+  touch-action: manipulation;
+  animation: eng-rest-breathe 1.8s var(--ease, ease) infinite;
 }
 
 .eng-rest-tap span {
-  font-family: "Barlow Condensed", var(--font-display, sans-serif);
-  font-size: clamp(48px, 16vw, 64px);
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: clamp(44px, 14vw, 58px);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   line-height: 1;
-  color: #1ba3ff;
+  color: var(--zone-blue, #5aa7c7);
+  text-transform: uppercase;
 }
 
 .eng-rest-tap small {
   font-size: 12px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--oled-muted, #8e8e93);
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
 }
 
-@keyframes eng-rest-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.04); opacity: 0.88; }
+.eng-rest-tap:active {
+  opacity: 0.75;
+}
+
+@keyframes eng-rest-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.78; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1014,18 +1074,37 @@
   right: 0;
   top: calc(52px + env(safe-area-inset-top, 0px));
   bottom: 0;
-  z-index: 7;
-  background: rgba(0, 0, 0, 0.96);
+  z-index: 10;
+  background: var(--oled-bg, #000);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
-  animation: eng-overlay-in 180ms ease-out;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  animation: eng-overlay-in 200ms var(--ease, ease-out);
+  outline: none;
+}
+
+.eng-rest-overlay:focus-visible {
+  outline: none;
+}
+
+.eng-rest-overlay .eng-rest-actions {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 4px;
 }
 
 @keyframes eng-overlay-in {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -1034,22 +1113,26 @@
 }
 
 .eng-rest-banner {
-  margin: 4px 0 0;
-  font-family: "Barlow Condensed", var(--font-display, sans-serif);
-  font-size: clamp(42px, 14vw, 56px);
+  margin: 8px 0 0;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: clamp(36px, 12vw, 48px);
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   line-height: 1;
+  text-transform: uppercase;
+  color: var(--oled-text, #fff);
 }
 
 .eng-rest-hint {
-  margin: 6px 0 8px;
-  color: rgba(255, 255, 255, 0.55);
+  margin: 8px 0 4px;
+  color: var(--oled-muted, #8e8e93);
   font-size: 13px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
 }
 
 .eng-rest-overlay .eng-morph {
-  margin-top: 4px;
+  margin-top: 8px;
+  flex: 0 0 auto;
 }
 
 .eng-rest-overlay .eng-up {
@@ -1061,22 +1144,62 @@
 .eng-emh {
   width: 100%;
   max-width: 340px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
-.eng-emh-easy { color: #1ba3ff; border: 1px solid rgba(27, 163, 255, 0.55); }
-.eng-emh-med { color: #16ec06; border: 1px solid rgba(22, 236, 6, 0.55); }
-.eng-emh-hard { color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.55); }
+.eng-emh button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 12px;
+  background: var(--oled-raised, #1c1c1e);
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 600;
+  touch-action: manipulation;
+}
+
+.eng-emh button:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eng-emh button:active { transform: none; }
+}
+
+.eng-emh-easy {
+  color: var(--zone-blue, #5aa7c7);
+  border: 1px solid color-mix(in srgb, var(--zone-blue, #5aa7c7) 55%, transparent);
+}
+.eng-emh-med {
+  color: var(--zone-green, #5ec4b7);
+  border: 1px solid color-mix(in srgb, var(--zone-green, #5ec4b7) 55%, transparent);
+}
+.eng-emh-hard {
+  color: var(--zone-red, #d0897d);
+  border: 1px solid color-mix(in srgb, var(--zone-red, #d0897d) 55%, transparent);
+}
 
 .eng-skip {
   width: 100%;
   max-width: 340px;
-  margin-top: 12px;
+  margin-top: 8px;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--engine, #5ec4b7);
+  color: #041012;
+  font-weight: 700;
+  font-size: 16px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  touch-action: manipulation;
 }
 
-.eng-phase--dim {
-  opacity: 0.35;
+.eng-skip:active {
+  opacity: 0.85;
 }
 
-.eng-morph[data-tone="blue"] .eng-morph-sub { color: #1ba3ff; }
-.eng-morph[data-tone="red"] .eng-morph-sub { color: #ff3b30; }
-.eng-morph[data-tone="green"] .eng-morph-sub { color: #16ec06; }
+.log-screen:has(.eng-rest-overlay) .log-bar {
+  visibility: hidden;
+  pointer-events: none;
+}
