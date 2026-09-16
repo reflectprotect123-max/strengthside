@@ -166,6 +166,12 @@
   border-radius: 10px;
   padding: 12px;
   outline: none;
+  color: var(--oled-text);
+}
+
+.lib-field select option {
+  color: var(--oled-text);
+  background: var(--oled-surface);
 }
 
 .lib-field textarea { min-height: 88px; resize: vertical; }
@@ -283,16 +289,26 @@
   width: 100%;
   max-width: 430px;
   margin: 0 auto;
+  max-height: min(88dvh, 100%);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background: #1c1c1e;
   border-radius: 18px 18px 0 0;
-  padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.lib-sheet-card .lib-field {
+  margin: 0 0 10px;
 }
 
 .lib-sheet-card h2 {
   font-family: var(--font-display);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
+  font-size: 18px;
 }
 
 .lib-primary {
@@ -302,7 +318,9 @@
   background: var(--trn-blue);
   color: #fff;
   font-weight: 700;
-  margin-top: 8px;
+  margin-top: 4px;
+  position: sticky;
+  bottom: 0;
 }
 
 .lib-primary:disabled { opacity: 0.4; }
@@ -311,6 +329,16 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.lib-cols-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.lib-cols-3 .lib-field {
+  margin: 0;
 }
 
 .bottom-nav button[data-tab="library"].active svg {

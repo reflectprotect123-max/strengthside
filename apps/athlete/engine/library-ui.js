@@ -146,6 +146,26 @@
       </div>`;
   }
 
+  function engineBaselineFieldHtml(b) {
+    const meta = root.HybridEngine ? HybridEngine.machineMeta(b.machine) : { modality: 'none' };
+    if (meta.modality === 'watts') {
+      return `<div class="lib-field"><label>Opening watts</label>
+        <input inputmode="numeric" value="${esc(b.typedWatts == null ? '' : b.typedWatts)}" placeholder="e.g. 220" onchange="LibraryView.patchBlock({typedWatts:this.value===''?null:Number(this.value)})">
+      </div>`;
+    }
+    if (meta.modality === 'split') {
+      return `<div class="lib-field"><label>Opening split sec /500m</label>
+        <input inputmode="numeric" value="${esc(b.typedSplitSec == null ? '' : b.typedSplitSec)}" placeholder="e.g. 136" onchange="LibraryView.patchBlock({typedSplitSec:this.value===''?null:Number(this.value)})">
+      </div>`;
+    }
+    if (meta.modality === 'rpm') {
+      return `<div class="lib-field"><label>Opening RPM</label>
+        <input inputmode="numeric" value="${esc(b.typedRpm == null ? '' : b.typedRpm)}" placeholder="e.g. 65" onchange="LibraryView.patchBlock({typedRpm:this.value===''?null:Number(this.value)})">
+      </div>`;
+    }
+    return '';
+  }
+
   function editSheetHtml() {
     const u = ui();
     if (u.screen !== 'edit' || !u.bid) return '';
@@ -176,24 +196,18 @@
               <option value="hard" ${b.effort === 'hard' ? 'selected' : ''}>Hard 8–9.5</option>
             </select>
           </div>
-          <div class="lib-field"><label>Rounds</label>
-            <input type="number" min="1" max="40" value="${esc(b.rounds || 8)}" onchange="LibraryView.patchBlock({rounds:Number(this.value)})">
+          <div class="lib-cols lib-cols-3">
+            <div class="lib-field"><label>Rounds</label>
+              <input type="number" min="1" max="40" value="${esc(b.rounds || 8)}" onchange="LibraryView.patchBlock({rounds:Number(this.value)})">
+            </div>
+            <div class="lib-field"><label>Work sec</label>
+              <input type="number" min="1" value="${esc(b.workSec || 15)}" onchange="LibraryView.patchBlock({workSec:Number(this.value)})">
+            </div>
+            <div class="lib-field"><label>Rest sec</label>
+              <input type="number" min="0" value="${esc(b.restSec || 45)}" onchange="LibraryView.patchBlock({restSec:Number(this.value)})">
+            </div>
           </div>
-          <div class="lib-field"><label>Work seconds</label>
-            <input type="number" min="1" value="${esc(b.workSec || 15)}" onchange="LibraryView.patchBlock({workSec:Number(this.value)})">
-          </div>
-          <div class="lib-field"><label>Rest seconds</label>
-            <input type="number" min="0" value="${esc(b.restSec || 45)}" onchange="LibraryView.patchBlock({restSec:Number(this.value)})">
-          </div>
-          <div class="lib-field"><label>First watts (bike/Echo)</label>
-            <input inputmode="numeric" value="${esc(b.typedWatts == null ? '' : b.typedWatts)}" placeholder="You type the first one" onchange="LibraryView.patchBlock({typedWatts:this.value===''?null:Number(this.value)})">
-          </div>
-          <div class="lib-field"><label>First split sec /500m (row/ski)</label>
-            <input inputmode="numeric" value="${esc(b.typedSplitSec == null ? '' : b.typedSplitSec)}" placeholder="e.g. 136" onchange="LibraryView.patchBlock({typedSplitSec:this.value===''?null:Number(this.value)})">
-          </div>
-          <div class="lib-field"><label>First RPM (fan bike)</label>
-            <input inputmode="numeric" value="${esc(b.typedRpm == null ? '' : b.typedRpm)}" onchange="LibraryView.patchBlock({typedRpm:this.value===''?null:Number(this.value)})">
-          </div>
+          ${engineBaselineFieldHtml(b)}
           <button type="button" class="lib-primary" onclick="LibraryView.closeSheet()">Done</button>
         </div></div>`;
     }

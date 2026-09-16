@@ -37,7 +37,7 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
-button, input, textarea {
+button, input, textarea, select {
   font: inherit;
   color: inherit;
 }
@@ -338,6 +338,10 @@ button {
 
 .ath-whoop-dial:nth-child(3) .ath-whoop-dial-ring {
   filter: drop-shadow(0 0 14px rgba(27, 163, 255, 0.16));
+}
+
+.ath-whoop-dial:nth-child(4) .ath-whoop-dial-ring {
+  filter: drop-shadow(0 0 14px rgba(201, 162, 39, 0.22));
 }
 
 .ath-whoop-dial-ring svg {
@@ -922,6 +926,22 @@ button {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+}
+
+.whoop-ios-form {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.whoop-advanced {
+  margin-top: 8px;
+}
+
+.whoop-advanced summary {
+  cursor: pointer;
+  color: var(--oled-muted);
+  font-size: 13px;
 }
 
 .account-actions {

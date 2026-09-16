@@ -1,4 +1,4 @@
-/* WHOOP bridge — one connection per HYBRID S&C login (Supabase user u:). */
+/* WHOOP bridge — official Allow (Apple/Google). No Totem, Health Connect, or steps. */
 (function (global) {
   function cfg() {
     return global.STRENGTH_CONFIG || global.ENGINE_CONFIG || {};
@@ -9,7 +9,7 @@
   }
   const SUPABASE_URL = cfg().supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co';
   const SUPABASE_ANON = cfg().supabaseAnon || '';
-  const NATIVE_APP_ID = 'com.hybrid.athlete'; // one Capacitor install for both houses
+  const NATIVE_APP_ID = 'com.hybrid.athlete';
   function nativeAppId() {
     return NATIVE_APP_ID;
   }
@@ -101,6 +101,36 @@
       return (data.session && data.session.user && data.session.user.email) || null;
     } catch (_) { return null; }
   }
+  function capPlugin(name) {
+    try {
+      return global.Capacitor && global.Capacitor.Plugins && global.Capacitor.Plugins[name];
+    } catch (_) { return null; }
+  }
+  async function edgeRequest(url, method, headers) {
+    const CapHttp = capPlugin('CapacitorHttp');
+    if (CapHttp && typeof CapHttp.request === 'function') {
+      const res = await CapHttp.request({
+        url: String(url),
+        method: method,
+        headers: headers,
+        connectTimeout: 30000,
+        readTimeout: 30000,
+        disableRedirects: true,
+      });
+      const payload = res && res.data;
+      const text = typeof payload === 'string' ? payload : (payload == null ? '' : JSON.stringify(payload));
+      const status = Number(res && res.status) || 0;
+      let body = null;
+      try { body = text ? JSON.parse(text) : null; } catch (_) {
+        body = payload && typeof payload === 'object' ? payload : null;
+      }
+      return { status: status, ok: status >= 200 && status < 300, body: body };
+    }
+    const res = await fetch(url, { method: method, headers: headers, cache: 'no-store' });
+    let body = null;
+    try { body = await res.json(); } catch (_) { body = null; }
+    return { status: res.status, ok: !!res.ok, body: body };
+  }
   async function api(path, opts) {
     opts = opts || {};
     const method = opts.method || 'GET';
@@ -109,15 +139,11 @@
     const url = fnUrl(path, opts.query);
     let res;
     try {
-      res = await fetch(url, {
-        method,
-        headers: {
-          authorization: 'Bearer ' + t,
-          apikey: SUPABASE_ANON,
-          'x-hybrid-product': hybridProduct(),
-          accept: 'application/json',
-        },
-        cache: 'no-store'
+      res = await edgeRequest(url, method, {
+        authorization: 'Bearer ' + t,
+        apikey: SUPABASE_ANON,
+        'x-hybrid-product': hybridProduct(),
+        accept: 'application/json',
       });
     } catch (err) {
       const e = new Error('WHOOP service is down — try again in a minute');
@@ -125,22 +151,18 @@
       e.code = 'whoop_unreachable';
       throw e;
     }
-    let body = null;
-    try { body = await res.json(); } catch (_) { body = null; }
+    const body = res.body;
     if (!res.ok) {
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
       const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
       const friendly = (res.status === 401 || raw === 'unauthorized')
         ? 'Sign in again in HYBRID S&C, then tap Connect WHOOP'
-        : (boot ? 'WHOOP service is down — try again in a minute' : raw);
+        : (boot ? 'WHOOP Allow is down on the server — not this phone' : raw);
       const e = new Error(friendly);
-      e.status = res.status; e.body = body; throw e;
+      e.status = res.status; e.body = body; e.code = boot ? 'whoop_boot' : ''; throw e;
     }
     return body;
   }
-  // `today` and `S` are let/const in the HTML script, so they are NOT on window.
-  // Resolve them explicitly — otherwise applyNormalized silently no-ops and Home
-  // keeps the fixture recovery/HRV/RHR values after a "WHOOP synced" toast.
   function todayIso() {
     if (typeof global.today === 'function') return global.today();
     const d = new Date();
@@ -152,13 +174,10 @@
     return null;
   }
   function finiteNum(v) {
-    // Number(null) === 0 — treat null/'' as missing so we don't write zeros.
     if (v == null || v === '') return null;
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
   }
-  // Ephemeral WHOOP UI state before index.html bridges window.S ↔ let S.
-  // Never invent a stub on global.S — that orphans Whoop from real app state.
   var whoopFallback = { connected: false, lastSyncAt: null, sampleDate: null, email: null };
   function st() {
     const S = appState();
@@ -197,7 +216,7 @@
     w.connected = true;
     w.lastSyncAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
     w.sampleDate = n.date || meta.sampleDate || w.sampleDate || null;
-    w.lastNormalized = n;
+    w.lastNormalized = Object.assign({}, w.lastNormalized || {}, n);
     if (typeof global.save === 'function') global.save();
     if (global.HybridIntegrations && typeof global.HybridIntegrations.persistWhoop === 'function') {
       const S = appState();
@@ -207,18 +226,12 @@
   }
   function metaLine() {
     const w = st();
-    if (!w.connected) return 'Not connected — using typed check-in values';
+    if (!w.connected) return 'Not connected — tap Connect WHOOP';
     const when = w.lastSyncAt ? new Date(w.lastSyncAt).toLocaleString() : 'never';
     return 'Connected · sample ' + (w.sampleDate || '—') + ' · synced ' + when;
   }
-  function statusChip(label, ok, detail) {
-    return '<div class=meta style="margin-top:6px"><b>' + esc(label) + '</b> · ' + esc(ok ? 'OK' : '—') + (detail ? ' · ' + esc(detail) : '') + '</div>';
-  }
-  function cloudStatusLines() {
-    var lines = '';
-    var w = st();
-    lines += statusChip('WHOOP', !!w.connected, w.connected ? metaLine() : 'not connected');
-    return lines;
+  function connectFormHtml() {
+    return '<p class="stub">This is the Android app. Connect WHOOP opens Allow in Chrome on this phone — Apple or Google is fine.</p>';
   }
   function cardHtml() {
     const w = st();
@@ -249,46 +262,51 @@
     if (line) line.textContent = metaLine();
   }
   async function refreshStatus() {
+    const w = st();
+    w.email = await email();
     const body = await api(FN.status);
     const whoop = (body && body.whoop) || {};
-    const w = st();
     w.connected = !!whoop.connected;
+    w.source = whoop.connected ? 'oauth' : null;
     w.lastSyncAt = whoop.lastSyncAt || w.lastSyncAt;
     w.sampleDate = whoop.sampleDate || w.sampleDate;
     if (whoop.normalized) applyNormalized(whoop.normalized, { syncedAt: whoop.lastSyncAt, sampleDate: whoop.sampleDate });
-    w.email = await email();
     if (typeof global.save === 'function') global.save();
     return body;
   }
   function refreshVisibleUi() {
     renderPanels();
-    // Sleep overview: rebuild metrics without re-entering auto-sync.
     if (document.getElementById('whoopSleepLine') && typeof global.openAthleteSleepOverview === 'function') {
       global.openAthleteSleepOverview(undefined, { skipWhoopSync: true });
       return;
     }
     const tab = (appState() && appState().tab) || null;
-    // Settings: only swap the Account card in place. Calling settings() rebuilds
-    // the whole page and shell() scrolls to top — that feels like broken scroll.
     if (tab === 'settings') return;
     if (typeof global.render === 'function') global.render();
+  }
+  async function syncOfficial(opts) {
+    opts = opts || {};
+    const body = await api(FN.sync, opts.backfill ? { query: { backfill: '1' } } : undefined);
+    let applied = false;
+    if (body && body.normalized) {
+      applied = !!applyNormalized(body.normalized, { syncedAt: body.syncedAt, sampleDate: body.normalized.date });
+    } else {
+      await refreshStatus();
+      applied = !!(st().lastNormalized && finiteNum(st().lastNormalized.recoveryScore));
+    }
+    return { body: body, applied: applied };
   }
   async function sync(opts) {
     opts = opts || {};
     if (ui.busy && !opts.quiet) return;
     if (!opts.quiet) { ui.busy = true; ui.message = 'Syncing WHOOP…'; renderPanels(); }
     try {
-      const body = await api(FN.sync, opts.backfill ? { query: { backfill: '1' } } : undefined);
-      let applied = false;
-      if (body && body.normalized) {
-        applied = !!applyNormalized(body.normalized, { syncedAt: body.syncedAt, sampleDate: body.normalized.date });
-      } else {
-        await refreshStatus();
-        applied = !!(st().lastNormalized && finiteNum(st().lastNormalized.recoveryScore));
-      }
+      const out = await syncOfficial(opts);
+      const applied = !!out.applied;
+      st().source = 'oauth';
       if (!opts.quiet) {
         ui.message = applied
-          ? 'WHOOP synced — Home recovery / HRV / RHR updated'
+          ? 'WHOOP synced — Home sleep / recovery / strain updated'
           : 'WHOOP reached but no recovery sample yet';
       }
       try { await refreshStatus(); } catch (_) {}
@@ -359,10 +377,15 @@
     if (!global.confirm('Disconnect WHOOP for this account?')) return;
     ui.busy = true; ui.message = 'Disconnecting…'; renderPanels();
     try {
-      await api(FN.disconnect, { method: 'POST', query: { provider: 'whoop' } });
+      try { await api(FN.disconnect, { method: 'POST', query: { provider: 'whoop' } }); } catch (_) {}
       const w = st();
-      w.connected = false; w.lastSyncAt = null; w.sampleDate = null; w.lastNormalized = null;
+      w.connected = false; w.lastSyncAt = null; w.sampleDate = null; w.lastNormalized = null; w.source = null;
+      w.ios = null; w.iosEmail = null;
       if (typeof global.save === 'function') global.save();
+      if (global.HybridIntegrations && typeof global.HybridIntegrations.persistWhoop === 'function') {
+        const S = appState();
+        if (S) global.HybridIntegrations.persistWhoop(S, todayIso());
+      }
       ui.message = 'WHOOP disconnected';
     } catch (err) { ui.message = err.message || 'Disconnect failed'; }
     finally { ui.busy = false; renderPanels(); }
@@ -387,8 +410,7 @@
       } catch (err) {
         bits.push('WHOOP: ' + ((err && err.message) || 'failed'));
       }
-
-      ui.message = 'Synced: ' + bits.join(' · ');
+      ui.message = bits.length ? ('Synced: ' + bits.join(' · ')) : '';
       ui.busy = false;
       refreshVisibleUi();
     } catch (err) {
@@ -431,18 +453,12 @@
     try { await client().auth.signOut(); } catch (_) {}
     st().email = null;
     st().connected = false;
-    st().lastSyncAt = null;
-    st().sampleDate = null;
-    st().lastNormalized = null;
+    st().ios = null;
+    st().iosEmail = null;
     if (typeof global.save === 'function') global.save();
     ui.message = '';
     if (typeof global.setTab === 'function') global.setTab('me');
     else renderPanels();
-  }
-  function capPlugin(name) {
-    try {
-      return global.Capacitor && global.Capacitor.Plugins && global.Capacitor.Plugins[name];
-    } catch (_) { return null; }
   }
   async function openWhoopAuthorize(url) {
     const Browser = capPlugin('Browser');
@@ -495,7 +511,7 @@
     } catch (_) {}
   }
   global.Whoop = {
-    cardHtml, metaLine, renderPanels, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
+    cardHtml, metaLine, renderPanels, connectFormHtml, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
     uiMessage: function () { return ui.message || ''; },
     client, token, email, waitForSupabase, fnUrl, resolveProxyBase

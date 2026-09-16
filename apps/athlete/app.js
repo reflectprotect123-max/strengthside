@@ -307,9 +307,9 @@ function gaugeRowHtml() {
       <span class="ath-label">WHOOP</span>
       <div class="ath-whoop-wrap">
         <div class="ath-whoop-dials gauge-row">
-          ${whoopDialSvg({ label: 'Sleep', value: m.sleepScore, max: 100, color: '#9db4c8', unit: '%', size: 104 })}
-          ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: whoopRecoveryColor(m.recovery), unit: '%', size: 104 })}
-          ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
+          ${whoopDialSvg({ label: 'Sleep', value: m.sleepScore, max: 100, color: '#9db4c8', unit: '%', size: 88 })}
+          ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: whoopRecoveryColor(m.recovery), unit: '%', size: 88 })}
+          ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 88 })}
         </div>
         ${todayCallHtml()}
       </div>
@@ -737,10 +737,15 @@ function meHtml() {
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
           <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p>
+          ${window.Whoop && typeof Whoop.uiMessage === 'function' && Whoop.uiMessage()
+            ? `<p class="stub signin-msg">${esc(Whoop.uiMessage())}</p>`
+            : ''}
+          ${window.Whoop && typeof Whoop.connectFormHtml === 'function' ? Whoop.connectFormHtml() : ''}
           <div class="account-actions">
             ${w.connected
-              ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button>'
-              : '<button type="button" class="btn" onclick="Whoop.connect()">Connect WHOOP</button>'}
+              ? '<button type="button" class="btn oled-cta block" onclick="Whoop.sync()">Sync WHOOP</button>' +
+                '<button type="button" class="btn" onclick="Whoop.disconnect()">Disconnect WHOOP</button>'
+              : '<button type="button" class="btn oled-cta block" onclick="Whoop.connect()">Connect WHOOP</button>'}
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
         </div>

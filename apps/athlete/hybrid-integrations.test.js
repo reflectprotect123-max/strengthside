@@ -42,6 +42,7 @@ test('persistWhoop writes whoop + checkin fields for today', () => {
         hrv: 55,
         restingHr: 48,
         whoopSleepPerformance: 85,
+        whoopSteps: 10616,
         whoopSyncedAt: '2026-09-15T11:00:00Z',
         whoopSampleDate: '2026-09-15',
       },
@@ -52,4 +53,6 @@ test('persistWhoop writes whoop + checkin fields for today', () => {
   assert.equal(shared.whoop.connected, true);
   assert.equal(shared.checkin['2026-09-15'].whoopRecovery, 80);
   assert.equal(shared.checkin['2026-09-15'].whoopStrain, 9.1);
+  assert.equal(shared.checkin['2026-09-15'].whoopSleepPerformance, 85);
+  assert.equal(shared.checkin['2026-09-15'].whoopSteps, undefined);
 });
