@@ -76,30 +76,32 @@ jobs:
           cp -f "$APK_SRC" "$APK"
           BUILD="$(grep -o "THE-brain-v1" apps/athlete/app.js | head -1 || echo THE-brain-v1)"
           SHA="$(git rev-parse --short HEAD)"
+          STAMP="$(date -u +'%Y-%m-%d %H:%M UTC')"
+          TITLE="Dogfood APK — ${STAMP}"
           NOTES="Debug Android shell for THE Hybrid athlete app.
 
+          **Built:** \`${STAMP}\`
+          **Version:** \`1.0.101\` (Health Connect poke)
           **Build stamp:** \`${BUILD}\`
           **Commit:** \`${SHA}\`
 
+          Direct download: https://github.com/reflectprotect123-max/strengthside/releases/download/dogfood-latest/the-hybrid-athlete-dogfood-debug.apk
+
           Install on phone: open this release on GitHub → Assets → \`the-hybrid-athlete-dogfood-debug.apk\` → Install.
-          Allow installs from your browser/files app if Android asks."
+          Allow installs from your browser/files app if Android asks.
 
-          # Drop stale differently-named assets so the release has one clear APK.
-          gh release view dogfood-latest --json assets -q '.assets[].name' 2>/dev/null | while read -r name; do
-            if [[ -n "$name" && "$name" != "the-hybrid-athlete-dogfood-debug.apk" ]]; then
-              gh release delete-asset dogfood-latest "$name" --yes || true
-            fi
-          done
+          GitHub keeps one floating \`dogfood-latest\` tag. This job deletes and recreates the release so the page date matches this APK, not the original August publish."
 
+          # Recreate the release so publishedAt matches this build. Editing +
+          # --clobber leaves the old published date, which makes the page look stale.
           if gh release view dogfood-latest >/dev/null 2>&1; then
-            gh release edit dogfood-latest --title "Dogfood APK (latest)" --notes "$NOTES" --latest
-            gh release upload dogfood-latest "$APK" --clobber
-          else
-            gh release create dogfood-latest "$APK" \
-              --title "Dogfood APK (latest)" \
-              --notes "$NOTES" \
-              --latest
+            gh release delete dogfood-latest --cleanup-tag --yes
           fi
+          gh release create dogfood-latest "$APK" \
+            --title "$TITLE" \
+            --notes "$NOTES" \
+            --latest \
+            --target "$GITHUB_SHA"
 
       - uses: actions/upload-artifact@v4
         with:
