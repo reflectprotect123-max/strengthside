@@ -37,7 +37,7 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
-button, input, textarea {
+button, input, textarea, select {
   font: inherit;
   color: inherit;
 }
