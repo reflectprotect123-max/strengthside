@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.95 | 2026-09-16 | WHOOP on Me is typed numbers from the WHOOP app (sleep / recovery / strain / steps); password login moved to Advanced |
 | 1.0.94 | 2026-09-16 | WHOOP login form names the WHOOP app password; reject message includes the email; native HTTP sends a JSON object body |
 | 1.0.93 | 2026-09-16 | WHOOP NotAuthorizedException maps to “wrong WHOOP email or password” |
 | 1.0.92 | 2026-09-15 | Quiet Me when WHOOP is not linked yet (no red “connect under Me” after boot sync) |

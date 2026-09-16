@@ -63,6 +63,22 @@ const strainFixture = {
   }],
 };
 
+test('normalizeManual maps typed WHOOP numbers onto the same snapshot shape', () => {
+  const Ios = loadIos();
+  const n = Ios.normalizeManual({
+    date: '2026-09-16',
+    sleep: '88',
+    recovery: '72',
+    strain: '9.4',
+    steps: '10616',
+  });
+  assert.equal(n.date, '2026-09-16');
+  assert.equal(n.sleepPerformance, 88);
+  assert.equal(n.recoveryScore, 72);
+  assert.equal(n.strain, 9.4);
+  assert.equal(n.steps, 10616);
+});
+
 test('projectTodaySnapshot pulls sleep / recovery / strain / steps / HRV / RHR', () => {
   const Ios = loadIos();
   const n = Ios.projectTodaySnapshot({

@@ -78,7 +78,7 @@ must(!html.includes('Copy training'), 'no Copy training chrome');
   const meStart = js.indexOf('function meHtml()');
   const meEnd = js.indexOf('\nfunction setTab(', meStart);
   const meFn = meStart >= 0 && meEnd > meStart ? js.slice(meStart, meEnd) : '';
-  must(meFn.includes('Whoop.syncAll') || meFn.includes('Whoop.connect'), 'Me still has WHOOP actions');
+  must(meFn.includes('Whoop.applyManual') || meFn.includes('Whoop.connect'), 'Me still has WHOOP actions');
   must(!/Copy training|PlanSync|statusLine|last copied|Library \+ sessions/i.test(meFn), 'Me HTML does not mention plan sync');
 }
 must(js.includes('PlanSync.schedulePush'), 'plan sync still runs on save');

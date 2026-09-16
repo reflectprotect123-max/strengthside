@@ -232,10 +232,22 @@
   function connectFormHtml() {
     const w = st();
     const prefill = w.iosEmail || w.email || '';
+    const last = w.lastNormalized || {};
     const mfa = !!ui.mfaSession;
     const busy = ui.busy ? ' disabled' : '';
+    function numVal(v) { return v == null || v === '' ? '' : esc(v); }
     return '<div class="whoop-ios-form">' +
-      '<p class="stub">Type the email and password that open the <b>WHOOP</b> app. Not the HYBRID S&amp;C password. Not a web SQL page.</p>' +
+      '<p class="stub">Open the WHOOP app and type today&apos;s numbers. Password login is off — WHOOP is rejecting it.</p>' +
+      '<div class="field"><label for="whoopManualSleep">Sleep %</label>' +
+      '<input id="whoopManualSleep" inputmode="decimal" placeholder="88" value="' + numVal(last.sleepPerformance) + '"' + busy + '></div>' +
+      '<div class="field"><label for="whoopManualRecovery">Recovery %</label>' +
+      '<input id="whoopManualRecovery" inputmode="decimal" placeholder="72" value="' + numVal(last.recoveryScore) + '"' + busy + '></div>' +
+      '<div class="field"><label for="whoopManualStrain">Strain</label>' +
+      '<input id="whoopManualStrain" inputmode="decimal" placeholder="9.4" value="' + numVal(last.strain) + '"' + busy + '></div>' +
+      '<div class="field"><label for="whoopManualSteps">Steps</label>' +
+      '<input id="whoopManualSteps" inputmode="numeric" placeholder="10000" value="' + numVal(last.steps) + '"' + busy + '></div>' +
+      '<details class="whoop-advanced"><summary>Advanced — WHOOP password</summary>' +
+      '<p class="stub">Only if you sign into the WHOOP app with email + password (not Apple or Google).</p>' +
       '<div class="field"><label for="whoopIosEmail">WHOOP app email</label>' +
       '<input id="whoopIosEmail" type="email" autocomplete="username" placeholder="WHOOP app email" value="' + esc(prefill) + '"' + busy + '></div>' +
       '<div class="field"><label for="whoopIosPassword">WHOOP app password</label>' +
@@ -244,7 +256,36 @@
         ? '<div class="field"><label for="whoopIosMfa">SMS code</label>' +
           '<input id="whoopIosMfa" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code"' + busy + '></div>'
         : '') +
+      '<button type="button" class="btn" onclick="Whoop.connect()"' + busy + '>Try password login</button>' +
+      '</details>' +
       '</div>';
+  }
+  async function applyManual() {
+    const Ios = iosApi();
+    if (!Ios || typeof Ios.normalizeManual !== 'function') {
+      ui.message = 'WHOOP client missing — reload the app';
+      paint();
+      return;
+    }
+    const n = Ios.normalizeManual({
+      sleep: document.getElementById('whoopManualSleep') && document.getElementById('whoopManualSleep').value,
+      recovery: document.getElementById('whoopManualRecovery') && document.getElementById('whoopManualRecovery').value,
+      strain: document.getElementById('whoopManualStrain') && document.getElementById('whoopManualStrain').value,
+      steps: document.getElementById('whoopManualSteps') && document.getElementById('whoopManualSteps').value,
+    });
+    if (n.sleepPerformance == null && n.recoveryScore == null && n.strain == null && n.steps == null) {
+      ui.message = 'Type at least one number from the WHOOP app';
+      paint();
+      global.alert(ui.message);
+      return;
+    }
+    applyNormalized(n, { syncedAt: n.capturedAt, sampleDate: n.date });
+    const w = st();
+    w.connected = true;
+    w.source = 'manual';
+    ui.message = 'Saved — Home sleep / recovery / strain / steps updated';
+    paint();
+    refreshVisibleUi();
   }
   function applyNormalized(n, meta) {
     meta = meta || {};
@@ -608,7 +649,7 @@
     } catch (_) {}
   }
   global.Whoop = {
-    cardHtml, metaLine, renderPanels, connectFormHtml, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
+    cardHtml, metaLine, renderPanels, connectFormHtml, applyManual, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
     uiMessage: function () { return ui.message || ''; },
     client, token, email, waitForSupabase, fnUrl, resolveProxyBase

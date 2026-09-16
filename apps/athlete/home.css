@@ -934,6 +934,16 @@ button {
   gap: 10px;
 }
 
+.whoop-advanced {
+  margin-top: 8px;
+}
+
+.whoop-advanced summary {
+  cursor: pointer;
+  color: var(--oled-muted);
+  font-size: 13px;
+}
+
 .account-actions {
   display: flex;
   flex-wrap: wrap;

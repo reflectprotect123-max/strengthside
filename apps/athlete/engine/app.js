@@ -742,11 +742,12 @@ function meHtml() {
           ${window.Whoop && typeof Whoop.uiMessage === 'function' && Whoop.uiMessage()
             ? `<p class="stub signin-msg">${esc(Whoop.uiMessage())}</p>`
             : ''}
-          ${!w.connected && window.Whoop && typeof Whoop.connectFormHtml === 'function' ? Whoop.connectFormHtml() : ''}
+          ${window.Whoop && typeof Whoop.connectFormHtml === 'function' ? Whoop.connectFormHtml() : ''}
           <div class="account-actions">
+            <button type="button" class="btn" onclick="Whoop.applyManual()">Save WHOOP numbers</button>
             ${w.connected
-              ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button><button type="button" class="btn" onclick="Whoop.disconnect()">Disconnect WHOOP</button>'
-              : '<button type="button" class="btn" onclick="Whoop.connect()">Connect WHOOP</button>'}
+              ? '<button type="button" class="btn" onclick="Whoop.disconnect()">Clear WHOOP</button>'
+              : ''}
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
         </div>

@@ -302,6 +302,19 @@
     ]);
     return projectTodaySnapshot({ home, recovery, strain, date });
   }
+  function normalizeManual(input) {
+    input = input || {};
+    return {
+      date: input.date || todayIso(),
+      recoveryScore: parseNumber(input.recovery),
+      sleepPerformance: parseNumber(input.sleep),
+      strain: parseNumber(input.strain),
+      steps: parseNumber(input.steps),
+      hrvMs: parseNumber(input.hrv),
+      restingHr: parseNumber(input.rhr),
+      capturedAt: new Date().toISOString(),
+    };
+  }
 
   const api = {
     login,
@@ -309,6 +322,7 @@
     refresh,
     syncToday,
     projectTodaySnapshot,
+    normalizeManual,
     deviceHeaders,
     newInstallationId,
     todayIso,
