@@ -23,9 +23,9 @@
   background: #000;
   position: relative;
   overscroll-behavior: contain;
-  --zone-blue: #5aa7c7;
-  --zone-green: var(--engine, #5ec4b7);
-  --zone-red: #d0897d;
+  --zone-blue: #6eb8d6;
+  --zone-green: #5ec4b4;
+  --zone-red: #e0a090;
 }
 
 .log-top {
@@ -944,9 +944,9 @@
 
 /* Instrument dial — Track Dawn zone accents */
 .eng-morph {
-  --zone-blue: #5aa7c7;
-  --zone-green: var(--engine, #5ec4b7);
-  --zone-red: #d0897d;
+  --zone-blue: #6eb8d6;
+  --zone-green: #5ec4b4;
+  --zone-red: #e0a090;
   --eng-ring: var(--zone-green);
   display: flex;
   flex-direction: column;
