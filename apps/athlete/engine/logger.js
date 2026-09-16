@@ -630,8 +630,8 @@
     } else if (e.phase === 'tapRest') {
       stage = `
         ${engineMorphDial(e, now, {
-          phaseLabel: 'Work',
-          endsAt: e.workEndsAt,
+          phaseLabel: 'Done',
+          endsAt: null,
           faceHtml: `
             <button type="button" class="eng-rest-tap" onclick="Logger.engineOpenRest()" aria-label="Start rest">
               <span>REST</span>
