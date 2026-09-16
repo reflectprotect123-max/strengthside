@@ -6,6 +6,7 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 | Version | Date | Note |
 | --- | --- | --- |
+| 1.0.98 | 2026-09-16 | Me copy is Android — Allow + steps run on this phone, no iPhone. cache the-brain-v23 / the-engine-v11 |
 | 1.0.97 | 2026-09-16 | Totem back on Me for steps (WHOOP app password). Allow stays for Apple/Google. cache the-brain-v22 / the-engine-v10 |
 | 1.0.96 | 2026-09-16 | Connect WHOOP is official Allow again (Apple/Google). Drop typed numbers. Edge whoopCallbackUrl fix for BOOT_ERROR; CapacitorHttp skips CORS. cache the-brain-v21 / the-engine-v9 |
 | 1.0.95 | 2026-09-16 | WHOOP on Me is typed numbers from the WHOOP app (sleep / recovery / strain / steps); password login moved to Advanced |

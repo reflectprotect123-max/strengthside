@@ -287,11 +287,11 @@
     const mfa = !!ui.mfaSession;
     const busy = ui.busy ? ' disabled' : '';
     const stepsOn = hasIosTokens();
-    return '<p class="stub">Tap Connect WHOOP to Allow (Apple or Google). Official WHOOP has no steps.</p>' +
+    return '<p class="stub">This is the Android app. Connect WHOOP opens Allow in Chrome on this phone — Apple or Google is fine. Official WHOOP has no steps.</p>' +
       '<div class="whoop-ios-form">' +
       '<p class="stub">' + (stepsOn
-        ? 'Totem is on — Sync also pulls steps.'
-        : 'Totem pulls steps. Use the password that opens the WHOOP app — not Apple, Google, or HYBRID S&amp;C.') + '</p>' +
+        ? 'Steps are on this phone — Sync pulls them too.'
+        : 'Steps also run on this Android phone. Use the password that opens the WHOOP app here — not Apple, Google, or HYBRID S&amp;C.') + '</p>' +
       '<div class="field"><label for="whoopIosEmail">WHOOP app email</label>' +
       '<input id="whoopIosEmail" type="email" autocomplete="username" placeholder="WHOOP app email" value="' + esc(prefill) + '"' + busy + '></div>' +
       '<div class="field"><label for="whoopIosPassword">WHOOP app password</label>' +
@@ -322,7 +322,7 @@
       return;
     }
     ui.busy = true;
-    ui.message = ui.mfaSession ? 'Verifying WHOOP code…' : 'Connecting Totem…';
+    ui.message = ui.mfaSession ? 'Verifying WHOOP code…' : 'Pulling steps…';
     paint();
     try {
       let tokens;
@@ -352,7 +352,7 @@
       if (n) applyNormalized(n, { syncedAt: n.capturedAt, sampleDate: n.date });
       st().connected = true;
       st().source = 'ios';
-      ui.message = 'Totem connected — Home includes steps';
+      ui.message = 'Steps connected — Home updated on this phone';
       paint();
       refreshVisibleUi();
     } catch (err) {
