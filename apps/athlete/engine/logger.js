@@ -485,17 +485,33 @@
   }
 
   function engRingSvg(progress, zones) {
-    const c = 2 * Math.PI * 42;
-    const off = c * (1 - Math.max(0, Math.min(1, progress || 0)));
+    // Morph-weight open horseshoe: 270° arc, thick stroke, zone endcaps.
+    const r = 40;
+    const c = 2 * Math.PI * r;
+    const span = 0.75; // 270°
+    const arcLen = c * span;
+    const filled = arcLen * Math.max(0, Math.min(1, progress || 0));
+    const gap = c - arcLen;
     const bg = Math.round(zones.bg);
     const gr = Math.round(zones.gr);
     return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
-      <circle class="eng-ring-track" cx="50" cy="50" r="42" fill="none" stroke-width="6.5"/>
-      <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="42" fill="none" stroke-width="6.5"
-        stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
-        transform="rotate(-90 50 50)"/>
-      <text x="22" y="82" class="eng-ring-label">${esc(bg)}</text>
-      <text x="78" y="82" class="eng-ring-label" text-anchor="end">${esc(gr)}</text>
+      <defs>
+        <linearGradient id="engArcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="currentColor" stop-opacity="0.7"/>
+          <stop offset="55%" stop-color="currentColor" stop-opacity="1"/>
+          <stop offset="100%" stop-color="currentColor" stop-opacity="0.82"/>
+        </linearGradient>
+      </defs>
+      <circle class="eng-ring-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="round"
+        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+        transform="rotate(135 50 50)"/>
+      <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke="url(#engArcGrad)" stroke-linecap="round"
+        stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
+        transform="rotate(135 50 50)"/>
+      <text x="18" y="88" class="eng-ring-label">${esc(bg)}</text>
+      <text x="82" y="88" class="eng-ring-label" text-anchor="end">${esc(gr)}</text>
     </svg>`;
   }
 
@@ -508,9 +524,11 @@
     if (faceClock && ends) faceClock.textContent = remainLabel(ends, now);
     const arc = document.getElementById('engRingArc');
     if (arc) {
-      const c = 2 * Math.PI * 42;
-      const p = engineProgress(e, now);
-      arc.setAttribute('stroke-dashoffset', (c * (1 - p)).toFixed(1));
+      const r = 40;
+      const c = 2 * Math.PI * r;
+      const arcLen = c * 0.75;
+      const filled = arcLen * engineProgress(e, now);
+      arc.setAttribute('stroke-dasharray', `${filled.toFixed(2)} ${(c - filled).toFixed(2)}`);
     }
   }
 
@@ -531,9 +549,27 @@
     return `
       <p class="log-emh-label" id="engEmhLabel">How was that interval?</p>
       <div class="log-intensity eng-emh" role="group" aria-labelledby="engEmhLabel">
-        <button type="button" class="eng-emh-easy" onclick="Logger.engineEffort('easy')">Easy</button>
-        <button type="button" class="eng-emh-med" onclick="Logger.engineEffort('medium')">Medium</button>
-        <button type="button" class="eng-emh-hard" onclick="Logger.engineEffort('hard')">Hard</button>
+        <button type="button" class="eng-emh-easy" onclick="Logger.engineEffort('easy')"><i aria-hidden="true"></i>Easy</button>
+        <button type="button" class="eng-emh-med" onclick="Logger.engineEffort('medium')"><i aria-hidden="true"></i>Medium</button>
+        <button type="button" class="eng-emh-hard" onclick="Logger.engineEffort('hard')"><i aria-hidden="true"></i>Hard</button>
+      </div>`;
+  }
+
+  function engineFootRail(e, parts, clock, phaseLabel, shown) {
+    return `
+      <div class="eng-rail">
+        <div class="eng-rail-cell">
+          <strong>${esc(parts.value)}${parts.unit ? ` ${esc(parts.unit)}` : ''}</strong>
+          <span>Target</span>
+        </div>
+        <div class="eng-rail-cell eng-rail-cell--mid">
+          <strong id="engClock">${esc(clock)}</strong>
+          <span>${esc(phaseLabel)}</span>
+        </div>
+        <div class="eng-rail-cell">
+          <strong>${esc(shown)}/${esc(e.rounds)}</strong>
+          <span>Reps</span>
+        </div>
       </div>`;
   }
 
@@ -546,38 +582,34 @@
     const phaseLabel = opts.phaseLabel || 'Work';
     const ends = opts.endsAt;
     const clock = ends != null ? remainLabel(ends, now) : '0:00';
+    const hideRail = !!opts.hideRail;
     const face = opts.faceHtml || `
       <strong class="eng-morph-num" id="engFaceNum">${esc(parts.value)}</strong>
-      <span class="eng-morph-unit">${esc(parts.unit || 'TARGET')}</span>`;
+      <span class="eng-morph-unit">${esc(parts.unit || 'TARGET')}</span>
+      <span class="eng-morph-cap">${esc(phaseLabel)} · ${esc(clock)}</span>`;
     return `
-      <div class="eng-morph" data-tone="${esc(tone)}">
-        <div class="eng-morph-top">
-          <div class="eng-morph-stat">
-            <strong id="engClock">${esc(clock)}</strong>
-            <span>${esc(phaseLabel)}</span>
-          </div>
-          <div class="eng-morph-stat eng-morph-stat--end">
-            <strong>${esc(shown)}/${esc(e.rounds)}</strong>
-            <span>Reps</span>
-          </div>
-        </div>
+      <div class="eng-morph" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
         <div class="eng-morph-dial">
+          <div class="eng-morph-wash" aria-hidden="true"></div>
           ${engRingSvg(progress, zones)}
           <div class="eng-morph-face">${face}</div>
         </div>
+        ${hideRail ? '' : engineFootRail(e, parts, clock, phaseLabel, shown)}
       </div>`;
   }
 
   function engineRestOverlay(e, page, target, now) {
     const nextTarget = HybridEngine.formatTarget(e.target, e.modality) || target;
     const more = e.structure === 'intervals' && (e.roundIndex + 1) < e.rounds;
+    const parts = engineTargetParts(e);
     const dial = engineMorphDial(e, now, {
       phaseLabel: 'Rest',
       endsAt: e.restEndsAt,
+      hideRail: true,
       faceHtml: `
         <strong class="eng-morph-num" id="engFaceClock">${e.restEndsAt != null ? esc(remainLabel(e.restEndsAt, now)) : '—'}</strong>
         <span class="eng-morph-unit">Remaining</span>
-        <span class="eng-morph-sub">${esc(target)}</span>`,
+        <span class="eng-morph-cap">${esc(target)}</span>`,
     });
     const effortBlock = e.needsEffort ? engineEffortButtons() : '';
     const skipBtn = e.needsEffort
@@ -587,9 +619,11 @@
       ? `<p class="eng-up">Last · ${esc(target)}</p>`
       : `<p class="eng-up">Up next · Work ${esc(Math.min(e.rounds, e.roundIndex + 1))}/${esc(e.rounds)} · ${esc(nextTarget)}</p>`;
     const restHint = more && e.restSec > 0
-      ? `${e.restSec}s rest · ${page.title}`
-      : more ? `Rate the bout · ${page.title}`
-      : `Last bout · ${page.title}`;
+      ? `${e.restSec}s · ${page.title}`
+      : more ? `Rate · ${page.title}`
+      : `Finish · ${page.title}`;
+    const shown = Math.min(e.rounds, e.roundIndex + 1);
+    const clock = e.restEndsAt != null ? remainLabel(e.restEndsAt, now) : '—';
     return `
       <div class="eng-rest-overlay" role="dialog" aria-modal="true" aria-label="Rest">
         <div class="eng-rest-head">
@@ -597,6 +631,7 @@
           <p class="eng-rest-hint">${esc(restHint)}</p>
         </div>
         ${dial}
+        ${engineFootRail(e, parts, clock, 'Rest', shown)}
         <div class="eng-rest-actions">
           ${upNext}
           ${effortBlock}
@@ -610,13 +645,15 @@
     if (!e || !root.HybridEngine) return `<p class="log-kicker">Engine bundle missing</p>`;
     const now = Date.now();
     const target = HybridEngine.formatTarget(e.target, e.modality) || (e.skipped ? 'No invented pace' : 'Type the first number');
-    const kicker = `${page.letter}. The Engine · ${(e.structure || 'intervals').toUpperCase()}`;
+    const kicker = `${page.letter} · ${(e.structure || 'intervals').toUpperCase()}`;
     let stage = '';
     let overlay = '';
     const titleBlock = `
-      <p class="log-kicker">${esc(kicker)}</p>
-      <h2 class="log-title eng-title">${esc(page.title)}</h2>
-      <p class="log-rx">${esc(page.prescription || '')}</p>`;
+      <div class="eng-head">
+        <p class="log-kicker eng-kicker">${esc(kicker)}</p>
+        <h2 class="log-title eng-title">${esc(page.title)}</h2>
+        <p class="log-rx eng-rx">${esc(page.prescription || '')}</p>
+      </div>`;
     if (e.phase === 'ready') {
       stage = `
         ${titleBlock}
@@ -630,20 +667,21 @@
     } else if (e.phase === 'work') {
       stage = `
         ${titleBlock}
-        <div class="eng-stage">
+        <div class="eng-stage eng-stage--live">
           ${engineMorphDial(e, now, { phaseLabel: 'Work', endsAt: e.workEndsAt })}
           <button type="button" class="eng-early" onclick="Logger.engineEnd()">End interval early</button>
         </div>`;
     } else if (e.phase === 'tapRest') {
       stage = `
         ${titleBlock}
-        <div class="eng-stage">
+        <div class="eng-stage eng-stage--live">
           ${engineMorphDial(e, now, {
             phaseLabel: 'Done',
             endsAt: null,
             faceHtml: `
               <button type="button" class="eng-rest-tap" onclick="Logger.engineOpenRest()" aria-label="Open rest">
-                <span>Rest</span>
+                <span class="eng-rest-tap-disc" aria-hidden="true"></span>
+                <span class="eng-rest-tap-label">Rest</span>
                 <small>Tap to open</small>
               </button>`,
           })}
