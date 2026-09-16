@@ -283,8 +283,84 @@
   }
   function connectFormHtml() {
     const w = st();
-    if (w.connected) return '';
-    return '<p class="stub">Tap Connect WHOOP. Allow on the WHOOP page — Apple or Google is fine.</p>';
+    const prefill = w.iosEmail || w.email || '';
+    const mfa = !!ui.mfaSession;
+    const busy = ui.busy ? ' disabled' : '';
+    const stepsOn = hasIosTokens();
+    return '<p class="stub">Tap Connect WHOOP to Allow (Apple or Google). Official WHOOP has no steps.</p>' +
+      '<div class="whoop-ios-form">' +
+      '<p class="stub">' + (stepsOn
+        ? 'Totem is on — Sync also pulls steps.'
+        : 'Totem pulls steps. Use the password that opens the WHOOP app — not Apple, Google, or HYBRID S&amp;C.') + '</p>' +
+      '<div class="field"><label for="whoopIosEmail">WHOOP app email</label>' +
+      '<input id="whoopIosEmail" type="email" autocomplete="username" placeholder="WHOOP app email" value="' + esc(prefill) + '"' + busy + '></div>' +
+      '<div class="field"><label for="whoopIosPassword">WHOOP app password</label>' +
+      '<input id="whoopIosPassword" type="password" autocomplete="current-password" placeholder="WHOOP app password"' + busy + '></div>' +
+      (mfa
+        ? '<div class="field"><label for="whoopIosMfa">SMS code</label>' +
+          '<input id="whoopIosMfa" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code"' + busy + '></div>'
+        : '') +
+      '</div>';
+  }
+  async function connectTotem() {
+    if (ui.busy) return;
+    const Ios = iosApi();
+    if (!Ios) {
+      ui.message = 'WHOOP client missing — reload the app';
+      paint();
+      global.alert(ui.message);
+      return;
+    }
+    const em = ((document.getElementById('whoopIosEmail') && document.getElementById('whoopIosEmail').value)
+      || st().iosEmail || st().email || '').trim();
+    const pw = (document.getElementById('whoopIosPassword') && document.getElementById('whoopIosPassword').value) || '';
+    const code = ((document.getElementById('whoopIosMfa') && document.getElementById('whoopIosMfa').value) || '').trim();
+    if (!em || (!pw && !ui.mfaSession)) {
+      ui.message = 'Enter the WHOOP app email and password to pull steps';
+      paint();
+      global.alert(ui.message);
+      return;
+    }
+    ui.busy = true;
+    ui.message = ui.mfaSession ? 'Verifying WHOOP code…' : 'Connecting Totem…';
+    paint();
+    try {
+      let tokens;
+      if (ui.mfaSession && code) {
+        tokens = await Ios.verifyMfa({
+          email: em,
+          session: ui.mfaSession,
+          challenge: ui.mfaChallenge || 'SMS_MFA',
+          code: code,
+        });
+      } else {
+        const out = await Ios.login({ email: em, password: pw });
+        if (out && out.challenge) {
+          ui.mfaSession = out.session;
+          ui.mfaChallenge = out.challenge;
+          ui.message = 'Enter the code WHOOP just texted you, then tap Pull steps again';
+          ui.busy = false;
+          paint();
+          return;
+        }
+        tokens = out;
+      }
+      ui.mfaSession = null;
+      ui.mfaChallenge = null;
+      saveIosTokens(tokens, em);
+      const n = await syncIosSteps();
+      if (n) applyNormalized(n, { syncedAt: n.capturedAt, sampleDate: n.date });
+      st().connected = true;
+      st().source = 'ios';
+      ui.message = 'Totem connected — Home includes steps';
+      paint();
+      refreshVisibleUi();
+    } catch (err) {
+      ui.message = err.message || 'Totem login failed';
+      paint();
+      global.alert(ui.message);
+      throw err;
+    } finally { ui.busy = false; paint(); }
   }
   function cardHtml() {
     const w = st();
@@ -587,7 +663,7 @@
     } catch (_) {}
   }
   global.Whoop = {
-    cardHtml, metaLine, renderPanels, connectFormHtml, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
+    cardHtml, metaLine, renderPanels, connectFormHtml, connectTotem, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
     uiMessage: function () { return ui.message || ''; },
     client, token, email, waitForSupabase, fnUrl, resolveProxyBase
