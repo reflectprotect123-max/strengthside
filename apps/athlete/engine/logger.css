@@ -1001,8 +1001,17 @@
   stroke: rgba(255, 255, 255, 0.1);
 }
 
+.eng-ring-zone {
+  opacity: 0.42;
+}
+
+.eng-ring-zone--blue { stroke: var(--zone-blue); }
+.eng-ring-zone--green { stroke: var(--zone-green); }
+.eng-ring-zone--red { stroke: var(--zone-red); }
+
 .eng-ring-arc {
   transition: stroke-dasharray 90ms linear;
+  opacity: 0.95;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1021,6 +1030,9 @@
   font-weight: 700;
   letter-spacing: 0.02em;
 }
+
+.eng-ring-label--blue { fill: var(--zone-blue); }
+.eng-ring-label--red { fill: var(--zone-red); }
 
 .eng-morph-face {
   position: absolute;
@@ -1062,6 +1074,21 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--eng-ring) 85%, #fff);
+}
+
+.eng-morph-zone {
+  margin-top: 8px;
+  font-size: 28px;
+  letter-spacing: 0.18em;
+  color: var(--eng-ring);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--eng-ring) 35%, transparent);
+}
+
+.eng-morph-sub {
+  margin-top: 4px;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: rgba(232, 238, 242, 0.55);
 }
 
 .eng-rail {

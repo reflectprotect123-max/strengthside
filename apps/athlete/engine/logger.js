@@ -447,7 +447,24 @@
     return 1;
   }
 
+  function engineLiveHr() {
+    const s = root.S || {};
+    const raw = s.liveHr != null ? s.liveHr
+      : (s.session && s.session.liveHr != null) ? s.session.liveHr
+      : null;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 35 || n > 230) return null;
+    return Math.round(n);
+  }
+
   function engineRingTone(e) {
+    const zones = engineZoneBounds();
+    const hr = engineLiveHr();
+    if (hr != null) {
+      if (hr < zones.bg) return 'blue';
+      if (hr < zones.gr) return 'green';
+      return 'red';
+    }
     if (!e) return 'green';
     if (e.phase === 'rest' || e.phase === 'tapRest') return 'blue';
     const effort = String(e.effort || 'medium').toLowerCase();
@@ -474,6 +491,23 @@
     return { bg: Math.round(zones.bgToday), gr: Math.round(zones.grToday), max: Number(z.hrMax) || 190 };
   }
 
+  function engineZoneName(tone) {
+    if (tone === 'blue') return 'BLUE';
+    if (tone === 'red') return 'RED';
+    return 'GREEN';
+  }
+
+  function engineHrFaceHtml(zones, tone) {
+    const hr = engineLiveHr();
+    const max = zones && zones.max != null ? zones.max : 190;
+    const zone = engineZoneName(tone || engineRingTone(null));
+    return `
+      <strong class="eng-morph-num" id="engFaceHr">${hr != null ? esc(hr) : '—'}</strong>
+      <span class="eng-morph-unit">BPM</span>
+      <span class="eng-morph-cap eng-morph-zone" id="engFaceZone">${esc(zone)}</span>
+      <span class="eng-morph-sub" id="engFaceMax">MAX ${esc(max)}</span>`;
+  }
+
   function engineTargetParts(e) {
     if (!e || !root.HybridEngine) return { value: '—', unit: '' };
     if (e.modality === 'rpm' && e.target && e.target.rpm != null) return { value: String(Math.round(e.target.rpm)), unit: 'RPM' };
@@ -484,16 +518,37 @@
     return { value: '—', unit: '' };
   }
 
+  function engRingZoneFrac(hr, zones) {
+    const floor = Math.max(50, Math.min(zones.bg - 35, zones.bg - 10));
+    const max = Math.max(zones.gr + 10, zones.max || 190);
+    const span = Math.max(1, max - floor);
+    return Math.max(0, Math.min(1, (hr - floor) / span));
+  }
+
+  function engRingSeg(fracStart, fracEnd, c, arcLen) {
+    const start = arcLen * Math.max(0, Math.min(1, fracStart));
+    const end = arcLen * Math.max(0, Math.min(1, fracEnd));
+    const len = Math.max(0.01, end - start);
+    return {
+      dash: `${len.toFixed(2)} ${Math.max(0.01, c - len).toFixed(2)}`,
+      offset: (-start).toFixed(2),
+    };
+  }
+
   function engRingSvg(progress, zones) {
-    // Morph-weight open horseshoe: 270° arc, thick stroke, zone endcaps.
+    // Morph-weight open horseshoe: 270° Blue → Green → Red track + live fill.
     const r = 40;
     const c = 2 * Math.PI * r;
     const span = 0.75; // 270°
     const arcLen = c * span;
     const filled = arcLen * Math.max(0, Math.min(1, progress || 0));
-    const gap = c - arcLen;
     const bg = Math.round(zones.bg);
     const gr = Math.round(zones.gr);
+    const blueEnd = engRingZoneFrac(bg, zones);
+    const greenEnd = Math.max(blueEnd + 0.02, engRingZoneFrac(gr, zones));
+    const blue = engRingSeg(0, blueEnd, c, arcLen);
+    const green = engRingSeg(blueEnd, greenEnd, c, arcLen);
+    const red = engRingSeg(greenEnd, 1, c, arcLen);
     return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
       <defs>
         <linearGradient id="engArcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -502,16 +557,24 @@
           <stop offset="100%" stop-color="currentColor" stop-opacity="0.82"/>
         </linearGradient>
       </defs>
-      <circle class="eng-ring-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
-        stroke-linecap="round"
-        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+      <circle class="eng-ring-zone eng-ring-zone--blue" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="butt"
+        stroke-dasharray="${blue.dash}" stroke-dashoffset="${blue.offset}"
+        transform="rotate(135 50 50)"/>
+      <circle class="eng-ring-zone eng-ring-zone--green" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="butt"
+        stroke-dasharray="${green.dash}" stroke-dashoffset="${green.offset}"
+        transform="rotate(135 50 50)"/>
+      <circle class="eng-ring-zone eng-ring-zone--red" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="butt"
+        stroke-dasharray="${red.dash}" stroke-dashoffset="${red.offset}"
         transform="rotate(135 50 50)"/>
       <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
         stroke="url(#engArcGrad)" stroke-linecap="round"
         stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
         transform="rotate(135 50 50)"/>
-      <text x="16" y="92" class="eng-ring-label">${esc(bg)}</text>
-      <text x="84" y="92" class="eng-ring-label" text-anchor="end">${esc(gr)}</text>
+      <text x="14" y="92" class="eng-ring-label eng-ring-label--blue">${esc(bg)}</text>
+      <text x="86" y="92" class="eng-ring-label eng-ring-label--red" text-anchor="end">${esc(gr)}</text>
     </svg>`;
   }
 
@@ -520,8 +583,16 @@
     const ends = e.phase === 'work' ? e.workEndsAt : e.phase === 'rest' ? e.restEndsAt : null;
     const clock = document.getElementById('engClock');
     if (clock && ends) clock.textContent = remainLabel(ends, now);
-    const faceClock = document.getElementById('engFaceClock');
-    if (faceClock && ends) faceClock.textContent = remainLabel(ends, now);
+    const tone = engineRingTone(e);
+    const hrEl = document.getElementById('engFaceHr');
+    if (hrEl) {
+      const hr = engineLiveHr();
+      hrEl.textContent = hr != null ? String(hr) : '—';
+    }
+    const zoneEl = document.getElementById('engFaceZone');
+    if (zoneEl) zoneEl.textContent = engineZoneName(tone);
+    const morph = document.querySelector('.eng-morph');
+    if (morph && morph.getAttribute('data-tone') !== tone) morph.setAttribute('data-tone', tone);
     const arc = document.getElementById('engRingArc');
     if (arc) {
       const r = 40;
@@ -583,10 +654,7 @@
     const ends = opts.endsAt;
     const clock = ends != null ? remainLabel(ends, now) : '0:00';
     const hideRail = !!opts.hideRail;
-    const face = opts.faceHtml || `
-      <strong class="eng-morph-num" id="engFaceNum">${esc(parts.value)}</strong>
-      <span class="eng-morph-unit">${esc(parts.unit || 'TARGET')}</span>
-      <span class="eng-morph-cap">${esc(phaseLabel)}</span>`;
+    const face = opts.faceHtml || engineHrFaceHtml(zones, tone);
     return `
       <div class="eng-morph" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
         <div class="eng-morph-dial">
@@ -606,10 +674,6 @@
       phaseLabel: 'Rest',
       endsAt: e.restEndsAt,
       hideRail: true,
-      faceHtml: `
-        <strong class="eng-morph-num" id="engFaceClock">${e.restEndsAt != null ? esc(remainLabel(e.restEndsAt, now)) : '—'}</strong>
-        <span class="eng-morph-unit">Remaining</span>
-        <span class="eng-morph-cap">${esc(target)}</span>`,
     });
     const effortBlock = e.needsEffort ? engineEffortButtons() : '';
     const skipBtn = e.needsEffort
