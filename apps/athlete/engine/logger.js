@@ -586,7 +586,7 @@
     const face = opts.faceHtml || `
       <strong class="eng-morph-num" id="engFaceNum">${esc(parts.value)}</strong>
       <span class="eng-morph-unit">${esc(parts.unit || 'TARGET')}</span>
-      <span class="eng-morph-cap">${esc(phaseLabel)} · ${esc(clock)}</span>`;
+      <span class="eng-morph-cap">${esc(phaseLabel)}</span>`;
     return `
       <div class="eng-morph" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
         <div class="eng-morph-dial">
