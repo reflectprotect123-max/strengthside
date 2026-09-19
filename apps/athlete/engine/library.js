@@ -260,7 +260,7 @@
     const blocks = [];
     let lastSection = '';
     for (const b of lettered(tpl)) {
-      if (b.kind === 'lift') continue;
+      if (b.kind === 'lift') continue; // Engine sessions do not log lifts; HR never applies to lifting.
       const section = sectionFor(b);
       if (section !== lastSection) {
         blocks.push({ kind: 'section', label: section.toUpperCase() });

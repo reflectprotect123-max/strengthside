@@ -22,6 +22,10 @@
   min-height: 100dvh;
   background: #000;
   position: relative;
+  overscroll-behavior: contain;
+  --zone-blue: #00c2ff;
+  --zone-green: #3dff7a;
+  --zone-red: #ff2b2b;
 }
 
 .log-top {
@@ -369,6 +373,7 @@
   color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
   font-weight: 600;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
 }
 .log-dur { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
 .log-dur button {
@@ -843,19 +848,529 @@
 .eng-go,
 .eng-early,
 .eng-stop {
-  min-height: 48px;
+  min-height: var(--tap, 44px);
   width: 100%;
-  border-radius: 12px;
+  border-radius: 14px;
   font-weight: 700;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  touch-action: manipulation;
+}
+
+.eng-go {
+  background: var(--engine, #5ec4b7);
+  color: #041012;
+  border: 0;
+  min-height: 52px;
+  letter-spacing: 0.02em;
 }
 
 .eng-early,
 .eng-stop {
-  margin-top: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  margin-top: 14px;
+  min-height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--oled-muted, #8e8e93);
+}
+
+.eng-early:active,
+.eng-stop:active,
+.eng-go:active,
+.eng-skip:active {
+  opacity: 0.82;
+  transform: scale(0.985);
+}
+
+.eng-early:focus-visible,
+.eng-stop:focus-visible,
+.eng-rest-tap:focus-visible,
+.eng-emh button:focus-visible,
+.eng-skip:focus-visible,
+.eng-go:focus-visible {
+  outline: 2px solid var(--engine, #5ec4b7);
+  outline-offset: 3px;
 }
 
 .eng-up {
-  margin: 0 0 16px;
+  margin: 0;
+  color: #b0b8bf;
+  font-size: 16px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  text-align: center;
+  font-weight: 500;
+}
+
+.eng-head {
+  margin-bottom: 4px;
+}
+
+.eng-kicker {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 15px;
+  color: var(--engine, #5ec4b7);
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-weight: 600;
+}
+
+.eng-title {
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-weight: 700;
+  font-size: clamp(36px, 11vw, 48px);
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  margin: 2px 0 6px;
+}
+
+.eng-rx {
+  color: var(--oled-muted, #8e8e93);
+  font-size: 16px;
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.eng-done-line {
+  margin: 8px 0 0;
+  text-align: center;
+  color: var(--oled-muted, #8e8e93);
+  font-size: 16px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 500;
+}
+
+.eng-stage--live {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+/* Instrument dial — Track Dawn zone accents */
+.eng-morph {
+  --zone-blue: #00c2ff;
+  --zone-green: #3dff7a;
+  --zone-red: #ff2b2b;
+  --eng-ring: var(--zone-green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin: 2px 0 4px;
+  color: var(--eng-ring);
+  animation: eng-dial-in 280ms var(--ease, cubic-bezier(.22,.7,.28,1)) both;
+}
+
+.eng-morph[data-tone="blue"] { --eng-ring: var(--zone-blue); }
+.eng-morph[data-tone="green"] { --eng-ring: var(--zone-green); }
+.eng-morph[data-tone="red"] { --eng-ring: var(--zone-red); }
+
+@keyframes eng-dial-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.eng-morph-dial {
+  position: relative;
+  width: min(86vw, 320px);
+  height: min(86vw, 320px);
+  display: grid;
+  place-items: center;
+}
+
+.eng-morph-wash {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--eng-ring) 42%, transparent), transparent 68%),
+    radial-gradient(circle at 50% 80%, rgba(255,255,255,0.03), transparent 55%);
+  pointer-events: none;
+  filter: blur(0.2px);
+}
+
+.eng-ring {
+  width: 100%;
+  height: 100%;
+  color: var(--eng-ring);
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 22px color-mix(in srgb, var(--eng-ring) 45%, transparent));
+}
+
+.eng-ring-track {
+  stroke: rgba(255, 255, 255, 0.16);
+}
+
+.eng-ring-zone {
+  display: none;
+}
+
+.eng-ring-arc {
+  transition: stroke-dasharray 90ms linear, stroke 160ms linear;
+  opacity: 1;
+  stroke: var(--eng-ring);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--eng-ring) 70%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eng-morph { animation: none; }
+  .eng-ring-arc { transition: none; }
+  .eng-early:active,
+  .eng-stop:active,
+  .eng-go:active,
+  .eng-skip:active { transform: none; }
+}
+
+.eng-ring-label {
+  fill: #c8d0d6;
+  font-size: 9px;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.eng-ring-label--blue { fill: var(--zone-blue); }
+.eng-ring-label--red { fill: var(--zone-red); }
+
+.eng-morph-face {
+  position: absolute;
+  inset: 22% 18% 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.eng-morph-num {
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: clamp(64px, 20vw, 88px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.88;
+  color: var(--eng-ring);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--eng-ring) 55%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.eng-morph-unit {
+  margin-top: 8px;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--eng-ring) 75%, #fff);
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 700;
+}
+
+.eng-morph-cap,
+.eng-morph-sub {
+  margin-top: 10px;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--eng-ring) 85%, #fff);
+}
+
+.eng-morph-zone {
+  margin-top: 8px;
+  font-size: 28px;
+  letter-spacing: 0.18em;
+  color: var(--eng-ring);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--eng-ring) 35%, transparent);
+}
+
+.eng-morph-sub {
+  margin-top: 4px;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: rgba(232, 238, 242, 0.72);
+}
+
+.eng-rail {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 8px;
+  padding: 12px 4px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.eng-rail-cell {
+  text-align: center;
+}
+
+.eng-rail-cell strong {
+  display: block;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: #eef2f4;
+  font-variant-numeric: tabular-nums;
+}
+
+.eng-rail-cell--mid strong {
+  font-size: 34px;
+  color: var(--eng-ring);
+}
+
+.eng-rail-cell span {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b0b8bf;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 600;
+}
+
+.eng-rest-tap {
+  pointer-events: auto;
+  position: relative;
+  width: min(100%, 210px);
+  min-height: 150px;
+  margin: 0 auto;
+  border: 0;
+  background: transparent;
   color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  touch-action: manipulation;
+}
+
+.eng-rest-tap-disc {
+  position: absolute;
+  inset: 8% 6%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--zone-blue, #00c2ff) 34%, transparent), transparent 70%),
+    rgba(12, 18, 22, 0.55);
+  border: 1px solid color-mix(in srgb, var(--zone-blue, #00c2ff) 45%, transparent);
+  animation: eng-rest-breathe 1.8s var(--ease, ease) infinite;
+  z-index: 0;
+}
+
+.eng-rest-tap-label,
+.eng-rest-tap small {
+  position: relative;
+  z-index: 1;
+}
+
+.eng-rest-tap-label {
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: clamp(48px, 15vw, 62px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: #eef2f4;
+  text-transform: uppercase;
+}
+
+.eng-rest-tap small {
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--zone-blue, #00c2ff) 80%, #fff);
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 700;
+}
+
+.eng-rest-tap:active .eng-rest-tap-disc {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+@keyframes eng-rest-breathe {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.82; transform: scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eng-rest-tap-disc { animation: none; }
+}
+
+.eng-rest-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(52px + env(safe-area-inset-top, 0px));
+  bottom: 0;
+  z-index: 10;
+  background:
+    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--zone-blue, #00c2ff) 16%, transparent), transparent 55%),
+    #07090b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  animation: eng-overlay-in 240ms var(--ease, ease-out);
+  outline: none;
+}
+
+.eng-rest-overlay:focus-visible { outline: none; }
+
+@keyframes eng-overlay-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eng-rest-overlay { animation: none; }
+}
+
+.eng-rest-head {
+  text-align: center;
+  width: 100%;
+}
+
+.eng-rest-banner {
+  margin: 4px 0 0;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: clamp(48px, 15vw, 64px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: #eef2f4;
+}
+
+.eng-rest-hint {
+  margin: 8px 0 0;
+  color: #b0b8bf;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 500;
+}
+
+.eng-rest-overlay .eng-morph {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.eng-rest-overlay .eng-morph-dial {
+  width: min(78vw, 290px);
+  height: min(78vw, 290px);
+}
+
+.eng-rest-overlay .eng-rail {
+  max-width: 340px;
+  margin-top: -4px;
+}
+
+.eng-rest-overlay .eng-rest-actions {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 2px;
+}
+
+.eng-emh {
+  width: 100%;
+  max-width: 340px;
+  gap: 10px;
+  margin: 0;
+}
+
+.eng-emh button {
+  flex: 1;
+  min-height: 52px;
+  border-radius: 14px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  font-weight: 700;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+}
+
+.eng-emh button i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+}
+
+.eng-emh button:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eng-emh button:active { transform: none; }
+}
+
+.log-intensity.eng-emh button.eng-emh-easy {
+  color: #eaf7fc;
+  background: linear-gradient(180deg, #3a7a92, #1e4a5c);
+  border: 1px solid #6eb8d6;
+}
+.log-intensity.eng-emh button.eng-emh-med {
+  color: #e7fbf7;
+  background: linear-gradient(180deg, #3a8f84, #1a524c);
+  border: 1px solid #5ec4b4;
+}
+.log-intensity.eng-emh button.eng-emh-hard {
+  color: #fcedea;
+  background: linear-gradient(180deg, #9a655c, #5a322c);
+  border: 1px solid #e0a090;
+}
+
+.eng-skip {
+  width: 100%;
+  max-width: 340px;
+  min-height: 52px;
+  border-radius: 14px;
+  border: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--engine, #5ec4b7) 92%, #fff), var(--engine, #5ec4b7));
+  color: #041012;
+  font-weight: 700;
+  font-size: 16px;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  touch-action: manipulation;
+  letter-spacing: 0.01em;
+}
+
+.log-screen:has(.eng-rest-overlay) .log-bar {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.log-screen:has(.eng-stage--live) .log-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.log-emh-label {
+  margin: 0 0 4px;
+  color: rgba(238, 242, 244, 0.85);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-body, "Space Grotesk", sans-serif);
+  text-align: center;
+  width: 100%;
+}
+
+.log-intensity.eng-emh button {
+  font-size: 17px;
 }

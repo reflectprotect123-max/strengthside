@@ -116,17 +116,13 @@
       if (s && s.phase === 'block' && root.HybridEngine) {
         const page = HybridSession.currentPage(s);
         const log = page && s.logs[page.id];
-        if (page && page.logMode === 'engine' && log && log.engine) {
+        if (page && HybridSession.isEngineHrPage(page) && log && log.engine) {
           const next = HybridEngine.tick(log, now);
           if (next !== log) {
             persistEngine(next);
             return;
           }
-          const clock = document.getElementById('engClock');
-          if (clock) {
-            const ends = log.engine.phase === 'work' ? log.engine.workEndsAt : log.engine.restEndsAt;
-            if (ends) clock.textContent = remainLabel(ends, now);
-          }
+          patchEngineLive(log.engine, now);
         }
       }
       const next = HybridTimer.tick(t, now);
@@ -184,7 +180,7 @@
 
   function headerHtml(s) {
     const page = s.phase === 'block' ? HybridSession.currentPage(s) : null;
-    if (page && page.logMode === 'engine') {
+    if (page && HybridSession.isEngineHrPage(page)) {
       return `
       <div class="log-top">
         <button type="button" class="log-back-x" onclick="Logger.chevron()" aria-label="Close">⌄</button>
@@ -437,6 +433,144 @@
     return `${m}:${String(r).padStart(2, '0')}`;
   }
 
+  function engineLiveHr() {
+    // Live BPM is Engine-only. Lifting never reads this.
+    const s = root.S || {};
+    const raw = s.liveHr != null ? s.liveHr
+      : (s.session && s.session.liveHr != null) ? s.session.liveHr
+      : null;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 35 || n > 230) return null;
+    return Math.round(n);
+  }
+
+  function engineRingTone(e) {
+    const zones = engineZoneBounds();
+    const hr = engineLiveHr();
+    if (hr != null) {
+      if (hr < zones.bg) return 'blue';
+      if (hr < zones.gr) return 'green';
+      return 'red';
+    }
+    if (!e) return 'green';
+    if (e.phase === 'rest' || e.phase === 'tapRest') return 'blue';
+    const effort = String(e.effort || 'medium').toLowerCase();
+    if (effort === 'hard') return 'red';
+    if (effort === 'easy') return 'blue';
+    return 'green';
+  }
+
+  function engineZoneBounds() {
+    const K = root.HybridBrainKernel;
+    if (!K || typeof K.dailyZones !== 'function') return { bg: 138, gr: 170, max: 190, floor: 60 };
+    const z = (root.S && root.S.settings && root.S.settings.zones) || {};
+    const c = (root.S && root.S.checkin && (root.S.checkin[root.S.selectedDate] || root.S.checkin[Object.keys(root.S.checkin || {})[0]])) || {};
+    const recovery = Number(c.whoopRecovery);
+    const connected = !!(root.S && root.S.settings && root.S.settings.whoop && root.S.settings.whoop.connected);
+    const zones = K.dailyZones({
+      recovery: Number.isFinite(recovery) ? recovery : null,
+      freshness: connected && Number.isFinite(recovery) ? 'current' : 'missing',
+      hrMax: Number(z.hrMax) || 190,
+      rhr28: Number(z.rhr28) || Number(c.restingHr) || 60,
+      bgBase: Number(z.bgBase) || 138,
+      grBase: Number(z.grBase) || 170.5,
+    });
+    return { bg: Math.round(zones.bgToday), gr: Math.round(zones.grToday), max: Number(z.hrMax) || 190, floor: Math.round(Number(z.rhr28) || Number(c.restingHr) || 60) };
+  }
+
+  function engineZoneName(tone) {
+    if (tone === 'blue') return 'BLUE';
+    if (tone === 'red') return 'RED';
+    return 'GREEN';
+  }
+
+  function engineHrFaceHtml(zones, tone) {
+    const hr = engineLiveHr();
+    const zone = engineZoneName(tone || engineRingTone(null));
+    return `
+      <strong class="eng-morph-num" id="engFaceHr">${hr != null ? esc(hr) : '—'}</strong>
+      <span class="eng-morph-unit">BPM</span>
+      <span class="eng-morph-cap eng-morph-zone" id="engFaceZone">${esc(zone)}</span>`;
+  }
+
+  function engineTargetParts(e) {
+    if (!e || !root.HybridEngine) return { value: '—', unit: '' };
+    if (e.modality === 'rpm' && e.target && e.target.rpm != null) return { value: String(Math.round(e.target.rpm)), unit: 'RPM' };
+    if (e.modality === 'split' && e.target && e.target.splitSec != null) {
+      return { value: HybridEngine.formatSplit(e.target.splitSec) || String(e.target.splitSec), unit: '/500' };
+    }
+    if (e.target && e.target.watts != null) return { value: String(Math.round(e.target.watts)), unit: 'W' };
+    return { value: '—', unit: '' };
+  }
+
+  function engineZoneSlice(tone, zones) {
+    const floor = Number(zones && zones.floor) || 60;
+    const max = Math.max(floor + 40, Number(zones && zones.max) || 190);
+    const bg = Math.max(floor + 8, Number(zones && zones.bg) || 138);
+    const gr = Math.max(bg + 8, Number(zones && zones.gr) || 170);
+    const span = Math.max(1, max - floor);
+    const blueEnd = Math.max(0.08, Math.min(0.45, (bg - floor) / span));
+    const greenEnd = Math.max(blueEnd + 0.12, Math.min(0.88, (gr - floor) / span));
+    if (tone === 'blue') return { start: 0, end: blueEnd };
+    if (tone === 'red') return { start: greenEnd, end: 1 };
+    return { start: blueEnd, end: greenEnd };
+  }
+
+  function engineZoneArc(tone, zones) {
+    const r = 40;
+    const c = 2 * Math.PI * r;
+    const arcLen = c * 0.75;
+    const slice = engineZoneSlice(tone, zones);
+    const start = arcLen * slice.start;
+    const len = Math.max(arcLen * 0.08, arcLen * (slice.end - slice.start));
+    return {
+      dash: `${len.toFixed(2)} ${Math.max(0.01, c - len).toFixed(2)}`,
+      offset: (-start).toFixed(2),
+    };
+  }
+
+  function engRingSvg(tone, zones) {
+    // Morph Train gauge: grey scale, current zone as a section. Clock stays on the rail.
+    const r = 40;
+    const c = 2 * Math.PI * r;
+    const arcLen = c * 0.75;
+    const gap = c - arcLen;
+    const arc = engineZoneArc(tone, zones);
+    return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="eng-ring-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="butt"
+        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+        transform="rotate(135 50 50)"/>
+      <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke="currentColor" stroke-linecap="butt"
+        stroke-dasharray="${arc.dash}" stroke-dashoffset="${arc.offset}"
+        transform="rotate(135 50 50)"/>
+    </svg>`;
+  }
+
+  function patchEngineLive(e, now) {
+    if (!e) return;
+    const ends = e.phase === 'work' ? e.workEndsAt : e.phase === 'rest' ? e.restEndsAt : null;
+    const clock = document.getElementById('engClock');
+    if (clock && ends) clock.textContent = remainLabel(ends, now);
+    const tone = engineRingTone(e);
+    const hrEl = document.getElementById('engFaceHr');
+    if (hrEl) {
+      const hr = engineLiveHr();
+      hrEl.textContent = hr != null ? String(hr) : '—';
+    }
+    const zoneEl = document.getElementById('engFaceZone');
+    if (zoneEl) zoneEl.textContent = engineZoneName(tone);
+    const morph = document.querySelector('.eng-morph');
+    if (morph && morph.getAttribute('data-tone') !== tone) morph.setAttribute('data-tone', tone);
+    const arc = document.getElementById('engRingArc');
+    if (arc) {
+      const next = engineZoneArc(tone, engineZoneBounds());
+      arc.setAttribute('stroke-dasharray', next.dash);
+      arc.setAttribute('stroke-dashoffset', next.offset);
+    }
+  }
+
   function persistEngine(nextLog) {
     const s = JSON.parse(JSON.stringify(session()));
     const page = HybridSession.currentPage(s);
@@ -450,57 +584,153 @@
     persist(s);
   }
 
+  function engineEffortButtons() {
+    return `
+      <p class="log-emh-label" id="engEmhLabel">How was that interval?</p>
+      <div class="log-intensity eng-emh" role="group" aria-labelledby="engEmhLabel">
+        <button type="button" class="eng-emh-easy" onclick="Logger.engineEffort('easy')"><i aria-hidden="true"></i>Easy</button>
+        <button type="button" class="eng-emh-med" onclick="Logger.engineEffort('medium')"><i aria-hidden="true"></i>Medium</button>
+        <button type="button" class="eng-emh-hard" onclick="Logger.engineEffort('hard')"><i aria-hidden="true"></i>Hard</button>
+      </div>`;
+  }
+
+  function engineFootRail(e, parts, clock, phaseLabel, shown) {
+    return `
+      <div class="eng-rail">
+        <div class="eng-rail-cell">
+          <strong>${esc(parts.value)}${parts.unit ? ` ${esc(parts.unit)}` : ''}</strong>
+          <span>Target</span>
+        </div>
+        <div class="eng-rail-cell eng-rail-cell--mid">
+          <strong id="engClock">${esc(clock)}</strong>
+          <span>${esc(phaseLabel)}</span>
+        </div>
+        <div class="eng-rail-cell">
+          <strong>${esc(shown)}/${esc(e.rounds)}</strong>
+          <span>Reps</span>
+        </div>
+      </div>`;
+  }
+
+  function engineMorphDial(e, now, opts) {
+    const zones = engineZoneBounds();
+    const tone = engineRingTone(e);
+    const parts = engineTargetParts(e);
+    const shown = Math.min(e.rounds, e.roundIndex + 1);
+    const phaseLabel = opts.phaseLabel || 'Work';
+    const ends = opts.endsAt;
+    const clock = ends != null ? remainLabel(ends, now) : '0:00';
+    const hideRail = !!opts.hideRail;
+    const face = opts.faceHtml || engineHrFaceHtml(zones, tone);
+    return `
+      <div class="eng-morph" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
+        <div class="eng-morph-dial">
+          <div class="eng-morph-wash" aria-hidden="true"></div>
+          ${engRingSvg(tone, zones)}
+          <div class="eng-morph-face">${face}</div>
+        </div>
+        ${hideRail ? '' : engineFootRail(e, parts, clock, phaseLabel, shown)}
+      </div>`;
+  }
+
+  function engineRestOverlay(e, page, target, now) {
+    const nextTarget = HybridEngine.formatTarget(e.target, e.modality) || target;
+    const more = e.structure === 'intervals' && (e.roundIndex + 1) < e.rounds;
+    const parts = engineTargetParts(e);
+    const dial = engineMorphDial(e, now, {
+      phaseLabel: 'Rest',
+      endsAt: e.restEndsAt,
+      hideRail: true,
+    });
+    const effortBlock = e.needsEffort ? engineEffortButtons() : '';
+    const skipBtn = e.needsEffort
+      ? ''
+      : `<button type="button" class="eng-skip" onclick="Logger.engineSkipRest()">Skip · start work</button>`;
+    const upNext = e.needsEffort
+      ? `<p class="eng-up">Last · ${esc(target)}</p>`
+      : `<p class="eng-up">Up next · Work ${esc(Math.min(e.rounds, e.roundIndex + 1))}/${esc(e.rounds)} · ${esc(nextTarget)}</p>`;
+    const restHint = more && e.restSec > 0
+      ? `${e.restSec}s · ${page.title}`
+      : more ? `Rate · ${page.title}`
+      : `Finish · ${page.title}`;
+    const shown = Math.min(e.rounds, e.roundIndex + 1);
+    const clock = e.restEndsAt != null ? remainLabel(e.restEndsAt, now) : '—';
+    return `
+      <div class="eng-rest-overlay" role="dialog" aria-modal="true" aria-label="Rest">
+        <div class="eng-rest-head">
+          <p class="eng-rest-banner">Rest</p>
+          <p class="eng-rest-hint">${esc(restHint)}</p>
+        </div>
+        ${dial}
+        ${engineFootRail(e, parts, clock, 'Rest', shown)}
+        <div class="eng-rest-actions">
+          ${upNext}
+          ${effortBlock}
+          ${skipBtn}
+        </div>
+      </div>`;
+  }
+
   function engineHtml(s, page, log) {
     const e = log.engine;
     if (!e || !root.HybridEngine) return `<p class="log-kicker">Engine bundle missing</p>`;
     const now = Date.now();
     const target = HybridEngine.formatTarget(e.target, e.modality) || (e.skipped ? 'No invented pace' : 'Type the first number');
-    const shown = Math.min(e.rounds, e.phase === 'ready' || e.phase === 'rest' ? e.roundIndex + 1 : e.roundIndex + 1);
-    const kicker = `${page.letter}. The Engine · ${(e.structure || 'intervals').toUpperCase()}`;
+    const kicker = `${page.letter} · ${(e.structure || 'intervals').toUpperCase()}`;
     let stage = '';
+    let overlay = '';
+    const titleBlock = `
+      <div class="eng-head">
+        <p class="log-kicker eng-kicker">${esc(kicker)}</p>
+        <h2 class="log-title eng-title">${esc(page.title)}</h2>
+        <p class="log-rx eng-rx">${esc(page.prescription || '')}</p>
+      </div>`;
     if (e.phase === 'ready') {
       stage = `
-        <p class="eng-target" id="engTarget">${esc(target)}</p>
-        ${e.skipped ? '' : `<label class="eng-first">First number
-          <input inputmode="decimal" value="${esc(e.modality === 'split' ? (e.target.splitSec || '') : e.modality === 'rpm' ? (e.target.rpm || '') : (e.target.watts || ''))}" onchange="Logger.engineTyped(this.value)">
-        </label>`}
-        <button type="button" class="log-primary eng-go" onclick="Logger.engineStart()">Start work</button>`;
+        ${titleBlock}
+        <div class="eng-stage">
+          <p class="eng-target" id="engTarget">${esc(target)}</p>
+          ${e.skipped ? '' : `<label class="eng-first">First number
+            <input inputmode="decimal" value="${esc(e.modality === 'split' ? (e.target.splitSec || '') : e.modality === 'rpm' ? (e.target.rpm || '') : (e.target.watts || ''))}" onchange="Logger.engineTyped(this.value)">
+          </label>`}
+          <button type="button" class="log-primary eng-go" onclick="Logger.engineStart()">Start work</button>
+        </div>`;
     } else if (e.phase === 'work') {
       stage = `
-        <p class="eng-phase">Work ${shown}/${e.rounds}</p>
-        <p class="eng-clock" id="engClock">${esc(remainLabel(e.workEndsAt, now))}</p>
-        <p class="eng-target">${esc(target)}</p>
-        <button type="button" class="eng-early" onclick="Logger.engineEnd()">End interval early</button>`;
-    } else if (e.phase === 'rest') {
-      const nextTarget = HybridEngine.formatTarget(e.target, e.modality) || target;
-      const restClock = e.restEndsAt != null ? `<p class="eng-clock" id="engClock">${esc(remainLabel(e.restEndsAt, now))}</p>` : '';
-      const effortBlock = e.needsEffort ? `
-        <p class="log-emh-label">How was that interval?</p>
-        <div class="log-intensity">
-          <button type="button" onclick="Logger.engineEffort('easy')">Easy</button>
-          <button type="button" onclick="Logger.engineEffort('medium')">Medium</button>
-          <button type="button" onclick="Logger.engineEffort('hard')">Hard</button>
-        </div>` : '';
-      const skipBtn = e.needsEffort ? '' : `<button type="button" class="log-primary" onclick="Logger.engineSkipRest()">Skip · start work</button>`;
-      const upNextBlock = e.needsEffort ? '' : `<p class="eng-target">Up next · ${esc(nextTarget)}</p>`;
+        ${titleBlock}
+        <div class="eng-stage eng-stage--live">
+          ${engineMorphDial(e, now, { phaseLabel: 'Work', endsAt: e.workEndsAt })}
+          <button type="button" class="eng-early" onclick="Logger.engineEnd()">End interval early</button>
+        </div>`;
+    } else if (e.phase === 'tapRest') {
       stage = `
-        <p class="eng-phase">Rest</p>
-        ${restClock}
-        <p class="eng-up">Last interval · ${esc(target)}</p>
-        ${effortBlock}
-        ${upNextBlock}
-        ${skipBtn}`;
+        ${titleBlock}
+        <div class="eng-stage eng-stage--live">
+          ${engineMorphDial(e, now, {
+            phaseLabel: 'Done',
+            endsAt: null,
+            faceHtml: `
+              <button type="button" class="eng-rest-tap" onclick="Logger.engineOpenRest()" aria-label="Open rest">
+                <span class="eng-rest-tap-disc" aria-hidden="true"></span>
+                <span class="eng-rest-tap-label">Rest</span>
+                <small>Tap to open</small>
+              </button>`,
+          })}
+          <p class="eng-done-line">Interval done · ${esc(target)}</p>
+        </div>`;
+    } else if (e.phase === 'rest') {
+      stage = '';
+      overlay = engineRestOverlay(e, page, target, now);
     } else {
       stage = `
-        <p class="eng-phase">Piece done</p>
-        <p class="eng-target">${esc(target)}</p>
-        <button type="button" class="log-complete is-done" onclick="Logger.next()">Next</button>`;
+        ${titleBlock}
+        <div class="eng-stage">
+          <p class="eng-phase">Piece done</p>
+          <p class="eng-target">${esc(target)}</p>
+          <button type="button" class="log-complete is-done" onclick="Logger.next()">Next</button>
+        </div>`;
     }
-    return `
-      <p class="log-kicker">${esc(kicker)}</p>
-      <h2 class="log-title">${esc(page.title)}</h2>
-      <p class="log-rx">${esc(page.prescription || '')}</p>
-      <div class="eng-stage">${stage}</div>`;
+    return `${stage}${overlay}`;
   }
 
   function completeHtml(s, page, log) {
@@ -689,7 +919,7 @@
     const log = s.logs[page.id] || { completed: false, sets: [], note: '' };
     let body = '';
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
-    else if (page.logMode === 'engine') body = engineHtml(s, page, log);
+    else if (HybridSession.isEngineHrPage(page)) body = engineHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
     else if (page.logMode === 'superset') {
       const members = (page.members || []).map((m) => `
@@ -729,6 +959,11 @@
     else inner = blockHtml(s);
     el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
     startClock();
+    const restDialog = el.querySelector('.eng-rest-overlay');
+    if (restDialog) {
+      restDialog.setAttribute('tabindex', '-1');
+      try { restDialog.focus({ preventScroll: true }); } catch (_) { restDialog.focus(); }
+    }
     if (s.phase === 'quote') {
       el.querySelector('.log-quote')?.addEventListener('click', () => Logger.gotQuote());
       if (!Logger._quoteTimer) {
@@ -762,6 +997,11 @@
       const s = session();
       const page = HybridSession.currentPage(s);
       persistEngine(HybridEngine.endWork(s.logs[page.id], Date.now(), true));
+    },
+    engineOpenRest() {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      persistEngine(HybridEngine.openRest(s.logs[page.id], Date.now()));
     },
     engineEffort(effort) {
       const s = session();
