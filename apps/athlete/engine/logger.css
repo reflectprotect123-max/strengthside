@@ -23,9 +23,9 @@
   background: #000;
   position: relative;
   overscroll-behavior: contain;
-  --zone-blue: #6eb8d6;
-  --zone-green: #5ec4b4;
-  --zone-red: #e0a090;
+  --zone-blue: #00c2ff;
+  --zone-green: #3dff7a;
+  --zone-red: #ff2b2b;
 }
 
 .log-top {
@@ -947,9 +947,9 @@
 
 /* Instrument dial — Track Dawn zone accents */
 .eng-morph {
-  --zone-blue: #6eb8d6;
-  --zone-green: #5ec4b4;
-  --zone-red: #e0a090;
+  --zone-blue: #00c2ff;
+  --zone-green: #3dff7a;
+  --zone-red: #ff2b2b;
   --eng-ring: var(--zone-green);
   display: flex;
   flex-direction: column;
@@ -982,8 +982,8 @@
   inset: 12%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--eng-ring) 28%, transparent), transparent 68%),
-    radial-gradient(circle at 50% 80%, rgba(255,255,255,0.04), transparent 55%);
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--eng-ring) 42%, transparent), transparent 68%),
+    radial-gradient(circle at 50% 80%, rgba(255,255,255,0.03), transparent 55%);
   pointer-events: none;
   filter: blur(0.2px);
 }
@@ -994,24 +994,22 @@
   color: var(--eng-ring);
   position: relative;
   z-index: 1;
-  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--eng-ring) 22%, transparent));
+  filter: drop-shadow(0 0 22px color-mix(in srgb, var(--eng-ring) 45%, transparent));
 }
 
 .eng-ring-track {
-  stroke: rgba(255, 255, 255, 0.1);
+  stroke: rgba(255, 255, 255, 0.16);
 }
 
 .eng-ring-zone {
-  opacity: 0.42;
+  display: none;
 }
 
-.eng-ring-zone--blue { stroke: var(--zone-blue); }
-.eng-ring-zone--green { stroke: var(--zone-green); }
-.eng-ring-zone--red { stroke: var(--zone-red); }
-
 .eng-ring-arc {
-  transition: stroke-dasharray 90ms linear;
-  opacity: 0.95;
+  transition: stroke-dasharray 90ms linear, stroke 160ms linear;
+  opacity: 1;
+  stroke: var(--eng-ring);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--eng-ring) 70%, transparent));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1052,7 +1050,8 @@
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 0.88;
-  color: #eef2f4;
+  color: var(--eng-ring);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--eng-ring) 55%, transparent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1088,7 +1087,7 @@
   margin-top: 4px;
   font-size: 15px;
   letter-spacing: 0.1em;
-  color: rgba(232, 238, 242, 0.55);
+  color: rgba(232, 238, 242, 0.72);
 }
 
 .eng-rail {
@@ -1153,9 +1152,9 @@
   inset: 8% 6%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--zone-blue, #5aa7c7) 34%, transparent), transparent 70%),
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--zone-blue, #00c2ff) 34%, transparent), transparent 70%),
     rgba(12, 18, 22, 0.55);
-  border: 1px solid color-mix(in srgb, var(--zone-blue, #5aa7c7) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--zone-blue, #00c2ff) 45%, transparent);
   animation: eng-rest-breathe 1.8s var(--ease, ease) infinite;
   z-index: 0;
 }
@@ -1180,7 +1179,7 @@
   font-size: 15px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--zone-blue, #5aa7c7) 80%, #fff);
+  color: color-mix(in srgb, var(--zone-blue, #00c2ff) 80%, #fff);
   font-family: var(--font-body, "Space Grotesk", sans-serif);
   font-weight: 700;
 }
@@ -1207,7 +1206,7 @@
   bottom: 0;
   z-index: 10;
   background:
-    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--zone-blue, #5aa7c7) 16%, transparent), transparent 55%),
+    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--zone-blue, #00c2ff) 16%, transparent), transparent 55%),
     #07090b;
   display: flex;
   flex-direction: column;

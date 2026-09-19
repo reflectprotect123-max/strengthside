@@ -536,41 +536,22 @@
   }
 
   function engRingSvg(progress, zones) {
-    // Morph-weight open horseshoe: 270° Blue → Green → Red track + live fill.
+    // Morph pattern: grey unused track, one OLED zone color for the live arc.
     const r = 40;
     const c = 2 * Math.PI * r;
     const span = 0.75; // 270°
     const arcLen = c * span;
     const filled = arcLen * Math.max(0, Math.min(1, progress || 0));
+    const gap = c - arcLen;
     const bg = Math.round(zones.bg);
     const gr = Math.round(zones.gr);
-    const blueEnd = engRingZoneFrac(bg, zones);
-    const greenEnd = Math.max(blueEnd + 0.02, engRingZoneFrac(gr, zones));
-    const blue = engRingSeg(0, blueEnd, c, arcLen);
-    const green = engRingSeg(blueEnd, greenEnd, c, arcLen);
-    const red = engRingSeg(greenEnd, 1, c, arcLen);
     return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
-      <defs>
-        <linearGradient id="engArcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="currentColor" stop-opacity="0.7"/>
-          <stop offset="55%" stop-color="currentColor" stop-opacity="1"/>
-          <stop offset="100%" stop-color="currentColor" stop-opacity="0.82"/>
-        </linearGradient>
-      </defs>
-      <circle class="eng-ring-zone eng-ring-zone--blue" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
-        stroke-linecap="butt"
-        stroke-dasharray="${blue.dash}" stroke-dashoffset="${blue.offset}"
-        transform="rotate(135 50 50)"/>
-      <circle class="eng-ring-zone eng-ring-zone--green" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
-        stroke-linecap="butt"
-        stroke-dasharray="${green.dash}" stroke-dashoffset="${green.offset}"
-        transform="rotate(135 50 50)"/>
-      <circle class="eng-ring-zone eng-ring-zone--red" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
-        stroke-linecap="butt"
-        stroke-dasharray="${red.dash}" stroke-dashoffset="${red.offset}"
+      <circle class="eng-ring-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="round"
+        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
         transform="rotate(135 50 50)"/>
       <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
-        stroke="url(#engArcGrad)" stroke-linecap="round"
+        stroke="currentColor" stroke-linecap="round"
         stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
         transform="rotate(135 50 50)"/>
       <text x="14" y="92" class="eng-ring-label eng-ring-label--blue">${esc(bg)}</text>
