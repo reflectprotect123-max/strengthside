@@ -464,12 +464,14 @@
     const K = root.HybridBrainKernel;
     if (!K || typeof K.dailyZones !== 'function') return { bg: 138, gr: 170, max: 190, floor: 60 };
     const z = (root.S && root.S.settings && root.S.settings.zones) || {};
-    const c = (root.S && root.S.checkin && (root.S.checkin[root.S.selectedDate] || root.S.checkin[Object.keys(root.S.checkin || {})[0]])) || {};
+    const day = root.S && root.S.selectedDate;
+    const c = (root.S && root.S.checkin && day && root.S.checkin[day]) || {};
     const recovery = Number(c.whoopRecovery);
     const connected = !!(root.S && root.S.settings && root.S.settings.whoop && root.S.settings.whoop.connected);
+    const current = connected && Number.isFinite(recovery);
     const zones = K.dailyZones({
-      recovery: Number.isFinite(recovery) ? recovery : null,
-      freshness: connected && Number.isFinite(recovery) ? 'current' : 'missing',
+      recovery: current ? recovery : null,
+      freshness: current ? 'current' : 'missing',
       hrMax: Number(z.hrMax) || 190,
       rhr28: Number(z.rhr28) || Number(c.restingHr) || 60,
       bgBase: Number(z.bgBase) || 138,
@@ -504,16 +506,10 @@
   }
 
   function engineZoneSlice(tone, zones) {
-    const floor = Number(zones && zones.floor) || 60;
-    const max = Math.max(floor + 40, Number(zones && zones.max) || 190);
-    const bg = Math.max(floor + 8, Number(zones && zones.bg) || 138);
-    const gr = Math.max(bg + 8, Number(zones && zones.gr) || 170);
-    const span = Math.max(1, max - floor);
-    const blueEnd = Math.max(0.08, Math.min(0.45, (bg - floor) / span));
-    const greenEnd = Math.max(blueEnd + 0.12, Math.min(0.88, (gr - floor) / span));
-    if (tone === 'blue') return { start: 0, end: blueEnd };
-    if (tone === 'red') return { start: greenEnd, end: 1 };
-    return { start: blueEnd, end: greenEnd };
+    if (root.HybridEngine && typeof root.HybridEngine.zoneSlice === 'function') {
+      return root.HybridEngine.zoneSlice(tone, zones);
+    }
+    return { start: 0, end: 1 };
   }
 
   function engineZoneArc(tone, zones) {
@@ -530,7 +526,7 @@
   }
 
   function engRingSvg(tone, zones) {
-    // Morph Train gauge: grey scale, current zone as a section. Clock stays on the rail.
+    // Grey 270° HR ruler. Current zone is one section. Clock stays on the rail.
     const r = 40;
     const c = 2 * Math.PI * r;
     const arcLen = c * 0.75;

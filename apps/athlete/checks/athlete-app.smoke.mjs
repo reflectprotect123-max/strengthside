@@ -110,11 +110,14 @@ must(js.includes('function startTrainingSession'), 'Start Session entry');
   must(engineSw.includes('./hybrid-sc.js'), 'engine hybrid-sc.js in SW cache');
   must(engineSw.includes('./hybrid-integrations.js'), 'engine hybrid-integrations.js in SW cache');
   must(engineSw.includes('../connectors/whoop.js'), 'engine SW caches shared whoop.js');
-  must(engineSw.includes("CACHE = 'the-engine-v8'"), 'engine SW cache bump v8');
+  must(engineSw.includes("CACHE = 'the-engine-v9'"), 'engine SW cache bump v9');
   must(readFileSync(join(engineRoot, 'session.js'), 'utf8').includes("block.kind === 'lift') continue"), 'engine session skips lift blocks');
   must(readFileSync(join(engineRoot, 'session.js'), 'utf8').includes('isEngineHrPage'), 'engine HR page helper');
   must(readFileSync(join(engineRoot, 'logger.js'), 'utf8').includes('HybridSession.isEngineHrPage(page)'), 'engine dial gated to HR pages');
   must(readFileSync(join(root, '../../design-system/the-hybrid-engine/pages/engine.md'), 'utf8').includes('Lifting has no heart rate'), 'engine page lock: lifting has no HR');
+  must(readFileSync(join(root, '../../docs/superpowers/specs/2026-09-19-engine-live-logger-design.md'), 'utf8').includes("Today's ruler"), 'engine live logger spec');
+  must(readFileSync(join(engineRoot, 'engine.js'), 'utf8').includes('function zoneSlice'), 'horseshoe fractions live on HybridEngine.zoneSlice');
+  must(!readFileSync(join(engineRoot, 'logger.css'), 'utf8').includes('#e0a090'), 'Rest EMH does not use forbidden salmon');
   must(readFileSync(join(engineRoot, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'conditioning'"), 'engine plan sync falls back to hosted conditioning domain');
   must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
 }

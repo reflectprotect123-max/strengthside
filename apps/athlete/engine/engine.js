@@ -338,6 +338,23 @@
     return [clock, chip, num].filter(Boolean).join(' · ');
   }
 
+  function zoneSlice(tone, zones) {
+    const floor = Number(zones && zones.floor) || 60;
+    const max = Math.max(floor + 40, Number(zones && zones.max) || 190);
+    let bg = Number(zones && zones.bg);
+    let gr = Number(zones && zones.gr);
+    if (!Number.isFinite(bg)) bg = 138;
+    if (!Number.isFinite(gr)) gr = 170;
+    bg = Math.min(max - 2, Math.max(floor + 1, bg));
+    gr = Math.min(max - 1, Math.max(bg + 1, gr));
+    const span = Math.max(1, max - floor);
+    const blueEnd = (bg - floor) / span;
+    const greenEnd = (gr - floor) / span;
+    if (tone === 'blue') return { start: 0, end: blueEnd };
+    if (tone === 'red') return { start: greenEnd, end: 1 };
+    return { start: blueEnd, end: greenEnd };
+  }
+
   const HybridEngine = {
     MACHINES,
     bandFor,
@@ -355,6 +372,7 @@
     skipRestAndStart,
     closePiece,
     rxText,
+    zoneSlice,
     machineTitle(id) { return machineMeta(id).title; },
   };
 

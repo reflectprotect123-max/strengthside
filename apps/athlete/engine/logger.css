@@ -1321,19 +1321,19 @@
 }
 
 .log-intensity.eng-emh button.eng-emh-easy {
-  color: #eaf7fc;
-  background: linear-gradient(180deg, #3a7a92, #1e4a5c);
-  border: 1px solid #6eb8d6;
+  color: var(--text, #eef2f4);
+  background: var(--panel2, #181d22);
+  border: 1px solid var(--line2, rgba(255,255,255,.12));
 }
 .log-intensity.eng-emh button.eng-emh-med {
-  color: #e7fbf7;
-  background: linear-gradient(180deg, #3a8f84, #1a524c);
-  border: 1px solid #5ec4b4;
+  color: var(--copper2, #e8c49a);
+  background: var(--copper-dim, rgba(212,165,116,.14));
+  border: 1px solid var(--copper, #d4a574);
 }
 .log-intensity.eng-emh button.eng-emh-hard {
-  color: #fcedea;
-  background: linear-gradient(180deg, #9a655c, #5a322c);
-  border: 1px solid #e0a090;
+  color: #f3e6e3;
+  background: rgba(208, 137, 125, 0.22);
+  border: 1px solid var(--bad, #d0897d);
 }
 
 .eng-skip {
