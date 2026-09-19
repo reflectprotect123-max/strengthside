@@ -433,6 +433,20 @@
     return `${m}:${String(r).padStart(2, '0')}`;
   }
 
+  function engineProgress(e, now) {
+    if (!e) return 0;
+    if (e.phase === 'work' && e.workEndsAt != null && e.workSec > 0) {
+      const left = Math.max(0, e.workEndsAt - now);
+      return Math.max(0, Math.min(1, left / (e.workSec * 1000)));
+    }
+    if (e.phase === 'rest' && e.restEndsAt != null && e.restSec > 0) {
+      const left = Math.max(0, e.restEndsAt - now);
+      return Math.max(0, Math.min(1, left / (e.restSec * 1000)));
+    }
+    if (e.phase === 'tapRest') return 0;
+    return 1;
+  }
+
   function engineLiveHr() {
     const s = root.S || {};
     const raw = s.liveHr != null ? s.liveHr
@@ -502,16 +516,21 @@
     return { value: '—', unit: '' };
   }
 
-  function engRingSvg() {
-    // Full horseshoe = zone lamp only. Clock lives on the Work/Rest rail.
+  function engRingSvg(progress) {
+    // Morph: grey leftover = time used up; colored arc = time left; color = live HR zone.
     const r = 40;
     const c = 2 * Math.PI * r;
     const arcLen = c * 0.75;
     const gap = c - arcLen;
+    const filled = arcLen * Math.max(0, Math.min(1, progress || 0));
     return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="eng-ring-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="round"
+        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+        transform="rotate(135 50 50)"/>
       <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
         stroke="currentColor" stroke-linecap="round"
-        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+        stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
         transform="rotate(135 50 50)"/>
     </svg>`;
   }
@@ -531,6 +550,14 @@
     if (zoneEl) zoneEl.textContent = engineZoneName(tone);
     const morph = document.querySelector('.eng-morph');
     if (morph && morph.getAttribute('data-tone') !== tone) morph.setAttribute('data-tone', tone);
+    const arc = document.getElementById('engRingArc');
+    if (arc) {
+      const r = 40;
+      const c = 2 * Math.PI * r;
+      const arcLen = c * 0.75;
+      const filled = arcLen * engineProgress(e, now);
+      arc.setAttribute('stroke-dasharray', `${filled.toFixed(2)} ${(c - filled).toFixed(2)}`);
+    }
   }
 
   function persistEngine(nextLog) {
@@ -577,6 +604,7 @@
   function engineMorphDial(e, now, opts) {
     const zones = engineZoneBounds();
     const tone = engineRingTone(e);
+    const progress = engineProgress(e, now);
     const parts = engineTargetParts(e);
     const shown = Math.min(e.rounds, e.roundIndex + 1);
     const phaseLabel = opts.phaseLabel || 'Work';
@@ -588,7 +616,7 @@
       <div class="eng-morph" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
         <div class="eng-morph-dial">
           <div class="eng-morph-wash" aria-hidden="true"></div>
-          ${engRingSvg()}
+          ${engRingSvg(progress)}
           <div class="eng-morph-face">${face}</div>
         </div>
         ${hideRail ? '' : engineFootRail(e, parts, clock, phaseLabel, shown)}
