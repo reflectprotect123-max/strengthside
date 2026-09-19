@@ -433,20 +433,6 @@
     return `${m}:${String(r).padStart(2, '0')}`;
   }
 
-  function engineProgress(e, now) {
-    if (!e) return 0;
-    if (e.phase === 'work' && e.workEndsAt != null && e.workSec > 0) {
-      const left = Math.max(0, e.workEndsAt - now);
-      return Math.max(0, Math.min(1, left / (e.workSec * 1000)));
-    }
-    if (e.phase === 'rest' && e.restEndsAt != null && e.restSec > 0) {
-      const left = Math.max(0, e.restEndsAt - now);
-      return Math.max(0, Math.min(1, left / (e.restSec * 1000)));
-    }
-    if (e.phase === 'tapRest') return 0;
-    return 1;
-  }
-
   function engineLiveHr() {
     const s = root.S || {};
     const raw = s.liveHr != null ? s.liveHr
@@ -475,7 +461,7 @@
 
   function engineZoneBounds() {
     const K = root.HybridBrainKernel;
-    if (!K || typeof K.dailyZones !== 'function') return { bg: 138, gr: 170, max: 190 };
+    if (!K || typeof K.dailyZones !== 'function') return { bg: 138, gr: 170, max: 190, floor: 60 };
     const z = (root.S && root.S.settings && root.S.settings.zones) || {};
     const c = (root.S && root.S.checkin && (root.S.checkin[root.S.selectedDate] || root.S.checkin[Object.keys(root.S.checkin || {})[0]])) || {};
     const recovery = Number(c.whoopRecovery);
@@ -488,7 +474,7 @@
       bgBase: Number(z.bgBase) || 138,
       grBase: Number(z.grBase) || 170.5,
     });
-    return { bg: Math.round(zones.bgToday), gr: Math.round(zones.grToday), max: Number(z.hrMax) || 190 };
+    return { bg: Math.round(zones.bgToday), gr: Math.round(zones.grToday), max: Number(z.hrMax) || 190, floor: Math.round(Number(z.rhr28) || Number(c.restingHr) || 60) };
   }
 
   function engineZoneName(tone) {
@@ -516,21 +502,47 @@
     return { value: '—', unit: '' };
   }
 
-  function engRingSvg(progress) {
-    // Morph: grey leftover = time used up; colored arc = time left; color = live HR zone.
+  function engineZoneSlice(tone, zones) {
+    const floor = Number(zones && zones.floor) || 60;
+    const max = Math.max(floor + 40, Number(zones && zones.max) || 190);
+    const bg = Math.max(floor + 8, Number(zones && zones.bg) || 138);
+    const gr = Math.max(bg + 8, Number(zones && zones.gr) || 170);
+    const span = Math.max(1, max - floor);
+    const blueEnd = Math.max(0.08, Math.min(0.45, (bg - floor) / span));
+    const greenEnd = Math.max(blueEnd + 0.12, Math.min(0.88, (gr - floor) / span));
+    if (tone === 'blue') return { start: 0, end: blueEnd };
+    if (tone === 'red') return { start: greenEnd, end: 1 };
+    return { start: blueEnd, end: greenEnd };
+  }
+
+  function engineZoneArc(tone, zones) {
+    const r = 40;
+    const c = 2 * Math.PI * r;
+    const arcLen = c * 0.75;
+    const slice = engineZoneSlice(tone, zones);
+    const start = arcLen * slice.start;
+    const len = Math.max(arcLen * 0.08, arcLen * (slice.end - slice.start));
+    return {
+      dash: `${len.toFixed(2)} ${Math.max(0.01, c - len).toFixed(2)}`,
+      offset: (-start).toFixed(2),
+    };
+  }
+
+  function engRingSvg(tone, zones) {
+    // Morph Train gauge: grey scale, current zone as a section. Clock stays on the rail.
     const r = 40;
     const c = 2 * Math.PI * r;
     const arcLen = c * 0.75;
     const gap = c - arcLen;
-    const filled = arcLen * Math.max(0, Math.min(1, progress || 0));
+    const arc = engineZoneArc(tone, zones);
     return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
       <circle class="eng-ring-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
-        stroke-linecap="round"
+        stroke-linecap="butt"
         stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
         transform="rotate(135 50 50)"/>
       <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
-        stroke="currentColor" stroke-linecap="round"
-        stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
+        stroke="currentColor" stroke-linecap="butt"
+        stroke-dasharray="${arc.dash}" stroke-dashoffset="${arc.offset}"
         transform="rotate(135 50 50)"/>
     </svg>`;
   }
@@ -552,11 +564,9 @@
     if (morph && morph.getAttribute('data-tone') !== tone) morph.setAttribute('data-tone', tone);
     const arc = document.getElementById('engRingArc');
     if (arc) {
-      const r = 40;
-      const c = 2 * Math.PI * r;
-      const arcLen = c * 0.75;
-      const filled = arcLen * engineProgress(e, now);
-      arc.setAttribute('stroke-dasharray', `${filled.toFixed(2)} ${(c - filled).toFixed(2)}`);
+      const next = engineZoneArc(tone, engineZoneBounds());
+      arc.setAttribute('stroke-dasharray', next.dash);
+      arc.setAttribute('stroke-dashoffset', next.offset);
     }
   }
 
@@ -604,7 +614,6 @@
   function engineMorphDial(e, now, opts) {
     const zones = engineZoneBounds();
     const tone = engineRingTone(e);
-    const progress = engineProgress(e, now);
     const parts = engineTargetParts(e);
     const shown = Math.min(e.rounds, e.roundIndex + 1);
     const phaseLabel = opts.phaseLabel || 'Work';
@@ -616,7 +625,7 @@
       <div class="eng-morph" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
         <div class="eng-morph-dial">
           <div class="eng-morph-wash" aria-hidden="true"></div>
-          ${engRingSvg(progress)}
+          ${engRingSvg(tone, zones)}
           <div class="eng-morph-face">${face}</div>
         </div>
         ${hideRail ? '' : engineFootRail(e, parts, clock, phaseLabel, shown)}

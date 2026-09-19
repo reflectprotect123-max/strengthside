@@ -2,17 +2,20 @@
 
 Locked 19 Sep 2026. This file **wins** over MASTER on the live Engine instrument.
 
-Primary job: **glanceable HR + interval clock**, Morph-style.
+Primary job: **glanceable HR zone gauge** (Morph Train / Quick Start) plus an unchanged Work/Rest clock on the rail.
 
-## How the horseshoe works (Morph)
+## How the horseshoe works (Morph Quick Start)
 
-- **Color** = where your heart is **right now** (Blue / Green / Red)
-- **Fill length** = time **left** in this Work or Rest
-- **Grey leftover** = time already used
-- Not a map of “stay in this zone, then drop to that zone”
-- Not a fill that grows with BPM
+Official guide: HR in the center; the **current zone appears as a section** inside the gauge.
 
-BPM number + zone word match the arc color (OLED). Target watts stay on the rail. Work/Rest digits still show the clock.
+- **Blue section** = Recovery (low end of the scale)
+- **Green section** = Conditioning (middle)
+- **Red section** = Overload (high end)
+- **Grey** = the rest of the scale
+- **Color of that section** = locked OLED tokens (do not drift)
+- **Work / Rest time does not drive the fill** — clock stays on the rail
+
+BPM number + zone word match the section color.
 
 ## OLED zone tokens (do not drift)
 
@@ -24,8 +27,7 @@ BPM number + zone word match the arc color (OLED). Target watts stay on the rail
 
 ## Do not
 
-- Always-full lamp (that left Morph)
-- Encode stay/drop coaching as ring notches
-- Tool-default orange `#F97316` or dusty salmon fills
+- Drive horseshoe fill from the interval timer
+- Recolor OLED tokens
 - Put target watts in the dial hole
 - Brand as Morpheus
