@@ -26,6 +26,7 @@
   }
 
   function decideNextStrength(input) {
+    // Load / reps / miss / effort only. Heart rate is not an input for lifting.
     const step = Number(input.equipmentStepKg) || 2.5;
     const suggested = Number(input.suggestedKg);
     const actual = input.actualKg == null ? null : Number(input.actualKg);

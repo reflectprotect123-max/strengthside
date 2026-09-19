@@ -116,7 +116,7 @@
       if (s && s.phase === 'block' && root.HybridEngine) {
         const page = HybridSession.currentPage(s);
         const log = page && s.logs[page.id];
-        if (page && page.logMode === 'engine' && log && log.engine) {
+        if (page && HybridSession.isEngineHrPage(page) && log && log.engine) {
           const next = HybridEngine.tick(log, now);
           if (next !== log) {
             persistEngine(next);
@@ -180,7 +180,7 @@
 
   function headerHtml(s) {
     const page = s.phase === 'block' ? HybridSession.currentPage(s) : null;
-    if (page && page.logMode === 'engine') {
+    if (page && HybridSession.isEngineHrPage(page)) {
       return `
       <div class="log-top">
         <button type="button" class="log-back-x" onclick="Logger.chevron()" aria-label="Close">⌄</button>
@@ -434,6 +434,7 @@
   }
 
   function engineLiveHr() {
+    // Live BPM is Engine-only. Lifting never reads this.
     const s = root.S || {};
     const raw = s.liveHr != null ? s.liveHr
       : (s.session && s.session.liveHr != null) ? s.session.liveHr
@@ -918,7 +919,7 @@
     const log = s.logs[page.id] || { completed: false, sets: [], note: '' };
     let body = '';
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
-    else if (page.logMode === 'engine') body = engineHtml(s, page, log);
+    else if (HybridSession.isEngineHrPage(page)) body = engineHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
     else if (page.logMode === 'superset') {
       const members = (page.members || []).map((m) => `

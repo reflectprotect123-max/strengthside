@@ -12,7 +12,7 @@
 - **Type:** Space Grotesk (body) + Barlow Condensed (display / eyebrows)
 - **Athlete shell:** sticky brand header + 4-tab bottom nav, `max-width: 760px`
 - **Coach shell:** left nav + header + main (desktop workspace)
-- **Dial accents:** copper = strength chrome. **Engine live logger** uses OLED Blue/Green/Red (`pages/engine.md`) — not dusty teal/salmon.
+- **Dial accents:** copper = strength chrome. **Engine live logger** uses OLED Blue/Green/Red (`pages/engine.md`) — not dusty teal/salmon. Strength / lifting never uses HR or those zone tokens.
 - **Engine eyebrows / non-live chrome** may still use `--zone` teal `#5ec4b4`. The instrument itself must not.
 
 ## Tokens (Track Dawn)

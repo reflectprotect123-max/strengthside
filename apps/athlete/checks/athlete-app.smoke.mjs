@@ -46,7 +46,7 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v19'"), 'SW cache bump v19');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v20'"), 'SW cache bump v20');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("url.origin !== self.location.origin"), 'SW does not intercept WHOOP Edge');
 must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'strength'"), 'plan sync falls back to hosted strength domain');
 must(html.includes('hybrid-sc.js'), 'hybrid-sc.js in index.html');
@@ -63,6 +63,13 @@ must(js.includes('switchHybridLocker'), 'locker switch handler');
 must(js.includes('engine_side'), 'peek engine_side occupancy snapshot');
 must(readFileSync(join(root, 'timer.js'), 'utf8').includes('Rest Timer'), 'rest timer picker');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('Select Timer'), 'Select Timer chrome');
+{
+  const liftLogger = readFileSync(join(root, 'logger.js'), 'utf8');
+  must(!/\bliveHr\b/.test(liftLogger), 'strength logger has no liveHr');
+  must(!/\bBPM\b/.test(liftLogger), 'strength logger has no BPM');
+  must(!liftLogger.includes('eng-morph'), 'strength logger has no Engine HR dial');
+  must(!liftLogger.includes('engFaceHr'), 'strength logger has no HR face');
+}
 must(readFileSync(join(root, 'session.js'), 'utf8').includes("logMode: 'superset'"), 'F1/F2 same-page pairing');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('log-ss-member'), 'stacked superset paint');
 must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes('strength_side'), 'plan domain strength_side');
@@ -103,7 +110,11 @@ must(js.includes('function startTrainingSession'), 'Start Session entry');
   must(engineSw.includes('./hybrid-sc.js'), 'engine hybrid-sc.js in SW cache');
   must(engineSw.includes('./hybrid-integrations.js'), 'engine hybrid-integrations.js in SW cache');
   must(engineSw.includes('../connectors/whoop.js'), 'engine SW caches shared whoop.js');
-  must(engineSw.includes("CACHE = 'the-engine-v7'"), 'engine SW cache bump v7');
+  must(engineSw.includes("CACHE = 'the-engine-v8'"), 'engine SW cache bump v8');
+  must(readFileSync(join(engineRoot, 'session.js'), 'utf8').includes("block.kind === 'lift') continue"), 'engine session skips lift blocks');
+  must(readFileSync(join(engineRoot, 'session.js'), 'utf8').includes('isEngineHrPage'), 'engine HR page helper');
+  must(readFileSync(join(engineRoot, 'logger.js'), 'utf8').includes('HybridSession.isEngineHrPage(page)'), 'engine dial gated to HR pages');
+  must(readFileSync(join(root, '../../design-system/the-hybrid-engine/pages/engine.md'), 'utf8').includes('Lifting has no heart rate'), 'engine page lock: lifting has no HR');
   must(readFileSync(join(engineRoot, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'conditioning'"), 'engine plan sync falls back to hosted conditioning domain');
   must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
 }

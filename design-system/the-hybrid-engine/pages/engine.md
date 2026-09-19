@@ -4,6 +4,8 @@ Locked 19 Sep 2026. This file **wins** over MASTER on the live Engine instrument
 
 Primary job: **glanceable HR zone gauge** (Morph Train / Quick Start) plus an unchanged Work/Rest clock on the rail.
 
+**Lifting has no heart rate.** No BPM, no Blue/Green/Red zone section, no time-in-zone, no chest-strap prompt. Strength pages are kg / reps / sets (and Easy/Medium/Hard is not a zone). WHOOP on Me is recovery, not a lift instrument. Engine compile skips `kind: 'lift'` blocks; if a lift page is ever shown, it uses the table logger — never this dial.
+
 ## How the horseshoe works (Morph Quick Start)
 
 Official guide: HR in the center; the **current zone appears as a section** inside the gauge.

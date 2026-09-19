@@ -17,6 +17,10 @@
     return 'complete';
   }
 
+  function isEngineHrPage(page) {
+    return !!(page && page.logMode === 'engine' && page.kind === 'engine');
+  }
+
   function emptySets(page) {
     if (page.logMode === 'complete' || page.logMode === 'doneHub' || page.logMode === 'superset' || page.logMode === 'engine') return [];
     const rows = [];
@@ -136,6 +140,7 @@
   function pagesFromPlan(plan) {
     const members = [];
     for (const block of (plan && plan.blocks) || []) {
+      // Lifts never enter the Engine logger. No HR, no zone gauge, no mixed lift+dial page.
       if (!block || block.kind === 'section' || block.kind === 'lift') continue;
       members.push(pageFromBlock(block));
     }
@@ -155,7 +160,7 @@
         group.push(members[j]);
         j += 1;
       }
-      if (group.length >= 2) {
+      if (group.length >= 2 && group.every((m) => m.kind === 'lift')) {
         pages.push({
           id: pa.base,
           letter: pa.base,
@@ -435,6 +440,7 @@
     setFeel,
     finishToSummary,
     summaryStats,
+    isEngineHrPage,
   };
 
   root.HybridSession = HybridSession;

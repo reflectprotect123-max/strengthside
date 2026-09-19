@@ -1,4 +1,5 @@
 (function (root) {
+  // Strength / lifting logger: kg, reps, sets. No heart rate. No zone gauge.
   const QUOTE = 'You can’t do in a race what you haven’t prepared for.';
   const COACH = 'Train with intent. Log every set. Leave the gym already recovering. Rest as prescribed — the clock comes next.';
 
