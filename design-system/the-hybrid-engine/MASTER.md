@@ -12,7 +12,8 @@
 - **Type:** Space Grotesk (body) + Barlow Condensed (display / eyebrows)
 - **Athlete shell:** sticky brand header + 4-tab bottom nav, `max-width: 760px`
 - **Coach shell:** left nav + header + main (desktop workspace)
-- **Dial accents:** copper = strength; zone teal `#5ec4b4` = Engine / conditioning only
+- **Dial accents:** copper = strength chrome. **Engine live logger** uses OLED Blue/Green/Red (`pages/engine.md`) — not dusty teal/salmon.
+- **Engine eyebrows / non-live chrome** may still use `--zone` teal `#5ec4b4`. The instrument itself must not.
 
 ## Tokens (Track Dawn)
 
@@ -23,7 +24,10 @@
 | Borders | `--line` / `--line2` | `rgba(255,255,255,.08)` / `.12` |
 | Text | `--text` / `--muted` / `--dim` | `#eef2f4` / `#9aa3ab` / `#6f7881` |
 | Brand | `--copper` / `--copper2` / `--copper-dim` | `#d4a574` / `#e8c49a` / `rgba(212,165,116,.14)` |
-| Engine | `--zone` / `--zone-dim` | `#5ec4b4` / `rgba(94,196,180,.14)` |
+| Engine chrome | `--zone` / `--zone-dim` | `#5ec4b4` / `rgba(94,196,180,.14)` |
+| Engine live Blue | `--zone-blue` | `#00c2ff` |
+| Engine live Green | `--zone-green` | `#3dff7a` |
+| Engine live Red | `--zone-red` | `#ff2b2b` (OLED; never `#e0a090`) |
 | Status | `--ok` / `--warn` / `--bad` | `#7dba9a` / `#d4a35b` / `#d0897d` |
 | Radius | `--r` / `--r-lg` | `16px` / `22px` (coach may use `--r:16`) |
 | Tap | `--tap-min` / `--tap` | **44px minimum** on interactive controls |
@@ -44,6 +48,7 @@
 ## Anti-patterns (banned)
 
 - Generic orange `#F97316` / vibrant block startup look from generic fitness templates
+- Dusty Engine zone pastels (`#6eb8d6` / `#5ec4b4` as live fill / `#e0a090`) on the logger dial
 - Purple-on-white, cream+#terracotta editorial, broadsheet hairlines
 - Emoji as structural icons
 - Cards in heroes; dashboard clutter on first viewport of marketing surfaces
@@ -56,5 +61,6 @@
 |---------|----------------|
 | Library templates | `pages/library.md` |
 | Coach workspace | `pages/coach.md` |
+| Engine logger (live dial) | `pages/engine.md` |
 
 When building a screen: read this MASTER, then the page file if present (page wins).

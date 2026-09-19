@@ -518,23 +518,6 @@
     return { value: '—', unit: '' };
   }
 
-  function engRingZoneFrac(hr, zones) {
-    const floor = Math.max(50, Math.min(zones.bg - 35, zones.bg - 10));
-    const max = Math.max(zones.gr + 10, zones.max || 190);
-    const span = Math.max(1, max - floor);
-    return Math.max(0, Math.min(1, (hr - floor) / span));
-  }
-
-  function engRingSeg(fracStart, fracEnd, c, arcLen) {
-    const start = arcLen * Math.max(0, Math.min(1, fracStart));
-    const end = arcLen * Math.max(0, Math.min(1, fracEnd));
-    const len = Math.max(0.01, end - start);
-    return {
-      dash: `${len.toFixed(2)} ${Math.max(0.01, c - len).toFixed(2)}`,
-      offset: (-start).toFixed(2),
-    };
-  }
-
   function engRingSvg(progress, zones) {
     // Morph pattern: grey unused track, one OLED zone color for the live arc.
     const r = 40;
