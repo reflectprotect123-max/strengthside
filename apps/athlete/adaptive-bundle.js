@@ -264,3 +264,4 @@ var HybridAdaptive = (() => {
   }
   return __toCommonJS(index_exports);
 })();
+if (typeof globalThis !== "undefined") globalThis.HybridAdaptive = HybridAdaptive;

@@ -13,6 +13,7 @@
     { key: 'meters', label: 'Meters' },
     { key: 'feet', label: 'Feet' },
     { key: 'watts', label: 'Watts' },
+    { key: 'rpe', label: 'RPE' },
     { key: 'calories', label: 'Calories' },
     { key: 'inches', label: 'Inches' },
     { key: 'velocity', label: 'Velocity (m/s)' },
@@ -20,26 +21,10 @@
     { key: 'for_completion', label: 'For Completion' },
   ];
 
-  const SEED_EXERCISES = [
-    'Bench Press',
-    'Lat Pull Downs',
-    'Back Squat',
-    'Front Squat',
-    'Snatch Grip Rack Deadlift',
-    'Barbell Lateral Squat',
-    'Goblet Box Squat',
-    'Reverse Hypers',
-    'Double Leg Banded Leg Curls',
-    'Garhammer Raises',
-    'Farmer Carry',
-    'Backwards Sled Drag',
-  ];
-
   const SEED_CIRCUITS = [
-    { title: 'Deadlift Warm-Up', instructions: 'Foam roll hamstrings\nActive straight leg raises' },
-    { title: 'Bench Press Warm-Up', instructions: 'Foam roll pecs\nBiphasic pec stretch' },
-    { title: 'Recovery Breathing', instructions: '10 nasal breaths\n5s inhale · 1s hold · 5s exhale' },
-    { title: 'Cooldown', instructions: 'Worlds Greatest Stretch\nRecovery breathing' },
+    { title: 'Easy spin', instructions: '3–5 min easy on the machine you will work\nNasal breathing' },
+    { title: 'Recovery breathing', instructions: '10 nasal breaths\n5s inhale · 1s hold · 5s exhale' },
+    { title: 'Cooldown', instructions: 'Easy spin until talk-test is easy\nRecovery breathing' },
   ];
 
   function nid(prefix) {
@@ -52,11 +37,7 @@
 
   function seedCatalog() {
     return {
-      exercises: SEED_EXERCISES.map((title) => ({
-        id: nid('ex'),
-        title,
-        columns: title === 'Garhammer Raises' ? ['reps'] : ['reps', 'weight_kg'],
-      })),
+      exercises: [],
       circuits: SEED_CIRCUITS.map((c) => ({
         id: nid('ci'),
         title: c.title,
@@ -91,12 +72,15 @@
     return (state.templates || []).find((t) => t.id === tid) || null;
   }
 
-  function createTemplate(state, { title, instructions } = {}) {
+  function createTemplate(state, { title, instructions, lane } = {}) {
     const st = clone(ensure(state));
+    const kind = 'engine';
     st.templates.unshift({
       id: nid('tpl'),
-      title: String(title || 'Session Template').trim() || 'Session Template',
+      title: String(title || (kind === 'engine' ? 'Engine session' : 'Session Template')).trim()
+        || (kind === 'engine' ? 'Engine session' : 'Session Template'),
       instructions: String(instructions || ''),
+      lane: kind,
       blocks: [],
     });
     return st;
@@ -107,6 +91,30 @@
     const t = st.templates.find((x) => x.id === tid);
     if (!t) return st;
     Object.assign(t, patch);
+    return st;
+  }
+
+  function addEnginePiece(state, tid, piece = {}) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t || t.lane !== 'engine') return st;
+    const machine = piece.machine || 'row';
+    const Eng = root.HybridEngine;
+    const title = piece.title || (Eng && Eng.machineTitle(machine)) || machine;
+    t.blocks.push({
+      id: nid('blk'),
+      kind: 'engine',
+      title,
+      machine,
+      structure: piece.structure || 'intervals',
+      effort: piece.effort || 'medium',
+      workSec: Math.max(1, Number(piece.workSec) || 15),
+      restSec: Math.max(0, Number(piece.restSec) || 45),
+      rounds: Math.max(1, Number(piece.rounds) || 8),
+      typedWatts: piece.typedWatts == null || piece.typedWatts === '' ? null : Number(piece.typedWatts),
+      typedSplitSec: piece.typedSplitSec == null || piece.typedSplitSec === '' ? null : Number(piece.typedSplitSec),
+      typedRpm: piece.typedRpm == null || piece.typedRpm === '' ? null : Number(piece.typedRpm),
+    });
     return st;
   }
 
@@ -133,31 +141,10 @@
     return st;
   }
 
-  function addExercise(state, tid, { title, setCount, columns, notes, catalogId, restSec } = {}) {
+  function addExercise(state, tid) {
     const st = clone(ensure(state));
     const t = st.templates.find((x) => x.id === tid);
     if (!t) return st;
-    let cols = Array.isArray(columns) && columns.length ? columns.slice() : ['reps', 'weight_kg'];
-    let name = title || 'Exercise';
-    if (catalogId) {
-      const hit = st.catalog.exercises.find((c) => c.id === catalogId);
-      if (hit) {
-        name = hit.title;
-        cols = (hit.columns || cols).slice();
-      }
-    }
-    cols = cols.filter((k) => k && k !== 'none');
-    if (!cols.length) cols = ['reps'];
-    t.blocks.push({
-      id: nid('blk'),
-      kind: 'lift',
-      title: name,
-      setCount: Math.max(1, Number(setCount) || 3),
-      columns: cols,
-      notes: Array.isArray(notes) ? notes : [],
-      restSec: restSec == null ? 120 : Number(restSec) || 0,
-      groupId: null,
-    });
     return st;
   }
 
@@ -261,23 +248,43 @@
   }
 
   function sectionFor(block) {
+    if (block.kind === 'engine') return 'The Engine';
     if (block.kind === 'circuit') {
       if (/recover|cool/i.test(block.title || '')) return 'Recovery';
       return 'Conditioning';
     }
-    return 'Strength/Power';
+    return 'Conditioning';
   }
 
   function compile(tpl) {
     const blocks = [];
     let lastSection = '';
     for (const b of lettered(tpl)) {
+      if (b.kind === 'lift') continue;
       const section = sectionFor(b);
       if (section !== lastSection) {
         blocks.push({ kind: 'section', label: section.toUpperCase() });
         lastSection = section;
       }
-      if (b.kind === 'circuit') {
+      if (b.kind === 'engine') {
+        const Eng = root.HybridEngine;
+        blocks.push({
+          kind: 'engine',
+          letter: b.letter,
+          title: b.title,
+          machine: b.machine,
+          structure: b.structure,
+          effort: b.effort,
+          workSec: b.workSec,
+          restSec: b.restSec,
+          rounds: b.rounds,
+          typedWatts: b.typedWatts,
+          typedSplitSec: b.typedSplitSec,
+          typedRpm: b.typedRpm,
+          prescription: Eng ? Eng.rxText(b) : `${b.rounds} rounds`,
+          section,
+        });
+      } else if (b.kind === 'circuit') {
         const recovery = /recover|cool/i.test(b.title || '');
         blocks.push({
           kind: recovery ? 'recovery' : 'warmup',
@@ -288,23 +295,11 @@
           footer: 'For Completion',
           section,
         });
-      } else {
-        blocks.push({
-          kind: 'lift',
-          letter: b.letter,
-          title: b.title,
-          prescription: rxFor(b),
-          notes: b.notes || [],
-          columns: (b.columns || ['reps']).slice(),
-          setCount: b.setCount,
-          restSec: b.restSec,
-          section,
-        });
       }
     }
     return {
       id: tpl.id,
-      title: tpl.title || 'Session Template',
+      title: tpl.title || 'Engine session',
       instructions: tpl.instructions || '',
       blocks,
       dots: {},
@@ -387,6 +382,7 @@
     patchTemplate,
     deleteTemplate,
     addCircuit,
+    addEnginePiece,
     addExercise,
     removeBlock,
     moveBlock,

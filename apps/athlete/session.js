@@ -12,14 +12,13 @@
   }
 
   function logModeFor(block, rx) {
+    if (block.kind === 'engine') return 'engine';
     if (block.kind === 'warmup' || block.kind === 'recovery') return 'complete';
-    if (rx.isMax) return 'max';
-    if (/^F\d/i.test(block.letter || '')) return 'reps';
-    return 'kg';
+    return 'complete';
   }
 
   function emptySets(page) {
-    if (page.logMode === 'complete' || page.logMode === 'doneHub' || page.logMode === 'superset') return [];
+    if (page.logMode === 'complete' || page.logMode === 'doneHub' || page.logMode === 'superset' || page.logMode === 'engine') return [];
     const rows = [];
     for (let i = 0; i < page.setCount; i++) {
       rows.push({
@@ -70,6 +69,19 @@
         note: '',
       };
     }
+    if (page.logMode === 'engine' && !session.logs[page.id].engine && root.HybridEngine) {
+      const anchors = session.engineAnchors || {};
+      const day = session.date;
+      const checkin = (root.S && root.S.checkin && day && root.S.checkin[day]) || {};
+      const rec = Number(checkin.whoopRecovery);
+      const ready = root.HybridEngine.readyLog(
+        page,
+        root.HybridAdaptive,
+        anchors[page.machine] || null,
+        Number.isFinite(rec) && rec > 0 ? rec : null,
+      );
+      session.logs[page.id] = { ...session.logs[page.id], ...ready };
+    }
     return session.logs[page.id];
   }
 
@@ -105,17 +117,26 @@
       note: block.note || '',
       goal: block.goal || '',
       footer: block.footer || '',
-      section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
-      setCount: mode === 'complete' ? 0 : (Number(block.setCount) || rx.setCount),
+      section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'The Engine'),
+      setCount: mode === 'complete' || mode === 'engine' ? 0 : (Number(block.setCount) || rx.setCount),
       targetReps: rx.targetReps,
-      columns: cols.length ? cols : (mode === 'kg' ? ['reps', 'weight_kg'] : cols),
+      columns: cols,
+      machine: block.machine,
+      structure: block.structure,
+      effort: block.effort,
+      workSec: block.workSec,
+      restSec: block.restSec,
+      rounds: block.rounds,
+      typedWatts: block.typedWatts,
+      typedSplitSec: block.typedSplitSec,
+      typedRpm: block.typedRpm,
     };
   }
 
   function pagesFromPlan(plan) {
     const members = [];
     for (const block of (plan && plan.blocks) || []) {
-      if (!block || block.kind === 'section') continue;
+      if (!block || block.kind === 'section' || block.kind === 'lift') continue;
       members.push(pageFromBlock(block));
     }
     const pages = [];
@@ -175,60 +196,12 @@
     return session;
   }
 
-  function memoryKey(title) {
-    return String(title || '').trim().toLowerCase();
-  }
-
-  function seedLift(session, lift) {
-    if (!lift || lift.logMode !== 'kg') return;
-    const mem = (session.liftMemory || {})[memoryKey(lift.title)];
-    if (!mem) return;
-    session.workingMax = session.workingMax || {};
-    if (mem.e1rmKg) session.workingMax[lift.id] = mem.e1rmKg;
-    const log = session.logs[lift.id];
-    if (!log || !log.sets || !log.sets[0]) return;
-    if (log.sets[0].kg != null && log.sets[0].kg !== '') return;
-    const K = brainKernel();
-    const cols = (lift.columns && lift.columns.length) ? lift.columns : ['reps', 'weight_kg'];
-    const kg = K && typeof K.openingKg === 'function'
-      ? K.openingKg({
-        columns: cols,
-        lastKg: mem.lastKg,
-        e1rmKg: mem.e1rmKg,
-        lastPct: mem.lastPct,
-        lastEffort: mem.lastEffort,
-        lastMiss: mem.lastMiss,
-        lastReps: mem.lastReps,
-        targetReps: lift.targetReps,
-      })
-      : mem.lastKg;
-    if (kg == null || kg === '') return;
-    log.sets[0].kg = kg;
-    log.sets[0].suggestedKg = kg;
-  }
-
-  function seedOpeningLoads(session, liftMemory) {
-    const s = session;
-    s.liftMemory = Object.assign({}, liftMemory || {}, s.liftMemory || {});
-    s.workingMax = s.workingMax || {};
-    for (const page of s.pages || []) {
-      if (page.logMode === 'superset') {
-        for (const m of page.members || []) seedLift(s, m);
-      } else {
-        seedLift(s, page);
-      }
-    }
-    return s;
-  }
-
-  function startSession({ date, plan, letter, existing, liftMemory } = {}) {
+  function startSession({ date, plan, letter, existing } = {}) {
     const pages = pagesFromPlan(plan);
-    const memory = liftMemory || (existing && existing.liftMemory) || {};
     if (existing && existing.date === date && existing.phase !== 'summary' && !letter) {
       const s = clone(existing);
       s.pages = pages;
-      s.liftMemory = Object.assign({}, memory, s.liftMemory || {});
-      return seedOpeningLoads(attachLogs(s), s.liftMemory);
+      return attachLogs(s);
     }
     const session = attachLogs({
       date,
@@ -240,7 +213,9 @@
       pages,
       logs: {},
       workingMax: {},
-      liftMemory: Object.assign({}, memory),
+      engineAnchors: (existing && existing.engineAnchors)
+        || (root.S && root.S.engineAnchors)
+        || {},
       feel: { intensity: null, durationMin: 0, note: '' },
       unit: 'kg',
     });
@@ -248,7 +223,7 @@
       const idx = pages.findIndex((p) => pageMatchesLetter(p, letter));
       session.blockIndex = idx >= 0 ? idx : 0;
     }
-    return seedOpeningLoads(session, memory);
+    return session;
   }
 
   function ackQuote(session) {
@@ -304,84 +279,20 @@
     return s;
   }
 
-  function effortLabel(effort) {
-    return effort === 'easy' || effort === 'medium' || effort === 'hard';
-  }
-
-  function canLogRow(row, liftPage) {
-    if (row.miss) return true;
-    if (!effortLabel(row.effort)) return false;
-    const hasReps = row.reps != null && row.reps !== '';
-    const hasKg = row.kg != null && row.kg !== '';
-    const isMax = liftPage && liftPage.logMode === 'max';
-    return hasReps && (hasKg || isMax);
-  }
-
   function logSet(session, setIndex, patch, memberId) {
     const s = clone(session);
     const page = currentPage(s);
     const log = getLog(s, page, memberId);
     const row = log.sets[setIndex];
     if (!row) return s;
-    const liftPage = page.logMode === 'superset' ? memberOf(page, memberId) : page;
     if (patch.reps != null) row.reps = Number(patch.reps);
     if (patch.kg != null) row.kg = Number(patch.kg);
     if (patch.cells && typeof patch.cells === 'object') {
       row.cells = { ...(row.cells || {}), ...patch.cells };
     }
     if (patch.miss != null) row.miss = !!patch.miss;
-    if (patch.effort !== undefined) row.effort = patch.effort;
-    row.logged = canLogRow(row, liftPage);
-    if (row.logged) applyStrengthBrain(s, setIndex, memberId, liftPage);
-    if (row.logged && liftPage && liftPage.logMode === 'kg') {
-      const K = brainKernel();
-      s.liftMemory = s.liftMemory || {};
-      const key = memoryKey(liftPage.title);
-      if (K && typeof K.rememberLift === 'function') {
-        s.liftMemory[key] = K.rememberLift(s.liftMemory[key], {
-          loadKg: row.kg,
-          reps: row.reps,
-          effort: row.effort,
-          miss: row.miss,
-        });
-        if (s.liftMemory[key].e1rmKg) {
-          s.workingMax = s.workingMax || {};
-          s.workingMax[liftPage.id] = s.liftMemory[key].e1rmKg;
-        }
-      }
-    }
+    row.logged = true;
     return s;
-  }
-
-  function brainKernel() {
-    return root.HybridBrainKernel;
-  }
-
-  function applyStrengthBrain(session, setIndex, memberId, liftPage) {
-    const K = brainKernel();
-    if (!K || typeof K.decideNext !== 'function') return;
-    const log = getLog(session, currentPage(session), memberId);
-    const row = log.sets[setIndex];
-    const suggested = row.suggestedKg != null ? row.suggestedKg : row.kg;
-    const out = K.decideNext({
-      kind: 'strength',
-      intendedEffort: (liftPage && liftPage.intendedEffort) || 'medium',
-      reportedEffort: row.effort,
-      suggestedKg: suggested,
-      actualKg: row.kg,
-      miss: row.miss,
-      completedReps: row.reps,
-      targetReps: liftPage && liftPage.targetReps,
-      equipmentStepKg: 2.5,
-    });
-    log.nextKg = out.nextKg;
-    log.ruleVersion = out.ruleVersion;
-    const nxt = log.sets[setIndex + 1];
-    if (nxt && !nxt.logged && nxt.kg == null && out.nextKg != null) {
-      nxt.kg = out.nextKg;
-      nxt.suggestedKg = out.nextKg;
-    }
-    session.strengthClose = K.close({ kind: 'strength', actualKg: row.kg });
   }
 
   function toggleLogged(session, setIndex, memberId) {
@@ -429,23 +340,20 @@
     const s = clone(session);
     s.workingMax = s.workingMax || {};
     s.workingMax[exerciseId] = Number(value);
-    const page = (s.pages || []).find((p) => p.id === exerciseId)
-      || ((s.pages || []).flatMap((p) => p.members || []).find((m) => m.id === exerciseId));
-    if (page && page.title) {
-      s.liftMemory = s.liftMemory || {};
-      const key = memoryKey(page.title);
-      s.liftMemory[key] = Object.assign({}, s.liftMemory[key] || {}, { e1rmKg: Number(value) });
-    }
     return s;
   }
 
   function openFeel(session) {
+    return openSummary(session);
+  }
+
+  function openSummary(session) {
     const s = clone(session);
+    s.phase = 'summary';
     const started = s.startedAt || Date.now();
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     s.feel = s.feel || {};
     if (!s.feel.durationMin) s.feel.durationMin = mins;
-    s.phase = 'summary';
     return s;
   }
 
@@ -468,7 +376,7 @@
     let blocksDone = 0;
     const workPages = session.pages.filter((p) => p.logMode !== 'doneHub');
     for (const page of workPages) {
-      if (page.logMode === 'complete') {
+      if (page.logMode === 'complete' || page.logMode === 'engine') {
         const log = (session.logs || {})[page.id];
         if (log && log.completed) {
           exercises += 1;
@@ -518,13 +426,12 @@
     logSet,
     toggleLogged,
     autofillFrom,
-    seedOpeningLoads,
-    memoryKey,
     logIdsForPage,
     memberOf,
     totals,
     setWorkingMax,
     openFeel,
+    openSummary,
     setFeel,
     finishToSummary,
     summaryStats,

@@ -1,11 +1,11 @@
 /* WHOOP bridge — one connection per HYBRID S&C login (Supabase user u:). */
 (function (global) {
   function cfg() {
-    return global.STRENGTH_CONFIG || global.ENGINE_CONFIG || {};
+    return global.ENGINE_CONFIG || global.STRENGTH_CONFIG || {};
   }
   function hybridProduct() {
     const c = cfg();
-    return c.hybridProduct || 'strength';
+    return c.hybridProduct || 'engine';
   }
   const SUPABASE_URL = cfg().supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co';
   const SUPABASE_ANON = cfg().supabaseAnon || '';
@@ -131,7 +131,7 @@
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
       const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
       const friendly = (res.status === 401 || raw === 'unauthorized')
-        ? 'Sign in again in HYBRID S&C, then tap Connect WHOOP'
+        ? 'Sign in again in The Engine, then tap Connect WHOOP'
         : (boot ? 'WHOOP service is down — try again in a minute' : raw);
       const e = new Error(friendly);
       e.status = res.status; e.body = body; throw e;
