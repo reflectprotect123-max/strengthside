@@ -2,6 +2,14 @@ name: Dogfood APK
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/athlete/**'
+      - 'apps/mobile/**'
+      - 'packages/brain/**'
+      - 'packages/adaptive/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/dogfood-apk.yml'
   push:
     branches: [main]
     paths:
@@ -66,6 +74,7 @@ jobs:
         run: bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
 
       - name: Publish dogfood-latest release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -73,7 +82,7 @@ jobs:
           APK_SRC="apps/mobile/capacitor/android/app/build/outputs/apk/debug/app-debug.apk"
           APK="apps/mobile/capacitor/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
           cp -f "$APK_SRC" "$APK"
-          BUILD="$(grep -o "THE-brain-v1" apps/athlete/app.js | head -1 || echo THE-brain-v1)"
+          BUILD="$(grep -oE 'THE-(hybrid-engine|brain)-v[0-9]+' apps/athlete/app.js | head -1 || echo THE-hybrid-engine-v1)"
           SHA="$(git rev-parse --short HEAD)"
           NOTES="Debug Android shell for THE Hybrid athlete app.
 
