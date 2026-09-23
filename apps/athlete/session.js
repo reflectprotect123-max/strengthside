@@ -32,12 +32,6 @@
     return rows;
   }
 
-  function letterParts(letter) {
-    const m = String(letter || '').match(/^([A-Za-z]+)(\d+)$/);
-    if (!m) return null;
-    return { base: m[1].toUpperCase(), n: Number(m[2]) };
-  }
-
   function logIdsForPage(page) {
     if (page && page.logMode === 'superset') return (page.members || []).map((m) => m.id);
     return page ? [page.id] : [];
@@ -134,50 +128,10 @@
   }
 
   function pagesFromPlan(plan) {
-    const members = [];
+    const pages = [];
     for (const block of (plan && plan.blocks) || []) {
       if (!block || block.kind === 'section' || block.kind === 'lift') continue;
-      members.push(pageFromBlock(block));
-    }
-    const pages = [];
-    for (let i = 0; i < members.length; i++) {
-      const a = members[i];
-      const pa = letterParts(a.letter);
-      if (!pa) {
-        pages.push(a);
-        continue;
-      }
-      const group = [a];
-      let j = i + 1;
-      while (j < members.length) {
-        const pb = letterParts(members[j].letter);
-        if (!pb || pb.base !== pa.base || pb.n !== pa.n + (j - i)) break;
-        group.push(members[j]);
-        j += 1;
-      }
-      if (group.length >= 2) {
-        pages.push({
-          id: pa.base,
-          letter: pa.base,
-          title: group.map((m) => m.title).join(' / '),
-          kind: 'lift',
-          logMode: 'superset',
-          prescription: '',
-          notes: [],
-          items: [],
-          bullets: [],
-          note: '',
-          goal: '',
-          footer: '',
-          section: a.section,
-          setCount: 0,
-          targetReps: null,
-          members: group,
-        });
-        i = j - 1;
-      } else {
-        pages.push(a);
-      }
+      pages.push(pageFromBlock(block));
     }
     pages.push({
       id: 'done',

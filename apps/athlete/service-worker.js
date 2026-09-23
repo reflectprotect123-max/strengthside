@@ -1,4 +1,4 @@
-const CACHE = 'the-engine-v18';
+const CACHE = 'the-engine-v19';
 const ASSETS = ['./', './index.html', './engine-config.js', './app.js', './home.css', './logger.css', './library.css', './session.js', './engine.js', './library.js', './library-ui.js', './logger.js', './timer.js', './brain-bundle.js', './brain-kernel.js', './adaptive-bundle.js', './native-bridge.js', './plan-sync.js', './hybrid-sc.js', './hybrid-integrations.js', './connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {

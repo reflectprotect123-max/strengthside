@@ -208,23 +208,12 @@
     let i = 0;
     while (i < blocks.length) {
       const b = blocks[i];
-      if (b.kind !== 'lift') {
-        b.letter = String.fromCharCode(code++);
+      if (b.kind === 'lift') {
         i += 1;
         continue;
       }
-      const run = [b];
-      let j = i + 1;
-      if (b.groupId) {
-        while (j < blocks.length && blocks[j].kind === 'lift' && blocks[j].groupId === b.groupId) {
-          run.push(blocks[j]);
-          j += 1;
-        }
-      }
-      const L = String.fromCharCode(code++);
-      if (run.length === 1) run[0].letter = L;
-      else run.forEach((x, n) => { x.letter = L + String(n + 1); });
-      i = j;
+      b.letter = String.fromCharCode(code++);
+      i += 1;
     }
     return blocks;
   }

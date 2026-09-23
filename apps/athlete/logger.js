@@ -622,7 +622,7 @@
     return `
       <div class="log-sum">
         <p class="log-kicker">${esc(s.date)}</p>
-        <h2 class="log-title">Heavy Lower</h2>
+        <h2 class="log-title">${esc(s.title || 'Session')}</h2>
         <div class="log-stat"><span>Exercises</span><b>${st.exercises}</b></div>
         <div class="log-stat"><span>Sets</span><b>${st.sets}</b></div>
         <div class="log-stat"><span>Reps</span><b>${st.reps}</b></div>
@@ -667,7 +667,7 @@
         <div class="log-sheet" onclick="if(event.target===this)Logger.sheet(null)">
           <div class="log-sheet-card">
             <h2>Set a new goal</h2>
-            <p>Track a target for this lift. Hybrid keeps this on the phone for now.</p>
+            <p>Track a target for this piece. Hybrid keeps this on the phone for now.</p>
             <button type="button" class="log-primary" onclick="Logger.sheet(null)">Got it</button>
           </div>
         </div>`;
@@ -691,17 +691,7 @@
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
     else if (page.logMode === 'engine') body = engineHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
-    else if (page.logMode === 'superset') {
-      const members = (page.members || []).map((m) => `
-        <section class="log-ss-member">
-          <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
-          ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
-          ${tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
-        </section>`).join('');
-      body = `
-        <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
-        <div class="log-ss">${members}</div>`;
-    } else {
+    else {
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
         <h2 class="log-title">${esc(page.title)}</h2>
@@ -790,17 +780,17 @@
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);
-      const id = page.logMode === 'superset' ? memberId : page.id;
+      const id = memberId || page.id;
       s.logs[id].note = v;
       persist(s);
     },
     focusPad(memberId, setIndex, field) {
       const s = session();
       const page = HybridSession.currentPage(s);
-      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const row = s.logs[lift.id].sets[setIndex];
+      const piece = HybridSession.memberOf(page, memberId) || page;
+      const row = s.logs[piece.id].sets[setIndex];
       const seed = field === 'kg' ? row.kg : field === 'reps' ? row.reps : (row.cells && row.cells[field]);
-      pad = { memberId: lift.id, setIndex, field, buffer: seed == null ? '' : String(seed), miss: !!row.miss };
+      pad = { memberId: piece.id, setIndex, field, buffer: seed == null ? '' : String(seed), miss: !!row.miss };
       paint();
     },
     closePad() { pad = null; paint(); },
@@ -819,16 +809,6 @@
       else if (pad.field === 'reps') patch.reps = n;
       else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), pad.setIndex, patch, pad.memberId);
-      if (pad.field === 'kg' && n > 0) {
-        const page = HybridSession.currentPage(s);
-        const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, pad.memberId) : page;
-        const prev = Math.max(0, ...s.logs[lift.id].sets.filter((r, i) => i !== pad.setIndex && r.logged).map((r) => r.kg || 0));
-        if (n >= prev && lift.targetReps) {
-          toast = `New ${lift.targetReps} Rep Max!`;
-          clearTimeout(toastTimer);
-          toastTimer = setTimeout(() => { toast = ''; paint(); }, 2200);
-        }
-      }
       pad = null;
       persist(s);
     },
@@ -848,10 +828,10 @@
     check(memberId, i) {
       const s = session();
       const page = HybridSession.currentPage(s);
-      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const row = s.logs[lift.id].sets[i];
-      if (!row.logged) persist(HybridSession.logSet(s, i, {}, lift.id));
-      else persist(HybridSession.toggleLogged(s, i, lift.id));
+      const piece = HybridSession.memberOf(page, memberId) || page;
+      const row = s.logs[piece.id].sets[i];
+      if (!row.logged) persist(HybridSession.logSet(s, i, {}, piece.id));
+      else persist(HybridSession.toggleLogged(s, i, piece.id));
     },
     unit(u) {
       const s = JSON.parse(JSON.stringify(session()));
@@ -861,11 +841,11 @@
     nudgeSets(memberId, dir) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);
-      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const log = s.logs[lift.id];
+      const piece = HybridSession.memberOf(page, memberId) || page;
+      const log = s.logs[piece.id];
       if (dir > 0) {
         log.sets.push({
-          reps: lift.logMode === 'max' ? null : lift.targetReps,
+          reps: piece.logMode === 'max' ? null : piece.targetReps,
           kg: null,
           cells: {},
           logged: false,

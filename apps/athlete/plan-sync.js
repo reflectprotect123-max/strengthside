@@ -78,11 +78,6 @@
     }, prev.session[catalogId]);
     sessions.push(catalogEnt);
     sessions.push(touch({
-      id: 'lift_memory',
-      kind: 'lift_memory',
-      memory: (state && state.liftMemory) || {},
-    }, prev.session.lift_memory));
-    sessions.push(touch({
       id: 'engine_anchors',
       kind: 'engine_anchors',
       anchors: (state && state.engineAnchors) || {},
@@ -181,7 +176,6 @@
       if (row.kind === 'assignment' && row.date) assignments[row.date] = row.templateId;
       else if (row.kind === 'log' && row.date) sessions[row.date] = row.payload;
       else if (row.kind === 'catalog') catalog = { exercises: row.exercises || [], circuits: row.circuits || [] };
-      else if (row.kind === 'lift_memory') next.liftMemory = row.memory || {};
       else if (row.kind === 'engine_anchors') next.engineAnchors = row.anchors || {};
     });
     next.library = {

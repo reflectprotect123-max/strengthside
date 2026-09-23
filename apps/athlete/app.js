@@ -20,7 +20,6 @@ const defaultState = () => ({
   library: null,
   sessions: {},
   engineAnchors: {},
-  liftMemory: {},
   planSync: { acks: { template: {}, session: {} }, snapshotRev: 0, lastPlan: null },
   libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,

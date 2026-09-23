@@ -96,14 +96,13 @@ test('tombstone drops the entity', () => {
   assert.ok(plan.tombstones.some((t) => t.id === 'tpl_a'));
 });
 
-test('pack and apply roundtrip liftMemory', () => {
+test('pack does not ship liftMemory', () => {
   const s = libState([]);
   s.liftMemory = { bench: { lastKg: 100, e1rmKg: 116.7 } };
   const packed = P.pack(s);
-  const row = packed.sessions.find((x) => x.kind === 'lift_memory');
-  assert.equal(row.memory.bench.lastKg, 100);
+  assert.equal(packed.sessions.find((x) => x.kind === 'lift_memory'), undefined);
   const next = P.applyPlan({ library: { templates: [], catalog: { exercises: [], circuits: [] }, assignments: {} }, sessions: {} }, packed);
-  assert.equal(next.liftMemory.bench.lastKg, 100);
+  assert.equal(next.liftMemory, undefined);
 });
 
 test('stale snapshot revision is a conflict from the transport', async () => {
