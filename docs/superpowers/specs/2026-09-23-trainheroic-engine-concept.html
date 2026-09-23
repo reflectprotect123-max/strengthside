@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Engine — TrainHeroic concept</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --void: #000000;
+      --raised: #111111;
+      --ink: #ffffff;
+      --mute: #8e8e93;
+      --engine: #5ec4b7;
+      --cta: #ffffff;
+      --cta-ink: #000000;
+      --line: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #090909;
+      color: var(--ink);
+      font-family: Barlow, ui-sans-serif, system-ui, sans-serif;
+    }
+    body { padding: 32px 20px 80px; }
+    h1.page {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: clamp(40px, 8vw, 72px);
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+    .lede {
+      max-width: 640px;
+      color: var(--mute);
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 0 36px;
+    }
+    .board {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      align-items: flex-start;
+    }
+    .phone {
+      width: 390px;
+      height: 844px;
+      background: var(--void);
+      border: 1px solid var(--line);
+      border-radius: 36px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+      flex: 0 0 390px;
+    }
+    .status {
+      height: 54px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 22px 8px;
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+    }
+    .screen { padding: 8px 20px 0; height: calc(100% - 54px); display: flex; flex-direction: column; }
+    .kicker {
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--mute);
+      font-weight: 600;
+    }
+    .title {
+      font-family: "Barlow Condensed", sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      line-height: 0.88;
+    }
+    .list { flex: 1; overflow: hidden; margin-top: 22px; }
+    .row {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .tile {
+      width: 56px;
+      height: 56px;
+      background: var(--raised);
+      display: grid;
+      place-items: center;
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      box-shadow: inset 0 -2px 0 var(--engine);
+    }
+    .piece { font-family: "Barlow Condensed", sans-serif; font-size: 28px; line-height: 0.95; text-transform: uppercase; margin: 0; }
+    .rx { color: var(--mute); font-size: 14px; margin: 4px 0 0; }
+    .sticky {
+      margin: auto -20px 0;
+      padding: 16px 20px 28px;
+      background: linear-gradient(to top, #000 70%, transparent);
+    }
+    .cta {
+      width: 100%;
+      height: 56px;
+      border: 0;
+      background: var(--cta);
+      color: var(--cta-ink);
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .ghost {
+      width: 100%;
+      margin-top: 10px;
+      background: transparent;
+      border: 0;
+      color: var(--mute);
+      font: 500 14px Barlow, sans-serif;
+      cursor: pointer;
+    }
+    .clock-wrap { flex: 1; display: grid; place-items: center; text-align: center; }
+    .stage {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto;
+    }
+    .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(var(--ink) 0 62%, var(--line) 62% 100%);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+    }
+    .clock {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 118px;
+      font-weight: 700;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .target { color: var(--mute); margin-top: 12px; font-size: 15px; }
+    .ring {
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        conic-gradient(var(--ink) 0 62%, var(--line) 62% 100%);
+      mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+    }
+    .ring-inner {
+      width: 268px;
+      height: 268px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+    }
+    .dawn {
+      height: 2px;
+      width: 72px;
+      background: var(--engine);
+      margin: 16px auto 0;
+    }
+    .tag { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mute); margin-bottom: 18px; }
+  </style>
+</head>
+<body>
+  <p class="tag">Concept · not live CSS</p>
+  <h1 class="page">The Engine</h1>
+  <p class="lede">TrainHeroic bones: true black, condensed type, letter tiles, sticky Start, rest ring. Engine identity: one letter and a race clock. White is the only shout. Teal is a hairline. WHOOP stays on Home.</p>
+  <div class="board">
+    <section class="phone" aria-label="Training list concept">
+      <div class="status"><span>9:41</span><span>THE ENGINE</span></div>
+      <div class="screen">
+        <p class="kicker">Wed 23 · Hard day</p>
+        <h2 class="title" style="font-size:52px;margin:8px 0 0">Echo<br>VO2</h2>
+        <div class="list">
+          <div class="row"><div class="tile">A</div><div><p class="piece">Easy spin</p><p class="rx">3 min nasal</p></div></div>
+          <div class="row"><div class="tile">B</div><div><p class="piece">Echo</p><p class="rx">8 × 15s / 45s</p></div></div>
+          <div class="row"><div class="tile">C</div><div><p class="piece">Breathe</p><p class="rx">Recovery</p></div></div>
+        </div>
+        <div class="sticky"><button class="cta" type="button">Start</button></div>
+      </div>
+    </section>
+    <section class="phone" aria-label="Work clock concept">
+      <div class="status"><span>9:41</span><span>WORK</span></div>
+      <div class="screen">
+        <p class="kicker">B · Echo · Bout 3 / 8</p>
+        <div class="clock-wrap">
+          <div class="clock">0:15</div>
+          <p class="target">Hold 62 rpm · last Close</p>
+        </div>
+        <div class="sticky">
+          <button class="cta" type="button">Log bout</button>
+          <button class="ghost" type="button">Skip this bout</button>
+        </div>
+      </div>
+    </section>
+    <section class="phone" aria-label="Rest ring concept">
+      <div class="status"><span>9:41</span><span>REST</span></div>
+      <div class="screen">
+        <p class="kicker">B · Echo · Rest 3 / 8</p>
+        <div class="clock-wrap">
+          <div class="stage">
+            <div class="ring" aria-hidden="true"></div>
+            <div class="clock" style="font-size:96px">0:17</div>
+          </div>
+          <div class="dawn" aria-hidden="true"></div>
+          <p class="target">Clock owns the rest. Teal only at dawn.</p>
+        </div>
+        <div class="sticky">
+          <button class="ghost" type="button">Skip rest</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
