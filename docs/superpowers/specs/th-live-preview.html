@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Engine — TrainHeroic paint</title>
+  <title>The Engine — OLED + TrainHeroic</title>
   <link rel="stylesheet" href="../../../apps/athlete/home.css" />
   <link rel="stylesheet" href="../../../apps/athlete/logger.css" />
   <link rel="stylesheet" href="../../../apps/athlete/th.css" />
@@ -15,6 +15,21 @@
 </head>
 <body>
   <div class="row">
+    <div class="shell" style="position:relative;height:720px;overflow:hidden">
+      <div class="shell-screen--oled" style="padding:16px">
+        <header class="home-top"><span class="home-mark">TH</span><div class="home-brand-text"><b>THE ENGINE</b><small>Conditioning</small></div></header>
+        <p class="ath-date">Wednesday, 24 Sep</p>
+        <section class="ath-module-whoop">
+          <span class="ath-label">WHOOP</span>
+          <div class="ath-whoop-dials" style="display:flex;gap:8px;justify-content:space-between;padding:12px 0">
+            <div style="text-align:center"><svg width="88" height="88"><circle cx="44" cy="44" r="36" fill="none" stroke="#2c2c2e" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="#9db4c8" stroke-width="7" stroke-dasharray="226" stroke-dashoffset="50" transform="rotate(-90 44 44)"/></svg><div class="ath-label">Sleep</div></div>
+            <div style="text-align:center"><svg width="88" height="88"><circle cx="44" cy="44" r="36" fill="none" stroke="#2c2c2e" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="#16ec06" stroke-width="7" stroke-dasharray="226" stroke-dashoffset="70" transform="rotate(-90 44 44)"/></svg><div class="ath-label">Recovery</div></div>
+            <div style="text-align:center"><svg width="88" height="88"><circle cx="44" cy="44" r="36" fill="none" stroke="#2c2c2e" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="#1ba3ff" stroke-width="7" stroke-dasharray="226" stroke-dashoffset="120" transform="rotate(-90 44 44)"/></svg><div class="ath-label">Strain</div></div>
+          </div>
+        </section>
+        <button type="button" class="btn oled-cta create-session-btn">Create session</button>
+      </div>
+    </div>
     <div class="shell" style="position:relative;height:720px;overflow:hidden">
       <div class="shell-screen shell-screen--training" style="min-height:720px;max-height:720px">
         <div class="trn-top"><span class="trn-month">The Engine</span></div>

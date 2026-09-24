@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
 
-/* TrainHeroic logger paint. Tokens: design-system/the-engine/MASTER.md */
+/* OLED chassis. TrainHeroic session grammar only on training + logger. */
 :root {
   --oled-bg: #000000;
   --oled-surface: #121212;
@@ -16,7 +16,8 @@
   --engine: #8e8e93;
   --trn-letter-bg: #3a3a3c;
   --trn-blue: #8e8e93;
-  --font-body: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-session: "Barlow", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -24,6 +25,13 @@ html, body, .shell {
   background: #000;
   color: #fff;
   font-family: var(--font-body);
+}
+
+.shell-screen--training,
+#logger,
+.log-screen,
+.tm-full {
+  font-family: var(--font-session);
 }
 
 button:focus-visible,
@@ -134,8 +142,6 @@ input:focus-visible {
 }
 
 .log-primary,
-.btn.oled-cta,
-.create-session-btn,
 .eng-go {
   background: var(--cta) !important;
   color: var(--cta-ink) !important;
@@ -150,7 +156,6 @@ input:focus-visible {
 }
 
 .log-primary:active,
-.btn.oled-cta:active,
 .eng-go:active {
   opacity: 0.88;
 }
@@ -174,7 +179,7 @@ input:focus-visible {
 .tm-full {
   background: #000;
   color: #fff;
-  font-family: var(--font-body);
+  font-family: var(--font-session);
 }
 
 .log-kicker,

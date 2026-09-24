@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 :root {
   --oled-bg: #000000;
@@ -18,7 +18,7 @@
   --recovery-room: #9fd356;
   --trn-blue: #8e8e93;
   --trn-letter-bg: #3a3a3c;
-  --font-body: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
   --nav-h: 72px;
   --fab-size: 56px;
@@ -618,8 +618,8 @@ button {
 .create-session-btn {
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.42);
-  background: #fff;
-  color: #000;
+  background: #000;
+  color: #fff;
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
@@ -629,14 +629,14 @@ button {
 
 .btn.oled-cta:active,
 .create-session-btn:active {
-  background: #f2f2f2;
+  background: var(--oled-raised);
 }
 
 @media (hover: hover) {
   .today-btn:hover { background: rgba(255, 255, 255, 0.06); }
   .btn.oled-cta:hover,
   .create-session-btn:hover {
-    background: #f2f2f2;
+    background: var(--oled-raised);
     border-color: #fff;
   }
 }
