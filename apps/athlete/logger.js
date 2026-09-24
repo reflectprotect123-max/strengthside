@@ -122,11 +122,7 @@
             persistEngine(next);
             return;
           }
-          const clock = document.getElementById('engClock');
-          if (clock) {
-            const ends = log.engine.phase === 'work' ? log.engine.workEndsAt : log.engine.restEndsAt;
-            if (ends) clock.textContent = remainLabel(ends, now);
-          }
+          patchEngineLive(log.engine, now);
         }
       }
       const next = HybridTimer.tick(t, now);
@@ -437,6 +433,145 @@
     return `${m}:${String(r).padStart(2, '0')}`;
   }
 
+  function engineLiveHr() {
+    const s = root.S || {};
+    const raw = s.liveHr != null ? s.liveHr
+      : (s.session && s.session.liveHr != null) ? s.session.liveHr
+      : null;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 35 || n > 230) return null;
+    return Math.round(n);
+  }
+
+  function engineZoneBounds() {
+    const K = root.HybridBrainKernel;
+    if (!K || typeof K.dailyZones !== 'function') return { bg: 138, gr: 170, max: 190 };
+    const z = (root.S && root.S.settings && root.S.settings.zones) || {};
+    const c = (root.S && root.S.checkin && (root.S.checkin[root.S.selectedDate] || root.S.checkin[Object.keys(root.S.checkin || {})[0]])) || {};
+    const recovery = Number(c.whoopRecovery);
+    const connected = !!(root.S && root.S.settings && root.S.settings.whoop && root.S.settings.whoop.connected);
+    const zones = K.dailyZones({
+      recovery: Number.isFinite(recovery) ? recovery : null,
+      freshness: connected && Number.isFinite(recovery) ? 'current' : 'missing',
+      hrMax: Number(z.hrMax) || 190,
+      rhr28: Number(z.rhr28) || Number(c.restingHr) || 60,
+      bgBase: Number(z.bgBase) || 138,
+      grBase: Number(z.grBase) || 170.5,
+    });
+    return { bg: Math.round(zones.bgToday), gr: Math.round(zones.grToday), max: Number(z.hrMax) || 190 };
+  }
+
+  function engineRingTone() {
+    const zones = engineZoneBounds();
+    const hr = engineLiveHr();
+    if (hr == null) return '';
+    if (hr < zones.bg) return 'blue';
+    if (hr < zones.gr) return 'green';
+    return 'red';
+  }
+
+  function engineZoneName(tone) {
+    if (tone === 'blue') return 'BLUE';
+    if (tone === 'green') return 'GREEN';
+    if (tone === 'red') return 'RED';
+    return '—';
+  }
+
+  function engineProgress(e, now) {
+    if (!e) return 0;
+    if (e.phase === 'work' && e.workEndsAt != null && e.workSec > 0) {
+      const left = Math.max(0, e.workEndsAt - now);
+      return Math.max(0, Math.min(1, left / (e.workSec * 1000)));
+    }
+    if (e.phase === 'rest' && e.restEndsAt != null && e.restSec > 0) {
+      const left = Math.max(0, e.restEndsAt - now);
+      return Math.max(0, Math.min(1, left / (e.restSec * 1000)));
+    }
+    return 0;
+  }
+
+  function engineTargetParts(e) {
+    if (!e || !root.HybridEngine) return { value: '—', unit: '' };
+    if (e.modality === 'rpm' && e.target && e.target.rpm != null) return { value: String(Math.round(e.target.rpm)), unit: 'RPM' };
+    if (e.modality === 'split' && e.target && e.target.splitSec != null) {
+      return { value: HybridEngine.formatSplit(e.target.splitSec) || String(e.target.splitSec), unit: '/500' };
+    }
+    if (e.target && e.target.watts != null) return { value: String(Math.round(e.target.watts)), unit: 'W' };
+    return { value: '—', unit: '' };
+  }
+
+  function engRingSvg(progress, zones) {
+    const r = 40;
+    const c = 2 * Math.PI * r;
+    const span = 0.75;
+    const arcLen = c * span;
+    const filled = arcLen * Math.max(0, Math.min(1, progress || 0));
+    const gap = c - arcLen;
+    return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="hr-shoe-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="round"
+        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+        transform="rotate(135 50 50)"/>
+      <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke="currentColor" stroke-linecap="round"
+        stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
+        transform="rotate(135 50 50)"/>
+      <text x="12" y="92" class="hr-shoe-label hr-shoe-label--blue">${esc(zones.bg)}</text>
+      <text x="88" y="92" class="hr-shoe-label hr-shoe-label--green" text-anchor="end">${esc(zones.gr)}</text>
+    </svg>`;
+  }
+
+  function engineHrDial(e, now, opts) {
+    const zones = engineZoneBounds();
+    const tone = engineRingTone();
+    const parts = engineTargetParts(e);
+    const shown = Math.min(e.rounds, e.roundIndex + 1);
+    const ends = opts.endsAt;
+    const clock = ends != null ? remainLabel(ends, now) : '—';
+    const hr = engineLiveHr();
+    return `
+      <div class="hr-shoe" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
+        <div class="hr-shoe-dial">
+          ${engRingSvg(engineProgress(e, now), zones)}
+          <div class="hr-shoe-face">
+            <strong class="hr-shoe-bpm" id="engFaceHr">${hr != null ? esc(hr) : '—'}</strong>
+            <span class="hr-shoe-unit">BPM</span>
+            <span class="hr-shoe-zone" id="engFaceZone">${esc(engineZoneName(tone))}</span>
+          </div>
+        </div>
+        <div class="eng-rail">
+          <div class="eng-rail-cell"><strong>${esc(parts.value)}${parts.unit ? ` ${esc(parts.unit)}` : ''}</strong><span>Target</span></div>
+          <div class="eng-rail-cell eng-rail-cell--mid"><strong id="engClock">${esc(clock)}</strong><span>${esc(opts.phaseLabel || '')}</span></div>
+          <div class="eng-rail-cell"><strong>${esc(shown)}/${esc(e.rounds)}</strong><span>Reps</span></div>
+        </div>
+      </div>`;
+  }
+
+  function patchEngineLive(e, now) {
+    if (!e) return;
+    const ends = e.phase === 'work' ? e.workEndsAt : e.phase === 'rest' ? e.restEndsAt : null;
+    const clock = document.getElementById('engClock');
+    if (clock && ends) clock.textContent = remainLabel(ends, now);
+    const tone = engineRingTone();
+    const hrEl = document.getElementById('engFaceHr');
+    if (hrEl) {
+      const hr = engineLiveHr();
+      hrEl.textContent = hr != null ? String(hr) : '—';
+    }
+    const zoneEl = document.getElementById('engFaceZone');
+    if (zoneEl) zoneEl.textContent = engineZoneName(tone);
+    const shoe = document.querySelector('#logger .hr-shoe');
+    if (shoe && shoe.getAttribute('data-tone') !== tone) shoe.setAttribute('data-tone', tone);
+    const arc = document.getElementById('engRingArc');
+    if (arc) {
+      const r = 40;
+      const c = 2 * Math.PI * r;
+      const arcLen = c * 0.75;
+      const filled = arcLen * engineProgress(e, now);
+      arc.setAttribute('stroke-dasharray', `${filled.toFixed(2)} ${(c - filled).toFixed(2)}`);
+    }
+  }
+
   function persistEngine(nextLog) {
     const s = JSON.parse(JSON.stringify(session()));
     const page = HybridSession.currentPage(s);
@@ -468,12 +603,10 @@
     } else if (e.phase === 'work') {
       stage = `
         <p class="eng-phase">Work ${shown}/${e.rounds}</p>
-        <p class="eng-clock" id="engClock">${esc(remainLabel(e.workEndsAt, now))}</p>
-        <p class="eng-target">${esc(target)}</p>
+        ${engineHrDial(e, now, { phaseLabel: 'Work', endsAt: e.workEndsAt })}
         <button type="button" class="eng-early" onclick="Logger.engineEnd()">End interval early</button>`;
     } else if (e.phase === 'rest') {
       const nextTarget = HybridEngine.formatTarget(e.target, e.modality) || target;
-      const restClock = e.restEndsAt != null ? `<p class="eng-clock" id="engClock">${esc(remainLabel(e.restEndsAt, now))}</p>` : '';
       const effortBlock = e.needsEffort ? `
         <p class="log-emh-label">How was that interval?</p>
         <div class="log-intensity">
@@ -485,7 +618,7 @@
       const upNextBlock = e.needsEffort ? '' : `<p class="eng-target">Up next · ${esc(nextTarget)}</p>`;
       stage = `
         <p class="eng-phase">Rest</p>
-        ${restClock}
+        ${engineHrDial(e, now, { phaseLabel: 'Rest', endsAt: e.restEndsAt })}
         <p class="eng-up">Last interval · ${esc(target)}</p>
         ${effortBlock}
         ${upNextBlock}

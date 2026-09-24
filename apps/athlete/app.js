@@ -318,12 +318,50 @@ function zonesCardHtml(checkin) {
   return `
     <section class="ath-zones" aria-label="Heart rate zones">
       <span class="ath-label">Today's zones</span>
+      <div class="hr-shoe-wrap">
+        ${hrShoeSvg(zones.bgToday, zones.grToday, profile.hrMax)}
+        <div class="hr-shoe-face" aria-hidden="true">
+          <span class="hr-shoe-kicker">Blue</span>
+          <strong>${Math.round(zones.bgToday)}</strong>
+          <span class="hr-shoe-kicker">Green</span>
+          <strong>${Math.round(zones.grToday)}</strong>
+        </div>
+      </div>
       <p class="ath-zone-est">Estimated from baseline${note}</p>
-      <ul>
-        <li>Blue → ${Math.round(zones.bgToday)} bpm</li>
-        <li>Green → ${Math.round(zones.grToday)} bpm</li>
-      </ul>
     </section>`;
+}
+
+function hrShoeSvg(bg, gr, maxHr) {
+  const blue = Math.round(bg);
+  const green = Math.round(gr);
+  const r = 40;
+  const c = 2 * Math.PI * r;
+  const span = 0.75;
+  const arcLen = c * span;
+  const gap = c - arcLen;
+  const floor = Math.max(50, Math.min(blue - 35, blue - 10));
+  const max = Math.max(green + 10, Number(maxHr) || 190);
+  const scale = Math.max(1, max - floor);
+  const frac = (v) => Math.max(0, Math.min(1, (v - floor) / scale));
+  const seg = (a, b, color) => {
+    const start = arcLen * frac(a);
+    const end = arcLen * frac(b);
+    const len = Math.max(0.4, end - start);
+    return `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9"
+      stroke-dasharray="${len.toFixed(2)} ${(c - len).toFixed(2)}"
+      stroke-dashoffset="${(-start).toFixed(2)}"
+      transform="rotate(135 50 50)"/>`;
+  };
+  return `<svg class="hr-shoe" viewBox="0 0 100 100" aria-hidden="true">
+    <circle class="hr-shoe-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9" stroke-linecap="round"
+      stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+      transform="rotate(135 50 50)"/>
+    ${seg(floor, blue, '#00c2ff')}
+    ${seg(blue, green, '#3dff7a')}
+    ${seg(green, max, '#ff2b2b')}
+    <text x="12" y="92" class="hr-shoe-label hr-shoe-label--blue">${blue}</text>
+    <text x="88" y="92" class="hr-shoe-label hr-shoe-label--green" text-anchor="end">${green}</text>
+  </svg>`;
 }
 
 function todayCallHtml() {

@@ -53,7 +53,7 @@ must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./engine.js'), 'engine.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v22'"), 'SW cache bump v22');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v23'"), 'SW cache bump v23');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./th.css'), 'th.css in SW cache');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--rx: #ff7a1a'), 'rx orange token');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--cta: #ffffff'), 'white Start Session CTA');
@@ -70,7 +70,14 @@ must(css.includes('--recovery-high: #16ec06'), 'WHOOP recovery lime stays on Hom
   must(loggerJs.includes('stroke="#ffffff"'), 'rest ring progress stroke is white');
   must(!loggerJs.includes('stroke="#16ec06"'), 'rest ring is not WHOOP lime');
   must(!loggerJs.includes('stroke="#1ba3ff"'), 'timer switch icon is not WHOOP blue');
+  must(loggerJs.includes('rotate(135 50 50)'), 'logger horseshoe opens at the bottom');
+  must(loggerJs.includes('const span = 0.75'), 'logger horseshoe is a 270 degree arc');
+  must(loggerJs.includes('id="engFaceHr"'), 'logger horseshoe face shows heart rate');
+  must(!loggerJs.includes("if (effort === 'easy') return 'blue'"), 'easy effort does not paint the heart-rate ring blue');
+  must(loggerJs.includes('hr-shoe'), 'work and rest render the heart-rate horseshoe');
 }
+must(js.includes('class="hr-shoe"'), 'home zones card renders the heart-rate horseshoe');
+must(css.includes('.hr-shoe'), 'home.css styles the heart-rate horseshoe');
 {
   const loggerCss = readFileSync(join(root, 'logger.css'), 'utf8');
   must(!loggerCss.includes('#1ba3ff'), 'logger.css has no WHOOP-blue chrome');

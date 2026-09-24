@@ -315,16 +315,55 @@ button {
   line-height: 1.35;
 }
 
-.ath-zones ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.hr-shoe-wrap {
+  position: relative;
+  width: min(72vw, 260px);
+  margin: 4px auto 8px;
+}
+
+.hr-shoe {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hr-shoe-track {
+  stroke: rgba(255, 255, 255, 0.16);
+}
+
+.hr-shoe-label {
+  font-size: 9px;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.hr-shoe-label--blue { fill: #00c2ff; }
+.hr-shoe-label--green { fill: #3dff7a; }
+
+.hr-shoe-face {
+  position: absolute;
+  inset: 28% 18% 22%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hr-shoe-face strong {
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.hr-shoe-kicker {
+  margin-top: 4px;
+  color: var(--oled-muted);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .ath-whoop-dials,

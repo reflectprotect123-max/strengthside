@@ -860,3 +860,78 @@
   margin: 0 0 16px;
   color: #fff;
 }
+
+div.hr-shoe {
+  --zone-blue: #00c2ff;
+  --zone-green: #3dff7a;
+  --zone-red: #ff2b2b;
+  --eng-ring: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+div.hr-shoe[data-tone="blue"] { --eng-ring: var(--zone-blue); }
+div.hr-shoe[data-tone="green"] { --eng-ring: var(--zone-green); }
+div.hr-shoe[data-tone="red"] { --eng-ring: var(--zone-red); }
+
+.hr-shoe-dial {
+  position: relative;
+  width: min(86vw, 320px);
+}
+
+.hr-shoe-dial .eng-ring {
+  width: 100%;
+  height: auto;
+  color: var(--eng-ring);
+  display: block;
+}
+
+.eng-ring-arc {
+  stroke: var(--eng-ring);
+}
+
+.hr-shoe-dial .hr-shoe-face strong,
+.hr-shoe-bpm {
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: clamp(64px, 18vw, 88px);
+  line-height: 0.85;
+  color: var(--eng-ring);
+}
+
+.hr-shoe-unit,
+.hr-shoe-zone {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: var(--oled-muted, #8e8e93);
+}
+
+.hr-shoe-zone { color: var(--eng-ring); font-size: 18px; }
+
+.eng-rail {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.eng-rail-cell { text-align: center; }
+
+.eng-rail-cell strong {
+  display: block;
+  font-family: var(--font-display, "Barlow Condensed", sans-serif);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.eng-rail-cell span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--oled-muted, #8e8e93);
+}
