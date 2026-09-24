@@ -5,6 +5,14 @@ Status: **awaiting approval**. Do not paint `apps/athlete/*.css` until you say g
 
 OLED true-black is rejected. This board keeps TrainHeroic structure (condensed type, letter tiles, sticky Start, rest ring) and drops the void.
 
+![Track Dawn three-phone board](./art/engine-concept-board.png)
+
+![List](./art/engine-concept-list.png)
+
+![Work](./art/engine-concept-work.png)
+
+![Rest](./art/engine-concept-rest.png)
+
 ## Subject
 
 The Engine athlete logger. One indoor piece: warmup, Echo intervals, breathe. Job on each screen: know the letter, run the clock, log the bout.
