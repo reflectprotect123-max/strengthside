@@ -63,7 +63,7 @@ must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./engine.js'), 'engine.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v26'"), 'SW cache bump v26');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v27'"), 'SW cache bump v27');
 must(!readFileSync(join(root, 'service-worker.js'), 'utf8').includes('brain-bundle.js'), 'SW cache has no hub brain bundle');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./th.css'), 'th.css in SW cache');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--rx: #ff7a1a'), 'rx orange token');
@@ -87,8 +87,13 @@ must(css.includes('--recovery-high: #16ec06'), 'WHOOP recovery lime stays on Hom
   must(!loggerJs.includes("if (effort === 'easy') return 'blue'"), 'easy effort does not paint the heart-rate ring blue');
   must(loggerJs.includes('hr-shoe'), 'work and rest render the heart-rate horseshoe');
 }
-must(js.includes('class="hr-shoe"'), 'home zones card renders the heart-rate horseshoe');
-must(css.includes('.hr-shoe'), 'home.css styles the heart-rate horseshoe');
+must(js.includes('class="zone-chart"'), 'home zones card renders the Morpheus-style chart lines');
+must(js.includes('Time in zones'), 'home zones card shows time in zones');
+must(js.includes('zone-time-list'), 'home zones card renders time-in-zone bars');
+must(js.includes('function recordZoneSample'), 'home accrues live HR into zone day totals');
+must(!js.includes('class="hr-shoe"'), 'home zones card no longer uses the horseshoe');
+must(css.includes('.zone-chart'), 'home.css styles the zone chart lines');
+must(css.includes('.zone-time-list'), 'home.css styles time-in-zone bars');
 {
   const loggerCss = readFileSync(join(root, 'logger.css'), 'utf8');
   must(!loggerCss.includes('#1ba3ff'), 'logger.css has no WHOOP-blue chrome');

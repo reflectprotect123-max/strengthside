@@ -8,6 +8,7 @@
   let toastTimer = 0;
   let clockTimer = 0;
   let lastBeep = '';
+  let lastZoneSaveAt = 0;
 
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -553,11 +554,9 @@
     const clock = document.getElementById('engClock');
     if (clock && ends) clock.textContent = remainLabel(ends, now);
     const tone = engineRingTone();
+    const hr = engineLiveHr();
     const hrEl = document.getElementById('engFaceHr');
-    if (hrEl) {
-      const hr = engineLiveHr();
-      hrEl.textContent = hr != null ? String(hr) : '—';
-    }
+    if (hrEl) hrEl.textContent = hr != null ? String(hr) : '—';
     const zoneEl = document.getElementById('engFaceZone');
     if (zoneEl) zoneEl.textContent = engineZoneName(tone);
     const shoe = document.querySelector('#logger .hr-shoe');
@@ -569,6 +568,13 @@
       const arcLen = c * 0.75;
       const filled = arcLen * engineProgress(e, now);
       arc.setAttribute('stroke-dasharray', `${filled.toFixed(2)} ${(c - filled).toFixed(2)}`);
+    }
+    if (hr != null && typeof root.recordZoneSample === 'function') {
+      root.recordZoneSample(hr, now);
+      if (typeof root.save === 'function' && now - lastZoneSaveAt > 5000) {
+        lastZoneSaveAt = now;
+        root.save();
+      }
     }
   }
 

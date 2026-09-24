@@ -19,6 +19,7 @@ const defaultState = () => ({
   library: null,
   sessions: {},
   engineAnchors: {},
+  zoneDay: {},
   planSync: { acks: { template: {}, session: {} }, snapshotRev: 0, lastPlan: null },
   libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,
@@ -32,6 +33,7 @@ function resetBlankSlate(keepAuth = true) {
   S.published = {};
   S.goals = [];
   S.checkin = {};
+  S.zoneDay = {};
   S.notifications = 0;
   S.chatUnread = 0;
   S.fabOpen = false;
@@ -286,54 +288,200 @@ function zonesCardHtml(checkin) {
     bgBase: profile.bgBase,
     grBase: profile.grBase,
   });
+  const blue = Math.round(zones.bgToday);
+  const green = Math.round(zones.grToday);
+  const day = zoneDayFor(S.selectedDate || today());
   const note = freshness === 'current' ? '' : ' · no WHOOP adjustment today';
   return `
     <section class="ath-zones" aria-label="Heart rate zones">
       <span class="ath-label">Today's zones</span>
-      <div class="hr-shoe-wrap">
-        ${hrShoeSvg(zones.bgToday, zones.grToday, profile.hrMax)}
-        <div class="hr-shoe-face" aria-hidden="true">
-          <span class="hr-shoe-kicker">Blue</span>
-          <strong>${Math.round(zones.bgToday)}</strong>
-          <span class="hr-shoe-kicker">Green</span>
-          <strong>${Math.round(zones.grToday)}</strong>
+      <div class="zone-cutoffs" aria-label="Zone cutoffs">
+        <span class="zone-cut zone-cut--blue"><em>Blue</em> <strong>${blue}</strong></span>
+        <span class="zone-cut zone-cut--green"><em>Green</em> <strong>${green}</strong></span>
+      </div>
+      <div class="zone-morph">
+        <div class="zone-morph-head">
+          <span>Chart</span>
+          <span class="zone-morph-range">${zoneChartRangeLabel(day)}</span>
         </div>
+        ${zoneChartHtml(day, blue, green, profile.hrMax)}
+        <div class="zone-morph-head zone-morph-head--zones">
+          <span>Time in zones</span>
+        </div>
+        ${zoneTimeBarsHtml(day)}
       </div>
       <p class="ath-zone-est">Estimated from baseline${note}</p>
     </section>`;
 }
 
-function hrShoeSvg(bg, gr, maxHr) {
-  const blue = Math.round(bg);
-  const green = Math.round(gr);
-  const r = 40;
-  const c = 2 * Math.PI * r;
-  const span = 0.75;
-  const arcLen = c * span;
-  const gap = c - arcLen;
-  const floor = Math.max(50, Math.min(blue - 35, blue - 10));
-  const max = Math.max(green + 10, Number(maxHr) || 190);
-  const scale = Math.max(1, max - floor);
-  const frac = (v) => Math.max(0, Math.min(1, (v - floor) / scale));
-  const seg = (a, b, color) => {
-    const start = arcLen * frac(a);
-    const end = arcLen * frac(b);
-    const len = Math.max(0.4, end - start);
-    return `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9"
-      stroke-dasharray="${len.toFixed(2)} ${(c - len).toFixed(2)}"
-      stroke-dashoffset="${(-start).toFixed(2)}"
-      transform="rotate(135 50 50)"/>`;
+function zoneDayFor(iso) {
+  const raw = (S.zoneDay && S.zoneDay[iso]) || {};
+  const samples = Array.isArray(raw.samples) ? raw.samples : [];
+  return {
+    blue: Math.max(0, Math.round(num(raw.blue) || 0)),
+    green: Math.max(0, Math.round(num(raw.green) || 0)),
+    red: Math.max(0, Math.round(num(raw.red) || 0)),
+    samples,
   };
-  return `<svg class="hr-shoe" viewBox="0 0 100 100" aria-hidden="true">
-    <circle class="hr-shoe-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9" stroke-linecap="round"
-      stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
-      transform="rotate(135 50 50)"/>
-    ${seg(floor, blue, '#00c2ff')}
-    ${seg(blue, green, '#3dff7a')}
-    ${seg(green, max, '#ff2b2b')}
-    <text x="12" y="92" class="hr-shoe-label hr-shoe-label--blue">${blue}</text>
-    <text x="88" y="92" class="hr-shoe-label hr-shoe-label--green" text-anchor="end">${green}</text>
-  </svg>`;
+}
+
+function formatZoneHms(sec) {
+  const s = Math.max(0, Math.round(Number(sec) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+}
+
+function zoneChartRangeLabel(day) {
+  const samples = day.samples || [];
+  if (samples.length < 2) return 'Range: —';
+  const spanMs = Math.max(0, Number(samples[samples.length - 1].t) - Number(samples[0].t));
+  const mins = Math.max(1, Math.round(spanMs / 60000));
+  return `Range: ${mins} min`;
+}
+
+function zoneToneForHr(hr, blue, green) {
+  if (hr < blue) return 'blue';
+  if (hr < green) return 'green';
+  return 'red';
+}
+
+function zoneChartHtml(day, blue, green, hrMax) {
+  const samples = day.samples || [];
+  const maxHr = Math.max(200, Number(hrMax) || 190);
+  const yMarks = [125, 150, 175, 200].filter((v) => v <= maxHr + 10);
+  const w = 320;
+  const h = 120;
+  const padL = 28;
+  const padR = 8;
+  const padT = 8;
+  const padB = 18;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const yAt = (bpm) => padT + plotH * (1 - athClamp(bpm / maxHr, 0, 1));
+  const grid = yMarks
+    .map((bpm) => {
+      const y = yAt(bpm);
+      return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" class="zone-chart-grid"/>
+        <text x="${padL - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" class="zone-chart-ylab">${bpm}</text>`;
+    })
+    .join('');
+  let bars = '';
+  if (samples.length) {
+    const t0 = Number(samples[0].t);
+    const t1 = Number(samples[samples.length - 1].t);
+    const span = Math.max(1, t1 - t0);
+    const step = Math.max(1, Math.floor(samples.length / 72));
+    const barW = Math.max(1.5, plotW / Math.ceil(samples.length / step) - 1.2);
+    for (let i = 0; i < samples.length; i += step) {
+      const s = samples[i];
+      const hr = Number(s.hr);
+      if (!Number.isFinite(hr)) continue;
+      const x = padL + ((Number(s.t) - t0) / span) * plotW;
+      const y = yAt(hr);
+      const tone = zoneToneForHr(hr, blue, green);
+      bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(2, padT + plotH - y).toFixed(1)}" class="zone-chart-bar zone-chart-bar--${tone}"/>`;
+    }
+  } else {
+    bars = `<text x="${padL + plotW / 2}" y="${padT + plotH / 2}" text-anchor="middle" class="zone-chart-empty">Train to fill</text>`;
+  }
+  const xLabels = samples.length >= 2
+    ? (() => {
+        const t0 = Number(samples[0].t);
+        const t1 = Number(samples[samples.length - 1].t);
+        const mid = t0 + (t1 - t0) / 2;
+        const fmt = (t) => {
+          const sec = Math.max(0, Math.round((t - t0) / 1000));
+          const m = Math.floor(sec / 60);
+          const r = sec % 60;
+          return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+        };
+        return `<text x="${padL}" y="${h - 4}" class="zone-chart-xlab">${fmt(t0)}</text>
+          <text x="${padL + plotW / 2}" y="${h - 4}" text-anchor="middle" class="zone-chart-xlab">${fmt(mid)}</text>
+          <text x="${w - padR}" y="${h - 4}" text-anchor="end" class="zone-chart-xlab">${fmt(t1)}</text>`;
+      })()
+    : `<text x="${padL}" y="${h - 4}" class="zone-chart-xlab">00:00</text>
+      <text x="${w - padR}" y="${h - 4}" text-anchor="end" class="zone-chart-xlab">—</text>`;
+  return `<svg class="zone-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Heart rate chart">${grid}${bars}${xLabels}</svg>`;
+}
+
+function zoneTimeBarsHtml(day) {
+  const rows = [
+    { key: 'blue', label: 'Blue', sec: day.blue, tone: 'blue' },
+    { key: 'green', label: 'Green', sec: day.green, tone: 'green' },
+    { key: 'red', label: 'Red', sec: day.red, tone: 'red' },
+  ];
+  const maxSec = Math.max(10 * 60, ...rows.map((r) => r.sec));
+  const scaleMarks = [10, 20, 30, 40, 50]
+    .filter((m) => m * 60 <= maxSec * 1.05 || m === 10)
+    .slice(0, 5);
+  const scaleMax = Math.max(maxSec, (scaleMarks[scaleMarks.length - 1] || 10) * 60);
+  const rowsHtml = rows
+    .map((r) => {
+      const pct = athClamp((r.sec / scaleMax) * 100, 0, 100);
+      return `
+        <div class="zone-time-row" data-tone="${r.tone}">
+          <div class="zone-time-meta">
+            <span class="zone-time-name">${r.label}</span>
+            <span class="zone-time-clock">${formatZoneHms(r.sec)}</span>
+          </div>
+          <div class="zone-time-track" aria-hidden="true">
+            <i class="zone-time-fill" style="width:${pct.toFixed(1)}%"></i>
+          </div>
+        </div>`;
+    })
+    .join('');
+  const scaleHtml = scaleMarks
+    .map((m) => `<span>${String(m).padStart(2, '0')}:00</span>`)
+    .join('');
+  return `
+    <div class="zone-time-list">
+      ${rowsHtml}
+      <div class="zone-time-scale" aria-hidden="true">${scaleHtml}</div>
+    </div>`;
+}
+
+/** Accrue live HR into today's zone chart + time-in-zone totals (1 Hz from logger). */
+function recordZoneSample(hr, atMs) {
+  const bpm = Math.round(Number(hr));
+  if (!Number.isFinite(bpm) || bpm < 35 || bpm > 230) return;
+  const iso = (S.session && S.session.date) || S.selectedDate || today();
+  const profile = zoneProfile();
+  const checkin = dailyCheckin(iso, false) || {};
+  const recovery = metricsFromCheckin(checkin).recovery;
+  const connected = !!S.settings?.whoop?.connected;
+  const freshness = connected && recovery != null ? 'current' : 'missing';
+  let blue = profile.bgBase;
+  let green = profile.grBase;
+  if (globalThis.HybridBrainKernel && typeof HybridBrainKernel.dailyZones === 'function') {
+    const z = HybridBrainKernel.dailyZones({
+      recovery,
+      freshness,
+      hrMax: profile.hrMax,
+      rhr28: profile.rhr28,
+      bgBase: profile.bgBase,
+      grBase: profile.grBase,
+    });
+    blue = z.bgToday;
+    green = z.grToday;
+  }
+  S.zoneDay = S.zoneDay || {};
+  const day = S.zoneDay[iso] || { blue: 0, green: 0, red: 0, samples: [] };
+  const tone = zoneToneForHr(bpm, blue, green);
+  day[tone] = Math.max(0, Math.round(num(day[tone]) || 0) + 1);
+  const samples = Array.isArray(day.samples) ? day.samples.slice() : [];
+  const t = Number(atMs) || Date.now();
+  const last = samples[samples.length - 1];
+  if (!last || t - Number(last.t) >= 900) {
+    samples.push({ t, hr: bpm });
+    if (samples.length > 2400) samples.splice(0, samples.length - 2400);
+  } else {
+    last.hr = bpm;
+    last.t = t;
+  }
+  day.samples = samples;
+  S.zoneDay[iso] = day;
 }
 
 function athleteRowHtml() {
@@ -786,6 +934,7 @@ window.S = S;
 window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
+window.recordZoneSample = recordZoneSample;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
 };
