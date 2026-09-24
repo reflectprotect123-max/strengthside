@@ -1,11 +1,11 @@
 # Handoff — The Engine
 
-Coach, desktop coach, and `evidence-platform/` are deleted. What remains is the athlete Engine app (`apps/athlete/`), `packages/adaptive/`, and `packages/brain/`.
+Coach, desktop coach, `evidence-platform/`, and the hub packet (`packages/brain/`) are deleted. What remains is the athlete Engine app (`apps/athlete/`) and the conditioning half of `packages/adaptive/`. Engine zones live in `apps/athlete/brain-kernel.js`.
 
 > **AUTHORITATIVE CHECKPOINT — 9 September 2026 (Brain spine reset).**
 > Chat history before this file is disposable. Start here.
 >
-> **Architecture:** `packages/brain/` = The Brain (pure logic). `apps/athlete/` = athlete UI + Netlify deploy root.
+> **Architecture:** `apps/athlete/` = the Engine. `packages/adaptive/` = conditioning open / next / close. `apps/athlete/brain-kernel.js` = today's heart-rate zones. The hub packet package is gone.
 > Old monolithic `prototype/hybrid-app/` is **deleted** — not archived.
 >
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
@@ -16,10 +16,10 @@ Coach, desktop coach, and `evidence-platform/` are deleted. What remains is the 
 
 | | |
 | --- | --- |
-| **Product** | Hybrid HTML athlete app — Brain hub + Strength / Engine / Nutrition branches (rebuilt screen-by-screen) |
-| **The Brain** | `@hybrid/brain` in `packages/brain/` — readiness, today’s call, coach context. **Not HTML.** |
+| **Product** | The Engine athlete app |
+| **Adaptive engine** | `@hybrid/adaptive` in `packages/adaptive/` — conditioning open, next, and close |
 | **Athlete UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
-| **Build** | `bash scripts/sync-athlete-app.sh` → bundles brain + adaptive into `apps/athlete/` |
+| **Build** | `bash scripts/sync-athlete-app.sh` → bundles adaptive into `apps/athlete/` |
 | **Coach chat** | In-app sheet → `brain-coach` proxy on athlete Netlify → OpenRouter on Brain owner site |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
 | **Storage** | **`THE-brain-v1`** only — no import from old `THE-builder-clean-v*` |

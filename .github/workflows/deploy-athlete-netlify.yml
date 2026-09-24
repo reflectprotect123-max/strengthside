@@ -14,9 +14,7 @@ on:
     paths:
       - 'apps/athlete/**'
       - 'scripts/sync-athlete-app.sh'
-      - 'scripts/bundle-brain.mjs'
       - 'scripts/bundle-adaptive.mjs'
-      - 'packages/brain/**'
       - 'packages/adaptive/**'
       - 'apps/mobile/capacitor/android/app/src/main/**'
       - 'scripts/deploy-athlete.mjs'

@@ -451,37 +451,6 @@ button {
   text-align: center;
 }
 
-.today-call {
-  margin: 4px 0 0;
-  padding: 12px 0 0;
-  border-top: 1px solid var(--oled-line);
-}
-
-.today-call .eyebrow {
-  margin: 0 0 4px;
-  color: var(--oled-muted);
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.today-call .title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  line-height: 1.05;
-}
-
-.today-call .meta {
-  margin: 6px 0 0;
-  color: var(--oled-muted);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
 /* ── Calendar week ── */
 .cal-strip {
   display: flex;

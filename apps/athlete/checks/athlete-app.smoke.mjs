@@ -12,8 +12,13 @@ function must(c, m) {
   if (!c) failures.push(m);
 }
 
+const repo = join(root, '..', '..');
 must(existsSync(join(root, 'index.html')), 'index.html');
-must(existsSync(join(root, 'brain-bundle.js')), 'brain-bundle.js — run pnpm run build:brain');
+must(!existsSync(join(root, 'brain-bundle.js')), 'hub brain bundle is gone');
+must(!existsSync(join(repo, 'packages/brain/package.json')), 'hub brain package is gone');
+must(!existsSync(join(repo, 'scripts/bundle-brain.mjs')), 'hub brain bundler is gone');
+must(existsSync(join(root, 'brain-kernel.js')), 'engine zone kernel remains');
+must(existsSync(join(repo, 'packages/adaptive/src/decide-next-cond.ts')), 'adaptive engine next remains');
 must(existsSync(join(root, 'engine.js')), 'engine.js');
 must(existsSync(join(root, 'home.css')), 'home.css');
 must(!html.includes('THE-builder-clean'), 'old storage/build id in index');
@@ -35,6 +40,9 @@ must(!html.includes('id="coachSheet"'), 'athlete has no coach sheet');
 must(!html.includes('data-tab="chat"'), 'no Chat tab');
 must(!js.includes("Whoop.fnUrl('brain-coach')"), 'athlete does not call the coach edge');
 must(!js.includes('function askCoach'), 'athlete has no askCoach');
+must(!/\bHybridBrain\b/.test(js), 'athlete does not call the hub brain');
+must(!js.includes('function todayCallHtml'), 'home has no hub today-call');
+must(!html.includes('brain-bundle.js'), 'index does not load the hub brain');
 must(js.includes('function trainingTabHtml'), 'training tab screen');
 must(!js.includes('TRAINING_DEMO'), 'no strength demo plan');
 must(css.includes('.shell-screen--training'), 'training screen styles');
@@ -54,7 +62,8 @@ must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./engine.js'), 'engine.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v24'"), 'SW cache bump v24');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v25'"), 'SW cache bump v25');
+must(!readFileSync(join(root, 'service-worker.js'), 'utf8').includes('brain-bundle.js'), 'SW cache has no hub brain bundle');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./th.css'), 'th.css in SW cache');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--rx: #ff7a1a'), 'rx orange token');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--cta: #ffffff'), 'white Start Session CTA');

@@ -122,27 +122,6 @@ function metricsFromCheckin(c = {}) {
   };
 }
 
-function checkinSlice(c = {}) {
-  return {
-    sleepQuality: num(c.sleepQuality) || null,
-    energy: num(c.energy) || null,
-    muscleSoreness: num(c.muscleSoreness) || null,
-    jointStress: num(c.jointStress) || null,
-    mentalStress: num(c.mentalStress) || null,
-  };
-}
-
-function packet() {
-  const c = S.checkin[S.selectedDate] || S.checkin[today()] || {};
-  return HybridBrain.buildBrainPacket({
-    date: S.selectedDate,
-    room: 'engine',
-    metrics: metricsFromCheckin(c),
-    checkin: checkinSlice(c),
-    connected: { whoop: !!S.settings.whoop.connected, concept2: false },
-  });
-}
-
 function dailyCheckin(date = today(), create = true) {
   S.checkin = S.checkin || {};
   if (!S.checkin[date] && create) {
@@ -156,10 +135,6 @@ function dailyCheckin(date = today(), create = true) {
     };
   }
   return S.checkin[date];
-}
-
-function readinessScore(c) {
-  return HybridBrain.scoreReadiness(metricsFromCheckin(c), checkinSlice(c));
 }
 
 function esc(v) {
@@ -281,7 +256,6 @@ function gaugeRowHtml() {
           ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: whoopRecoveryColor(m.recovery), unit: '%', size: 104 })}
           ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
         </div>
-        ${todayCallHtml()}
       </div>
     </section>
     ${zonesCardHtml(c)}`;
@@ -360,16 +334,6 @@ function hrShoeSvg(bg, gr, maxHr) {
     <text x="12" y="92" class="hr-shoe-label hr-shoe-label--blue">${blue}</text>
     <text x="88" y="92" class="hr-shoe-label hr-shoe-label--green" text-anchor="end">${green}</text>
   </svg>`;
-}
-
-function todayCallHtml() {
-  const p = packet();
-  return `
-    <div class="today-call">
-      <p class="eyebrow">${esc(p.label || 'Today')}</p>
-      <p class="title">${esc(p.todayCall || 'Train with intent')}</p>
-      <p class="meta">${esc(p.reason || 'Connect WHOOP under Me for live readiness.')}</p>
-    </div>`;
 }
 
 function athleteRowHtml() {
@@ -797,7 +761,6 @@ window.S = S;
 window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
-window.readinessScore = readinessScore;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
 };

@@ -1,11 +1,11 @@
 # The Engine
 
-One product: the athlete Engine app, plus the adaptive brain.
+One product: the athlete Engine app, plus the conditioning half of adaptive.
 
 | Role | Path |
 | --- | --- |
-| Adaptive brain | `packages/adaptive/` → `apps/athlete/adaptive-bundle.js` |
-| Daily packet | `packages/brain/` → `apps/athlete/brain-bundle.js` |
+| Adaptive engine | `packages/adaptive/` → `apps/athlete/adaptive-bundle.js` |
+| Engine zones | `apps/athlete/brain-kernel.js` |
 | App | `apps/athlete/` |
 | Android shell | `apps/mobile/capacitor/` wraps `apps/athlete/` |
 
