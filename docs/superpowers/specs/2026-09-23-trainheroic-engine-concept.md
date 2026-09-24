@@ -1,46 +1,41 @@
-# The Engine — TrainHeroic logger concept
+# The Engine — full-colour concept
 
 Date: 2026-09-23  
-Status: concept only. Do not paint `apps/athlete/*.css` until this spec is approved.
+Status: **awaiting approval**. Do not paint `apps/athlete/*.css` until you say go.
 
-## What this is
+OLED true-black is rejected. This board keeps TrainHeroic structure (condensed type, letter tiles, sticky Start, rest ring) and drops the void.
 
-A visual and interaction concept for The Engine athlete logger. Structure comes from TrainHeroic (true black, huge condensed type, letter tiles, sticky Start, rest ring). Identity stays Engine: one letter, a race clock, Hybrid words. Morph branding never appears. Coach Strength is out of scope.
+## Subject
 
-Live app CSS is unchanged in this pass. The clickable mock is `docs/superpowers/specs/2026-09-23-trainheroic-engine-concept.html`.
+The Engine athlete logger. One indoor piece: warmup, Echo intervals, breathe. Job on each screen: know the letter, run the clock, log the bout.
 
-## Approaches
+## Why this palette
 
-1. **Recommended — concept first, then a paint pass.** Tokens and three screens in a mock. Approve, then restyle `home.css` / `logger.css` only.
-2. Paint live CSS now. Faster, but we lock type scale and CTA without a look at rest vs work.
-3. Clone TrainHeroic orange + white. Wrong product: Engine teal is quiet physiology chrome, not the CTA, and we do not mix Morph / WHOOP / OLED palettes.
+Not OLED. Not Morph orange. Not WHOOP lime/yellow/red as chrome (those stay on Home dials only). Blue here is **Rest**, never Easy.
 
-## Tokens (approved for the mock, not yet in the app)
-
-| Role | Token | Hex | Rule |
+| Role | Token | Hex | Where it lives |
 | --- | --- | --- | --- |
-| Void | `--void` | `#000000` | True black, OLED |
-| Surface | `--raised` | `#111111` | Letter tiles, sheets |
-| Text | `--ink` | `#FFFFFF` | Titles and CTA fill |
-| Mute | `--mute` | `#8E8E93` | Kickers, rest copy |
-| Engine | `--engine` | `#5EC4B7` | 2px letter underline and rest-complete hairline only |
-| CTA | `--cta` | `#FFFFFF` | Sticky Start / Log. Ink on the button is black |
-| Line | `--line` | `rgba(255,255,255,0.10)` | Hairlines |
+| Dawn | `--canvas` | `#B6F0DC` | Training list field |
+| Ink | `--ink` | `#042826` | Type on dawn |
+| Paper | `--paper` | `#F4FFFB` | Nav, sheets |
+| Work | `--work` | `#FF2D1A` | Whole work screen |
+| Rest | `--rest` | `#2540D4` | Whole rest screen |
+| Lane | `--lane` | `#FFE14A` | Start CTA, letter A |
+| Engine | `--engine` | `#0B8F84` | Letter B, brand mark |
 
-WHOOP recovery / strain / sleep colors stay on Home dials. They never enter the logger. Blue on Home is WHOOP strain, not Easy, and not Engine blue-as-easy.
+Type: **Barlow Condensed** 700 for titles, letters, clock. **Barlow** 500 for kickers.
 
-Type: **Barlow Condensed** 700 for letters, piece titles, and the clock. **Barlow** 400/500 for body and kickers. Clock is the signature: ~96–120px condensed, tabular, tracking tight.
+Signature: the phone **is** the phase. Mint = list. Red = work. Blue = rest. Yellow Start is the only control that shouts on dawn.
 
 ## Screens
 
-**Training list.** One session title in condensed 40px. Letter tiles `A` `B` `C` on raised squares. Piece title + rx on the right. Sticky bottom **Start**. No copper Strength, no kg, no working max.
+1. **List** — mint field, jersey letter tiles (A lane, B engine, C rest), sticky yellow **Start**.
+2. **Work** — red field, white 0:15, target from last Close, white **Log bout**.
+3. **Rest** — blue field, white ring + clock, skip as text. Blue means rest, not easy.
 
-**Work.** Giant remaining work time. Kicker `B · ECHO · WORK`. Target line is watts or rpm from Close, not a guessed PR. White **Log bout** is the only loud control.
+## Not in this paint (still locked)
 
-**Rest.** Same clock, thinner. Ring around the digits. Engine teal hairline only when rest completes (Track Dawn cue). Skip rest is a text control, not a second CTA.
-
-## What we are not doing until you say go
-
-- Restyling `home.css` / `logger.css`
-- Morph Monday minute targets or after-session auto-progress
-- Reintroducing lift / kg / e1rm in the athlete shell
+- Live `home.css` / `logger.css` until approval
+- Morph Monday minutes / auto-progress
+- Lift / kg / e1rm in the athlete shell
+- WHOOP colours inside the logger
