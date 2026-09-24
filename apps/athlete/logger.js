@@ -213,7 +213,7 @@
     const off = c * (1 - Math.max(0, Math.min(1, progress || 0)));
     return `<svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true">
       <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>
-      <circle cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5"
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#ffffff" stroke-width="5"
         stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
         transform="rotate(-90 50 50)"/>
     </svg>${inner}`;
@@ -257,7 +257,7 @@
   }
 
   function pickerIcon(id) {
-    const g = '#16ec06';
+    const g = '#ffffff';
     const w = '#fff';
     if (id === 'rest') {
       return `<svg viewBox="0 0 72 72" class="tm-ico">${circ()}<text x="36" y="44" text-anchor="middle" fill="${g}" font-size="22" font-weight="700" font-family="Barlow Condensed,sans-serif">Zzz</text></svg>`;
@@ -285,7 +285,7 @@
   }
 
   function icoSwitch() {
-    return `<svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="11" r="6" fill="none" stroke="#1ba3ff" stroke-width="1.6"/><path d="M10 7 v4" stroke="#1ba3ff" stroke-width="1.6"/></svg>`;
+    return `<svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="11" r="6" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M10 7 v4" stroke="#ffffff" stroke-width="1.6"/></svg>`;
   }
 
   function fieldBox(key, value, label) {

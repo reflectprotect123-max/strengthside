@@ -58,18 +58,18 @@
   background: rgba(255, 255, 255, 0.22);
 }
 
-.log-dot.done { background: #16ec06; }
+.log-dot.done { background: #34c759; }
 .log-dot.current {
   width: 14px;
   height: 14px;
-  background: #16ec06;
+  background: #34c759;
   margin-top: -3px;
 }
 
 .log-clock {
   min-width: 48px;
   text-align: right;
-  color: #1ba3ff;
+  color: #ffffff;
   font-variant-numeric: tabular-nums;
   padding-top: 10px;
   font-size: 14px;
@@ -168,7 +168,7 @@
 
 .log-side-row + .log-side-row { border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 6px; }
 
-.log-add { color: #1ba3ff; font-weight: 600; }
+.log-add { color: #ffffff; font-weight: 600; }
 
 .log-rx {
   margin: 0 0 8px;
@@ -200,7 +200,7 @@
   width: 100%;
   min-height: 48px;
   border-radius: 10px;
-  background: #1ba3ff;
+  background: #3a3a3c;
   color: #fff;
   font-weight: 700;
   font-size: 16px;
@@ -208,7 +208,7 @@
 }
 
 .log-complete.is-done {
-  background: #16ec06;
+  background: #34c759;
   color: #000;
 }
 
@@ -232,17 +232,17 @@
   text-align: center;
   font-size: 16px;
 }
-.log-cell.focus { border-color: #1ba3ff; box-shadow: 0 0 0 1px #1ba3ff; }
+.log-cell.focus { border-color: #ffffff; box-shadow: 0 0 0 1px #ffffff; }
 .log-cell.ph { color: rgba(255, 255, 255, 0.35); }
 .log-check {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 2px solid #16ec06;
+  border: 2px solid #34c759;
   background: transparent;
 }
 .log-check.on {
-  background: #16ec06;
+  background: #34c759;
   color: #000;
   font-size: 14px;
   font-weight: 700;
@@ -285,7 +285,7 @@
 
 .log-bar-btn {
   min-height: 44px;
-  color: #1ba3ff;
+  color: #ffffff;
   font-weight: 600;
   font-size: 16px;
 }
@@ -294,8 +294,8 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 3px solid #1ba3ff;
-  color: #1ba3ff;
+  border: 3px solid #ffffff;
+  color: #ffffff;
   font-size: 22px;
   margin: 0 auto;
   display: grid;
@@ -325,8 +325,8 @@
   width: 100%;
   min-height: 48px;
   border-radius: 10px;
-  background: #1ba3ff;
-  color: #fff;
+  background: #ffffff;
+  color: #000;
   font-weight: 700;
   font-size: 16px;
   margin-top: 24px;
@@ -347,7 +347,7 @@
   letter-spacing: 0.12em;
 }
 
-.log-link { color: #1ba3ff; font-weight: 600; }
+.log-link { color: #ffffff; font-weight: 600; }
 
 .log-feel { text-align: left; justify-content: flex-start; }
 .log-feel h1 { font-size: 22px; margin: 0 0 16px; }
@@ -362,7 +362,7 @@
   border-radius: 8px;
   background: #1c1c1e;
 }
-.log-intensity button.on { background: #1ba3ff; }
+.log-intensity button.on { background: #ffffff; color: #000; }
 
 .log-emh-label {
   margin: 10px 0 6px;
@@ -416,7 +416,7 @@
   padding: 8px 12px;
   background: #2c2c2e;
 }
-.log-unit button.on { background: #1ba3ff; }
+.log-unit button.on { background: #ffffff; color: #000; }
 
 .log-keys {
   display: grid;
@@ -434,7 +434,8 @@
 .log-keys .log-wide { border-radius: 26px; }
 .log-pad-side { display: flex; flex-direction: column; gap: 10px; }
 .log-pad-side .blue {
-  background: #1ba3ff;
+  background: #ffffff;
+  color: #000;
   border-radius: 26px;
   height: 52px;
   font-size: 15px;
@@ -453,7 +454,7 @@
   top: calc(8px + env(safe-area-inset-top, 0px));
   left: 16px;
   right: 16px;
-  background: #16ec06;
+  background: #ffffff;
   color: #000;
   font-weight: 700;
   text-align: center;
@@ -528,7 +529,7 @@
 }
 .tm-head h2 { margin: 0; font-size: 22px; font-weight: 600; }
 .tm-switch {
-  color: #1ba3ff;
+  color: #ffffff;
   font-weight: 600;
   background: none;
   display: inline-flex;
@@ -582,7 +583,7 @@
 }
 .tm-quick { display: flex; flex-direction: column; gap: 4px; }
 .tm-quick button {
-  color: #1ba3ff;
+  color: #ffffff;
   font-size: 20px;
   background: none;
   min-height: 40px;
@@ -600,15 +601,15 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 2px solid #1ba3ff;
-  color: #1ba3ff;
+  border: 2px solid #ffffff;
+  color: #ffffff;
   font-size: 22px;
   background: none;
 }
 .tm-ms {
   width: 64px;
   height: 56px;
-  border: 2px solid #1ba3ff;
+  border: 2px solid #ffffff;
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -620,9 +621,9 @@
   width: 92px;
   height: 92px;
   border-radius: 50%;
-  border: 4px solid #16ec06;
-  background: radial-gradient(circle at 50% 45%, #145c14, #062406);
-  color: #16ec06;
+  border: 4px solid #ffffff;
+  background: #000;
+  color: #ffffff;
   font-weight: 700;
   font-size: 13px;
   display: grid;
@@ -635,9 +636,9 @@
   width: 176px;
   height: 176px;
   border-radius: 50%;
-  border: 6px solid #16ec06;
+  border: 6px solid #ffffff;
   background: #000;
-  color: #16ec06;
+  color: #ffffff;
   font-size: 72px;
   display: grid;
   place-items: center;
@@ -652,7 +653,7 @@
 .tm-field input, .tm-pair input {
   width: 72px;
   min-height: 48px;
-  border: 2px solid #1ba3ff;
+  border: 2px solid #ffffff;
   border-radius: 10px;
   background: #000;
   color: #fff;
@@ -707,7 +708,7 @@
 .tm-pause { color: #ff4d4d; border: 2px solid #ff4d4d; background: #1a0000; }
 
 .tm-select {
-  color: #1ba3ff;
+  color: #ffffff;
   font-weight: 600;
   font-size: 13px;
   background: none;
@@ -777,7 +778,7 @@
   font-family: var(--font-display, "Barlow Condensed", sans-serif);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--engine, #5ec4b7);
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
 }
@@ -801,7 +802,7 @@
   line-height: 0.9;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: var(--engine, #5ec4b7);
+  color: #ffffff;
 }
 
 .eng-target {

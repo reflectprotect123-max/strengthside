@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
 
 :root {
   --oled-bg: #000000;
@@ -14,11 +14,11 @@
   --recovery: var(--recovery-high);
   --strain: #1ba3ff;
   --strength: #d4a574;
-  --engine: #5ec4b7;
+  --engine: #8e8e93;
   --recovery-room: #9fd356;
-  --trn-blue: #1ba3ff;
+  --trn-blue: #8e8e93;
   --trn-letter-bg: #3a3a3c;
-  --font-body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Barlow", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
   --nav-h: 72px;
   --fab-size: 56px;
@@ -1070,8 +1070,10 @@ button {
 }
 
 .trn-icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: grid;
   place-items: center;
   color: var(--oled-muted);
@@ -1178,15 +1180,15 @@ button {
 }
 
 .trn-letter {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
   font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   line-height: 1;
 }
 
@@ -1212,12 +1214,11 @@ button {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  border-color: rgba(94, 196, 183, 0.35);
 }
 
 .trn-letter--engine {
-  background: #143834;
-  color: var(--engine);
+  background: var(--trn-letter-bg);
+  color: #fff;
   margin-top: 2px;
 }
 
@@ -1359,8 +1360,8 @@ button {
 .trn-add-icon {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: var(--trn-blue);
+  border-radius: 8px;
+  background: var(--trn-letter-bg);
   color: #fff;
   display: grid;
   place-items: center;
@@ -1388,6 +1389,8 @@ button {
   text-transform: uppercase;
   padding: 8px 0 12px;
 }
+
+.trn-empty {
   color: var(--oled-muted);
   text-align: center;
   padding: 40px 12px;
@@ -1395,8 +1398,8 @@ button {
 }
 
 .fab-layer--training .fab {
-  background: var(--trn-blue);
-  color: #fff;
+  background: #fff;
+  color: #000;
   font-weight: 400;
 }
 

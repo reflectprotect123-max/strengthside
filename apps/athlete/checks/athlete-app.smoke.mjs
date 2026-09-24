@@ -52,10 +52,29 @@ must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./engine.js'), 'engine.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v20'"), 'SW cache bump v20');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v21'"), 'SW cache bump v21');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./th.css'), 'th.css in SW cache');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--rx: #ff7a1a'), 'rx orange token');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--cta: #ffffff'), 'white Start Session CTA');
+must(!css.includes('--engine: #5ec4b7'), 'home.css engine token is not Track Dawn mint');
+must(css.includes('--engine: #8e8e93'), 'home.css engine token is mute gray');
+must(!css.includes('--trn-blue: #1ba3ff'), 'training chrome is not WHOOP strain blue');
+must(css.includes('--strain: #1ba3ff'), 'WHOOP strain token stays on Home dials');
+must(css.includes('--recovery-high: #16ec06'), 'WHOOP recovery lime stays on Home dials');
+{
+  const loggerJs = readFileSync(join(root, 'logger.js'), 'utf8');
+  must(loggerJs.includes('stroke="#ffffff"'), 'rest ring progress stroke is white');
+  must(!loggerJs.includes('stroke="#16ec06"'), 'rest ring is not WHOOP lime');
+  must(!loggerJs.includes('stroke="#1ba3ff"'), 'timer switch icon is not WHOOP blue');
+}
+{
+  const loggerCss = readFileSync(join(root, 'logger.css'), 'utf8');
+  must(!loggerCss.includes('#1ba3ff'), 'logger.css has no WHOOP-blue chrome');
+  must(!loggerCss.includes('var(--engine, #5ec4b7)'), 'engine clock does not fall back to mint');
+}
+must(readFileSync(join(root, 'th.css'), 'utf8').includes('.trn-icon-btn'), 'training icon buttons in overlay');
+must(/\.trn-icon-btn[\s\S]{0,120}min-height:\s*44px/.test(readFileSync(join(root, 'th.css'), 'utf8')), 'training icon buttons meet 44px');
+must(!readFileSync(join(root, 'library.css'), 'utf8').includes('background: var(--trn-blue)'), 'library primary is not WHOOP-blue');
 must(!readFileSync(join(root, 'brain-kernel.js'), 'utf8').includes('decideNextStrength'), 'kernel has no lift next');
 must(!readFileSync(join(root, 'brain-kernel.js'), 'utf8').includes('rememberLift'), 'kernel has no lift memory');
 must(!readFileSync(join(root, 'app.js'), 'utf8').includes('liftMemory'), 'athlete state has no liftMemory');

@@ -75,6 +75,51 @@ input:focus-visible {
   color: var(--oled-muted);
 }
 
+.trn-icon-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.lib-primary {
+  background: var(--cta) !important;
+  color: var(--cta-ink) !important;
+  border-radius: 8px;
+}
+
+.tm-switch,
+.tm-quick button,
+.tm-select,
+.log-add,
+.log-link,
+.log-clock,
+.log-bar-btn {
+  color: #fff !important;
+}
+
+.tm-custom > button,
+.tm-ms,
+.tm-field input,
+.tm-pair input,
+.log-play {
+  border-color: #fff !important;
+  color: #fff !important;
+}
+
+.tm-start,
+.tm-giant {
+  border-color: #fff !important;
+  color: #fff !important;
+  background: #000 !important;
+}
+
+.log-intensity button.on,
+.log-unit button.on {
+  background: #fff;
+  color: #000;
+}
+
 .trn-lift-rx,
 .log-rx {
   color: var(--rx);
