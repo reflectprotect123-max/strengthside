@@ -1,6 +1,6 @@
 {
   "appId": "com.hybrid.athlete",
-  "appName": "HYBRID S&C",
+    "appName": "The Engine",
   "webDir": "../../athlete",
   "server": {
     "androidScheme": "https"

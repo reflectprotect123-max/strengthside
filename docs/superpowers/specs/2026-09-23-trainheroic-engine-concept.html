@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Engine — full colour concept</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --canvas: #B6F0DC;
+      --ink: #042826;
+      --paper: #F4FFFB;
+      --work: #FF2D1A;
+      --rest: #2540D4;
+      --lane: #FFE14A;
+      --engine: #0B8F84;
+      --mute: #1F5C54;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #062E2A;
+      color: var(--paper);
+      font-family: Barlow, ui-sans-serif, system-ui, sans-serif;
+    }
+    body { padding: 20px 16px 40px; }
+    .tag {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #7ED9C8;
+      margin: 0 0 10px;
+    }
+    h1.page {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: clamp(36px, 7vw, 64px);
+      line-height: 0.86;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      margin: 0 0 10px;
+      color: var(--lane);
+    }
+    .lede {
+      max-width: 720px;
+      color: #C7F6EB;
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 0 0 28px;
+    }
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 32px;
+    }
+    .swatch {
+      width: 72px;
+      height: 56px;
+      border-radius: 8px;
+      display: grid;
+      align-content: end;
+      padding: 6px 8px;
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .board {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      align-items: flex-start;
+    }
+    @media (min-width: 1100px) {
+      .board { flex-direction: row; flex-wrap: wrap; }
+    }
+    .phone {
+      width: 360px;
+      height: 720px;
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      flex: none;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+    }
+    .status {
+      height: 48px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 18px 8px;
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+    }
+    .screen { padding: 6px 16px 0; height: calc(100% - 48px); display: flex; flex-direction: column; }
+    .kicker {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0;
+    }
+    .title {
+      font-family: "Barlow Condensed", sans-serif;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      line-height: 0.86;
+      margin: 8px 0 0;
+    }
+    .list { flex: 0 1 auto; margin-top: 14px; }
+    .sticky {
+      margin-top: auto;
+      margin-left: -16px;
+      margin-right: -16px;
+      margin-bottom: 0;
+      padding: 14px 16px 22px;
+      flex-shrink: 0;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 2px solid rgba(4, 40, 38, 0.12);
+    }
+    .tile {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 30px;
+      font-weight: 800;
+    }
+    .piece {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 22px;
+      line-height: 0.92;
+      text-transform: uppercase;
+      margin: 0;
+      font-weight: 800;
+    }
+    .rx { margin: 4px 0 0; font-size: 13px; font-weight: 600; }
+    .cta {
+      width: 100%;
+      height: 54px;
+      border: 0;
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .ghost {
+      width: 100%;
+      margin-top: 8px;
+      background: transparent;
+      border: 0;
+      font: 600 14px Barlow, sans-serif;
+      cursor: pointer;
+    }
+    .clock-wrap { flex: 1; display: grid; place-items: center; text-align: center; }
+    .clock {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 112px;
+      font-weight: 800;
+      line-height: 0.78;
+      letter-spacing: -0.05em;
+      font-variant-numeric: tabular-nums;
+      margin: 0;
+    }
+    .target { margin: 12px 0 0; font-size: 15px; font-weight: 600; }
+    .stage {
+      position: relative;
+      width: 248px;
+      height: 248px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto;
+    }
+    .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(#fff 0 58%, rgba(255,255,255,0.22) 58% 100%);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px));
+    }
+    .dawn { --bg: var(--canvas); --fg: var(--ink); --soft: var(--mute); }
+    .heat { --bg: var(--work); --fg: #fff; --soft: rgba(255,255,255,0.82); }
+    .blue { --bg: var(--rest); --fg: #fff; --soft: rgba(255,255,255,0.84); }
+    .dawn, .heat, .blue { background: var(--bg); color: var(--fg); }
+    .dawn .kicker, .dawn .rx, .heat .kicker, .heat .target, .blue .kicker, .blue .target, .blue .ghost, .heat .ghost { color: var(--soft); }
+    .heat .cta { background: #fff; color: var(--work); }
+    .dawn .cta { background: var(--lane); color: var(--ink); }
+    .blue .cta { background: var(--lane); color: var(--ink); }
+    .cap {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #7ED9C8;
+      margin: 0 0 8px;
+    }
+    .col { display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <p class="tag">Concept art · not live CSS · needs your yes</p>
+  <h1 class="page">Track Dawn</h1>
+  <p class="lede">OLED is gone. The phone is the phase: mint list, red work, blue rest. TrainHeroic bones stay — huge condensed type, letter tiles, sticky Start, rest ring. Yellow is the shout. Blue means rest, not easy. WHOOP colours stay on Home dials only.</p>
+  <div class="swatches">
+    <div class="swatch" style="background:#B6F0DC;color:#042826">Dawn</div>
+    <div class="swatch" style="background:#FF2D1A;color:#fff">Work</div>
+    <div class="swatch" style="background:#2540D4;color:#fff">Rest</div>
+    <div class="swatch" style="background:#FFE14A;color:#042826">Lane</div>
+    <div class="swatch" style="background:#0B8F84;color:#fff">Engine</div>
+    <div class="swatch" style="background:#042826;color:#B6F0DC">Ink</div>
+  </div>
+  <div class="board">
+    <div class="col">
+      <p class="cap">1 · List</p>
+      <section class="phone dawn" aria-label="Training list concept">
+        <div class="status"><span>9:41</span><span>THE ENGINE</span></div>
+        <div class="screen">
+          <p class="kicker">Wed 23 · Hard day</p>
+          <h2 class="title" style="font-size:40px">Echo VO2</h2>
+          <div class="list">
+            <div class="row">
+              <div class="tile" style="background:#FFE14A;color:#042826">A</div>
+              <div><p class="piece">Easy spin</p><p class="rx">3 min nasal</p></div>
+            </div>
+            <div class="row">
+              <div class="tile" style="background:#0B8F84;color:#fff">B</div>
+              <div><p class="piece">Echo</p><p class="rx">8 × 15s / 45s</p></div>
+            </div>
+            <div class="row">
+              <div class="tile" style="background:#2540D4;color:#fff">C</div>
+              <div><p class="piece">Breathe</p><p class="rx">Recovery</p></div>
+            </div>
+          </div>
+          <div class="sticky"><button class="cta" type="button">Start</button></div>
+        </div>
+      </section>
+    </div>
+    <div class="col">
+      <p class="cap">2 · Work</p>
+      <section class="phone heat" aria-label="Work clock concept">
+        <div class="status"><span>9:41</span><span>WORK</span></div>
+        <div class="screen">
+          <p class="kicker">B · Echo · Bout 3 / 8</p>
+          <div class="clock-wrap">
+            <p class="clock">0:15</p>
+            <p class="target">Hold 62 rpm · last Close</p>
+          </div>
+          <div class="sticky">
+            <button class="cta" type="button">Log bout</button>
+            <button class="ghost" type="button">Skip this bout</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="col">
+      <p class="cap">3 · Rest</p>
+      <section class="phone blue" aria-label="Rest ring concept">
+        <div class="status"><span>9:41</span><span>REST</span></div>
+        <div class="screen">
+          <p class="kicker">B · Echo · Rest 3 / 8</p>
+          <div class="clock-wrap">
+            <div class="stage">
+              <div class="ring" aria-hidden="true"></div>
+              <p class="clock" style="font-size:88px">0:17</p>
+            </div>
+            <p class="target">Blue is the rest. Not easy.</p>
+          </div>
+          <div class="sticky">
+            <button class="ghost" type="button">Skip rest</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

@@ -24,7 +24,7 @@ function libState(templates, extra) {
 
 test('pack stamps rev on new templates and assignments', () => {
   const packed = P.pack(libState([{ id: 'tpl_a', title: 'Upper', blocks: [] }]));
-  assert.equal(packed.domain, 'strength_side');
+  assert.equal(packed.domain, 'engine_side');
   assert.equal(packed.templates[0]._meta.rev, 1);
   assert.equal(packed.templates[0].title, 'Upper');
 });
@@ -43,13 +43,13 @@ test('unchanged body does not bump rev', () => {
 
 test('merge adopts remote when local is not dirty past ack', () => {
   const local = {
-    domain: 'strength_side',
+    domain: 'engine_side',
     templates: [{ id: 'tpl_a', title: 'Old', blocks: [], _meta: { rev: 1 } }],
     sessions: [],
     tombstones: [],
   };
   const remote = {
-    domain: 'strength_side',
+    domain: 'engine_side',
     templates: [{ id: 'tpl_a', title: 'Cloud', blocks: [], _meta: { rev: 2 } }],
     sessions: [],
     tombstones: [],
@@ -61,13 +61,13 @@ test('merge adopts remote when local is not dirty past ack', () => {
 
 test('merge keeps local and flags conflict when both edited past ack', () => {
   const local = {
-    domain: 'strength_side',
+    domain: 'engine_side',
     templates: [{ id: 'tpl_a', title: 'Phone A', blocks: [], _meta: { rev: 3 } }],
     sessions: [],
     tombstones: [],
   };
   const remote = {
-    domain: 'strength_side',
+    domain: 'engine_side',
     templates: [{ id: 'tpl_a', title: 'Phone B', blocks: [], _meta: { rev: 3 } }],
     sessions: [],
     tombstones: [],
@@ -80,13 +80,13 @@ test('merge keeps local and flags conflict when both edited past ack', () => {
 
 test('tombstone drops the entity', () => {
   const local = {
-    domain: 'strength_side',
+    domain: 'engine_side',
     templates: [{ id: 'tpl_a', title: 'Gone', blocks: [], _meta: { rev: 1 } }],
     sessions: [],
     tombstones: [],
   };
   const remote = {
-    domain: 'strength_side',
+    domain: 'engine_side',
     templates: [],
     sessions: [],
     tombstones: [{ id: 'tpl_a', kind: 'template', rev: 2 }],
@@ -96,18 +96,17 @@ test('tombstone drops the entity', () => {
   assert.ok(plan.tombstones.some((t) => t.id === 'tpl_a'));
 });
 
-test('pack and apply roundtrip liftMemory', () => {
+test('pack does not ship liftMemory', () => {
   const s = libState([]);
   s.liftMemory = { bench: { lastKg: 100, e1rmKg: 116.7 } };
   const packed = P.pack(s);
-  const row = packed.sessions.find((x) => x.kind === 'lift_memory');
-  assert.equal(row.memory.bench.lastKg, 100);
+  assert.equal(packed.sessions.find((x) => x.kind === 'lift_memory'), undefined);
   const next = P.applyPlan({ library: { templates: [], catalog: { exercises: [], circuits: [] }, assignments: {} }, sessions: {} }, packed);
-  assert.equal(next.liftMemory.bench.lastKg, 100);
+  assert.equal(next.liftMemory, undefined);
 });
 
 test('stale snapshot revision is a conflict from the transport', async () => {
-  const cloud = { revision: 4, snapshot: { domain: 'strength_side', templates: [], sessions: [], tombstones: [] } };
+  const cloud = { revision: 4, snapshot: { domain: 'engine_side', templates: [], sessions: [], tombstones: [] } };
   const io = {
     async userId() { return 'user-1'; },
     async pull() { return { revision: cloud.revision, snapshot: cloud.snapshot }; },
@@ -123,9 +122,9 @@ test('stale snapshot revision is a conflict from the transport', async () => {
 });
 
 test('hosted fallback domains stay ordered preferred then admitted', () => {
-  assert.equal(P.DOMAIN, 'strength_side');
-  assert.equal(P.DOMAIN_FALLBACK, 'strength');
-  assert.deepEqual(P.DOMAINS, ['strength_side', 'strength']);
+  assert.equal(P.DOMAIN, 'engine_side');
+  assert.equal(P.DOMAIN_FALLBACK, 'conditioning');
+  assert.deepEqual(P.DOMAINS, ['engine_side', 'conditioning']);
 });
 
 test('isInvalidDomain matches hosted RPC reject', () => {

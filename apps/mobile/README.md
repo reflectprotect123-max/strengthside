@@ -1,6 +1,6 @@
 # Athlete app
 
-This is the product surface. The Brain lives in `packages/brain/` only — not here.
+This is the Engine product surface. Conditioning math lives in `packages/adaptive/`. Heart-rate zones live in `apps/athlete/brain-kernel.js`.
 
 **Edit:** `apps/athlete/` (`index.html`, `app.js`, `home.css`)  
 **Then:** `bash scripts/sync-athlete-app.sh`  

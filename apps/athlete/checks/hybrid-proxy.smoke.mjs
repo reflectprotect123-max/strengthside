@@ -94,9 +94,10 @@ const sandbox = {
       },
     }),
   },
-  STRENGTH_CONFIG: {
+  ENGINE_CONFIG: {
     supabaseUrl: 'https://orysjncrksmdfabpuftd.supabase.co',
     supabaseAnon: 'anon',
+    hybridProduct: 'engine',
   },
   location: { protocol: 'https:', hostname: 'localhost', pathname: '/' },
 };
@@ -112,8 +113,8 @@ await sandbox.Whoop.refreshStatus();
 if (!String(sandbox.lastFetch || '').includes('/functions/v1/integrations-status')) {
   throw new Error('expected Edge integrations-status URL, got: ' + sandbox.lastFetch);
 }
-if (!String(sandbox.lastFetch || '').includes('product=strength')) {
-  throw new Error('expected product=strength on Edge URL, got: ' + sandbox.lastFetch);
+if (!String(sandbox.lastFetch || '').includes('product=engine')) {
+  throw new Error('expected product=engine on Edge URL, got: ' + sandbox.lastFetch);
 }
 
 console.log('hybrid-proxy.smoke: ok', readdirSync(fnDir).length, 'functions (Netlify leftovers; WHOOP client is Edge)');

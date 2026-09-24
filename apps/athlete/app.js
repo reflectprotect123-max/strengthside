@@ -1,6 +1,6 @@
-const BRAIN_BUILD = 'THE-brain-v1';
-const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v9';
+const BRAIN_BUILD = 'THE-hybrid-engine-v1';
+const STORAGE_KEY = 'THE-hybrid-engine-v1';
+const APP_BUILD = 'engine-apk-1.0.5';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -10,7 +10,6 @@ const defaultState = () => ({
   selectedDate: today(),
   checkin: {},
   settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
-  coachHistory: [],
   published: {},
   goals: [],
   fabOpen: false,
@@ -18,8 +17,9 @@ const defaultState = () => ({
   timer: null,
   loggerOpen: false,
   library: null,
-  liftMemory: {},
   sessions: {},
+  engineAnchors: {},
+  zoneDay: {},
   planSync: { acks: { template: {}, session: {} }, snapshotRev: 0, lastPlan: null },
   libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,
@@ -32,8 +32,8 @@ function resetBlankSlate(keepAuth = true) {
     : { connected: false, lastSyncAt: null, email: null };
   S.published = {};
   S.goals = [];
-  S.coachHistory = [];
   S.checkin = {};
+  S.zoneDay = {};
   S.notifications = 0;
   S.chatUnread = 0;
   S.fabOpen = false;
@@ -69,44 +69,16 @@ function load() {
 
 function refreshHybridOccupancy() {
   if (!window.HybridSc) return;
-  const engineDates = (S.hybridOccupancy && S.hybridOccupancy.engine) || {};
-  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
-}
-
-async function peekEngineOccupancy() {
-  if (!window.HybridSc || !window.Whoop || typeof Whoop.client !== 'function') return;
-  try {
-    const sb = Whoop.client();
-    const { data: sessionData } = await sb.auth.getSession();
-    const uid = sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.id;
-    if (!uid) return;
-    const domains = (HybridSc.SNAPSHOT_DOMAINS && HybridSc.SNAPSHOT_DOMAINS.engine) || ['engine_side', 'conditioning'];
-    let snapshot = null;
-    for (const domain of domains) {
-      const { data, error } = await sb
-        .from('athlete_domain_snapshots')
-        .select('snapshot')
-        .eq('user_id', uid)
-        .eq('domain', domain)
-        .maybeSingle();
-      if (!error && data) { snapshot = data.snapshot; break; }
-    }
-    if (!snapshot) return;
-    const engineDates = HybridSc.datesFromSnapshot(snapshot);
-    HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
-    window.S = S;
-  } catch (_) {
-    /* offline / unsigned */
-  }
+  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S));
 }
 
 function save() {
-  if (S.session && S.session.liftMemory) {
-    S.liftMemory = Object.assign({}, S.liftMemory || {}, S.session.liftMemory);
-  }
   if (S.session && S.session.date) {
     S.sessions = S.sessions || {};
     S.sessions[S.session.date] = S.session;
+  }
+  if (S.session && S.session.engineAnchors) {
+    S.engineAnchors = Object.assign({}, S.engineAnchors || {}, S.session.engineAnchors);
   }
   refreshHybridOccupancy();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
@@ -152,27 +124,6 @@ function metricsFromCheckin(c = {}) {
   };
 }
 
-function checkinSlice(c = {}) {
-  return {
-    sleepQuality: num(c.sleepQuality) || null,
-    energy: num(c.energy) || null,
-    muscleSoreness: num(c.muscleSoreness) || null,
-    jointStress: num(c.jointStress) || null,
-    mentalStress: num(c.mentalStress) || null,
-  };
-}
-
-function packet() {
-  const c = S.checkin[S.selectedDate] || S.checkin[today()] || {};
-  return HybridBrain.buildBrainPacket({
-    date: S.selectedDate,
-    room: 'engine',
-    metrics: metricsFromCheckin(c),
-    checkin: checkinSlice(c),
-    connected: { whoop: !!S.settings.whoop.connected, concept2: false },
-  });
-}
-
 function dailyCheckin(date = today(), create = true) {
   S.checkin = S.checkin || {};
   if (!S.checkin[date] && create) {
@@ -186,10 +137,6 @@ function dailyCheckin(date = today(), create = true) {
     };
   }
   return S.checkin[date];
-}
-
-function readinessScore(c) {
-  return HybridBrain.scoreReadiness(metricsFromCheckin(c), checkinSlice(c));
 }
 
 function esc(v) {
@@ -281,8 +228,8 @@ function topBarHtml() {
     <header class="home-top">
       <div class="home-brand">
         <span class="home-mark" aria-hidden="true">TH</span>
-        <div class="home-brand-text" aria-label="HYBRID S&C, Strength">
-          ${HybridSc.brandHtml('strength')}
+        <div class="home-brand-text" aria-label="The Engine">
+          ${HybridSc.brandHtml()}
         </div>
       </div>
       <div class="home-top-actions">
@@ -311,19 +258,230 @@ function gaugeRowHtml() {
           ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: whoopRecoveryColor(m.recovery), unit: '%', size: 104 })}
           ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
         </div>
-        ${todayCallHtml()}
       </div>
+    </section>
+    ${zonesCardHtml(c)}`;
+}
+
+function zoneProfile() {
+  const z = S.settings?.zones || {};
+  const c = dailyCheckin(S.selectedDate, false) || dailyCheckin(today(), false) || {};
+  return {
+    hrMax: num(z.hrMax) || 190,
+    rhr28: num(z.rhr28) || num(c.restingHr) || 60,
+    bgBase: num(z.bgBase) || 138,
+    grBase: num(z.grBase) || 170.5,
+  };
+}
+
+function zonesCardHtml(checkin) {
+  if (!globalThis.HybridBrainKernel || typeof HybridBrainKernel.dailyZones !== 'function') return '';
+  const profile = zoneProfile();
+  const recovery = metricsFromCheckin(checkin || {}).recovery;
+  const connected = !!S.settings?.whoop?.connected;
+  const freshness = connected && recovery != null ? 'current' : 'missing';
+  const zones = HybridBrainKernel.dailyZones({
+    recovery,
+    freshness,
+    hrMax: profile.hrMax,
+    rhr28: profile.rhr28,
+    bgBase: profile.bgBase,
+    grBase: profile.grBase,
+  });
+  const blue = Math.round(zones.bgToday);
+  const green = Math.round(zones.grToday);
+  const day = zoneDayFor(S.selectedDate || today());
+  const note = freshness === 'current' ? '' : ' · no WHOOP adjustment today';
+  return `
+    <section class="ath-zones" aria-label="Heart rate zones">
+      <span class="ath-label">Today's zones</span>
+      <div class="zone-cutoffs" aria-label="Zone cutoffs">
+        <span class="zone-cut zone-cut--blue"><em>Blue</em> <strong>${blue}</strong></span>
+        <span class="zone-cut zone-cut--green"><em>Green</em> <strong>${green}</strong></span>
+      </div>
+      <div class="zone-morph">
+        <div class="zone-morph-head">
+          <span>Chart</span>
+          <span class="zone-morph-range">${zoneChartRangeLabel(day)}</span>
+        </div>
+        ${zoneChartHtml(day, blue, green, profile.hrMax)}
+        <div class="zone-morph-head zone-morph-head--zones">
+          <span>Time in zones</span>
+        </div>
+        ${zoneTimeBarsHtml(day)}
+      </div>
+      <p class="ath-zone-est">Estimated from baseline${note}</p>
     </section>`;
 }
 
-function todayCallHtml() {
-  const p = packet();
+function zoneDayFor(iso) {
+  const raw = (S.zoneDay && S.zoneDay[iso]) || {};
+  const samples = Array.isArray(raw.samples) ? raw.samples : [];
+  return {
+    blue: Math.max(0, Math.round(num(raw.blue) || 0)),
+    green: Math.max(0, Math.round(num(raw.green) || 0)),
+    red: Math.max(0, Math.round(num(raw.red) || 0)),
+    samples,
+  };
+}
+
+function formatZoneHms(sec) {
+  const s = Math.max(0, Math.round(Number(sec) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const r = s % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+}
+
+function zoneChartRangeLabel(day) {
+  const samples = day.samples || [];
+  if (samples.length < 2) return 'Range: —';
+  const spanMs = Math.max(0, Number(samples[samples.length - 1].t) - Number(samples[0].t));
+  const mins = Math.max(1, Math.round(spanMs / 60000));
+  return `Range: ${mins} min`;
+}
+
+function zoneToneForHr(hr, blue, green) {
+  if (hr < blue) return 'blue';
+  if (hr < green) return 'green';
+  return 'red';
+}
+
+function zoneChartHtml(day, blue, green, hrMax) {
+  const samples = day.samples || [];
+  const maxHr = Math.max(200, Number(hrMax) || 190);
+  const yMarks = [125, 150, 175, 200].filter((v) => v <= maxHr + 10);
+  const w = 320;
+  const h = 120;
+  const padL = 28;
+  const padR = 8;
+  const padT = 8;
+  const padB = 18;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const yAt = (bpm) => padT + plotH * (1 - athClamp(bpm / maxHr, 0, 1));
+  const grid = yMarks
+    .map((bpm) => {
+      const y = yAt(bpm);
+      return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" class="zone-chart-grid"/>
+        <text x="${padL - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" class="zone-chart-ylab">${bpm}</text>`;
+    })
+    .join('');
+  let bars = '';
+  if (samples.length) {
+    const t0 = Number(samples[0].t);
+    const t1 = Number(samples[samples.length - 1].t);
+    const span = Math.max(1, t1 - t0);
+    const step = Math.max(1, Math.floor(samples.length / 72));
+    const barW = Math.max(1.5, plotW / Math.ceil(samples.length / step) - 1.2);
+    for (let i = 0; i < samples.length; i += step) {
+      const s = samples[i];
+      const hr = Number(s.hr);
+      if (!Number.isFinite(hr)) continue;
+      const x = padL + ((Number(s.t) - t0) / span) * plotW;
+      const y = yAt(hr);
+      const tone = zoneToneForHr(hr, blue, green);
+      bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(2, padT + plotH - y).toFixed(1)}" class="zone-chart-bar zone-chart-bar--${tone}"/>`;
+    }
+  } else {
+    bars = `<text x="${padL + plotW / 2}" y="${padT + plotH / 2}" text-anchor="middle" class="zone-chart-empty">Train to fill</text>`;
+  }
+  const xLabels = samples.length >= 2
+    ? (() => {
+        const t0 = Number(samples[0].t);
+        const t1 = Number(samples[samples.length - 1].t);
+        const mid = t0 + (t1 - t0) / 2;
+        const fmt = (t) => {
+          const sec = Math.max(0, Math.round((t - t0) / 1000));
+          const m = Math.floor(sec / 60);
+          const r = sec % 60;
+          return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+        };
+        return `<text x="${padL}" y="${h - 4}" class="zone-chart-xlab">${fmt(t0)}</text>
+          <text x="${padL + plotW / 2}" y="${h - 4}" text-anchor="middle" class="zone-chart-xlab">${fmt(mid)}</text>
+          <text x="${w - padR}" y="${h - 4}" text-anchor="end" class="zone-chart-xlab">${fmt(t1)}</text>`;
+      })()
+    : `<text x="${padL}" y="${h - 4}" class="zone-chart-xlab">00:00</text>
+      <text x="${w - padR}" y="${h - 4}" text-anchor="end" class="zone-chart-xlab">—</text>`;
+  return `<svg class="zone-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Heart rate chart">${grid}${bars}${xLabels}</svg>`;
+}
+
+function zoneTimeBarsHtml(day) {
+  const rows = [
+    { key: 'blue', label: 'Blue', sec: day.blue, tone: 'blue' },
+    { key: 'green', label: 'Green', sec: day.green, tone: 'green' },
+    { key: 'red', label: 'Red', sec: day.red, tone: 'red' },
+  ];
+  const maxSec = Math.max(10 * 60, ...rows.map((r) => r.sec));
+  const scaleMarks = [10, 20, 30, 40, 50]
+    .filter((m) => m * 60 <= maxSec * 1.05 || m === 10)
+    .slice(0, 5);
+  const scaleMax = Math.max(maxSec, (scaleMarks[scaleMarks.length - 1] || 10) * 60);
+  const rowsHtml = rows
+    .map((r) => {
+      const pct = athClamp((r.sec / scaleMax) * 100, 0, 100);
+      return `
+        <div class="zone-time-row" data-tone="${r.tone}">
+          <div class="zone-time-meta">
+            <span class="zone-time-name">${r.label}</span>
+            <span class="zone-time-clock">${formatZoneHms(r.sec)}</span>
+          </div>
+          <div class="zone-time-track" aria-hidden="true">
+            <i class="zone-time-fill" style="width:${pct.toFixed(1)}%"></i>
+          </div>
+        </div>`;
+    })
+    .join('');
+  const scaleHtml = scaleMarks
+    .map((m) => `<span>${String(m).padStart(2, '0')}:00</span>`)
+    .join('');
   return `
-    <div class="today-call">
-      <p class="eyebrow">${esc(p.label || 'Today')}</p>
-      <p class="title">${esc(p.todayCall || 'Train with intent')}</p>
-      <p class="meta">${esc(p.reason || 'Connect WHOOP under Me for live readiness.')}</p>
+    <div class="zone-time-list">
+      ${rowsHtml}
+      <div class="zone-time-scale" aria-hidden="true">${scaleHtml}</div>
     </div>`;
+}
+
+/** Accrue live HR into today's zone chart + time-in-zone totals (1 Hz from logger). */
+function recordZoneSample(hr, atMs) {
+  const bpm = Math.round(Number(hr));
+  if (!Number.isFinite(bpm) || bpm < 35 || bpm > 230) return;
+  const iso = (S.session && S.session.date) || S.selectedDate || today();
+  const profile = zoneProfile();
+  const checkin = dailyCheckin(iso, false) || {};
+  const recovery = metricsFromCheckin(checkin).recovery;
+  const connected = !!S.settings?.whoop?.connected;
+  const freshness = connected && recovery != null ? 'current' : 'missing';
+  let blue = profile.bgBase;
+  let green = profile.grBase;
+  if (globalThis.HybridBrainKernel && typeof HybridBrainKernel.dailyZones === 'function') {
+    const z = HybridBrainKernel.dailyZones({
+      recovery,
+      freshness,
+      hrMax: profile.hrMax,
+      rhr28: profile.rhr28,
+      bgBase: profile.bgBase,
+      grBase: profile.grBase,
+    });
+    blue = z.bgToday;
+    green = z.grToday;
+  }
+  S.zoneDay = S.zoneDay || {};
+  const day = S.zoneDay[iso] || { blue: 0, green: 0, red: 0, samples: [] };
+  const tone = zoneToneForHr(bpm, blue, green);
+  day[tone] = Math.max(0, Math.round(num(day[tone]) || 0) + 1);
+  const samples = Array.isArray(day.samples) ? day.samples.slice() : [];
+  const t = Number(atMs) || Date.now();
+  const last = samples[samples.length - 1];
+  if (!last || t - Number(last.t) >= 900) {
+    samples.push({ t, hr: bpm });
+    if (samples.length > 2400) samples.splice(0, samples.length - 2400);
+  } else {
+    last.hr = bpm;
+    last.t = t;
+  }
+  day.samples = samples;
+  S.zoneDay[iso] = day;
 }
 
 function athleteRowHtml() {
@@ -408,58 +566,6 @@ function trainingHomeHtml() {
 
 const homeHtml = trainingHomeHtml;
 
-/** Reference plan from HPP training screen (screenshot match). */
-const TRAINING_DEMO = {
-  dots: { '2026-09-07': true, '2026-09-09': true, '2026-09-11': true },
-  blocks: [
-    {
-      kind: 'warmup',
-      letter: 'A',
-      title: 'Deadlift Warm-Up',
-      items: [
-        { n: 1, text: 'Foam Roll Hamstrings x 60s each side – small 1-2” motion', note: 'All foam rolling should be non-painful so remove pressure as needed' },
-        { n: 2, text: 'Active Straight Leg Raises x 10 reps each side' },
-        { n: 3, text: 'Bird Dogs: 3 x 3-5 each' },
-        { n: 4, text: 'BW Glute Bridge: 3 x 5 with a 1 count at top of each rep. Rest as needed.' },
-        { n: 5, text: 'KB RDLs: 3 x 5. Rest 60s.' },
-        { n: 6, text: 'Box Jump Variation (your choice): 3 x 3. Rest 45-60s.', note: 'Jump for maximal height to a moderate height box.' },
-      ],
-      footer: 'For Completion',
-    },
-    {
-      kind: 'section',
-      label: 'STRENGTH/POWER',
-      badge: { icon: 'trophy', text: 'For Weight' },
-    },
-    { kind: 'lift', letter: 'B', title: 'Snatch Grip Rack Deadlift', prescription: '6 x 3', notes: ['increase weight each set', 'set at mid shin', 'straps are acceptable'] },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'C', title: 'Barbell Lateral Squat', prescription: '3 x 8' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'D', title: 'Goblet Box Squat', prescription: '3 x 12' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'E', title: 'Reverse Hypers', prescription: '4 x 25' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    { kind: 'lift', letter: 'F1', title: 'Double Leg Banded Leg Curls', prescription: '4 x 25' },
-    { kind: 'lift', letter: 'F2', title: 'Garhammer Raises', prescription: '4 x MAX' },
-    { kind: 'section', label: 'STRENGTH/POWER' },
-    {
-      kind: 'recovery',
-      letter: 'G',
-      title: 'Recovery Breathing',
-      bullets: [
-        '10 Nasal Breaths',
-        '5 second inhale',
-        '1-second hold at the top',
-        '5 second exhale',
-        '1-second pause at the bottom',
-      ],
-      note: 'Turn off the music and make sure you’re in a relaxing state.',
-      goal: 'The goal is to start the recovery process before leaving the gym',
-      footer: 'For Completion',
-    },
-  ],
-};
-
 function trainingPlanForDate(iso) {
   if (window.HybridLibrary) {
     S.library = HybridLibrary.ensure(S.library);
@@ -467,7 +573,6 @@ function trainingPlanForDate(iso) {
     if (fromLib) return fromLib;
   }
   if (S.trainingPlans && S.trainingPlans[iso]) return S.trainingPlans[iso];
-  if (iso >= '2026-09-07' && iso <= '2026-09-13') return TRAINING_DEMO;
   return null;
 }
 
@@ -548,18 +653,16 @@ function trnSectionHtml(block) {
     </div>`;
 }
 
-function trnLiftHtml(block, opts = {}) {
-  const ss = opts.superset
-    ? `<div class="trn-ss">− Superset</div>`
-    : '';
+function trnEngineHtml(block) {
   return `
-    <article class="trn-block trn-block--lift" onclick="startTrainingSession('${esc(block.letter)}')">
-      <span class="trn-letter">${esc(block.letter)}</span>
+    <article class="trn-block trn-block--engine" onclick="startTrainingSession('${esc(block.letter)}')">
+      <span class="trn-letter trn-letter--engine">${esc(block.letter)}</span>
       <div class="trn-lift-body">
+        <p class="trn-engine-kicker">The Engine</p>
         <h3 class="trn-lift-title">${esc(block.title)}</h3>
         <p class="trn-lift-rx">${esc(block.prescription)}</p>
       </div>
-    </article>${ss}`;
+    </article>`;
 }
 
 function trnRecoveryHtml(block) {
@@ -583,7 +686,7 @@ function trainingBlocksHtml(iso) {
     return `<p class="trn-empty">Nothing scheduled for this day yet.</p>
     <button type="button" class="trn-add-exercise" onclick="openLibraryForDay()">
       <span class="trn-add-icon" aria-hidden="true">+</span>
-      <span>Add Exercise</span>
+      <span>Add Engine session</span>
     </button>`;
   }
   const head = plan.title
@@ -593,13 +696,7 @@ function trainingBlocksHtml(iso) {
     .map((block, i) => {
       if (block.kind === 'warmup') return trnWarmupHtml(block);
       if (block.kind === 'section') return trnSectionHtml(block);
-      if (block.kind === 'lift') {
-        const next = plan.blocks[i + 1];
-        const a = String(block.letter || '').match(/^([A-Za-z]+)(\d+)$/);
-        const b = next && String(next.letter || '').match(/^([A-Za-z]+)(\d+)$/);
-        const superset = !!(a && b && a[1] === b[1] && Number(b[2]) === Number(a[2]) + 1);
-        return trnLiftHtml(block, { superset });
-      }
+      if (block.kind === 'engine') return trnEngineHtml(block);
       if (block.kind === 'recovery') return trnRecoveryHtml(block);
       return '';
     })
@@ -609,7 +706,7 @@ function trainingBlocksHtml(iso) {
     ${body}
     <button type="button" class="trn-add-exercise" onclick="openLibraryForDay()">
       <span class="trn-add-icon" aria-hidden="true">+</span>
-      <span>Add Exercise</span>
+      <span>Add Engine session</span>
     </button>`;
 }
 
@@ -640,7 +737,7 @@ function openLibraryForDay() {
   S.library = window.HybridLibrary ? HybridLibrary.ensure(S.library) : S.library;
   const tid = S.library && S.library.assignments && S.library.assignments[S.selectedDate];
   if (tid && window.LibraryView) LibraryView.open(tid);
-  else if (window.LibraryView) LibraryView.create();
+  else if (window.LibraryView) LibraryView.createEngine();
   else render();
 }
 
@@ -713,18 +810,6 @@ async function lookForAppUpdate() {
   window.alert(`You're on ${otaInfo.current || APP_BUILD}. No new version is ready.`);
 }
 
-async function switchHybridLocker(next) {
-  if (next === 'strength') return;
-  try {
-    if (window.Whoop && typeof Whoop.client === 'function') {
-      await Whoop.client().auth.updateUser({ data: { hybrid_sc: next } });
-    }
-  } catch (_) {
-    /* offline — still walk the hallway */
-  }
-  location.assign(HybridSc.origins(location.href)[next === 'engine' ? 'engine' : 'strength']);
-}
-
 function meHtml() {
   const w = S.settings.whoop || {};
   if (w.email) {
@@ -732,11 +817,13 @@ function meHtml() {
       <div class="page">
         <div class="eyebrow">Me</div>
         <h1>Profile</h1>
-        ${HybridSc.lockerCardHtml('strength')}
         ${meAppSectionHtml()}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
-          <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p>
+          <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'} · ${esc(APP_BUILD)}</p>
+          ${window.Whoop && typeof Whoop.uiMessage === 'function' && Whoop.uiMessage()
+            ? `<p class="stub signin-msg">${esc(Whoop.uiMessage())}</p>`
+            : ''}
           <div class="account-actions">
             ${w.connected
               ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button>'
@@ -750,9 +837,8 @@ function meHtml() {
     <div class="page page-signin">
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
-      ${HybridSc.lockerCardHtml('strength')}
       ${meAppSectionHtml()}
-      <p class="stub page-lead">One email and password for HYBRID S&amp;C. After sign-in you land on Strength — blank slate, no demo sessions.</p>
+      <p class="stub page-lead">One email and password for The Engine. After sign-in you land on a blank conditioning slate.</p>
       <div id="whoopCard"></div>
     </div>`;
 }
@@ -798,6 +884,31 @@ function syncFab() {
   layer.classList.toggle('fab-layer--training', S.tab === 'training');
 }
 
+function render() {
+  const root = document.getElementById('app');
+  if (!root) return;
+  const map = {
+    home: homeHtml,
+    training: trainingTabHtml,
+    library: libraryHtml,
+    me: meHtml,
+    settings: meHtml,
+  };
+  if (S.tab === 'chat') S.tab = 'home';
+  root.innerHTML = (map[S.tab] || homeHtml)();
+  document.querySelectorAll('[data-tab]').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tab === S.tab);
+  });
+  const shell = document.getElementById('shell');
+  if (shell) shell.classList.toggle('shell--training', S.tab === 'training');
+  syncFab();
+  if (window.Logger && S.loggerOpen) Logger.paint();
+  if (window.Whoop) {
+    if (S.tab === 'me' && !(S.settings.whoop && S.settings.whoop.email)) Whoop.renderPanels();
+    if (S.tab === 'home' || S.tab === 'training') Whoop.autoSyncIfPossible();
+  }
+}
+
 function fabAction(kind) {
   S.fabOpen = false;
   save();
@@ -813,123 +924,17 @@ function fabAction(kind) {
   }
   if (kind === 'session') {
     S.tab = 'library';
-    if (window.LibraryView) LibraryView.create();
+    if (window.LibraryView) LibraryView.createEngine();
     else render();
-    return;
-  }
-  if (kind === 'coach') {
-    openCoachSheet();
   }
 }
 
-function openCoachSheet() {
-  const sheet = document.getElementById('coachSheet');
-  if (!sheet) return;
-  sheet.classList.remove('hidden');
-  sheet.setAttribute('aria-hidden', 'false');
-  renderCoachSheetLog();
-}
-
-function closeCoachSheet() {
-  const sheet = document.getElementById('coachSheet');
-  if (!sheet) return;
-  sheet.classList.add('hidden');
-  sheet.setAttribute('aria-hidden', 'true');
-}
-
-function renderCoachSheetLog() {
-  const log = document.getElementById('coachSheetLog');
-  if (!log) return;
-  log.innerHTML = (S.coachHistory || [])
-    .map((m) => `<div class="msg ${m.role}">${esc(m.content)}</div>`)
-    .join('');
-  log.scrollTop = log.scrollHeight;
-}
-
-function render() {
-  const root = document.getElementById('app');
-  const map = {
-    home: homeHtml,
-    training: trainingTabHtml,
-    library: libraryHtml,
-    me: meHtml,
-    settings: meHtml,
-  };
-  if (S.tab === 'chat') S.tab = 'home';
-  root.innerHTML = (map[S.tab] || homeHtml)();
-
-  document.querySelectorAll('[data-tab]').forEach((b) => {
-    b.classList.toggle('active', b.dataset.tab === S.tab);
-  });
-
-  const shell = document.getElementById('shell');
-  if (shell) shell.classList.toggle('shell--training', S.tab === 'training');
-
-  syncFab();
-  renderCoachSheetLog();
-  if (window.Logger && S.loggerOpen) Logger.paint();
-
-  if (window.Whoop) {
-    if (S.tab === 'me' && !(S.settings.whoop && S.settings.whoop.email)) {
-      Whoop.renderPanels();
-    }
-    if (S.tab === 'home' || S.tab === 'training') Whoop.autoSyncIfPossible();
-  }
-}
-
-async function askCoach() {
-  const input = document.getElementById('coachSheetInput');
-  const status = document.getElementById('coachSheetStatus');
-  const message = (input && input.value || '').trim();
-  if (!message) return;
-  if (!window.Whoop || !(await Whoop.token())) {
-    if (status) status.textContent = 'Sign in under Me before using the coach.';
-    return;
-  }
-  if (status) status.textContent = 'Thinking…';
-  S.coachHistory = S.coachHistory || [];
-  S.coachHistory.push({ role: 'user', content: message });
-  input.value = '';
-  render();
-  renderCoachSheetLog();
-  try {
-    const coachUrl = (window.Whoop && typeof Whoop.fnUrl === 'function')
-      ? Whoop.fnUrl('brain-coach')
-      : String((window.STRENGTH_CONFIG && STRENGTH_CONFIG.supabaseUrl) || 'https://orysjncrksmdfabpuftd.supabase.co').replace(/\/$/, '') + '/functions/v1/brain-coach';
-    const res = await fetch(coachUrl, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + (await Whoop.token()),
-        apikey: (window.STRENGTH_CONFIG && STRENGTH_CONFIG.supabaseAnon) || '',
-        'x-hybrid-product': 'strength',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        packet: HybridBrain.coachContextFromPacket(packet()),
-        history: S.coachHistory.filter((m) => m.content !== '(empty reply)').slice(-8),
-      }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.error || 'Coach request failed');
-    const reply = String(body.reply || '').trim();
-    if (!reply) throw new Error('Coach returned no text. Try again.');
-    S.coachHistory.push({ role: 'assistant', content: reply });
-    if (status) status.textContent = '';
-    S.chatUnread = Math.max(0, (S.chatUnread || 0) - 1);
-  } catch (err) {
-    if (status) status.textContent = err.message || 'Coach failed';
-  }
-  save();
-  render();
-  renderCoachSheetLog();
-}
 
 window.S = S;
 window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
-window.readinessScore = readinessScore;
+window.recordZoneSample = recordZoneSample;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
 };
@@ -941,15 +946,11 @@ window.goToday = goToday;
 window.toggleFab = toggleFab;
 window.closeFab = closeFab;
 window.fabAction = fabAction;
-window.openCoachSheet = openCoachSheet;
-window.closeCoachSheet = closeCoachSheet;
-window.askCoach = askCoach;
 window.applyOtaUpdate = applyOtaUpdate;
 window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;
 window.trainingPlanForDate = trainingPlanForDate;
 window.openLibraryForDay = openLibraryForDay;
-window.switchHybridLocker = switchHybridLocker;
 window.render = render;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -965,13 +966,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.HybridIntegrations.mergeIntoState) HybridIntegrations.mergeIntoState(S);
   }
   refreshHybridOccupancy();
-  peekEngineOccupancy().then(() => {
-    if (S.tab === 'home' || S.tab === 'training') render();
-  });
   await refreshOtaStatus(false);
   render();
 });
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && !/\/functions\/v1\//.test(location.pathname || '')) {
   navigator.serviceWorker.register('./service-worker.js').catch(() => {});
 }

@@ -8,8 +8,8 @@ const require = createRequire(import.meta.url);
 require(join(dirname(fileURLToPath(import.meta.url)), 'hybrid-sc.js'));
 const H = globalThis.HybridSc;
 
-test('PRODUCT is HYBRID S&C', () => {
-  assert.equal(H.PRODUCT, 'HYBRID S&C');
+test('PRODUCT is The Engine', () => {
+  assert.equal(H.PRODUCT, 'The Engine');
 });
 
 test('datesFromState collects assignment and session ISO keys', () => {
@@ -38,72 +38,46 @@ test('datesFromSnapshot walks snapshot.sessions date fields', () => {
   assert.equal(Object.keys(dates).length, 2);
 });
 
-test('occupancy merges strength and engine date maps', () => {
-  const occ = H.occupancy(
-    { '2026-09-11': true, '2026-09-12': true },
-    { '2026-09-12': true, '2026-09-13': true },
-  );
-  assert.deepEqual(occ.strength, { '2026-09-11': true, '2026-09-12': true });
+test('occupancy is engine dates only', () => {
+  const occ = H.occupancy({ '2026-09-12': true, '2026-09-13': true });
   assert.deepEqual(occ.engine, { '2026-09-12': true, '2026-09-13': true });
+  assert.equal(occ.strength, undefined);
 });
 
-test('dotsHtml emits both strength and engine spans on shared day', () => {
-  const occ = H.occupancy({ '2026-09-12': true }, { '2026-09-12': true });
+test('dotsHtml emits engine span only', () => {
+  const occ = H.occupancy({ '2026-09-12': true });
   const html = H.dotsHtml('2026-09-12', occ);
-  assert.match(html, /cal-dot strength/);
   assert.match(html, /cal-dot engine/);
-});
-
-test('dotsHtml emits zero spans when day is empty', () => {
-  const occ = H.occupancy({}, {});
+  assert.ok(!/cal-dot strength/.test(html));
   assert.equal(H.dotsHtml('2026-09-01', occ), '');
 });
 
-test('origins at athlete root points engine to ./engine/', () => {
+test('origins stay on the engine house', () => {
   const o = H.origins('https://example.com/apps/athlete/index.html');
-  assert.equal(o.strength, './');
-  assert.equal(o.engine, './engine/');
-});
-
-test('origins inside engine house points strength to ../', () => {
-  const o = H.origins('https://example.com/apps/athlete/engine/index.html');
-  assert.equal(o.strength, '../');
   assert.equal(o.engine, './');
+  assert.equal(o.strength, undefined);
 });
 
-test('lockerCardHtml marks Strength primary when active strength', () => {
-  const html = H.lockerCardHtml('strength');
-  assert.match(html, /HYBRID S&amp;C/);
-  assert.match(html, /class="btn primary"[^>]*>Strength/);
-  assert.match(html, /class="btn"[^>]*>Engine/);
-  assert.match(html, /aria-pressed="true"/);
-  assert.match(html, /onclick="switchHybridLocker\('strength'\)"/);
-  assert.match(html, /onclick="switchHybridLocker\('engine'\)"/);
-  assert.ok(!/PlanSync/i.test(html));
-  assert.ok(!/Copy training/i.test(html));
+test('lockerCardHtml is gone', () => {
+  assert.equal(H.lockerCardHtml(), '');
 });
 
-test('brandHtml lights active locker on status line', () => {
-  const strength = H.brandHtml('strength');
-  assert.match(strength, /HYBRID S&amp;C/);
-  assert.match(strength, /<span class="on">Strength<\/span>/);
-  assert.match(strength, /<span>Engine<\/span>/);
-
-  const engine = H.brandHtml('engine');
-  assert.match(engine, /<span class="on">Engine<\/span>/);
-  assert.match(engine, /<span>Strength<\/span>/);
+test('brandHtml is conditioning only', () => {
+  const html = H.brandHtml();
+  assert.match(html, /The Engine/);
+  assert.match(html, /Conditioning/);
+  assert.ok(!/Strength/.test(html));
 });
 
-test('applyOccupancyToState sets hybridOccupancy on state', () => {
+test('applyOccupancyToState sets engine occupancy', () => {
   const S = {};
-  H.applyOccupancyToState(S, { '2026-09-11': true }, { '2026-09-12': true });
+  H.applyOccupancyToState(S, { '2026-09-12': true });
   assert.deepEqual(S.hybridOccupancy, {
-    strength: { '2026-09-11': true },
     engine: { '2026-09-12': true },
   });
 });
 
-test('SNAPSHOT_DOMAINS prefers locker names then hosted-admitted aliases', () => {
-  assert.deepEqual(H.SNAPSHOT_DOMAINS.strength, ['strength_side', 'strength']);
+test('SNAPSHOT_DOMAINS has engine locker names only', () => {
+  assert.equal(H.SNAPSHOT_DOMAINS.strength, undefined);
   assert.deepEqual(H.SNAPSHOT_DOMAINS.engine, ['engine_side', 'conditioning']);
 });

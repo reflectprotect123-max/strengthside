@@ -23,26 +23,25 @@ globalThis.render = () => {
   paints += 1;
 };
 
+require(join(dir, 'engine.js'));
 require(join(dir, 'library.js'));
 globalThis.S.library = globalThis.HybridLibrary.emptyState();
-globalThis.S.library = globalThis.HybridLibrary.createTemplate(globalThis.S.library, { title: 'Upper Day' });
+globalThis.S.library = globalThis.HybridLibrary.createTemplate(globalThis.S.library, { title: 'Row VO2' });
 require(join(dir, 'library-ui.js'));
 
 test('search does not full-render the shell (keeps the input focused)', () => {
   paints = 0;
   results.innerHTML = '';
-  globalThis.LibraryView.search('Upper');
+  globalThis.LibraryView.search('Row');
   assert.equal(paints, 0, 'search must not call render()');
-  assert.equal(globalThis.S.libUi.q, 'Upper');
-  assert.match(results.innerHTML, /Upper Day/);
+  assert.equal(globalThis.S.libUi.q, 'Row');
+  assert.match(results.innerHTML, /Row VO2/);
 });
 
-test('picker search also patches #libResults without render()', () => {
+test('list search does not invent lift cards', () => {
   paints = 0;
   results.innerHTML = '';
-  globalThis.S.libUi.screen = 'picker';
-  globalThis.S.libUi.tab = 'exercises';
-  globalThis.LibraryView.search('Bench');
+  globalThis.LibraryView.search('Squat');
   assert.equal(paints, 0);
-  assert.match(results.innerHTML, /Bench Press/);
+  assert.ok(!/Squat/.test(results.innerHTML));
 });

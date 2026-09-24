@@ -1,14 +1,14 @@
 (function (root) {
   const QUOTE = 'You can’t do in a race what you haven’t prepared for.';
-  const COACH = 'Train with intent. Log every set. Leave the gym already recovering. Rest as prescribed — the clock comes next.';
+  const COACH = 'Hold the talk-test. Log every bout. Rest as prescribed — the clock comes next.';
 
   let pad = null;
   let sheet = null;
-  let effortOpen = null;
   let toast = '';
   let toastTimer = 0;
   let clockTimer = 0;
   let lastBeep = '';
+  let lastZoneSaveAt = 0;
 
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -21,7 +21,6 @@
   function persist(next) {
     root.S.session = next;
     root.S.loggerOpen = true;
-    if (next && next.liftMemory) root.S.liftMemory = next.liftMemory;
     if (typeof root.save === 'function') root.save();
     paint();
   }
@@ -44,13 +43,12 @@
       ? root.S.session
       : null;
     if (letter && existing) {
-      root.S.session = HS.goToLetter(HS.startSession({ date: d, plan: p, existing, liftMemory: root.S.liftMemory }), letter);
+      root.S.session = HS.goToLetter(HS.startSession({ date: d, plan: p, existing }), letter);
     } else if (letter) {
-      root.S.session = HS.startSession({ date: d, plan: p, letter, liftMemory: root.S.liftMemory });
+      root.S.session = HS.startSession({ date: d, plan: p, letter });
     } else {
-      root.S.session = HS.startSession({ date: d, plan: p, existing, liftMemory: root.S.liftMemory });
+      root.S.session = HS.startSession({ date: d, plan: p, existing });
     }
-    if (root.S.session && root.S.session.liftMemory) root.S.liftMemory = root.S.session.liftMemory;
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');
@@ -115,6 +113,19 @@
       if (clock) clock.textContent = elapsed();
       const t = timerState();
       const now = Date.now();
+      const s = session();
+      if (s && s.phase === 'block' && root.HybridEngine) {
+        const page = HybridSession.currentPage(s);
+        const log = page && s.logs[page.id];
+        if (page && page.logMode === 'engine' && log && log.engine) {
+          const next = HybridEngine.tick(log, now);
+          if (next !== log) {
+            persistEngine(next);
+            return;
+          }
+          patchEngineLive(log.engine, now);
+        }
+      }
       const next = HybridTimer.tick(t, now);
       if (next !== t) {
         if (next.view === 'idle' && t.view !== 'idle') beep('done');
@@ -159,7 +170,8 @@
   function dotsHtml(s) {
     return s.pages.map((p, i) => {
       const ids = HybridSession.logIdsForPage(p);
-      const done = p.logMode === 'complete' ? !!(s.logs[p.id] && s.logs[p.id].completed)
+      const done = p.logMode === 'complete' || p.logMode === 'engine'
+        ? !!(s.logs[p.id] && s.logs[p.id].completed)
         : p.logMode === 'doneHub' ? false
         : ids.some((id) => s.logs[id] && s.logs[id].sets && s.logs[id].sets.some((r) => r.logged));
       const cur = s.phase === 'block' && i === s.blockIndex;
@@ -168,6 +180,18 @@
   }
 
   function headerHtml(s) {
+    const page = s.phase === 'block' ? HybridSession.currentPage(s) : null;
+    if (page && page.logMode === 'engine') {
+      return `
+      <div class="log-top">
+        <button type="button" class="log-back-x" onclick="Logger.chevron()" aria-label="Close">⌄</button>
+        <div class="log-dots">${dotsHtml(s)}</div>
+        <div class="log-clock" id="logClock">${elapsed()}</div>
+      </div>
+      <div class="log-totals log-totals--engine">
+        <div class="eng-eyebrow">The Engine</div>
+      </div>`;
+    }
     const t = HybridSession.totals(s);
     return `
       <div class="log-top">
@@ -186,7 +210,7 @@
     const off = c * (1 - Math.max(0, Math.min(1, progress || 0)));
     return `<svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true">
       <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>
-      <circle cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5"
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#ffffff" stroke-width="5"
         stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"
         transform="rotate(-90 50 50)"/>
     </svg>${inner}`;
@@ -230,7 +254,7 @@
   }
 
   function pickerIcon(id) {
-    const g = '#16ec06';
+    const g = '#ffffff';
     const w = '#fff';
     if (id === 'rest') {
       return `<svg viewBox="0 0 72 72" class="tm-ico">${circ()}<text x="36" y="44" text-anchor="middle" fill="${g}" font-size="22" font-weight="700" font-family="Barlow Condensed,sans-serif">Zzz</text></svg>`;
@@ -258,7 +282,7 @@
   }
 
   function icoSwitch() {
-    return `<svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="11" r="6" fill="none" stroke="#1ba3ff" stroke-width="1.6"/><path d="M10 7 v4" stroke="#1ba3ff" stroke-width="1.6"/></svg>`;
+    return `<svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="11" r="6" fill="none" stroke="#ffffff" stroke-width="1.6"/><path d="M10 7 v4" stroke="#ffffff" stroke-width="1.6"/></svg>`;
   }
 
   function fieldBox(key, value, label) {
@@ -403,6 +427,221 @@
       </div>`;
   }
 
+  function remainLabel(endsAt, now) {
+    const sec = Math.max(0, Math.ceil(((endsAt || now) - now) / 1000));
+    const m = Math.floor(sec / 60);
+    const r = sec % 60;
+    return `${m}:${String(r).padStart(2, '0')}`;
+  }
+
+  function engineLiveHr() {
+    const s = root.S || {};
+    const raw = s.liveHr != null ? s.liveHr
+      : (s.session && s.session.liveHr != null) ? s.session.liveHr
+      : null;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 35 || n > 230) return null;
+    return Math.round(n);
+  }
+
+  function engineZoneBounds() {
+    const K = root.HybridBrainKernel;
+    if (!K || typeof K.dailyZones !== 'function') return { bg: 138, gr: 170, max: 190 };
+    const z = (root.S && root.S.settings && root.S.settings.zones) || {};
+    const c = (root.S && root.S.checkin && (root.S.checkin[root.S.selectedDate] || root.S.checkin[Object.keys(root.S.checkin || {})[0]])) || {};
+    const recovery = Number(c.whoopRecovery);
+    const connected = !!(root.S && root.S.settings && root.S.settings.whoop && root.S.settings.whoop.connected);
+    const zones = K.dailyZones({
+      recovery: Number.isFinite(recovery) ? recovery : null,
+      freshness: connected && Number.isFinite(recovery) ? 'current' : 'missing',
+      hrMax: Number(z.hrMax) || 190,
+      rhr28: Number(z.rhr28) || Number(c.restingHr) || 60,
+      bgBase: Number(z.bgBase) || 138,
+      grBase: Number(z.grBase) || 170.5,
+    });
+    return { bg: Math.round(zones.bgToday), gr: Math.round(zones.grToday), max: Number(z.hrMax) || 190 };
+  }
+
+  function engineRingTone() {
+    const zones = engineZoneBounds();
+    const hr = engineLiveHr();
+    if (hr == null) return '';
+    if (hr < zones.bg) return 'blue';
+    if (hr < zones.gr) return 'green';
+    return 'red';
+  }
+
+  function engineZoneName(tone) {
+    if (tone === 'blue') return 'BLUE';
+    if (tone === 'green') return 'GREEN';
+    if (tone === 'red') return 'RED';
+    return '—';
+  }
+
+  function engineProgress(e, now) {
+    if (!e) return 0;
+    if (e.phase === 'work' && e.workEndsAt != null && e.workSec > 0) {
+      const left = Math.max(0, e.workEndsAt - now);
+      return Math.max(0, Math.min(1, left / (e.workSec * 1000)));
+    }
+    if (e.phase === 'rest' && e.restEndsAt != null && e.restSec > 0) {
+      const left = Math.max(0, e.restEndsAt - now);
+      return Math.max(0, Math.min(1, left / (e.restSec * 1000)));
+    }
+    return 0;
+  }
+
+  function engineTargetParts(e) {
+    if (!e || !root.HybridEngine) return { value: '—', unit: '' };
+    if (e.modality === 'rpm' && e.target && e.target.rpm != null) return { value: String(Math.round(e.target.rpm)), unit: 'RPM' };
+    if (e.modality === 'split' && e.target && e.target.splitSec != null) {
+      return { value: HybridEngine.formatSplit(e.target.splitSec) || String(e.target.splitSec), unit: '/500' };
+    }
+    if (e.target && e.target.watts != null) return { value: String(Math.round(e.target.watts)), unit: 'W' };
+    return { value: '—', unit: '' };
+  }
+
+  function engRingSvg(progress, zones) {
+    const r = 40;
+    const c = 2 * Math.PI * r;
+    const span = 0.75;
+    const arcLen = c * span;
+    const filled = arcLen * Math.max(0, Math.min(1, progress || 0));
+    const gap = c - arcLen;
+    return `<svg class="eng-ring" id="engRing" viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="hr-shoe-track" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke-linecap="round"
+        stroke-dasharray="${arcLen.toFixed(2)} ${gap.toFixed(2)}"
+        transform="rotate(135 50 50)"/>
+      <circle class="eng-ring-arc" id="engRingArc" cx="50" cy="50" r="${r}" fill="none" stroke-width="9"
+        stroke="currentColor" stroke-linecap="round"
+        stroke-dasharray="${filled.toFixed(2)} ${(c - filled).toFixed(2)}"
+        transform="rotate(135 50 50)"/>
+      <text x="12" y="92" class="hr-shoe-label hr-shoe-label--blue">${esc(zones.bg)}</text>
+      <text x="88" y="92" class="hr-shoe-label hr-shoe-label--green" text-anchor="end">${esc(zones.gr)}</text>
+    </svg>`;
+  }
+
+  function engineHrDial(e, now, opts) {
+    const zones = engineZoneBounds();
+    const tone = engineRingTone();
+    const parts = engineTargetParts(e);
+    const shown = Math.min(e.rounds, e.roundIndex + 1);
+    const ends = opts.endsAt;
+    const clock = ends != null ? remainLabel(ends, now) : '—';
+    const hr = engineLiveHr();
+    return `
+      <div class="hr-shoe" data-tone="${esc(tone)}" data-phase="${esc(e.phase || '')}">
+        <div class="hr-shoe-dial">
+          ${engRingSvg(engineProgress(e, now), zones)}
+          <div class="hr-shoe-face">
+            <strong class="hr-shoe-bpm" id="engFaceHr">${hr != null ? esc(hr) : '—'}</strong>
+            <span class="hr-shoe-unit">BPM</span>
+            <span class="hr-shoe-zone" id="engFaceZone">${esc(engineZoneName(tone))}</span>
+          </div>
+        </div>
+        <div class="eng-rail">
+          <div class="eng-rail-cell"><strong>${esc(parts.value)}${parts.unit ? ` ${esc(parts.unit)}` : ''}</strong><span>Target</span></div>
+          <div class="eng-rail-cell eng-rail-cell--mid"><strong id="engClock">${esc(clock)}</strong><span>${esc(opts.phaseLabel || '')}</span></div>
+          <div class="eng-rail-cell"><strong>${esc(shown)}/${esc(e.rounds)}</strong><span>Reps</span></div>
+        </div>
+      </div>`;
+  }
+
+  function patchEngineLive(e, now) {
+    if (!e) return;
+    const ends = e.phase === 'work' ? e.workEndsAt : e.phase === 'rest' ? e.restEndsAt : null;
+    const clock = document.getElementById('engClock');
+    if (clock && ends) clock.textContent = remainLabel(ends, now);
+    const tone = engineRingTone();
+    const hr = engineLiveHr();
+    const hrEl = document.getElementById('engFaceHr');
+    if (hrEl) hrEl.textContent = hr != null ? String(hr) : '—';
+    const zoneEl = document.getElementById('engFaceZone');
+    if (zoneEl) zoneEl.textContent = engineZoneName(tone);
+    const shoe = document.querySelector('#logger .hr-shoe');
+    if (shoe && shoe.getAttribute('data-tone') !== tone) shoe.setAttribute('data-tone', tone);
+    const arc = document.getElementById('engRingArc');
+    if (arc) {
+      const r = 40;
+      const c = 2 * Math.PI * r;
+      const arcLen = c * 0.75;
+      const filled = arcLen * engineProgress(e, now);
+      arc.setAttribute('stroke-dasharray', `${filled.toFixed(2)} ${(c - filled).toFixed(2)}`);
+    }
+    if (hr != null && typeof root.recordZoneSample === 'function') {
+      root.recordZoneSample(hr, now);
+      if (typeof root.save === 'function' && now - lastZoneSaveAt > 5000) {
+        lastZoneSaveAt = now;
+        root.save();
+      }
+    }
+  }
+
+  function persistEngine(nextLog) {
+    const s = JSON.parse(JSON.stringify(session()));
+    const page = HybridSession.currentPage(s);
+    s.logs[page.id] = nextLog;
+    if (nextLog.engine && nextLog.engine.phase === 'done' && root.HybridEngine) {
+      const closed = HybridEngine.closePiece(nextLog, root.HybridAdaptive);
+      s.engineAnchors = s.engineAnchors || {};
+      if (page.machine) s.engineAnchors[page.machine] = closed;
+      root.S.engineAnchors = { ...(root.S.engineAnchors || {}), ...(s.engineAnchors || {}) };
+    }
+    persist(s);
+  }
+
+  function engineHtml(s, page, log) {
+    const e = log.engine;
+    if (!e || !root.HybridEngine) return `<p class="log-kicker">Engine bundle missing</p>`;
+    const now = Date.now();
+    const target = HybridEngine.formatTarget(e.target, e.modality) || (e.skipped ? 'No invented pace' : 'Type the first number');
+    const shown = Math.min(e.rounds, e.phase === 'ready' || e.phase === 'rest' ? e.roundIndex + 1 : e.roundIndex + 1);
+    const kicker = `${page.letter}. The Engine · ${(e.structure || 'intervals').toUpperCase()}`;
+    let stage = '';
+    if (e.phase === 'ready') {
+      stage = `
+        <p class="eng-target" id="engTarget">${esc(target)}</p>
+        ${e.skipped ? '' : `<label class="eng-first">First number
+          <input inputmode="decimal" value="${esc(e.modality === 'split' ? (e.target.splitSec || '') : e.modality === 'rpm' ? (e.target.rpm || '') : (e.target.watts || ''))}" onchange="Logger.engineTyped(this.value)">
+        </label>`}
+        <button type="button" class="log-primary eng-go" onclick="Logger.engineStart()">Start work</button>`;
+    } else if (e.phase === 'work') {
+      stage = `
+        <p class="eng-phase">Work ${shown}/${e.rounds}</p>
+        ${engineHrDial(e, now, { phaseLabel: 'Work', endsAt: e.workEndsAt })}
+        <button type="button" class="eng-early" onclick="Logger.engineEnd()">End interval early</button>`;
+    } else if (e.phase === 'rest') {
+      const nextTarget = HybridEngine.formatTarget(e.target, e.modality) || target;
+      const effortBlock = e.needsEffort ? `
+        <p class="log-emh-label">How was that interval?</p>
+        <div class="log-intensity">
+          <button type="button" onclick="Logger.engineEffort('easy')">Easy</button>
+          <button type="button" onclick="Logger.engineEffort('medium')">Medium</button>
+          <button type="button" onclick="Logger.engineEffort('hard')">Hard</button>
+        </div>` : '';
+      const skipBtn = e.needsEffort ? '' : `<button type="button" class="log-primary" onclick="Logger.engineSkipRest()">Skip · start work</button>`;
+      const upNextBlock = e.needsEffort ? '' : `<p class="eng-target">Up next · ${esc(nextTarget)}</p>`;
+      stage = `
+        <p class="eng-phase">Rest</p>
+        ${engineHrDial(e, now, { phaseLabel: 'Rest', endsAt: e.restEndsAt })}
+        <p class="eng-up">Last interval · ${esc(target)}</p>
+        ${effortBlock}
+        ${upNextBlock}
+        ${skipBtn}`;
+    } else {
+      stage = `
+        <p class="eng-phase">Piece done</p>
+        <p class="eng-target">${esc(target)}</p>
+        <button type="button" class="log-complete is-done" onclick="Logger.next()">Next</button>`;
+    }
+    return `
+      <p class="log-kicker">${esc(kicker)}</p>
+      <h2 class="log-title">${esc(page.title)}</h2>
+      <p class="log-rx">${esc(page.prescription || '')}</p>
+      <div class="eng-stage">${stage}</div>`;
+  }
+
   function completeHtml(s, page, log) {
     const items = (page.items || []).map((it) => `
       <li><strong>${it.n}.</strong> ${esc(it.text)}
@@ -422,39 +661,14 @@
       <input class="log-ex-note" placeholder="Add circuit note" value="${esc(log.note || '')}" onchange="Logger.note('${esc(page.id)}',this.value)">`;
   }
 
-  function resolvePadKg(n, memberId) {
-    const s = session();
-    const page = HybridSession.currentPage(s);
-    const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-    const mem = liftMem(s, lift);
-    const e1 = (s.workingMax && s.workingMax[lift.id]) || mem.e1rmKg;
-    const K = root.HybridBrainKernel;
-    if (K && typeof K.kgFromPctPad === 'function') {
-      const kg = K.kgFromPctPad({ columns: lift.columns, raw: n, e1rmKg: e1 });
-      if (kg != null) return kg;
-    }
-    return n;
-  }
-
-  function liftMem(s, page) {
-    const key = root.HybridSession && HybridSession.memoryKey
-      ? HybridSession.memoryKey(page.title)
-      : String(page.title || '').trim().toLowerCase();
-    return (s && s.liftMemory && s.liftMemory[key])
-      || (root.S && root.S.liftMemory && root.S.liftMemory[key])
-      || {};
-  }
-
   function sideHtml(s, page) {
-    const mem = liftMem(s, page);
-    const wm = (s.workingMax && s.workingMax[page.id]) || mem.e1rmKg || '';
-    const last = mem.lastKg != null && mem.lastKg !== '' ? mem.lastKg : '';
+    const wm = (s.workingMax && s.workingMax[page.id]) || '';
     return `
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
         <div class="log-side">
           <div class="log-side-row"><span>WORKING MAX</span><button type="button" class="log-add" onclick="Logger.sheet('wm')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
-          <div class="log-side-row"><span>LAST</span><span>${last !== '' ? esc(last) : 'None'}</span></div>
+          <div class="log-side-row"><span>LAST</span><span>${wm ? esc(wm) : 'None'}</span></div>
         </div>
       </div>`;
   }
@@ -478,25 +692,6 @@
     return v == null ? '' : v;
   }
 
-  function effortShort(effort) {
-    if (effort === 'easy') return 'Easy';
-    if (effort === 'hard') return 'Hard';
-    if (effort === 'medium') return 'Med';
-    return '—';
-  }
-
-  function effortPopHtml() {
-    if (!effortOpen) return '';
-    return `<div class="effort-pop" id="effortPop">
-      <p>Effort</p>
-      <div class="log-intensity">
-        <button type="button" onclick="Logger.effortPick('easy')">Easy</button>
-        <button type="button" onclick="Logger.effortPick('medium')">Medium</button>
-        <button type="button" onclick="Logger.effortPick('hard')">Hard</button>
-      </div>
-    </div>`;
-  }
-
   function tableHtml(s, page, log) {
     const cols = columnsFor(page);
     const mid = esc(page.id);
@@ -509,11 +704,9 @@
         const ph = field === 'reps' && row.reps == null;
         return `<td><button type="button" class="log-cell${focus ? ' focus' : ''}${ph ? ' ph' : ''}" onclick="Logger.focusPad('${mid}',${i},'${esc(field)}')">${esc(val)}</button></td>`;
       }).join('');
-      const effortTap = effortOpen && effortOpen.memberId === page.id && effortOpen.setIndex === i;
       return `<tr>
         <td>${i + 1}</td>
         ${tds}
-        <td><button type="button" class="log-cell${effortTap ? ' tap' : ''}" data-effort-cell="${mid}:${i}" onclick="Logger.effortPop('${mid}',${i})">${esc(effortShort(row.effort))}</button></td>
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
       </tr>`;
     }).join('');
@@ -521,7 +714,7 @@
       <p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <table class="log-table">
-        <thead><tr><th>Sets</th>${heads}<th>Effort</th><th></th></tr></thead>
+        <thead><tr><th>Sets</th>${heads}<th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="log-set-ctrl">
@@ -568,7 +761,7 @@
     return `
       <div class="log-sum">
         <p class="log-kicker">${esc(s.date)}</p>
-        <h2 class="log-title">Heavy Lower</h2>
+        <h2 class="log-title">${esc(s.title || 'Session')}</h2>
         <div class="log-stat"><span>Exercises</span><b>${st.exercises}</b></div>
         <div class="log-stat"><span>Sets</span><b>${st.sets}</b></div>
         <div class="log-stat"><span>Reps</span><b>${st.reps}</b></div>
@@ -613,7 +806,7 @@
         <div class="log-sheet" onclick="if(event.target===this)Logger.sheet(null)">
           <div class="log-sheet-card">
             <h2>Set a new goal</h2>
-            <p>Track a target for this lift. Hybrid keeps this on the phone for now.</p>
+            <p>Track a target for this piece. Hybrid keeps this on the phone for now.</p>
             <button type="button" class="log-primary" onclick="Logger.sheet(null)">Got it</button>
           </div>
         </div>`;
@@ -635,25 +828,16 @@
     const log = s.logs[page.id] || { completed: false, sets: [], note: '' };
     let body = '';
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
+    else if (page.logMode === 'engine') body = engineHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
-    else if (page.logMode === 'superset') {
-      const members = (page.members || []).map((m) => `
-        <section class="log-ss-member">
-          <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
-          ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
-          ${tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
-        </section>`).join('');
-      body = `
-        <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
-        <div class="log-ss">${members}</div>`;
-    } else {
+    else {
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
         <h2 class="log-title">${esc(page.title)}</h2>
         ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
         ${tableHtml(s, page, log)}`;
     }
-    return `${headerHtml(s)}<div class="log-body">${body}${effortPopHtml()}</div>${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
+    return `${headerHtml(s)}<div class="log-body">${body}</div>${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
   }
 
   function paint() {
@@ -669,6 +853,7 @@
     let inner = '';
     if (s.phase === 'quote') inner = quoteHtml();
     else if (s.phase === 'coach') inner = coachHtml();
+    else if (s.phase === 'feel') inner = feelHtml(s);
     else if (s.phase === 'summary') inner = summaryHtml(s);
     else inner = blockHtml(s);
     el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
@@ -694,23 +879,57 @@
       persist(HybridSession.ackQuote(session()));
     },
     gotCoach() { persist(HybridSession.ackCoach(session())); },
-    next() { pad = null; effortOpen = null; persist(HybridSession.nextPage(session())); },
-    prev() { pad = null; effortOpen = null; persist(HybridSession.prevPage(session())); },
+    next() { pad = null; persist(HybridSession.nextPage(session())); },
+    prev() { pad = null; persist(HybridSession.prevPage(session())); },
     complete() { persist(HybridSession.completeCurrent(session())); },
+    engineStart() {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      persistEngine(HybridEngine.startWork(s.logs[page.id], Date.now()));
+    },
+    engineEnd() {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      persistEngine(HybridEngine.endWork(s.logs[page.id], Date.now(), true));
+    },
+    engineEffort(effort) {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      const log = s.logs[page.id];
+      if (!log.engine || !log.engine.needsEffort) return;
+      persistEngine(HybridEngine.recordEffort(log, effort, root.HybridAdaptive, Date.now()));
+    },
+    engineSkipRest() {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      persistEngine(HybridEngine.skipRestAndStart(s.logs[page.id], Date.now()));
+    },
+    engineTyped(raw) {
+      const n = Number(raw);
+      const s = JSON.parse(JSON.stringify(session()));
+      const page = HybridSession.currentPage(s);
+      const e = s.logs[page.id].engine;
+      if (!Number.isFinite(n) || n <= 0) return;
+      if (e.modality === 'split') e.target.splitSec = n;
+      else if (e.modality === 'rpm') e.target.rpm = n;
+      else e.target.watts = n;
+      e.skipped = false;
+      persist(s);
+    },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);
-      const id = page.logMode === 'superset' ? memberId : page.id;
+      const id = memberId || page.id;
       s.logs[id].note = v;
       persist(s);
     },
     focusPad(memberId, setIndex, field) {
       const s = session();
       const page = HybridSession.currentPage(s);
-      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const row = s.logs[lift.id].sets[setIndex];
+      const piece = HybridSession.memberOf(page, memberId) || page;
+      const row = s.logs[piece.id].sets[setIndex];
       const seed = field === 'kg' ? row.kg : field === 'reps' ? row.reps : (row.cells && row.cells[field]);
-      pad = { memberId: lift.id, setIndex, field, buffer: seed == null ? '' : String(seed), miss: !!row.miss };
+      pad = { memberId: piece.id, setIndex, field, buffer: seed == null ? '' : String(seed), miss: !!row.miss };
       paint();
     },
     closePad() { pad = null; paint(); },
@@ -725,20 +944,10 @@
       if (!pad) return;
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = resolvePadKg(n, pad.memberId);
+      if (pad.field === 'kg') patch.kg = n;
       else if (pad.field === 'reps') patch.reps = n;
       else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), pad.setIndex, patch, pad.memberId);
-      if (pad.field === 'kg' && patch.kg > 0) {
-        const page = HybridSession.currentPage(s);
-        const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, pad.memberId) : page;
-        const prev = Math.max(0, ...s.logs[lift.id].sets.filter((r, i) => i !== pad.setIndex && r.logged).map((r) => r.kg || 0));
-        if (patch.kg >= prev && lift.targetReps) {
-          toast = `New ${lift.targetReps} Rep Max!`;
-          clearTimeout(toastTimer);
-          toastTimer = setTimeout(() => { toast = ''; paint(); }, 2200);
-        }
-      }
       pad = null;
       persist(s);
     },
@@ -747,7 +956,7 @@
       const idx = pad.setIndex;
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = resolvePadKg(n, pad.memberId);
+      if (pad.field === 'kg') patch.kg = n;
       else if (pad.field === 'reps') patch.reps = n;
       else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), idx, patch, pad.memberId);
@@ -758,33 +967,10 @@
     check(memberId, i) {
       const s = session();
       const page = HybridSession.currentPage(s);
-      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const row = s.logs[lift.id].sets[i];
-      if (!row.logged) {
-        if (!row.effort && !row.miss) return;
-        persist(HybridSession.logSet(s, i, {}, lift.id));
-      } else persist(HybridSession.toggleLogged(s, i, lift.id));
-    },
-    effortPop(memberId, setIndex) {
-      effortOpen = { memberId, setIndex };
-      paint();
-      requestAnimationFrame(() => {
-        const cell = document.querySelector(`[data-effort-cell="${memberId}:${setIndex}"]`);
-        const pop = document.getElementById('effortPop');
-        if (!cell || !pop) return;
-        const body = cell.closest('.log-body');
-        if (!body) return;
-        const bodyRect = body.getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
-        pop.style.top = `${cellRect.bottom - bodyRect.top + body.scrollTop + 4}px`;
-        pop.style.left = `${Math.max(8, cellRect.left - bodyRect.left)}px`;
-      });
-    },
-    effortPick(effort) {
-      if (!effortOpen) return;
-      const { memberId, setIndex } = effortOpen;
-      effortOpen = null;
-      persist(HybridSession.logSet(session(), setIndex, { effort }, memberId));
+      const piece = HybridSession.memberOf(page, memberId) || page;
+      const row = s.logs[piece.id].sets[i];
+      if (!row.logged) persist(HybridSession.logSet(s, i, {}, piece.id));
+      else persist(HybridSession.toggleLogged(s, i, piece.id));
     },
     unit(u) {
       const s = JSON.parse(JSON.stringify(session()));
@@ -794,11 +980,11 @@
     nudgeSets(memberId, dir) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);
-      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const log = s.logs[lift.id];
+      const piece = HybridSession.memberOf(page, memberId) || page;
+      const log = s.logs[piece.id];
       if (dir > 0) {
         log.sets.push({
-          reps: lift.logMode === 'max' ? null : lift.targetReps,
+          reps: piece.logMode === 'max' ? null : piece.targetReps,
           kg: null,
           cells: {},
           logged: false,
@@ -815,7 +1001,7 @@
       sheet = null;
       paint();
     },
-    doneTraining() { pad = null; persist(HybridSession.openFeel(session())); },
+    doneTraining() { pad = null; persist(HybridSession.openSummary(session())); },
     addExercise() {
       close();
       if (typeof root.openLibraryForDay === 'function') root.openLibraryForDay();

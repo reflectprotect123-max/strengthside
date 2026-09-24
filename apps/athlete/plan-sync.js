@@ -1,15 +1,13 @@
 /**
- * Strength Side plan sync — Library templates + calendar/logger sessions.
- * Domain `strength_side` is preferred; hosted Postgres currently admits
- * `strength` so push/pull fall back there until the ecosystem migration lands.
- * Uses existing upsert_athlete_domain_snapshot (no new table in this repo).
- * WHOOP/Concept2 stay on their own buttons — this is not that path.
+ * Engine plan sync — library, sessions, Close anchors.
+ * Domain `engine_side` preferred; hosted Postgres currently admits
+ * `conditioning` so push/pull fall back there until the ecosystem migration lands.
  */
 (function (root) {
-  const DOMAIN = 'strength_side';
-  const DOMAIN_FALLBACK = 'strength';
+  const DOMAIN = 'engine_side';
+  const DOMAIN_FALLBACK = 'conditioning';
   const DOMAINS = [DOMAIN, DOMAIN_FALLBACK];
-  const WRITER = 'strengthside-athlete';
+  const WRITER = 'engine-athlete';
   const SCHEMA = 1;
   const DEBOUNCE_MS = 2500;
 
@@ -80,10 +78,10 @@
     }, prev.session[catalogId]);
     sessions.push(catalogEnt);
     sessions.push(touch({
-      id: 'lift_memory',
-      kind: 'lift_memory',
-      memory: (state && state.liftMemory) || {},
-    }, prev.session.lift_memory));
+      id: 'engine_anchors',
+      kind: 'engine_anchors',
+      anchors: (state && state.engineAnchors) || {},
+    }, prev.session.engine_anchors));
 
     const prevTpls = new Set(Object.keys(prev.template));
     const liveTpls = new Set(templates.map((t) => t.id));
@@ -178,7 +176,7 @@
       if (row.kind === 'assignment' && row.date) assignments[row.date] = row.templateId;
       else if (row.kind === 'log' && row.date) sessions[row.date] = row.payload;
       else if (row.kind === 'catalog') catalog = { exercises: row.exercises || [], circuits: row.circuits || [] };
-      else if (row.kind === 'lift_memory') next.liftMemory = row.memory || {};
+      else if (row.kind === 'engine_anchors') next.engineAnchors = row.anchors || {};
     });
     next.library = {
       templates: plan.templates || [],

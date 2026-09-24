@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Engine — OLED + TrainHeroic</title>
+  <link rel="stylesheet" href="../../../apps/athlete/home.css" />
+  <link rel="stylesheet" href="../../../apps/athlete/logger.css" />
+  <link rel="stylesheet" href="../../../apps/athlete/th.css" />
+  <style>
+    body { margin: 0; background: #111; padding: 16px; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .shell { margin: 0; flex: 0 0 360px; width: 360px; min-width: 360px; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div class="shell" style="position:relative;height:720px;overflow:hidden">
+      <div class="shell-screen--oled" style="padding:16px">
+        <header class="home-top"><span class="home-mark">TH</span><div class="home-brand-text"><b>THE ENGINE</b><small>Conditioning</small></div></header>
+        <p class="ath-date">Wednesday, 24 Sep</p>
+        <section class="ath-module-whoop">
+          <span class="ath-label">WHOOP</span>
+          <div class="ath-whoop-dials" style="display:flex;gap:8px;justify-content:space-between;padding:12px 0">
+            <div style="text-align:center"><svg width="88" height="88"><circle cx="44" cy="44" r="36" fill="none" stroke="#2c2c2e" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="#9db4c8" stroke-width="7" stroke-dasharray="226" stroke-dashoffset="50" transform="rotate(-90 44 44)"/></svg><div class="ath-label">Sleep</div></div>
+            <div style="text-align:center"><svg width="88" height="88"><circle cx="44" cy="44" r="36" fill="none" stroke="#2c2c2e" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="#16ec06" stroke-width="7" stroke-dasharray="226" stroke-dashoffset="70" transform="rotate(-90 44 44)"/></svg><div class="ath-label">Recovery</div></div>
+            <div style="text-align:center"><svg width="88" height="88"><circle cx="44" cy="44" r="36" fill="none" stroke="#2c2c2e" stroke-width="7"/><circle cx="44" cy="44" r="36" fill="none" stroke="#1ba3ff" stroke-width="7" stroke-dasharray="226" stroke-dashoffset="120" transform="rotate(-90 44 44)"/></svg><div class="ath-label">Strain</div></div>
+          </div>
+        </section>
+        <button type="button" class="btn oled-cta create-session-btn">Create session</button>
+      </div>
+    </div>
+    <div class="shell" style="position:relative;height:720px;overflow:hidden">
+      <div class="shell-screen shell-screen--training" style="min-height:720px;max-height:720px">
+        <div class="trn-top"><span class="trn-month">The Engine</span></div>
+        <div class="trn-scroll" style="padding-bottom:88px">
+          <div class="trn-block trn-block--warmup">
+            <div class="trn-block-head"><span class="trn-letter">A</span><h2 class="trn-block-title">Easy spin</h2></div>
+          </div>
+          <div class="trn-block trn-block--engine">
+            <span class="trn-letter trn-letter--engine">B</span>
+            <div class="trn-lift-body">
+              <p class="trn-engine-kicker">The Engine</p>
+              <h3 class="trn-lift-title">Echo</h3>
+              <p class="trn-lift-rx">8 x 15s / 45s</p>
+            </div>
+          </div>
+          <div class="trn-block trn-block--recovery">
+            <div class="trn-block-head"><span class="trn-letter">C</span><h2 class="trn-block-title">Breathe</h2></div>
+          </div>
+          <div class="trn-start-bar" style="position:absolute;left:0;right:0;transform:none;width:auto;max-width:none;bottom:0">
+            <button type="button" class="log-primary">Start Session</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="logger" class="shell" style="position:relative;height:720px">
+      <div class="log-screen">
+        <div class="log-top"><span class="log-back-x">×</span><span class="log-clock">12:04</span></div>
+        <div class="log-body">
+          <p class="log-kicker">B. The Engine · INTERVALS</p>
+          <h2 class="log-title">Echo</h2>
+          <p class="log-rx">8 x 15s / 45s</p>
+          <div class="eng-stage">
+            <p class="eng-phase">Work 3/8</p>
+            <p class="eng-clock">0:15</p>
+            <p class="eng-target">Hold 62 rpm</p>
+            <button type="button" class="log-primary eng-go">Start work</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="shell" style="position:relative;height:720px;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <p class="eng-phase">Rest</p>
+      <svg class="tm-ring" viewBox="0 0 100 100" width="240" height="240" aria-hidden="true">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/>
+        <circle cx="50" cy="50" r="46" fill="none" stroke="#ffffff" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="90"
+          transform="rotate(-90 50 50)"/>
+      </svg>
+      <p class="eng-clock" style="position:absolute">0:45</p>
+    </div>
+  </div>
+</body>
+</html>

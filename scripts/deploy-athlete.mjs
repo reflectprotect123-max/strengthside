@@ -48,7 +48,7 @@ if (!siteId) fail('Could not resolve athlete site id (thehybridsystem)');
 const stage = mkdtempSync(join(tmpdir(), 'athlete-deploy-'));
 console.log(`Staging flat athlete bundle at ${stage}`);
 for (const rel of [
-  'index.html', 'app.js', 'home.css', 'brain-bundle.js', 'adaptive-bundle.js',
+  'index.html', 'app.js', 'home.css', 'adaptive-bundle.js',
   'native-bridge.js', 'service-worker.js', 'netlify.toml', 'package.json',
   'connectors', 'vendor', 'netlify',
 ]) {

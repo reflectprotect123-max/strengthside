@@ -1,11 +1,11 @@
 /* WHOOP bridge — one connection per HYBRID S&C login (Supabase user u:). */
 (function (global) {
   function cfg() {
-    return global.STRENGTH_CONFIG || global.ENGINE_CONFIG || {};
+    return global.ENGINE_CONFIG || global.STRENGTH_CONFIG || {};
   }
   function hybridProduct() {
     const c = cfg();
-    return c.hybridProduct || 'strength';
+    return c.hybridProduct || 'engine';
   }
   const SUPABASE_URL = cfg().supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co';
   const SUPABASE_ANON = cfg().supabaseAnon || '';
@@ -18,7 +18,6 @@
     sync: 'whoop-sync',
     status: 'integrations-status',
     disconnect: 'integrations-disconnect',
-    coach: 'brain-coach'
   };
   function functionName(path) {
     return String(path || '').replace(/^\//, '').split('?')[0];
@@ -131,7 +130,7 @@
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
       const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
       const friendly = (res.status === 401 || raw === 'unauthorized')
-        ? 'Sign in again in HYBRID S&C, then tap Connect WHOOP'
+        ? 'Sign in again in The Engine, then tap Connect WHOOP'
         : (boot ? 'WHOOP service is down — try again in a minute' : raw);
       const e = new Error(friendly);
       e.status = res.status; e.body = body; throw e;
@@ -184,13 +183,6 @@
       c.updatedAt = Date.now();
       c.whoopSyncedAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
       c.whoopSampleDate = n.date || meta.sampleDate || null;
-      if (typeof global.readinessScore === 'function') {
-        const s = global.readinessScore(c);
-        Object.assign(c, {
-          readinessColor: s.color, mainLimiter: s.reason,
-          backgroundLoad: s.backgroundLoad, recoveryPenalty: s.recoveryPenalty, wearablePenalty: s.wearablePenalty
-        });
-      }
       if (typeof global.touchRecord === 'function') global.touchRecord(c, 'daily_checkins');
     }
     const w = st();

@@ -1,0 +1,280 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
+
+/* OLED chassis. TrainHeroic session grammar only on training + logger. */
+:root {
+  --oled-bg: #000000;
+  --oled-surface: #121212;
+  --oled-raised: #1c1c1e;
+  --oled-text: #ffffff;
+  --oled-muted: #8e8e93;
+  --oled-line: rgba(255, 255, 255, 0.1);
+  --tile: #3a3a3c;
+  --rx: #ff7a1a;
+  --cta: #ffffff;
+  --cta-ink: #000000;
+  --done: #34c759;
+  --engine: #8e8e93;
+  --trn-letter-bg: #3a3a3c;
+  --trn-blue: #8e8e93;
+  --font-body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-session: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Barlow Condensed", ui-sans-serif, system-ui, sans-serif;
+}
+
+html, body, .shell {
+  background: #000;
+  color: #fff;
+  font-family: var(--font-body);
+}
+
+.shell-screen--training,
+#logger,
+.log-screen,
+.tm-full {
+  font-family: var(--font-session);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.home-top {
+  background: linear-gradient(180deg, #000 75%, transparent);
+}
+
+.home-mark,
+.ath-date,
+.ath-workout,
+.lib-title,
+.log-title,
+.trn-block-title,
+.trn-lift-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.trn-block-title,
+.trn-lift-title {
+  font-size: 22px;
+  text-transform: uppercase;
+}
+
+.trn-letter,
+.trn-letter--engine,
+.trn-block--warmup .trn-letter,
+.trn-block--recovery .trn-letter,
+.trn-block--lift .trn-letter {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--tile);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.trn-engine-kicker {
+  color: var(--oled-muted);
+}
+
+.trn-icon-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.lib-primary {
+  background: var(--cta) !important;
+  color: var(--cta-ink) !important;
+  border-radius: 8px;
+}
+
+.tm-switch,
+.tm-quick button,
+.tm-select,
+.log-add,
+.log-link,
+.log-clock,
+.log-bar-btn {
+  color: #fff !important;
+}
+
+.tm-custom > button,
+.tm-ms,
+.tm-field input,
+.tm-pair input,
+.log-play {
+  border-color: #fff !important;
+  color: #fff !important;
+}
+
+.tm-start,
+.tm-giant {
+  border-color: #fff !important;
+  color: #fff !important;
+  background: #000 !important;
+}
+
+.log-intensity button.on,
+.log-unit button.on {
+  background: #fff;
+  color: #000;
+}
+
+.trn-lift-rx,
+.log-rx {
+  color: var(--rx);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.trn-start-bar {
+  background: linear-gradient(180deg, transparent, #000 32%);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  bottom: var(--nav-h);
+}
+
+.log-primary,
+.eng-go {
+  background: var(--cta) !important;
+  color: var(--cta-ink) !important;
+  border: 0 !important;
+  border-radius: 8px;
+  min-height: 52px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.log-primary:active,
+.eng-go:active {
+  opacity: 0.88;
+}
+
+.fab {
+  background: #fff;
+  color: #000;
+}
+
+.bottom-nav {
+  background: #000;
+  border-top: 1px solid var(--oled-line);
+}
+
+.bottom-nav button.active {
+  color: #fff;
+}
+
+#logger,
+.log-screen,
+.tm-full {
+  background: #000;
+  color: #fff;
+  font-family: var(--font-session);
+}
+
+.log-kicker,
+.eng-phase {
+  color: var(--oled-muted);
+  font-family: var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.log-title {
+  font-size: 32px;
+  text-transform: uppercase;
+}
+
+.eng-clock {
+  font-family: var(--font-display);
+  font-size: clamp(72px, 22vw, 104px);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: #fff;
+  line-height: 0.85;
+}
+
+.log-complete {
+  background: var(--tile);
+  color: #fff;
+}
+
+.log-complete.is-done {
+  background: var(--done);
+  color: #000;
+}
+
+.log-check {
+  border-color: var(--done);
+}
+
+.log-check.on {
+  background: var(--done);
+  color: #000;
+}
+
+.log-dot.done,
+.log-dot.current {
+  background: var(--done);
+}
+
+.log-clock,
+.log-bar-btn,
+.log-play,
+.log-link,
+.log-add,
+.tm-switch,
+.tm-quick button {
+  color: #fff;
+}
+
+.log-play {
+  border-color: #fff;
+}
+
+.log-bar {
+  background: #000;
+  border-top: 1px solid var(--oled-line);
+}
+
+.eng-first input {
+  background: var(--tile);
+  color: #fff;
+  border: 1px solid var(--oled-line);
+}
+
+.lib-search,
+.lib-create {
+  background: var(--oled-surface);
+  border-color: var(--oled-line);
+}
+
+.shell-screen--library {
+  background: #000;
+}
+
+.trn-top,
+.trn-scroll,
+.shell-screen--training {
+  background: #000;
+}
+
+.cal-strip--training .cal-day.active b {
+  border-bottom-color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
