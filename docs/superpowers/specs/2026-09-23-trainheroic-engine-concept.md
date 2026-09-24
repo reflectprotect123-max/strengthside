@@ -1,27 +1,17 @@
-# Logger look — pick one
+# Logger look — TrainHeroic (locked)
 
-Status: **awaiting approval**. Live `apps/athlete/*.css` is not painted until you pick A or B.
+Status: **A locked.** User rejected Track Dawn and asked to paint TrainHeroic, not Morph-style. Athlete UI never says Morph.
 
-Track Dawn is dead. Two boards, both black, both lettered, both Engine copy (Echo VO2). No Morph wordmark on the phone.
+## A — TrainHeroic (shipping)
 
-## A — TrainHeroic
+True black. Gray 8px letter tiles. Orange only on the prescription (`8 x 15s / 45s`). **White Start Session**. Giant white work clock. Rest is a **thin white ring**.
 
-True black. Gray letter tiles. Orange only on the prescription (`8 x 15s / 45s`). **White Start Session**. White rest ring.
+WHOOP recovery/strain/sleep colours stay on Home dials only.
 
-![TrainHeroic board](./art/th-board.png)
+## B — Morph-style (not shipping)
 
-![TrainHeroic list](./art/th-list.png)
+Orange Start / orange rest ring. Keep in art only.
 
-![TrainHeroic rest](./art/th-rest.png)
+## Remaining paint (this pass)
 
-## B — Morph-style (1:1 structure, no Morph logo)
-
-True black. Gray letter rows. **Orange Start**. Orange **Log**. Orange rest ring. Same work/rest clock Morph uses.
-
-![Morph-style board](./art/morph-style-board.png)
-
-![Morph-style list](./art/morph-style-list.png)
-
-![Morph-style rest](./art/morph-style-rest.png)
-
-Reply **A** or **B**. Then we paint the live logger.
+`th.css` overlay is not enough. Source tokens still mint Engine (`#5ec4b7`, `#143834`) and WHOOP-blue chrome (`#1ba3ff`) on Training/Logger/Library. Rest timer SVG stroke is WHOOP lime (`#16ec06`). Those must die in `home.css`, `logger.css`, `library.css`, and `logger.js`. Dials in `whoopRecoveryColor` / strain `#1ba3ff` stay.
