@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Engine — TrainHeroic paint</title>
+  <link rel="stylesheet" href="../../../apps/athlete/home.css" />
+  <link rel="stylesheet" href="../../../apps/athlete/logger.css" />
+  <link rel="stylesheet" href="../../../apps/athlete/th.css" />
+  <style>
+    body { margin: 0; background: #111; padding: 16px; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .shell { margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <div class="shell" style="position:relative;height:720px;overflow:hidden">
+      <div class="shell-screen shell-screen--training" style="min-height:720px;max-height:720px">
+        <div class="trn-top"><span class="trn-month">The Engine</span></div>
+        <div class="trn-scroll" style="padding-bottom:88px">
+          <div class="trn-block trn-block--warmup">
+            <div class="trn-block-head"><span class="trn-letter">A</span><h2 class="trn-block-title">Easy spin</h2></div>
+          </div>
+          <div class="trn-block trn-block--engine">
+            <div class="trn-block-head"><span class="trn-letter trn-letter--engine">B</span>
+              <div>
+                <p class="trn-engine-kicker">The Engine</p>
+                <h2 class="trn-block-title">Echo</h2>
+                <p class="trn-lift-rx">8 x 15s / 45s</p>
+              </div>
+            </div>
+          </div>
+          <div class="trn-block trn-block--recovery">
+            <div class="trn-block-head"><span class="trn-letter">C</span><h2 class="trn-block-title">Breathe</h2></div>
+          </div>
+          <div class="trn-start-bar" style="position:absolute;left:0;right:0;transform:none;width:auto;max-width:none;bottom:0">
+            <button type="button" class="log-primary">Start Session</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="logger" class="shell" style="position:relative;height:720px">
+      <div class="log-screen">
+        <div class="log-top"><span class="log-back-x">×</span><span class="log-clock">12:04</span></div>
+        <div class="log-body">
+          <p class="log-kicker">B. The Engine · INTERVALS</p>
+          <h2 class="log-title">Echo</h2>
+          <p class="log-rx">8 x 15s / 45s</p>
+          <div class="eng-stage">
+            <p class="eng-phase">Work 3/8</p>
+            <p class="eng-clock">0:15</p>
+            <p class="eng-target">Hold 62 rpm</p>
+            <button type="button" class="log-primary eng-go">Start work</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
