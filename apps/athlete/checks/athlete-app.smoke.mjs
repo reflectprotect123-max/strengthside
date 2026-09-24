@@ -42,6 +42,7 @@ must(!js.includes("Whoop.fnUrl('brain-coach')"), 'athlete does not call the coac
 must(!js.includes('function askCoach'), 'athlete has no askCoach');
 must(!/\bHybridBrain\b/.test(js), 'athlete does not call the hub brain');
 must(!js.includes('function todayCallHtml'), 'home has no hub today-call');
+must(js.includes('function render()'), 'engine shell still paints the home screen');
 must(!html.includes('brain-bundle.js'), 'index does not load the hub brain');
 must(js.includes('function trainingTabHtml'), 'training tab screen');
 must(!js.includes('TRAINING_DEMO'), 'no strength demo plan');
@@ -62,7 +63,7 @@ must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./engine.js'), 'engine.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v25'"), 'SW cache bump v25');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v26'"), 'SW cache bump v26');
 must(!readFileSync(join(root, 'service-worker.js'), 'utf8').includes('brain-bundle.js'), 'SW cache has no hub brain bundle');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./th.css'), 'th.css in SW cache');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--rx: #ff7a1a'), 'rx orange token');

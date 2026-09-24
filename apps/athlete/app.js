@@ -736,6 +736,31 @@ function syncFab() {
   layer.classList.toggle('fab-layer--training', S.tab === 'training');
 }
 
+function render() {
+  const root = document.getElementById('app');
+  if (!root) return;
+  const map = {
+    home: homeHtml,
+    training: trainingTabHtml,
+    library: libraryHtml,
+    me: meHtml,
+    settings: meHtml,
+  };
+  if (S.tab === 'chat') S.tab = 'home';
+  root.innerHTML = (map[S.tab] || homeHtml)();
+  document.querySelectorAll('[data-tab]').forEach((b) => {
+    b.classList.toggle('active', b.dataset.tab === S.tab);
+  });
+  const shell = document.getElementById('shell');
+  if (shell) shell.classList.toggle('shell--training', S.tab === 'training');
+  syncFab();
+  if (window.Logger && S.loggerOpen) Logger.paint();
+  if (window.Whoop) {
+    if (S.tab === 'me' && !(S.settings.whoop && S.settings.whoop.email)) Whoop.renderPanels();
+    if (S.tab === 'home' || S.tab === 'training') Whoop.autoSyncIfPossible();
+  }
+}
+
 function fabAction(kind) {
   S.fabOpen = false;
   save();
