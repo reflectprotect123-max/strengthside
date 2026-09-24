@@ -1,4 +1,6 @@
-# Handoff — TheStrengthEngine
+# Handoff — The Engine
+
+Coach, desktop coach, and `evidence-platform/` are deleted. What remains is the athlete Engine app (`apps/athlete/`), `packages/adaptive/`, and `packages/brain/`.
 
 > **AUTHORITATIVE CHECKPOINT — 9 September 2026 (Brain spine reset).**
 > Chat history before this file is disposable. Start here.

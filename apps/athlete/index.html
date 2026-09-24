@@ -20,24 +20,8 @@
       <div class="fab-menu">
         <button type="button" onclick="fabAction('goal')">Add goal</button>
         <button type="button" onclick="fabAction('session')">Create session</button>
-        <button type="button" onclick="fabAction('coach')">Talk to coach</button>
       </div>
       <button type="button" class="fab" aria-label="Add" onclick="toggleFab(event)">+</button>
-    </div>
-    <div id="coachSheet" class="coach-sheet hidden" aria-hidden="true">
-      <div class="coach-sheet-backdrop" onclick="closeCoachSheet()"></div>
-      <div class="coach-sheet-panel">
-        <div class="coach-sheet-head">
-          <strong>Talk to coach</strong>
-          <button type="button" class="icon-btn" onclick="closeCoachSheet()" aria-label="Close">×</button>
-        </div>
-        <div class="coach-log" id="coachSheetLog"></div>
-        <div class="coach-compose">
-          <textarea id="coachSheetInput" rows="2" placeholder="Ask about today’s training…"></textarea>
-          <button type="button" class="btn primary" onclick="askCoach()">Send</button>
-        </div>
-        <p class="stub" id="coachSheetStatus"></p>
-      </div>
     </div>
     <div id="logger" class="hidden"></div>
     <nav class="bottom-nav" id="bottomNav">

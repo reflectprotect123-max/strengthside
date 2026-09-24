@@ -10,7 +10,6 @@ const defaultState = () => ({
   selectedDate: today(),
   checkin: {},
   settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
-  coachHistory: [],
   published: {},
   goals: [],
   fabOpen: false,
@@ -32,7 +31,6 @@ function resetBlankSlate(keepAuth = true) {
     : { connected: false, lastSyncAt: null, email: null };
   S.published = {};
   S.goals = [];
-  S.coachHistory = [];
   S.checkin = {};
   S.notifications = 0;
   S.chatUnread = 0;
@@ -791,114 +789,9 @@ function fabAction(kind) {
     S.tab = 'library';
     if (window.LibraryView) LibraryView.createEngine();
     else render();
-    return;
-  }
-  if (kind === 'coach') {
-    openCoachSheet();
   }
 }
 
-function openCoachSheet() {
-  const sheet = document.getElementById('coachSheet');
-  if (!sheet) return;
-  sheet.classList.remove('hidden');
-  sheet.setAttribute('aria-hidden', 'false');
-  renderCoachSheetLog();
-}
-
-function closeCoachSheet() {
-  const sheet = document.getElementById('coachSheet');
-  if (!sheet) return;
-  sheet.classList.add('hidden');
-  sheet.setAttribute('aria-hidden', 'true');
-}
-
-function renderCoachSheetLog() {
-  const log = document.getElementById('coachSheetLog');
-  if (!log) return;
-  log.innerHTML = (S.coachHistory || [])
-    .map((m) => `<div class="msg ${m.role}">${esc(m.content)}</div>`)
-    .join('');
-  log.scrollTop = log.scrollHeight;
-}
-
-function render() {
-  const root = document.getElementById('app');
-  const map = {
-    home: homeHtml,
-    training: trainingTabHtml,
-    library: libraryHtml,
-    me: meHtml,
-    settings: meHtml,
-  };
-  if (S.tab === 'chat') S.tab = 'home';
-  root.innerHTML = (map[S.tab] || homeHtml)();
-
-  document.querySelectorAll('[data-tab]').forEach((b) => {
-    b.classList.toggle('active', b.dataset.tab === S.tab);
-  });
-
-  const shell = document.getElementById('shell');
-  if (shell) shell.classList.toggle('shell--training', S.tab === 'training');
-
-  syncFab();
-  renderCoachSheetLog();
-  if (window.Logger && S.loggerOpen) Logger.paint();
-
-  if (window.Whoop) {
-    if (S.tab === 'me' && !(S.settings.whoop && S.settings.whoop.email)) {
-      Whoop.renderPanels();
-    }
-    if (S.tab === 'home' || S.tab === 'training') Whoop.autoSyncIfPossible();
-  }
-}
-
-async function askCoach() {
-  const input = document.getElementById('coachSheetInput');
-  const status = document.getElementById('coachSheetStatus');
-  const message = (input && input.value || '').trim();
-  if (!message) return;
-  if (!window.Whoop || !(await Whoop.token())) {
-    if (status) status.textContent = 'Sign in under Me before using the coach.';
-    return;
-  }
-  if (status) status.textContent = 'Thinking…';
-  S.coachHistory = S.coachHistory || [];
-  S.coachHistory.push({ role: 'user', content: message });
-  input.value = '';
-  render();
-  renderCoachSheetLog();
-  try {
-    const coachUrl = (window.Whoop && typeof Whoop.fnUrl === 'function')
-      ? Whoop.fnUrl('brain-coach')
-      : String((window.ENGINE_CONFIG && ENGINE_CONFIG.supabaseUrl) || 'https://orysjncrksmdfabpuftd.supabase.co').replace(/\/$/, '') + '/functions/v1/brain-coach';
-    const res = await fetch(coachUrl, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + (await Whoop.token()),
-        apikey: (window.ENGINE_CONFIG && ENGINE_CONFIG.supabaseAnon) || '',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        message,
-        packet: HybridBrain.coachContextFromPacket(packet()),
-        history: S.coachHistory.filter((m) => m.content !== '(empty reply)').slice(-8),
-      }),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.error || 'Coach request failed');
-    const reply = String(body.reply || '').trim();
-    if (!reply) throw new Error('Coach returned no text. Try again.');
-    S.coachHistory.push({ role: 'assistant', content: reply });
-    if (status) status.textContent = '';
-    S.chatUnread = Math.max(0, (S.chatUnread || 0) - 1);
-  } catch (err) {
-    if (status) status.textContent = err.message || 'Coach failed';
-  }
-  save();
-  render();
-  renderCoachSheetLog();
-}
 
 window.S = S;
 window.save = save;
@@ -916,9 +809,6 @@ window.goToday = goToday;
 window.toggleFab = toggleFab;
 window.closeFab = closeFab;
 window.fabAction = fabAction;
-window.openCoachSheet = openCoachSheet;
-window.closeCoachSheet = closeCoachSheet;
-window.askCoach = askCoach;
 window.applyOtaUpdate = applyOtaUpdate;
 window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;

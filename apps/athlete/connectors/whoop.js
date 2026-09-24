@@ -18,7 +18,6 @@
     sync: 'whoop-sync',
     status: 'integrations-status',
     disconnect: 'integrations-disconnect',
-    coach: 'brain-coach'
   };
   function functionName(path) {
     return String(path || '').replace(/^\//, '').split('?')[0];
