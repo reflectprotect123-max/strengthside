@@ -82,3 +82,26 @@ test('every method has a ladder', () => {
     assert.ok(method.rungs.length >= 5, method.name);
   }
 });
+
+test('a finished continuous session is done without an effort prompt', () => {
+  require(join(dirname(fileURLToPath(import.meta.url)), 'engine.js'));
+  const started = globalThis.HybridEngine.startWork({
+    engine: {
+      structure: 'continuous',
+      phase: 'ready',
+      workSec: 1800,
+      restSec: 0,
+      rounds: 1,
+      roundIndex: 0,
+      target: {},
+      bouts: [],
+    },
+  }, 1000);
+  const done = globalThis.HybridEngine.endWork(started, 1000 + 1800 * 1000, false);
+  assert.equal(done.engine.phase, 'done');
+  assert.equal(done.completed, true);
+  assert.equal(done.engine.workComplete, true);
+  const early = globalThis.HybridEngine.endWork(started, 1000 + 10 * 60 * 1000, true);
+  assert.equal(early.engine.workComplete, false);
+  assert.equal(early.engine.phase, 'done');
+});

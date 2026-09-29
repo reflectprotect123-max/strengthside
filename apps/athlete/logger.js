@@ -582,6 +582,17 @@
     const s = JSON.parse(JSON.stringify(session()));
     const page = HybridSession.currentPage(s);
     s.logs[page.id] = nextLog;
+    if (nextLog.engine && nextLog.engine.phase === 'done' && nextLog.engine.condBase && !nextLog.engine.condCounted) {
+      nextLog.engine.condCounted = true;
+      s.phase = 'summary';
+      const e = nextLog.engine;
+      const completedSec = e.workStartedAt
+        ? Math.min(e.workSec, Math.max(0, Math.round(((e.workEndedAt || Date.now()) - e.workStartedAt) / 1000)))
+        : (e.workComplete ? e.workSec : 0);
+      if (typeof root.applyCondFinish === 'function') {
+        root.applyCondFinish({ completedMin: completedSec / 60, plannedMin: e.plannedMin });
+      }
+    }
     if (nextLog.engine && nextLog.engine.phase === 'done' && root.HybridEngine) {
       const closed = HybridEngine.closePiece(nextLog, root.HybridAdaptive);
       s.engineAnchors = s.engineAnchors || {};
@@ -600,7 +611,9 @@
     const kicker = `${page.letter}. The Engine · ${(e.structure || 'intervals').toUpperCase()}`;
     let stage = '';
     if (e.phase === 'ready') {
-      stage = `
+      stage = e.structure === 'continuous'
+        ? `<button type="button" class="log-primary eng-go" onclick="Logger.engineStart()">Start easy</button>`
+        : `
         <p class="eng-target" id="engTarget">${esc(target)}</p>
         ${e.skipped ? '' : `<label class="eng-first">First number
           <input inputmode="decimal" value="${esc(e.modality === 'split' ? (e.target.splitSec || '') : e.modality === 'rpm' ? (e.target.rpm || '') : (e.target.watts || ''))}" onchange="Logger.engineTyped(this.value)">
@@ -608,9 +621,9 @@
         <button type="button" class="log-primary eng-go" onclick="Logger.engineStart()">Start work</button>`;
     } else if (e.phase === 'work') {
       stage = `
-        <p class="eng-phase">Work ${shown}/${e.rounds}</p>
-        ${engineHrDial(e, now, { phaseLabel: 'Work', endsAt: e.workEndsAt })}
-        <button type="button" class="eng-early" onclick="Logger.engineEnd()">End interval early</button>`;
+        <p class="eng-phase">${e.structure === 'continuous' ? 'Easy' : `Work ${shown}/${e.rounds}`}</p>
+        ${engineHrDial(e, now, { phaseLabel: e.structure === 'continuous' ? 'Easy' : 'Work', endsAt: e.workEndsAt })}
+        <button type="button" class="eng-early" onclick="Logger.engineEnd()">${e.structure === 'continuous' ? 'End session' : 'End interval early'}</button>`;
     } else if (e.phase === 'rest') {
       const nextTarget = HybridEngine.formatTarget(e.target, e.modality) || target;
       const effortBlock = e.needsEffort ? `

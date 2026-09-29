@@ -268,7 +268,16 @@ function gaugeRowHtml() {
 
 function condBlock() {
   if (!window.HybridProgression) return null;
-  S.condBlock = HybridProgression.normalize(S.condBlock, today());
+  const current = HybridProgression.normalize(S.condBlock, today());
+  const keepRung = current.szn === 'base' && current.methodId === 1;
+  S.condBlock = HybridProgression.normalize({
+    szn: 'base',
+    methodId: 1,
+    rung: keepRung ? current.rung : 1,
+    streak: keepRung ? current.streak : 0,
+    startedOn: current.startedOn,
+    last: current.last,
+  }, today());
   return S.condBlock;
 }
 
@@ -286,77 +295,63 @@ function blockCardHtml() {
   if (!block || !window.HybridProgression) return '';
   const dose = HybridProgression.dose(block, { recovery: recoveryBand() });
   const week = HybridProgression.weekOf(block, S.selectedDate || today());
-  const seasons = Object.values(HybridProgression.SZNS);
-  const chips = seasons
-    .map((szn) => {
-      const on = szn.id === block.szn ? ' is-on' : '';
-      return `<button type="button" class="cond-szn${on}" onclick="setCondSeason('${szn.id}')">${esc(szn.label)}</button>`;
-    })
-    .join('');
-  const methods = dose.szn.methods
-    .map((id) => HybridProgression.methodById(id))
-    .map((method) => {
-      const on = method.id === block.methodId ? ' is-on' : '';
-      return `<button type="button" class="cond-method${on}" data-band="${esc(method.band)}" onclick="setCondMethod(${method.id})">${esc(method.name)}</button>`;
-    })
-    .join('');
   const pips = Array.from({ length: dose.rungCount }, (_, i) => {
     const cls = i + 1 < dose.rung ? ' is-done' : i + 1 === dose.rung ? ' is-now' : '';
     return `<i class="cond-pip${cls}"></i>`;
   }).join('');
-  const need = dose.atCeiling ? 'Ceiling — hold this dose' : dose.streak === 1 ? 'One more clean finish moves the rung' : 'Two clean finishes move the rung';
+  const need = dose.atCeiling
+    ? 'Ceiling. Hold this dose.'
+    : dose.streak === 1
+      ? 'One more full session moves the rung.'
+      : 'Two full sessions move the rung.';
   return `
-    <section class="cond-block" aria-label="Training block">
-      <span class="ath-label">This block</span>
-      <div class="cond-szn-row">${chips}</div>
-      <p class="cond-job">${esc(dose.szn.job)}</p>
+    <section class="cond-block" aria-label="Base block">
+      <span class="ath-label">Base</span>
       <p class="cond-week">Week ${week} of ${dose.weeks}</p>
-      <div class="cond-method-row">${methods}</div>
       <p class="cond-rx">${esc(dose.label)}</p>
-      <p class="cond-meta">Rung ${dose.rung} of ${dose.rungCount} · ${esc(need)}</p>
+      <p class="cond-meta">Steady State Z1 · rung ${dose.rung} of ${dose.rungCount}</p>
+      <p class="cond-meta">${esc(need)}</p>
       <div class="cond-pips" aria-hidden="true">${pips}</div>
       <div class="cond-actions">
-        <button type="button" class="cond-done" onclick="logCondFinish('clean')">Clean finish</button>
-        <button type="button" class="cond-hold" onclick="logCondFinish('short')">Short</button>
+        <button type="button" class="cond-done" onclick="startBaseSession()">Start easy</button>
       </div>
     </section>`;
 }
 
-function setCondSeason(id) {
-  if (!window.HybridProgression) return;
-  S.condBlock = HybridProgression.startSeason(id, today());
-  save();
-  render();
+function startBaseSession() {
+  const block = condBlock();
+  if (!block || !window.HybridProgression || !window.Logger) return;
+  const dose = HybridProgression.dose(block, { recovery: recoveryBand() });
+  const minutes = dose.minutes || 30;
+  const plan = {
+    title: 'Base',
+    blocks: [{
+      kind: 'engine',
+      letter: 'B',
+      title: 'Steady State Z1',
+      machine: 'walk',
+      structure: 'continuous',
+      effort: 'easy',
+      workSec: Math.round(minutes * 60),
+      restSec: 0,
+      rounds: 1,
+      prescription: dose.label,
+      condBase: true,
+      plannedMin: minutes,
+    }],
+  };
+  Logger.open({ date: today(), letter: 'B', plan });
 }
 
-function setCondMethod(id) {
-  if (!window.HybridProgression) return;
-  S.condBlock = HybridProgression.setMethod(condBlock(), id, today());
-  save();
-  render();
-}
-
-function logCondFinish(kind) {
+function applyCondFinish(input) {
   if (!window.HybridProgression) return;
   const block = condBlock();
-  const dose = HybridProgression.dose(block, { recovery: recoveryBand() });
-  if (kind === 'short') {
-    S.condBlock = HybridProgression.recordFinish(block, {
-      date: today(),
-      completedMin: dose.minutes ? Math.round(dose.minutes * 0.5) : 0,
-      plannedMin: dose.minutes || 0,
-      qualified: dose.continuous ? undefined : false,
-    });
-  } else {
-    S.condBlock = HybridProgression.recordFinish(block, {
-      date: today(),
-      qualified: true,
-      completedMin: dose.minutes || undefined,
-      plannedMin: dose.minutes || undefined,
-    });
-  }
+  S.condBlock = HybridProgression.recordFinish(block, {
+    date: today(),
+    completedMin: input && input.completedMin,
+    plannedMin: input && input.plannedMin,
+  });
   save();
-  render();
 }
 
 function zoneProfile() {
@@ -1031,9 +1026,8 @@ window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
 window.recordZoneSample = recordZoneSample;
-window.setCondSeason = setCondSeason;
-window.setCondMethod = setCondMethod;
-window.logCondFinish = logCondFinish;
+window.applyCondFinish = applyCondFinish;
+window.startBaseSession = startBaseSession;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
 };
