@@ -1,0 +1,37 @@
+project_id = "orysjncrksmdfabpuftd"
+
+[functions.whoop-callback]
+verify_jwt = false
+
+[functions.whoop-connect]
+verify_jwt = true
+
+[functions.whoop-sync]
+verify_jwt = true
+
+[functions.integrations-status]
+verify_jwt = true
+
+[functions.integrations-disconnect]
+verify_jwt = true
+
+[functions.brain-coach]
+verify_jwt = true
+
+[functions.www]
+verify_jwt = false
+
+[functions.whoop-webhook]
+verify_jwt = false
+
+[functions.whoop-health]
+verify_jwt = false
+
+[functions.off-proxy]
+verify_jwt = false
+
+[functions.strength]
+verify_jwt = false
+
+[functions.brain]
+verify_jwt = false
