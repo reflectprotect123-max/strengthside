@@ -1,8 +1,0 @@
-# The Brain — athlete product. WHOOP/Concept2 proxy-only → thehybridengine1.
-[build]
-  base = "."
-  publish = "."
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
