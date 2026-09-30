@@ -20,6 +20,7 @@ const defaultState = () => ({
   sessions: {},
   engineAnchors: {},
   zoneDay: {},
+  condBlock: null,
   planSync: { acks: { template: {}, session: {} }, snapshotRev: 0, lastPlan: null },
   libUi: { screen: 'list', tid: null, tab: 'exercises', q: '', selected: [], draft: {}, date: '', bid: null },
   notifications: 0,
@@ -34,6 +35,7 @@ function resetBlankSlate(keepAuth = true) {
   S.goals = [];
   S.checkin = {};
   S.zoneDay = {};
+  S.condBlock = null;
   S.notifications = 0;
   S.chatUnread = 0;
   S.fabOpen = false;
@@ -260,7 +262,96 @@ function gaugeRowHtml() {
         </div>
       </div>
     </section>
-    ${zonesCardHtml(c)}`;
+    ${zonesCardHtml(c)}
+    ${blockCardHtml()}`;
+}
+
+function condBlock() {
+  if (!window.HybridProgression) return null;
+  const current = HybridProgression.normalize(S.condBlock, today());
+  const keepRung = current.szn === 'base' && current.methodId === 1;
+  S.condBlock = HybridProgression.normalize({
+    szn: 'base',
+    methodId: 1,
+    rung: keepRung ? current.rung : 1,
+    streak: keepRung ? current.streak : 0,
+    startedOn: current.startedOn,
+    last: current.last,
+  }, today());
+  return S.condBlock;
+}
+
+function recoveryBand() {
+  const c = dailyCheckin(S.selectedDate, false) || dailyCheckin(today(), false) || {};
+  const recovery = metricsFromCheckin(c).recovery;
+  if (recovery == null || !S.settings?.whoop?.connected) return null;
+  if (recovery < 34) return 'red';
+  if (recovery < 67) return 'yellow';
+  return 'green';
+}
+
+function blockCardHtml() {
+  const block = condBlock();
+  if (!block || !window.HybridProgression) return '';
+  const dose = HybridProgression.dose(block, { recovery: recoveryBand() });
+  const week = HybridProgression.weekOf(block, today());
+  const pips = Array.from({ length: dose.rungCount }, (_, i) => {
+    const cls = i + 1 < dose.rung ? ' is-done' : i + 1 === dose.rung ? ' is-now' : '';
+    return `<i class="cond-pip${cls}"></i>`;
+  }).join('');
+  const need = dose.atCeiling
+    ? 'Ceiling. Hold this dose.'
+    : dose.streak === 1
+      ? 'One more full session moves the rung.'
+      : 'Two full sessions move the rung.';
+  return `
+    <section class="cond-block" aria-label="Base block">
+      <span class="ath-label">Base</span>
+      <p class="cond-week">Week ${week} of ${dose.weeks}</p>
+      <p class="cond-rx">${esc(dose.label)}</p>
+      <p class="cond-meta">Steady State Z1 · rung ${dose.rung} of ${dose.rungCount}</p>
+      <p class="cond-meta">${esc(need)}</p>
+      <div class="cond-pips" aria-hidden="true">${pips}</div>
+      <div class="cond-actions">
+        <button type="button" class="cond-done" onclick="startBaseSession()">Start easy</button>
+      </div>
+    </section>`;
+}
+
+function startBaseSession() {
+  const block = condBlock();
+  if (!block || !window.HybridProgression || !window.Logger) return;
+  const dose = HybridProgression.dose(block, { recovery: recoveryBand() });
+  const minutes = dose.minutes || 30;
+  const plan = {
+    title: 'Base',
+    blocks: [{
+      kind: 'engine',
+      letter: 'B',
+      title: 'Steady State Z1',
+      machine: 'walk',
+      structure: 'continuous',
+      effort: 'easy',
+      workSec: Math.round(minutes * 60),
+      restSec: 0,
+      rounds: 1,
+      prescription: dose.label,
+      condBase: true,
+      plannedMin: minutes,
+    }],
+  };
+  Logger.open({ date: today(), letter: 'B', plan });
+}
+
+function applyCondFinish(input) {
+  if (!window.HybridProgression) return;
+  const block = condBlock();
+  S.condBlock = HybridProgression.recordFinish(block, {
+    date: today(),
+    completedMin: input && input.completedMin,
+    plannedMin: input && input.plannedMin,
+  });
+  save();
 }
 
 function zoneProfile() {
@@ -935,6 +1026,8 @@ window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
 window.recordZoneSample = recordZoneSample;
+window.applyCondFinish = applyCondFinish;
+window.startBaseSession = startBaseSession;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
 };

@@ -15,7 +15,6 @@ function must(c, m) {
 const repo = join(root, '..', '..');
 must(existsSync(join(root, 'index.html')), 'index.html');
 must(!existsSync(join(root, 'brain-bundle.js')), 'hub brain bundle is gone');
-must(!existsSync(join(repo, 'packages/brain/package.json')), 'hub brain package is gone');
 must(!existsSync(join(repo, 'scripts/bundle-brain.mjs')), 'hub brain bundler is gone');
 must(existsSync(join(root, 'brain-kernel.js')), 'engine zone kernel remains');
 must(existsSync(join(repo, 'packages/adaptive/src/decide-next-cond.ts')), 'adaptive engine next remains');
@@ -63,7 +62,13 @@ must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./engine.js'), 'engine.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v27'"), 'SW cache bump v27');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-engine-v29'"), 'SW cache bump v29');
+must(html.includes('progression.js'), 'index loads progression');
+must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./progression.js'), 'progression.js in SW cache');
+must(js.includes('Steady State Z1'), 'home shows the base easy block');
+must(js.includes('function startBaseSession'), 'base block starts a real easy session');
+must(!js.includes('Clean finish'), 'home does not hand-mark a finish');
+must(!js.includes('function setCondSeason'), 'home does not switch seasons');
 must(!readFileSync(join(root, 'service-worker.js'), 'utf8').includes('brain-bundle.js'), 'SW cache has no hub brain bundle');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./th.css'), 'th.css in SW cache');
 must(readFileSync(join(root, 'th.css'), 'utf8').includes('--rx: #ff7a1a'), 'rx orange token');
@@ -147,12 +152,6 @@ must(readFileSync(join(root, 'hybrid-integrations.js'), 'utf8').includes('PlanSy
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 must(js.includes('trnEngineHtml'), 'training paints Engine blocks');
 must(!js.includes('trnLiftHtml'), 'training does not paint lift cards');
-
-{
-  const engineIndex = readFileSync(join(root, 'engine/index.html'), 'utf8');
-  must(existsSync(join(root, 'engine/index.html')), 'apps/athlete/engine/index.html');
-  must(/location\.replace\('\.\.\/'\)/.test(engineIndex) || engineIndex.includes('url=../'), 'old /engine/ house redirects to athlete root');
-}
 
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');

@@ -150,7 +150,12 @@
         target: opened.target,
         bouts: [],
         workEndsAt: null,
+        workStartedAt: null,
+        workEndedAt: null,
         restEndsAt: null,
+        condBase: !!piece.condBase,
+        plannedMin: piece.plannedMin != null ? Number(piece.plannedMin) : null,
+        condCounted: false,
         needsEffort: false,
         workComplete: true,
       },
@@ -161,6 +166,7 @@
     const s = clone(log);
     const e = s.engine;
     e.phase = 'work';
+    e.workStartedAt = now;
     e.workEndsAt = now + e.workSec * 1000;
     e.restEndsAt = null;
     e.needsEffort = false;
@@ -171,10 +177,19 @@
   function endWork(log, now, early) {
     const s = clone(log);
     const e = s.engine;
+    e.workEndedAt = now;
+    e.workComplete = !early;
+    if (e.structure === 'continuous') {
+      e.phase = 'done';
+      e.needsEffort = false;
+      e.workEndsAt = now;
+      e.restEndsAt = null;
+      s.completed = true;
+      return s;
+    }
     e.phase = 'rest';
     e.needsEffort = true;
     e.workEndsAt = now;
-    e.workComplete = !early;
     const more = e.structure === 'intervals' && (e.roundIndex + 1) < e.rounds;
     if (more && e.restSec > 0) {
       e.restEndsAt = now + e.restSec * 1000;

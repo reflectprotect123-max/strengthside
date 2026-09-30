@@ -1,0 +1,9 @@
+{
+  "name": "@adaptivebrain/kernel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "typecheck": "node --check src/index.js && node --check src/engine.js && node --check src/zones.js && node --check browser-iife.js"
+  }
+}

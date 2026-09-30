@@ -124,6 +124,8 @@
       typedWatts: block.typedWatts,
       typedSplitSec: block.typedSplitSec,
       typedRpm: block.typedRpm,
+      condBase: !!block.condBase,
+      plannedMin: block.plannedMin,
     };
   }
 
