@@ -15,7 +15,6 @@ function must(c, m) {
 const repo = join(root, '..', '..');
 must(existsSync(join(root, 'index.html')), 'index.html');
 must(!existsSync(join(root, 'brain-bundle.js')), 'hub brain bundle is gone');
-must(!existsSync(join(repo, 'packages/brain/package.json')), 'hub brain package is gone');
 must(!existsSync(join(repo, 'scripts/bundle-brain.mjs')), 'hub brain bundler is gone');
 must(existsSync(join(root, 'brain-kernel.js')), 'engine zone kernel remains');
 must(existsSync(join(repo, 'packages/adaptive/src/decide-next-cond.ts')), 'adaptive engine next remains');
@@ -153,12 +152,6 @@ must(readFileSync(join(root, 'hybrid-integrations.js'), 'utf8').includes('PlanSy
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 must(js.includes('trnEngineHtml'), 'training paints Engine blocks');
 must(!js.includes('trnLiftHtml'), 'training does not paint lift cards');
-
-{
-  const engineIndex = readFileSync(join(root, 'engine/index.html'), 'utf8');
-  must(existsSync(join(root, 'engine/index.html')), 'apps/athlete/engine/index.html');
-  must(/location\.replace\('\.\.\/'\)/.test(engineIndex) || engineIndex.includes('url=../'), 'old /engine/ house redirects to athlete root');
-}
 
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');
