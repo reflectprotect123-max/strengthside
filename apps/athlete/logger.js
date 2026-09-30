@@ -584,11 +584,15 @@
     s.logs[page.id] = nextLog;
     if (nextLog.engine && nextLog.engine.phase === 'done' && nextLog.engine.condBase && !nextLog.engine.condCounted) {
       nextLog.engine.condCounted = true;
-      s.phase = 'summary';
       const e = nextLog.engine;
       const completedSec = e.workStartedAt
         ? Math.min(e.workSec, Math.max(0, Math.round(((e.workEndedAt || Date.now()) - e.workStartedAt) / 1000)))
         : (e.workComplete ? e.workSec : 0);
+      s.feel = s.feel || {};
+      s.feel.durationMin = Math.max(1, Math.round(completedSec / 60));
+      const summarized = HybridSession.openSummary(s);
+      s.phase = summarized.phase;
+      s.feel = summarized.feel;
       if (typeof root.applyCondFinish === 'function') {
         root.applyCondFinish({ completedMin: completedSec / 60, plannedMin: e.plannedMin });
       }

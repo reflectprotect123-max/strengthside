@@ -294,7 +294,7 @@ function blockCardHtml() {
   const block = condBlock();
   if (!block || !window.HybridProgression) return '';
   const dose = HybridProgression.dose(block, { recovery: recoveryBand() });
-  const week = HybridProgression.weekOf(block, S.selectedDate || today());
+  const week = HybridProgression.weekOf(block, today());
   const pips = Array.from({ length: dose.rungCount }, (_, i) => {
     const cls = i + 1 < dose.rung ? ' is-done' : i + 1 === dose.rung ? ' is-now' : '';
     return `<i class="cond-pip${cls}"></i>`;

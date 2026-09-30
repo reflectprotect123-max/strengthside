@@ -91,3 +91,11 @@ test('doneTraining skips feel phase', () => {
   s = HybridSession.openFeel(s);
   assert.equal(s.phase, 'summary');
 });
+
+test('openSummary keeps a duration the logger already measured', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
+  s.feel.durationMin = 30;
+  s = HybridSession.openSummary(s);
+  assert.equal(s.phase, 'summary');
+  assert.equal(s.feel.durationMin, 30);
+});
