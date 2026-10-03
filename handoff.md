@@ -1,5 +1,12 @@
 # Handoff — TheStrengthEngine
 
+> **Engine HTML release — 3 October 2026:** PR #228 merged. Capgo **1.1.6**
+> is live on **engine-html**, using the Android **1.1.1** shell. WHOOP sync
+> backend now imports main-sleep hours; Home keeps per-metric source dates.
+> The optional private steps trial requires a separate WHOOP login and is
+> unconfigured. See `docs/whoop-sleep-steps-trial.md`. Fresh update offer, ZIP
+> checksum and generated HTML/native bytes verified; real-account data pending.
+
 > **AUTHORITATIVE CHECKPOINT — 9 September 2026 (Brain spine reset).**
 > Chat history before this file is disposable. Start here.
 >
