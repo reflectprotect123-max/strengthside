@@ -25,3 +25,18 @@ test('subjective check-ins and skipped dates round-trip without changing WHOOP p
   assert.equal(restored.checkin['2026-10-03'].sleepHours,7.25);
   assert.equal(restored.whoopHistory[0].recovery,82);
 });
+
+test('bedtime answers and morning deferral round-trip independently through the existing cloud ledger',()=>{
+  const bedtimeQuestionnaire={fatigue:3,nutrition:4,alcoholDrinks:0,completedAt:'2026-10-03T21:00:00Z',updatedAt:'2026-10-03T21:00:00Z',model_version:'bedtime-questionnaire-v1',evidenceLabel:'STRENGTHSIDE-DESIGNED',questionEvidenceLabel:'HISTORICAL'};
+  const state={checkin:{'2026-10-03':{bedtimeQuestionnaire,subjectiveRecoveryDeferredAt:'2026-10-03T08:00:00Z',whoopRecovery:82}},settings:{}};
+  const restored=P.applyPlan({library:{},settings:{}},P.pack(state));
+  assert.deepEqual(JSON.parse(JSON.stringify(restored.checkin['2026-10-03'].bedtimeQuestionnaire)),bedtimeQuestionnaire);
+  assert.equal(restored.checkin['2026-10-03'].subjectiveRecoveryDeferredAt,'2026-10-03T08:00:00Z');
+  assert.equal(restored.checkin['2026-10-03'].whoopRecovery,82);
+});
+
+test('measured and interpolated zone time retain separate provenance through account storage',()=>{
+ const workout={id:'gap-test',date:'2026-10-04',zoneSeconds:{Blue:30,Green:0,Red:0},estimatedZoneSeconds:{Blue:5,Green:0,Red:0},unknownSeconds:2,zonesFrozen:true,activeZones:{blue:120,green:140,red:160,max:190,version:'locked'},hrAccountingVersion:'hr-gap-v1',gapEstimates:[{from:30,to:35,fromBpm:130,toBpm:134,model_version:'hr-gap-v1',evidenceLabel:'STRENGTHSIDE-DESIGNED'}]};
+ const restored=P.applyPlan({library:{},settings:{}},P.pack({liveWorkoutHistory:[workout],checkin:{},settings:{}}));
+ assert.deepEqual(JSON.parse(JSON.stringify(restored.liveWorkoutHistory[0])),workout);
+});
