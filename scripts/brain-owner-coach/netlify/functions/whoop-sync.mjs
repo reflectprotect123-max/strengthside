@@ -28,15 +28,15 @@ async function refreshWithoutDiscardingRotation(owner, currentToken) {
   }
 }
 
-async function fetchSnapshotForOwner(owner, initialToken, historyDays) {
+async function fetchSnapshotForOwner(owner, initialToken, historyDays, allHistory) {
   let token = initialToken;
   if (tokenNeedsRefresh(token) && token.refresh_token) token = await refreshWithoutDiscardingRotation(owner, token);
   try {
-    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays }) };
+    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays, allHistory }) };
   } catch (error) {
     if (!isWhoopUnauthorized(error) || !token.refresh_token) throw error;
     token = await refreshWithoutDiscardingRotation(owner, token);
-    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays }) };
+    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays, allHistory }) };
   }
 }
 
@@ -67,9 +67,9 @@ export async function handler(event) {
     if (!token) return json({ connected: false }, 401);
     const backfill = event.queryStringParameters?.backfill === '1';
     const historyDays = backfill ? BACKFILL_SYNC_HISTORY_DAYS : REGULAR_SYNC_HISTORY_DAYS;
-    const { snapshot } = await fetchSnapshotForOwner(owner, token, historyDays);
-    await syncRecord('whoop', owner, snapshot);
-    return json({ connected: true, provider: 'whoop', normalized: snapshot.normalized, dailyStrain: snapshot.dailyStrain, dailyRecovery: snapshot.dailyRecovery, syncedAt: snapshot.syncedAt });
+    const { snapshot } = await fetchSnapshotForOwner(owner, token, historyDays, event.queryStringParameters?.history === 'all');
+    const persisted = await syncRecord('whoop', owner, snapshot);
+    return json({ connected: true, provider: 'whoop', normalized: snapshot.normalized, dailyStrain: persisted.dailyStrain, dailyRecovery: persisted.dailyRecovery, dailyMetrics: persisted.dailyMetrics, historyTruncated: snapshot.historyTruncated, syncedAt: snapshot.syncedAt });
   } catch (error) {
     const response = whoopErrorResponse(error, 'sync_failed');
     return json(response.body, response.status, response.headers);

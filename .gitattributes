@@ -1,0 +1,2 @@
+# Preserve embedded vendor JavaScript string whitespace in standalone HTML.
+apps/athlete/conditioning/*.html -whitespace

@@ -1,11 +1,11 @@
-# Manual Capgo OTA ship (dogfood + live). Needs repo secret CAPGO_TOKEN.
+# Manual Capgo OTA ship (engine-html). Needs repo secret CAPGO_TOKEN.
 name: Capgo ship
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Capgo bundle version (e.g. 1.0.53)
+        description: Capgo bundle version (e.g. 1.1.2)
         required: true
         type: string
 
@@ -36,4 +36,5 @@ jobs:
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
           CAPGO_BUNDLE_VERSION: ${{ inputs.version }}
+          CAPGO_CHANNEL: engine-html
         run: bash apps/mobile/capacitor/scripts/ship-capgo.sh

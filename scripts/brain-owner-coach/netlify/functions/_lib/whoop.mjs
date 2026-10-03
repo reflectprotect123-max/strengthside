@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { dailyPhysiology } from './history.mjs';
 import { config, requireConfig } from './config.mjs';
 
 const API = 'https://api.prod.whoop.com/developer/v2';
@@ -214,7 +215,7 @@ async function fetchCollection(path, token, maxRecords) {
   const seenTokens = new Set();
   let nextToken = '';
   let pages = 0;
-  while (records.length < maxRecords && pages < 10) {
+  while (records.length < maxRecords && pages < 400) {
     const params = new URLSearchParams({ limit: String(Math.min(MAX_PAGE_SIZE, maxRecords - records.length)) });
     if (nextToken) params.set('nextToken', nextToken);
     const separator = String(path).includes('?') ? '&' : '?';
@@ -227,8 +228,8 @@ async function fetchCollection(path, token, maxRecords) {
     nextToken = pageToken;
     pages += 1;
   }
-  if (pages >= 10 && nextToken) throw new WhoopError('WHOOP pagination did not converge', { code: 'pagination_error', kind: 'api', status: 502 });
-  return { records: records.slice(0, maxRecords) };
+  if (pages >= 400 && nextToken && records.length < maxRecords) throw new WhoopError('WHOOP pagination did not converge', { code: 'pagination_error', kind: 'api', status: 502 });
+  return { records: records.slice(0, maxRecords), truncated: records.length >= maxRecords && !!nextToken };
 }
 
 export function normalizeWhoopRecovery(input = {}) {
@@ -296,8 +297,8 @@ function extractDailyRecovery(recoveryRecords) {
   return [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, recoveryScore]) => ({ date, recoveryScore }));
 }
 
-export async function fetchWhoopSnapshot(token, { historyDays = 10 } = {}) {
-  const days = Math.max(7, Math.min(120, Math.round(finiteNumber(historyDays) ?? 10)));
+export async function fetchWhoopSnapshot(token, { historyDays = 10, allHistory = false } = {}) {
+  const days = allHistory ? 10000 : Math.max(7, Math.min(120, Math.round(finiteNumber(historyDays) ?? 10)));
   const [recovery, cycle, sleep, workout] = await Promise.all([
     fetchCollection('/recovery', token, days),
     fetchCollection('/cycle', token, days),
@@ -308,7 +309,9 @@ export async function fetchWhoopSnapshot(token, { historyDays = 10 } = {}) {
     recovery, cycle, sleep, workout,
     normalized: normalizeWhoopPayload({ recovery, cycle, sleep, workout }),
     dailyStrain: extractDailyStrain(recordsOf(cycle)),
-    dailyRecovery: extractDailyRecovery(recordsOf(recovery)),
+    dailyMetrics: dailyPhysiology(recordsOf(recovery), recordsOf(cycle)),
+    dailyRecovery: dailyPhysiology(recordsOf(recovery), recordsOf(cycle)).filter(r=>r.recovery!=null).map(r=>({date:r.date,recoveryScore:r.recovery})),
+    historyTruncated: !!(recovery.truncated || cycle.truncated),
     syncedAt: new Date().toISOString(),
   };
 }
