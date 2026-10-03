@@ -257,3 +257,19 @@ Artifact: `/workspace/previews/The-Hybrid-Engine-Capgo-1.1.5.zip`.
 Phone installation/physical WHOOP validation remains unobserved. User installs
 via Settings → Check for updates → Restart now after ending the workout, then
 Settings → Onboarding. Prior completion remains available through Edit.
+
+## Compact Home cardio card — 3 October 2026
+
+Home combines today's Blue/Green/Red bpm boundaries and selected-week recorded
+cardio minutes in one card, before Start training. Strength-only sessions are
+excluded. Saved weekly target ranges appear with colored completion lines;
+current-week manual settings provide a fallback. Missing/invalid ranges are
+labelled not set, with no invented dose. Historical dates retain an explicit
+“Today’s bpm” label rather than claiming reconstructed past boundaries.
+Progress retains weekly minutes and daily breakdown. No zone calculations,
+WHOOP sync, automatic progression or workout behavior changed.
+
+Validation: HTML/onboarding, WHOOP Home and mocked native smoke checks passed;
+Chromium checks covered strength exclusion, targets, invalid/missing ranges,
+historical context and 320/393px layouts. Repository verify passed; local
+Postgres migration apply was skipped because initdb is unavailable.
