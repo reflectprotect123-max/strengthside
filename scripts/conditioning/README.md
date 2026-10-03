@@ -23,6 +23,7 @@ Do not package `source.html` as the entry point: `index.html` includes the nativ
 - Account-isolated local archives when switching authenticated accounts.
 - Existing cloud snapshot/RPC extended to include live workouts, dated physiology, zone settings and target history.
 - WHOOP sync code extended with dated HRV/RHR and durable history merging; full-history request capped at 10,000 records, with an explicit truncation indicator.
+- After sign-in and launch, check the server for an existing WHOOP connection and sync it automatically. Home shows the latest observed WHOOP recovery/HRV/RHR with a clear date when today's reading is unavailable. Viewing a historical date stays on that date. Values remain observed WHOOP data, not a replacement recovery formula.
 
 ## Supabase WHOOP backend
 
@@ -48,6 +49,6 @@ Supabase deployment validation: eight history/pagination/handler tests passed an
 
 ## Capgo publication
 
-Bundle 1.1.2 is published on `engine-html`; the existing `live` and `dogfood` channels remain on their previous bundle. The update server offers 1.1.2 to Android native version 1.1.1. Its downloaded archive checksum was verified and its two files match the new APK assets. No installation/update on a physical phone has been tested yet.
+Bundle 1.1.2 initially established the `engine-html` channel; its downloaded archive checksum and APK asset match were verified. Bundle 1.1.3 adds existing-account WHOOP discovery and observed Home readings without requiring a native APK change. The existing `live` and `dogfood` channels are preserved. No WHOOP account or physical-phone update is inspected from this workspace.
 
 For future HTML updates, use a unique version with `CAPGO_BUNDLE_VERSION=1.1.3 bash apps/mobile/capacitor/scripts/ship-capgo.sh`. This builds the new HTML and uploads only `index.html` and `native-plugins.js`, declares minimum update version 1.1.1, and pins the dedicated channel. Native plugin/Java changes still require a rebuilt APK. The cloud worker requires `NODE_USE_ENV_PROXY=1` for Node's network calls; credentials must come from its existing secure configuration or ignored credential file.

@@ -13,6 +13,9 @@ html=html.replace('Automatic WHOOP account sync is not connected in this local c
 // Keep the NEW HTML as the source. Only add native/auth/storage integration.
 const files=['apps/athlete/engine/engine-config.js','apps/athlete/vendor/supabase.min.js','apps/athlete/connectors/whoop.js','apps/athlete/engine/plan-sync.js','scripts/conditioning/updates.js','scripts/conditioning/runtime.js'];
 const scripts=files.map(f=>'<script>'+fs.readFileSync(path.join(root,f),'utf8').replace(/<\/script/gi,'<\\/script')+'</script>').join('');
+// Make the observed-data selector available to the source HTML's Home renderer.
+const homeData=fs.readFileSync(path.join(root,'scripts/conditioning/home-data.js'),'utf8');
+html=html.replace('<script>','<script>'+homeData+'</script><script>');
 html=html.replace('</body>','<script src="native-plugins.js"></script>'+scripts+'</body>');
 fs.writeFileSync(path.join(out,'index.html'),html);
 console.log('Built new HTML + native adapters:',path.relative(root,out));
