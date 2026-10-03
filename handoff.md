@@ -162,3 +162,27 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 **Library Sessions (11 Sep 2026):** On-phone builder is live in `apps/athlete/library.js` + `library-ui.js`. Persist on-device. No Capgo unless **IMPORTANT**.
 **Next agent:** Library / on-phone builder against that lock. Do not Capgo unless the owner marks **IMPORTANT**.
+
+
+## New HTML live-HR checkpoint — 3 October 2026
+
+The Android 1.1.1 APK uses `apps/athlete/conditioning/`, built from `source.html`
+by `scripts/conditioning/build.mjs`. Its dedicated Capgo channel `engine-html`
+now offers bundle **1.1.4**. Older app channels remain unchanged.
+
+The user reported HR and the horseshoe remaining at 47. The central number is
+raw Bluetooth HR; synthetic 8-bit/16-bit packets reproduce no 47 ceiling. The
+fill remains a linear mapping from the configured Blue lower boundary to max HR;
+no physiological values or boundaries were fabricated to increase it.
+
+**STRENGTHSIDE-DESIGNED:** notification liveness now distinguishes live readings
+from an idle Bluetooth connection, retries subscriptions after stale readings
+with a 15-second cooldown, clears contact-invalid/stale values, and ignores old
+native callbacks after unsubscribe/disconnect. The five-minute no-reading
+threshold disconnects the monitor while preserving the workout timer.
+
+Validation: native smoke exercises 47–192 bpm, full sweep, stale retry/cooldown,
+contact loss/recovery, typed-view offsets and late callbacks after disconnect.
+New HTML/WHOOP Home/Capgo smoke checks and repository `verify` passed. The offered
+1.1.4 download checksum and HTML/native bytes match the tested files. Actual
+WHOOP hardware was unavailable; the reported physical cause is not established.

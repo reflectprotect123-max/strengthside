@@ -7910,7 +7910,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const clock=n=>{n=Math.max(0,Math.floor(n));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');};
   const colors={Blue:'var(--trn-blue)',Green:'var(--recovery-high)',Red:'var(--recovery-low)',Unknown:'var(--oled-muted)'};
-  let device,characteristic,lastTick=Date.now(),lastSave=0,lastPacket=0,hr=null,deviceMessage='',audioSig='',outsideAt=0,insideState=null,zoneDraft={};
+  let device,characteristic,lastTick=Date.now(),lastSave=0,lastPacket=0,hr=null,deviceMessage='',audioSig='',outsideAt=0,insideState=null,zoneDraft={},connectedAt=0,lastRetry=0,retrying=false;
   const w=()=>S.liveWorkout;
   S.library=HybridLibrary.ensure(S.library);
   if(w()&&['running','paused'].includes(w().status)){w().status='paused';if(w().interval&&w().interval.phase!=='done')w().interval.paused=true;save();}
@@ -7960,7 +7960,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
   }
   function targetInside(bpm){const z=zones(),t=intervalTarget();if(!z||!t||/maximal|maximum|power/i.test(t)||w()?.type==='Strength')return null;let lo,hi;if(t.includes('Green')){lo=z.green;hi=z.red;}else if(t.includes('Red')){lo=z.red;hi=z.max+1;}else if(t.includes('Blue')){lo=z.blue;hi=z.green;}else return null;const width=hi-lo;if(t==='Middle or upper Blue')lo+=width/3;else if(t.startsWith('Middle ')){lo+=width/3;hi-=width/3;}else if(t.startsWith('Upper ')){lo+=width*2/3;}else if(t.startsWith('Lower ')){hi=lo+width/3;}return bpm>=lo&&bpm<hi;}
   function receive(bpm,now=Date.now()){
-    if(!Number.isFinite(bpm)||bpm<1||bpm>300)return;tick(now);hr=bpm;lastPacket=now;const x=w();
+    if(!Number.isFinite(bpm)||bpm<1||bpm>300)return;tick(now);hr=bpm;lastPacket=now;deviceMessage='';const x=w();
     if(x?.status==='running'){
       x.samples.push({t:x.elapsed,bpm,zone:zone(bpm),segment:x.type==='Mixed'?x.mixedSegment:x.type,zoneVersion:zones()?.version||null});if(x.samples.length>100000)x.samples.shift();
       const inside=targetInside(bpm);
@@ -7969,7 +7969,28 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
       else{outsideAt=0;insideState=null;}
     }paint();
   }
-  function parsePacket(value){const v=value instanceof DataView?value:new DataView(value);if(v.byteLength<2)throw Error('Incomplete heart-rate packet');const flags=v.getUint8(0);if((flags&4)&&!(flags&2))return null;if((flags&1)&&v.byteLength<3)throw Error('Incomplete 16-bit heart-rate packet');return flags&1?v.getUint16(1,true):v.getUint8(1);}
+  function parsePacket(value){const v=value instanceof DataView?value:ArrayBuffer.isView(value)?new DataView(value.buffer,value.byteOffset,value.byteLength):new DataView(value);if(v.byteLength<2)throw Error('Incomplete heart-rate packet');const flags=v.getUint8(0);if((flags&4)&&!(flags&2))return null;if((flags&1)&&v.byteLength<3)throw Error('Incomplete 16-bit heart-rate packet');return flags&1?v.getUint16(1,true):v.getUint8(1);}
+  // STRENGTHSIDE-DESIGNED: transport liveness is separate from measured HR.
+  function sensorStatus(now=Date.now()){
+    if(!device?.gatt?.connected)return deviceMessage||'Turn on WHOOP Heart Rate Broadcast, then connect your monitor.';
+    const age=now-(lastPacket||connectedAt);
+    if(deviceMessage)return deviceMessage;
+    if(lastPacket&&age<=10000)return 'Live · '+hr+' bpm · '+Math.max(0,Math.floor(age/1000))+'s since reading';
+    return (lastPacket?'No fresh heart rate':'Waiting for heart rate')+' · '+Math.max(0,Math.floor(age/1000))+'s. Check WHOOP Heart Rate Broadcast or reconnect.';
+  }
+  async function checkSensorHealth(now=Date.now()){
+    if(!device?.gatt?.connected)return;
+    const age=now-(lastPacket||connectedAt);
+    if(age>=300000){LiveWorkout.disconnect();deviceMessage='Disconnected after 5 minutes without HR readings.';paint();return;}
+    if(age<=10000||retrying||now-lastRetry<15000)return;
+    const target=device,stream=characteristic;lastRetry=now;retrying=true;
+    try{
+      await stream.stopNotifications?.();
+      if(target!==device||!target.gatt.connected)return;
+      await stream.startNotifications();
+    }catch{if(target===device)deviceMessage='Heart-rate stream stopped. Check WHOOP Heart Rate Broadcast and reconnect.';}
+    finally{retrying=false;paint();}
+  }
   function dial(){
     const current=Date.now()-lastPacket<=10000?hr:null,z=zone(current),x=w();
     const polar=p=>{const a=(150+240*p)*Math.PI/180;return [165+130*Math.cos(a),150+130*Math.sin(a)];};
@@ -8001,7 +8022,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
     if(!x)return '';
     if(S.liveScreen==='ratings')return '<div class="live-screen live-rating"><h1 style="text-align:center">Nice workout!</h1><label for="liveRpe">How hard was the workout?<output id="rpeOutput">'+x.rpe+'</output></label><input id="liveRpe" type="range" min="0" max="10" value="'+x.rpe+'" oninput="LiveWorkout.rating(\'rpe\',this.value)"><p class="live-device">0 · No effort　　　　　　　　　10 · Exhausting</p><label for="livePerformance">Rate your performance<output id="performanceOutput">'+x.performance+'</output></label><input id="livePerformance" type="range" min="0" max="10" value="'+x.performance+'" oninput="LiveWorkout.rating(\'performance\',this.value)"><p class="live-device">0 · Worst　　　　　　　　　10 · Best</p><textarea aria-label="Workout notes" placeholder="Notes" oninput="LiveWorkout.notes(this.value)">'+esc(x.notes)+'</textarea><button class="method-load" style="margin-top:80px" onclick="LiveWorkout.submit()">Submit</button><button class="method-secondary" style="color:var(--recovery-low)" onclick="LiveWorkout.discard()">Delete</button></div>';
     const i=x.interval,active=i&&!['ready','done'].includes(i.phase),samples=x.samples,avg=samples.length?Math.round(samples.reduce((s,v)=>s+v.bpm,0)/samples.length):'—';
-    return '<div class="live-screen"><div class="live-head">'+(active?'<div class="live-counter">'+i.rep+'/'+(i.method.continuous?1:i.config.rounds)+'<small>REPS</small></div>':'<button aria-label="Back to Training" onclick="LiveWorkout.leave()">‹</button>')+'<span class="live-brand">STRENGTHSIDE</span>'+(active?'<div class="live-counter">'+clock(Math.ceil(i.remaining))+'<small>'+i.phase.toUpperCase()+'</small></div>':'<button aria-label="Personal zones" onclick="LiveWorkout.zones()">Zones</button>')+'</div>'+dial()+'<div class="live-stats"><div><b>'+avg+'</b><small>AVG HR</small></div><b class="live-time">'+clock(x.elapsed)+'</b><div><b>—</b><small>CAL</small></div></div>'+chart()+'<div class="live-pages">'+[0,1,2,3].map(v=>'<button class="'+(v===x.chartView?'on':'')+'" aria-label="Workout data view '+(v+1)+'" onclick="LiveWorkout.view('+v+')"></button>').join('')+'</div><div class="live-controls"><div><button class="live-interval" '+(x.type==='Strength'?'disabled':'')+' onclick="LiveWorkout.interval()">'+(i?.phase==='ready'?'START':active?'END':icon('plus'))+'</button><small>Interval</small></div><div><button class="live-play" aria-label="'+(x.status==='running'?'Pause workout':'Start workout')+'" onclick="LiveWorkout.toggle()">'+icon(x.status==='running'?'pause':'play')+'</button></div><div><button aria-label="Share workout" onclick="LiveWorkout.share()">'+icon('share')+'</button><small>Share</small></div></div>'+(!device?.gatt?.connected?'<button class="live-connect" onclick="LiveWorkout.connect()">Connect HR Monitor</button>':'<button class="live-connect" onclick="LiveWorkout.disconnect()">'+esc(device.name||'HR Monitor')+' · Disconnect</button>')+'<p class="live-device">'+esc(deviceMessage||(!zones()?'Personal HR zones have not been set.':'WHOOP HR Broadcast · standard Bluetooth heart rate'))+'</p>'+(x.type==='Mixed'?'<button class="method-secondary" onclick="LiveWorkout.segment()">Current segment: '+x.mixedSegment+' · switch</button>':'')+'</div>'+overlay();
+    return '<div class="live-screen"><div class="live-head">'+(active?'<div class="live-counter">'+i.rep+'/'+(i.method.continuous?1:i.config.rounds)+'<small>REPS</small></div>':'<button aria-label="Back to Training" onclick="LiveWorkout.leave()">‹</button>')+'<span class="live-brand">STRENGTHSIDE</span>'+(active?'<div class="live-counter">'+clock(Math.ceil(i.remaining))+'<small>'+i.phase.toUpperCase()+'</small></div>':'<button aria-label="Personal zones" onclick="LiveWorkout.zones()">Zones</button>')+'</div>'+dial()+'<div class="live-stats"><div><b>'+avg+'</b><small>AVG HR</small></div><b class="live-time">'+clock(x.elapsed)+'</b><div><b>—</b><small>CAL</small></div></div>'+chart()+'<div class="live-pages">'+[0,1,2,3].map(v=>'<button class="'+(v===x.chartView?'on':'')+'" aria-label="Workout data view '+(v+1)+'" onclick="LiveWorkout.view('+v+')"></button>').join('')+'</div><div class="live-controls"><div><button class="live-interval" '+(x.type==='Strength'?'disabled':'')+' onclick="LiveWorkout.interval()">'+(i?.phase==='ready'?'START':active?'END':icon('plus'))+'</button><small>Interval</small></div><div><button class="live-play" aria-label="'+(x.status==='running'?'Pause workout':'Start workout')+'" onclick="LiveWorkout.toggle()">'+icon(x.status==='running'?'pause':'play')+'</button></div><div><button aria-label="Share workout" onclick="LiveWorkout.share()">'+icon('share')+'</button><small>Share</small></div></div>'+(!device?.gatt?.connected?'<button class="live-connect" onclick="LiveWorkout.connect()">Connect HR Monitor</button>':'<button class="live-connect" onclick="LiveWorkout.disconnect()">'+esc(device.name||'HR Monitor')+' · Disconnect</button>')+'<p class="live-device">'+esc(sensorStatus())+(!zones()?'<br>Personal HR zones have not been set.':'')+'</p>'+(x.type==='Mixed'?'<button class="method-secondary" onclick="LiveWorkout.segment()">Current segment: '+x.mixedSegment+' · switch</button>':'')+'</div>'+overlay();
   }
   const baseTraining=trainingTabHtml;
   trainingTabHtml=function(){
@@ -8038,10 +8059,10 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
     saveZones(){const z=zoneDraft;if(![z.blue,z.green,z.red,z.max].every(n=>Number.isInteger(n)&&n>0&&n<=300)||!(z.blue<z.green&&z.green<z.red&&z.red<=z.max)||(z.resting!=null&&(!Number.isInteger(z.resting)||z.resting<=0||z.resting>=z.max))){document.getElementById('liveZoneError').textContent='Use ordered bpm boundaries: Blue < Green < Red ≤ maximum, with resting HR below maximum.';return;}tick();S.settings.liveZones={blue:z.blue,green:z.green,red:z.red,max:z.max,resting:z.resting??null,version:'manual-'+Date.now(),evidenceLabel:'STRENGTHSIDE-DESIGNED'};if(w()){w().activeZones=calculatedZones();w().zoneHistory=[...(w().zoneHistory||[]),{at:w().elapsed,...w().activeZones}];}S.liveSheet=null;save();render();},
     async connect(){
       if(!navigator.bluetooth){deviceMessage='Bluetooth requires Chrome or Edge on a supported computer or Android device. iPhone browsers do not support this connection.';render();return;}
-      try{deviceMessage='Turn on Heart Rate Broadcast in WHOOP, then select the device.';render();device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});device.addEventListener('gattserverdisconnected',()=>{hr=null;deviceMessage='HR monitor disconnected. The workout timer is still available.';paint();});const server=await device.gatt.connect(),service=await server.getPrimaryService('heart_rate');characteristic=await service.getCharacteristic('heart_rate_measurement');characteristic.addEventListener('characteristicvaluechanged',e=>{try{const bpm=parsePacket(e.target.value);if(bpm!==null)receive(bpm);}catch{deviceMessage='Unreadable heart-rate packet.';}});await characteristic.startNotifications();lastPacket=Date.now();deviceMessage='Connected — waiting for heart rate.';render();}catch(e){deviceMessage=e.name==='NotFoundError'?'Device selection cancelled.':e.message;render();}
+      try{if(device?.gatt?.connected)device.gatt.disconnect();hr=null;lastPacket=0;deviceMessage='Turn on Heart Rate Broadcast in WHOOP, then select the device.';render();device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});const monitor=device;device.addEventListener('gattserverdisconnected',()=>{if(device!==monitor)return;hr=null;deviceMessage='HR monitor disconnected. The workout timer is still available.';paint();});const server=await device.gatt.connect();connectedAt=Date.now();lastRetry=connectedAt;const service=await server.getPrimaryService('heart_rate');characteristic=await service.getCharacteristic('heart_rate_measurement');characteristic.addEventListener('characteristicvaluechanged',e=>{if(device!==monitor||!monitor.gatt.connected)return;try{const bpm=parsePacket(e.target.value);if(bpm!==null)receive(bpm);else{hr=null;deviceMessage='WHOOP is connected but reports no skin contact. Check its fit.';paint();}}catch{hr=null;deviceMessage='Unreadable heart-rate packet. Reconnect your monitor.';paint();}});await characteristic.startNotifications();if(!lastPacket)deviceMessage='';render();}catch(e){deviceMessage=e.name==='NotFoundError'?'Device selection cancelled.':e.message;render();}
     },disconnect(){device?.gatt?.disconnect();hr=null;deviceMessage='Disconnected.';render();},
     async share(){const x=w(),blob=new Blob([JSON.stringify(x,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='strengthside-workout.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);},
-    canZoneAlerts(){return !!device?.gatt?.connected&&!!zones();},calculatedZones,receive,parsePacket,tick,zone,paint
+    canZoneAlerts(){return !!device?.gatt?.connected&&!!zones();},calculatedZones,receive,parsePacket,tick,zone,paint,checkSensorHealth,sensorStatus
   };
   const goList=LibraryView.goList;LibraryView.goList=function(){if(S.liveReturn){S.liveReturn=false;show();}else goList();};
   const baseLibraryHtml=LibraryView.html;
@@ -8055,7 +8076,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
   document.addEventListener('pointerup',e=>{if(!swipeStart)return;const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;swipeStart=null;if(w()&&Math.abs(dx)>40&&Math.abs(dy)<80)LiveWorkout.view((w().chartView+(dx<0?1:3))%4);},{passive:true});
   document.addEventListener('keydown',e=>{if(S.tab!=='training'||!S.liveSheet)return;if(e.key==='Escape'){LiveWorkout.closeSheet();return;}if(e.key==='Tab'){const items=[...document.querySelectorAll('.live-sheet button,.live-sheet input')].filter(el=>el.getClientRects().length),first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}}});
   const baseRender=window.render;window.render=function(){baseRender();if(S.liveScreen&&S.tab==='training')document.getElementById('app').innerHTML=html();};
-  setInterval(()=>{tick();if(device?.gatt?.connected&&Date.now()-lastPacket>=300000){LiveWorkout.disconnect();deviceMessage='Disconnected after 5 minutes without HR readings.';}paint();},250);
+  setInterval(()=>{tick();checkSensorHealth();paint();},250);
   render();
 })();
 </script><script>/* CONFIRMED: Morpheus exposes daily/weekly/monthly recovery, HRV, RHR,
@@ -9124,7 +9145,24 @@ const style=document.createElement('style');style.textContent='.engine-sensor-di
 const renderBase=window.render;window.render=function(){renderBase();if(S.tab==='me'||S.tab==='settings')document.querySelector('.pg-page')?.insertAdjacentHTML('afterbegin',accountHtml()+EngineUpdates.html());updateRecording();};
 async function stopScan(){clearTimeout(scanTimer);if(native)try{await N.BleClient.stopLEScan();}catch{}}
 function chooser(){return new Promise(async(resolve,reject)=>{const dialog=document.createElement('dialog');dialog.className='engine-sensor-dialog';dialog.innerHTML='<h2>Connect heart-rate monitor</h2><p>Turn on Heart Rate Broadcast in WHOOP.</p><div class="engine-devices"></div><p class="engine-scan-status">Searching…</p><button class="method-secondary">Cancel</button>';document.body.append(dialog);dialog.showModal();let done=false;const finish=async(device,error)=>{if(done)return;done=true;await stopScan();dialog.close();dialog.remove();error?reject(error):resolve(device);};dialog.querySelector('button').onclick=()=>finish(null,new DOMException('Device selection cancelled','NotFoundError'));dialog.addEventListener('cancel',event=>{event.preventDefault();finish(null,new DOMException('Device selection cancelled','NotFoundError'));});try{await N.BleClient.initialize({androidNeverForLocation:true});if(!(await N.BleClient.isEnabled()))await N.BleClient.requestEnable();const seen=new Set();await N.BleClient.requestLEScan({services:[service]},result=>{const d=result.device;if(!d?.deviceId||seen.has(d.deviceId))return;seen.add(d.deviceId);const b=document.createElement('button');b.className='method-secondary';b.textContent=d.name||d.deviceId;b.onclick=()=>finish(makeDevice(d));dialog.querySelector('.engine-devices').append(b);});scanTimer=setTimeout(async()=>{await stopScan();if(!done)dialog.querySelector('.engine-scan-status').textContent='Scan finished. Choose a device or cancel and retry.';},12000);}catch(err){finish(null,err);}});}
-function makeDevice(info){const device=new EventTarget();device.name=info.name||'WHOOP Heart Rate Broadcast';const char=new EventTarget();char.startNotifications=async()=>{await N.BleClient.startNotifications(info.deviceId,service,characteristic,value=>{char.value=value;char.dispatchEvent(new Event('characteristicvaluechanged'));});return char;};device.gatt={connected:false,connect:async()=>{await N.BleClient.connect(info.deviceId,()=>{device.gatt.connected=false;connected=null;device.dispatchEvent(new Event('gattserverdisconnected'));updateRecording();});device.gatt.connected=true;connected=device;updateRecording();return {getPrimaryService:async()=>({getCharacteristic:async()=>char})};},disconnect:()=>{device.gatt.connected=false;connected=null;N.BleClient.stopNotifications(info.deviceId,service,characteristic).catch(()=>{}).finally(()=>N.BleClient.disconnect(info.deviceId).catch(()=>{}));device.dispatchEvent(new Event('gattserverdisconnected'));updateRecording();}};return device;}
+function makeDevice(info){
+  const device=new EventTarget(),char=new EventTarget();let streamGeneration=0;
+  device.name=info.name||'WHOOP Heart Rate Broadcast';
+  char.stopNotifications=()=>{streamGeneration++;return N.BleClient.stopNotifications(info.deviceId,service,characteristic);};
+  char.startNotifications=async()=>{
+    const generation=++streamGeneration;
+    await N.BleClient.startNotifications(info.deviceId,service,characteristic,value=>{
+      if(generation!==streamGeneration||!device.gatt.connected)return;
+      char.value=value;char.dispatchEvent(new Event('characteristicvaluechanged'));
+    });return char;
+  };
+  const ended=()=>{streamGeneration++;device.gatt.connected=false;if(connected===device)connected=null;device.dispatchEvent(new Event('gattserverdisconnected'));updateRecording();};
+  device.gatt={connected:false,connect:async()=>{
+    await N.BleClient.connect(info.deviceId,ended);device.gatt.connected=true;connected=device;updateRecording();
+    return {getPrimaryService:async()=>({getCharacteristic:async()=>char})};
+  },disconnect:()=>{ended();char.stopNotifications().catch(()=>{}).finally(()=>N.BleClient.disconnect(info.deviceId).catch(()=>{}));}};
+  return device;
+}
 let serviceBusy=false;
 async function updateRecording(){if(!native||serviceBusy)return;const running=S.liveWorkout?.status==='running',desired=running&&!!connected?.gatt.connected;if(desired===foreground)return;serviceBusy=true;try{if(desired){await N.KeepAwake.keepAwake();await N.WorkoutService.start();foreground=true;}else{await N.WorkoutService.stop();await N.KeepAwake.allowSleep();foreground=false;}}catch(err){accountMessage='Native recording support: '+err.message;}finally{serviceBusy=false;}}
 if(native){Standalone.export=async()=>{try{await N.WorkoutService.share({filename:'engine-backup.json',data:JSON.stringify(S,null,2)});}catch(err){alert('Backup export failed: '+err.message);}};LiveWorkout.share=async()=>{try{await N.WorkoutService.share({filename:'engine-workout.json',data:JSON.stringify(S.liveWorkout,null,2)});}catch(err){alert(err.message);}};}

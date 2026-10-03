@@ -33,7 +33,24 @@ const style=document.createElement('style');style.textContent='.engine-sensor-di
 const renderBase=window.render;window.render=function(){renderBase();if(S.tab==='me'||S.tab==='settings')document.querySelector('.pg-page')?.insertAdjacentHTML('afterbegin',accountHtml()+EngineUpdates.html());updateRecording();};
 async function stopScan(){clearTimeout(scanTimer);if(native)try{await N.BleClient.stopLEScan();}catch{}}
 function chooser(){return new Promise(async(resolve,reject)=>{const dialog=document.createElement('dialog');dialog.className='engine-sensor-dialog';dialog.innerHTML='<h2>Connect heart-rate monitor</h2><p>Turn on Heart Rate Broadcast in WHOOP.</p><div class="engine-devices"></div><p class="engine-scan-status">Searching…</p><button class="method-secondary">Cancel</button>';document.body.append(dialog);dialog.showModal();let done=false;const finish=async(device,error)=>{if(done)return;done=true;await stopScan();dialog.close();dialog.remove();error?reject(error):resolve(device);};dialog.querySelector('button').onclick=()=>finish(null,new DOMException('Device selection cancelled','NotFoundError'));dialog.addEventListener('cancel',event=>{event.preventDefault();finish(null,new DOMException('Device selection cancelled','NotFoundError'));});try{await N.BleClient.initialize({androidNeverForLocation:true});if(!(await N.BleClient.isEnabled()))await N.BleClient.requestEnable();const seen=new Set();await N.BleClient.requestLEScan({services:[service]},result=>{const d=result.device;if(!d?.deviceId||seen.has(d.deviceId))return;seen.add(d.deviceId);const b=document.createElement('button');b.className='method-secondary';b.textContent=d.name||d.deviceId;b.onclick=()=>finish(makeDevice(d));dialog.querySelector('.engine-devices').append(b);});scanTimer=setTimeout(async()=>{await stopScan();if(!done)dialog.querySelector('.engine-scan-status').textContent='Scan finished. Choose a device or cancel and retry.';},12000);}catch(err){finish(null,err);}});}
-function makeDevice(info){const device=new EventTarget();device.name=info.name||'WHOOP Heart Rate Broadcast';const char=new EventTarget();char.startNotifications=async()=>{await N.BleClient.startNotifications(info.deviceId,service,characteristic,value=>{char.value=value;char.dispatchEvent(new Event('characteristicvaluechanged'));});return char;};device.gatt={connected:false,connect:async()=>{await N.BleClient.connect(info.deviceId,()=>{device.gatt.connected=false;connected=null;device.dispatchEvent(new Event('gattserverdisconnected'));updateRecording();});device.gatt.connected=true;connected=device;updateRecording();return {getPrimaryService:async()=>({getCharacteristic:async()=>char})};},disconnect:()=>{device.gatt.connected=false;connected=null;N.BleClient.stopNotifications(info.deviceId,service,characteristic).catch(()=>{}).finally(()=>N.BleClient.disconnect(info.deviceId).catch(()=>{}));device.dispatchEvent(new Event('gattserverdisconnected'));updateRecording();}};return device;}
+function makeDevice(info){
+  const device=new EventTarget(),char=new EventTarget();let streamGeneration=0;
+  device.name=info.name||'WHOOP Heart Rate Broadcast';
+  char.stopNotifications=()=>{streamGeneration++;return N.BleClient.stopNotifications(info.deviceId,service,characteristic);};
+  char.startNotifications=async()=>{
+    const generation=++streamGeneration;
+    await N.BleClient.startNotifications(info.deviceId,service,characteristic,value=>{
+      if(generation!==streamGeneration||!device.gatt.connected)return;
+      char.value=value;char.dispatchEvent(new Event('characteristicvaluechanged'));
+    });return char;
+  };
+  const ended=()=>{streamGeneration++;device.gatt.connected=false;if(connected===device)connected=null;device.dispatchEvent(new Event('gattserverdisconnected'));updateRecording();};
+  device.gatt={connected:false,connect:async()=>{
+    await N.BleClient.connect(info.deviceId,ended);device.gatt.connected=true;connected=device;updateRecording();
+    return {getPrimaryService:async()=>({getCharacteristic:async()=>char})};
+  },disconnect:()=>{ended();char.stopNotifications().catch(()=>{}).finally(()=>N.BleClient.disconnect(info.deviceId).catch(()=>{}));}};
+  return device;
+}
 let serviceBusy=false;
 async function updateRecording(){if(!native||serviceBusy)return;const running=S.liveWorkout?.status==='running',desired=running&&!!connected?.gatt.connected;if(desired===foreground)return;serviceBusy=true;try{if(desired){await N.KeepAwake.keepAwake();await N.WorkoutService.start();foreground=true;}else{await N.WorkoutService.stop();await N.KeepAwake.allowSleep();foreground=false;}}catch(err){accountMessage='Native recording support: '+err.message;}finally{serviceBusy=false;}}
 if(native){Standalone.export=async()=>{try{await N.WorkoutService.share({filename:'engine-backup.json',data:JSON.stringify(S,null,2)});}catch(err){alert('Backup export failed: '+err.message);}};LiveWorkout.share=async()=>{try{await N.WorkoutService.share({filename:'engine-workout.json',data:JSON.stringify(S.liveWorkout,null,2)});}catch(err){alert(err.message);}};}
