@@ -2874,7 +2874,7 @@ function profile(state,date){
   const observed=restingBaseline(state,date),manual=stored.restingMode==='manual';
   const resting=manual?stored.resting:observed.resting;
   const result=karvonen(stored.max,resting);
-  return result?{...result,restingMode:manual?'manual':'whoop',restingSource:manual?'Manual resting HR':observed.source,
+  return result?{...result,maxSource:stored.maxSource,maxEstimate:stored.maxEstimate,restingMode:manual?'manual':'whoop',restingSource:manual?'Manual resting HR':observed.source,
     baseline_inputs:manual?[{rhr:resting,source:'Manual resting HR'}]:observed.samples,
     baseline_window:manual?null:{start:observed.windowStart,end:observed.windowEnd},
     version:result.version+':'+(manual?'manual':date)}:null;
@@ -2887,6 +2887,53 @@ function settings(max,resting,state,date){
     version:CONFIG.version,baseline_version:CONFIG.version,evidenceLabel:'STRENGTHSIDE-DESIGNED'};
 }
 window.EngineZones={CONFIG,karvonen,restingBaseline,profile,settings};
+})();
+
+/* STRENGTHSIDE-DESIGNED: explicit fitness setup, independent of daily recovery.
+ * Age estimates use Tanaka (2001); fitness/goal are stored without invented
+ * zone offsets or automatic weekly progression. */
+(function(){
+const VERSION='fitness-onboarding-v1';
+const FITNESS=['low','moderate','high'],GOALS=['maintain','improve'];
+function estimatedMaximum(age){return Number.isInteger(age)&&age>=18&&age<=100?Math.round(208-.7*age):null;}
+function draft(state,date){
+  const p=state.settings.fitnessProfile||{},z=state.settings.liveZones||{};
+  const observed=EngineZones.restingBaseline(state,date);
+  return {age:p.age??null,fitness:p.cardioFitness??null,goal:p.goal??null,
+    maximumMode:z.maxSource==='age-estimated'||!z.max?'estimated':'known',knownMaximum:z.max??null,
+    restingMode:observed.resting==null||z.restingMode==='manual'?'manual':'whoop',restingHR:z.resting??null};
+}
+function error(step,d,state,date){
+  if(step==='age'&&estimatedMaximum(d.age)==null)return 'Enter your age, from 18 to 100.';
+  if(step==='fitness'&&!FITNESS.includes(d.fitness))return 'Choose your current cardio fitness.';
+  if(step==='goal'&&!GOALS.includes(d.goal))return 'Choose your cardio goal.';
+  if(step==='maximum'&&(!['estimated','known'].includes(d.maximumMode)||(d.maximumMode==='known'&&(!Number.isInteger(d.knownMaximum)||d.knownMaximum<1||d.knownMaximum>300))))return 'Enter your known maximum heart rate, or choose an age estimate.';
+  if(step==='resting'){
+    if(!['whoop','manual'].includes(d.restingMode))return 'Choose WHOOP or enter your resting heart rate.';
+    const r=d.restingMode==='whoop'?EngineZones.restingBaseline(state,date).resting:d.restingHR;
+    if(typeof r!=='number'||!Number.isFinite(r)||r<=0||r>=300)return 'Enter your resting heart rate or use available WHOOP data.';
+  }
+  return '';
+}
+function result(d,state,date){
+  for(const step of ['age','fitness','goal','maximum','resting']){const message=error(step,d,state,date);if(message)return {error:message};}
+  const max=d.maximumMode==='known'?d.knownMaximum:estimatedMaximum(d.age);
+  const zones=EngineZones.settings(max,d.restingMode==='manual'?d.restingHR:null,state,date);
+  if(!zones)return {error:'Maximum HR must be higher than resting HR. Check both answers.'};
+  zones.maxSource=d.maximumMode==='known'?'entered':'age-estimated';
+  if(d.maximumMode==='estimated')zones.maxEstimate={age:d.age,equation:'208 - 0.7 × age',unrounded:208-.7*d.age,version:'tanaka-2001'};
+  const profile={version:VERSION,age:d.age,cardioFitness:d.fitness,goal:d.goal,
+    maximumMode:d.maximumMode,maxHR:max,maximumSource:zones.maxSource,
+    restingMode:d.restingMode,restingHR:d.restingMode==='manual'?d.restingHR:null,
+    evidenceLabel:'STRENGTHSIDE-DESIGNED'};
+  return {profile,zones,baseline:EngineZones.profile({settings:{liveZones:zones},whoopHistory:state.whoopHistory,checkin:state.checkin},date)};
+}
+function complete(state,d,date,now){
+  const value=result(d,state,date);if(value.error)return value;
+  return {...value,onboarding:{version:VERSION,completed:true,
+    completedAt:state.settings.onboarding?.completedAt||now,updatedAt:now}};
+}
+window.EngineOnboardingModel={VERSION,estimatedMaximum,draft,error,result,complete};
 })();
 </script><script>"use strict";
 var HybridAdaptive = (() => {
@@ -8183,10 +8230,10 @@ function home(){const d=S.selectedDate||today(),reading=window.EngineHome?Engine
 function settings(){
   const c=S.checkin[S.selectedDate]||{},z=S.settings.liveZones||{};
   return '<div class="pg-page"><p class="lib-kicker">The Engine</p><h1>Settings</h1>'+
-    '<section class="pg-card"><h2>Heart-rate zones</h2>'+LiveWorkout.zoneForm('Progress.zones(event)')+
+    (window.EngineOnboarding?EngineOnboarding.settingsHtml():'')+'<details class="pg-card"><summary>Heart-rate zones</summary>'+LiveWorkout.zoneForm('Progress.zones(event)')+
     '<details><summary>Advanced: custom boundaries</summary><form onsubmit="Progress.customZones(event)">'+
     [['blue','Blue starts'],['green','Green starts'],['red','Red starts'],['max','Maximum HR'],['resting','Resting HR (optional)']].map(([k,label])=>'<label>'+label+'<input name="'+k+'" aria-label="Custom '+label+'" type="number" min="1" max="300" '+(k==='resting'?'':'required')+' value="'+e(z[k]??'')+'"></label>').join('')+
-    '<button class="method-secondary">Save custom boundaries</button></form></details><p class="pg-muted">Settings changes apply to your next workout.</p></section>'+
+    '<button class="method-secondary">Save custom boundaries</button></form></details><p class="pg-muted">Settings changes apply to your next workout.</p></details>'+
     '<section class="pg-card"><h2>Workout sounds</h2><button class="method-secondary" onclick="Progress.alerts()">Work, recovery and countdown sounds</button></section>'+
     '<p role="status">'+e(notice)+'</p><details class="pg-card"><summary>Data tools</summary>'+
     '<h2>WHOOP history</h2><label>Import history<input aria-label="Import WHOOP history" type="file" accept=".csv,.json,text/csv,application/json" onchange="Progress.importFile(this.files[0])"></label><p class="pg-muted">'+(S.whoopHistory?.length||0)+' imported days.</p>'+
@@ -8821,7 +8868,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     const measurements = new Map(Object.entries(state.checkin || {}).map(([date, checkin]) => [date, {date, checkin}]));
     for (const row of (state.whoopHistory || [])) measurements.set(row.date, {...measurements.get(row.date), date: row.date, whoop: row});
     for (const [date, payload] of measurements) sessions.push(touch({id:'measurement_'+date, kind:'conditioning_measurement', payload}, prev.session['measurement_'+date]));
-    if (state.settings && (state.settings.liveZones || state.settings.methodAlerts)) sessions.push(touch({id:'conditioning_settings',kind:'conditioning_settings',payload:{liveZones:state.settings.liveZones,methodAlerts:state.settings.methodAlerts}},prev.session.conditioning_settings));
+    if (state.settings && (state.settings.liveZones || state.settings.methodAlerts || state.settings.fitnessProfile || state.settings.onboarding)) sessions.push(touch({id:'conditioning_settings',kind:'conditioning_settings',payload:{liveZones:state.settings.liveZones,methodAlerts:state.settings.methodAlerts,fitnessProfile:state.settings.fitnessProfile,onboarding:state.settings.onboarding}},prev.session.conditioning_settings));
     for (const target of (state.weeklyTargetHistory || [])) sessions.push(touch({id:'weekly_target_'+target.weekStart,kind:'conditioning_weekly_target',payload:target},prev.session['weekly_target_'+target.weekStart]));
     const catalogId = 'catalog';
     const catalogEnt = touch({
@@ -9264,6 +9311,87 @@ if(native){Standalone.export=async()=>{try{await N.WorkoutService.share({filenam
 window.EngineApp={signIn,signOut,sync,history,bindAccount,flushStorage,refreshWhoop,async connectWhoop(){try{await Whoop.connect();}catch(err){accountMessage=err.message;render();}},async cloud(){const result=await PlanSync.syncNow();accountMessage=result.ok?'Saved workouts synced.':'Cloud storage: '+result.reason;render();}};
 if(native){Object.defineProperty(navigator,'bluetooth',{configurable:true,value:{requestDevice:chooser}});N.App.addListener('appStateChange',({isActive})=>{save();if(!isActive&&!connected?.gatt.connected&&S.liveWorkout?.status==='running')LiveWorkout.pause();if(isActive){LiveWorkout.tick();render();}});N.App.addListener('backButton',()=>{if(S.tab==='training'){LiveWorkout.leave();return;}if(S.tab!=='home'){setTab('home');return;}N.App.minimizeApp();});}
 restoreNative().then(async()=>{render();await EngineUpdates.ready();try{const {data:{session}}=await Whoop.client().auth.getSession();if(session){bindAccount(session.user);const result=await PlanSync.syncNow();accountMessage=result.ok?'Account storage ready.':'Cloud storage: '+result.reason;}}catch(err){accountMessage=err.message;}render();if(S.settings.whoop?.email)await refreshWhoop();});
+render();
+})();
+</script><script>/* STRENGTHSIDE-DESIGNED: opt-in, one-question-at-a-time fitness setup. */
+(function(){
+const M=EngineOnboardingModel;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const labels={low:'Low',moderate:'Moderate',high:'High',maintain:'Maintain cardio',improve:'Improve cardio'};
+let opened=false,index=0,draft=null,flow=[],message='',owner=null;
+function input(key,label,min,max,value){return '<label>'+label+'<input autofocus aria-label="'+label+'" type="number" min="'+min+'" max="'+max+'" step="'+(key==='restingHR'?'any':'1')+'" value="'+esc(value??'')+'" oninput="EngineOnboarding.value(\''+key+'\',this.value)"></label>';}
+function choices(key,items){return '<div class="onboarding-choices">'+items.map(([value,title,description])=>'<button type="button" aria-pressed="'+(draft[key]===value)+'" onclick="EngineOnboarding.pick(\''+key+'\',\''+value+'\')"><b>'+title+'</b><span>'+description+'</span></button>').join('')+'</div>';}
+function question(){
+  const step=flow[index],observed=EngineZones.restingBaseline(S,today());
+  switch(step){
+    case 'age':return '<h2>How old are you?</h2><p>Your age helps estimate maximum heart rate.</p>'+input('age','Age in years',18,100,draft.age);
+    case 'fitness':return '<h2>How is your cardio fitness?</h2>'+choices('fitness',[
+      ['low','Low · Building a base','I’m starting or returning to cardio. Sustained aerobic exercise is challenging.'],
+      ['moderate','Moderate · Training regularly','I do cardio regularly and can sustain a comfortable pace. Harder efforts challenge me.'],
+      ['high','High · Well conditioned','I have a consistent cardio training history, can sustain longer sessions and tolerate harder efforts well.']]);
+    case 'goal':return '<h2>What’s your cardio goal?</h2>'+choices('goal',[
+      ['maintain','Maintain cardio','Keep my conditioning while focusing on other training.'],
+      ['improve','Improve cardio','Build my aerobic fitness and conditioning.']]);
+    case 'maximum':return '<h2>Do you know your maximum HR?</h2>'+choices('maximumMode',[
+      ['estimated','Estimate it for me','Use my age to estimate a starting point.'],
+      ['known','I know my maximum','Use a maximum heart rate I’ve measured or already know.']])+
+      (draft.maximumMode==='known'?input('knownMaximum','Maximum HR',1,300,draft.knownMaximum):'<p class="onboarding-estimate">Estimated maximum: <b>'+M.estimatedMaximum(draft.age)+' bpm</b></p>');
+    case 'resting':return '<h2>What’s your resting heart rate?</h2>'+
+      (observed.resting!=null?choices('restingMode',[
+        ['whoop','Use WHOOP','Resting HR average: '+observed.resting.toFixed(1)+' bpm.'],
+        ['manual','Enter it myself','Use my own resting heart rate.']]):'<p>WHOOP hasn’t supplied resting HR yet. Enter a resting measurement to calculate your zones.</p>')+
+      (draft.restingMode==='manual'?input('restingHR','Resting HR',1,299,draft.restingHR):'');
+    case 'review':{
+      const value=M.result(draft,S,today());if(value.error)return '<h2>Check your answers</h2><p>'+esc(value.error)+'</p>';
+      const z=value.baseline;
+      return '<h2>You’re ready to train</h2><dl><div><dt>Cardio fitness</dt><dd>'+labels[draft.fitness]+'</dd></div><div><dt>Goal</dt><dd>'+labels[draft.goal]+'</dd></div><div><dt>Maximum HR</dt><dd>'+z.max+' bpm · '+(draft.maximumMode==='known'?'Entered':'Estimated')+'</dd></div><div><dt>Resting HR</dt><dd>'+z.resting.toFixed(1)+' bpm · '+(draft.restingMode==='whoop'?'WHOOP':'Entered')+'</dd></div></dl><div class="onboarding-zone-summary">'+[['Blue',z.blue,z.green-1],['Green',z.green,z.red-1],['Red',z.red,z.max]].map(([name,lo,hi])=>'<p style="color:'+({Blue:'var(--trn-blue)',Green:'var(--recovery-high)',Red:'var(--recovery-low)'}[name])+'">'+name+' <b>'+lo+'–'+hi+' bpm</b></p>').join('')+'</div><p>Estimated baseline zones. Today’s recovery adjusts your cardio guidance.</p>';
+    }
+  }
+}
+function dialogHtml(){return '<dialog id="engineOnboarding" class="engine-onboarding" aria-labelledby="onboardingTitle"><header><span id="onboardingTitle">'+(S.settings.onboarding?.completed?'Edit fitness setup':'Onboarding')+'</span><button type="button" aria-label="Close onboarding" onclick="EngineOnboarding.close()">×</button></header><p class="onboarding-step">'+(index+1)+' of '+flow.length+'</p><form onsubmit="EngineOnboarding.next(event)">'+question()+'<p class="live-warning" role="status">'+esc(message)+'</p><footer>'+(index?'<button type="button" class="method-secondary" onclick="EngineOnboarding.back()">Back</button>':'')+'<button class="method-load" type="submit">'+(flow[index]==='review'?'Finish':'Next')+'</button></footer></form></dialog>';}
+function settingsHtml(){
+  const done=S.settings.onboarding?.completed,p=S.settings.fitnessProfile;
+  return '<section class="pg-card onboarding-card"><h2>Onboarding</h2>'+
+    '<button id="onboardingStart" class="method-secondary" '+(done?'disabled aria-label="Onboarding completed"':'onclick="EngineOnboarding.open()"')+'>'+(done?'Completed':'Start onboarding')+'</button>'+
+    (done?'<p class="pg-muted">'+esc(labels[p?.cardioFitness]||'Fitness setup saved')+' · '+esc(labels[p?.goal]||'')+'</p><button id="editFitnessProfile" class="method-secondary" onclick="EngineOnboarding.open(true)">Edit fitness setup</button>':'<p class="pg-muted">Answer a few questions to set up your cardio zones.</p>')+'</section>';
+}
+function close(){opened=false;draft=null;message='';render();document.getElementById(S.settings.onboarding?.completed?'editFitnessProfile':'onboardingStart')?.focus();}
+window.EngineOnboarding={settingsHtml,close,
+  open(edit=false){if(S.settings.onboarding?.completed&&!edit)return;owner=S.accountId||null;draft=M.draft(S,today());index=0;message='';flow=['age','fitness','goal','maximum'];if(draft.restingMode==='manual')flow.push('resting');flow.push('review');opened=true;render();},
+  value(key,value){if(['age','knownMaximum','restingHR'].includes(key))draft[key]=value.trim()===''?null:Number(value);},
+  pick(key,value){draft[key]=value;message='';render();document.querySelector('#engineOnboarding [aria-pressed="true"]')?.focus();},
+  back(){if(index){index--;message='';render();}},
+  next(event){
+    event.preventDefault();if(!opened)return;
+    if((S.accountId||null)!==owner){close();return;}
+    if(flow[index]==='review'){
+      const value=M.complete(S,draft,today(),new Date().toISOString());
+      if(value.error){message=value.error;render();return;}
+      S.settings.fitnessProfile=value.profile;S.settings.liveZones=value.zones;S.settings.onboarding=value.onboarding;
+      // A running/paused workout keeps its previously recorded zone snapshot.
+      save();close();return;
+    }
+    message=M.error(flow[index],draft,S,today());if(message){render();return;}
+    // A WHOOP baseline may disappear while the dialog is open; request a value.
+    if(flow[index]==='maximum'&&EngineZones.restingBaseline(S,today()).resting==null&&!flow.includes('resting')){draft.restingMode='manual';flow.splice(flow.length-1,0,'resting');}
+    index++;render();
+  }
+};
+const style=document.createElement('style');style.textContent=`
+.engine-onboarding{width:min(440px,calc(100% - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:24px;border:1px solid var(--oled-line,#282828);border-radius:18px;background:var(--oled-surface,#101010);color:var(--oled-text,#fff);box-sizing:border-box}
+.engine-onboarding::backdrop{background:#000c}.engine-onboarding header{display:flex;justify-content:space-between;align-items:center;color:var(--oled-muted);font-size:13px}.engine-onboarding header button{border:0;background:none;color:inherit;font-size:28px;min-width:44px;min-height:44px}
+.engine-onboarding h2{font-size:24px;line-height:1.2;margin:20px 0}.engine-onboarding p{font-size:13px;line-height:1.6;color:var(--oled-muted)}.engine-onboarding label{display:block;font-size:14px;margin:20px 0}.engine-onboarding input{display:block;width:100%;box-sizing:border-box;margin-top:10px;padding:14px;border:1px solid var(--oled-line);border-radius:9px;background:#080808;color:inherit;font-size:20px;color-scheme:dark}
+.onboarding-choices{display:grid;gap:12px}.onboarding-choices button{display:block;width:100%;text-align:left;padding:16px;border:1px solid var(--oled-line);border-radius:12px;background:#080808;color:inherit}.onboarding-choices button[aria-pressed=true]{border-color:var(--engine);box-shadow:inset 0 0 0 1px var(--engine)}.onboarding-choices b{font-size:15px}.onboarding-choices span{display:block;font-size:13px;line-height:1.5;color:var(--oled-muted);margin-top:8px}
+.engine-onboarding footer{display:flex;gap:12px;margin-top:24px}.engine-onboarding footer button{flex:1}.engine-onboarding dl div{display:flex;justify-content:space-between;gap:16px;margin:14px 0;font-size:13px}.engine-onboarding dt{color:var(--oled-muted)}.engine-onboarding dd{margin:0;text-align:right}.onboarding-zone-summary{border-top:1px solid var(--oled-line);padding-top:12px}.onboarding-zone-summary p{display:flex;justify-content:space-between}.onboarding-card button:disabled{opacity:.4;cursor:default}.engine-onboarding button:focus-visible,.engine-onboarding input:focus-visible{outline:2px solid var(--engine);outline-offset:3px}
+`;
+document.head.append(style);
+const baseRender=window.render;window.render=function(){
+  document.getElementById('engineOnboarding')?.remove();baseRender();
+  if(!opened)return;
+  document.body.insertAdjacentHTML('beforeend',dialogHtml());const dialog=document.getElementById('engineOnboarding');
+  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});dialog.showModal();
+  (dialog.querySelector('[autofocus]')||dialog.querySelector('[aria-pressed=true]')||dialog.querySelector('.onboarding-choices button')||dialog.querySelector('button[type=submit]'))?.focus();
+};
 render();
 })();
 </script></body>

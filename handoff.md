@@ -203,3 +203,29 @@ The existing daily recovery adjustment remains, and settings data tools are fold
 Unit/HTML/Home/native/Capgo smoke checks and repository `verify` pass. This is local
 validation, not evidence of publication or a physical WHOOP test. Do not run a
 Capgo shipment until the user requests it.
+
+
+## Pending Settings Onboarding — 3 October 2026
+
+User requested a Settings Onboarding entry that asks questions individually,
+closes after completion and becomes greyed out. This is implemented locally;
+**no Capgo release**. Dedicated channel remains 1.1.4.
+
+`onboarding-model.js` validates age (18–100), fitness, goal, maximum HR mode and
+resting-HR source. Unknown max uses rounded Tanaka `208 − 0.7 × age`, with an
+explicit known-max override and versioned provenance. `onboarding.js` presents
+one question per dialog page, conditionally asks for missing/manual resting HR,
+and reviews the derived baseline before Finish. Existing workouts retain their
+zone snapshots. Cancel/Back/Escape work; no boot-time auto-opening.
+
+Completion disables the Onboarding button as Completed; Edit fitness setup is
+separate. Profile and completion metadata are included in the existing
+`conditioning_settings` plan-sync payload and native/local backup. Unit tests
+verify account storage round-trip; no schema or production database changes.
+Fitness/goal remain metadata pending defined conditioning/dose rules.
+
+Validation: model/storage tests, browser question/completion/reload/edit/cancel
+flow, native HR/WHOOP Home/Capgo smoke and repository verify pass. Browser
+screenshots are `/workspace/previews/onboarding-review.png` and
+`/workspace/previews/onboarding-completed.png`. Physical phone verification is
+pending. Do not publish Capgo without the user's new instruction.

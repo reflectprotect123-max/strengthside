@@ -8119,10 +8119,10 @@ function home(){const d=S.selectedDate||today(),reading=window.EngineHome?Engine
 function settings(){
   const c=S.checkin[S.selectedDate]||{},z=S.settings.liveZones||{};
   return '<div class="pg-page"><p class="lib-kicker">The Engine</p><h1>Settings</h1>'+
-    '<section class="pg-card"><h2>Heart-rate zones</h2>'+LiveWorkout.zoneForm('Progress.zones(event)')+
+    (window.EngineOnboarding?EngineOnboarding.settingsHtml():'')+'<details class="pg-card"><summary>Heart-rate zones</summary>'+LiveWorkout.zoneForm('Progress.zones(event)')+
     '<details><summary>Advanced: custom boundaries</summary><form onsubmit="Progress.customZones(event)">'+
     [['blue','Blue starts'],['green','Green starts'],['red','Red starts'],['max','Maximum HR'],['resting','Resting HR (optional)']].map(([k,label])=>'<label>'+label+'<input name="'+k+'" aria-label="Custom '+label+'" type="number" min="1" max="300" '+(k==='resting'?'':'required')+' value="'+e(z[k]??'')+'"></label>').join('')+
-    '<button class="method-secondary">Save custom boundaries</button></form></details><p class="pg-muted">Settings changes apply to your next workout.</p></section>'+
+    '<button class="method-secondary">Save custom boundaries</button></form></details><p class="pg-muted">Settings changes apply to your next workout.</p></details>'+
     '<section class="pg-card"><h2>Workout sounds</h2><button class="method-secondary" onclick="Progress.alerts()">Work, recovery and countdown sounds</button></section>'+
     '<p role="status">'+e(notice)+'</p><details class="pg-card"><summary>Data tools</summary>'+
     '<h2>WHOOP history</h2><label>Import history<input aria-label="Import WHOOP history" type="file" accept=".csv,.json,text/csv,application/json" onchange="Progress.importFile(this.files[0])"></label><p class="pg-muted">'+(S.whoopHistory?.length||0)+' imported days.</p>'+

@@ -2,6 +2,21 @@
 
 Status: implemented and tested in the new HTML; **not published to Capgo**.
 
+Settings now offers an opt-in **Onboarding** dialog: age, self-rated cardio
+fitness, cardio goal and estimated/known maximum HR, one question at a time.
+Resting HR is taken from WHOOP when available; otherwise a manual question is
+added. A final review shows the estimated baseline zones before saving.
+
+Finishing closes the dialog and disables its entry as Completed. It never opens
+automatically. Edit fitness setup remains available; cancelling changes nothing.
+Completion and answers persist locally and through the existing account ledger.
+Heart-rate overrides/custom boundaries are folded under Heart-rate zones.
+
+An unknown max uses `round(208 − 0.7 × age)` for adults 18–100; a known maximum
+replaces that estimate. Source, age and equation version are retained. Fitness
+and goal are captured for future conditioning rules; they do not currently
+invent per-level zone offsets or enable automatic weekly progression.
+
 **STRENGTHSIDE-DESIGNED:** estimate three baseline cardio zones with Karvonen:
 
 `boundary_bpm = resting_hr + fraction × (maximum_hr − resting_hr)`

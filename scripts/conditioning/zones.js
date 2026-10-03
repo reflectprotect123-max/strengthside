@@ -36,7 +36,7 @@ function profile(state,date){
   const observed=restingBaseline(state,date),manual=stored.restingMode==='manual';
   const resting=manual?stored.resting:observed.resting;
   const result=karvonen(stored.max,resting);
-  return result?{...result,restingMode:manual?'manual':'whoop',restingSource:manual?'Manual resting HR':observed.source,
+  return result?{...result,maxSource:stored.maxSource,maxEstimate:stored.maxEstimate,restingMode:manual?'manual':'whoop',restingSource:manual?'Manual resting HR':observed.source,
     baseline_inputs:manual?[{rhr:resting,source:'Manual resting HR'}]:observed.samples,
     baseline_window:manual?null:{start:observed.windowStart,end:observed.windowEnd},
     version:result.version+':'+(manual?'manual':date)}:null;

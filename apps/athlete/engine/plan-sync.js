@@ -76,7 +76,7 @@
     const measurements = new Map(Object.entries(state.checkin || {}).map(([date, checkin]) => [date, {date, checkin}]));
     for (const row of (state.whoopHistory || [])) measurements.set(row.date, {...measurements.get(row.date), date: row.date, whoop: row});
     for (const [date, payload] of measurements) sessions.push(touch({id:'measurement_'+date, kind:'conditioning_measurement', payload}, prev.session['measurement_'+date]));
-    if (state.settings && (state.settings.liveZones || state.settings.methodAlerts)) sessions.push(touch({id:'conditioning_settings',kind:'conditioning_settings',payload:{liveZones:state.settings.liveZones,methodAlerts:state.settings.methodAlerts}},prev.session.conditioning_settings));
+    if (state.settings && (state.settings.liveZones || state.settings.methodAlerts || state.settings.fitnessProfile || state.settings.onboarding)) sessions.push(touch({id:'conditioning_settings',kind:'conditioning_settings',payload:{liveZones:state.settings.liveZones,methodAlerts:state.settings.methodAlerts,fitnessProfile:state.settings.fitnessProfile,onboarding:state.settings.onboarding}},prev.session.conditioning_settings));
     for (const target of (state.weeklyTargetHistory || [])) sessions.push(touch({id:'weekly_target_'+target.weekStart,kind:'conditioning_weekly_target',payload:target},prev.session['weekly_target_'+target.weekStart]));
     const catalogId = 'catalog';
     const catalogEnt = touch({

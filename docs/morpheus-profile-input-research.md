@@ -47,7 +47,11 @@ Holding RHR constant, a +10 bpm max-HR correction shifts the unrounded starts by
 These are baseline effects; daily recovery adjustments are applied separately.
 At the same received BPM, a higher maximum also reduces horseshoe fill.
 
-## Proposed next implementation (not built)
+## Implementation follow-up
+
+Follow-up on 3 October: the local, unpublished Onboarding flow now captures age,
+fitness and goal, and offers estimated/known max HR. Fitness/goal-specific dose
+rules and workout-derived max-HR correction remain unimplemented.
 
 **STRENGTHSIDE-DESIGNED:** offer age-based estimated max HR when unknown, with an
 explicit measured/known maximum override. The Tanaka equation `208 − 0.7 × age`
