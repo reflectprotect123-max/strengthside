@@ -20,6 +20,7 @@
     "check:whoop-deeplink": "node apps/athlete/checks/whoop-deeplink.smoke.mjs",
     "check:engine-onboarding": "node --test scripts/conditioning/onboarding-model.test.mjs scripts/conditioning/storage.test.mjs",
     "check:engine-zones": "node --test scripts/conditioning/zones.test.mjs scripts/conditioning/hr-accounting.test.mjs",
+    "check:engine-flow": "node scripts/conditioning/build.mjs && node scripts/conditioning/flow.smoke.cjs",
     "check:engine-hr": "node scripts/conditioning/hr-accounting.test.mjs && node scripts/conditioning/hr-gap.smoke.cjs",
     "check:engine-home": "node --test scripts/conditioning/home-data.test.mjs",
     "check:engine-updates": "node --test scripts/conditioning/updates.test.mjs",
