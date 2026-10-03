@@ -1,5 +1,10 @@
 # Totem WHOOP integration review
 
+**Correction, 3 October 2026:** official WHOOP cycles expose `step_count` since
+23 September 2026 under existing `read:cycles`, with no re-consent. Totem is
+not required for steps. Production sync uses the official field; the previous
+private steps trial is superseded. See [WHOOP changelog](https://developer.whoop.com/docs/api-changelog).
+
 Reviewed 3 October 2026. Repository: [thebriangao/totem](https://github.com/thebriangao/totem),
 main commit `f9ac7f18198ccc1ea3a21e4d6bdc83733b4ef702` (16 September 2026).
 Initial review only. A subsequent authorized sleep/steps trial is documented in

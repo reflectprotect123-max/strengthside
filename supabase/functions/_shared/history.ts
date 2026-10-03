@@ -20,6 +20,22 @@ export function dailyPhysiology(recoveries: any[]=[],cycles: any[]=[], sleeps: a
     const record={date,recovery,hrv,rhr,cycleId:r.cycle_id,source:'WHOOP account',calibrating:!!s.user_calibrating,updatedAt:r.updated_at||r.created_at||''};
     if(!previous||record.updatedAt>previous.updatedAt)daily.set(date,record);
   }
+  // CONFIRMED: WHOOP added top-level Cycle.step_count on 2026-09-23,
+  // covered by read:cycles. STRENGTHSIDE-DESIGNED: local-cycle-date mapping.
+  const stepsByDate=new Map<string, any>();
+  for(const cycle of cycles){
+    const date=physiologicalDate(cycle),steps=cycle.step_count;
+    if(!date||!Number.isSafeInteger(steps)||steps<0||steps>2147483647)continue;
+    const updatedAt=cycle.updated_at||cycle.created_at||cycle.start;
+    const previous=stepsByDate.get(date);
+    if(previous&&updatedAt<previous.stepsUpdatedAt)continue;
+    stepsByDate.set(date,{date,steps,stepsCycleId:cycle.id,stepsUpdatedAt:updatedAt,
+      stepsCycleStart:cycle.start,stepsCycleEnd:cycle.end??null});
+  }
+  for(const [date,steps] of stepsByDate){
+    const prior=daily.get(date)||{date,source:'WHOOP account'};
+    daily.set(date,{...prior,...steps,sources:{...prior.sources,steps:'WHOOP official API'}});
+  }
   // Main sleep belongs to the recovery it generated, otherwise to its local wake date.
   const recoveryDates=new Map(recoveries.map(r=>[String(r.sleep_id),r.date||physiologicalDate(lookup.get(String(r.cycle_id)))]));
   for(const sleep of sleeps){
