@@ -1,4 +1,9 @@
-# Totem WHOOP integration review
+# Totem WHOOP integration review (historical)
+
+**Removed, 3 October 2026:** the owner chose official WHOOP data only. The private
+steps adapter, login tooling and workspace Totem installation have been removed.
+The following records the earlier source review, not an active integration or
+installation recommendation.
 
 **Correction, 3 October 2026:** official WHOOP cycles expose `step_count` since
 23 September 2026 under existing `read:cycles`, with no re-consent. Totem is
