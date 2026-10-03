@@ -29,7 +29,7 @@ function question(){
     case 'review':{
       const value=M.result(draft,S,today());if(value.error)return '<h2>Check your answers</h2><p>'+esc(value.error)+'</p>';
       const z=value.baseline;
-      return '<h2>You’re ready to train</h2><dl><div><dt>Cardio fitness</dt><dd>'+labels[draft.fitness]+'</dd></div><div><dt>Goal</dt><dd>'+labels[draft.goal]+'</dd></div><div><dt>Maximum HR</dt><dd>'+z.max+' bpm · '+(draft.maximumMode==='known'?'Entered':'Estimated')+'</dd></div><div><dt>Resting HR</dt><dd>'+z.resting.toFixed(1)+' bpm · '+(draft.restingMode==='whoop'?'WHOOP':'Entered')+'</dd></div></dl><div class="onboarding-zone-summary">'+[['Blue',z.blue,z.green-1],['Green',z.green,z.red-1],['Red',z.red,z.max]].map(([name,lo,hi])=>'<p style="color:'+({Blue:'var(--trn-blue)',Green:'var(--recovery-high)',Red:'var(--recovery-low)'}[name])+'">'+name+' <b>'+lo+'–'+hi+' bpm</b></p>').join('')+'</div><p>Estimated baseline zones. Today’s recovery adjusts your cardio guidance.</p>';
+      return '<h2>You’re ready to train</h2><dl><div><dt>Cardio fitness</dt><dd>'+labels[draft.fitness]+'</dd></div><div><dt>Goal</dt><dd>'+labels[draft.goal]+'</dd></div><div><dt>Maximum HR</dt><dd>'+z.max+' bpm · '+(draft.maximumMode==='known'?'Entered':'Estimated')+'</dd></div><div><dt>Resting HR</dt><dd>'+z.resting.toFixed(1)+' bpm · '+(draft.restingMode==='whoop'?'WHOOP':'Entered')+'</dd></div></dl><p>Your cardio zones will appear on Home. Today’s recovery adjusts that guidance; workouts keep their starting zones.</p>';
     }
   }
 }

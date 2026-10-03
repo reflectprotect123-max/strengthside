@@ -1,0 +1,13 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: bluetooth=(self)
+  X-Frame-Options: DENY
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/web.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
