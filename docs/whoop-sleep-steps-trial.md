@@ -28,7 +28,9 @@ and **STRENGTHSIDE-DESIGNED** evidence labels.
 ## Current limits
 
 Tested with synthetic API pages and browser sessions, **not the user's live
-private account**. Changes are not deployed or sent through Capgo by this task.
+private account**. Release update: PR #228 merged on 3 October 2026; whoop-sync backend deployed
+and Capgo 1.1.6 published to engine-html. Fresh update delivery, ZIP checksum
+and app bytes were verified. Private steps remain unconfigured pending login.
 The trial reads only the week plot, because longer plots may be aggregates.
 Repeated syncs retain dated steps, but this is not a full historical step backfill.
 Only dates with an explicit year and daily integer values are accepted. Ambiguous
