@@ -1,3 +1,4 @@
+import {mergeIntegrationHistory} from './history.mjs';
 import { randomBytes } from 'node:crypto';
 import { encryptJson, decryptJson } from './crypto.mjs';
 import { getJson, setJson, deleteKey } from './store.mjs';
@@ -139,7 +140,7 @@ export async function removeToken(provider, owner, providerUserId) {
 export async function syncRecord(provider, owner, data) {
   const previous = await getJson(`data:${provider}:${owner}`);
   const next = data && typeof data === 'object' ? data : {};
-  const merged = previous && typeof previous === 'object' ? { ...previous, ...next } : next;
+  const merged = mergeIntegrationHistory(previous || {}, next);
   await setJson(`data:${provider}:${owner}`, merged);
   return merged;
 }

@@ -2,6 +2,14 @@
 
 One-line notes when shipping Capgo bundles or coach desktop shells.
 
+## Capgo (engine-html channel)
+
+| Version | Date | Note |
+| --- | --- | --- |
+| 1.1.5 | 2026-10-03 | Automatic Karvonen zones using WHOOP resting-HR average or manual override; age-estimated/known max HR; one-time Settings Onboarding with saved completion/edit; folded advanced settings. Fitness and goal are stored; automatic weekly progression remains disabled. |
+| 1.1.4 | 2026-10-03 | Live HR shows reading freshness; retries stalled notifications with a 15-second cooldown; clears stale/contact-invalid readings and ignores disconnected callbacks. Simulated BLE readings 47–192 bpm update the number and full horseshoe sweep. No 47-bpm cap reproduced; physical WHOOP verification remains pending. |
+| 1.1.3 | 2026-10-03 | Home discovers an existing WHOOP account connection and displays dated observed recovery, precise HRV and resting HR. |
+
 ## Capgo (dogfood + live channels)
 
 | Version | Date | Note |

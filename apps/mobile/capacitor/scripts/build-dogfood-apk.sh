@@ -3,12 +3,13 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
-cd "$REPO"
-bash scripts/sync-athlete-app.sh
 cd "$ROOT"
 if [[ ! -x node_modules/.bin/cap ]]; then
-  npm install --no-fund --no-audit
+  npm ci --no-fund --no-audit
 fi
+cd "$REPO"
+node scripts/conditioning/build.mjs
+cd "$ROOT"
 npx cap sync android
 
 if [[ -z "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ]]; then

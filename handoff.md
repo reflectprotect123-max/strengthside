@@ -162,3 +162,91 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 **Library Sessions (11 Sep 2026):** On-phone builder is live in `apps/athlete/library.js` + `library-ui.js`. Persist on-device. No Capgo unless **IMPORTANT**.
 **Next agent:** Library / on-phone builder against that lock. Do not Capgo unless the owner marks **IMPORTANT**.
+
+
+## New HTML live-HR checkpoint — 3 October 2026
+
+The Android 1.1.1 APK uses `apps/athlete/conditioning/`, built from `source.html`
+by `scripts/conditioning/build.mjs`. Its dedicated Capgo channel `engine-html`
+now offers bundle **1.1.4**. Older app channels remain unchanged.
+
+The user reported HR and the horseshoe remaining at 47. The central number is
+raw Bluetooth HR; synthetic 8-bit/16-bit packets reproduce no 47 ceiling. The
+fill remains a linear mapping from the configured Blue lower boundary to max HR;
+no physiological values or boundaries were fabricated to increase it.
+
+**STRENGTHSIDE-DESIGNED:** notification liveness now distinguishes live readings
+from an idle Bluetooth connection, retries subscriptions after stale readings
+with a 15-second cooldown, clears contact-invalid/stale values, and ignores old
+native callbacks after unsubscribe/disconnect. The five-minute no-reading
+threshold disconnects the monitor while preserving the workout timer.
+
+Validation: native smoke exercises 47–192 bpm, full sweep, stale retry/cooldown,
+contact loss/recovery, typed-view offsets and late callbacks after disconnect.
+New HTML/WHOOP Home/Capgo smoke checks and repository `verify` passed. The offered
+1.1.4 download checksum and HTML/native bytes match the tested files. Actual
+WHOOP hardware was unavailable; the reported physical cause is not established.
+
+
+## Pending Karvonen/settings changes — 3 October 2026
+
+User explicitly requested **no Capgo deployment yet**. The offered bundle remains
+1.1.4; local generated HTML contains unpublished automatic zone/settings work.
+
+See `docs/conditioning-zone-settings.md`. Karvonen estimates Blue/Green/Red starts
+at 50/70/85% HR reserve, using entered max HR and a WHOOP 28-calendar-day resting-HR
+mean (or explicit override). Cutoffs are **STRENGTHSIDE-DESIGNED**. Existing custom
+boundaries are preserved until Calculate zones is selected. Settings saves leave
+active workout boundaries frozen; explicit in-workout saves record the update.
+The existing daily recovery adjustment remains, and settings data tools are folded.
+
+Unit/HTML/Home/native/Capgo smoke checks and repository `verify` pass. This is local
+validation, not evidence of publication or a physical WHOOP test. Do not run a
+Capgo shipment until the user requests it.
+
+
+## Pending Settings Onboarding — 3 October 2026
+
+User requested a Settings Onboarding entry that asks questions individually,
+closes after completion and becomes greyed out. This is implemented locally;
+**no Capgo release**. Dedicated channel remains 1.1.4.
+
+`onboarding-model.js` validates age (18–100), fitness, goal, maximum HR mode and
+resting-HR source. Unknown max uses rounded Tanaka `208 − 0.7 × age`, with an
+explicit known-max override and versioned provenance. `onboarding.js` presents
+one question per dialog page, conditionally asks for missing/manual resting HR,
+and reviews the derived baseline before Finish. Existing workouts retain their
+zone snapshots. Cancel/Back/Escape work; no boot-time auto-opening.
+
+Completion disables the Onboarding button as Completed; Edit fitness setup is
+separate. Profile and completion metadata are included in the existing
+`conditioning_settings` plan-sync payload and native/local backup. Unit tests
+verify account storage round-trip; no schema or production database changes.
+Fitness/goal remain metadata pending defined conditioning/dose rules.
+
+Validation: model/storage tests, browser question/completion/reload/edit/cancel
+flow, native HR/WHOOP Home/Capgo smoke and repository verify pass. Browser
+screenshots are `/workspace/previews/onboarding-review.png` and
+`/workspace/previews/onboarding-completed.png`. Physical phone verification is
+pending. Do not publish Capgo without the user's new instruction.
+
+
+## Published new HTML 1.1.5 — 3 October 2026
+
+User explicitly instructed “capgo it all”, superseding the earlier deployment
+hold. Capgo channel `engine-html` now points to **1.1.5** for Android APK 1.1.1.
+No native reinstall is needed; the older live/dogfood channels were not targeted.
+
+Includes all pending Karvonen, age-estimated/known maximum, simplified Settings
+and opt-in Onboarding work. Fitness/goal answers are stored; undefined fitness
+zone offsets and automatic weekly progression were not invented or enabled.
+
+Model/storage/zone tests, browser onboarding/WHOOP/native regression checks and
+Capgo smoke passed. A fresh update request offered 1.1.5; downloaded ZIP checksum
+and HTML/native bytes match the tested build. The first unqualified update request
+returned cached 1.1.4; a cache-busting verification request returned the new bundle.
+Artifact: `/workspace/previews/The-Hybrid-Engine-Capgo-1.1.5.zip`.
+
+Phone installation/physical WHOOP validation remains unobserved. User installs
+via Settings → Check for updates → Restart now after ending the workout, then
+Settings → Onboarding. Prior completion remains available through Edit.

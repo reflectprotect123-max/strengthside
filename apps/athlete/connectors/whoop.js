@@ -171,13 +171,15 @@
     meta = meta || {};
     if (!n || typeof n !== 'object') return false;
     if (typeof global.dailyCheckin !== 'function') return false;
-    const c = global.dailyCheckin(todayIso(), true);
+    const sampleDate=String(n.date || meta.sampleDate || todayIso()).slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(sampleDate)||sampleDate>todayIso()) return false;
+    const c = global.dailyCheckin(sampleDate, true);
     let changed = false;
     const recovery = finiteNum(n.recoveryScore), hrv = finiteNum(n.hrvMs), rhr = finiteNum(n.restingHr);
     const sleepPerf = finiteNum(n.sleepPerformance), strain = finiteNum(n.strain);
-    if (recovery != null && recovery > 0) { c.whoopRecovery = Math.round(recovery); changed = true; }
-    if (hrv != null && hrv > 0) { c.hrv = Math.round(hrv); changed = true; }
-    if (rhr != null && rhr > 0) { c.restingHr = Math.round(rhr); changed = true; }
+    if (recovery != null && recovery >= 0) { c.whoopRecovery = Math.round(recovery); changed = true; }
+    if (hrv != null && hrv > 0) { c.hrv = hrv; changed = true; }
+    if (rhr != null && rhr > 0) { c.restingHr = rhr; changed = true; }
     if (sleepPerf != null && sleepPerf > 0) { c.whoopSleepPerformance = Math.round(sleepPerf); c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
     if (strain != null && strain > 0) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
     if (changed) {

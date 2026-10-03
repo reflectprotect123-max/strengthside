@@ -69,6 +69,15 @@
       const id = 'log_' + date;
       sessions.push(touch({ id, date, kind: 'log', payload: logs[date] }, prev.session[id]));
     }
+    // STRENGTHSIDE-DESIGNED: the new conditioning app uses the same account-scoped ledger.
+    for (const workout of (state.liveWorkoutHistory || [])) {
+      sessions.push(touch({id: 'conditioning_' + workout.id, kind: 'conditioning_workout', payload: workout}, prev.session['conditioning_' + workout.id]));
+    }
+    const measurements = new Map(Object.entries(state.checkin || {}).map(([date, checkin]) => [date, {date, checkin}]));
+    for (const row of (state.whoopHistory || [])) measurements.set(row.date, {...measurements.get(row.date), date: row.date, whoop: row});
+    for (const [date, payload] of measurements) sessions.push(touch({id:'measurement_'+date, kind:'conditioning_measurement', payload}, prev.session['measurement_'+date]));
+    if (state.settings && (state.settings.liveZones || state.settings.methodAlerts || state.settings.fitnessProfile || state.settings.onboarding)) sessions.push(touch({id:'conditioning_settings',kind:'conditioning_settings',payload:{liveZones:state.settings.liveZones,methodAlerts:state.settings.methodAlerts,fitnessProfile:state.settings.fitnessProfile,onboarding:state.settings.onboarding}},prev.session.conditioning_settings));
+    for (const target of (state.weeklyTargetHistory || [])) sessions.push(touch({id:'weekly_target_'+target.weekStart,kind:'conditioning_weekly_target',payload:target},prev.session['weekly_target_'+target.weekStart]));
     const catalogId = 'catalog';
     const catalogEnt = touch({
       id: catalogId,
@@ -176,10 +185,15 @@
     const next = state || {};
     const assignments = {};
     const sessions = {};
+    const workouts=[], measurements=[], targets=[];
     let catalog = (next.library && next.library.catalog) || { exercises: [], circuits: [] };
     (plan.sessions || []).forEach((row) => {
       if (row.kind === 'assignment' && row.date) assignments[row.date] = row.templateId;
       else if (row.kind === 'log' && row.date) sessions[row.date] = row.payload;
+      else if (row.kind === 'conditioning_workout') workouts.push(row.payload);
+      else if (row.kind === 'conditioning_measurement') measurements.push(row.payload);
+      else if (row.kind === 'conditioning_weekly_target') targets.push(row.payload);
+      else if (row.kind === 'conditioning_settings') next.settings={...next.settings,...row.payload};
       else if (row.kind === 'catalog') catalog = { exercises: row.exercises || [], circuits: row.circuits || [] };
       else if (row.kind === 'lift_memory') next.liftMemory = row.memory || {};
       else if (row.kind === 'engine_anchors') next.engineAnchors = row.anchors || {};
@@ -190,6 +204,9 @@
       assignments,
     };
     next.sessions = sessions;
+    if(workouts.length) next.liveWorkoutHistory=workouts.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    if(measurements.length){next.checkin={...next.checkin}; const whoop=new Map((next.whoopHistory||[]).map(r=>[r.date,r]));for(const m of measurements){if(m.checkin)next.checkin[m.date]=m.checkin;if(m.whoop)whoop.set(m.date,m.whoop);}next.whoopHistory=[...whoop.values()].sort((a,b)=>a.date.localeCompare(b.date));}
+    if(targets.length)next.weeklyTargetHistory=targets;
     next.planSync = next.planSync || { acks: { template: {}, session: {} }, snapshotRev: 0 };
     next.planSync.lastPlan = plan;
     return next;

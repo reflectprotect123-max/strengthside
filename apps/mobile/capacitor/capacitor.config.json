@@ -1,7 +1,7 @@
 {
   "appId": "com.hybrid.athlete",
-  "appName": "HYBRID S&C",
-  "webDir": "../../athlete",
+  "appName": "The Hybrid Engine",
+  "webDir": "../../athlete/conditioning",
   "server": {
     "androidScheme": "https"
   },
@@ -10,18 +10,22 @@
   },
   "plugins": {
     "Camera": {
-      "permissions": ["camera"]
+      "permissions": [
+        "camera"
+      ]
     },
     "CapacitorUpdater": {
       "appId": "com.hybrid.athlete",
-      "autoUpdate": true,
-      "defaultChannel": "dogfood",
-      "appReadyTimeout": 10000,
-      "responseTimeout": 20
+      "autoUpdate": "onlyDownload",
+      "defaultChannel": "engine-html",
+      "appReadyTimeout": 30000,
+      "responseTimeout": 20,
+      "allowSetDefaultChannel": false,
+      "persistDefaultChannelOnReinstall": false
     },
     "BluetoothLe": {
       "displayStrings": {
-        "scanning": "Scanning…",
+        "scanning": "Scanning\u2026",
         "cancel": "Cancel",
         "availableDevices": "Available devices",
         "noDeviceFound": "No device found"
