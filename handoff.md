@@ -186,3 +186,20 @@ contact loss/recovery, typed-view offsets and late callbacks after disconnect.
 New HTML/WHOOP Home/Capgo smoke checks and repository `verify` passed. The offered
 1.1.4 download checksum and HTML/native bytes match the tested files. Actual
 WHOOP hardware was unavailable; the reported physical cause is not established.
+
+
+## Pending Karvonen/settings changes — 3 October 2026
+
+User explicitly requested **no Capgo deployment yet**. The offered bundle remains
+1.1.4; local generated HTML contains unpublished automatic zone/settings work.
+
+See `docs/conditioning-zone-settings.md`. Karvonen estimates Blue/Green/Red starts
+at 50/70/85% HR reserve, using entered max HR and a WHOOP 28-calendar-day resting-HR
+mean (or explicit override). Cutoffs are **STRENGTHSIDE-DESIGNED**. Existing custom
+boundaries are preserved until Calculate zones is selected. Settings saves leave
+active workout boundaries frozen; explicit in-workout saves record the update.
+The existing daily recovery adjustment remains, and settings data tools are folded.
+
+Unit/HTML/Home/native/Capgo smoke checks and repository `verify` pass. This is local
+validation, not evidence of publication or a physical WHOOP test. Do not run a
+Capgo shipment until the user requests it.
