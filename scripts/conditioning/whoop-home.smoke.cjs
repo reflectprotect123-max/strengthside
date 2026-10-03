@@ -14,7 +14,7 @@ const {chromium}=require('/home/agent/.local/lib/node_modules/@playwright/cli/no
       Whoop.client=()=>({auth:{getSession:async()=>({data:{session:{user:{id:'synthetic-user',email:'athlete@example.test'},access_token:'synthetic-session'}}})}});
       Whoop.refreshStatus=async()=>{connectionChecks++;return {whoop:{connected:true}};};
       PlanSync.syncNow=async()=>({ok:true});
-      window.fetch=async()=>{syncRequests++;return Response.json({connected:true,dailyMetrics:[{date:today(),recovery:0,hrv:48.123,rhr:54}],syncedAt:new Date().toISOString()});};
+      window.fetch=async()=>{syncRequests++;return Response.json({connected:true,dailyMetrics:[{date:today(),recovery:0,hrv:48.123,rhr:54,sleep:7.25,steps:0,sources:{steps:'WHOOP private feed'}}],syncedAt:new Date().toISOString()});};
       S.selectedDate=today();await EngineApp.refreshWhoop();setTab('home');
     });
     assert.equal(await page.evaluate(()=>connectionChecks),1);
@@ -23,7 +23,12 @@ const {chromium}=require('/home/agent/.local/lib/node_modules/@playwright/cli/no
     assert.equal(await page.evaluate(()=>S.whoopHistory.at(-1).hrv),48.123);
     const cards=await page.locator('.pg-cards .pg-card').allTextContents();
     assert.match(cards[0],/0\s*%/);assert.match(cards[1],/48\.1\s*ms/);assert.match(cards[2],/54\s*bpm/);
-    assert.match(cards[0],/WHOOP account/);
+    assert.match(cards[0],/WHOOP account/);assert.match(cards[3],/7\.3\s*h/);assert.match(cards[4],/0/);assert.match(cards[4],/WHOOP private feed/);
+    assert.equal(await page.evaluate(()=>S.checkin[today()].sleepHours),7.25);
+    assert.equal(await page.evaluate(()=>S.checkin[today()].steps),0);
+    await page.evaluate(()=>{setTab('progress');});
+    assert.match(await page.locator('#app').innerText(),/7\.3/);
+    await page.evaluate(()=>setTab('home'));
     assert.equal(await page.getByRole('button',{name:'Refresh WHOOP',exact:true}).count(),1);
     await page.evaluate(()=>{S.whoopHistory[0].date='2026-09-29';delete S.checkin[today()];render();});
     assert.match(await page.locator('#app').innerText(),/Latest WHOOP reading: 2026-09-29/);

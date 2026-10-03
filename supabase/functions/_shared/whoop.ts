@@ -231,20 +231,20 @@ export async function fetchWhoopSnapshot(token: string, { historyDays = 10, allH
   const [recovery, cycle, sleep, workout] = await Promise.all([
     fetchCollection('/recovery', token, count),
     fetchCollection('/cycle', token, count),
-    fetchCollection('/activity/sleep', token, 7),
+    fetchCollection('/activity/sleep', token, count),
     fetchCollection('/activity/workout', token, MAX_WORKOUTS),
   ]);
-  const dailyMetrics = dailyPhysiology(recordsOf(recovery), recordsOf(cycle));
+  const dailyMetrics = dailyPhysiology(recordsOf(recovery), recordsOf(cycle), recordsOf(sleep));
   const normalized = normalizeWhoopPayload({ recovery, cycle, sleep, workout });
-  const latest = dailyMetrics.at(-1);
+  const latest = dailyMetrics.filter((r: any) => r.recovery != null || r.hrv != null || r.rhr != null).at(-1);
   if (latest) Object.assign(normalized, {
     date: latest.date, recoveryScore: latest.recovery, hrvMs: latest.hrv, restingHr: latest.rhr,
   });
   return {
     recovery, cycle, sleep, workout, normalized, dailyMetrics,
     dailyStrain: extractDailyStrain(recordsOf(cycle)),
-    dailyRecovery: dailyMetrics.map(({ date, recovery: recoveryScore }: any) => ({ date, recoveryScore })),
-    historyTruncated: recovery.truncated || cycle.truncated,
+    dailyRecovery: dailyMetrics.filter((r: any) => r.recovery != null).map(({ date, recovery: recoveryScore }: any) => ({ date, recoveryScore })),
+    historyTruncated: recovery.truncated || cycle.truncated || sleep.truncated,
     syncedAt: new Date().toISOString(),
   };
 }

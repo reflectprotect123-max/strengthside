@@ -2,7 +2,10 @@
 
 Reviewed 3 October 2026. Repository: [thebriangao/totem](https://github.com/thebriangao/totem),
 main commit `f9ac7f18198ccc1ea3a21e4d6bdc83733b4ef702` (16 September 2026).
-Review only: no installation, account login, app integration or Capgo change.
+Initial review only. A subsequent authorized sleep/steps trial is documented in
+[WHOOP sleep and steps trial](whoop-sleep-steps-trial.md). It adds a narrow
+read-only adapter and prepares Totem separately for private login; no live
+private-account login or Capgo change has occurred.
 
 Totem is a Node/MCP server wrapping WHOOP's private app API. Its README advertises
 55 tools, including reads and writes. Source inspection confirms tools for

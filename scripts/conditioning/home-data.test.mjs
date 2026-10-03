@@ -23,3 +23,9 @@ test('future or empty WHOOP readings cannot fill the Home cards',()=>{
   const result=select([{date:'2026-10-04',source:'WHOOP account',recovery:90},{date:'2026-10-02',source:'WHOOP account',hrv:null}],'2026-10-03','2026-10-03');
   assert.equal(result.row.recovery,undefined);assert.equal(result.row.hrv,undefined);
 });
+test('each Home metric keeps its own observation date when steps refresh before physiology',()=>{
+  const result=select([{date:'2026-10-02',source:'WHOOP account',hrv:48,sleep:7.25},{date:'2026-10-03',source:'WHOOP account',steps:0,sources:{steps:'WHOOP private feed'}}],'2026-10-03','2026-10-03');
+  assert.deepEqual(JSON.parse(JSON.stringify(result.metrics.hrv)),{value:48,date:'2026-10-02',source:'WHOOP account'});
+  assert.equal(result.metrics.steps.value,0);assert.equal(result.metrics.steps.date,'2026-10-03');assert.equal(result.metrics.steps.source,'WHOOP private feed');
+  assert.equal(result.metrics.sleep.value,7.25);
+});
