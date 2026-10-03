@@ -1,4 +1,3 @@
-import { fetchPersonalSteps } from '../_shared/whoop-steps.ts';
 import { ownerFromRequest } from '../_shared/auth.ts';
 import { json, methodGuard, preflight } from '../_shared/http.ts';
 import { loadToken, saveToken, syncRecord } from '../_shared/oauth.ts';
@@ -58,17 +57,7 @@ Deno.serve(async (req) => {
     const backfill = params.get('backfill') === '1';
     const allHistory = params.get('history') === 'all';
     const historyDays = backfill ? 100 : 10;
-    const { snapshot, token: activeToken } = await fetchSnapshotForOwner(owner, token, historyDays, allHistory);
-    // Optional steps never replace or prevent the official physiological sync.
-    let endDate=new Date().toISOString().slice(0,10);
-    try{endDate=new Intl.DateTimeFormat('en-CA',{timeZone:Deno.env.get('WHOOP_STEPS_TIMEZONE')||'UTC',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}catch{/* Invalid optional timezone must not break official sync. */}
-    const steps = await fetchPersonalSteps(owner, endDate, activeToken.access_token);
-    const byDate = new Map<string, any>(snapshot.dailyMetrics.map((r: any) => [r.date, r]));
-    for(const row of steps.rows) {
-      const prior=byDate.get(row.date)||{};
-      byDate.set(row.date,{...prior,...row,sources:{...prior.sources,...row.sources}});
-    }
-    snapshot.dailyMetrics=[...byDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
+    const { snapshot } = await fetchSnapshotForOwner(owner, token, historyDays, allHistory);
     const saved = await syncRecord('whoop', owner, snapshot);
     return json({
       connected: true,
@@ -78,8 +67,9 @@ Deno.serve(async (req) => {
       dailyRecovery: saved.dailyRecovery,
       dailyMetrics: saved.dailyMetrics,
       historyTruncated: snapshot.historyTruncated,
-      modelVersion: 'whoop-history-v2',
-      stepsStatus: steps.status,
+      modelVersion: 'whoop-history-v3',
+      stepsStatus: snapshot.dailyMetrics.some((r: any) => r.steps != null) ? 'ok' : 'no_dated_readings',
+      stepsProvider: 'whoop-official',
       syncedAt: snapshot.syncedAt,
     });
   } catch (error) {

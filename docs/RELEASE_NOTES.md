@@ -4,6 +4,12 @@ One-line notes when shipping Capgo bundles or coach desktop shells.
 
 ## Capgo (engine-html channel)
 
+Backend correction, 3 October 2026: WHOOP added Cycle.step_count on 23 September
+2026 under existing read:cycles. Sync imports official cycle totals and no longer
+uses the private steps adapter. Existing app 1.1.6 displays these values after
+Refresh WHOOP; no new login, permission or Capgo upload is needed.
+
+
 | Version | Date | Note |
 | --- | --- | --- |
 | 1.1.6 | 2026-10-03 | Official WHOOP main-sleep hours in Home/history/trends; per-metric source dates; optional account-matched private steps trial (requires separate login, remains unconfigured). WHOOP sync backend deployed; Android 1.1.1 shell retained; fresh Capgo offer, ZIP checksum and deployed app bytes verified. |

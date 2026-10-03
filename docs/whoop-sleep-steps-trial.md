@@ -1,4 +1,17 @@
-# WHOOP sleep and steps trial
+# WHOOP sleep and steps integration
+
+**Current correction — 3 October 2026:** WHOOP's [official changelog](https://developer.whoop.com/docs/api-changelog)
+records `Cycle.step_count` added on **23 September 2026**, covered by existing
+`read:cycles` with no re-consent. The [OpenAPI schema](https://api.prod.whoop.com/developer/doc/openapi.json)
+confirms a nullable integer counting steps during the physiological cycle.
+The sync handler now reads this official field using existing OAuth, alongside
+sleep/HRV/RHR. Zero is valid; missing values are not zero. Values are assigned to
+the cycle's local start date and retain cycle ID, boundaries and update time;
+they are WHOOP cycle totals, not reconstructed midnight-to-midnight totals.
+Steps backfill follows existing cycle pagination where WHOOP provides the field.
+No private token, Totem login or new APK/Capgo bundle is needed on app 1.1.6.
+The private adapter and setup instructions below are retained as historical trial
+material; **the production WHOOP sync no longer invokes the private adapter**.
 
 3 October 2026. **STRENGTHSIDE-DESIGNED** connector and presentation; these are
 WHOOP observations, not Morpheus calculations. No proprietary Morpheus formula

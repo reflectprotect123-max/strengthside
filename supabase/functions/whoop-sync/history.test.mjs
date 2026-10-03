@@ -25,7 +25,7 @@ globalThis.fetch = async url => {
   for (let i = cursor; i < end; i++) {
     const date = new Date(Date.UTC(2026, 8, 30 - i, 2)).toISOString();
     if (u.pathname.endsWith('/recovery')) records.push({ cycle_id: i + 1, sleep_id: 'sleep-'+i, score_state: 'SCORED', score: { recovery_score: i === 0 ? 0 : 80, hrv_rmssd_milli: 48.123 + i / 100, resting_heart_rate: 54 } });
-    if (u.pathname.endsWith('/cycle')) records.push({ id: i + 1, start: date, timezone_offset: '-05:00', score: { strain: 5 } });
+    if (u.pathname.endsWith('/cycle')) records.push({ id: i + 1, start: date, timezone_offset: '-05:00', step_count: i===0?0:8234, score: { strain: 5 } });
   }
   if (u.pathname.endsWith('/activity/sleep')) records.push(...Array.from({length:end-cursor},(_,n)=>({id:'sleep-'+(cursor+n),end:'2026-10-01T08:00:00Z',score_state:'SCORED',nap:false,score:{stage_summary:{total_light_sleep_time_milli:4*3600000,total_slow_wave_sleep_time_milli:2*3600000,total_rem_sleep_time_milli:3600000,total_awake_time_milli:3600000,total_in_bed_time_milli:8*3600000}}})));
   if (u.pathname.endsWith('/recovery')) pageCount++;
@@ -43,7 +43,11 @@ test('full-history handler returns all pages, precise metrics, zero recovery and
   assert.equal(body.dailyMetrics.at(-1).hrv, 48.123);
   assert.equal(body.dailyMetrics.at(-1).sleep, 7);
   assert.equal(body.dailyMetrics[0].sleep, 7);
-  assert.equal(body.stepsStatus, 'not_configured');
+  assert.equal(body.stepsStatus, 'ok');
+  assert.equal(body.stepsProvider, 'whoop-official');
+  assert.equal(body.dailyMetrics.at(-1).steps, 0);
+  assert.equal(body.dailyMetrics[0].steps, 8234);
+  assert.equal(body.dailyMetrics.at(-1).sources.steps, 'WHOOP official API');
   assert.equal(body.normalized.recoveryScore, 0);
   assert.equal(body.normalized.date, '2026-09-29');
   assert.equal(body.historyTruncated, false);

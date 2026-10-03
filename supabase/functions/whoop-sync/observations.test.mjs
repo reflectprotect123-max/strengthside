@@ -34,3 +34,11 @@ test('private feed checks app owner and WHOOP account identity; expired sessions
     expired=false;privateId=7;assert.equal((await fetchPersonalSteps('s:owner','2026-10-03','synthetic-public-token')).rows[0].steps,1234);assert.equal(trendCalls,1);
   }finally{globalThis.fetch=original;}
 });
+
+test('official top-level cycle steps preserve zero/local dates, skip null and invalid values, and use the newest observation without summing',()=>{
+  const cycle=(id,steps,extra={})=>({id,step_count:steps,start:'2026-10-02T23:00:00Z',timezone_offset:'+10:00',updated_at:'2026-10-03T10:00:00Z',...extra});
+  const rows=dailyPhysiology([], [cycle(1,100),cycle(2,0,{updated_at:'2026-10-03T11:00:00Z'}),cycle(3,null),cycle(4,-1),cycle(5,1.5),cycle(6,undefined),cycle(7,'100')]);
+  assert.equal(rows.length,1);assert.equal(rows[0].date,'2026-10-03');assert.equal(rows[0].steps,0);assert.equal(rows[0].stepsCycleId,2);
+  assert.equal(rows[0].sources.steps,'WHOOP official API');
+  assert.equal(dailyPhysiology([], [cycle(1,null)]).length,0);
+});
