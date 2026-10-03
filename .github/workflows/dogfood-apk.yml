@@ -65,40 +65,38 @@ jobs:
       - name: Build debug dogfood APK
         run: bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
 
-      - name: Publish dogfood-latest release
+      - name: Publish new HTML APK release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          APK_SRC="apps/mobile/capacitor/android/app/build/outputs/apk/debug/app-debug.apk"
-          APK="apps/mobile/capacitor/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
-          cp -f "$APK_SRC" "$APK"
-          BUILD="$(grep -o "THE-brain-v1" apps/athlete/app.js | head -1 || echo THE-brain-v1)"
-          SHA="$(git rev-parse --short HEAD)"
-          NOTES="Debug Android shell for THE Hybrid athlete app.
+          VERSION="$(sed -n 's/.*versionName "\(.*\)".*/\1/p' apps/mobile/capacitor/android/app/build.gradle)"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          TAG="engine-html-v$VERSION"
+          OUT="apps/mobile/capacitor/android/app/build/outputs/apk/debug"
+          APK="$OUT/The-Hybrid-Engine-$VERSION.apk"
+          cp "$OUT/app-debug.apk" "$APK"
+          (cd "$OUT" && sha256sum "The-Hybrid-Engine-$VERSION.apk" > SHA256SUMS.txt)
+          cat > /tmp/release-notes.md <<'NOTES'
+          Install the APK from Assets on your Android phone (Android 7 or newer).
 
-          **Build stamp:** \`${BUILD}\`
-          **Commit:** \`${SHA}\`
+          This build packages the new conditioning HTML, Bluetooth heart-rate recording,
+          WHOOP account/history integration, and Capgo updates on `engine-html`.
+          Updates download automatically. Apply them from Settings → Restart now
+          after finishing your workout.
 
-          Install on phone: open this release on GitHub → Assets → \`the-hybrid-athlete-dogfood-debug.apk\` → Install.
-          Allow installs from your browser/files app if Android asks."
-
-          # Drop stale differently-named assets so the release has one clear APK.
-          gh release view dogfood-latest --json assets -q '.assets[].name' 2>/dev/null | while read -r name; do
-            if [[ -n "$name" && "$name" != "the-hybrid-athlete-dogfood-debug.apk" ]]; then
-              gh release delete-asset dogfood-latest "$name" --yes || true
-            fi
-          done
-
-          if gh release view dogfood-latest >/dev/null 2>&1; then
-            gh release edit dogfood-latest --title "Dogfood APK (latest)" --notes "$NOTES" --latest
-            gh release upload dogfood-latest "$APK" --clobber
+          This is a debug APK built by GitHub Actions. Physical-phone installation,
+          WHOOP pairing and signed-in history sync still need testing.
+          Native plugin changes require a new APK; HTML changes can arrive through Capgo.
+          NOTES
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file /tmp/release-notes.md --prerelease
           else
-            gh release create dogfood-latest "$APK" \
-              --title "Dogfood APK (latest)" \
-              --notes "$NOTES" \
-              --latest
+            gh release create "$TAG" --target "$GITHUB_SHA" \
+              --title "The Hybrid Engine — new HTML APK $VERSION" \
+              --notes-file /tmp/release-notes.md --prerelease --latest=false
           fi
+          gh release upload "$TAG" "$APK" "$OUT/SHA256SUMS.txt" --clobber
 
       - uses: actions/upload-artifact@v4
         with:

@@ -3,12 +3,13 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
-cd "$REPO"
-node scripts/conditioning/build.mjs
 cd "$ROOT"
 if [[ ! -x node_modules/.bin/cap ]]; then
   npm ci --no-fund --no-audit
 fi
+cd "$REPO"
+node scripts/conditioning/build.mjs
+cd "$ROOT"
 npx cap sync android
 
 if [[ -z "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ]]; then
