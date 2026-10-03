@@ -49,7 +49,7 @@ At the same received BPM, a higher maximum also reduces horseshoe fill.
 
 ## Implementation follow-up
 
-Follow-up on 3 October: the local, unpublished Onboarding flow now captures age,
+Follow-up on 3 October: the Onboarding flow published in Capgo 1.1.5 captures age,
 fitness and goal, and offers estimated/known max HR. Fitness/goal-specific dose
 rules and workout-derived max-HR correction remain unimplemented.
 

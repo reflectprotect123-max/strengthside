@@ -1,6 +1,6 @@
 # Automatic cardio zone settings
 
-Status: implemented and tested in the new HTML; **not published to Capgo**.
+Status: published in Capgo **1.1.5** on `engine-html`, 3 October 2026.
 
 Settings now offers an opt-in **Onboarding** dialog: age, self-rated cardio
 fitness, cardio goal and estimated/known maximum HR, one question at a time.

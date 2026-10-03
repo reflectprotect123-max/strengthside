@@ -229,3 +229,24 @@ flow, native HR/WHOOP Home/Capgo smoke and repository verify pass. Browser
 screenshots are `/workspace/previews/onboarding-review.png` and
 `/workspace/previews/onboarding-completed.png`. Physical phone verification is
 pending. Do not publish Capgo without the user's new instruction.
+
+
+## Published new HTML 1.1.5 — 3 October 2026
+
+User explicitly instructed “capgo it all”, superseding the earlier deployment
+hold. Capgo channel `engine-html` now points to **1.1.5** for Android APK 1.1.1.
+No native reinstall is needed; the older live/dogfood channels were not targeted.
+
+Includes all pending Karvonen, age-estimated/known maximum, simplified Settings
+and opt-in Onboarding work. Fitness/goal answers are stored; undefined fitness
+zone offsets and automatic weekly progression were not invented or enabled.
+
+Model/storage/zone tests, browser onboarding/WHOOP/native regression checks and
+Capgo smoke passed. A fresh update request offered 1.1.5; downloaded ZIP checksum
+and HTML/native bytes match the tested build. The first unqualified update request
+returned cached 1.1.4; a cache-busting verification request returned the new bundle.
+Artifact: `/workspace/previews/The-Hybrid-Engine-Capgo-1.1.5.zip`.
+
+Phone installation/physical WHOOP validation remains unobserved. User installs
+via Settings → Check for updates → Restart now after ending the workout, then
+Settings → Onboarding. Prior completion remains available through Edit.
