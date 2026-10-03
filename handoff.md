@@ -273,3 +273,31 @@ Validation: HTML/onboarding, WHOOP Home and mocked native smoke checks passed;
 Chromium checks covered strength exclusion, targets, invalid/missing ranges,
 historical context and 320/393px layouts. Repository verify passed; local
 Postgres migration apply was skipped because initdb is unavailable.
+
+## Daily subjective check-in — 3 October 2026
+
+Home now offers optional daily sleep quality, soreness and overall wellbeing
+questions using 1–5 choices. Sleep duration stays supplied by WHOOP; no duplicate
+hours question. The exact prompts and endpoints are HISTORICAL, verified from
+the first-party 2019 Morpheus guide (printed page 8). Current FAQs CONFIRMED
+still describe morning sleep, soreness and wellbeing inputs. The integration
+and storage model are STRENGTHSIDE-DESIGNED; current exact Morpheus UI wording
+was not verified.
+
+The current-day card opens unanswered, collapses after Save or Not now, and
+supports editing/cancelling. No choice is preselected. Historical dates show
+recorded answers read-only. Unsaved choices survive Home re-renders during sync;
+completed answers and skip timestamps survive reload. Account/date changes reset
+the draft. Daily answers are stored in checkin[date].subjectiveRecovery with
+version, timestamps and evidence label; the existing measurement ledger, local
+storage and native backup persist them without a schema change.
+
+WHOOP observations and recovery scores are untouched. These answers do not
+adjust cardio boundaries or enable weekly progression. The optional check-in
+never blocks sync or starting a workout.
+
+Validation: existing WHOOP Home browser check covers required answers, no default
+answers, skip, edit/cancel, reload, new-day reset, historical display, 320/393px
+layout and refresh during a draft. Storage tests verify account-ledger round-trip
+and unchanged physiology. HTML/onboarding and mocked native checks passed.
+Repository verify passed; local Postgres apply skipped (initdb unavailable).

@@ -13,3 +13,15 @@ test('fitness answers and onboarding completion round-trip through account stora
   assert.equal(restored.settings.onboarding.completed,true);
   assert.equal(restored.settings.onboarding.completedAt,'2026-10-03T02:00:00Z');
 });
+
+test('subjective check-ins and skipped dates round-trip without changing WHOOP physiology',()=>{
+  const subjectiveRecovery={sleepQuality:4,soreness:2,wellbeing:5,completedAt:'2026-10-03T09:00:00Z',updatedAt:'2026-10-03T09:00:00Z',model_version:'subjective-recovery-v1',evidenceLabel:'STRENGTHSIDE-DESIGNED'};
+  const state={checkin:{'2026-10-03':{whoopRecovery:82,hrv:48.123,restingHr:54,sleepHours:7.25,subjectiveRecovery},'2026-10-02':{subjectiveRecoverySkippedAt:'2026-10-02T09:00:00Z'}},whoopHistory:[{date:'2026-10-03',recovery:82,sleep:7.25}],settings:{}};
+  const plan=JSON.parse(JSON.stringify(P.pack(state)));
+  const restored=P.applyPlan({library:{},settings:{}},plan);
+  assert.deepEqual(JSON.parse(JSON.stringify(restored.checkin['2026-10-03'].subjectiveRecovery)),subjectiveRecovery);
+  assert.equal(restored.checkin['2026-10-02'].subjectiveRecoverySkippedAt,'2026-10-02T09:00:00Z');
+  assert.equal(restored.checkin['2026-10-03'].whoopRecovery,82);
+  assert.equal(restored.checkin['2026-10-03'].sleepHours,7.25);
+  assert.equal(restored.whoopHistory[0].recovery,82);
+});
