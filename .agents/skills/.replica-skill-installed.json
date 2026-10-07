@@ -1,0 +1,20 @@
+{
+  "source": "https://github.com/Jakeschincariol/replica-skill",
+  "commit": "77c9436fb3d18c3d58169efb8caf4fe906b0dc51",
+  "installed_on": "2026-10-04",
+  "skills": [
+    "replica-architect",
+    "replica-backend",
+    "replica-brand",
+    "replica-build",
+    "replica-deploy",
+    "replica-design",
+    "replica-diff",
+    "replica-entrepreneur",
+    "replica-launch",
+    "replica-recon",
+    "replica-test"
+  ],
+  "destination": "/workspace/strengthside-daily-checkin/.agents/skills",
+  "removal": "Remove the listed replica-* directories and this receipt from the destination."
+}

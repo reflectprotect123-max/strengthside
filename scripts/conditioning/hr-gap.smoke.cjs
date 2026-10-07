@@ -19,7 +19,7 @@ const output=await page.evaluate(()=>{
  startGapTest('Cardio',false);LiveWorkout.receive(130,testTime);S.settings.liveZones={blue:120,green:140,red:160,max:190,version:'late'};advanceGapTest(5,134);out.noZones=copy();
  startGapTest();const frozen=JSON.stringify(S.liveWorkout.activeZones);S.settings.liveZones={blue:90,green:110,red:130,max:195,version:'future'};S.checkin[today()]={whoopRecovery:0};LiveWorkout.zones();out.lockedDialog=document.querySelector('[role="dialog"]').innerText;out.hasEditor=!!document.querySelector('[role="dialog"] form');LiveWorkout.saveZones();out.freezeAfterSave=JSON.stringify(S.liveWorkout.activeZones)===frozen;LiveWorkout.pause();LiveWorkout.resume();out.freezeAfterResume=JSON.stringify(S.liveWorkout.activeZones)===frozen;
  // Save and read the interpolated workout through the real UI/storage path.
- startGapTest();LiveWorkout.receive(130,testTime);advanceGapTest(5,134);LiveWorkout.finish();LiveWorkout.submit();out.saved=S.liveWorkoutHistory.at(-1);setTab('home');out.homeText=document.getElementById('app').innerText;Progress.workout(out.saved.id);setTab('progress');out.historyText=document.getElementById('app').innerText;
+ startGapTest();LiveWorkout.receive(130,testTime);advanceGapTest(5,134);LiveWorkout.finish();LiveWorkout.submit();out.saved=S.liveWorkoutHistory.at(-1);setTab('home');out.homeText=document.getElementById('app').innerText;setTab('progress');Progress.workout(out.saved.id);out.historyText=document.getElementById('app').innerText;
  return out;
 });
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`),sum=o=>Object.values(o||{}).reduce((a,b)=>a+b,0);
