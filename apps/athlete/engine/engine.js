@@ -171,10 +171,20 @@
   function endWork(log, now, early) {
     const s = clone(log);
     const e = s.engine;
-    e.phase = 'rest';
+    // Work clock finished → athlete taps REST mid-screen before rest overlay opens.
+    e.phase = 'tapRest';
     e.needsEffort = true;
     e.workEndsAt = now;
     e.workComplete = !early;
+    e.restEndsAt = null;
+    return s;
+  }
+
+  function openRest(log, now) {
+    const s = clone(log);
+    const e = s.engine;
+    if (!e || e.phase !== 'tapRest') return log;
+    e.phase = 'rest';
     const more = e.structure === 'intervals' && (e.roundIndex + 1) < e.rounds;
     if (more && e.restSec > 0) {
       e.restEndsAt = now + e.restSec * 1000;
@@ -338,6 +348,7 @@
     readyLog,
     startWork,
     endWork,
+    openRest,
     tick,
     recordEffort,
     skipRest,
