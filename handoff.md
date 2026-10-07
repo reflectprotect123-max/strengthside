@@ -159,3 +159,21 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 
 **Library Sessions (11 Sep 2026):** On-phone builder is live in `apps/athlete/library.js` + `library-ui.js`. Persist on-device. No Capgo unless **IMPORTANT**.
 **Next agent:** Library / on-phone builder against that lock. Do not Capgo unless the owner marks **IMPORTANT**.
+
+## Strength-only dogfood APK — 8 October 2026
+
+User confirmed screenshots from `cursor/the-engine-cond-ddba` and asked for a
+strength-only APK. All strengthside remote branch heads were inspected for app
+identity, native web root and split provenance. The preserved split is commits
+`f29d2059` / `37c1ba53`, on `cursor/the-engine-cond-ddba`. Main instead points its
+Android shell at the new conditioning HTML.
+
+Branch `cursor/strength-only-dogfood-20261008` packages the confirmed strength
+app as The Strength 1.2.0 (code 120). It removes conditioning navigation, old
+Concept2 UI hooks, misleading Warm-Up/Conditioning labeling and the old Capgo
+plugin. Old conditioning entities are filtered from device/cloud import; lift
+logs and warmup/recovery circuits remain. No database migrations, live website
+deployment or Capgo broadcast is part of this change.
+
+APK workflow runs repository verify before building and checking native assets,
+then publishes `strength-dogfood-v1.2.0`. Physical phone validation is pending.

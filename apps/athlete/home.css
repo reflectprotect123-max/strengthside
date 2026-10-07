@@ -14,7 +14,6 @@
   --recovery: var(--recovery-high);
   --strain: #1ba3ff;
   --strength: #d4a574;
-  --engine: #5ec4b7;
   --recovery-room: #9fd356;
   --trn-blue: #1ba3ff;
   --trn-letter-bg: #3a3a3c;
@@ -441,7 +440,6 @@ button {
 }
 
 .cal-dot.strength { background: var(--strength); }
-.cal-dot.engine { background: var(--engine); }
 .cal-dot.recovery { background: var(--recovery-room); }
 
 /* ── Session list ── */
@@ -505,7 +503,6 @@ button {
 }
 
 .pub-dot.strength { background: var(--strength); }
-.pub-dot.engine { background: var(--engine); }
 .pub-dot.recovery { background: var(--recovery-room); }
 
 .published-item strong {

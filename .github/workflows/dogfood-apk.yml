@@ -1,9 +1,9 @@
-name: Dogfood APK
+name: Strength Dogfood APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'cursor/strength-only-dogfood-20261008']
     paths:
       - 'apps/athlete/**'
       - 'apps/mobile/**'
@@ -61,47 +61,46 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Validate strength app
+        run: pnpm run verify
+
       - name: Build debug dogfood APK
         run: bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
 
-      - name: Publish dogfood-latest release
+      - name: Publish strength dogfood APK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          APK_SRC="apps/mobile/capacitor/android/app/build/outputs/apk/debug/app-debug.apk"
-          APK="apps/mobile/capacitor/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
-          cp -f "$APK_SRC" "$APK"
-          BUILD="$(grep -o "THE-brain-v1" apps/athlete/app.js | head -1 || echo THE-brain-v1)"
-          SHA="$(git rev-parse --short HEAD)"
-          NOTES="Debug Android shell for THE Hybrid athlete app.
+          OUT="apps/mobile/capacitor/android/app/build/outputs/apk/debug"
+          APK="$OUT/The-Strength-1.2.0.apk"
+          (cd "$OUT" && sha256sum The-Strength-1.2.0.apk > SHA256SUMS.txt)
+          cat > /tmp/strength-release-notes.md <<'NOTES'
+          Strength-only dogfood APK, version 1.2.0.
 
-          **Build stamp:** \`${BUILD}\`
-          **Commit:** \`${SHA}\`
+          TrainHeroic-inspired Training, Library builder, set-by-set logger,
+          supersets, rest timers and WHOOP account connection.
+          Conditioning is removed. Legacy conditioning sessions are filtered
+          at device/cloud import. This APK loads its bundled strength app;
+          it cannot download the old Hybrid S&C/Engine Capgo app.
 
-          Install on phone: open this release on GitHub → Assets → \`the-hybrid-athlete-dogfood-debug.apk\` → Install.
-          Allow installs from your browser/files app if Android asks."
-
-          # Drop stale differently-named assets so the release has one clear APK.
-          gh release view dogfood-latest --json assets -q '.assets[].name' 2>/dev/null | while read -r name; do
-            if [[ -n "$name" && "$name" != "the-hybrid-athlete-dogfood-debug.apk" ]]; then
-              gh release delete-asset dogfood-latest "$name" --yes || true
-            fi
-          done
-
-          if gh release view dogfood-latest >/dev/null 2>&1; then
-            gh release edit dogfood-latest --title "Dogfood APK (latest)" --notes "$NOTES" --latest
-            gh release upload dogfood-latest "$APK" --clobber
+          Download The-Strength-1.2.0.apk on Android and open it to install.
+          Validation: repository verify, strength import tests and native asset
+          boundary checks. Physical-phone installation has not been tested.
+          NOTES
+          TAG="strength-dogfood-v1.2.0"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file /tmp/strength-release-notes.md
           else
-            gh release create dogfood-latest "$APK" \
-              --title "Dogfood APK (latest)" \
-              --notes "$NOTES" \
-              --latest
+            gh release create "$TAG" --target "$GITHUB_SHA" \
+              --title "The Strength — dogfood APK 1.2.0" \
+              --notes-file /tmp/strength-release-notes.md --latest
           fi
+          gh release upload "$TAG" "$APK" "$OUT/SHA256SUMS.txt" --clobber
 
       - uses: actions/upload-artifact@v4
         with:
-          name: the-hybrid-athlete-dogfood-debug
-          path: apps/mobile/capacitor/android/app/build/outputs/apk/debug/*.apk
+          name: strength-only-apk-1.2.0
+          path: apps/mobile/capacitor/android/app/build/outputs/apk/debug/The-Strength-1.2.0.apk
           if-no-files-found: error
           retention-days: 30

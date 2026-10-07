@@ -115,7 +115,7 @@
   function pagesFromPlan(plan) {
     const members = [];
     for (const block of (plan && plan.blocks) || []) {
-      if (!block || block.kind === 'section') continue;
+      if (!block || !['lift', 'warmup', 'recovery'].includes(block.kind)) continue;
       members.push(pageFromBlock(block));
     }
     const pages = [];

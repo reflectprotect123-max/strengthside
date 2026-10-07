@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a debug dogfood APK of the Hybrid HTML athlete shell.
+# Build a debug dogfood APK of the strength-only HTML athlete shell.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
@@ -7,9 +7,10 @@ cd "$REPO"
 bash scripts/sync-athlete-app.sh
 cd "$ROOT"
 if [[ ! -x node_modules/.bin/cap ]]; then
-  npm install --no-fund --no-audit
+  npm ci --no-fund --no-audit
 fi
 npx cap sync android
+node "$REPO/apps/athlete/checks/capgo-live-update.smoke.mjs"
 
 if [[ -z "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ]]; then
   for candidate in "$HOME/Android/Sdk" /opt/android-sdk /usr/lib/android-sdk; do
@@ -34,10 +35,10 @@ if [[ ! -f "$APK" ]]; then
   echo "Missing $APK" >&2
   exit 1
 fi
-NAMED="$ROOT/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
+NAMED="$ROOT/android/app/build/outputs/apk/debug/The-Strength-1.2.0.apk"
 cp -f "$APK" "$NAMED"
 echo "Built: $NAMED"
 if [[ -d /opt/cursor/artifacts ]]; then
-  cp -f "$NAMED" /opt/cursor/artifacts/the-hybrid-athlete-dogfood-debug.apk
-  echo "Copied to /opt/cursor/artifacts/the-hybrid-athlete-dogfood-debug.apk"
+  cp -f "$NAMED" /opt/cursor/artifacts/The-Strength-1.2.0.apk
+  echo "Copied to /opt/cursor/artifacts/The-Strength-1.2.0.apk"
 fi

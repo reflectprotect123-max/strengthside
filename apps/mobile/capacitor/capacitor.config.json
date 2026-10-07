@@ -1,6 +1,6 @@
 {
   "appId": "com.hybrid.athlete",
-  "appName": "THE Hybrid",
+  "appName": "The Strength",
   "webDir": "../../athlete",
   "server": {
     "androidScheme": "https"
@@ -10,18 +10,13 @@
   },
   "plugins": {
     "Camera": {
-      "permissions": ["camera"]
-    },
-    "CapacitorUpdater": {
-      "appId": "com.hybrid.athlete",
-      "autoUpdate": true,
-      "defaultChannel": "dogfood",
-      "appReadyTimeout": 10000,
-      "responseTimeout": 20
+      "permissions": [
+        "camera"
+      ]
     },
     "BluetoothLe": {
       "displayStrings": {
-        "scanning": "Scanning…",
+        "scanning": "Scanning\u2026",
         "cancel": "Cancel",
         "availableDevices": "Available devices",
         "noDeviceFound": "No device found"

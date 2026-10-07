@@ -1,5 +1,5 @@
-const CACHE = 'the-brain-v12';
-const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './timer.js', './brain-bundle.js', './native-bridge.js', './connectors/whoop.js', './vendor/supabase.min.js'];
+const CACHE = 'strength-dogfood-v1.2.0';
+const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './timer.js', './brain-bundle.js', './strength-only.js', './native-bridge.js', './connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

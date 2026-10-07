@@ -53,6 +53,7 @@
   }
 
   function pack(state) {
+    if (root.StrengthOnly) root.StrengthOnly.cleanState(state);
     const lib = (state && state.library) || { templates: [], catalog: { exercises: [], circuits: [] }, assignments: {} };
     const prev = prevIndex(state && state.planSync && state.planSync.lastPlan);
     const templates = (lib.templates || []).map((t) => touch(t, prev.template[t.id]));
@@ -179,7 +180,7 @@
     next.sessions = sessions;
     next.planSync = next.planSync || { acks: { template: {}, session: {} }, snapshotRev: 0 };
     next.planSync.lastPlan = plan;
-    return next;
+    return root.StrengthOnly ? root.StrengthOnly.cleanState(next) : next;
   }
 
   function ackFrom(plan) {
