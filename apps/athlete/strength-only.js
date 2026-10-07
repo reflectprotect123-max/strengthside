@@ -1,6 +1,7 @@
 /** Remove legacy conditioning entities at device and cloud import boundaries. */
 (function (root) {
   function isConditioning(value) {
+    if (value?.kind === 'section' && /^(conditioning|engine|cardio)$/i.test(String(value.label || '').trim())) return true;
     return !!value && ['kind', 'type', 'product', 'hybridProduct', 'room', 'logMode'].some((key) =>
       /^(engine|conditioning|cond|cardio)(?:_|$)/i.test(String(value[key] || '')));
   }

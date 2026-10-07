@@ -7,7 +7,7 @@ import './plan-sync.js';
 
 test('mixed legacy device state keeps lifts and removes conditioning and its assignments', () => {
   const state = { engineSchedule: {}, library: { templates: [
-    { id: 'strength', blocks: [{ kind: 'lift', title: 'Front Squat' }, { kind: 'engine', title: 'Bike' }] },
+    { id: 'strength', blocks: [{ kind: 'lift', title: 'Front Squat' }, { kind: 'section', label: 'CONDITIONING' }, { kind: 'engine', title: 'Bike' }] },
     { id: 'engine', kind: 'engine', blocks: [] },
   ], assignments: { '2026-10-08': 'strength', '2026-10-09': 'engine' } },
   published: { '2026-10-08': [{ type: 'strength' }, { type: 'engine' }] },
