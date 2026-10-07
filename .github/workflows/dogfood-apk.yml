@@ -88,7 +88,7 @@ jobs:
           Validation: repository verify, strength import tests and native asset
           boundary checks. Physical-phone installation has not been tested.
           NOTES
-          TAG="strength-dogfood-v1.2.0"
+          TAG="strength-dogfood-v1.2.0-${GITHUB_SHA:0:7}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --notes-file /tmp/strength-release-notes.md
           else

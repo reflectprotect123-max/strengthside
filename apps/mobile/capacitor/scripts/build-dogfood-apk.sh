@@ -10,6 +10,17 @@ if [[ ! -x node_modules/.bin/cap ]]; then
   npm ci --no-fund --no-audit
 fi
 npx cap sync android
+python3 - "$ROOT/android/app/src/main/assets/public" <<'PY'
+from pathlib import Path
+import shutil, sys
+public = Path(sys.argv[1])
+for name in ['checks', 'netlify']:
+    shutil.rmtree(public / name, ignore_errors=True)
+for path in public.rglob('*.test.js'):
+    path.unlink()
+for name in ['package.json', 'netlify.toml']:
+    (public / name).unlink(missing_ok=True)
+PY
 node "$REPO/apps/athlete/checks/capgo-live-update.smoke.mjs"
 
 if [[ -z "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ]]; then
