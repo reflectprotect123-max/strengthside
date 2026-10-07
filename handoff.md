@@ -176,4 +176,6 @@ logs and warmup/recovery circuits remain. No database migrations, live website
 deployment or Capgo broadcast is part of this change.
 
 APK workflow runs repository verify before building and checking native assets,
-then publishes `strength-dogfood-v1.2.0`. Physical phone validation is pending.
+then uploads `strength-only-apk-1.2.0`. GitHub denied release creation (403),
+so the APK is delivered from the Actions artifact instead. Physical phone
+validation is pending.
