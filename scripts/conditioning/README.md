@@ -52,3 +52,33 @@ Supabase deployment validation: eight history/pagination/handler tests passed an
 Bundle 1.1.2 initially established the `engine-html` channel; its downloaded archive checksum and APK asset match were verified. Bundle 1.1.3 adds existing-account WHOOP discovery and observed Home readings without requiring a native APK change. The existing `live` and `dogfood` channels are preserved. No WHOOP account or physical-phone update is inspected from this workspace.
 
 For future HTML updates, use a unique version with `CAPGO_BUNDLE_VERSION=1.1.3 bash apps/mobile/capacitor/scripts/ship-capgo.sh`. This builds the new HTML and uploads only `index.html` and `native-plugins.js`, declares minimum update version 1.1.1, and pins the dedicated channel. Native plugin/Java changes still require a rebuilt APK. The cloud worker requires `NODE_USE_ENV_PROXY=1` for Node's network calls; credentials must come from its existing secure configuration or ignored credential file.
+
+## HR dropouts and frozen workout zones
+
+`hr-accounting.js` implements STRENGTHSIDE-DESIGNED, versioned timing rules.
+A normal HR sample supports up to three seconds of recorded time. When the next
+valid sample brackets a gap greater than three and at most ten seconds, and the
+endpoint difference is at most 20 bpm, the whole interval is reclassified as
+estimated using a linear HR path through the workout's frozen boundaries.
+Measured time is removed before estimates are added, preventing double counting.
+A returning sample is required; long/unbracketed/suspect gaps stay unknown.
+Pause/resume, explicit disconnection, invalid/contact-error readings, and mixed
+strength segments break the interpolation anchor. This cannot detect all wrist
+sensor artifacts or establish the true HR during a dropout. The limits are
+provisional design constants, not vendor formulas or validated physiological limits.
+
+`zoneSeconds` retains measured counters; `estimatedZoneSeconds` is separate.
+`gapEstimates` records endpoints, zone/model versions and design provenance.
+Live, Home and history totals include estimates and label their contribution.
+Legacy workouts without estimate fields retain their old totals. No weekly target
+ranges or automatic progression rules are introduced by this change.
+
+Zones are locked on first start, including an unavailable snapshot when no valid
+zones exist. Settings changes apply to future workouts. In-workout editing is
+read-only after start, and pausing/resuming never replaces the snapshot. Workouts
+can still run without zones, but cannot fabricate measured zone minutes. The
+separate manual Easy/Medium/Hard fallback workflow remains to be defined/built.
+
+Run `pnpm run check:engine-hr` for the math and deterministic browser checks.
+`check:engine-zones` also runs the pure accounting tests. Native BLE smoke uses
+mocked devices; physical wrist sensor interpolation accuracy is not verified.

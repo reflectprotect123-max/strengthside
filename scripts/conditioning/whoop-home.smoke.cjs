@@ -82,14 +82,71 @@ const {chromium}=require('/home/agent/.local/lib/node_modules/@playwright/cli/no
     await page.evaluate(()=>{S.selectedDate='2026-09-28';render();});
     assert.equal(await page.locator('.pg-daily form').count(),0);
     assert.equal(await page.locator('.pg-daily').getAttribute('open'),null);
+    // Legacy "Not now" flags must not claim the user skipped or hide a new prompt.
+    await page.evaluate(()=>{S.selectedDate=today();delete S.checkin[today()].subjectiveRecovery;delete S.checkin[today()].subjectiveRecoveryDeferredAt;S.checkin[today()].subjectiveRecoverySkippedAt='legacy';S.selectedDate='2026-09-28';render();S.selectedDate=today();render();});
+    assert.equal(await page.locator('.pg-daily').getAttribute('open'),'');
+    assert.doesNotMatch(await page.locator('#app').innerText(),/Skipped for this day/);
+    await page.locator('.pg-daily').getByRole('button',{name:'Not now',exact:true}).click();
+    assert.equal(await page.evaluate(()=>S.checkin[today()].subjectiveRecoverySkippedAt??null),null);
+    assert.equal(await page.evaluate(()=>S.checkin[today()].subjectiveRecovery??null),null);
+    // Optional bedtime scales are unselected; alcohol is a count, including zero.
+    const bedtime=page.locator('.pg-bedtime');
+    assert.equal(await bedtime.getAttribute('open'),null);
+    await bedtime.locator('summary').click();
+    assert.equal(await bedtime.locator('input:checked').count(),0);
+    assert.equal(await page.getByLabel('Alcohol · number of drinks',{exact:true}).inputValue(),'');
+    await page.evaluate(()=>Progress.saveBedtime({preventDefault(){},target:document.querySelector('.pg-bedtime form')},today()));
+    assert.equal(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire??null),null);
+    await page.getByRole('radio',{name:'Fatigue level: 3',exact:true}).check();
+    await page.getByRole('radio',{name:'Nutrition quality: 4',exact:true}).check();
+    await page.evaluate(()=>render());
+    assert.equal(await page.getByRole('radio',{name:'Fatigue level: 3',exact:true}).isChecked(),true);
+    // Empty drinks must not be silently converted to zero.
+    await page.evaluate(()=>Progress.saveBedtime({preventDefault(){},target:document.querySelector('.pg-bedtime form')},today()));
+    assert.equal(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire??null),null);
+    for(const invalid of ['-1','1.5']){
+      await page.getByLabel('Alcohol · number of drinks',{exact:true}).fill(invalid);
+      await page.evaluate(()=>Progress.saveBedtime({preventDefault(){},target:document.querySelector('.pg-bedtime form')},today()));
+      assert.equal(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire??null),null);
+    }
+    await page.getByLabel('Alcohol · number of drinks',{exact:true}).fill('0');
+    await bedtime.getByRole('button',{name:'Save bedtime check-in',exact:true}).click();
+    assert.equal(await bedtime.getAttribute('open'),null);
+    assert.equal(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire.alcoholDrinks),0);
+    const bedtimeSaved=await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire);
+    assert.equal(bedtimeSaved.evidenceLabel,'STRENGTHSIDE-DESIGNED');
+    assert.equal(bedtimeSaved.questionEvidenceLabel,'HISTORICAL');
+    await page.reload();await restoreMockAccount();
+    assert.deepEqual(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire),bedtimeSaved);
+    await bedtime.locator('summary').click();
+    await bedtime.getByRole('button',{name:'Edit bedtime check-in',exact:true}).click();
+    await page.getByLabel('Alcohol · number of drinks',{exact:true}).fill('2');
+    await page.evaluate(async()=>{await EngineApp.refreshWhoop();});
+    assert.equal(await page.getByLabel('Alcohol · number of drinks',{exact:true}).inputValue(),'2');
+    await bedtime.getByRole('button',{name:'Cancel',exact:true}).click();
+    assert.deepEqual(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire),bedtimeSaved);
+    await bedtime.locator('summary').click();
+    await bedtime.getByRole('button',{name:'Edit bedtime check-in',exact:true}).click();
+    await page.getByLabel('Alcohol · number of drinks',{exact:true}).fill('2');
+    await bedtime.getByRole('button',{name:'Save bedtime check-in',exact:true}).click();
+    assert.equal(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire.alcoholDrinks),2);
+    assert.equal(await page.evaluate(()=>S.checkin[today()].bedtimeQuestionnaire.completedAt),bedtimeSaved.completedAt);
+    await page.evaluate(()=>{S.selectedDate='2026-09-28';render();});
+    assert.equal(await bedtime.locator('form').count(),0);
+    await bedtime.locator('summary').click();
+    assert.match(await bedtime.innerText(),/No answers recorded/);
+    assert.doesNotMatch(await bedtime.innerText(),/Skipped/);
     // A new date has no inherited answers and prompts again.
     await page.evaluate(()=>{const previous=today;window.today=()=> '2026-10-04';S.selectedDate=today();render();window.restoreToday=previous;});
     assert.equal(await page.locator('.pg-daily').getAttribute('open'),'');
     assert.equal(await page.locator('.pg-daily input:checked').count(),0);
+    assert.equal(await page.locator('.pg-bedtime input:checked').count(),0);
+    assert.equal(await page.locator('.pg-bedtime #bedtimeAlcohol').inputValue(),'');
     for(const width of [320,393]){await page.setViewportSize({width,height:852});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
-    await page.screenshot({path:'/workspace/previews/daily-recovery-checkin.png',fullPage:true});
+    await page.locator('.pg-bedtime > summary').click();
+    await page.screenshot({path:'/workspace/previews/bedtime-checkin.png',fullPage:true});
     await page.evaluate(()=>{window.today=restoreToday;});
     assert.deepEqual(errors,[]);
-    console.log('PASS: existing-account connection discovery, WHOOP sync to Home, precise HRV, zero recovery, dated stale readings and independent daily questionnaire save/skip/edit/reload/sync (synthetic account).');
+    console.log('PASS: existing-account connection discovery, WHOOP sync to Home, precise HRV, zero recovery, dated stale readings and independent morning and bedtime questionnaires, legacy deferred-status correction, count validation and save/edit/reload/sync (synthetic account).');
   }finally{await browser.close();server.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
