@@ -8085,7 +8085,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
   function zone(bpm){return w()?.type==='Strength'?'Unknown':EngineHrAccounting.classify(bpm,zones());}
   function newWorkout(type='Cardio'){return {id:'live-'+Date.now(),type,status:'ready',elapsed:0,samples:[],zoneSeconds:{Blue:0,Green:0,Red:0},estimatedZoneSeconds:{Blue:0,Green:0,Red:0},gapEstimates:[],hrAccountingVersion:EngineHrAccounting.CONFIG.version,unknownSeconds:0,zoneHistory:zones()?[{at:0,...zones()}]:[],interval:null,intervalHistory:[],rpe:5,performance:5,notes:'',chartView:0,chartWindow:0,mixedSegment:'cardio'};}
   function show(screen='workout'){S.scheduledView=false;S.liveScreen=screen;S.tab='training';S.loggerOpen=false;save();render();}
-  function mutate(fn){tick();fn();save();render();}
+  function mutate(fn){tick();if(w()?.status==='finished')return;fn();save();render();}
   function intervalTarget(){
     const i=w()?.interval;if(!i||i.phase==='done'||i.phase==='ready')return '';
     if(i.phase==='rest')return i.method.recoveryTarget;
@@ -8095,10 +8095,23 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
   }
   function phaseDuration(i){return i.phase==='warmup'?i.config.warmup*60:i.phase==='cooldown'?i.config.cooldown*60:i.phase==='rest'?i.config.rest:i.config.work;}
   function finishInterval(){const x=w(),i=x.interval;if(!i)return;i.phase='done';i.remaining=0;x.intervalHistory.push({methodId:i.method.id,title:i.method.title,config:{...i.config},completed:true,at:Date.now()});const next=x.pendingIntervals?.shift();if(next)x.interval={...next,phase:'ready',rep:1,remaining:next.config.work};}
-  function advance(){const i=w().interval;if(i.phase==='warmup')i.phase='work';else if(i.phase==='work'&&!i.method.continuous&&(i.rep<i.config.rounds||i.config.recoverAfterLast!==false))i.phase='rest';else if((i.phase==='rest'||i.phase==='work')&&i.rep<i.config.rounds){i.rep++;i.phase='work';}else if(i.config.cooldown&&i.phase!=='cooldown')i.phase='cooldown';else {finishInterval();return;}i.remaining=phaseDuration(i);}
+  // STRENGTHSIDE-DESIGNED: one phase transition rule for timing and countdown.
+  function nextPhase(i){if(i.phase==='warmup')i.phase='work';else if(i.phase==='work'&&!i.method.continuous&&(i.rep<i.config.rounds||i.config.recoverAfterLast!==false))i.phase='rest';else if((i.phase==='rest'||i.phase==='work')&&i.rep<i.config.rounds){i.rep++;i.phase='work';}else if(i.config.cooldown&&i.phase!=='cooldown')i.phase='cooldown';else {i.phase='done';i.remaining=0;return;}i.remaining=phaseDuration(i);}
+  function advance(){const i=w().interval;nextPhase(i);if(i.phase==='done')finishInterval();}
+  function intervalRemaining(interval){
+    if(!interval||interval.phase==='done')return 0;
+    const i={...interval};
+    if(i.phase==='ready'){i.phase=i.config.warmup?'warmup':'work';i.remaining=phaseDuration(i);}
+    let remaining=0,guard=0;
+    while(i.phase!=='done'&&guard++<10000){remaining+=Math.max(0,i.remaining);nextPhase(i);}
+    return remaining;
+  }
+  function workoutRemaining(x){if(!x?.interval)return null;return intervalRemaining(x.interval)+(x.pendingIntervals||[]).reduce((sum,i)=>sum+intervalRemaining({...i,phase:'ready'}),0);}
   function sound(){const i=w()?.interval;if(!i||['ready','done'].includes(i.phase))return;const sig=i.phase+':'+i.rep;if(sig!==audioSig){audioSig=sig;outsideAt=0;insideState=null;Standalone.playSound((S.settings.methodAlerts||{})[i.phase==='rest'?1:0]);}const n=Math.ceil(i.remaining),key=sig+':'+n;if(n>0&&n<=3&&i.lastCountdown!==key){i.lastCountdown=key;Standalone.playSound((S.settings.methodAlerts||{})[4]);}}
   function tick(now=Date.now()){
-    const dt=Math.max(0,(now-lastTick)/1000);lastTick=now;const x=w();if(!x||x.status!=='running')return;
+    let dt=Math.max(0,(now-lastTick)/1000);lastTick=now;const x=w();if(!x||x.status!=='running')return;
+    const timed=!!x.interval&&!['ready','done'].includes(x.interval.phase);
+    if(timed)dt=Math.min(dt,intervalRemaining(x.interval));
     x.elapsed+=dt;
     // Sample-supported time and interpolated dropout time remain separate.
     const covered=EngineHrAccounting.coverage(x.elapsed-dt,x.elapsed,accountingSample),z=zone(accountingSample?.bpm);
@@ -8107,6 +8120,11 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
     x.unknownSeconds+=cardio?dt-(z!=='Unknown'?covered:0):0;
     const i=x.interval;if(i&&!['ready','done'].includes(i.phase)){
       let budget=dt,guard=0;while(budget>0&&i.phase!=='done'&&guard++<10000){if(budget<i.remaining){i.remaining-=budget;budget=0;}else{budget-=i.remaining;advance();}}sound();
+    }
+    if(timed&&x.interval.phase==='done'){
+      x.status='finished';x.finishedReason='planned-duration';accountingSample=null;
+      S.liveSheet=null;S.liveScreen='ratings';
+      Standalone.playSound((S.settings.methodAlerts||{})[4]);save();render();return;
     }
     if(now-lastSave>5000){lastSave=now;save();}
   }
@@ -8188,7 +8206,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
     if(S.liveScreen==='ratings')return '<div class="live-screen live-rating"><h1 style="text-align:center">Nice workout!</h1><label for="liveRpe">How hard was the workout?<output id="rpeOutput">'+x.rpe+'</output></label><input id="liveRpe" type="range" min="0" max="10" value="'+x.rpe+'" oninput="LiveWorkout.rating(\'rpe\',this.value)"><p class="live-device">0 · No effort　　　　　　　　　10 · Exhausting</p><label for="livePerformance">Rate your performance<output id="performanceOutput">'+x.performance+'</output></label><input id="livePerformance" type="range" min="0" max="10" value="'+x.performance+'" oninput="LiveWorkout.rating(\'performance\',this.value)"><p class="live-device">0 · Worst　　　　　　　　　10 · Best</p><textarea aria-label="Workout notes" placeholder="Notes" oninput="LiveWorkout.notes(this.value)">'+esc(x.notes)+'</textarea><button class="method-load" style="margin-top:80px" onclick="LiveWorkout.submit()">Submit</button><button class="method-secondary" style="color:var(--recovery-low)" onclick="LiveWorkout.discard()">Delete</button></div>';
     x.chartView=(x.chartView||0)%2;
     const i=x.interval,active=i&&!['ready','done'].includes(i.phase),samples=x.samples,avg=samples.length?Math.round(samples.reduce((s,v)=>s+v.bpm,0)/samples.length):'—';
-    return '<div class="live-screen"><div class="live-head">'+(active?'<div class="live-counter">'+i.rep+'/'+(i.method.continuous?1:i.config.rounds)+'<small>REPS</small></div>':'<button aria-label="Back to Training" onclick="LiveWorkout.leave()">‹</button>')+'<span class="live-brand">STRENGTHSIDE</span>'+(active?'<div class="live-counter">'+clock(Math.ceil(i.remaining))+'<small>'+i.phase.toUpperCase()+'</small></div>':'<span></span>')+'</div>'+dial()+'<div class="live-stats"><div><b>'+avg+'</b><small>AVG HR</small></div><b class="live-time">'+clock(x.elapsed)+'</b><div><b>—</b><small>CAL</small></div></div>'+chart()+'<div class="live-pages">'+[0,1].map(v=>'<button class="'+(v===x.chartView?'on':'')+'" aria-label="Workout data view '+(v+1)+'" onclick="LiveWorkout.view('+v+')"></button>').join('')+'</div><div class="live-controls"><div><button class="live-interval" '+(x.type==='Strength'?'disabled':'')+' onclick="LiveWorkout.interval()">'+(i?.phase==='ready'?'START':active?'END':icon('plus'))+'</button><small>Interval</small></div><div><button class="live-play" aria-label="'+(x.status==='running'?'Pause workout':'Start workout')+'" onclick="LiveWorkout.toggle()">'+icon(x.status==='running'?'pause':'play')+'</button></div><div><button aria-label="Share workout" onclick="LiveWorkout.share()">'+icon('share')+'</button><small>Share</small></div></div>'+(!device?.gatt?.connected?'<button class="live-connect" onclick="LiveWorkout.connect()">Connect HR Monitor</button>':'<button class="live-connect" onclick="LiveWorkout.disconnect()">'+esc(device.name||'HR Monitor')+' · Disconnect</button>')+'<p class="live-device">'+esc(sensorStatus())+(estimatedLabel(x)?'<br>'+esc(estimatedLabel(x)):'')+(!zones()?'<br>Personal HR zones have not been set.':'')+'</p>'+(x.type==='Mixed'?'<button class="method-secondary" onclick="LiveWorkout.segment()">Current segment: '+x.mixedSegment+' · switch</button>':'')+'</div>'+overlay();
+    return '<div class="live-screen"><div class="live-head">'+(active?'<div class="live-counter">'+i.rep+'/'+(i.method.continuous?1:i.config.rounds)+'<small>REPS</small></div>':'<button aria-label="Back to Training" onclick="LiveWorkout.leave()">‹</button>')+'<span class="live-brand">STRENGTHSIDE</span>'+(active?'<div class="live-counter">'+clock(Math.ceil(i.remaining))+'<small>'+i.phase.toUpperCase()+'</small></div>':'<span></span>')+'</div>'+dial()+'<div class="live-stats"><div><b>'+avg+'</b><small>AVG HR</small></div><b class="live-time" aria-label="'+(workoutRemaining(x)==null?'Elapsed time':'Time remaining')+'">'+clock(workoutRemaining(x)==null?x.elapsed:Math.ceil(workoutRemaining(x)))+'</b><div><b>—</b><small>CAL</small></div></div>'+chart()+'<div class="live-pages">'+[0,1].map(v=>'<button class="'+(v===x.chartView?'on':'')+'" aria-label="Workout data view '+(v+1)+'" onclick="LiveWorkout.view('+v+')"></button>').join('')+'</div><div class="live-controls"><div><button class="live-interval" '+(x.type==='Strength'?'disabled':'')+' onclick="LiveWorkout.interval()">'+(i?.phase==='ready'?'START':active?'END':icon('plus'))+'</button><small>Interval</small></div><div><button class="live-play" aria-label="'+(x.status==='running'?'Pause workout':'Start workout')+'" onclick="LiveWorkout.toggle()">'+icon(x.status==='running'?'pause':'play')+'</button></div><div><button aria-label="Share workout" onclick="LiveWorkout.share()">'+icon('share')+'</button><small>Share</small></div></div>'+(!device?.gatt?.connected?'<button class="live-connect" onclick="LiveWorkout.connect()">Connect HR Monitor</button>':'<button class="live-connect" onclick="LiveWorkout.disconnect()">'+esc(device.name||'HR Monitor')+' · Disconnect</button>')+'<p class="live-device">'+esc(sensorStatus())+(estimatedLabel(x)?'<br>'+esc(estimatedLabel(x)):'')+(!zones()?'<br>Personal HR zones have not been set.':'')+'</p>'+(x.type==='Mixed'?'<button class="method-secondary" onclick="LiveWorkout.segment()">Current segment: '+x.mixedSegment+' · switch</button>':'')+'</div>'+overlay();
   }
   const baseTraining=trainingTabHtml;
   trainingTabHtml=function(){
@@ -8223,10 +8241,10 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
     },
     interval(){const i=w().interval;if(i?.phase==='ready'){if(w().status!=='running'){deviceMessage='Press Play to start the workout before starting intervals.';render();return;}S.liveSheet='confirm';render();}else if(i&&!['ready','done'].includes(i.phase)){this.pause();}else{S.liveReturn=true;S.tab='library';Standalone.browse('Blue');}},
     changeInterval(){if(!Standalone.methods.some(m=>m.id===w().interval.method.id)){alert('This older saved block keeps its recorded timing. End it to choose another method.');return;}S.liveSheet=null;S.liveReturn=true;S.tab='library';Standalone.detail(w().interval.method.id);S.libUi.methodDraft={...w().interval.config};save();render();},
-    confirmInterval(){mutate(()=>{const i=w().interval;i.phase=i.config.warmup?'warmup':'work';i.remaining=phaseDuration(i);S.liveSheet=null;audioSig='';sound();});},
+    confirmInterval(){if(w()?.interval?.phase!=='ready')return;mutate(()=>{const i=w().interval;i.phase=i.config.warmup?'warmup':'work';i.remaining=phaseDuration(i);S.liveSheet=null;audioSig='';sound();});},
     toggle(){if(w().status==='running')this.pause();else this.resume();},
     pause(){mutate(()=>{accountingSample=null;w().status='paused';S.liveSheet='paused';});},
-    resume(){accountingSample=null;lastTick=Date.now();if(w().status==='ready'){w().zonesFrozen=true;w().activeZones=calculatedZones();w().zoneHistory=w().activeZones?[{at:w().elapsed,...w().activeZones}]:[];}w().status='running';S.liveSheet=null;Standalone.audioContext?.resume();save();render();},
+    resume(){accountingSample=null;lastTick=Date.now();if(w().status==='ready'){w().zonesFrozen=true;w().activeZones=calculatedZones();w().zoneHistory=w().activeZones?[{at:w().elapsed,...w().activeZones}]:[];const i=w().interval;if(i?.phase==='ready'){i.phase=i.config.warmup?'warmup':'work';i.remaining=phaseDuration(i);audioSig='';sound();}}w().status='running';S.liveSheet=null;Standalone.audioContext?.resume();save();render();},
     endInterval(){w().pendingIntervals=[];const i=w().interval;w().intervalHistory.push({methodId:i.method.id,completed:false,at:Date.now()});i.phase='done';S.liveSheet=null;save();render();},
     endQuestion(){S.liveSheet='end';render();},endCancel(){S.liveSheet='paused';render();},
     finish(){mutate(()=>{const i=w().interval;if(i&&!['ready','done'].includes(i.phase)){w().intervalHistory.push({methodId:i.method.id,title:i.method.title,config:{...i.config},completed:false,phase:i.phase,rep:i.rep,remaining:i.remaining,at:Date.now()});i.phase='done';}w().status='finished';S.liveSheet=null;S.liveScreen='ratings';});},
