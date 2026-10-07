@@ -67,37 +67,6 @@ jobs:
       - name: Build debug dogfood APK
         run: bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh
 
-      - name: Publish strength dogfood APK
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          OUT="apps/mobile/capacitor/android/app/build/outputs/apk/debug"
-          APK="$OUT/The-Strength-1.2.0.apk"
-          (cd "$OUT" && sha256sum The-Strength-1.2.0.apk > SHA256SUMS.txt)
-          cat > /tmp/strength-release-notes.md <<'NOTES'
-          Strength-only dogfood APK, version 1.2.0.
-
-          TrainHeroic-inspired Training, Library builder, set-by-set logger,
-          supersets, rest timers and WHOOP account connection.
-          Conditioning is removed. Legacy conditioning sessions are filtered
-          at device/cloud import. This APK loads its bundled strength app;
-          it cannot download the old Hybrid S&C/Engine Capgo app.
-
-          Download The-Strength-1.2.0.apk on Android and open it to install.
-          Validation: repository verify, strength import tests and native asset
-          boundary checks. Physical-phone installation has not been tested.
-          NOTES
-          TAG="strength-dogfood-v1.2.0-${GITHUB_SHA:0:7}"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --notes-file /tmp/strength-release-notes.md
-          else
-            gh release create "$TAG" --target "$GITHUB_SHA" \
-              --title "The Strength — dogfood APK 1.2.0" \
-              --notes-file /tmp/strength-release-notes.md --latest
-          fi
-          gh release upload "$TAG" "$APK" "$OUT/SHA256SUMS.txt" --clobber
-
       - uses: actions/upload-artifact@v4
         with:
           name: strength-only-apk-1.2.0
