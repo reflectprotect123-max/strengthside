@@ -30,6 +30,21 @@ if (!legacyApp.includes('state.meta.progressionAudit=state.meta.progressionAudit
   throw new Error('historical progression audit data must remain stored');
 }
 if (legacyApp.includes('readiness overview')) throw new Error('accessibility copy still promises readiness advice');
+for (const text of ['next session load', 'Best e1RM', 'e1RM trend', 'Est. 1RM', 'rowE1rmHint(', 'e1rmCard(']) {
+  if (legacyApp.includes(text)) throw new Error(`coach UI must not advertise ${text}`);
+}
+for (const text of ['the engine sets load', 'engine picks sets', 'Engine handles volume', 'RIR on last set for progression']) {
+  if (coachColumns.includes(text)) throw new Error(`prescription UI must not advertise ${text}`);
+}
+const volumeOverviewSource = legacyApp.split('\n').find((line) => line.startsWith('function exerciseVolumeMeta('));
+if (!volumeOverviewSource) throw new Error('template volume overview missing');
+const volumeOverview = vm.runInNewContext(`${volumeOverviewSource}\nexerciseVolumeMeta`, { window: {} });
+if (volumeOverview({ autopilotVolume: true }) !== 'Not prescribed') {
+  throw new Error('template overview must describe an unset volume target honestly');
+}
+if (volumeOverview({ autopilotVolume: false, sets: 3, reps: '6-8' }) !== '3 × 6-8') {
+  throw new Error('template overview must retain coach-prescribed volume');
+}
 
 if (!html.includes('coach-loop.js')) throw new Error('coach.html missing coach-loop.js');
 if (!html.includes('coach-nutrition.js')) throw new Error('coach.html missing coach-nutrition.js');
