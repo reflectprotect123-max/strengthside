@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Hybrid Strength</string>
     <string name="title_activity_main">Hybrid Strength</string>
-    <string name="package_name">com.hybrid.athlete</string>
+    <string name="package_name">com.hybrid.strength</string>
     <string name="custom_url_scheme">com.hybrid.athlete</string>
 </resources>

@@ -46,10 +46,10 @@ if [[ ! -f "$APK" ]]; then
   echo "Missing $APK" >&2
   exit 1
 fi
-NAMED="$ROOT/android/app/build/outputs/apk/debug/Hybrid-Strength-1.2.1.apk"
+NAMED="$ROOT/android/app/build/outputs/apk/debug/Hybrid-Strength-1.2.2.apk"
 cp -f "$APK" "$NAMED"
 echo "Built: $NAMED"
 if [[ -d /opt/cursor/artifacts ]]; then
-  cp -f "$NAMED" /opt/cursor/artifacts/Hybrid-Strength-1.2.1.apk
-  echo "Copied to /opt/cursor/artifacts/Hybrid-Strength-1.2.1.apk"
+  cp -f "$NAMED" /opt/cursor/artifacts/Hybrid-Strength-1.2.2.apk
+  echo "Copied to /opt/cursor/artifacts/Hybrid-Strength-1.2.2.apk"
 fi

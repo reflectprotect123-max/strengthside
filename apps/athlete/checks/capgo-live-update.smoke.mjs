@@ -10,7 +10,7 @@ const cfg = JSON.parse(read(join(cap, 'capacitor.config.json')));
 const pkg = JSON.parse(read(join(cap, 'package.json')));
 assert.equal(cfg.appName, 'Hybrid Strength');
 assert.equal(cfg.webDir, '../../athlete');
-assert.equal(cfg.appId, 'com.hybrid.athlete');
+assert.equal(cfg.appId, 'com.hybrid.strength');
 assert.equal(cfg.plugins.CapacitorUpdater, undefined, 'no legacy update configuration');
 assert.equal(pkg.dependencies['@capgo/capacitor-updater'], undefined, 'no legacy update plugin');
 assert.ok(!read(join(cap, 'android/app/capacitor.build.gradle')).includes('capgo-capacitor-updater'));

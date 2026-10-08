@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'strength-dogfood-v1.2.1';
+const APP_BUILD = 'strength-dogfood-v1.2.2';
 
 
 const defaultState = () => ({
