@@ -543,10 +543,11 @@
 
   function summaryHtml(s) {
     const st = HybridSession.summaryStats(s);
+    const title = s.title || 'Completed session';
     return `
       <div class="log-sum">
         <p class="log-kicker">${esc(s.date)}</p>
-        <h2 class="log-title">Heavy Lower</h2>
+        <h2 class="log-title">${esc(title)}</h2>
         <div class="log-stat"><span>Exercises</span><b>${st.exercises}</b></div>
         <div class="log-stat"><span>Sets</span><b>${st.sets}</b></div>
         <div class="log-stat"><span>Reps</span><b>${st.reps}</b></div>

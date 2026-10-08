@@ -263,9 +263,11 @@ function todayCallHtml() {
 }
 
 function athleteRowHtml() {
-  const items = S.published[S.selectedDate] || S.published[today()] || [];
-  const first = items[0];
-  const workout = first ? first.title : 'No session scheduled';
+  // Home and Training must read the same schedule authority. Library assignments
+  // are already resolved by trainingPlanForDate(), while published is only a
+  // legacy display cache.
+  const plan = trainingPlanForDate(S.selectedDate);
+  const workout = plan && plan.title ? plan.title : 'No session scheduled';
   return `
     <div class="ath-athlete">
       <div class="ath-avatar" aria-hidden="true">
@@ -588,6 +590,7 @@ function meAppSectionHtml() {
       <div class="eyebrow">App</div>
       <p class="stub">${otaLine} · ${esc(APP_BUILD)}</p>
       <div class="account-actions">
+        <button type="button" class="btn" onclick="openHistory()">Training history</button>
         <button type="button" class="btn" onclick="lookForAppUpdate()">Look for app update</button>
       </div>
     </div>`;
@@ -679,6 +682,37 @@ function meHtml() {
       <p class="stub page-lead">Sign in to sync your Hybrid Strength sessions and progress.</p>
       <div id="whoopCard"></div>
     </div>`;
+}
+
+function historyHtml() {
+  const sessions = Object.values(S.sessions || {})
+    .filter((session) => session && session.phase === 'summary')
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  const rows = sessions.length
+    ? sessions.map((session) => {
+      const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
+      const title = session.title || 'Completed session';
+      const date = session.date || 'Date unavailable';
+      return `<article class="card account-compact history-session">
+        <p class="eyebrow">${esc(date)}</p>
+        <h2>${esc(title)}</h2>
+        <p class="stub">${num(stats.exercises)} exercises · ${num(stats.sets)} sets · ${num(stats.reps)} reps</p>
+      </article>`;
+    }).join('')
+    : '<p class="stub page-lead">Completed strength sessions will appear here.</p>';
+  return `<div class="page">
+    <div class="eyebrow">Me</div>
+    <h1>Training history</h1>
+    ${rows}
+    <button type="button" class="btn" onclick="setTab('me')">Back to Me</button>
+  </div>`;
+}
+
+function openHistory() {
+  S.tab = 'history';
+  S.fabOpen = false;
+  save();
+  render();
 }
 
 function setTab(tab) {
@@ -777,6 +811,7 @@ function render() {
     training: trainingTabHtml,
     library: libraryHtml,
     me: meHtml,
+    history: historyHtml,
     settings: meHtml,
   };
   if (S.tab === 'chat') S.tab = 'home';

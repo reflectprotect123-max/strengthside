@@ -85,6 +85,10 @@ must(!html.includes('Copy training'), 'no Copy training chrome');
 must(js.includes('PlanSync.schedulePush'), 'plan sync still runs on save');
 must(readFileSync(join(root, 'hybrid-integrations.js'), 'utf8').includes('PlanSync.syncNow'), 'plan sync runs on boot');
 must(js.includes('function startTrainingSession'), 'Start Session entry');
+must(js.includes('const plan = trainingPlanForDate(S.selectedDate);'), 'Home and Training use the same scheduled plan');
+must(js.includes('function historyHtml') && js.includes('function openHistory'), 'Me provides a Training history route');
+must(readFileSync(join(root, 'logger.js'), 'utf8').includes("const title = s.title || 'Completed session';"), 'completion summary uses the actual session title');
+must(!readFileSync(join(root, 'logger.js'), 'utf8').includes('<h2 class="log-title">Heavy Lower</h2>'), 'completion summary has no hardcoded workout title');
 
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');
