@@ -11,6 +11,7 @@ const defaultState = () => ({
   checkin: {},
   settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
   coachHistory: [],
+  dailyProgressCheckins: {},
   published: {},
   goals: [],
   fabOpen: false,
@@ -708,6 +709,75 @@ function historyHtml() {
   </div>`;
 }
 
+function completedSessions() {
+  return Object.values(S.sessions || {})
+    .filter((session) => session && session.phase === 'summary')
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+}
+
+function hasDailyProgressCheckin(date = today()) {
+  return !!(S.dailyProgressCheckins && S.dailyProgressCheckins[date]);
+}
+
+function needsDailyProgressCheckin() {
+  return !hasDailyProgressCheckin(today());
+}
+
+function progressHtml() {
+  const checkedIn = hasDailyProgressCheckin();
+  const c = dailyCheckin(today(), false) || {};
+  const sessions = completedSessions();
+  const recent = sessions.slice(0, 3);
+  const whoop = [
+    ['Sleep', c.whoopSleepPerformance, '%'],
+    ['Recovery', c.whoopRecovery, '%'],
+    ['Strain', c.whoopStrain, ''],
+  ].map(([label, value, unit]) => `<div class="progress-metric"><span>${label}</span><b>${value === '' || value == null ? '—' : `${esc(value)}${unit}`}</b></div>`).join('');
+  const workoutRows = recent.length
+    ? recent.map((session) => {
+      const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
+      return `<article class="progress-row">
+        <div><b>${esc(session.title || 'Completed session')}</b><small>${esc(session.date || '')}</small></div>
+        <span>${num(stats.sets)} sets</span>
+      </article>`;
+    }).join('')
+    : '<p class="stub">Your completed strength sessions will appear here.</p>';
+  const goals = (S.goals || []).length
+    ? `<ul class="progress-goals">${S.goals.map((goal) => `<li>${esc(goal.title)}</li>`).join('')}</ul>`
+    : '<p class="stub">Add a goal from the + menu when you are ready.</p>';
+  return `<div class="page progress-page">
+    <div class="eyebrow">Strength</div>
+    <h1>Progress</h1>
+    <section class="card progress-checkin ${checkedIn ? 'is-complete' : ''}">
+      <p class="eyebrow">Daily check-in</p>
+      <h2>${checkedIn ? 'Checked in today' : 'Check in for today'}</h2>
+      <p class="stub">This is a daily record only. It does not change your training.</p>
+      ${checkedIn
+        ? '<p class="progress-confirmation">✓ Recorded</p>'
+        : '<button type="button" class="btn oled-cta" onclick="completeDailyProgressCheckin()">Mark today checked in</button>'}
+    </section>
+    <section class="card progress-section">
+      <p class="eyebrow">WHOOP readings</p>
+      <div class="progress-metrics">${whoop}</div>
+    </section>
+    <section class="card progress-section">
+      <div class="progress-section-head"><p class="eyebrow">Strength history</p><button type="button" class="btn" onclick="openHistory()">See all</button></div>
+      ${workoutRows}
+    </section>
+    <section class="card progress-section">
+      <p class="eyebrow">Goals</p>
+      ${goals}
+    </section>
+  </div>`;
+}
+
+function completeDailyProgressCheckin() {
+  S.dailyProgressCheckins = S.dailyProgressCheckins || {};
+  S.dailyProgressCheckins[today()] = { completedAt: new Date().toISOString() };
+  save();
+  render();
+}
+
 function openHistory() {
   S.tab = 'history';
   S.fabOpen = false;
@@ -809,6 +879,7 @@ function render() {
   const map = {
     home: homeHtml,
     training: trainingTabHtml,
+    progress: progressHtml,
     library: libraryHtml,
     me: meHtml,
     history: historyHtml,
@@ -820,6 +891,12 @@ function render() {
   document.querySelectorAll('[data-tab]').forEach((b) => {
     b.classList.toggle('active', b.dataset.tab === S.tab);
   });
+  const progressButton = document.querySelector('[data-tab="progress"]');
+  if (progressButton) {
+    const needsCheckin = needsDailyProgressCheckin();
+    progressButton.classList.toggle('needs-checkin', needsCheckin);
+    progressButton.setAttribute('aria-label', needsCheckin ? 'Progress — daily check-in needed' : 'Progress');
+  }
 
   const shell = document.getElementById('shell');
   if (shell) shell.classList.toggle('shell--training', S.tab === 'training');

@@ -87,6 +87,10 @@ must(readFileSync(join(root, 'hybrid-integrations.js'), 'utf8').includes('PlanSy
 must(js.includes('function startTrainingSession'), 'Start Session entry');
 must(js.includes('const plan = trainingPlanForDate(S.selectedDate);'), 'Home and Training use the same scheduled plan');
 must(js.includes('function historyHtml') && js.includes('function openHistory'), 'Me provides a Training history route');
+must(html.includes('data-tab="progress"') && html.includes('<span>Progress</span>'), 'Progress is a bottom navigation tab');
+must(js.includes('function progressHtml') && js.includes('function completeDailyProgressCheckin'), 'Progress has a daily record-only check-in');
+must(js.includes("'Progress — daily check-in needed'"), 'Progress exposes the daily check-in reminder accessibly');
+must(css.includes('needs-checkin::before') && css.includes('rgba(22, 236, 6'), 'Progress check-in reminder has a green halo');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes("const title = s.title || 'Completed session';"), 'completion summary uses the actual session title');
 must(!readFileSync(join(root, 'logger.js'), 'utf8').includes('<h2 class="log-title">Heavy Lower</h2>'), 'completion summary has no hardcoded workout title');
 
