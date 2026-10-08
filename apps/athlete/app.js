@@ -69,35 +69,7 @@ function load() {
 
 function refreshHybridOccupancy() {
   if (!window.HybridSc) return;
-  const engineDates = (S.hybridOccupancy && S.hybridOccupancy.engine) || {};
-  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
-}
-
-async function peekEngineOccupancy() {
-  if (!window.HybridSc || !window.Whoop || typeof Whoop.client !== 'function') return;
-  try {
-    const sb = Whoop.client();
-    const { data: sessionData } = await sb.auth.getSession();
-    const uid = sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.id;
-    if (!uid) return;
-    const domains = (HybridSc.SNAPSHOT_DOMAINS && HybridSc.SNAPSHOT_DOMAINS.engine) || ['engine_side', 'conditioning'];
-    let snapshot = null;
-    for (const domain of domains) {
-      const { data, error } = await sb
-        .from('athlete_domain_snapshots')
-        .select('snapshot')
-        .eq('user_id', uid)
-        .eq('domain', domain)
-        .maybeSingle();
-      if (!error && data) { snapshot = data.snapshot; break; }
-    }
-    if (!snapshot) return;
-    const engineDates = HybridSc.datesFromSnapshot(snapshot);
-    HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
-    window.S = S;
-  } catch (_) {
-    /* offline / unsigned */
-  }
+  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S));
 }
 
 function save() {
@@ -142,37 +114,6 @@ function num(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function metricsFromCheckin(c = {}) {
-  return {
-    recovery: num(c.whoopRecovery) || null,
-    strain: num(c.whoopStrain) || null,
-    sleepScore: num(c.whoopSleepPerformance) || null,
-    hrvMs: num(c.hrv) || null,
-    restingHr: num(c.restingHr) || null,
-  };
-}
-
-function checkinSlice(c = {}) {
-  return {
-    sleepQuality: num(c.sleepQuality) || null,
-    energy: num(c.energy) || null,
-    muscleSoreness: num(c.muscleSoreness) || null,
-    jointStress: num(c.jointStress) || null,
-    mentalStress: num(c.mentalStress) || null,
-  };
-}
-
-function packet() {
-  const c = S.checkin[S.selectedDate] || S.checkin[today()] || {};
-  return HybridBrain.buildBrainPacket({
-    date: S.selectedDate,
-    room: 'engine',
-    metrics: metricsFromCheckin(c),
-    checkin: checkinSlice(c),
-    connected: { whoop: !!S.settings.whoop.connected, concept2: false },
-  });
-}
-
 function dailyCheckin(date = today(), create = true) {
   S.checkin = S.checkin || {};
   if (!S.checkin[date] && create) {
@@ -186,10 +127,6 @@ function dailyCheckin(date = today(), create = true) {
     };
   }
   return S.checkin[date];
-}
-
-function readinessScore(c) {
-  return HybridBrain.scoreReadiness(metricsFromCheckin(c), checkinSlice(c));
 }
 
 function esc(v) {
@@ -281,8 +218,8 @@ function topBarHtml() {
     <header class="home-top">
       <div class="home-brand">
         <span class="home-mark" aria-hidden="true">TH</span>
-        <div class="home-brand-text" aria-label="HYBRID S&C, Strength">
-          ${HybridSc.brandHtml('strength')}
+        <div class="home-brand-text" aria-label="Hybrid Strength">
+          ${HybridSc.brandHtml()}
         </div>
       </div>
       <div class="home-top-actions">
@@ -301,15 +238,14 @@ function topBarHtml() {
 
 function gaugeRowHtml() {
   const c = dailyCheckin(S.selectedDate, false) || dailyCheckin(today(), false) || {};
-  const m = metricsFromCheckin(c);
   return `
     <section class="ath-module-whoop" aria-label="WHOOP">
       <span class="ath-label">WHOOP</span>
       <div class="ath-whoop-wrap">
         <div class="ath-whoop-dials gauge-row">
-          ${whoopDialSvg({ label: 'Sleep', value: m.sleepScore, max: 100, color: '#9db4c8', unit: '%', size: 104 })}
-          ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: whoopRecoveryColor(m.recovery), unit: '%', size: 104 })}
-          ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
+          ${whoopDialSvg({ label: 'Sleep', value: c.whoopSleepPerformance, max: 100, color: '#9db4c8', unit: '%', size: 104 })}
+          ${whoopDialSvg({ label: 'Recovery', value: c.whoopRecovery, max: 100, color: whoopRecoveryColor(c.whoopRecovery), unit: '%', size: 104 })}
+          ${whoopDialSvg({ label: 'Strain', value: c.whoopStrain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
         </div>
         ${todayCallHtml()}
       </div>
@@ -317,12 +253,12 @@ function gaugeRowHtml() {
 }
 
 function todayCallHtml() {
-  const p = packet();
+  const connected = !!S.settings.whoop?.connected;
   return `
     <div class="today-call">
-      <p class="eyebrow">${esc(p.label || 'Today')}</p>
-      <p class="title">${esc(p.todayCall || 'Train with intent')}</p>
-      <p class="meta">${esc(p.reason || 'Connect WHOOP under Me for live readiness.')}</p>
+      <p class="eyebrow">WHOOP status</p>
+      <p class="title">${connected ? 'WHOOP connected' : 'Connect WHOOP under Me'}</p>
+      <p class="meta">${connected ? 'Wearable readings appear above when available.' : 'WHOOP readings appear above after syncing.'}</p>
     </div>`;
 }
 
@@ -713,18 +649,6 @@ async function lookForAppUpdate() {
   window.alert(`You're on ${otaInfo.current || APP_BUILD}. No new version is ready.`);
 }
 
-async function switchHybridLocker(next) {
-  if (next === 'strength') return;
-  try {
-    if (window.Whoop && typeof Whoop.client === 'function') {
-      await Whoop.client().auth.updateUser({ data: { hybrid_sc: next } });
-    }
-  } catch (_) {
-    /* offline — still walk the hallway */
-  }
-  location.assign(HybridSc.origins(location.href)[next === 'engine' ? 'engine' : 'strength']);
-}
-
 function meHtml() {
   const w = S.settings.whoop || {};
   if (w.email) {
@@ -732,7 +656,7 @@ function meHtml() {
       <div class="page">
         <div class="eyebrow">Me</div>
         <h1>Profile</h1>
-        ${HybridSc.lockerCardHtml('strength')}
+        ${HybridSc.lockerCardHtml()}
         ${meAppSectionHtml()}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
@@ -750,9 +674,9 @@ function meHtml() {
     <div class="page page-signin">
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
-      ${HybridSc.lockerCardHtml('strength')}
+      ${HybridSc.lockerCardHtml()}
       ${meAppSectionHtml()}
-      <p class="stub page-lead">One email and password for HYBRID S&amp;C. After sign-in you land on Strength — blank slate, no demo sessions.</p>
+      <p class="stub page-lead">Sign in to sync your Hybrid Strength sessions and progress.</p>
       <div id="whoopCard"></div>
     </div>`;
 }
@@ -906,7 +830,6 @@ async function askCoach() {
       },
       body: JSON.stringify({
         message,
-        packet: HybridBrain.coachContextFromPacket(packet()),
         history: S.coachHistory.filter((m) => m.content !== '(empty reply)').slice(-8),
       }),
     });
@@ -929,7 +852,6 @@ window.S = S;
 window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
-window.readinessScore = readinessScore;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
 };
@@ -949,7 +871,6 @@ window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;
 window.trainingPlanForDate = trainingPlanForDate;
 window.openLibraryForDay = openLibraryForDay;
-window.switchHybridLocker = switchHybridLocker;
 window.render = render;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -965,9 +886,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.HybridIntegrations.mergeIntoState) HybridIntegrations.mergeIntoState(S);
   }
   refreshHybridOccupancy();
-  peekEngineOccupancy().then(() => {
-    if (S.tab === 'home' || S.tab === 'training') render();
-  });
   await refreshOtaStatus(false);
   render();
 });

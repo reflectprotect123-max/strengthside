@@ -2,8 +2,7 @@
   const STORAGE_KEY = 'HYBRID_SC_integrations_v1';
   const WHOOP_CHECKIN_KEYS = [
     'whoopRecovery', 'hrv', 'restingHr', 'whoopSleepPerformance', 'whoopStrain',
-    'whoopSyncedAt', 'whoopSampleDate', 'sleepQuality', 'readinessColor', 'mainLimiter',
-    'backgroundLoad', 'recoveryPenalty', 'wearablePenalty', 'updatedAt',
+    'whoopSyncedAt', 'whoopSampleDate', 'updatedAt',
   ];
 
   let foregroundBound = false;
@@ -53,7 +52,7 @@
     }
     S.checkin = S.checkin || {};
     Object.keys(shared.checkin || {}).forEach((iso) => {
-      const slice = shared.checkin[iso];
+      const slice = sliceCheckin(shared.checkin[iso]);
       if (!slice) return;
       S.checkin[iso] = Object.assign({}, S.checkin[iso] || {}, slice);
     });
@@ -66,7 +65,7 @@
     shared.whoop = Object.assign({}, shared.whoop || {}, S.settings && S.settings.whoop ? S.settings.whoop : {});
     shared.checkin = shared.checkin || {};
     const slice = sliceCheckin(S.checkin && S.checkin[iso]);
-    if (slice) shared.checkin[iso] = Object.assign({}, shared.checkin[iso] || {}, slice);
+    if (slice) shared.checkin[iso] = Object.assign({}, sliceCheckin(shared.checkin[iso]) || {}, slice);
     writeShared(shared);
   }
 

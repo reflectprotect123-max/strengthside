@@ -1,7 +1,7 @@
-/* WHOOP bridge — one connection per HYBRID S&C login (Supabase user u:). */
+/* WHOOP bridge — one connection per Hybrid Strength login (Supabase user u:). */
 (function (global) {
   function cfg() {
-    return global.STRENGTH_CONFIG || global.ENGINE_CONFIG || {};
+    return global.STRENGTH_CONFIG || {};
   }
   function hybridProduct() {
     const c = cfg();
@@ -9,7 +9,7 @@
   }
   const SUPABASE_URL = cfg().supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co';
   const SUPABASE_ANON = cfg().supabaseAnon || '';
-  const NATIVE_APP_ID = 'com.hybrid.athlete'; // one Capacitor install for both houses
+  const NATIVE_APP_ID = 'com.hybrid.athlete';
   function nativeAppId() {
     return NATIVE_APP_ID;
   }
@@ -131,7 +131,7 @@
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
       const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
       const friendly = (res.status === 401 || raw === 'unauthorized')
-        ? 'Sign in again in HYBRID S&C, then tap Connect WHOOP'
+        ? 'Sign in again in Hybrid Strength, then tap Connect WHOOP'
         : (boot ? 'WHOOP service is down — try again in a minute' : raw);
       const e = new Error(friendly);
       e.status = res.status; e.body = body; throw e;
@@ -180,19 +180,12 @@
     if (recovery != null && recovery >= 0) { c.whoopRecovery = Math.round(recovery); changed = true; }
     if (hrv != null && hrv > 0) { c.hrv = hrv; changed = true; }
     if (rhr != null && rhr > 0) { c.restingHr = rhr; changed = true; }
-    if (sleepPerf != null && sleepPerf > 0) { c.whoopSleepPerformance = Math.round(sleepPerf); c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
+    if (sleepPerf != null && sleepPerf > 0) { c.whoopSleepPerformance = Math.round(sleepPerf); changed = true; }
     if (strain != null && strain > 0) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
     if (changed) {
       c.updatedAt = Date.now();
       c.whoopSyncedAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
       c.whoopSampleDate = n.date || meta.sampleDate || null;
-      if (typeof global.readinessScore === 'function') {
-        const s = global.readinessScore(c);
-        Object.assign(c, {
-          readinessColor: s.color, mainLimiter: s.reason,
-          backgroundLoad: s.backgroundLoad, recoveryPenalty: s.recoveryPenalty, wearablePenalty: s.wearablePenalty
-        });
-      }
       if (typeof global.touchRecord === 'function') global.touchRecord(c, 'daily_checkins');
     }
     const w = st();
@@ -203,7 +196,7 @@
     if (typeof global.save === 'function') global.save();
     if (global.HybridIntegrations && typeof global.HybridIntegrations.persistWhoop === 'function') {
       const S = appState();
-      if (S) global.HybridIntegrations.persistWhoop(S, todayIso());
+      if (S) global.HybridIntegrations.persistWhoop(S, sampleDate);
     }
     return changed;
   }
@@ -404,7 +397,7 @@
     const em = ((document.getElementById('whoopEmail') && document.getElementById('whoopEmail').value) || '').trim();
     const pw = (document.getElementById('whoopPassword') && document.getElementById('whoopPassword').value) || '';
     if (!em || !pw) {
-      global.alert('Enter the same email + password you use on THE Hybrid Engine');
+      global.alert('Enter the same email + password you use in Hybrid Strength');
       return;
     }
     ui.busy = true;
