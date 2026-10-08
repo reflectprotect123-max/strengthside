@@ -111,19 +111,12 @@
     if (recovery != null && recovery > 0) { c.whoopRecovery = Math.round(recovery); changed = true; }
     if (hrv != null && hrv > 0) { c.hrv = Math.round(hrv); changed = true; }
     if (rhr != null && rhr > 0) { c.restingHr = Math.round(rhr); changed = true; }
-    if (sleepPerf != null && sleepPerf > 0) { c.sleepQuality = Math.max(1, Math.min(10, Math.round(sleepPerf / 10))); changed = true; }
+    if (sleepPerf != null && sleepPerf > 0) { c.whoopSleepPerformance = Math.round(sleepPerf); changed = true; }
     if (strain != null && strain > 0) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
     if (changed) {
       c.updatedAt = Date.now();
       c.whoopSyncedAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
       c.whoopSampleDate = n.date || meta.sampleDate || null;
-      if (typeof global.readinessScore === 'function') {
-        const s = global.readinessScore(c);
-        Object.assign(c, {
-          readinessColor: s.color, mainLimiter: s.reason,
-          backgroundLoad: s.backgroundLoad, recoveryPenalty: s.recoveryPenalty, wearablePenalty: s.wearablePenalty
-        });
-      }
       if (typeof global.touchRecord === 'function') global.touchRecord(c, 'daily_checkins');
     }
     const w = st();
