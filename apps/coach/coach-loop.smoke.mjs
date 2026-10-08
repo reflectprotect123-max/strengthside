@@ -23,6 +23,13 @@ for (const token of ['RecoveryPrescription.prescribe(', 'RecoveryEngine.recovery
 if (legacyApp.includes('x.summary.e1rm=sessionE1rmList(x)')) {
   throw new Error('session completion must not write a derived e1RM');
 }
+if (legacyApp.includes('sessionProgressionCard(') || legacyApp.includes('kg next time')) {
+  throw new Error('historical progression audits must not render as current coaching');
+}
+if (!legacyApp.includes('state.meta.progressionAudit=state.meta.progressionAudit||[]')) {
+  throw new Error('historical progression audit data must remain stored');
+}
+if (legacyApp.includes('readiness overview')) throw new Error('accessibility copy still promises readiness advice');
 
 if (!html.includes('coach-loop.js')) throw new Error('coach.html missing coach-loop.js');
 if (!html.includes('coach-nutrition.js')) throw new Error('coach.html missing coach-nutrition.js');
@@ -190,6 +197,19 @@ metricsCheckin = rawCheckin;
 for (const [key, value] of Object.entries({ recovery: 72, hrv: 58, rhr: 51, sleep: 84, strain: 12.5 })) {
   if (metricsSandbox.athHomeMetrics()[key] !== value) throw new Error(`coach displayed ${key} incorrectly`);
 }
+const overviewSource = legacyApp.slice(legacyApp.indexOf('function athSleepOverviewBody('), legacyApp.indexOf('function setIllnessFlag('));
+if (!overviewSource.startsWith('function athSleepOverviewBody(')) throw new Error('WHOOP overview helper missing');
+let overviewRecovery = null;
+const overviewSandbox = {
+  athHomeMetrics: () => ({ recovery: overviewRecovery, hrv: null, rhr: null, sleep: null, strain: null }),
+  athMetric: (value, suffix = '') => value == null ? '—' : `${value}${suffix}`,
+  athClamp: (n, lo, hi) => Math.min(hi, Math.max(lo, n)),
+  window: {},
+};
+vm.runInNewContext(overviewSource, overviewSandbox);
+if (overviewSandbox.athSleepOverviewBody().includes('class=ath-bthumb')) throw new Error('missing recovery must not show a positioned thumb');
+overviewRecovery = 72;
+if (!overviewSandbox.athSleepOverviewBody().includes('class=ath-bthumb')) throw new Error('observed recovery should show its thumb');
 
 console.log('coach-loop: ok', {
   feedCards: feed[0].cards.length,
