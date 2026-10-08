@@ -4,9 +4,8 @@
 
   let pad = null;
   let sheet = null;
+  let workingMaxId = null;
   let effortOpen = null;
-  let toast = '';
-  let toastTimer = 0;
   let clockTimer = 0;
   let lastBeep = '';
 
@@ -64,6 +63,7 @@
     root.S.loggerOpen = false;
     pad = null;
     sheet = null;
+    workingMaxId = null;
     if (typeof root.save === 'function') root.save();
     const el = document.getElementById('logger');
     if (el) el.classList.add('hidden');
@@ -422,39 +422,17 @@
       <input class="log-ex-note" placeholder="Add circuit note" value="${esc(log.note || '')}" onchange="Logger.note('${esc(page.id)}',this.value)">`;
   }
 
-  function resolvePadKg(n, memberId) {
-    const s = session();
-    const page = HybridSession.currentPage(s);
-    const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-    const mem = liftMem(s, lift);
-    const e1 = (s.workingMax && s.workingMax[lift.id]) || mem.e1rmKg;
-    const K = root.HybridBrainKernel;
-    if (K && typeof K.kgFromPctPad === 'function') {
-      const kg = K.kgFromPctPad({ columns: lift.columns, raw: n, e1rmKg: e1 });
-      if (kg != null) return kg;
-    }
+  function resolvePadKg(n) {
     return n;
   }
 
-  function liftMem(s, page) {
-    const key = root.HybridSession && HybridSession.memoryKey
-      ? HybridSession.memoryKey(page.title)
-      : String(page.title || '').trim().toLowerCase();
-    return (s && s.liftMemory && s.liftMemory[key])
-      || (root.S && root.S.liftMemory && root.S.liftMemory[key])
-      || {};
-  }
-
   function sideHtml(s, page) {
-    const mem = liftMem(s, page);
-    const wm = (s.workingMax && s.workingMax[page.id]) || mem.e1rmKg || '';
-    const last = mem.lastKg != null && mem.lastKg !== '' ? mem.lastKg : '';
+    const wm = (s.workingMax && s.workingMax[page.id]) || '';
     return `
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
         <div class="log-side">
-          <div class="log-side-row"><span>WORKING MAX</span><button type="button" class="log-add" onclick="Logger.sheet('wm')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
-          <div class="log-side-row"><span>LAST</span><span>${last !== '' ? esc(last) : 'None'}</span></div>
+          <div class="log-side-row"><span>WORKING MAX</span><button type="button" class="log-add" onclick="Logger.sheet('wm','${esc(page.id)}')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
         </div>
       </div>`;
   }
@@ -618,8 +596,7 @@
           </div>
         </div>`;
     }
-    const page = HybridSession.currentPage(s);
-    const cur = (s.workingMax && s.workingMax[page.id]) || '';
+    const cur = (s.workingMax && s.workingMax[workingMaxId]) || '';
     return `
       <div class="log-sheet" onclick="if(event.target===this)Logger.sheet(null)">
         <div class="log-sheet-card">
@@ -671,7 +648,7 @@
     else if (s.phase === 'coach') inner = coachHtml();
     else if (s.phase === 'summary') inner = summaryHtml(s);
     else inner = blockHtml(s);
-    el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
+    el.innerHTML = `<div class="log-screen">${inner}</div>`;
     startClock();
     if (s.phase === 'quote') {
       el.querySelector('.log-quote')?.addEventListener('click', () => Logger.gotQuote());
@@ -725,20 +702,10 @@
       if (!pad) return;
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = resolvePadKg(n, pad.memberId);
+      if (pad.field === 'kg') patch.kg = resolvePadKg(n);
       else if (pad.field === 'reps') patch.reps = n;
       else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), pad.setIndex, patch, pad.memberId);
-      if (pad.field === 'kg' && patch.kg > 0) {
-        const page = HybridSession.currentPage(s);
-        const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, pad.memberId) : page;
-        const prev = Math.max(0, ...s.logs[lift.id].sets.filter((r, i) => i !== pad.setIndex && r.logged).map((r) => r.kg || 0));
-        if (patch.kg >= prev && lift.targetReps) {
-          toast = `New ${lift.targetReps} Rep Max!`;
-          clearTimeout(toastTimer);
-          toastTimer = setTimeout(() => { toast = ''; paint(); }, 2200);
-        }
-      }
       pad = null;
       persist(s);
     },
@@ -747,7 +714,7 @@
       const idx = pad.setIndex;
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = resolvePadKg(n, pad.memberId);
+      if (pad.field === 'kg') patch.kg = resolvePadKg(n);
       else if (pad.field === 'reps') patch.reps = n;
       else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), idx, patch, pad.memberId);
@@ -807,12 +774,12 @@
       } else if (log.sets.length > 1) log.sets.pop();
       persist(s);
     },
-    sheet(kind) { sheet = kind; paint(); },
+    sheet(kind, exerciseId) { sheet = kind; workingMaxId = exerciseId || null; paint(); },
     saveWm() {
       const input = document.getElementById('wmInput');
-      const page = HybridSession.currentPage(session());
-      persist(HybridSession.setWorkingMax(session(), page.id, input && input.value));
+      persist(HybridSession.setWorkingMax(session(), workingMaxId, input && input.value));
       sheet = null;
+      workingMaxId = null;
       paint();
     },
     doneTraining() { pad = null; persist(HybridSession.openFeel(session())); },

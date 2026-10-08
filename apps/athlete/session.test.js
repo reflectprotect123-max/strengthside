@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
-require(join(here, 'brain-kernel.js'));
 require(join(here, 'session.js'));
 const HybridSession = globalThis.HybridSession;
 
@@ -164,28 +163,37 @@ test('feel then finish lands on summary', () => {
   assert.equal(s.phase, 'summary');
 });
 
-test('logged working set remembers lastKg and e1rm; next session seeds first empty kg', () => {
+test('logged working set does not derive lift memory or a next-session load', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
   s = HybridSession.logSet(s, 0, { kg: 100, reps: 3, effort: 'medium' });
-  const mem = s.liftMemory['snatch grip rack deadlift'];
-  assert.equal(mem.lastKg, 100);
-  assert.ok(mem.e1rmKg > 100);
-  let s2 = HybridSession.startSession({
+  assert.equal(s.liftMemory['snatch grip rack deadlift'], undefined);
+  const s2 = HybridSession.startSession({
     date: '2026-09-08',
     plan: demoPlan,
     letter: 'B',
     liftMemory: s.liftMemory,
   });
-  assert.equal(s2.logs.B.sets[0].kg, 100);
-  assert.equal(s2.workingMax.B, mem.e1rmKg);
+  assert.equal(s2.logs.B.sets[0].kg, null);
+  assert.equal(s2.workingMax.B, undefined);
 });
 
-test('seed does not overwrite a filled first kg', () => {
+test('legacy lift memory does not seed first kg or working max', () => {
   const liftMemory = { 'snatch grip rack deadlift': { lastKg: 100, e1rmKg: 116.7 } };
   let s = HybridSession.startSession({ date: '2026-09-08', plan: demoPlan, letter: 'B', liftMemory });
+  assert.equal(s.logs.B.sets[0].kg, null);
+  assert.equal(s.workingMax.B, undefined);
   s.logs.B.sets[0].kg = 90;
   s = HybridSession.seedOpeningLoads(s, liftMemory);
   assert.equal(s.logs.B.sets[0].kg, 90);
+  assert.equal(s.workingMax.B, undefined);
+});
+
+test('manual working max is stored without changing a set or lift memory', () => {
+  const s = HybridSession.startSession({ date: '2026-09-08', plan: demoPlan, letter: 'B' });
+  const next = HybridSession.setWorkingMax(s, 'B', 115);
+  assert.equal(next.workingMax.B, 115);
+  assert.equal(next.logs.B.sets[0].kg, null);
+  assert.deepEqual(next.liftMemory, {});
 });
 
 test('warmup complete does not write liftMemory', () => {
@@ -194,11 +202,16 @@ test('warmup complete does not write liftMemory', () => {
   assert.equal(Object.keys(s.liftMemory || {}).length, 0);
 });
 
-test('logged easy set writes brain nextKg onto the following row', () => {
+test('logging a set records athlete input without changing a future target', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
-  s = HybridSession.logSet(s, 0, { kg: 100, effort: 'easy' });
+  const originalSecondKg = s.logs.B.sets[1].kg;
+  s = HybridSession.logSet(s, 0, { kg: 100, reps: 6, effort: 'easy' });
   assert.equal(s.logs.B.sets[0].logged, true);
-  assert.equal(s.logs.B.nextKg, 102.5);
-  assert.equal(s.logs.B.sets[1].kg, 102.5);
-  assert.equal(s.strengthClose.lastKg, 100);
+  assert.equal(s.logs.B.sets[0].kg, 100);
+  assert.equal(s.logs.B.sets[0].reps, 6);
+  assert.equal(s.logs.B.sets[0].effort, 'easy');
+  assert.equal('nextKg' in s.logs.B, false);
+  assert.equal('ruleVersion' in s.logs.B, false);
+  assert.equal('strengthClose' in s, false);
+  assert.equal(s.logs.B.sets[1].kg, originalSecondKg);
 });

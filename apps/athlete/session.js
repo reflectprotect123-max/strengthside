@@ -179,46 +179,10 @@
     return String(title || '').trim().toLowerCase();
   }
 
-  function seedLift(session, lift) {
-    if (!lift || lift.logMode !== 'kg') return;
-    const mem = (session.liftMemory || {})[memoryKey(lift.title)];
-    if (!mem) return;
-    session.workingMax = session.workingMax || {};
-    if (mem.e1rmKg) session.workingMax[lift.id] = mem.e1rmKg;
-    const log = session.logs[lift.id];
-    if (!log || !log.sets || !log.sets[0]) return;
-    if (log.sets[0].kg != null && log.sets[0].kg !== '') return;
-    const K = brainKernel();
-    const cols = (lift.columns && lift.columns.length) ? lift.columns : ['reps', 'weight_kg'];
-    const kg = K && typeof K.openingKg === 'function'
-      ? K.openingKg({
-        columns: cols,
-        lastKg: mem.lastKg,
-        e1rmKg: mem.e1rmKg,
-        lastPct: mem.lastPct,
-        lastEffort: mem.lastEffort,
-        lastMiss: mem.lastMiss,
-        lastReps: mem.lastReps,
-        targetReps: lift.targetReps,
-      })
-      : mem.lastKg;
-    if (kg == null || kg === '') return;
-    log.sets[0].kg = kg;
-    log.sets[0].suggestedKg = kg;
-  }
-
   function seedOpeningLoads(session, liftMemory) {
-    const s = session;
-    s.liftMemory = Object.assign({}, liftMemory || {}, s.liftMemory || {});
-    s.workingMax = s.workingMax || {};
-    for (const page of s.pages || []) {
-      if (page.logMode === 'superset') {
-        for (const m of page.members || []) seedLift(s, m);
-      } else {
-        seedLift(s, page);
-      }
-    }
-    return s;
+    session.liftMemory = Object.assign({}, liftMemory || {}, session.liftMemory || {});
+    session.workingMax = session.workingMax || {};
+    return session;
   }
 
   function startSession({ date, plan, letter, existing, liftMemory } = {}) {
@@ -332,56 +296,7 @@
     if (patch.miss != null) row.miss = !!patch.miss;
     if (patch.effort !== undefined) row.effort = patch.effort;
     row.logged = canLogRow(row, liftPage);
-    if (row.logged) applyStrengthBrain(s, setIndex, memberId, liftPage);
-    if (row.logged && liftPage && liftPage.logMode === 'kg') {
-      const K = brainKernel();
-      s.liftMemory = s.liftMemory || {};
-      const key = memoryKey(liftPage.title);
-      if (K && typeof K.rememberLift === 'function') {
-        s.liftMemory[key] = K.rememberLift(s.liftMemory[key], {
-          loadKg: row.kg,
-          reps: row.reps,
-          effort: row.effort,
-          miss: row.miss,
-        });
-        if (s.liftMemory[key].e1rmKg) {
-          s.workingMax = s.workingMax || {};
-          s.workingMax[liftPage.id] = s.liftMemory[key].e1rmKg;
-        }
-      }
-    }
     return s;
-  }
-
-  function brainKernel() {
-    return root.HybridBrainKernel;
-  }
-
-  function applyStrengthBrain(session, setIndex, memberId, liftPage) {
-    const K = brainKernel();
-    if (!K || typeof K.decideNext !== 'function') return;
-    const log = getLog(session, currentPage(session), memberId);
-    const row = log.sets[setIndex];
-    const suggested = row.suggestedKg != null ? row.suggestedKg : row.kg;
-    const out = K.decideNext({
-      kind: 'strength',
-      intendedEffort: (liftPage && liftPage.intendedEffort) || 'medium',
-      reportedEffort: row.effort,
-      suggestedKg: suggested,
-      actualKg: row.kg,
-      miss: row.miss,
-      completedReps: row.reps,
-      targetReps: liftPage && liftPage.targetReps,
-      equipmentStepKg: 2.5,
-    });
-    log.nextKg = out.nextKg;
-    log.ruleVersion = out.ruleVersion;
-    const nxt = log.sets[setIndex + 1];
-    if (nxt && !nxt.logged && nxt.kg == null && out.nextKg != null) {
-      nxt.kg = out.nextKg;
-      nxt.suggestedKg = out.nextKg;
-    }
-    session.strengthClose = K.close({ kind: 'strength', actualKg: row.kg });
   }
 
   function toggleLogged(session, setIndex, memberId) {
@@ -429,13 +344,6 @@
     const s = clone(session);
     s.workingMax = s.workingMax || {};
     s.workingMax[exerciseId] = Number(value);
-    const page = (s.pages || []).find((p) => p.id === exerciseId)
-      || ((s.pages || []).flatMap((p) => p.members || []).find((m) => m.id === exerciseId));
-    if (page && page.title) {
-      s.liftMemory = s.liftMemory || {};
-      const key = memoryKey(page.title);
-      s.liftMemory[key] = Object.assign({}, s.liftMemory[key] || {}, { e1rmKg: Number(value) });
-    }
     return s;
   }
 
