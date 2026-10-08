@@ -8,7 +8,7 @@ const cap = join(athlete, '..', 'mobile', 'capacitor');
 const read = (p) => readFileSync(p, 'utf8');
 const cfg = JSON.parse(read(join(cap, 'capacitor.config.json')));
 const pkg = JSON.parse(read(join(cap, 'package.json')));
-assert.equal(cfg.appName, 'The Strength');
+assert.equal(cfg.appName, 'Hybrid Strength');
 assert.equal(cfg.webDir, '../../athlete');
 assert.equal(cfg.appId, 'com.hybrid.athlete');
 assert.equal(cfg.plugins.CapacitorUpdater, undefined, 'no legacy update configuration');

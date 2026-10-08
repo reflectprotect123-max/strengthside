@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'strength-dogfood-v1.2.0';
+const APP_BUILD = 'strength-dogfood-v1.2.1';
 
 
 const defaultState = () => ({
@@ -614,7 +614,7 @@ function openLibraryForDay() {
 }
 
 function meAppSectionHtml() {
-  return `<div class="card account-compact"><div class="eyebrow">App</div><p class="stub">The Strength · ${esc(APP_BUILD)}</p></div>`;
+  return `<div class="card account-compact"><div class="eyebrow">App</div><p class="stub">Hybrid Strength · ${esc(APP_BUILD)}</p></div>`;
 }
 
 function meHtml() {
