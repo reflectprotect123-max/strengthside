@@ -1,0 +1,26 @@
+name: Publish Hybrid Strength 1.2.3 APK
+on:
+  push:
+    branches: ['apk-delivery/strength-slider-v1.2.3']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify APK bytes and Android signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum -c SHA256SUMS.txt
+          SIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -n "$SIGNER"
+          "$SIGNER" verify --verbose --print-certs Hybrid-Strength-1.2.3.apk
+      - name: Upload complete signed APK and tested web source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload strength-slider-v1.2.3 \
+            Hybrid-Strength-1.2.3.apk SHA256SUMS.txt Hybrid-Strength-1.2.3-web-source.zip \
+            --repo reflectprotect123-max/strengthside
