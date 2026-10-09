@@ -14,7 +14,14 @@
     });
     // A bundle is healthy only after the strength UI has rendered.
     const app = document.getElementById('app');
-    if (app?.children.length) await updater.notifyAppReady();
-    else console.warn('Strength UI did not render; leaving update rollback enabled.');
+    if (!app) throw new Error('Strength UI root missing');
+    if (!app.children.length) await new Promise((resolve, reject) => {
+      const observer = new MutationObserver(() => {
+        if (app.children.length) { clearTimeout(timeout); observer.disconnect(); resolve(); }
+      });
+      const timeout = setTimeout(() => { observer.disconnect(); reject(new Error('Strength UI did not render')); }, 25000);
+      observer.observe(app, { childList: true });
+    });
+    await updater.notifyAppReady();
   } catch (error) { console.warn('Live update initialization failed', error); }
 })();
