@@ -1,19 +1,12 @@
-# Hybrid Strength — dogfood Android shell
+# Hybrid Strength Capgo shell
 
-Wraps only `apps/athlete/`, the strength product on the original split branch.
-Conditioning/Engine is absent. WHOOP, strength calendar, Library, supersets and
-rest timers remain. Its install id is `com.hybrid.strength`, separate from the
-Hybrid S&C app. The WHOOP callback keeps its registered scheme
-`com.hybrid.athlete`. Version 1.2.2 / Android code 122.
+App ID: `com.hybrid.strength`. Native version: 1.2.4 (124).
+Updater: `@capgo/capacitor-updater` 8.52.1. Channel: `strength-live`.
 
-The old Capgo plugin is removed so a saved/downloaded combined app cannot
-replace the embedded strength app. Updates currently require a new APK.
+The APK contains the existing strength slider and rest timer screens. Updates download automatically. The JavaScript bridge schedules them with a `kill` delay, so backgrounding an open workout does not apply an update. Close the app fully and reopen to apply a queued bundle. A healthy bundle calls `notifyAppReady` after the UI renders; failed startup leaves Capgo rollback enabled. Native service-worker caching is disabled.
 
-Build: `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh` with Java 21,
-Android SDK 36 and pnpm 10.33.0. Output: `Hybrid-Strength-1.2.2.apk`.
+Build: `npm ci`, `npx cap sync android`, then `cd android && ./gradlew assembleRelease`. Use Java 21 and Android SDK 36. The GitHub workflow builds an unsigned APK. Final signing uses the retained 1.2.3 key outside the repository. Never commit signing files or API keys.
 
-CI uploads `hybrid-strength-apk-1.2.2` from the strength dogfood branch.
-Release creation is unavailable to the workflow token; download the Actions
-artifact ZIP and extract `Hybrid-Strength-1.2.2.apk`.
-Device and cloud imports filter legacy conditioning entities while preserving
-strength templates, logged sets, warmups and recovery blocks.
+Ship a compatible web update: set CAPGO_TOKEN securely and CAPGO_BUNDLE_VERSION to a new version, then run `bash scripts/ship-capgo.sh`. Native plugin changes need another APK. Browser checks are at repository root. No physical phone installation or OTA activation has been tested here.
+
+Native artifact built in Actions run 37904358688. The final signed APK replaces its web assets with the tested source in this branch before zip alignment and signing. Capgo bundle `1.2.4+capgo.1` is linked to `strength-live`; the update endpoint returned it for a simulated Android 1.2.4 request. This verifies server routing, not installation on a phone.

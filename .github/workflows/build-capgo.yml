@@ -2,6 +2,10 @@ name: Build Strength Capgo APK
 on:
   push:
     branches: ['apk-build/strength-capgo-v1.2.4']
+    paths:
+      - 'apps/mobile/capacitor/android/**'
+      - 'apps/mobile/capacitor/package*.json'
+      - 'apps/mobile/capacitor/capacitor.config.json'
 permissions:
   contents: read
 jobs:

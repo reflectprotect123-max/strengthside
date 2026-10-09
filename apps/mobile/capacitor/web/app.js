@@ -848,7 +848,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  if (window.NativeBridge?.isNative()) {
+    // Capgo owns native bundles; browser caches must not serve an older UI.
+    navigator.serviceWorker.getRegistrations().then(registrations =>
+      Promise.all(registrations.map(registration => registration.unregister()))
+    ).then(() => caches.keys()).then(keys =>
+      Promise.all(keys.filter(key => key.startsWith('hybrid-')).map(key => caches.delete(key)))
+    ).catch(() => {});
+  } else {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  }
 }
 
 function trySliderDemo() {

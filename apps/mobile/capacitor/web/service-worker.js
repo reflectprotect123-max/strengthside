@@ -1,5 +1,5 @@
-const CACHE = 'hybrid-strength-slider-v1.2.3';
-const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './load-engine.js', './timer.js', './brain-bundle.js', './strength-only.js', './native-bridge.js', './connectors/whoop.js', './vendor/supabase.min.js'];
+const CACHE = 'hybrid-strength-capgo-v1.2.4';
+const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './load-engine.js', './timer.js', './brain-bundle.js', './strength-only.js', './native-bridge.js', './capgo-updates.js', './connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
