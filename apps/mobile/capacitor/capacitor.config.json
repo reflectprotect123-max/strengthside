@@ -1,0 +1,34 @@
+{
+  "appId": "com.hybrid.strength",
+  "appName": "Hybrid Strength",
+  "webDir": "web",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "Camera": {
+      "permissions": [
+        "camera"
+      ]
+    },
+    "BluetoothLe": {
+      "displayStrings": {
+        "scanning": "Scanning\u2026",
+        "cancel": "Cancel",
+        "availableDevices": "Available devices",
+        "noDeviceFound": "No device found"
+      }
+    },
+    "CapacitorUpdater": {
+      "appId": "com.hybrid.strength",
+      "autoUpdate": "onlyDownload",
+      "defaultChannel": "strength-live",
+      "appReadyTimeout": 30000,
+      "responseTimeout": 20,
+      "allowSetDefaultChannel": false
+    }
+  }
+}
