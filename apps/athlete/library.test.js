@@ -100,3 +100,17 @@ test('authored reps and ranges reach the session and progression engine', () => 
   }
   for(const value of ['','0','8-6','2.5','6-','-8','8-10-12']) assert.equal(Lib.parseRepTarget(value),null,value);
 });
+
+test('deleting a template clears every assignment; stale cloud assignments are pruned',()=>{
+ let state=Lib.createTemplate(Lib.emptyState(),{title:'Delete me'});const tid=state.templates[0].id;
+ state=Lib.addExercise(state,tid,{title:'Squat'});state=Lib.assignDate(state,tid,'2026-10-10');state=Lib.assignDate(state,tid,'2026-10-12');
+ const deleted=Lib.deleteTemplate(state,tid);assert.deepEqual(deleted.assignments,{});assert.equal(deleted.templates.length,0);
+ assert.deepEqual(Lib.ensure({...deleted,assignments:{'2026-10-10':tid}}).assignments,{});
+});
+
+
+test('older authored ranges retain their target and select Rep Range on upgrade', () => {
+ const lib=HybridLibrary.ensure({templates:[{id:'old',blocks:[{kind:'lift',columns:['reps','weight_kg'],repTarget:'6-8'}]}],assignments:{},catalog:{exercises:[],circuits:[]}});
+ assert.deepEqual(lib.templates[0].blocks[0].columns,['reps_range','weight_kg']);
+ assert.equal(lib.templates[0].blocks[0].repTarget,'6-8');
+});

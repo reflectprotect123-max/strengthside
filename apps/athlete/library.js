@@ -77,12 +77,19 @@
   function ensure(state) {
     if (!state || typeof state !== 'object') return emptyState();
     const next = {
-      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: (t.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)) })) : [],
+      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: (t.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
+        const reps = parseRepTarget(b.repTarget);
+        // Preserve ranges saved before Reps and Rep Range had separate entry rules.
+        return reps && reps.min !== reps.max && (b.columns || []).includes('reps') && !(b.columns || []).includes('meters')
+          ? { ...b, columns: b.columns.map(c => c === 'reps' ? 'reps_range' : c) } : b;
+      }) })) : [],
       catalog: state.catalog && Array.isArray(state.catalog.exercises)
         ? state.catalog
         : seedCatalog(),
       assignments: state.assignments && typeof state.assignments === 'object' ? state.assignments : {},
     };
+    const templateIds = new Set(next.templates.map(t => t.id));
+    next.assignments = Object.fromEntries(Object.entries(next.assignments).filter(([, id]) => templateIds.has(id)));
     if (!next.catalog.exercises.length && !next.catalog.circuits.length) next.catalog = seedCatalog();
     return next;
   }

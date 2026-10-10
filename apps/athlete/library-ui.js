@@ -1,4 +1,5 @@
 (function (root) {
+  let numberPad = null;
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   }
@@ -162,20 +163,20 @@
       <div class="lib-sheet-card">
         <h2>Edit exercise</h2>
         <div class="lib-field"><label>Title</label><input value="${esc(b.title)}" onchange="LibraryView.patchBlock({title:this.value})"></div>
-        <div class="lib-field"><label>Sets</label>
-          <input type="number" min="1" max="12" value="${esc(b.setCount || 3)}" onchange="LibraryView.patchBlock({setCount:Number(this.value)})">
+        <div class="lib-field"><label for="libSets">Sets</label>
+          <input id="libSets" readonly value="${esc(b.setCount || 3)}" onclick="LibraryView.openNumberPad('sets')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();LibraryView.openNumberPad('sets')}">
         </div>
         ${(b.columns || ['reps']).some(c => ['reps','reps_range'].includes(c)) && !(b.columns || []).includes('meters') ? `<div class="lib-field">
-          <label for="libRepTarget">Reps / rep range</label>
-          <input id="libRepTarget" type="text" inputmode="text" placeholder="8 or 6-8" value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onchange="LibraryView.setRepTarget(this.value)" aria-describedby="libRepHelp">
-          <p id="libRepHelp" role="status">${esc(u.repError || 'Enter a rep count or range, for example 8 or 6-8.')}</p>
+          <label for="libRepTarget">${(b.columns || []).includes('reps_range') ? 'Rep range' : 'Reps'}</label>
+          <input id="libRepTarget" readonly value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onclick="LibraryView.openNumberPad('reps')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();LibraryView.openNumberPad('reps')}" aria-describedby="libRepHelp">
+          <p id="libRepHelp" role="status">${esc(u.repError || ((b.columns || []).includes('reps_range') ? 'Enter a rep range, for example 6-8.' : 'Enter a whole rep count, for example 8.'))}</p>
         </div>` : ''}
         <div class="lib-field"><label>What do you want to track?</label>
           <div class="lib-cols">
-            <select onchange="LibraryView.setCols(this.value, document.getElementById('libCol2').value)">
+            <select id="libCol1" aria-label="First metric" onchange="LibraryView.setCols(this.value, document.getElementById('libCol2').value)">
               ${trackOptions(c1)}
             </select>
-            <select id="libCol2" onchange="LibraryView.setCols('${esc(c1)}', this.value)">
+            <select id="libCol2" aria-label="Second metric" onchange="LibraryView.setCols('${esc(c1)}', this.value)">
               ${trackOptions(c2)}
             </select>
           </div>
@@ -279,9 +280,22 @@
       </div>`;
   }
 
+  function numberPadHtml() {
+    if (!numberPad) return '';
+    const keys = ['1','2','3','4','5','6','7','8','9',numberPad.range ? '–' : null,'0','⌫'];
+    return `<div class="lib-number-backdrop" role="dialog" aria-label="${numberPad.field === 'sets' ? 'Sets' : numberPad.range ? 'Rep range' : 'Reps'} keypad">
+      <div class="log-pad lib-number-pad">
+        <div class="log-pad-head"><div><span class="log-pad-val" aria-live="polite">${esc(numberPad.buffer || '0')}</span></div><button type="button" aria-label="Cancel number entry" onclick="LibraryView.closeNumberPad()">⌄</button></div>
+        <p role="status">${esc(numberPad.error || '')}</p>
+        <div class="log-keys">${keys.map(k => k === null ? '<span></span>' : `<button type="button" onclick="LibraryView.numberKey('${k}')">${k}</button>`).join('')}
+          <div class="log-pad-side" style="grid-column:4;grid-row:1 / span 4"><button type="button" class="blue" onclick="LibraryView.saveNumberPad()">Save</button><button type="button" class="blue" onclick="LibraryView.clearNumberPad()">Clear</button></div>
+        </div>
+      </div></div>`;
+  }
+
   function html() {
     const s = ui().screen;
-    if (s === 'edit' || s === 'editBlock') return editorHtml();
+    if (s === 'edit' || s === 'editBlock') return editorHtml() + numberPadHtml();
     if (s === 'picker' || s === 'newEx' || s === 'newCirc') return pickerHtml();
     if (s === 'calendar') return calendarHtml();
     return listHtml();
@@ -354,21 +368,55 @@
       root.S.library = st;
       go('edit', { tid: ui().tid, bid: null });
     },
-    editBlock(bid) { root.S.libUi.bid = bid; root.S.libUi.repError = null; save(); },
-    closeSheet() { root.S.libUi.bid = null; save(); },
+    editBlock(bid) { numberPad = null; root.S.libUi.bid = bid; root.S.libUi.repError = null; save(); },
+    closeSheet() { numberPad = null; root.S.libUi.bid = null; save(); },
     patchBlock(patch) { setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch)); },
+    openNumberPad(field) {
+      const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
+      if (!b || !['sets','reps'].includes(field)) return;
+      const range = field === 'reps' && (b.columns || []).includes('reps_range');
+      numberPad = { field, range, buffer: String(field === 'sets' ? b.setCount || 3 : b.repTarget || (range ? '8-12' : '8')), fresh: true };
+      save();
+    },
+    closeNumberPad() { numberPad = null; save(); },
+    clearNumberPad() { if (numberPad) { numberPad.buffer = ''; numberPad.fresh = false; numberPad.error = ''; save(); } },
+    numberKey(key) {
+      if (!numberPad) return;
+      if (key === '⌫') numberPad.buffer = numberPad.buffer.slice(0,-1);
+      else if (/^\d$/.test(key)) numberPad.buffer = (numberPad.fresh ? '' : numberPad.buffer) + key;
+      else if (key === '–' && numberPad.range && /^\d+$/.test(numberPad.buffer)) numberPad.buffer += '-';
+      else return;
+      numberPad.fresh = false; numberPad.error = ''; save();
+    },
+    saveNumberPad() {
+      if (!numberPad) return;
+      const parsed = root.HybridLibrary.parseRepTarget(numberPad.buffer);
+      if (!parsed || (!numberPad.range && parsed.min !== parsed.max) || (numberPad.field === 'sets' && parsed.max > 12)) {
+        numberPad.error = numberPad.field === 'sets' ? 'Enter 1–12 sets.' : numberPad.range ? 'Enter positive whole reps, with the lower number first.' : 'Enter one positive whole rep count.';
+        save(); return;
+      }
+      const field = numberPad.field; numberPad = null;
+      if (field === 'sets') LibraryView.patchBlock({setCount: parsed.min});
+      else { LibraryView.setRepTarget(parsed.text); save(); }
+    },
     setRepTarget(value) {
+      const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
+      const range = (b?.columns || []).includes('reps_range');
       const parsed = root.HybridLibrary.parseRepTarget(value);
-      if (!parsed) { root.S.libUi.repError = 'Enter positive whole reps, with the lower number first: 8 or 6-8.'; save(); return; }
+      if (!parsed || (!range && parsed.min !== parsed.max)) { root.S.libUi.repError = range ? 'Enter positive whole reps, with the lower number first.' : 'Select Rep Range to enter a range.'; save(); return; }
       root.S.libUi.repError = null;
       root.S.library = root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, { repTarget: parsed.text });
-      const help = root.document?.getElementById('libRepHelp');
-      if (help) help.textContent = 'Enter a rep count or range, for example 8 or 6-8.';
       save({ paint: false });
     },
     setCols(c1, c2) {
       const cols = [c1, c2].filter((k) => k && k !== 'none');
-      setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, { columns: cols.length ? cols : ['reps'] }));
+      const columns = cols.length ? cols : ['reps'];
+      const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
+      const parsed = root.HybridLibrary.parseRepTarget(b?.repTarget);
+      const patch = {columns};
+      if (parsed && !columns.includes('reps_range')) patch.repTarget = String(parsed.min);
+      numberPad = null; root.S.libUi.repError = null;
+      setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch));
     },
     removeBlock(bid) { setLib(root.HybridLibrary.removeBlock(lib(), ui().tid, bid)); },
     reorder() {
