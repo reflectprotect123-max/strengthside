@@ -32,6 +32,8 @@
         const floor = newer(installed, bundled) ? installed : bundled;
         emit({ current: floor });
         const latest = await p.getLatest({ channel: 'strength-live' });
+        if (latest.kind === 'up_to_date' || latest.error === 'no_new_version_available') return emit({ status: 'current', message: 'Your app is up to date.' });
+        if (latest.kind === 'blocked') return emit({ status: 'error', message: 'No compatible live update is available for this APK.' });
         if (latest.error) throw new Error('Update check failed');
         if (latest.breaking || latest.major) return emit({ status: 'error', message: 'This update needs a new APK install.' });
         if (!newer(latest.version, floor) || !latest.url) return emit({ status: 'current', message: 'Your app is up to date.' });

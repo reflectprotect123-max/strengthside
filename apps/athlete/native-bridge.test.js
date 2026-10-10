@@ -26,3 +26,8 @@ test('browser explains that updates require the phone install',async()=>{
  const {root}=setup();root.Capacitor.isNativePlatform=()=>false;
  assert.equal((await root.NativeBridge.probeLiveUpdate({refresh:true})).status,'browser');
 });
+
+test('Capgo no-new-version response is a successful check',async()=>{
+ const {root,calls}=setup({error:'no_new_version_available',kind:'up_to_date'});
+ assert.equal((await root.NativeBridge.probeLiveUpdate({refresh:true})).status,'current');assert.ok(!calls.includes('download'));
+});
