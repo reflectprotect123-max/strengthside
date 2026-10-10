@@ -27,7 +27,8 @@ test('explicit rack supersedes inferred loads and filters invalid entries withou
  const page={...db,availableLoads:Object.freeze([18,6,NaN,-1,Infinity,6,null,'',true,'12'])};Object.freeze(page);
  assert.deepEqual(plain(E.profile(page).loads),[6,12,18]);
  assert.equal(E.next(6,page),12);assert.equal(E.floor(10,page),6);assert.equal(E.next(18,page),null);
- assert.equal(E.next(10,{...db,availableLoads:[]}),null);
+ assert.equal(E.next(10,{...db,availableLoads:[]}),12.5);
+ assert.equal(E.next(10,{...db,availableLoads:[NaN,-1,null]}),12.5);
 });
 test('upward caps hold and coarse downward reductions stop at known minimum',()=>{
  assert.equal(E.round(12.5,10,db,{upCap:.15,downCap:.15}),10);
@@ -55,6 +56,8 @@ test('versioned provisional exercise starters use exact conventions and defaults
  assert.equal(E.starter({...db,loadConvention:'single',title:'Goblet Squat'}).kg,6);
  assert.equal(E.starter({...db,equipmentId:undefined,title:'DB Bench Press'}).kg,5);
  assert.equal(E.starter({...db,equipmentId:'machine',title:'DB Bench Press'}).kg,null);
+ assert.equal(E.starter({...db,equipmentId:' Dumbbell ',title:'DB Bench Press'}).kg,5);
+ assert.equal(E.next(10,{...db,equipmentId:' Dumbbell '}),12.5);
  assert.equal(E.starter({...db,title:'Bench Press',availableLoads:[2,4,6]}).kg,4);
 });
 test('unknown equipment, units, conventions and unrelated exercises do not start or convert',()=>{
@@ -68,4 +71,14 @@ test('invalid numeric values never become automatic loads',()=>{
  for(const value of [NaN,Infinity,-1,null,undefined,'',true]){
   assert.equal(E.floor(value,db),null);assert.equal(E.next(value,db),null);assert.equal(E.round(value,10,db),null);assert.equal(E.round(10,value,db),null);
  }
+});
+
+test('legacy unspecified rack uses declared generic steps without inventing a starter',()=>{
+ const page={equipmentStepKg:2.5,minimumKg:0,loadUnit:'kg',loadConvention:'total',availableLoads:[],title:'Squat'};
+ assert.equal(E.next(40,page),42.5);assert.equal(E.round(42.5,40,page,{upCap:.1}),42.5);
+ assert.equal(E.starter(page).kg,null);
+ const offset={...page,minimumKg:3,equipmentStepKg:4};
+ assert.equal(E.floor(10,offset),7);assert.equal(E.next(7,offset),11);
+ assert.equal(E.floor(2,offset),null);assert.equal(E.round(1,3,offset,{downCap:.1}),3);
+ assert.equal(E.next(1e12+3,offset),1e12+7);
 });

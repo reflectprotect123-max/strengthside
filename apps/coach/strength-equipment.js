@@ -7,43 +7,48 @@
     const n=Number(value);return Number.isFinite(n)&&n>=0?n:null;
   }
   function identity(page) {
-    if(page.equipmentId)return page.equipmentId;
+    if(typeof page.equipmentId==='string'&&page.equipmentId.trim())return page.equipmentId.trim().toLowerCase();
     const title=page.title||'';
     if(/\bdumbbell\b|\bdb\b/i.test(title))return 'dumbbell';
     if(/\bbarbell\b/i.test(title))return 'barbell';
     return '';
   }
   function unique(loads) {return [...new Set(loads)].sort((a,b)=>a-b);}
+  function explicitLoads(page) {
+    return Array.isArray(page.availableLoads)?unique(page.availableLoads.map(number).filter(n=>n!=null)):[];
+  }
   function metadata(page) {
     const unit=page.loadUnit||'',convention=page.loadConvention||'',equipment=identity(page);
     const declared=number(page.minimumKg)??number(page.barWeightKg);
     const db=equipment==='dumbbell'&&unit==='kg'&&['per_hand','single'].includes(convention);
     const bar=equipment==='barbell'&&unit==='kg'&&convention==='total'&&declared!=null;
-    return {unit,convention,declared,db,bar};
+    const grid=(number(page.equipmentStepKg)??0)>0&&declared!=null;
+    return {unit,convention,declared,db,bar,grid};
   }
   function profile(page={}) {
     const m=metadata(page);
-    if(Array.isArray(page.availableLoads)) {
-      const loads=unique(page.availableLoads.map(number).filter(n=>n!=null));
+    const explicit=explicitLoads(page);
+    if(explicit.length) {
+      const loads=explicit;
       return {loads,step:0,min:loads[0]??0,convention:m.convention,unit:m.unit};
     }
-    const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):0;
-    const min=m.db?Math.max(1,m.declared??1):m.bar?m.declared:0;
-    const loads=m.db?[1,2,3,4,5,6,7,8,9,10,12.5,15,17.5,20].filter(n=>n>=min):m.bar?[min,min+step]:[];
+    const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?number(page.equipmentStepKg):0;
+    const min=m.db?Math.max(1,m.declared??1):m.bar||m.grid?m.declared:0;
+    const loads=m.db?[1,2,3,4,5,6,7,8,9,10,12.5,15,17.5,20].filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
     return {loads,step,min,convention:m.convention,unit:m.unit};
   }
   // Seed profiles stay compact; supply neighboring rungs around every queried value.
   // This covers high loads without allocating a ladder with an arbitrary upper limit.
   function rack(page,values) {
     const p=profile(page),m=metadata(page);
-    if(Array.isArray(page.availableLoads)||!p.step)return p.loads;
+    if(explicitLoads(page).length||!p.step)return p.loads;
     const loads=[...p.loads];
     for(const value of [...values,p.min]) {
       const base=m.db?10:p.min;
       const index=Math.floor((value-base)/p.step);
       for(const offset of [-1,0,1,2]) {
         const n=base+(index+offset)*p.step;
-        if(n>=p.min&&(m.bar||n>=12.5)&&Number.isFinite(n))loads.push(n);
+        if(n>=p.min&&(!m.db||n>=12.5)&&Number.isFinite(n))loads.push(n);
       }
     }
     return unique(loads);
