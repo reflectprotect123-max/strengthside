@@ -407,11 +407,13 @@
       await waitForSupabase();
       const { data, error } = await client().auth.signInWithPassword({ email: em, password: pw });
       if (error) throw error;
+      if (global.StrengthMemory && data.user) await global.StrengthMemory.bind(data.user.id);
       st().email = (data.user && data.user.email) || em;
       if (typeof global.save === 'function') global.save();
       ui.message = '';
       ui.busy = false;
-      if (typeof global.resetBlankSlate === 'function') global.resetBlankSlate(true);
+      // Signing in must preserve completed sets and pending offline writes.
+      if (global.StrengthMemory) global.StrengthMemory.schedule(0);
       try { await syncAll(); } catch (_) { /* sync is optional immediately after sign-in */ }
       if (typeof global.setTab === 'function') global.setTab('home');
       else if (typeof global.render === 'function') global.render();

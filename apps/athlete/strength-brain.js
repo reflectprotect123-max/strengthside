@@ -43,7 +43,7 @@
     return 'average'; // Max-effort testing and automatic harder-set schedules are deferred.
   }
   function next({page,row,nextRow,index=0}) {
-    const kg=Number(row.kg),reps=Number(row.reps),desired=row.purpose!=='ramp'&&row.effort==='hard'&&index>=page.setCount-1?'hard':target(page,nextRow,index);
+    const kg=Number(row.kg),reps=Number(row.reps),desired=row.purpose!=='ramp'&&row.effort==='hard'&&(nextRow?.workingIndex??index)>=page.setCount-1?'hard':target(page,nextRow,index);
     if(!eligible(page)||!Number.isFinite(kg)||kg<=0)return {kg:row.kg,target:desired,ruleVersion:VERSION};
     let value=kg,up=.05,down=.05;
     if(row.miss||reps<page.targetReps){value=kg*.9;down=.1;}
@@ -115,11 +115,12 @@
       if(positive(working))working=e.loads.length?e.loads.filter(x=>x<=working).at(-1)??null:Math.max(e.min,Math.floor(working/e.step)*e.step);
       page.workingKg=working;page.startConfidence=positive(working)?'history':'unknown';
       // First main lift ramps; explicit classification controls subsequent heavy lifts/accessories.
-      const main=page.exerciseType==='main'||(!mainSeen&&page.exerciseType!=='accessory');mainSeen=true;
+      const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
+      const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
       const count=page.rampCount===0?0:main?2:page.rampCount===2?2:0;
       const start=positive(working)?Math.max(e.min,e.loads.length?e.loads.filter(x=>x<=working*.5).at(-1)??e.loads[0]:Math.floor(working*.5/e.step)*e.step):null;
       const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),purpose:'ramp',reps:page.targetReps,kg:i===0?start:null,cells:{},logged:false,miss:false}));
-      log.sets=ramps.concat(log.sets.map((r,i)=>({...r,id:r.id||root.crypto.randomUUID(),purpose:'working',kg:count?null:i===0?working??r.kg:r.kg})));
+      log.sets=ramps.concat(log.sets.map((r,i)=>({...r,id:r.id||root.crypto.randomUUID(),purpose:'working',workingIndex:i,kg:count?null:i===0?working??r.kg:r.kg})));
     }
     s.brainSeeded=true;return s;
   }

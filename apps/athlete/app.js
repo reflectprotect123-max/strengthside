@@ -27,6 +27,17 @@ const defaultState = () => ({
   chatUnread: 0,
 });
 
+function bindStrengthAccount(uid) {
+  const previous = S.accountId || window.StrengthMemory?.ownerId();
+  if (previous && previous !== uid) {
+    localStorage.setItem(STORAGE_KEY + ':account:' + previous, JSON.stringify(S));
+    const archived = localStorage.getItem(STORAGE_KEY + ':account:' + uid);
+    S = archived ? { ...defaultState(), ...StrengthOnly.cleanState(JSON.parse(archived)) } : defaultState();
+    window.S = S;
+  }
+  S.accountId = uid;
+}
+
 function resetBlankSlate(keepAuth = true) {
   const whoop = keepAuth && S.settings?.whoop
     ? { ...S.settings.whoop }

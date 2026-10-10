@@ -302,6 +302,7 @@
         setStatus({ busy: false, lastError: 'auth_required' });
         return { ok: false, reason: 'auth_required' };
       }
+      if (root.StrengthMemory) await root.StrengthMemory.bind(uid);
       let state = readState();
       let local = pack(state);
       const remoteWrap = await io.pull();

@@ -19,7 +19,6 @@
 
   function persist(next) {
     root.S.session = next;
-    root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     paint();
@@ -49,6 +48,7 @@
     } else {
       root.S.session = HS.startSession({ date: d, plan: p, existing });
     }
+    root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');
@@ -440,13 +440,14 @@
   }
 
   function sideHtml(s, page) {
-    const wm = (s.workingMax && s.workingMax[page.id]) || '';
+    const past = root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
+    const wm = past.rolling ? Math.round(past.rolling * 10) / 10 : (s.workingMax && s.workingMax[page.id]) || '';
     return `
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
         <div class="log-side">
-          <div class="log-side-row"><span>WORKING MAX</span><button type="button" class="log-add" onclick="Logger.sheet('wm')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
-          <div class="log-side-row"><span>LAST</span><span>${wm ? esc(wm) : 'None'}</span></div>
+          <div class="log-side-row"><span>EST. 1RM</span><button type="button" class="log-add" onclick="Logger.sheet('wm')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
+          <div class="log-side-row"><span>LAST</span><span>${past.latest ? esc(past.latest.rows.filter(r=>r.logged && r.purpose!=='ramp').at(-1)?.kg || '') + ' kg' : 'None'}</span></div>
         </div>
       </div>`;
   }
@@ -511,13 +512,13 @@
     const position = EFFORTS.indexOf(chosen || target || 'average');
     const done = flow.index < 0;
     const rows = flow.rows;
-    const repTarget = page.targetReps == null ? 'MAX' : page.targetRepMax > page.targetReps ? `${page.targetReps}–${page.targetRepMax}` : page.targetReps;
+    const repTarget = flow.rows[flow.index]?.purpose === 'ramp' ? page.targetReps : page.targetReps == null ? 'MAX' : page.targetRepMax > page.targetReps ? `${page.targetReps}–${page.targetRepMax}` : page.targetReps;
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Warm-up':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(r.kg)} kg × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
       <section class="log-active-set" data-exercise="${id}">
-        <div class="log-set-heading"><h3>${done ? `All ${rows.length} sets recorded` : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Warm-up ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)} reps</span>`}</div>
+        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Warm-up ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)} reps</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
           <label>Reps completed<input class="log-cell" type="number" inputmode="numeric" min="0" step="1" value="${esc(flow.draft.reps)}" oninput="Logger.setField('${id}','reps',this.value)"></label>

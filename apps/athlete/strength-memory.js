@@ -56,6 +56,7 @@
     persist();schedule();
   }
   async function bind(uid) {
+    root.bindStrengthAccount?.(uid);
     if(memory.ownerId&&memory.ownerId!==uid) {
       root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
       try{memory=JSON.parse(root.localStorage.getItem(KEY+':'+uid))||empty();}catch{memory=empty();}
@@ -110,7 +111,7 @@
   function schedule(ms=1500) {if(timer)root.clearTimeout(timer);timer=root.setTimeout(()=>{timer=null;sync().catch(()=>{});},ms);}
   function records(){return memory.records;}
   function getStatus(){return {...status,pending:Object.keys(memory.pending).length};}
-  root.StrengthMemory={capture,records,sync,schedule,restore,getStatus,bind};
+  root.StrengthMemory={capture,records,sync,schedule,restore,getStatus,bind,ownerId:()=>memory.ownerId};
   root.addEventListener?.('online',()=>schedule(0));
   root.addEventListener?.('visibilitychange',()=>{if(root.document?.visibilityState==='visible')schedule(0);});
   restore().then(()=>schedule(0));
