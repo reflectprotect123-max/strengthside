@@ -88,7 +88,7 @@ test('authored reps and ranges reach the session and progression engine', () => 
   const tid=st.templates[0].id;
   st=Lib.addExercise(st,tid,{title:'Back Squat',setCount:3,columns:['reps','weight_kg']});
   const bid=st.templates[0].blocks[0].id;
-  for (const [value,min,max] of [['5',5,5],['6–8',6,8]]) {
+  for (const [value,min,max] of [['1',1,1],['5',5,5],['3-5',3,5],['6–8',6,8],['12-20',12,20],['20-30',20,30],['50-100',50,100]]) {
     st=Lib.patchBlock(st,tid,bid,{repTarget:Lib.parseRepTarget(value).text,targetEffort:'max_effort'});
     const block=Lib.compile(st.templates[0]).blocks.find(b=>b.kind==='lift');
     const page=HybridSession.pagesFromPlan({blocks:[block]})[0];
