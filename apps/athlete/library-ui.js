@@ -130,6 +130,9 @@
           <textarea placeholder="Coach notes for Start Session" onchange="LibraryView.patchTpl({instructions:this.value})">${esc(t.instructions)}</textarea>
         </div>
         ${body}
+        <div style="padding:16px">
+          <button type="button" class="lib-primary" onclick="LibraryView.calendar('${esc(t.id)}',true)">Post to calendar</button>
+        </div>
         <div class="lib-row-btns">
           <button type="button" onclick="LibraryView.picker('exercises')">+ Add Exercise</button>
           <button type="button" onclick="LibraryView.picker('circuits')">+ Add Circuit</button>
@@ -257,16 +260,16 @@
     return `
       <div class="shell-screen shell-screen--library">
         <div class="lib-head-row">
-          <button type="button" class="lib-back" onclick="LibraryView.goList()">←</button>
-          <h1>Add to calendar</h1>
+          <button type="button" class="lib-back" onclick="LibraryView.calendarBack()" aria-label="Back">←</button>
+          <h1>Post to calendar</h1>
         </div>
         <div class="lib-field">
-          <label>Date</label>
-          <input type="date" value="${esc(date)}" onchange="LibraryView.setDate(this.value)">
+          <label for="sessionPostDate">Session date</label>
+          <input id="sessionPostDate" type="date" value="${esc(date)}" onchange="LibraryView.setDate(this.value)">
         </div>
         <p class="lib-empty" style="text-align:left;padding:0 16px 12px">Lands on your Training tab only — no other athletes.</p>
         <div style="padding:0 16px">
-          <button type="button" class="lib-primary" onclick="LibraryView.confirmDate()">Add to calendar</button>
+          <button type="button" class="lib-primary" onclick="LibraryView.confirmDate()">Post to calendar</button>
         </div>
         <p class="lib-empty">${esc(t && t.title)}</p>
       </div>`;
@@ -374,12 +377,17 @@
       while (steps--) st = root.HybridLibrary.moveBlock(st, ui().tid, id, dir);
       setLib(st);
     },
-    calendar(tid) {
-      go('calendar', { tid, date: typeof root.today === 'function' ? root.today() : '' });
+    calendar(tid, fromEditor) {
+      go('calendar', { tid, fromEditor: !!fromEditor, date: typeof root.today === 'function' ? root.today() : '' });
     },
+    calendarBack() { if (ui().fromEditor) go('edit'); else LibraryView.goList(); },
     setDate(d) { root.S.libUi.date = d; save(); },
     confirmDate() {
-      const date = ui().date || (typeof root.today === 'function' ? root.today() : '');
+      const date = ui().date || '';
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { root.alert('Choose a session date.'); return; }
+      if (root.S.sessions && root.S.sessions[date]) { root.alert('This day already has a workout in progress or completed. Choose another day.'); return; }
+      const assigned = lib().assignments[date];
+      if (assigned && assigned !== ui().tid && !root.confirm('Replace the session already planned for this day?')) return;
       setLib(root.HybridLibrary.assignDate(lib(), ui().tid, date));
       if (typeof root.selectDate === 'function') root.selectDate(date);
       root.S.tab = 'training';

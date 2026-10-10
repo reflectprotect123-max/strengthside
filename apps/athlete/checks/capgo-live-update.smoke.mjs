@@ -13,7 +13,7 @@ assert.equal(config.plugins.CapacitorUpdater.autoUpdate,'onlyDownload');
 assert.equal(pkg.dependencies['@capgo/capacitor-updater'],'8.52.1');
 assert.ok(read('apps/athlete/index.html').includes('capgo-updates.js'));
 assert.ok(read('apps/athlete/capgo-updates.js').includes('notifyAppReady'));
-assert.ok(read('apps/athlete/capgo-updates.js').includes("kind: 'kill'"));
+assert.ok(read('apps/athlete/native-bridge.js').includes("kind: 'kill'"));
 const ship=read('apps/mobile/capacitor/scripts/ship-capgo.sh');
 assert.ok(ship.includes('--min-update-version 1.2.4'));
 assert.ok(ship.includes('--path ../../athlete --channel strength-live'));

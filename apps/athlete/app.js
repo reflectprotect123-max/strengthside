@@ -611,7 +611,9 @@ function meAppSectionHtml() {
     <div class="card account-compact">
       <div class="eyebrow">App</div>
       <p class="stub">${otaLine} · ${esc(APP_BUILD)}</p>
+      <p class="stub" role="status">${esc(otaInfo.message || '')}</p>
       <div class="account-actions">
+        <button type="button" class="btn" onclick="lookForAppUpdate()" ${['checking','available'].includes(otaInfo.status) ? 'disabled' : ''}>Update app</button>
         <button type="button" class="btn" onclick="openHistory()">Training history</button>
         <button type="button" class="btn" onclick="trySliderDemo()">Try slider demo</button>
       </div>
@@ -667,11 +669,7 @@ async function lookForAppUpdate() {
     if (S.tab === 'me') render();
     return;
   }
-  if (otaInfo.status === 'browser') {
-    window.alert('App updates run on the phone install — not in the browser.');
-    return;
-  }
-  window.alert(`You're on ${otaInfo.current || APP_BUILD}. No new version is ready.`);
+
 }
 
 function meHtml() {

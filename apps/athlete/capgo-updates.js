@@ -8,8 +8,7 @@
     await updater.addListener('updateAvailable', async ({ bundle }) => {
       if (!bundle?.id) return;
       try {
-        await updater.setMultiDelay({ delayConditions: [{ kind: 'kill' }] });
-        await updater.next({ id: bundle.id });
+        await window.NativeBridge.queueLiveUpdate(bundle);
       } catch (error) { console.warn('Live update scheduling failed', error); }
     });
     // A bundle is healthy only after the strength UI has rendered.
