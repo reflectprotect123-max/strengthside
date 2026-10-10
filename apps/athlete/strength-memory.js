@@ -25,6 +25,17 @@
     if(!root.Capacitor?.isNativePlatform?.()||root.localStorage.getItem(KEY))return;
     try{const r=await filesystem().readFile({path:'strength-memory-v1.json',directory:'DATA',encoding:'utf8'});const saved=JSON.parse(r.data);if(saved.version===VERSION){memory=saved;persist();}}catch{/* First install has no backup. */}
   }
+  function clone(value){return value==null?value:JSON.parse(JSON.stringify(value));}
+  function stable(value) {
+    if(Array.isArray(value))return value.map(stable);
+    if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(key=>[key,stable(value[key])]));
+    return value;
+  }
+  function signature(value) {
+    const text=JSON.stringify(stable(value));let hash=2166136261;
+    for(let i=0;i<text.length;i++){hash^=text.charCodeAt(i);hash=Math.imul(hash,16777619);}
+    return `fnv1a32:${(hash>>>0).toString(16).padStart(8,'0')}`;
+  }
   function fingerprint(r){return JSON.stringify([r.sessionId,r.exerciseKey,r.kind,r.deleted,r.payload]);}
   function put(record) {
     const old=memory.records[record.id];
@@ -32,6 +43,33 @@
     const rev=(old?.localRevision||0)+1;
     memory.records[record.id]={...record,localRevision:rev};
     memory.pending[record.id]=rev;
+  }
+  function authoredTargets(page) {
+    try{return clone(root.StrengthTargets.normalize(page));}catch{return clone(page?.setTargets||null);}
+  }
+  function prescriptionSignature(page) {
+    return signature({exerciseKey:root.StrengthBrain.key(page),targets:authoredTargets(page),columns:page.columns||[],logMode:page.logMode||null});
+  }
+  function currentSets(exerciseKey) {
+    return Object.values(memory.records).filter(r=>r.kind==='set'&&!r.deleted&&r.exerciseKey===exerciseKey&&r.payload?.row&&r.payload?.page);
+  }
+  function replay(exerciseKey) {
+    const sessions=new Map();
+    for(const record of currentSets(exerciseKey)) {
+      const payload=record.payload,bucket=sessions.get(record.sessionId)||{page:payload.page,records:[],at:payload.sessionStartedAt||payload.date||0,sessionId:record.sessionId};
+      bucket.records.push(record);sessions.set(record.sessionId,bucket);
+    }
+    let state={freshE1rm:null,exposures:0,confidence:'unknown',modelVersion:root.StrengthBrain.VERSION,lastSourceSignature:null};
+    const evidence=[];
+    for(const bucket of [...sessions.values()].sort((a,b)=>String(a.at).localeCompare(String(b.at))||a.sessionId.localeCompare(b.sessionId))) {
+      bucket.records.sort((a,b)=>(a.payload.row.ordinal||0)-(b.payload.row.ordinal||0));
+      const result=root.StrengthBrain.review(bucket.page,bucket.records.map(r=>r.payload.row));
+      if(!Number.isFinite(Number(result.e1rm))||Number(result.e1rm)<=0||!result.sourceSetIds?.length)continue;
+      const sourceSignature=signature(bucket.records.map(r=>({id:r.id,revision:r.localRevision||0,content:fingerprint(r)})));
+      state=root.StrengthBrainCore.learn(state,{estimate:result.e1rm,sourceSignature,modelVersion:root.StrengthBrain.VERSION});
+      evidence.push({sessionId:bucket.sessionId,estimate:result.e1rm,sourceSignature,sourceSetIds:result.sourceSetIds});
+    }
+    return {...state,evidence};
   }
   function capture(session) {
     if(!session||session.demo)return;
@@ -41,16 +79,18 @@
     session.brainEstimateIds=session.brainEstimateIds||{};
     for(const outer of session.pages||[])for(const page of outer.members||[outer]) {
       if(page.kind!=='lift')continue;
-      const rows=session.logs?.[page.id]?.sets||[];
+      const rows=session.logs?.[page.id]?.sets||[],exerciseKey=root.StrengthBrain.key(page),targets=authoredTargets(page);
       rows.forEach((row,index)=>{
         row.id=row.id||root.crypto.randomUUID();alive.add(row.id);
         if(!row.logged&&!memory.records[row.id])return;
-        put({id:row.id,sessionId:session.id,exerciseKey:root.StrengthBrain.key(page),kind:'set',deleted:!row.logged,payload:{page:{...page},row:{...row,ordinal:index},sessionStartedAt:session.startedAt,date:session.date}});
+        put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:2,authoredTargets:targets,page:clone(page),row:{...clone(row),ordinal:index,context:clone(row.context||{})},sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
       });
+      for(const record of Object.values(memory.records))if(record.kind==='set'&&record.sessionId===session.id&&record.exerciseKey===exerciseKey&&!alive.has(record.id)&&!record.deleted)put({...record,deleted:true});
       if(root.StrengthBrain.eligible(page) && (rows.some(r=>r.logged) || session.brainEstimateIds[page.id])) {
         const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
-        const result=root.StrengthBrain.review(page,rows);
-        put({id,sessionId:session.id,exerciseKey:root.StrengthBrain.key(page),kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,sourceSetIds:rows.filter(r=>r.logged && r.purpose!=='ramp').map(r=>r.id),rollingE1rm:root.StrengthBrain.history(memory.records,page).rolling,sessionStartedAt:session.startedAt,date:session.date}});
+        const result=root.StrengthBrain.review(page,rows),state=replay(exerciseKey);
+        const ownEvidence=state.evidence.find(e=>e.sessionId===session.id);
+        put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,sourceSetIds:result.sourceSetIds||[],sourceSignature:ownEvidence?.sourceSignature||null,prescriptionSignature:prescriptionSignature(page),freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date}});
       }
     }
     for(const r of Object.values(memory.records))if(r.kind==='set'&&r.sessionId===session.id&&!alive.has(r.id)&&!r.deleted)put({...r,deleted:true});
@@ -116,7 +156,7 @@
   }
   function records(){return memory.records;}
   function getStatus(){return {...status,pending:Object.keys(memory.pending).length};}
-  root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,ownerId:()=>memory.ownerId};
+  root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,replay,ownerId:()=>memory.ownerId};
   root.addEventListener?.('online',()=>schedule(0));
   root.addEventListener?.('visibilitychange',()=>{if(root.document?.visibilityState==='visible')schedule(0);});
   restore().then(()=>schedule(0));

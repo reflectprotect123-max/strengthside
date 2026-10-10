@@ -92,6 +92,12 @@ test('logSet kg updates totals and check', () => {
   assert.equal(t.kg, 60);
 });
 
+test('logSet preserves the requested rest as set evidence', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'B' });
+  s = HybridSession.logSet(s, 0, { kg: 60, effort: 'medium', context: { requestedRestSec: 120, elapsedRestSec: null } });
+  assert.deepEqual(s.logs.B.sets[0].context, { requestedRestSec: 120, elapsedRestSec: null });
+});
+
 test('logSet MAX writes reps on the F2 member of the pair page', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'F2' });
   assert.equal(s.pages[s.blockIndex].id, 'F');

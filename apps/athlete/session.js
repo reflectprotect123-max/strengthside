@@ -299,6 +299,7 @@
     }
     if (patch.miss != null) row.miss = !!patch.miss;
     if (patch.effort !== undefined) row.effort = patch.effort;
+    if (patch.context && typeof patch.context === 'object') row.context = { ...(row.context || {}), ...patch.context };
     row.logged = options.commit === false ? false : canLogRow(row, liftPage);
     return s;
   }

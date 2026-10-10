@@ -806,6 +806,8 @@
       if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
       const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
       if (lift.logMode === 'kg') patch.kg = Number.isFinite(kg) ? kg : null;
+      const selectedRest=(s.restChoices||{})[page.id];
+      patch.context={requestedRestSec:selectedRest?Math.round(selectedRest/1000):null,elapsedRestSec:null};
       const next = HybridSession.logSet(s, f.index, patch, memberId);
       const rows = next.logs[memberId].sets;
       const index = rows.findIndex(r => !r.logged && !r.skipped);

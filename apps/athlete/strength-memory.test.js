@@ -46,3 +46,34 @@ test('explicit session removal tombstones its sets and estimates without touchin
  assert.ok(Object.values(M.records()).filter(r=>r.sessionId===a.id).every(r=>r.deleted));
  assert.ok(Object.values(M.records()).filter(r=>r.sessionId===b.id).every(r=>!r.deleted));
 });
+
+test('set evidence snapshots authored targets and selected rest context',()=>{
+ const {M}=create(),s=session();
+ s.pages[0].setTargets=[{id:'A:set:0',purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'}}];
+ s.logs.A.sets[0].targetId='A:set:0';s.logs.A.sets[0].context={requestedRestSec:120,elapsedRestSec:null};
+ M.capture(s);const set=Object.values(M.records()).find(r=>r.kind==='set');
+ s.pages[0].setTargets[0].reps.max=99;
+ assert.equal(set.payload.contractVersion,2);assert.equal(set.payload.authoredTargets[0].reps.max,8);
+ assert.equal(JSON.stringify(set.payload.row.context),JSON.stringify({requestedRestSec:120,elapsedRestSec:null}));
+ assert.match(set.payload.prescriptionSignature,/^fnv1a32:/);
+});
+
+test('chronological replay learns one exposure per session and replaces edited evidence',()=>{
+ const {M}=create(),a=session(),b=session();a.startedAt=1;b.startedAt=2;
+ M.capture(a);M.capture(b);
+ let state=M.replay('squat|default|total|kg');
+ assert.equal(state.exposures,2);assert.equal(state.confidence,'provisional');
+ const prior=state.freshE1rm,signature=state.evidence[0].sourceSignature;
+ a.logs.A.sets[0].kg=50;M.capture(a);state=M.replay('squat|default|total|kg');
+ assert.equal(state.exposures,2);assert.notEqual(state.freshE1rm,prior);assert.notEqual(state.evidence[0].sourceSignature,signature);
+ M.removeSession(a.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,1);
+ M.removeSession(b.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,0);assert.equal(state.freshE1rm,null);
+});
+
+test('derived estimate carries traceable model and source metadata without trusting old estimates',()=>{
+ const {M}=create(),s=session();M.capture(s);
+ const estimate=Object.values(M.records()).find(r=>r.kind==='session_estimate');
+ assert.equal(estimate.payload.exposures,1);assert.equal(estimate.payload.confidence,'provisional');
+ assert.equal(estimate.payload.modelVersion,'strength-v2-conservative');assert.match(estimate.payload.sourceSignature,/^fnv1a32:/);
+ assert.equal(JSON.stringify(estimate.payload.sourceSetIds),JSON.stringify([s.logs.A.sets[0].id]));
+});
