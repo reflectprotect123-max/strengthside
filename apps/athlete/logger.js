@@ -638,8 +638,8 @@
   function padHtml() {
     if (!pad) return '';
     const unit = (session().unit || 'kg') === 'lb' ? 'lb' : 'kg';
-    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'];
-    const keyBtns = keys.map((k) => `<button type="button" onclick="Logger.padKey('${k}')">${k}</button>`).join('');
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', pad.field === 'reps' ? null : '.', '0', '⌫'];
+    const keyBtns = keys.map((k) => k === null ? '<span></span>' : `<button type="button" onclick="Logger.padKey('${k}')">${k}</button>`).join('');
     return `
       <div class="log-pad">
         <div class="log-pad-head">
@@ -861,7 +861,10 @@
     padKey(k) {
       if (!pad) return;
       if (k === '⌫') pad.buffer = String(pad.buffer || '').slice(0, -1);
-      else pad.buffer = `${pad.buffer || ''}${k}`.replace(/^0+(\d)/, '$1');
+      else {
+        if (!/^\d$/.test(k) && !(k === '.' && pad.field !== 'reps' && !pad.buffer.includes('.'))) return;
+        pad.buffer = `${pad.buffer || ''}${k}`.replace(/^0+(\d)/, '$1');
+      }
       paint();
     },
     padMiss() { if (pad) { pad.miss = !pad.miss; paint(); } },

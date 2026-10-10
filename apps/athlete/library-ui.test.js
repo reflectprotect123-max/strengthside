@@ -63,7 +63,8 @@ test('exercise builder accepts authored reps without exposing engine controls', 
   S.library=HybridLibrary.addExercise(S.library,tid,{title:'Squat'});
   const bid=S.library.templates[0].blocks.at(-1).id;
   LibraryView.open(tid);LibraryView.editBlock(bid);
-  assert.match(LibraryView.html(),/Reps \/ rep range/);
+  assert.match(LibraryView.html(),/>Reps<\/label>/);
+  LibraryView.setCols('reps_range','weight_kg');
   assert.doesNotMatch(LibraryView.html(),/Target difficulty|Smallest weight/);
   LibraryView.setRepTarget('6–8');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6-8');
   LibraryView.setRepTarget('8-6');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6-8');assert.match(LibraryView.html(),/lower number first/);
@@ -72,4 +73,18 @@ test('exercise builder accepts authored reps without exposing engine controls', 
 test('new exercise and circuit forms render without editor-only block references', () => {
  LibraryView.newEx();assert.match(LibraryView.html(),/New Exercise/);assert.doesNotMatch(LibraryView.html(),/libRepTarget/);
  LibraryView.newCirc();assert.match(LibraryView.html(),/New Circuit/);assert.doesNotMatch(LibraryView.html(),/libRepTarget/);
+});
+
+
+test('numeric keypad follows the selected metric and cancels without changing values', () => {
+ const tid=S.library.templates[0].id;const bid=S.library.templates[0].blocks.at(-1).id;
+ LibraryView.open(tid);LibraryView.editBlock(bid);LibraryView.setCols('reps','weight_kg');
+ LibraryView.openNumberPad('reps');assert.doesNotMatch(LibraryView.html(),/numberKey\('–'\)/);
+ LibraryView.numberKey('9');LibraryView.closeNumberPad();assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6');
+ LibraryView.setRepTarget('10-12');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6');
+ LibraryView.setCols('reps_range','weight_kg');LibraryView.openNumberPad('reps');assert.match(LibraryView.html(),/numberKey\('–'\)/);
+ for(const key of ['1','2','–','2','0']) LibraryView.numberKey(key);LibraryView.saveNumberPad();
+ assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'12-20');
+ LibraryView.setCols('reps','weight_kg');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'12');
+ LibraryView.openNumberPad('sets');LibraryView.numberKey('0');LibraryView.saveNumberPad();assert.match(LibraryView.html(),/Enter 1–12 sets/);LibraryView.closeNumberPad();
 });

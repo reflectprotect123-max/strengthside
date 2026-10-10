@@ -12,15 +12,14 @@ test('product is Hybrid Strength', () => {
   assert.equal(H.PRODUCT, 'HYBRID STRENGTH');
 });
 
-test('datesFromState collects assignment and session ISO keys', () => {
+test('datesFromState marks scheduled plans, not archived session keys', () => {
   const state = {
-    library: { assignments: { '2026-09-11': 'tpl_a', '2026-09-12': 'tpl_b' } },
+    library: { templates:[{id:'tpl_a',blocks:[{kind:'lift'}]},{id:'tpl_b',blocks:[{kind:'lift'}]}], assignments: { '2026-09-11': 'tpl_a', '2026-09-12': 'tpl_b' } },
     sessions: { '2026-09-12': { date: '2026-09-12' }, '2026-09-15': {} },
   };
   assert.deepEqual(H.datesFromState(state), {
     '2026-09-11': true,
     '2026-09-12': true,
-    '2026-09-15': true,
   });
 });
 
@@ -46,4 +45,10 @@ test('applyOccupancyToState stores only Strength dates', () => {
 
 test('snapshot domains contain only the Strength aliases', () => {
   assert.deepEqual(H.SNAPSHOT_DOMAINS, { strength: ['strength_side', 'strength'] });
+});
+
+test('deleted, orphaned and empty templates cannot leave ghost calendar markers', () => {
+ const archived={phase:'summary',logs:{A:{sets:[{logged:true,reps:8,kg:40}]}}};
+ const state={library:{templates:[{id:'empty',blocks:[]}],assignments:{'2026-10-10':'deleted','2026-10-11':'empty'}},sessions:{'2026-10-10':archived},trainingPlans:{'2026-10-12':{blocks:[{kind:'lift'}]}}};
+ assert.deepEqual(H.datesFromState(state),{'2026-10-12':true});assert.equal(state.sessions['2026-10-10'],archived);
 });

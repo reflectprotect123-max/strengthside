@@ -317,3 +317,9 @@
   color: var(--trn-blue);
   fill: var(--trn-blue);
 }
+
+.lib-number-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.72); }
+.lib-number-pad { position: absolute; max-width: 430px; margin: 0 auto; color: #fff; }
+.lib-number-pad button { color: #fff; border: 0; cursor: pointer; }
+.lib-number-pad .log-pad-head > button { background: transparent; font-size: 28px; }
+.lib-number-pad p { min-height: 20px; font-size: 13px; }
