@@ -1,0 +1,623 @@
+{
+  "schemaVersion": 1,
+  "assumptions": {
+    "capacityModels": [
+      "Epley inverse",
+      "Brzycki inverse",
+      ".025-.031 perturbed endurance"
+    ],
+    "effortBias": "integer -2..2 RIR plus noise",
+    "dayVariation": "approximately 3.5%",
+    "warmups": 2,
+    "restAndSupersetFatigue": "0..4.5%",
+    "programs": [
+      "10/8/6",
+      "5/3/1",
+      "3x6-8",
+      "20/25",
+      "periodic final AMRAP"
+    ],
+    "exposures": [
+      12,
+      50
+    ]
+  },
+  "tuneSeeds": [
+    1101,
+    1102,
+    1103,
+    1104
+  ],
+  "holdoutSeeds": [
+    2201,
+    2202,
+    2203,
+    2204
+  ],
+  "tuning": [
+    {
+      "policyVersion": "strength-v2-conservative",
+      "seeds": [
+        1101,
+        1102,
+        1103,
+        1104
+      ],
+      "strata": {
+        "db_beginner": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 214,
+          "underloaded": 3641,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.04503367003367004,
+          "underloadRate": 0.7662037037037037,
+          "meanEndError": 0.04726367306624532
+        },
+        "db_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 159,
+          "underloaded": 4337,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.03345959595959596,
+          "underloadRate": 0.9126683501683501,
+          "meanEndError": 0.058419990149116675
+        },
+        "bar_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 144,
+          "underloaded": 4432,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.030303030303030304,
+          "underloadRate": 0.9326599326599326,
+          "meanEndError": 0.0784432448588646
+        },
+        "machine_coarse": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 207,
+          "underloaded": 3909,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.043560606060606064,
+          "underloadRate": 0.82260101010101,
+          "meanEndError": 0.04380869076057123
+        }
+      },
+      "aggregate": {
+        "athletes": 576,
+        "sets": 19008,
+        "misses": 724,
+        "underloaded": 16319,
+        "missRate": 0.03808922558922559,
+        "underloadRate": 0.8585332491582491,
+        "meanEndError": 0.05698389970869946,
+        "invariants": {
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0
+        }
+      }
+    },
+    {
+      "policyVersion": "strength-v2-u10-b15",
+      "seeds": [
+        1101,
+        1102,
+        1103,
+        1104
+      ],
+      "strata": {
+        "db_beginner": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 219,
+          "underloaded": 3428,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.046085858585858584,
+          "underloadRate": 0.7213804713804713,
+          "meanEndError": 0.04791490281101182
+        },
+        "db_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 186,
+          "underloaded": 3767,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.039141414141414144,
+          "underloadRate": 0.7927188552188552,
+          "meanEndError": 0.06011339372079038
+        },
+        "bar_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 146,
+          "underloaded": 4371,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.030723905723905723,
+          "underloadRate": 0.9198232323232324,
+          "meanEndError": 0.029132872299640324
+        },
+        "machine_coarse": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 207,
+          "underloaded": 3909,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.043560606060606064,
+          "underloadRate": 0.82260101010101,
+          "meanEndError": 0.04380869076057123
+        }
+      },
+      "aggregate": {
+        "athletes": 576,
+        "sets": 19008,
+        "misses": 758,
+        "underloaded": 15475,
+        "missRate": 0.03987794612794613,
+        "underloadRate": 0.8141308922558923,
+        "meanEndError": 0.04524246489800344,
+        "invariants": {
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0
+        }
+      }
+    },
+    {
+      "policyVersion": "strength-v2-u10-b25",
+      "seeds": [
+        1101,
+        1102,
+        1103,
+        1104
+      ],
+      "strata": {
+        "db_beginner": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 219,
+          "underloaded": 3428,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.046085858585858584,
+          "underloadRate": 0.7213804713804713,
+          "meanEndError": 0.04791490281101182
+        },
+        "db_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 186,
+          "underloaded": 3767,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.039141414141414144,
+          "underloadRate": 0.7927188552188552,
+          "meanEndError": 0.06011339372079038
+        },
+        "bar_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 146,
+          "underloaded": 4371,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.030723905723905723,
+          "underloadRate": 0.9198232323232324,
+          "meanEndError": 0.029132872299640324
+        },
+        "machine_coarse": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 207,
+          "underloaded": 3909,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.043560606060606064,
+          "underloadRate": 0.82260101010101,
+          "meanEndError": 0.04380869076057123
+        }
+      },
+      "aggregate": {
+        "athletes": 576,
+        "sets": 19008,
+        "misses": 758,
+        "underloaded": 15475,
+        "missRate": 0.03987794612794613,
+        "underloadRate": 0.8141308922558923,
+        "meanEndError": 0.04524246489800344,
+        "invariants": {
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0
+        }
+      }
+    },
+    {
+      "policyVersion": "strength-v2-u15-b25-l20",
+      "seeds": [
+        1101,
+        1102,
+        1103,
+        1104
+      ],
+      "strata": {
+        "db_beginner": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 272,
+          "underloaded": 3091,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.05723905723905724,
+          "underloadRate": 0.6504629629629629,
+          "meanEndError": 0.046723840721178925
+        },
+        "db_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 210,
+          "underloaded": 3580,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.04419191919191919,
+          "underloadRate": 0.7533670033670034,
+          "meanEndError": 0.07545647049813116
+        },
+        "bar_trained": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 146,
+          "underloaded": 4371,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.030723905723905723,
+          "underloadRate": 0.9198232323232324,
+          "meanEndError": 0.029709772253752296
+        },
+        "machine_coarse": {
+          "athletes": 144,
+          "sets": 4752,
+          "misses": 267,
+          "underloaded": 3579,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.05618686868686869,
+          "underloadRate": 0.7531565656565656,
+          "meanEndError": 0.04388461488690083
+        }
+      },
+      "aggregate": {
+        "athletes": 576,
+        "sets": 19008,
+        "misses": 895,
+        "underloaded": 14621,
+        "missRate": 0.04708543771043771,
+        "underloadRate": 0.7692024410774411,
+        "meanEndError": 0.0489436745899908,
+        "invariants": {
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0
+        }
+      }
+    }
+  ],
+  "selectedBeforeHoldout": {
+    "version": "strength-v2-u10-b15",
+    "upCap": 0.1,
+    "warmupUpCap": 0.1,
+    "downCap": 0.1,
+    "observationBlend": 0.15,
+    "learningBlend": 0.1
+  },
+  "holdout": {
+    "baseline": {
+      "policyVersion": "strength-v2-conservative",
+      "seeds": [
+        2201,
+        2202,
+        2203,
+        2204
+      ],
+      "strata": {
+        "db_beginner": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 2078,
+          "underloaded": 7947,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.10456924315619968,
+          "underloadRate": 0.3999094202898551,
+          "meanEndError": 0.04366876769091925
+        },
+        "db_trained": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 1242,
+          "underloaded": 8388,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.0625,
+          "underloadRate": 0.4221014492753623,
+          "meanEndError": 0.03960078479883584
+        },
+        "bar_trained": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 655,
+          "underloaded": 12606,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.0329609500805153,
+          "underloadRate": 0.6343599033816425,
+          "meanEndError": 0.05213790308785286
+        },
+        "machine_coarse": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 2690,
+          "underloaded": 10524,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.13536634460547503,
+          "underloadRate": 0.5295893719806763,
+          "meanEndError": 0.03879486407989877
+        }
+      },
+      "aggregate": {
+        "athletes": 576,
+        "sets": 79488,
+        "misses": 6665,
+        "underloaded": 39465,
+        "missRate": 0.08384913446054751,
+        "underloadRate": 0.49649003623188404,
+        "meanEndError": 0.043550579914376684,
+        "invariants": {
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0
+        }
+      }
+    },
+    "candidate": {
+      "policyVersion": "strength-v2-u10-b15",
+      "seeds": [
+        2201,
+        2202,
+        2203,
+        2204
+      ],
+      "strata": {
+        "db_beginner": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 1989,
+          "underloaded": 8044,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.10009057971014493,
+          "underloadRate": 0.40479066022544286,
+          "meanEndError": 0.04740079132384595
+        },
+        "db_trained": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 1212,
+          "underloaded": 8797,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.06099033816425121,
+          "underloadRate": 0.4426831723027375,
+          "meanEndError": 0.05425590237637802
+        },
+        "bar_trained": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 699,
+          "underloaded": 12730,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.035175120772946857,
+          "underloadRate": 0.6405998389694042,
+          "meanEndError": 0.05816984332719303
+        },
+        "machine_coarse": {
+          "athletes": 144,
+          "sets": 19872,
+          "misses": 2690,
+          "underloaded": 10524,
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0,
+          "missRate": 0.13536634460547503,
+          "underloadRate": 0.5295893719806763,
+          "meanEndError": 0.03879486407989877
+        }
+      },
+      "aggregate": {
+        "athletes": 576,
+        "sets": 79488,
+        "misses": 6590,
+        "underloaded": 40095,
+        "missRate": 0.0829055958132045,
+        "underloadRate": 0.5044157608695652,
+        "meanEndError": 0.04965535027682894,
+        "invariants": {
+          "invalid": 0,
+          "capViolations": 0,
+          "equipmentViolations": 0,
+          "actualMutations": 0,
+          "wrongReferences": 0,
+          "duplicateLearning": 0,
+          "accountLeaks": 0
+        }
+      }
+    },
+    "gate": {
+      "pass": false,
+      "reasons": [
+        "aggregate:underloading"
+      ]
+    }
+  },
+  "frozenPolicy": {
+    "version": "strength-v2-conservative",
+    "upCap": 0.05,
+    "warmupUpCap": 0.1,
+    "downCap": 0.1,
+    "observationBlend": 0.15,
+    "learningBlend": 0.1
+  },
+  "frozenPolicyHash": "75bf80f104870dc977514c8a49f951ca73d30770f58166a936f7b04cb4005449",
+  "rejectedAfterHoldout": "strength-v2-u10-b15"
+}
