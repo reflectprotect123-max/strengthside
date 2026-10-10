@@ -15,3 +15,9 @@ test('legacy return is ignored; new denial return reports cancellation without s
  await w.Whoop.handleWhoopReturn('com.hybrid.athlete://whoop?status=connected');assert.equal(count,0);
  await w.Whoop.handleWhoopReturn('com.hybrid.strength://whoop?status=denied');assert.equal(count,0);assert.match(w.Whoop.uiMessage(),/cancelled/);assert.equal(w.S.settings.whoop.awaitingReturn,false);
 });
+
+test('undeployed namespaced account endpoint uses the existing authenticated Supabase lane; auth errors do not fall back',async()=>{
+ const urls=[];const w=fixture(async url=>{urls.push(url);if(url.includes('/strength-whoop-status'))return {status:404,ok:false,json:async()=>({error:'not_found'})};return {status:200,ok:true,json:async()=>({whoop:{connected:true}})};});
+ await w.Whoop.refreshStatus();assert.equal(urls.length,2);assert.ok(urls[1].includes('/functions/v1/integrations-status?product=strength'));assert.equal(w.S.settings.whoop.connected,true);
+ let requests=0;const denied=fixture(async()=>{requests++;return {status:401,ok:false,json:async()=>({error:'unauthorized'})};});await assert.rejects(denied.Whoop.refreshStatus(),/Sign in/);assert.equal(requests,1);
+});

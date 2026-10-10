@@ -107,25 +107,18 @@
     const t = data.session?.access_token;
     const requestAccount = user?.id || appState()?.accountId;
     if (!t) { const e = new Error('Sign in to sync WHOOP'); e.code = 'auth_required'; throw e; }
-    const url = fnUrl(path, opts.query);
-    let res;
-    try {
-      res = await fetch(url, {
+    const request = async route => {
+      try {return await fetch(fnUrl(route,opts.query), {
         method,
-        headers: {
-          authorization: 'Bearer ' + t,
-          apikey: SUPABASE_ANON,
-          'x-hybrid-product': hybridProduct(),
-          accept: 'application/json',
-        },
-        cache: 'no-store'
-      });
-    } catch (err) {
-      const e = new Error('WHOOP service is down — try again in a minute');
-      e.cause = err;
-      e.code = 'whoop_unreachable';
-      throw e;
-    }
+        headers: {authorization:'Bearer '+t,apikey:SUPABASE_ANON,'x-hybrid-product':hybridProduct(),accept:'application/json'},
+        cache:'no-store'
+      });}catch(err){const error=new Error('WHOOP service is down — try again in a minute');error.cause=err;error.code='whoop_unreachable';throw error;}
+    };
+    let res = await request(path);
+    if (requestAccount && requestAccount !== appState()?.accountId) throw new Error('Account changed during WHOOP sync');
+    // Compatibility with already-deployed shared endpoints until the new account routes are published.
+    const legacy = {'strength-whoop-status':'integrations-status','strength-whoop-disconnect':'integrations-disconnect'}[path];
+    if(res.status===404&&legacy)res=await request(legacy);
     if (requestAccount && requestAccount !== appState()?.accountId) throw new Error('Account changed during WHOOP sync');
     let body = null;
     try { body = await res.json(); } catch (_) { body = null; }
