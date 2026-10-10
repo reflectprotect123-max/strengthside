@@ -68,3 +68,8 @@ test('exercise builder accepts authored reps without exposing engine controls', 
   LibraryView.setRepTarget('6–8');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6-8');
   LibraryView.setRepTarget('8-6');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6-8');assert.match(LibraryView.html(),/lower number first/);
 });
+
+test('new exercise and circuit forms render without editor-only block references', () => {
+ LibraryView.newEx();assert.match(LibraryView.html(),/New Exercise/);assert.doesNotMatch(LibraryView.html(),/libRepTarget/);
+ LibraryView.newCirc();assert.match(LibraryView.html(),/New Circuit/);assert.doesNotMatch(LibraryView.html(),/libRepTarget/);
+});
