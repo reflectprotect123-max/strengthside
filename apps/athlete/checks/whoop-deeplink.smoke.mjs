@@ -16,7 +16,7 @@ must(existsSync(strings), 'strings.xml missing');
 if (existsSync(manifest) && existsSync(strings)) {
   const xml = readFileSync(manifest, 'utf8');
   const str = readFileSync(strings, 'utf8');
-  must(str.includes('com.hybrid.athlete'), 'scheme com.hybrid.athlete');
+  must(str.includes('com.hybrid.strength'), 'scheme com.hybrid.strength');
   must(/android.intent.action.VIEW/.test(xml), 'VIEW intent');
   must(/android.intent.category.BROWSABLE/.test(xml), 'BROWSABLE');
 }

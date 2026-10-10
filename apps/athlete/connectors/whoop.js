@@ -9,7 +9,7 @@
   }
   const SUPABASE_URL = cfg().supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co';
   const SUPABASE_ANON = cfg().supabaseAnon || '';
-  const NATIVE_APP_ID = 'com.hybrid.athlete';
+  const NATIVE_APP_ID = 'com.hybrid.strength';
   function nativeAppId() {
     return NATIVE_APP_ID;
   }
@@ -64,7 +64,9 @@
   async function syncAuthEmail() {
     try {
       await waitForSupabase();
-      const em = await email();
+      const { data } = await client().auth.getSession();
+      if (data.session?.user && global.StrengthMemory) await global.StrengthMemory.bind(data.session.user.id);
+      const em = data.session?.user?.email || null;
       const w = st();
       if (em && w.email !== em) {
         w.email = em;
@@ -87,6 +89,7 @@
     try {
       if (await token()) await refreshStatus();
     } catch (_) { /* not linked yet */ }
+    if (launchReturnUrl) await handleWhoopReturn(launchReturnUrl);
     if (typeof global.render === 'function') global.render();
     return changed;
   }
@@ -104,7 +107,11 @@
   async function api(path, opts) {
     opts = opts || {};
     const method = opts.method || 'GET';
-    const t = await token();
+    const { data } = await client().auth.getSession();
+    const user = data.session?.user;
+    if (user && global.StrengthMemory) await global.StrengthMemory.bind(user.id);
+    const t = data.session?.access_token;
+    const requestAccount = user?.id || appState()?.accountId;
     if (!t) { const e = new Error('Sign in to sync WHOOP'); e.code = 'auth_required'; throw e; }
     const url = fnUrl(path, opts.query);
     let res;
@@ -125,8 +132,10 @@
       e.code = 'whoop_unreachable';
       throw e;
     }
+    if (requestAccount && requestAccount !== appState()?.accountId) throw new Error('Account changed during WHOOP sync');
     let body = null;
     try { body = await res.json(); } catch (_) { body = null; }
+    if (requestAccount && requestAccount !== appState()?.accountId) throw new Error('Account changed during WHOOP sync');
     if (!res.ok) {
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
       const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
@@ -177,11 +186,14 @@
     let changed = false;
     const recovery = finiteNum(n.recoveryScore), hrv = finiteNum(n.hrvMs), rhr = finiteNum(n.restingHr);
     const sleepPerf = finiteNum(n.sleepPerformance), strain = finiteNum(n.strain);
-    if (recovery != null && recovery >= 0) { c.whoopRecovery = Math.round(recovery); changed = true; }
+    if (recovery != null && recovery >= 0 && recovery <= 100) { c.whoopRecovery = Math.round(recovery); changed = true; }
     if (hrv != null && hrv > 0) { c.hrv = hrv; changed = true; }
     if (rhr != null && rhr > 0) { c.restingHr = rhr; changed = true; }
-    if (sleepPerf != null && sleepPerf > 0) { c.whoopSleepPerformance = Math.round(sleepPerf); changed = true; }
-    if (strain != null && strain > 0) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
+    if (sleepPerf != null && sleepPerf >= 0 && sleepPerf <= 100 && (!global.StrengthHome || n.metricDates?.sleepPerformance === sampleDate)) { c.whoopSleepPerformance = Math.round(sleepPerf); changed = true; }
+    if (strain != null && strain >= 0 && strain <= 21 && (!global.StrengthHome || n.metricDates?.strain === sampleDate)) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
+    if (global.StrengthHome && appState()) {
+      changed = !!global.StrengthHome.importHistory(appState(), { normalized: n, syncedAt: meta.syncedAt }, todayIso()) || changed;
+    }
     if (changed) {
       c.updatedAt = Date.now();
       c.whoopSyncedAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
@@ -230,6 +242,10 @@
       '</div>' + msg + '</div>';
   }
   function renderPanels() {
+    for (const id of ['whoopHomeStatus', 'whoopAccountStatus']) {
+      const line = document.getElementById(id);
+      if (line) line.textContent = ui.message || metaLine();
+    }
     const card = document.getElementById('whoopCard');
     if (!card) return;
     const html = cardHtml();
@@ -268,34 +284,41 @@
     if (tab === 'settings') return;
     if (typeof global.render === 'function') global.render();
   }
-  async function sync(opts) {
+  let syncPromise = null;
+  let lastAutoAttempt = 0;
+  function sync(opts) {
     opts = opts || {};
-    if (ui.busy && !opts.quiet) return;
+    if (syncPromise) return syncPromise;
+    syncPromise = performSync(opts).finally(function () { syncPromise = null; });
+    return syncPromise;
+  }
+  async function performSync(opts) {
     if (!opts.quiet) { ui.busy = true; ui.message = 'Syncing WHOOP…'; renderPanels(); }
     try {
-      const body = await api(FN.sync, opts.backfill ? { query: { backfill: '1' } } : undefined);
+      const query = { backfill: '1', history: opts.full ? 'all' : 'recent' };
+      const body = await api(FN.sync, { query });
       let applied = false;
-      if (body && body.normalized) {
-        applied = !!applyNormalized(body.normalized, { syncedAt: body.syncedAt, sampleDate: body.normalized.date });
-      } else {
-        await refreshStatus();
-        applied = !!(st().lastNormalized && finiteNum(st().lastNormalized.recoveryScore));
+      if (body?.normalized) applied = !!applyNormalized(body.normalized, { syncedAt: body.syncedAt, sampleDate: body.normalized.date });
+      const state = appState();
+      const count = state && global.StrengthHome ? global.StrengthHome.importHistory(state, body || {}, todayIso()) : 0;
+      if (state && global.HybridIntegrations) {
+        for (const row of state.whoopHistory || []) global.HybridIntegrations.persistWhoop(state, row.date);
       }
-      if (!opts.quiet) {
-        ui.message = applied
-          ? 'WHOOP synced — Home recovery / HRV / RHR updated'
-          : 'WHOOP reached but no recovery sample yet';
-      }
-      try { await refreshStatus(); } catch (_) {}
-      if (!opts.quiet) {
-        ui.busy = false;
-        refreshVisibleUi();
-      }
+      const w = st();
+      w.connected = body?.connected !== false;
+      w.lastSyncAt = body?.syncedAt || new Date().toISOString();
+      if (typeof global.save === 'function') global.save();
+      ui.message = count || applied ? 'WHOOP synced · recovery, sleep and dated readings updated' : 'WHOOP connected · no dated readings available yet';
+      if (body?.historyTruncated) ui.message += ' · Older history reached the server limit';
+      if (typeof global.render === 'function') global.render();
+      return body;
     } catch (err) {
-      if (!opts.quiet) ui.message = err.code === 'auth_required' ? 'Sign in to sync WHOOP' : (err.message || 'Sync failed');
+      ui.message = err.code === 'auth_required' ? 'Sign in to sync WHOOP' : (err.message || 'Sync failed; saved readings kept');
+      renderPanels();
       throw err;
     } finally {
-      if (!opts.quiet) { ui.busy = false; renderPanels(); }
+      if (!opts.quiet) ui.busy = false;
+      renderPanels();
     }
   }
   let awaitingWhoopReturn = false;
@@ -310,24 +333,11 @@
       await refreshStatus();
       if (st().connected) await sync({ quiet: true });
       ui.message = st().connected ? 'WHOOP connected' : 'WHOOP did not finish — tap Connect again';
-      if (st().connected) awaitingWhoopReturn = false;
+      if (st().connected) { awaitingWhoopReturn = false; st().awaitingReturn = false; if (typeof global.save === 'function') global.save(); }
     } catch (err) {
       ui.message = (err && err.message) || 'Could not finish WHOOP connect';
     }
     paint();
-  }
-  async function pollWhoopLinked() {
-    for (let i = 0; i < 45; i += 1) {
-      await new Promise(function (resolve) { global.setTimeout(resolve, 2000); });
-      if (!awaitingWhoopReturn) return;
-      try {
-        await refreshStatus();
-        if (st().connected) {
-          await finishWhoopReturn();
-          return;
-        }
-      } catch (_) {}
-    }
   }
   async function connect() {
     if (ui.busy) return;
@@ -337,10 +347,12 @@
       const url = body && typeof body.authorizeUrl === 'string' ? body.authorizeUrl : '';
       if (!/^https:\/\//i.test(url)) throw new Error('WHOOP connect URL missing');
       awaitingWhoopReturn = true;
+      st().awaitingReturn = true;
+      if (typeof global.save === 'function') global.save();
       await openWhoopAuthorize(url);
       ui.message = 'Finish Allow in WHOOP, then return here. This screen updates when it saves.';
       paint();
-      pollWhoopLinked();
+
     } catch (err) {
       awaitingWhoopReturn = false;
       ui.message = err.code === 'auth_required' ? 'Sign in before connecting WHOOP' : (err.message || 'Connect failed');
@@ -407,11 +419,13 @@
       await waitForSupabase();
       const { data, error } = await client().auth.signInWithPassword({ email: em, password: pw });
       if (error) throw error;
+      if (global.StrengthMemory && data.user) await global.StrengthMemory.bind(data.user.id);
       st().email = (data.user && data.user.email) || em;
       if (typeof global.save === 'function') global.save();
       ui.message = '';
       ui.busy = false;
-      if (typeof global.resetBlankSlate === 'function') global.resetBlankSlate(true);
+      // Signing in must preserve completed sets and pending offline writes.
+      if (global.StrengthMemory) global.StrengthMemory.schedule(0);
       try { await syncAll(); } catch (_) { /* sync is optional immediately after sign-in */ }
       if (typeof global.setTab === 'function') global.setTab('home');
       else if (typeof global.render === 'function') global.render();
@@ -430,6 +444,7 @@
     st().sampleDate = null;
     st().lastNormalized = null;
     if (typeof global.save === 'function') global.save();
+    if (typeof global.signOutStrengthAccount === 'function') global.signOutStrengthAccount();
     ui.message = '';
     if (typeof global.setTab === 'function') global.setTab('me');
     else renderPanels();
@@ -447,27 +462,31 @@
     }
     global.open(url, '_blank', 'noopener');
   }
+  let launchReturnUrl = null;
+  async function handleWhoopReturn(value) {
+    let url;try{url=new URL(String(value||''));}catch{return;}
+    if(url.protocol!=='com.hybrid.strength:'||url.hostname!=='whoop')return;
+    if(!appState()){launchReturnUrl=value;return;}
+    launchReturnUrl=null;
+    const Browser=capPlugin('Browser');if(Browser?.close)try{await Browser.close();}catch{}
+    const status=url.searchParams.get('status');
+    if(status==='denied'||status==='error'){
+      awaitingWhoopReturn=false;st().awaitingReturn=false;
+      ui.message=status==='denied'?'WHOOP connection cancelled':'WHOOP connection failed. Please try again.';
+      if(typeof global.save==='function')global.save();paint();return;
+    }
+    if(status!=='connected')return;
+    awaitingWhoopReturn=true;await finishWhoopReturn();
+  }
   let nativeWhoopBound = false;
   function bindNativeWhoopReturn() {
     const App = capPlugin('App');
     if (!App || typeof App.addListener !== 'function' || nativeWhoopBound) return false;
     nativeWhoopBound = true;
-    App.addListener('appUrlOpen', async function (data) {
-      const u = String((data && data.url) || '');
-      if (u.indexOf('whoop') === -1) return;
-      const Browser = capPlugin('Browser');
-      if (Browser && typeof Browser.close === 'function') {
-        try { await Browser.close(); } catch (_) {}
-      }
-      awaitingWhoopReturn = true;
-      await finishWhoopReturn();
-    });
+    App.addListener('appUrlOpen', data => handleWhoopReturn(data?.url));
+    if(typeof App.getLaunchUrl==='function') App.getLaunchUrl().then(data=>{launchReturnUrl=data?.url||null;if(appState())handleWhoopReturn(launchReturnUrl);}).catch(()=>{});
     App.addListener('appStateChange', async function (state) {
-      if (!state || !state.isActive || !awaitingWhoopReturn) return;
-      const Browser = capPlugin('Browser');
-      if (Browser && typeof Browser.close === 'function') {
-        try { await Browser.close(); } catch (_) {}
-      }
+      if (!state?.isActive || !(awaitingWhoopReturn || st().awaitingReturn)) return;
       await finishWhoopReturn();
     });
     return true;
@@ -481,19 +500,21 @@
     }, 250);
   }
   async function autoSyncIfPossible() {
+    if (syncPromise || Date.now() - lastAutoAttempt < 5 * 60000) return;
+    lastAutoAttempt = Date.now();
     try {
       await syncAuthEmail();
       if (!(await token())) return;
       await refreshStatus();
       if (!st().connected) return;
       await sync({ quiet: true });
-    } catch (_) {}
+    } catch (_) { renderPanels(); }
   }
   global.Whoop = {
     cardHtml, metaLine, renderPanels, autoSyncIfPossible, hydrateAuth, syncAuthEmail,
     signIn, signOut, connect, sync, syncAll, disconnect, refreshStatus,
     uiMessage: function () { return ui.message || ''; },
-    client, token, email, waitForSupabase, fnUrl, resolveProxyBase
+    client, token, email, waitForSupabase, fnUrl, resolveProxyBase, handleWhoopReturn
   };
   bindNativeWhoopReturnWhenReady();
 })(window);

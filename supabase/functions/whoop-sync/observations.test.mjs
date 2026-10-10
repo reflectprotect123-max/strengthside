@@ -16,3 +16,9 @@ test('official top-level cycle steps preserve zero/local dates, skip null and in
   assert.equal(rows[0].sources.steps,'WHOOP official API');
   assert.equal(dailyPhysiology([], [cycle(1,null)]).length,0);
 });
+
+test('sleep performance and daily strain keep their physiological dates independently of recovery',()=>{
+ const rows=dailyPhysiology([], [{id:1,start:'2026-10-02T23:00:00Z',timezone_offset:'+10:00',score:{strain:0}}],[sleep('main',{score:{sleep_performance_percentage:82,stage_summary:{total_light_sleep_time_milli:14400000,total_slow_wave_sleep_time_milli:7200000,total_rem_sleep_time_milli:3600000}}})]);
+ assert.equal(rows.find(r=>r.date==='2026-10-03').strain,0);assert.equal(rows.find(r=>r.date==='2026-10-04').sleepPerformance,82);assert.equal(rows.find(r=>r.date==='2026-10-04').sleep,7);
+ assert.equal(dailyPhysiology([],[],[sleep('nap',{nap:true,score:{sleep_performance_percentage:90}})]).length,0);
+});

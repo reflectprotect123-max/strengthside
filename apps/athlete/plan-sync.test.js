@@ -133,3 +133,9 @@ test('isInvalidDomain matches hosted RPC reject', () => {
   assert.equal(P.isInvalidDomain({ details: 'invalid domain' }), true);
   assert.equal(P.isInvalidDomain({ message: 'not authenticated' }), false);
 });
+
+test('daily answers sync as individual dated entities without replacing WHOOP observations',()=>{
+ const s=libState([]);s.checkin={'2026-10-10':{whoopRecovery:80,subjectiveRecovery:{sleepQuality:4,soreness:2,wellbeing:4,completedAt:'now'},bedtimeQuestionnaire:{fatigue:3,nutrition:4,alcoholDrinks:0}}};
+ const plan=P.pack(s),record=plan.sessions.find(r=>r.kind==='daily_checkin');assert.equal(record.date,'2026-10-10');assert.equal(record.payload.whoopRecovery,undefined);
+ const restored=P.applyPlan({checkin:{'2026-10-10':{whoopRecovery:75}}},plan);assert.equal(restored.checkin['2026-10-10'].whoopRecovery,75);assert.equal(restored.checkin['2026-10-10'].bedtimeQuestionnaire.alcoholDrinks,0);assert.ok(restored.dailyProgressCheckins['2026-10-10']);
+});

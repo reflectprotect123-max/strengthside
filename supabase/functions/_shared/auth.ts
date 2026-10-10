@@ -56,13 +56,11 @@ export function whoopCallbackUrl(): string {
   return (Deno.env.get('WHOOP_CALLBACK_URL') || 'https://orysjncrksmdfabpuftd.supabase.co/functions/v1/whoop-callback').trim();
 }
 
-export function nativeReturnUrl(product: HybridProduct = 'engine'): string {
-  if (product === 'strength') {
-    return Deno.env.get('STRENGTH_NATIVE_RETURN_URL') || 'com.hybrid.athlete://whoop';
-  }
-  return Deno.env.get('NATIVE_RETURN_URL') || 'com.hybrid.engine://whoop';
+// Each APK receives its own allowlisted native return. Strength has no legacy return.
+export function nativeAppId(product: HybridProduct = 'engine', requested?: string): string {
+  if(product==='strength') return requested==='com.hybrid.athlete'?'com.hybrid.athlete':'com.hybrid.strength';
+  return 'com.hybrid.engine';
 }
-
-export function nativeAppId(product: HybridProduct = 'engine'): string {
-  return product === 'strength' ? 'com.hybrid.athlete' : 'com.hybrid.engine';
+export function nativeReturnUrl(product: HybridProduct = 'engine', requested?: string): string {
+  return nativeAppId(product,requested)+'://whoop';
 }

@@ -22,6 +22,12 @@ export function dailyPhysiology(recoveries: any[]=[],cycles: any[]=[], sleeps: a
   }
   // CONFIRMED: WHOOP added top-level Cycle.step_count on 2026-09-23,
   // covered by read:cycles. STRENGTHSIDE-DESIGNED: local-cycle-date mapping.
+  for(const cycle of cycles){
+    const date=physiologicalDate(cycle),strain=cycle.score?.strain;
+    if(!date||typeof strain!=='number'||!Number.isFinite(strain)||strain<0||strain>21)continue;
+    const prior=daily.get(date)||{date,source:'WHOOP account'};
+    daily.set(date,{...prior,strain,sources:{...prior.sources,strain:'WHOOP account'}});
+  }
   const stepsByDate=new Map<string, any>();
   for(const cycle of cycles){
     const date=physiologicalDate(cycle),steps=cycle.step_count;
@@ -42,6 +48,13 @@ export function dailyPhysiology(recoveries: any[]=[],cycles: any[]=[], sleeps: a
     if(sleep.nap===true||sleep.score_state!=='SCORED')continue;
     const date=recoveryDates.get(String(sleep.id))||physiologicalDate({start:sleep.end,timezone_offset:sleep.timezone_offset});
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))continue;
+    const score=sleep.score?.sleep_performance_percentage;
+    if(typeof score==='number'&&Number.isFinite(score)&&score>=0&&score<=100){
+      const prior=daily.get(date)||{date,source:'WHOOP account'};
+      const updatedAt=sleep.updated_at||sleep.created_at||'';
+      if(!prior.sleepPerformanceUpdatedAt||updatedAt>=prior.sleepPerformanceUpdatedAt)
+        daily.set(date,{...prior,sleepPerformance:score,sleepPerformanceUpdatedAt:updatedAt,sources:{...prior.sources,sleepPerformance:'WHOOP account'}});
+    }
     const stages=sleep.score?.stage_summary;
     const values=[stages?.total_light_sleep_time_milli,stages?.total_slow_wave_sleep_time_milli,stages?.total_rem_sleep_time_milli];
     if(!values.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0))continue;

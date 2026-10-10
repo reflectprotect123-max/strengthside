@@ -113,6 +113,14 @@
       targetEffort: effortLabel(block.targetEffort) ? block.targetEffort : block.targetEffort === 'medium' ? 'average' : block.kind === 'lift' ? 'average' : null,
       restSec: Number(block.restSec) > 0 ? Number(block.restSec) : null,
       demoStartingKg: Number(block.demoStartingKg) > 0 ? Number(block.demoStartingKg) : null,
+      exerciseId: block.exerciseId || block.libraryExerciseId || null,
+      equipmentId: block.equipmentId || null,
+      equipmentStepKg: Number(block.equipmentStepKg) > 0 ? Number(block.equipmentStepKg) : 2.5,
+      availableLoads: Array.isArray(block.availableLoads) ? block.availableLoads : [],
+      minimumKg: Number(block.minimumKg) || 0,
+      loadConvention: block.loadConvention || 'total',
+      exerciseType: block.exerciseType || null,
+      rampCount: block.rampCount,
       columns: cols,
     };
   }
@@ -188,6 +196,7 @@
       return attachLogs(s);
     }
     const session = attachLogs({
+      id: root.crypto?.randomUUID?.() || String(Date.now()),
       date,
       title: (plan && plan.title) || '',
       instructions: (plan && plan.instructions) || '',
@@ -325,7 +334,7 @@
         const log = (session.logs || {})[id];
         if (!log) continue;
         for (const row of log.sets || []) {
-          if (!row.logged) continue;
+          if (!row.logged || row.purpose === 'ramp') continue;
           reps += Number(row.reps) || 0;
           kg += Number(row.kg) || 0;
         }
@@ -383,7 +392,7 @@
       for (const id of logIdsForPage(page)) {
         const log = (session.logs || {})[id];
         if (!log) continue;
-        const logged = (log.sets || []).filter((r) => r.logged).length;
+        const logged = (log.sets || []).filter((r) => r.logged && r.purpose !== 'ramp').length;
         if (logged) {
           pageExercises += 1;
           pageSets += logged;

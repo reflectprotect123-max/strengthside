@@ -70,10 +70,10 @@ it:
 Both repositories write migrations against **one** Postgres. This is the rule that
 keeps that from becoming a disaster:
 
-- **This repo owns exactly twelve tables**: `metric`, `equipment`, `exercise`,
+- **This repo owns exactly thirteen tables**: `metric`, `equipment`, `exercise`,
   `strength_block_item`, `prescribed_set`, `prescribed_target`, `assigned_session`,
   `performed_set`, `performed_measurement`, `working_max_event`, `pr_event`,
-  `coaching_note` — plus their RLS and the `embed-coaching-note` function.
+  `coaching_note`, `strength_brain_records` — plus their RLS and the `embed-coaching-note` function.
 - **The hybrid stub owns the rest of the shared ledger** (auth helpers, nutrition
   domain history, legacy coach/ARC relationship SQL including
   `coaches_athlete_anywhere`). Those objects stay in Postgres as **frozen legacy** —
@@ -88,27 +88,24 @@ keeps that from becoming a disaster:
   renumber, and never rename a migration that has been pushed — the ledger is shared
   and renaming an applied migration breaks it for both repos.
 
-## WHOOP / Netlify ownership — do not cut over again
+## WHOOP ownership — shared Supabase lane
 
-`thehybridsystem.netlify.app` (athlete site in this repo) is **proxy-only** for
-WHOOP, Concept2, and `brain-coach`. Tokens, OAuth pending state, Blobs,
-`whoop-callback`, and `OPENROUTER_API_KEY` live on **The Brain repo** owner site
-`thehybridengine1.netlify.app` (Netlify slug unchanged until OAuth cutover — see
-`docs/brain-repo-rename.md`). Athlete functions only forward `Authorization` +
-path via `_hybrid-proxy.mjs`.
+WHOOP OAuth, encrypted provider tokens, dated history, status and disconnect live
+in the existing Supabase project `orysjncrksmdfabpuftd`. Athlete clients call
+`/functions/v1/` directly with their Supabase session. Do not restore the retired
+Netlify token/return implementation.
 
-- **Never** ship real WHOOP handlers (`whoop-callback`, `_lib/whoop.mjs`,
-  `@netlify/blobs`, etc.) on the athlete site. `pnpm run check:whoop-ownership`
-  fails the build if that shape returns.
-- OAuth `redirect_uri` host must stay `thehybridengine1.netlify.app`.
-  `pnpm run check:whoop-live` hits production and fails if athlete starts
-  issuing its own callback host (the cutover fingerprint).
-- Android must keep a `VIEW`/`BROWSABLE` intent for `com.hybrid.athlete` —
-  `pnpm run check:whoop-deeplink`. Capgo cannot fix a missing manifest filter.
-- Deploy workflow runs ownership **before** Netlify deploy and live smoke
-  **after**. Scheduled `whoop-live-watch` catches drift without a deploy.
-- Before claiming an upstream site is "dead," curl the live function and paste
-  status + timestamp into the PR. A false 404 assumption caused the last outage.
+Strength and the conditioning APK use the existing `product=strength` WHOOP owner
+lane (`s:<authenticated user id>`). This shares a provider connection and dated
+physiology for the same account; it does not share strength workout state.
+Strength's native return is `com.hybrid.strength://whoop`. The connect function
+stores an allowlisted APK target with single-use OAuth state, so conditioning
+installs can return to their own application. Do not accept arbitrary return URLs.
+
+The new strength memory table is the thirteenth strength-owned ledger table.
+It stores individual local-logger sets and derived session estimates without
+inventing coach-assignment foreign keys. Writes use the authenticated, revision-
+checked `sync_strength_brain_records` RPC; other accounts cannot read the records.
 
 ## Product ownership
 
@@ -119,7 +116,7 @@ path via `_hybrid-proxy.mjs`.
   Big Mac.
 - **No product engine packages remain.** Nutrition engines were deleted with
   S&C. The next brain is a **single** adaptive engine — new package, new APIs.
-- Shared Supabase strength tables remain a **data ledger** (see twelve-table
+- Shared Supabase strength tables remain a **data ledger** (see thirteen-table
   contract). They do not imply a decision engine exists in this repo.
 
 ## Athlete app — one surface
