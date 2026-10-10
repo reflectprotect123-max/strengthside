@@ -159,6 +159,9 @@
     }
     const c1 = (b.columns && b.columns[0]) || 'reps';
     const c2 = (b.columns && b.columns[1]) || 'none';
+    let targets=[];try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||((b.columns||[]).includes('reps_range')?'8-12':'8')});}catch{}
+    const perSet=u.perSet||Array.isArray(b.setTargets);
+    const targetRows=perSet?`<div class="lib-field"><label>Each set</label>${targets.map((t,i)=>`<div class="lib-cols" style="align-items:center;margin:6px 0"><span>${i+1}</span>${t.purpose==='amrap'?`<button type="button" class="lib-chip" aria-label="Set ${i+1} AMRAP">AMRAP · Set 1 weight</button>`:`<input readonly aria-label="Set ${i+1} reps" value="${esc(t.reps.min===t.reps.max?t.reps.min:`${t.reps.min}-${t.reps.max}`)}" onclick="LibraryView.openNumberPad('set:${i}')">`}${i===targets.length-1?`<button type="button" class="lib-text-btn" onclick="LibraryView.toggleAmrap()">${t.purpose==='amrap'?'Remove AMRAP':'Add final AMRAP'}</button>`:''}</div>`).join('')}<p role="status">${esc(u.targetError||'The brain chooses difficulty and load automatically.')}</p></div>`:'';
     return `<div class="lib-sheet" onclick="if(event.target===this)LibraryView.closeSheet()">
       <div class="lib-sheet-card">
         <h2>Edit exercise</h2>
@@ -171,6 +174,7 @@
           <input id="libRepTarget" readonly value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onclick="LibraryView.openNumberPad('reps')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();LibraryView.openNumberPad('reps')}" aria-describedby="libRepHelp">
           <p id="libRepHelp" role="status">${esc(u.repError || ((b.columns || []).includes('reps_range') ? 'Enter a rep range, for example 6-8.' : 'Enter a whole rep count, for example 8.'))}</p>
         </div>` : ''}
+        ${(b.columns || ['reps']).some(c=>['reps','reps_range'].includes(c))?`<button type="button" class="lib-chip" onclick="LibraryView.editEachSet()">${perSet?'Use same reps':'Edit each set'}</button>${targetRows}`:''}
         <div class="lib-field"><label>What do you want to track?</label>
           <div class="lib-cols">
             <select id="libCol1" aria-label="First metric" onchange="LibraryView.setCols(this.value, document.getElementById('libCol2').value)">
@@ -368,14 +372,20 @@
       root.S.library = st;
       go('edit', { tid: ui().tid, bid: null });
     },
-    editBlock(bid) { numberPad = null; root.S.libUi.bid = bid; root.S.libUi.repError = null; save(); },
+    editBlock(bid) { numberPad = null; root.S.libUi.bid = bid; root.S.libUi.repError = null; root.S.libUi.targetError=null; save(); },
     closeSheet() { numberPad = null; root.S.libUi.bid = null; save(); },
     patchBlock(patch) { setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch)); },
     openNumberPad(field) {
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
-      if (!b || !['sets','reps'].includes(field)) return;
-      const range = field === 'reps' && (b.columns || []).includes('reps_range');
-      numberPad = { ...root.TrainingCore.numberEntry(null,{key:'reps',range}), field, buffer: String(field === 'sets' ? b.setCount || 3 : b.repTarget || (range ? '8-12' : '8')) };
+      if (!b || (!['sets','reps'].includes(field)&&!/^set:\d+$/.test(field))) return;
+      const range = field !== 'sets' && (b.columns || []).includes('reps_range');
+      let value=field === 'sets' ? b.setCount || 3 : b.repTarget || (range ? '8-12' : '8');
+      if(/^set:\d+$/.test(field)){
+        let targets=[];try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||(range?'8-12':'8')});}catch{}
+        const t=targets[Number(field.split(':')[1])];if(!t||t.purpose==='amrap')return;
+        value=t.reps.min===t.reps.max?t.reps.min:`${t.reps.min}-${t.reps.max}`;
+      }
+      numberPad = { ...root.TrainingCore.numberEntry(null,{key:'reps',range}), field, buffer: String(value) };
       save();
     },
     closeNumberPad() { numberPad = null; save(); },
@@ -393,6 +403,7 @@
       }
       const field = numberPad.field; numberPad = null;
       if (field === 'sets') LibraryView.patchBlock({setCount: parsed.min});
+      else if(/^set:\d+$/.test(field))LibraryView.setTargetReps(Number(field.split(':')[1]),parsed.text);
       else { LibraryView.setRepTarget(parsed.text); save(); }
     },
     setRepTarget(value) {
@@ -404,6 +415,26 @@
       root.S.library = root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, { repTarget: parsed.text });
       save({ paint: false });
     },
+    editEachSet(){
+      const b=root.HybridLibrary.template(lib(),ui().tid)?.blocks.find(b=>b.id===ui().bid);if(!b)return;
+      if(ui().perSet||Array.isArray(b.setTargets)){root.S.libUi.perSet=false;LibraryView.patchBlock({repTarget:b.repTarget||'8',setTargets:undefined});return;}
+      root.S.libUi.perSet=true;save();
+    },
+    setTargetReps(index,value){
+      const b=root.HybridLibrary.template(lib(),ui().tid)?.blocks.find(b=>b.id===ui().bid),parsed=root.HybridLibrary.parseRepTarget(value);if(!b||!parsed)return;
+      let targets;try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||'8'});}catch(e){root.S.libUi.targetError=e.message;save();return;}
+      targets[index]={...targets[index],purpose:'working',reps:{min:parsed.min,max:parsed.max},loadRule:{kind:'adaptive'},toFailure:false};
+      try{root.StrengthTargets.validate(targets);root.S.libUi.targetError=null;LibraryView.patchBlock({setTargets:targets});}catch(e){root.S.libUi.targetError=e.message;save();}
+    },
+    toggleAmrap(){
+      const b=root.HybridLibrary.template(lib(),ui().tid)?.blocks.find(b=>b.id===ui().bid);if(!b)return;
+      let targets;try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||'8'});}catch(e){root.S.libUi.targetError=e.message;save();return;}
+      const last=targets.at(-1);
+      if(last.purpose==='amrap')targets.pop();
+      else targets.push({id:`${b.id||'block'}:set:${targets.length}`,purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
+      const valid=root.StrengthTargets.validate(targets);if(!valid.valid){root.S.libUi.targetError=valid.error;save();return;}
+      root.S.libUi.targetError=null;LibraryView.patchBlock({setTargets:targets});
+    },
     setCols(c1, c2) {
       const cols = [c1, c2].filter((k) => k && k !== 'none');
       const columns = cols.length ? cols : ['reps'];
@@ -411,6 +442,7 @@
       const parsed = root.HybridLibrary.parseRepTarget(b?.repTarget);
       const patch = {columns};
       if (parsed && !columns.includes('reps_range')) patch.repTarget = String(parsed.min);
+      if(Array.isArray(b?.setTargets)&&!columns.includes('reps_range'))patch.setTargets=b.setTargets.map(t=>t.purpose==='amrap'?t:{...t,reps:{min:t.reps.min,max:t.reps.min}});
       numberPad = null; root.S.libUi.repError = null;
       setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch));
     },

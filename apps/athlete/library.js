@@ -141,6 +141,7 @@
       kind: 'lift',
       title: name,
       setCount: Math.max(1, Number(setCount) || 3),
+      repTarget: cols.includes('reps_range') ? '8-12' : '8',
       columns: cols,
       notes: Array.isArray(notes) ? notes : [],
       restSec: restSec == null ? 120 : Number(restSec) || 0,
@@ -178,6 +179,14 @@
     if (!b) return st;
     Object.assign(b, patch);
     if (Array.isArray(b.columns)) b.columns = b.columns.filter((k) => k && k !== 'none');
+    if (Array.isArray(patch.setTargets)) {
+      const targets=root.StrengthTargets.normalize({...b,setTargets:patch.setTargets});
+      b.setTargets=targets;b.setCount=targets.length;
+      const first=targets.find(x=>x.purpose==='working');
+      if(first?.reps)b.repTarget=first.reps.min===first.reps.max?String(first.reps.min):`${first.reps.min}-${first.reps.max}`;
+    } else if ((patch.setCount!=null||patch.repTarget!=null) && Array.isArray(b.setTargets)) {
+      delete b.setTargets;
+    }
     return st;
   }
 
@@ -241,6 +250,7 @@
   const parseRepTarget = root.TrainingCore.repTarget;
 
   function rxFor(block) {
+    if(Array.isArray(block.setTargets)&&!(block.columns||[]).includes('meters'))return block.setTargets.map(t=>t.purpose==='amrap'?'AMRAP':t.reps.min===t.reps.max?String(t.reps.min):`${t.reps.min}-${t.reps.max}`).join(' / ');
     const sets = Math.max(1, Number(block.setCount) || 3);
     const cols = block.columns || ['reps'];
     const hasReps = cols.some(c => c === 'reps' || c === 'reps_range');
@@ -280,16 +290,21 @@
           section,
         });
       } else {
+        const hasReps=(b.columns||[]).some(c=>c==='reps'||c==='reps_range');
+        const targetInput={...b,repTarget:b.repTarget||((b.columns||[]).includes('reps_range')?'8-12':'8')};
+        const setTargets=hasReps?root.StrengthTargets.normalize(targetInput):null;
+        const first=setTargets?.find(t=>t.purpose==='working');
         blocks.push({
           kind: 'lift',
           letter: b.letter,
           title: b.title,
-          prescription: rxFor(b),
-          repMin: parseRepTarget(b.repTarget)?.min,
-          repMax: parseRepTarget(b.repTarget)?.max,
+          prescription: rxFor(Array.isArray(b.setTargets)?{...b,setTargets}:b),
+          repMin: first?.reps?.min,
+          repMax: first?.reps?.max,
+          setTargets: setTargets?clone(setTargets):null,
           notes: b.notes || [],
           columns: (b.columns || ['reps']).slice(),
-          setCount: b.setCount,
+          setCount: setTargets?.length||b.setCount,
           restSec: b.restSec,
           exerciseId: b.exerciseId,
           equipmentId: b.equipmentId,

@@ -22,9 +22,14 @@
   function emptySets(page) {
     if (page.logMode === 'complete' || page.logMode === 'doneHub' || page.logMode === 'superset') return [];
     const rows = [];
+    const targets=Array.isArray(page.setTargets)?page.setTargets:[];
     for (let i = 0; i < page.setCount; i++) {
+      const target=targets[i];
       rows.push({
-        reps: page.logMode === 'max' ? null : page.targetReps,
+        targetId:target?.id||null,
+        purpose:target?.purpose||'working',
+        workingIndex:targets.slice(0,i).filter(t=>t.purpose!=='warmup').length,
+        reps: target?.purpose==='amrap'||page.logMode === 'max' ? null : target?.reps?.min??page.targetReps,
         kg: i === 0 && page.logMode === 'kg' ? page.demoStartingKg : null,
         cells: {},
         logged: false,
@@ -95,6 +100,9 @@
     const mode = cols.length && !cols.includes('weight_kg') && !cols.includes('weight_lb') && !cols.includes('weight_pct') && !cols.includes('lwp')
       ? (rx.isMax ? 'max' : 'reps')
       : logModeFor(block, rx);
+    const setTargets=Array.isArray(block.setTargets)?JSON.parse(JSON.stringify(block.setTargets)):null;
+    const first=setTargets?.find(t=>t.purpose==='working');
+    if(first?.reps){rx.targetReps=first.reps.min;rx.targetRepMax=first.reps.max;rx.isMax=false;}
     return {
       id: block.letter || block.title,
       letter: block.letter || '',
@@ -109,7 +117,8 @@
       goal: block.goal || '',
       footer: block.footer || '',
       section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
-      setCount: mode === 'complete' ? 0 : (Number(block.setCount) || rx.setCount),
+      setCount: mode === 'complete' ? 0 : (setTargets?.length||Number(block.setCount) || rx.setCount),
+      setTargets,
       targetReps: rx.targetReps,
       targetRepMax: rx.targetRepMax,
       targetEffort: effortLabel(block.targetEffort) ? block.targetEffort : block.targetEffort === 'medium' ? 'average' : block.kind === 'lift' ? 'average' : null,

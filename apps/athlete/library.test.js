@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 require(join(dirname(fileURLToPath(import.meta.url)), 'training-core.js'));
+require(join(dirname(fileURLToPath(import.meta.url)), 'strength-targets.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'library.js'));
 const Lib = globalThis.HybridLibrary;
 
@@ -114,4 +115,17 @@ test('older authored ranges retain their target and select Rep Range on upgrade'
  const lib=HybridLibrary.ensure({templates:[{id:'old',blocks:[{kind:'lift',columns:['reps','weight_kg'],repTarget:'6-8'}]}],assignments:{},catalog:{exercises:[],circuits:[]}});
  assert.deepEqual(lib.templates[0].blocks[0].columns,['reps_range','weight_kg']);
  assert.equal(lib.templates[0].blocks[0].repTarget,'6-8');
+});
+
+test('compile preserves arbitrary set targets and final first-working-weight AMRAP',()=>{
+ let st=Lib.createTemplate(Lib.emptyState(),{title:'Wave'}),tid=st.templates[0].id;
+ st=Lib.addExercise(st,tid,{title:'Squat',setCount:4,columns:['reps','weight_kg']});
+ const bid=st.templates[0].blocks[0].id;
+ const reps=[10,8,6].map((n,i)=>({id:`${bid}:set:${i}`,purpose:'working',reps:{min:n,max:n},loadRule:{kind:'adaptive'},toFailure:false}));
+ reps.push({id:`${bid}:set:3`,purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
+ st=Lib.patchBlock(st,tid,bid,{setTargets:reps});
+ const lift=Lib.compile(st.templates[0]).blocks.find(b=>b.kind==='lift');
+ assert.deepEqual(lift.setTargets.map(t=>t.reps?.min??null),[10,8,6,null]);
+ assert.equal(lift.setTargets[3].loadRule.kind,'first_working_set');assert.equal(lift.setCount,4);
+ assert.equal(lift.prescription,'10 / 8 / 6 / AMRAP');
 });

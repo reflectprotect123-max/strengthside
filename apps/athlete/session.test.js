@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
 require(join(here, 'training-core.js'));
+require(join(here, 'strength-targets.js'));
 require(join(here, 'session.js'));
 const HybridSession = globalThis.HybridSession;
 
@@ -219,6 +220,17 @@ test('logging a set records athlete input without changing a future target', () 
   assert.equal('ruleVersion' in s.logs.B, false);
   assert.equal('strengthClose' in s, false);
   assert.equal(s.logs.B.sets[1].kg, originalSecondKg);
+});
+
+test('arbitrary authored targets are snapshotted into distinct logger rows',()=>{
+ const authored=[10,8,6].map((n,i)=>({id:`wave:set:${i}`,purpose:'working',reps:{min:n,max:n},loadRule:{kind:'adaptive'},toFailure:false}));
+ authored.push({id:'wave:set:3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
+ const plan={title:'Wave',blocks:[{kind:'lift',letter:'A',title:'Squat',columns:['reps','weight_kg'],setTargets:authored,setCount:4,repMin:10,repMax:10}]};
+ const session=HybridSession.startSession({date:'2026-10-11',plan,letter:'A'});
+ assert.deepEqual(session.logs.A.sets.map(r=>r.reps),[10,8,6,null]);
+ assert.deepEqual(session.logs.A.sets.map(r=>r.targetId),authored.map(t=>t.id));
+ plan.blocks[0].setTargets[0].reps.min=99;
+ assert.equal(session.pages[0].setTargets[0].reps.min,10);
 });
 
 test('metric rows save drafts separately and complete only after required values and actual effort',()=>{
