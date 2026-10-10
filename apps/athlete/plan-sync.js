@@ -56,6 +56,7 @@
   }
 
   function pack(state) {
+    if (root.StrengthOnly) root.StrengthOnly.cleanState(state);
     const lib = (state && state.library) || { templates: [], catalog: { exercises: [], circuits: [] }, assignments: {} };
     const prev = prevIndex(state && state.planSync && state.planSync.lastPlan);
     const templates = (lib.templates || []).map((t) => touch(t, prev.template[t.id]));

@@ -1,8 +1,7 @@
 (function (root) {
-  const PRODUCT = 'HYBRID S&C';
+  const PRODUCT = 'HYBRID STRENGTH';
   const SNAPSHOT_DOMAINS = {
     strength: ['strength_side', 'strength'],
-    engine: ['engine_side', 'conditioning'],
   };
 
   function dateMap(keys) {
@@ -27,59 +26,35 @@
     return dateMap(rows.map((row) => row && row.date).filter(Boolean));
   }
 
-  function occupancy(strengthDates, engineDates) {
+  function occupancy(strengthDates) {
     return {
       strength: { ...(strengthDates || {}) },
-      engine: { ...(engineDates || {}) },
     };
   }
 
   function dotsHtml(iso, occ) {
-    const map = occ || { strength: {}, engine: {} };
+    const map = occ || { strength: {} };
     const bits = [];
     if (map.strength && map.strength[iso]) bits.push('<span class="cal-dot strength"></span>');
-    if (map.engine && map.engine[iso]) bits.push('<span class="cal-dot engine"></span>');
     return bits.join('');
   }
 
-  function brandHtml(active) {
-    const strengthOn = active === 'strength' ? ' class="on"' : '';
-    const engineOn = active === 'engine' ? ' class="on"' : '';
+  function brandHtml() {
     return `
-          <b>HYBRID S&amp;C</b>
-          <small class="home-lockers"><span${strengthOn}>Strength</span><i>|</i><span${engineOn}>Engine</span></small>`;
+          <b>HYBRID STRENGTH</b>`;
   }
 
-  function lockerCardHtml(active) {
-    const sOn = active === 'strength' ? ' primary' : '';
-    const eOn = active === 'engine' ? ' primary' : '';
+  function lockerCardHtml() {
     return `
     <div class="card account-compact locker-card">
-      <div class="eyebrow">HYBRID S&amp;C</div>
-      <p class="stub">One login. Strength and Engine stay in their own lockers.</p>
-      <div class="locker-switch" role="group" aria-label="Locker">
-        <button type="button" class="btn${sOn}" aria-pressed="${active === 'strength'}" onclick="switchHybridLocker('strength')">Strength</button>
-        <button type="button" class="btn${eOn}" aria-pressed="${active === 'engine'}" onclick="switchHybridLocker('engine')">Engine</button>
-      </div>
+      <div class="eyebrow">HYBRID STRENGTH</div>
+      <p class="stub">Strength training, sessions and progress.</p>
     </div>`;
   }
 
-  function origins(href) {
-    let path = String(href || '');
-    try {
-      path = new URL(href).pathname;
-    } catch (_) {
-      /* relative href */
-    }
-    if (/\/engine(?:\/|$)/.test(path)) {
-      return { strength: '../', engine: './' };
-    }
-    return { strength: './', engine: './engine/' };
-  }
-
-  function applyOccupancyToState(S, strengthDates, engineDates) {
+  function applyOccupancyToState(S, strengthDates) {
     if (!S || typeof S !== 'object') return S;
-    S.hybridOccupancy = occupancy(strengthDates, engineDates);
+    S.hybridOccupancy = occupancy(strengthDates);
     return S;
   }
 
@@ -92,7 +67,6 @@
     dotsHtml,
     lockerCardHtml,
     brandHtml,
-    origins,
     applyOccupancyToState,
   };
 

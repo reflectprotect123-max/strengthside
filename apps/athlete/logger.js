@@ -4,7 +4,6 @@
 
   let pad = null;
   let sheet = null;
-  let effortOpen = null;
   let toast = '';
   let toastTimer = 0;
   let clockTimer = 0;
@@ -21,7 +20,6 @@
   function persist(next) {
     root.S.session = next;
     root.S.loggerOpen = true;
-    if (next && next.liftMemory) root.S.liftMemory = next.liftMemory;
     if (typeof root.save === 'function') root.save();
     paint();
   }
@@ -40,17 +38,16 @@
     const d = date || (root.S && root.S.selectedDate);
     const p = plan || (typeof root.trainingPlanForDate === 'function' ? root.trainingPlanForDate(d) : null);
     if (!p || !HS) return;
-    const existing = root.S.session && root.S.session.date === d && root.S.session.phase !== 'summary'
+    const existing = root.S.session && root.S.session.date === d && root.S.session.phase !== 'summary' && (!root.S.session.demo || p.title === 'Slider demo')
       ? root.S.session
       : null;
     if (letter && existing) {
-      root.S.session = HS.goToLetter(HS.startSession({ date: d, plan: p, existing, liftMemory: root.S.liftMemory }), letter);
+      root.S.session = HS.goToLetter(HS.startSession({ date: d, plan: p, existing }), letter);
     } else if (letter) {
-      root.S.session = HS.startSession({ date: d, plan: p, letter, liftMemory: root.S.liftMemory });
+      root.S.session = HS.startSession({ date: d, plan: p, letter });
     } else {
-      root.S.session = HS.startSession({ date: d, plan: p, existing, liftMemory: root.S.liftMemory });
+      root.S.session = HS.startSession({ date: d, plan: p, existing });
     }
-    if (root.S.session && root.S.session.liftMemory) root.S.liftMemory = root.S.session.liftMemory;
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');
@@ -86,6 +83,25 @@
     root.S.timer = next;
     if (typeof root.save === 'function') root.save();
     paint();
+  }
+
+  function rememberRest(timer) {
+    const s = session();
+    if (!s || timer.mode !== 'rest' || !Number.isFinite(timer.config.restMs) || timer.config.restMs <= 0) return;
+    const page = HybridSession.currentPage(s);
+    s.restChoices = { ...(s.restChoices || {}), [page.id]: timer.config.restMs };
+  }
+  function moveExercise(direction) {
+    const s = session();
+    const next = direction > 0 ? HybridSession.nextPage(s) : HybridSession.prevPage(s);
+    if (next.blockIndex !== s.blockIndex) {
+      // Clear both timer history and the choice for the newly entered exercise.
+      delete (next.restChoices || {})[HybridSession.currentPage(next).id];
+      root.S.timer = HybridTimer.create();
+      lastBeep = '';
+    }
+    pad = null; sheet = null;
+    persist(next);
   }
 
   let audioCtx = null;
@@ -422,39 +438,14 @@
       <input class="log-ex-note" placeholder="Add circuit note" value="${esc(log.note || '')}" onchange="Logger.note('${esc(page.id)}',this.value)">`;
   }
 
-  function resolvePadKg(n, memberId) {
-    const s = session();
-    const page = HybridSession.currentPage(s);
-    const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-    const mem = liftMem(s, lift);
-    const e1 = (s.workingMax && s.workingMax[lift.id]) || mem.e1rmKg;
-    const K = root.HybridBrainKernel;
-    if (K && typeof K.kgFromPctPad === 'function') {
-      const kg = K.kgFromPctPad({ columns: lift.columns, raw: n, e1rmKg: e1 });
-      if (kg != null) return kg;
-    }
-    return n;
-  }
-
-  function liftMem(s, page) {
-    const key = root.HybridSession && HybridSession.memoryKey
-      ? HybridSession.memoryKey(page.title)
-      : String(page.title || '').trim().toLowerCase();
-    return (s && s.liftMemory && s.liftMemory[key])
-      || (root.S && root.S.liftMemory && root.S.liftMemory[key])
-      || {};
-  }
-
   function sideHtml(s, page) {
-    const mem = liftMem(s, page);
-    const wm = (s.workingMax && s.workingMax[page.id]) || mem.e1rmKg || '';
-    const last = mem.lastKg != null && mem.lastKg !== '' ? mem.lastKg : '';
+    const wm = (s.workingMax && s.workingMax[page.id]) || '';
     return `
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
         <div class="log-side">
           <div class="log-side-row"><span>WORKING MAX</span><button type="button" class="log-add" onclick="Logger.sheet('wm')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
-          <div class="log-side-row"><span>LAST</span><span>${last !== '' ? esc(last) : 'None'}</span></div>
+          <div class="log-side-row"><span>LAST</span><span>${wm ? esc(wm) : 'None'}</span></div>
         </div>
       </div>`;
   }
@@ -478,23 +469,86 @@
     return v == null ? '' : v;
   }
 
-  function effortShort(effort) {
-    if (effort === 'easy') return 'Easy';
-    if (effort === 'hard') return 'Hard';
-    if (effort === 'medium') return 'Med';
-    return '—';
+  function effortShort(effort) { return ({very_easy:'Very Easy',easy:'Easy',average:'Average',hard:'Hard',max_effort:'Max Effort'})[effort] || '—'; }
+
+  const EFFORTS = ['very_easy', 'easy', 'average', 'hard', 'max_effort'];
+  const EFFORT_COPY = { very_easy: 'Very light effort.', easy: 'Could have done 5–7 more reps.', average: 'Could have done 3–4 more reps.', hard: 'Could have done 1 or 2 more reps.', max_effort: 'Could not do any more reps.' };
+
+  function setFlow(s, page) {
+    const rows = (s.logs[page.id] && s.logs[page.id].sets) || [];
+    const pending = rows.findIndex((r) => !r.logged);
+    const saved = (s.loggerSetFlow || {})[page.id] || {};
+    const index = Number.isInteger(saved.index) && rows[saved.index] && (saved.editing || !rows[saved.index].logged)
+      ? saved.index : pending;
+    const row = rows[index];
+    return {
+      ...saved, index, rows,
+      draft: saved.index === index && saved.draft ? saved.draft : {
+        reps: row && row.reps != null ? row.reps : '',
+        kg: row && row.kg != null ? row.kg : '',
+        effort: row && row.logged ? row.effort || null : null,
+        miss: !!(row && row.logged && row.miss),
+      },
+    };
   }
 
-  function effortPopHtml() {
-    if (!effortOpen) return '';
-    return `<div class="effort-pop" id="effortPop">
-      <p>Effort</p>
-      <div class="log-intensity">
-        <button type="button" onclick="Logger.effortPick('easy')">Easy</button>
-        <button type="button" onclick="Logger.effortPick('medium')">Medium</button>
-        <button type="button" onclick="Logger.effortPick('hard')">Hard</button>
-      </div>
-    </div>`;
+  function supportsSetFlow(page) {
+    return !/carry|farmer|suitcase|\bhold\b|plank/i.test(page.title || '') && ['kg', 'reps', 'max'].includes(page.logMode) && columnsFor(page).every((c) => ['reps', 'reps_range', 'weight_kg'].includes(c));
+  }
+
+  function setActionHtml(s, page) {
+    const flow = setFlow(s, page);
+    if (flow.index < 0) return '';
+    return `<div class="log-set-action"><button type="button" class="log-primary" onclick="Logger.${flow.rest ? 'startSet' : 'saveSet'}('${esc(page.id)}')">${flow.rest ? 'Start next set' : flow.editing ? 'Save changes' : 'Log set'}</button></div>`;
+  }
+
+  function activeSetHtml(s, page, log, dockAction = false) {
+    const flow = setFlow(s, page);
+    const id = esc(page.id);
+    const target = EFFORTS.includes(page.targetEffort) ? page.targetEffort : null;
+    const chosen = EFFORTS.includes(flow.draft.effort) ? flow.draft.effort : null;
+    const position = EFFORTS.indexOf(chosen || target || 'average');
+    const done = flow.index < 0;
+    const rows = flow.rows;
+    const repTarget = page.targetReps == null ? 'MAX' : page.targetRepMax > page.targetReps ? `${page.targetReps}–${page.targetRepMax}` : page.targetReps;
+    const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>Set ${i + 1} · ${page.logMode === 'kg' ? `${esc(r.kg)} kg × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
+    return `<p class="log-rx">${esc(page.prescription)}</p>
+      ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+      <p class="log-demo-note">Demo load adjustment · 1 kg steps</p><p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
+      <section class="log-active-set" data-exercise="${id}">
+        <div class="log-set-heading"><h3>${done ? `All ${rows.length} sets recorded` : `${flow.rest ? 'Next · ' : ''}Set ${flow.index + 1} of ${rows.length}`}</h3>${done ? '' : `<span>${esc(repTarget)} reps</span>`}</div>
+        ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
+        ${flow.adjustment && !flow.rest ? `<p class="log-note log-load-decision">${esc(flow.adjustment.reason)}</p>` : ""}<div class="log-active-fields">
+          <label>Reps completed<input class="log-cell" type="number" inputmode="numeric" min="0" step="1" value="${esc(flow.draft.reps)}" oninput="Logger.setField('${id}','reps',this.value)"></label>
+          ${page.logMode === 'kg' ? `<label>Weight (kg)<input class="log-cell" type="number" inputmode="decimal" min="0" step="any" value="${esc(flow.draft.kg)}" oninput="Logger.setField('${id}','kg',this.value)"></label>` : ''}
+        </div>
+        ${target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>'}
+        ${flow.rest ? `<p class="log-note">${flow.adjustment ? esc(flow.adjustment.reason) : "Set saved. Review the next set; adjust the weight if needed."}</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : `
+        <div class="log-effort-inline">
+          <div class="log-effort-heading"><label id="effortHeading-${id}" for="setEffort-${id}">${chosen ? 'This set felt' : target ? 'This set should feel' : 'How did this set feel?'}</label><strong id="effortValue-${id}">${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : target ? target === 'medium' ? 'Medium' : effortShort(target) : 'Choose effort'}</strong></div>
+          <input id="setEffort-${id}" class="log-effort-slider" type="range" min="0" max="4" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onpointerup="Logger.setEffort('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.setEffort('${id}',this.value)}">
+          <div class="log-effort-labels" aria-hidden="true"><span>Very Easy</span><span>Easy</span><span>Average</span><span>Hard</span><span>Max Effort</span></div>
+          <p class="log-note" id="effortHelp-${id}">${flow.draft.miss ? 'Enter the reps you actually completed.' : chosen ? EFFORT_COPY[chosen] : 'Rate the actual effort after completing your set.'}</p>
+        </div>
+        <button type="button" class="log-set-incomplete" aria-pressed="${!!flow.draft.miss}" onclick="Logger.setIncomplete('${id}')">Did Not Complete</button>
+        <p class="log-set-error" role="status">${esc(flow.error || '')}</p>
+        ${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`}`}`}
+      </section>
+      <div class="log-set-history-list">${history}</div>
+      <div class="log-set-ctrl"><button type="button" onclick="Logger.nudgeSets('${id}',-1)" aria-label="Remove a set">−</button><span>Sets</span><button type="button" onclick="Logger.nudgeSets('${id}',1)" aria-label="Add a set">+</button></div>
+      <input class="log-ex-note" placeholder="Add exercise note" aria-label="Exercise note" value="${esc(log.note || '')}" onchange="Logger.note('${id}',this.value)">`;
+  }
+
+  function updateSetFlow(memberId, update, repaint = true) {
+    const s = JSON.parse(JSON.stringify(session()));
+    const page = HybridSession.currentPage(s);
+    const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
+    if (!lift || lift.id !== memberId) return;
+    const flow = setFlow(s, lift);
+    const { rows, ...stored } = flow;
+    s.loggerSetFlow = { ...(s.loggerSetFlow || {}), [memberId]: update(stored, lift, s) };
+    if (repaint) persist(s);
+    else { root.S.session = s; if (typeof root.save === 'function') root.save(); }
   }
 
   function tableHtml(s, page, log) {
@@ -509,11 +563,9 @@
         const ph = field === 'reps' && row.reps == null;
         return `<td><button type="button" class="log-cell${focus ? ' focus' : ''}${ph ? ' ph' : ''}" onclick="Logger.focusPad('${mid}',${i},'${esc(field)}')">${esc(val)}</button></td>`;
       }).join('');
-      const effortTap = effortOpen && effortOpen.memberId === page.id && effortOpen.setIndex === i;
       return `<tr>
         <td>${i + 1}</td>
         ${tds}
-        <td><button type="button" class="log-cell${effortTap ? ' tap' : ''}" data-effort-cell="${mid}:${i}" onclick="Logger.effortPop('${mid}',${i})">${esc(effortShort(row.effort))}</button></td>
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
       </tr>`;
     }).join('');
@@ -521,7 +573,7 @@
       <p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <table class="log-table">
-        <thead><tr><th>Sets</th>${heads}<th>Effort</th><th></th></tr></thead>
+        <thead><tr><th>Sets</th>${heads}<th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="log-set-ctrl">
@@ -565,10 +617,11 @@
 
   function summaryHtml(s) {
     const st = HybridSession.summaryStats(s);
+    const title = s.title || 'Completed session';
     return `
       <div class="log-sum">
         <p class="log-kicker">${esc(s.date)}</p>
-        <h2 class="log-title">Heavy Lower</h2>
+        <h2 class="log-title">${esc(title)}</h2>
         <div class="log-stat"><span>Exercises</span><b>${st.exercises}</b></div>
         <div class="log-stat"><span>Sets</span><b>${st.sets}</b></div>
         <div class="log-stat"><span>Reps</span><b>${st.reps}</b></div>
@@ -641,7 +694,7 @@
         <section class="log-ss-member">
           <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
           ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
-          ${tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
+          ${supportsSetFlow(m) ? activeSetHtml(s, m, s.logs[m.id] || { sets: [], note: '' }) : tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
         </section>`).join('');
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
@@ -651,9 +704,9 @@
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
         <h2 class="log-title">${esc(page.title)}</h2>
         ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
-        ${tableHtml(s, page, log)}`;
+        ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
-    return `${headerHtml(s)}<div class="log-body">${body}${effortPopHtml()}</div>${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
+    return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
   }
 
   function paint() {
@@ -669,6 +722,7 @@
     let inner = '';
     if (s.phase === 'quote') inner = quoteHtml();
     else if (s.phase === 'coach') inner = coachHtml();
+    else if (s.phase === 'feel') inner = feelHtml(s);
     else if (s.phase === 'summary') inner = summaryHtml(s);
     else inner = blockHtml(s);
     el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
@@ -689,20 +743,91 @@
     open,
     close,
     paint,
+    setField(memberId, field, raw) {
+      if (!['reps', 'kg'].includes(field)) return;
+      updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, [field]: raw } }), false);
+    },
+    setEffort(memberId, raw) {
+      const effort = EFFORTS[Number(raw)];
+      if (!effort) return;
+      updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, effort } }), false);
+      const slider = document.getElementById(`setEffort-${memberId}`);
+      if (!slider || slider.disabled) return;
+      slider.setAttribute('aria-valuetext', effort === 'medium' ? 'Medium' : effortShort(effort));
+      document.getElementById(`effortHeading-${memberId}`).textContent = 'This set felt';
+      document.getElementById(`effortValue-${memberId}`).textContent = effort === 'medium' ? 'Medium' : effortShort(effort);
+      document.getElementById(`effortHelp-${memberId}`).textContent = EFFORT_COPY[effort];
+      slider.closest('.log-active-set').querySelector('.log-set-error').textContent = '';
+    },
+    setIncomplete(memberId) {
+      updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, miss: !f.draft.miss, effort: null } }));
+    },
+    editSet(memberId, index) {
+      updateSetFlow(memberId, (f, lift, s) => {
+        const r = s.logs[lift.id].sets[index];
+        return r && r.logged ? { index, editing: true, rest: false, draft: { reps: r.reps, kg: r.kg, effort: r.effort || null, miss: !!r.miss } } : f;
+      });
+    },
+    startSet(memberId) {
+      updateSetFlow(memberId, f => ({ ...f, rest: false, editing: false }));
+      const t = timerState();
+      if (t.mode === 'rest' && t.display === 'docked') persistTimer(HybridTimer.stop(t));
+    },
+    saveSet(memberId) {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
+      if (!lift || lift.id !== memberId) return;
+      const f = setFlow(s, lift);
+      if (f.index < 0 || f.rest) return;
+      const reps = Number(f.draft.reps), kg = Number(f.draft.kg);
+      let error = '';
+      if (f.draft.reps === '' || !Number.isInteger(reps) || reps < 0) error = 'Enter the reps you actually completed.';
+      else if (lift.logMode === 'kg' && (f.draft.kg === '' || f.draft.kg == null || !Number.isFinite(kg) || kg < 0)) error = 'Enter a valid weight in kg.';
+      else if (!f.draft.miss && reps === 0) error = 'For zero reps, select Did Not Complete.';
+      else if (!f.draft.miss && !EFFORTS.includes(f.draft.effort)) error = 'Choose an effort or select Did Not Complete.';
+      if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
+      const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
+      if (lift.logMode === 'kg') patch.kg = kg;
+      const next = HybridSession.logSet(s, f.index, patch, memberId);
+      const rows = next.logs[memberId].sets;
+      const index = rows.findIndex(r => !r.logged);
+      let adjustment = null;
+      if (!f.editing && index >= 0 && lift.logMode === 'kg') {
+        adjustment = DemoLoadEngine.next({kg,reps,miss:patch.miss,effort:patch.effort,target:lift.targetEffort,minReps:lift.targetReps});
+        rows[index].kg = adjustment.kg;
+        rows[f.index].loadDecision = adjustment;
+      }
+      const r = rows[index];
+      next.loggerSetFlow = { ...(next.loggerSetFlow || {}), [memberId]: {
+        index, rest: index >= 0, editing: false, adjustment,
+        draft: { reps: r && r.reps != null ? r.reps : '', kg: r && r.kg != null ? r.kg : '', effort: null, miss: false },
+      } };
+      if (!f.editing) {
+        const selected = (s.restChoices || {})[page.id];
+        if (selected) {
+          let timer = HybridTimer.choose(timerState(), 'rest');
+          timer = HybridTimer.start(HybridTimer.quickStart(timer, selected), Date.now());
+          timer.display = 'docked';
+          root.S.timer = timer;
+        }
+      }
+      persist(next);
+    },
     gotQuote() {
       if (Logger._quoteTimer) { clearTimeout(Logger._quoteTimer); Logger._quoteTimer = 0; }
       persist(HybridSession.ackQuote(session()));
     },
     gotCoach() { persist(HybridSession.ackCoach(session())); },
-    next() { pad = null; effortOpen = null; persist(HybridSession.nextPage(session())); },
-    prev() { pad = null; effortOpen = null; persist(HybridSession.prevPage(session())); },
+    next() { moveExercise(1); },
+    prev() { moveExercise(-1); },
     complete() { persist(HybridSession.completeCurrent(session())); },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);
       const id = page.logMode === 'superset' ? memberId : page.id;
       s.logs[id].note = v;
-      persist(s);
+      root.S.session = s; root.save();
     },
     focusPad(memberId, setIndex, field) {
       const s = session();
@@ -725,15 +850,15 @@
       if (!pad) return;
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = resolvePadKg(n, pad.memberId);
+      if (pad.field === 'kg') patch.kg = n;
       else if (pad.field === 'reps') patch.reps = n;
       else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), pad.setIndex, patch, pad.memberId);
-      if (pad.field === 'kg' && patch.kg > 0) {
+      if (pad.field === 'kg' && n > 0) {
         const page = HybridSession.currentPage(s);
         const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, pad.memberId) : page;
         const prev = Math.max(0, ...s.logs[lift.id].sets.filter((r, i) => i !== pad.setIndex && r.logged).map((r) => r.kg || 0));
-        if (patch.kg >= prev && lift.targetReps) {
+        if (n >= prev && lift.targetReps) {
           toast = `New ${lift.targetReps} Rep Max!`;
           clearTimeout(toastTimer);
           toastTimer = setTimeout(() => { toast = ''; paint(); }, 2200);
@@ -747,7 +872,7 @@
       const idx = pad.setIndex;
       const n = Number(pad.buffer);
       const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = resolvePadKg(n, pad.memberId);
+      if (pad.field === 'kg') patch.kg = n;
       else if (pad.field === 'reps') patch.reps = n;
       else patch.cells = { [pad.field]: n };
       let s = HybridSession.logSet(session(), idx, patch, pad.memberId);
@@ -760,31 +885,8 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) {
-        if (!row.effort && !row.miss) return;
-        persist(HybridSession.logSet(s, i, {}, lift.id));
-      } else persist(HybridSession.toggleLogged(s, i, lift.id));
-    },
-    effortPop(memberId, setIndex) {
-      effortOpen = { memberId, setIndex };
-      paint();
-      requestAnimationFrame(() => {
-        const cell = document.querySelector(`[data-effort-cell="${memberId}:${setIndex}"]`);
-        const pop = document.getElementById('effortPop');
-        if (!cell || !pop) return;
-        const body = cell.closest('.log-body');
-        if (!body) return;
-        const bodyRect = body.getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
-        pop.style.top = `${cellRect.bottom - bodyRect.top + body.scrollTop + 4}px`;
-        pop.style.left = `${Math.max(8, cellRect.left - bodyRect.left)}px`;
-      });
-    },
-    effortPick(effort) {
-      if (!effortOpen) return;
-      const { memberId, setIndex } = effortOpen;
-      effortOpen = null;
-      persist(HybridSession.logSet(session(), setIndex, { effort }, memberId));
+      if (!row.logged) persist(HybridSession.logSet(s, i, {}, lift.id));
+      else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {
       const s = JSON.parse(JSON.stringify(session()));
@@ -825,7 +927,7 @@
       const cur = (session().feel && session().feel.durationMin) || 1;
       persist(HybridSession.setFeel(session(), { durationMin: Math.max(1, cur + d) }));
     },
-    feelNote(v) { persist(HybridSession.setFeel(session(), { note: v })); },
+    feelNote(v) { root.S.session = HybridSession.setFeel(session(), { note: v }); root.save(); },
     finish() { persist(HybridSession.finishToSummary(session())); },
     chevron() {
       const t = timerState();
@@ -837,12 +939,12 @@
     },
     timerOpen() { persistTimer(HybridTimer.openPicker(timerState())); },
     timerPlay() { persistTimer(HybridTimer.play(timerState(), Date.now())); },
-    timerChoose(id) { persistTimer(HybridTimer.choose(timerState(), id)); },
-    timerClosePicker() { persistTimer(HybridTimer.closePicker(timerState())); },
+    timerChoose(id) { const timer = HybridTimer.choose(timerState(), id); persistTimer(timer); },
+    timerClosePicker() { const timer=timerState(); if(timer.view==='setup') rememberRest(timer); persistTimer(HybridTimer.closePicker(timer)); },
     timerSwitch() { persistTimer(HybridTimer.openPicker(HybridTimer.stop(timerState()))); },
     timerQuick(ms) { persistTimer(HybridTimer.quickStart(timerState(), ms)); },
     timerNudge(dir) { persistTimer(HybridTimer.nudgeRest(timerState(), dir)); },
-    timerStart() { persistTimer(HybridTimer.start(timerState(), Date.now())); },
+    timerStart() { const timer = HybridTimer.start(timerState(), Date.now()); rememberRest(timer); persistTimer(timer); },
     timerReset() { persistTimer(HybridTimer.reset(timerState(), Date.now())); },
     timerPause() { persistTimer(HybridTimer.togglePause(timerState(), Date.now())); },
     timerTapDock() { persistTimer(HybridTimer.openStopSheet(timerState())); },

@@ -28,7 +28,7 @@ if (!LC.getSheetColumns().length) throw new Error('effort column expected for pr
 const twin = LC.builderPrescriptionHtml();
 if (!twin.includes('autopilot-strip')) throw new Error('autopilot strip missing');
 if (!twin.includes('Volume')) throw new Error('volume autopilot strip missing');
-if (!twin.includes('Autopilot')) throw new Error('autopilot label missing');
+if (twin.includes('Autopilot') || !twin.includes('Not prescribed')) throw new Error('unset volume must be labelled Not prescribed');
 if (!twin.includes('logger-screen')) throw new Error('builder twin should match athlete logger');
 if (!twin.includes('hero-metrics')) throw new Error('builder twin hero missing');
 if (!twin.includes('Next set')) throw new Error('builder twin Next set missing');

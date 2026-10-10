@@ -7,13 +7,17 @@ const root = join(dir, '..');
 const css = readFileSync(join(root, 'home.css'), 'utf8');
 const js = readFileSync(join(root, 'app.js'), 'utf8');
 const html = readFileSync(join(root, 'index.html'), 'utf8');
+const worker = readFileSync(join(root, 'service-worker.js'), 'utf8');
 const failures = [];
 function must(c, m) {
   if (!c) failures.push(m);
 }
 
 must(existsSync(join(root, 'index.html')), 'index.html');
-must(existsSync(join(root, 'brain-bundle.js')), 'brain-bundle.js — run pnpm run build:brain');
+for (const name of ['brain-bundle.js', 'brain-kernel.js', 'adaptive-bundle.js']) {
+  must(!html.includes(name), `index.html must not load ${name}`);
+  must(!worker.includes(name), `service worker must not cache ${name}`);
+}
 must(existsSync(join(root, 'home.css')), 'home.css');
 must(!html.includes('THE-builder-clean'), 'old storage/build id in index');
 must(js.includes('THE-brain-v1'), 'brain storage key');
@@ -46,7 +50,7 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("CACHE = 'the-brain-v19'"), 'SW cache bump v19');
+must(worker.includes("CACHE = 'the-brain-v20'"), 'SW cache bump v20');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("url.origin !== self.location.origin"), 'SW does not intercept WHOOP Edge');
 must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'strength'"), 'plan sync falls back to hosted strength domain');
 must(html.includes('hybrid-sc.js'), 'hybrid-sc.js in index.html');
@@ -55,12 +59,12 @@ must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-sc
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-integrations.js'), 'hybrid-integrations.js in SW cache');
 must(js.includes('HybridIntegrations.bootSync'), 'boot runs full sync on open');
 must(js.includes('HybridIntegrations.mergeIntoState'), 'shared WHOOP merges on load');
-must(html.includes('HYBRID S&amp;C') || html.includes('HYBRID S&C'), 'HYBRID S&C title');
-must(js.includes('HybridSc.brandHtml') && js.includes("HybridSc.brandHtml('strength')"), 'Home brand uses HybridSc');
+must(html.includes('Hybrid Strength'), 'Hybrid Strength title');
+must(js.includes('HybridSc.brandHtml()'), 'Home brand uses the Strength-only brand');
 must(js.includes('HybridSc.dotsHtml') && js.includes('S.hybridOccupancy'), 'calendar dots from hybrid occupancy');
-must(js.includes('HybridSc.lockerCardHtml') && js.includes("HybridSc.lockerCardHtml('strength')"), 'Me locker card');
-must(js.includes('switchHybridLocker'), 'locker switch handler');
-must(js.includes('engine_side'), 'peek engine_side occupancy snapshot');
+must(js.includes('HybridSc.lockerCardHtml()'), 'Me shows the Strength product card');
+must(!js.includes('switchHybridLocker'), 'no conditioning locker switch');
+must(!js.includes('engine_side') && !js.includes('peekEngineOccupancy'), 'no conditioning calendar sync');
 must(readFileSync(join(root, 'timer.js'), 'utf8').includes('Rest Timer'), 'rest timer picker');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('Select Timer'), 'Select Timer chrome');
 must(readFileSync(join(root, 'session.js'), 'utf8').includes("logMode: 'superset'"), 'F1/F2 same-page pairing');
@@ -81,32 +85,14 @@ must(!html.includes('Copy training'), 'no Copy training chrome');
 must(js.includes('PlanSync.schedulePush'), 'plan sync still runs on save');
 must(readFileSync(join(root, 'hybrid-integrations.js'), 'utf8').includes('PlanSync.syncNow'), 'plan sync runs on boot');
 must(js.includes('function startTrainingSession'), 'Start Session entry');
-
-{
-  const engineRoot = join(root, 'engine');
-  const engineHtml = readFileSync(join(engineRoot, 'index.html'), 'utf8');
-  const engineJs = readFileSync(join(engineRoot, 'app.js'), 'utf8');
-  const engineSw = readFileSync(join(engineRoot, 'service-worker.js'), 'utf8');
-  must(existsSync(join(engineRoot, 'index.html')), 'apps/athlete/engine/index.html');
-  must(engineHtml.includes('hybrid-product" content="engine"'), 'engine index hybrid-product engine');
-  must(engineHtml.includes('HYBRID S&amp;C') || engineHtml.includes('HYBRID S&C'), 'engine HYBRID S&C title');
-  must(engineHtml.includes('hybrid-sc.js'), 'engine hybrid-sc.js in index.html');
-  must(engineJs.includes("HybridSc.brandHtml('engine')"), 'Engine brand uses HybridSc');
-  must(engineJs.includes("HybridSc.lockerCardHtml('engine')"), 'Engine Me locker card');
-  must(engineJs.includes('HybridSc.dotsHtml') && engineJs.includes('S.hybridOccupancy'), 'Engine calendar dots from hybrid occupancy');
-  must(engineJs.includes('switchHybridLocker'), 'Engine locker switch handler');
-  must(engineJs.includes('strength_side'), 'Engine peek strength_side occupancy snapshot');
-  must(readFileSync(join(engineRoot, 'engine-config.js'), 'utf8').includes("strengthOrigin: '../'"), 'engine-config strengthOrigin');
-  must(engineHtml.includes('../connectors/whoop.js'), 'engine uses shared parent whoop.js');
-  must(engineHtml.includes('hybrid-integrations.js'), 'engine hybrid-integrations.js in index.html');
-  must(engineJs.includes('HybridIntegrations.bootSync'), 'Engine boot runs full sync on open');
-  must(engineSw.includes('./hybrid-sc.js'), 'engine hybrid-sc.js in SW cache');
-  must(engineSw.includes('./hybrid-integrations.js'), 'engine hybrid-integrations.js in SW cache');
-  must(engineSw.includes('../connectors/whoop.js'), 'engine SW caches shared whoop.js');
-  must(engineSw.includes("CACHE = 'the-engine-v7'"), 'engine SW cache bump v7');
-  must(readFileSync(join(engineRoot, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'conditioning'"), 'engine plan sync falls back to hosted conditioning domain');
-  must(readFileSync(join(engineRoot, 'home.css'), 'utf8').includes('.locker-switch'), 'engine locker switch CSS');
-}
+must(js.includes('const plan = trainingPlanForDate(S.selectedDate);'), 'Home and Training use the same scheduled plan');
+must(js.includes('function historyHtml') && js.includes('function openHistory'), 'Me provides a Training history route');
+must(html.includes('data-tab="progress"') && html.includes('<span>Progress</span>'), 'Progress is a bottom navigation tab');
+must(js.includes('function progressHtml') && js.includes('function completeDailyProgressCheckin'), 'Progress has a daily record-only check-in');
+must(js.includes("'Progress — daily check-in needed'"), 'Progress exposes the daily check-in reminder accessibly');
+must(css.includes('needs-checkin::before') && css.includes('rgba(22, 236, 6'), 'Progress check-in reminder has a green halo');
+must(readFileSync(join(root, 'logger.js'), 'utf8').includes("const title = s.title || 'Completed session';"), 'completion summary uses the actual session title');
+must(!readFileSync(join(root, 'logger.js'), 'utf8').includes('<h2 class="log-title">Heavy Lower</h2>'), 'completion summary has no hardcoded workout title');
 
 if (failures.length) {
   console.error('athlete-app.smoke FAIL');

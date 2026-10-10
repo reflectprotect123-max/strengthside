@@ -9,6 +9,43 @@ import vm from 'node:vm';
 const dir = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 const html = readFileSync(join(dir, 'coach.html'), 'utf8');
+const legacyApp = readFileSync(join(dir, 'index.html'), 'utf8');
+const whoopBridge = readFileSync(join(dir, 'whoop.js'), 'utf8');
+const coachColumns = readFileSync(join(dir, 'log-columns.js'), 'utf8');
+for (const token of ['readinessScore', 'decisionFromScore', 'athRecoveryGateOverlay'].map((name) => `function ${name}(`)) {
+  if (legacyApp.includes(token)) throw new Error(`${token} must be removed`);
+}
+for (const token of ['readinessColor', 'mainLimiter', 'backgroundLoad', 'recoveryPenalty', 'wearablePenalty', 'biologicalCost']) {
+  if (legacyApp.includes(token) || whoopBridge.includes(token)) throw new Error(`${token} must not be written by coach check-ins or WHOOP sync`);
+}
+for (const token of ['RecoveryPrescription.prescribe(', 'RecoveryEngine.recoveryPosture(']) {
+  if (legacyApp.includes(token)) throw new Error(`${token} must not change a coach session`);
+}
+if (legacyApp.includes('x.summary.e1rm=sessionE1rmList(x)')) {
+  throw new Error('session completion must not write a derived e1RM');
+}
+if (legacyApp.includes('sessionProgressionCard(') || legacyApp.includes('kg next time')) {
+  throw new Error('historical progression audits must not render as current coaching');
+}
+if (!legacyApp.includes('state.meta.progressionAudit=state.meta.progressionAudit||[]')) {
+  throw new Error('historical progression audit data must remain stored');
+}
+if (legacyApp.includes('readiness overview')) throw new Error('accessibility copy still promises readiness advice');
+for (const text of ['next session load', 'Best e1RM', 'e1RM trend', 'Est. 1RM', 'rowE1rmHint(', 'e1rmCard(']) {
+  if (legacyApp.includes(text)) throw new Error(`coach UI must not advertise ${text}`);
+}
+for (const text of ['the engine sets load', 'engine picks sets', 'Engine handles volume', 'RIR on last set for progression']) {
+  if (coachColumns.includes(text)) throw new Error(`prescription UI must not advertise ${text}`);
+}
+const volumeOverviewSource = legacyApp.split('\n').find((line) => line.startsWith('function exerciseVolumeMeta('));
+if (!volumeOverviewSource) throw new Error('template volume overview missing');
+const volumeOverview = vm.runInNewContext(`${volumeOverviewSource}\nexerciseVolumeMeta`, { window: {} });
+if (volumeOverview({ autopilotVolume: true }) !== 'Not prescribed') {
+  throw new Error('template overview must describe an unset volume target honestly');
+}
+if (volumeOverview({ autopilotVolume: false, sets: 3, reps: '6-8' }) !== '3 × 6-8') {
+  throw new Error('template overview must retain coach-prescribed volume');
+}
 
 if (!html.includes('coach-loop.js')) throw new Error('coach.html missing coach-loop.js');
 if (!html.includes('coach-nutrition.js')) throw new Error('coach.html missing coach-nutrition.js');
@@ -138,6 +175,57 @@ if (L.targetList(rangeEx)[0] !== '10-12') throw new Error('range kept');
 if (/TrainHeroic|Train HYBRD/.test(JSON.stringify(S.templates))) {
   throw new Error('seed templates must not include third-party program names');
 }
+
+const rawCheckin = { date: '2026-08-26', sleepQuality: 8 };
+const whoopWindow = {
+  S: { settings: {}, dailyCheckins: [rawCheckin] },
+  today: () => '2026-08-26',
+  dailyCheckin: () => rawCheckin,
+  touchRecord: () => {},
+  save: () => {},
+  localStorage: {},
+  location: { hostname: 'localhost', protocol: 'http:' },
+  supabase: { createClient: () => ({ auth: { getSession: async () => ({ data: { session: { access_token: 'test', user: { email: 'test@example.com' } } } }) } }) },
+};
+vm.runInNewContext(whoopBridge, {
+  window: whoopWindow,
+  fetch: async () => ({ ok: true, json: async () => ({ whoop: {
+    connected: true,
+    lastSyncAt: '2026-08-26T12:00:00Z',
+    normalized: { date: '2026-08-26', recoveryScore: 72, hrvMs: 58, restingHr: 51, sleepPerformance: 84, strain: 12.5 },
+  } }) }),
+});
+await whoopWindow.Whoop.refreshStatus();
+for (const [key, value] of Object.entries({ whoopRecovery: 72, hrv: 58, restingHr: 51, whoopSleepPerformance: 84, whoopStrain: 12.5, sleepQuality: 8 })) {
+  if (rawCheckin[key] !== value) throw new Error(`WHOOP raw sync changed ${key}: ${rawCheckin[key]}`);
+}
+if (!rawCheckin.whoopSyncedAt || rawCheckin.whoopSampleDate !== '2026-08-26') throw new Error('WHOOP sample timestamps missing');
+for (const key of ['readinessColor', 'mainLimiter', 'backgroundLoad', 'recoveryPenalty', 'wearablePenalty']) {
+  if (key in rawCheckin) throw new Error(`WHOOP sync wrote ${key}`);
+}
+const metricsSource = legacyApp.slice(legacyApp.indexOf('function athObservedNumber('), legacyApp.indexOf('function athRingsSvg('));
+if (!metricsSource.startsWith('function athObservedNumber(')) throw new Error('coach raw metrics helper missing');
+let metricsCheckin = {};
+const metricsSandbox = { dailyCheckin: () => metricsCheckin, today: () => '2026-08-26', athClamp: (n, lo, hi) => Math.min(hi, Math.max(lo, n)) };
+vm.runInNewContext(metricsSource, metricsSandbox);
+if (Object.values(metricsSandbox.athHomeMetrics()).some((value) => value !== null)) throw new Error('missing WHOOP observations must remain missing');
+metricsCheckin = rawCheckin;
+for (const [key, value] of Object.entries({ recovery: 72, hrv: 58, rhr: 51, sleep: 84, strain: 12.5 })) {
+  if (metricsSandbox.athHomeMetrics()[key] !== value) throw new Error(`coach displayed ${key} incorrectly`);
+}
+const overviewSource = legacyApp.slice(legacyApp.indexOf('function athSleepOverviewBody('), legacyApp.indexOf('function setIllnessFlag('));
+if (!overviewSource.startsWith('function athSleepOverviewBody(')) throw new Error('WHOOP overview helper missing');
+let overviewRecovery = null;
+const overviewSandbox = {
+  athHomeMetrics: () => ({ recovery: overviewRecovery, hrv: null, rhr: null, sleep: null, strain: null }),
+  athMetric: (value, suffix = '') => value == null ? '—' : `${value}${suffix}`,
+  athClamp: (n, lo, hi) => Math.min(hi, Math.max(lo, n)),
+  window: {},
+};
+vm.runInNewContext(overviewSource, overviewSandbox);
+if (overviewSandbox.athSleepOverviewBody().includes('class=ath-bthumb')) throw new Error('missing recovery must not show a positioned thumb');
+overviewRecovery = 72;
+if (!overviewSandbox.athSleepOverviewBody().includes('class=ath-bthumb')) throw new Error('observed recovery should show its thumb');
 
 console.log('coach-loop: ok', {
   feedCards: feed[0].cards.length,

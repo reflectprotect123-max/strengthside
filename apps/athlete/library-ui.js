@@ -157,7 +157,7 @@
     const c2 = (b.columns && b.columns[1]) || 'none';
     return `<div class="lib-sheet" onclick="if(event.target===this)LibraryView.closeSheet()">
       <div class="lib-sheet-card">
-        <h2>Edit exercise</h2>
+        <h2>Edit exercise</h2><div class="lib-field"><label for="targetDifficulty">Target difficulty</label><select id="targetDifficulty" onchange="LibraryView.patchBlock({targetEffort:this.value})">${['very_easy','easy','average','hard','max_effort'].map((key)=>`<option value="${key}" ${key===(b.targetEffort || 'average')?'selected':''}>${({very_easy:'Very Easy',easy:'Easy',average:'Average',hard:'Hard',max_effort:'Max Effort'})[key]}</option>`).join('')}</select></div>
         <div class="lib-field"><label>Title</label><input value="${esc(b.title)}" onchange="LibraryView.patchBlock({title:this.value})"></div>
         <div class="lib-field"><label>Sets</label>
           <input type="number" min="1" max="12" value="${esc(b.setCount || 3)}" onchange="LibraryView.patchBlock({setCount:Number(this.value)})">

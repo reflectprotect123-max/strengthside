@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v9';
+const APP_BUILD = 'strength-capgo-v1.2.4';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -11,6 +11,7 @@ const defaultState = () => ({
   checkin: {},
   settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
   coachHistory: [],
+  dailyProgressCheckins: {},
   published: {},
   goals: [],
   fabOpen: false,
@@ -54,7 +55,7 @@ function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState();
-    const parsed = JSON.parse(raw);
+    const parsed = StrengthOnly.cleanState(JSON.parse(raw));
     if (!parsed || parsed.build !== BRAIN_BUILD) return defaultState();
     return {
       ...defaultState(),
@@ -69,42 +70,14 @@ function load() {
 
 function refreshHybridOccupancy() {
   if (!window.HybridSc) return;
-  const engineDates = (S.hybridOccupancy && S.hybridOccupancy.engine) || {};
-  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
-}
-
-async function peekEngineOccupancy() {
-  if (!window.HybridSc || !window.Whoop || typeof Whoop.client !== 'function') return;
-  try {
-    const sb = Whoop.client();
-    const { data: sessionData } = await sb.auth.getSession();
-    const uid = sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.id;
-    if (!uid) return;
-    const domains = (HybridSc.SNAPSHOT_DOMAINS && HybridSc.SNAPSHOT_DOMAINS.engine) || ['engine_side', 'conditioning'];
-    let snapshot = null;
-    for (const domain of domains) {
-      const { data, error } = await sb
-        .from('athlete_domain_snapshots')
-        .select('snapshot')
-        .eq('user_id', uid)
-        .eq('domain', domain)
-        .maybeSingle();
-      if (!error && data) { snapshot = data.snapshot; break; }
-    }
-    if (!snapshot) return;
-    const engineDates = HybridSc.datesFromSnapshot(snapshot);
-    HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S), engineDates);
-    window.S = S;
-  } catch (_) {
-    /* offline / unsigned */
-  }
+  HybridSc.applyOccupancyToState(S, HybridSc.datesFromState(S));
 }
 
 function save() {
   if (S.session && S.session.liftMemory) {
     S.liftMemory = Object.assign({}, S.liftMemory || {}, S.session.liftMemory);
   }
-  if (S.session && S.session.date) {
+  if (S.session && S.session.date && !S.session.demo && !S.sliderDemoOpening) {
     S.sessions = S.sessions || {};
     S.sessions[S.session.date] = S.session;
   }
@@ -142,37 +115,6 @@ function num(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function metricsFromCheckin(c = {}) {
-  return {
-    recovery: num(c.whoopRecovery) || null,
-    strain: num(c.whoopStrain) || null,
-    sleepScore: num(c.whoopSleepPerformance) || null,
-    hrvMs: num(c.hrv) || null,
-    restingHr: num(c.restingHr) || null,
-  };
-}
-
-function checkinSlice(c = {}) {
-  return {
-    sleepQuality: num(c.sleepQuality) || null,
-    energy: num(c.energy) || null,
-    muscleSoreness: num(c.muscleSoreness) || null,
-    jointStress: num(c.jointStress) || null,
-    mentalStress: num(c.mentalStress) || null,
-  };
-}
-
-function packet() {
-  const c = S.checkin[S.selectedDate] || S.checkin[today()] || {};
-  return HybridBrain.buildBrainPacket({
-    date: S.selectedDate,
-    room: 'engine',
-    metrics: metricsFromCheckin(c),
-    checkin: checkinSlice(c),
-    connected: { whoop: !!S.settings.whoop.connected, concept2: false },
-  });
-}
-
 function dailyCheckin(date = today(), create = true) {
   S.checkin = S.checkin || {};
   if (!S.checkin[date] && create) {
@@ -186,10 +128,6 @@ function dailyCheckin(date = today(), create = true) {
     };
   }
   return S.checkin[date];
-}
-
-function readinessScore(c) {
-  return HybridBrain.scoreReadiness(metricsFromCheckin(c), checkinSlice(c));
 }
 
 function esc(v) {
@@ -281,8 +219,8 @@ function topBarHtml() {
     <header class="home-top">
       <div class="home-brand">
         <span class="home-mark" aria-hidden="true">TH</span>
-        <div class="home-brand-text" aria-label="HYBRID S&C, Strength">
-          ${HybridSc.brandHtml('strength')}
+        <div class="home-brand-text" aria-label="Hybrid Strength">
+          ${HybridSc.brandHtml()}
         </div>
       </div>
       <div class="home-top-actions">
@@ -301,15 +239,14 @@ function topBarHtml() {
 
 function gaugeRowHtml() {
   const c = dailyCheckin(S.selectedDate, false) || dailyCheckin(today(), false) || {};
-  const m = metricsFromCheckin(c);
   return `
     <section class="ath-module-whoop" aria-label="WHOOP">
       <span class="ath-label">WHOOP</span>
       <div class="ath-whoop-wrap">
         <div class="ath-whoop-dials gauge-row">
-          ${whoopDialSvg({ label: 'Sleep', value: m.sleepScore, max: 100, color: '#9db4c8', unit: '%', size: 104 })}
-          ${whoopDialSvg({ label: 'Recovery', value: m.recovery, max: 100, color: whoopRecoveryColor(m.recovery), unit: '%', size: 104 })}
-          ${whoopDialSvg({ label: 'Strain', value: m.strain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
+          ${whoopDialSvg({ label: 'Sleep', value: c.whoopSleepPerformance, max: 100, color: '#9db4c8', unit: '%', size: 104 })}
+          ${whoopDialSvg({ label: 'Recovery', value: c.whoopRecovery, max: 100, color: whoopRecoveryColor(c.whoopRecovery), unit: '%', size: 104 })}
+          ${whoopDialSvg({ label: 'Strain', value: c.whoopStrain, max: 21, color: '#1ba3ff', unit: '', size: 104 })}
         </div>
         ${todayCallHtml()}
       </div>
@@ -317,19 +254,21 @@ function gaugeRowHtml() {
 }
 
 function todayCallHtml() {
-  const p = packet();
+  const connected = !!S.settings.whoop?.connected;
   return `
     <div class="today-call">
-      <p class="eyebrow">${esc(p.label || 'Today')}</p>
-      <p class="title">${esc(p.todayCall || 'Train with intent')}</p>
-      <p class="meta">${esc(p.reason || 'Connect WHOOP under Me for live readiness.')}</p>
+      <p class="eyebrow">WHOOP status</p>
+      <p class="title">${connected ? 'WHOOP connected' : 'Connect WHOOP under Me'}</p>
+      <p class="meta">${connected ? 'Wearable readings appear above when available.' : 'WHOOP readings appear above after syncing.'}</p>
     </div>`;
 }
 
 function athleteRowHtml() {
-  const items = S.published[S.selectedDate] || S.published[today()] || [];
-  const first = items[0];
-  const workout = first ? first.title : 'No session scheduled';
+  // Home and Training must read the same schedule authority. Library assignments
+  // are already resolved by trainingPlanForDate(), while published is only a
+  // legacy display cache.
+  const plan = trainingPlanForDate(S.selectedDate);
+  const workout = plan && plan.title ? plan.title : 'No session scheduled';
   return `
     <div class="ath-athlete">
       <div class="ath-avatar" aria-hidden="true">
@@ -645,14 +584,15 @@ function openLibraryForDay() {
 }
 
 function meAppSectionHtml() {
-  const otaLine = otaInfo.current ? `Channel ${esc(otaInfo.current)}` : `Build ${esc(APP_BUILD)}`;
+  const otaLine = window.NativeBridge?.isNative() ? 'Live updates · strength-live · reopen to apply' : 'Browser preview';
   return `
     ${otaBannerHtml()}
     <div class="card account-compact">
       <div class="eyebrow">App</div>
       <p class="stub">${otaLine} · ${esc(APP_BUILD)}</p>
       <div class="account-actions">
-        <button type="button" class="btn" onclick="lookForAppUpdate()">Look for app update</button>
+        <button type="button" class="btn" onclick="openHistory()">Training history</button>
+        <button type="button" class="btn" onclick="trySliderDemo()">Try slider demo</button>
       </div>
     </div>`;
 }
@@ -713,18 +653,6 @@ async function lookForAppUpdate() {
   window.alert(`You're on ${otaInfo.current || APP_BUILD}. No new version is ready.`);
 }
 
-async function switchHybridLocker(next) {
-  if (next === 'strength') return;
-  try {
-    if (window.Whoop && typeof Whoop.client === 'function') {
-      await Whoop.client().auth.updateUser({ data: { hybrid_sc: next } });
-    }
-  } catch (_) {
-    /* offline — still walk the hallway */
-  }
-  location.assign(HybridSc.origins(location.href)[next === 'engine' ? 'engine' : 'strength']);
-}
-
 function meHtml() {
   const w = S.settings.whoop || {};
   if (w.email) {
@@ -732,7 +660,7 @@ function meHtml() {
       <div class="page">
         <div class="eyebrow">Me</div>
         <h1>Profile</h1>
-        ${HybridSc.lockerCardHtml('strength')}
+        ${HybridSc.lockerCardHtml()}
         ${meAppSectionHtml()}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
@@ -750,11 +678,111 @@ function meHtml() {
     <div class="page page-signin">
       <div class="eyebrow">Account</div>
       <h1>Sign in</h1>
-      ${HybridSc.lockerCardHtml('strength')}
+      ${HybridSc.lockerCardHtml()}
       ${meAppSectionHtml()}
-      <p class="stub page-lead">One email and password for HYBRID S&amp;C. After sign-in you land on Strength — blank slate, no demo sessions.</p>
+      <p class="stub page-lead">Sign in to sync your Hybrid Strength sessions and progress.</p>
       <div id="whoopCard"></div>
     </div>`;
+}
+
+function historyHtml() {
+  const sessions = Object.values(S.sessions || {})
+    .filter((session) => session && session.phase === 'summary')
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  const rows = sessions.length
+    ? sessions.map((session) => {
+      const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
+      const title = session.title || 'Completed session';
+      const date = session.date || 'Date unavailable';
+      return `<article class="card account-compact history-session">
+        <p class="eyebrow">${esc(date)}</p>
+        <h2>${esc(title)}</h2>
+        <p class="stub">${num(stats.exercises)} exercises · ${num(stats.sets)} sets · ${num(stats.reps)} reps</p>
+      </article>`;
+    }).join('')
+    : '<p class="stub page-lead">Completed strength sessions will appear here.</p>';
+  return `<div class="page">
+    <div class="eyebrow">Me</div>
+    <h1>Training history</h1>
+    ${rows}
+    <button type="button" class="btn" onclick="setTab('me')">Back to Me</button>
+  </div>`;
+}
+
+function completedSessions() {
+  return Object.values(S.sessions || {})
+    .filter((session) => session && session.phase === 'summary')
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+}
+
+function hasDailyProgressCheckin(date = today()) {
+  return !!(S.dailyProgressCheckins && S.dailyProgressCheckins[date]);
+}
+
+function needsDailyProgressCheckin() {
+  return !hasDailyProgressCheckin(today());
+}
+
+function progressHtml() {
+  const checkedIn = hasDailyProgressCheckin();
+  const c = dailyCheckin(today(), false) || {};
+  const sessions = completedSessions();
+  const recent = sessions.slice(0, 3);
+  const whoop = [
+    ['Sleep', c.whoopSleepPerformance, '%'],
+    ['Recovery', c.whoopRecovery, '%'],
+    ['Strain', c.whoopStrain, ''],
+  ].map(([label, value, unit]) => `<div class="progress-metric"><span>${label}</span><b>${value === '' || value == null ? '—' : `${esc(value)}${unit}`}</b></div>`).join('');
+  const workoutRows = recent.length
+    ? recent.map((session) => {
+      const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
+      return `<article class="progress-row">
+        <div><b>${esc(session.title || 'Completed session')}</b><small>${esc(session.date || '')}</small></div>
+        <span>${num(stats.sets)} sets</span>
+      </article>`;
+    }).join('')
+    : '<p class="stub">Your completed strength sessions will appear here.</p>';
+  const goals = (S.goals || []).length
+    ? `<ul class="progress-goals">${S.goals.map((goal) => `<li>${esc(goal.title)}</li>`).join('')}</ul>`
+    : '<p class="stub">Add a goal from the + menu when you are ready.</p>';
+  return `<div class="page progress-page">
+    <div class="eyebrow">Strength</div>
+    <h1>Progress</h1>
+    <section class="card progress-checkin ${checkedIn ? 'is-complete' : ''}">
+      <p class="eyebrow">Daily check-in</p>
+      <h2>${checkedIn ? 'Checked in today' : 'Check in for today'}</h2>
+      <p class="stub">This is a daily record only. It does not change your training.</p>
+      ${checkedIn
+        ? '<p class="progress-confirmation">✓ Recorded</p>'
+        : '<button type="button" class="btn oled-cta" onclick="completeDailyProgressCheckin()">Mark today checked in</button>'}
+    </section>
+    <section class="card progress-section">
+      <p class="eyebrow">WHOOP readings</p>
+      <div class="progress-metrics">${whoop}</div>
+    </section>
+    <section class="card progress-section">
+      <div class="progress-section-head"><p class="eyebrow">Strength history</p><button type="button" class="btn" onclick="openHistory()">See all</button></div>
+      ${workoutRows}
+    </section>
+    <section class="card progress-section">
+      <p class="eyebrow">Goals</p>
+      ${goals}
+    </section>
+  </div>`;
+}
+
+function completeDailyProgressCheckin() {
+  S.dailyProgressCheckins = S.dailyProgressCheckins || {};
+  S.dailyProgressCheckins[today()] = { completedAt: new Date().toISOString() };
+  save();
+  render();
+}
+
+function openHistory() {
+  S.tab = 'history';
+  S.fabOpen = false;
+  save();
+  render();
 }
 
 function setTab(tab) {
@@ -851,8 +879,10 @@ function render() {
   const map = {
     home: homeHtml,
     training: trainingTabHtml,
+    progress: progressHtml,
     library: libraryHtml,
     me: meHtml,
+    history: historyHtml,
     settings: meHtml,
   };
   if (S.tab === 'chat') S.tab = 'home';
@@ -861,6 +891,12 @@ function render() {
   document.querySelectorAll('[data-tab]').forEach((b) => {
     b.classList.toggle('active', b.dataset.tab === S.tab);
   });
+  const progressButton = document.querySelector('[data-tab="progress"]');
+  if (progressButton) {
+    const needsCheckin = needsDailyProgressCheckin();
+    progressButton.classList.toggle('needs-checkin', needsCheckin);
+    progressButton.setAttribute('aria-label', needsCheckin ? 'Progress — daily check-in needed' : 'Progress');
+  }
 
   const shell = document.getElementById('shell');
   if (shell) shell.classList.toggle('shell--training', S.tab === 'training');
@@ -906,7 +942,6 @@ async function askCoach() {
       },
       body: JSON.stringify({
         message,
-        packet: HybridBrain.coachContextFromPacket(packet()),
         history: S.coachHistory.filter((m) => m.content !== '(empty reply)').slice(-8),
       }),
     });
@@ -929,7 +964,6 @@ window.S = S;
 window.save = save;
 window.today = today;
 window.dailyCheckin = dailyCheckin;
-window.readinessScore = readinessScore;
 window.touchRecord = function () {
   if (window.PlanSync) PlanSync.schedulePush();
 };
@@ -949,7 +983,6 @@ window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;
 window.trainingPlanForDate = trainingPlanForDate;
 window.openLibraryForDay = openLibraryForDay;
-window.switchHybridLocker = switchHybridLocker;
 window.render = render;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -965,13 +998,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.HybridIntegrations.mergeIntoState) HybridIntegrations.mergeIntoState(S);
   }
   refreshHybridOccupancy();
-  peekEngineOccupancy().then(() => {
-    if (S.tab === 'home' || S.tab === 'training') render();
-  });
   await refreshOtaStatus(false);
   render();
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  if (window.NativeBridge?.isNative()) {
+    // Capgo owns native bundles; browser caches must not serve an older UI.
+    navigator.serviceWorker.getRegistrations().then(registrations =>
+      Promise.all(registrations.map(registration => registration.unregister()))
+    ).then(() => caches.keys()).then(keys =>
+      Promise.all(keys.filter(key => key.startsWith('hybrid-')).map(key => caches.delete(key)))
+    ).catch(() => {});
+  } else {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  }
+}
+
+
+function trySliderDemo() {
+ const date=today();
+ const plan={title:'Slider demo',instructions:'Sample loads, not a prescribed workout. Choose your rest timer; log each set to try the adjustments.',blocks:[
+ {kind:'lift',letter:'A',title:'Back Squat',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,columns:['reps','weight_kg'],notes:[]},
+ {kind:'lift',letter:'B',title:'Bench Press',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,columns:['reps','weight_kg'],notes:[]}]};
+ S.selectedDate=date;S.tab='training';
+ // Start explicitly without replacing a user's assigned workout or archived history.
+ const old=S.session; if(!old?.demo) S.sliderPreviousSession=old; S.session=null; S.sliderDemoOpening=true;
+ Logger.open({date,letter:'A',plan}); S.session.demo=true; delete S.sliderDemoOpening; save();
 }

@@ -3,13 +3,12 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="$(cd "$ROOT/../../.." && pwd)"
+cd "$REPO"
+bash scripts/sync-athlete-app.sh
 cd "$ROOT"
 if [[ ! -x node_modules/.bin/cap ]]; then
   npm ci --no-fund --no-audit
 fi
-cd "$REPO"
-node scripts/conditioning/build.mjs
-cd "$ROOT"
 npx cap sync android
 
 if [[ -z "${ANDROID_HOME:-}${ANDROID_SDK_ROOT:-}" ]]; then
@@ -35,10 +34,10 @@ if [[ ! -f "$APK" ]]; then
   echo "Missing $APK" >&2
   exit 1
 fi
-NAMED="$ROOT/android/app/build/outputs/apk/debug/the-hybrid-athlete-dogfood-debug.apk"
+NAMED="$ROOT/android/app/build/outputs/apk/debug/hybrid-strength-debug.apk"
 cp -f "$APK" "$NAMED"
 echo "Built: $NAMED"
 if [[ -d /opt/cursor/artifacts ]]; then
-  cp -f "$NAMED" /opt/cursor/artifacts/the-hybrid-athlete-dogfood-debug.apk
-  echo "Copied to /opt/cursor/artifacts/the-hybrid-athlete-dogfood-debug.apk"
+  cp -f "$NAMED" /opt/cursor/artifacts/hybrid-strength-debug.apk
+  echo "Copied to /opt/cursor/artifacts/hybrid-strength-debug.apk"
 fi

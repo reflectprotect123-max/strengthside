@@ -77,7 +77,7 @@
   function ensure(state) {
     if (!state || typeof state !== 'object') return emptyState();
     const next = {
-      templates: Array.isArray(state.templates) ? state.templates : [],
+      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: (t.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)) })) : [],
       catalog: state.catalog && Array.isArray(state.catalog.exercises)
         ? state.catalog
         : seedCatalog(),
@@ -263,7 +263,7 @@
   function sectionFor(block) {
     if (block.kind === 'circuit') {
       if (/recover|cool/i.test(block.title || '')) return 'Recovery';
-      return 'Conditioning';
+      return 'Warm-Up';
     }
     return 'Strength/Power';
   }
@@ -271,7 +271,7 @@
   function compile(tpl) {
     const blocks = [];
     let lastSection = '';
-    for (const b of lettered(tpl)) {
+    for (const b of lettered({ ...tpl, blocks: (tpl.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)) })) {
       const section = sectionFor(b);
       if (section !== lastSection) {
         blocks.push({ kind: 'section', label: section.toUpperCase() });
@@ -298,6 +298,7 @@
           columns: (b.columns || ['reps']).slice(),
           setCount: b.setCount,
           restSec: b.restSec,
+          targetEffort: b.targetEffort || 'average',
           section,
         });
       }

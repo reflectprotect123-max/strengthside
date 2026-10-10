@@ -1,0 +1,1578 @@
+{
+  "created": "2026-10-05 Australia/Sydney",
+  "skills": [
+    {
+      "folder": "caveman",
+      "original_folder": "caveman",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/caveman",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/caveman",
+        "/workspace/strengthside/.cursor/skills/caveman",
+        "/workspace/strengthside/.agents/skills/caveman"
+      ],
+      "sha256_tree": "48646eeec87b27067502d8bd450484faf08af588df783706b1571ee72f2d918c",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "frontend-design",
+      "original_folder": "frontend-design",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/frontend-design",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/frontend-design",
+        "/workspace/strengthside/.cursor/skills/frontend-design",
+        "/workspace/strengthside/.agents/skills/frontend-design"
+      ],
+      "sha256_tree": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "mem-search",
+      "original_folder": "mem-search",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/mem-search",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/mem-search",
+        "/workspace/strengthside/.cursor/skills/mem-search",
+        "/workspace/strengthside/.agents/skills/mem-search"
+      ],
+      "sha256_tree": "6058bee763732e6c85f77523e97ad27f476e73ee44fbfdcf105a218ef1dd52e0",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-architect",
+      "original_folder": "replica-architect",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-architect"
+      ],
+      "sha256_tree": "7183b19b4ff29f9e1d072a28bc169e3ebb197e0db49e67a4341a25f9c829d2e8",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-backend",
+      "original_folder": "replica-backend",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-backend"
+      ],
+      "sha256_tree": "91720124898d0be30745cf89911103613bbf6537de9b6167f3b85b820be21114",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-brand",
+      "original_folder": "replica-brand",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-brand"
+      ],
+      "sha256_tree": "991a79db98c05a99f4848c1a9e36b8f2976e59aaf883c76a84d688248402a346",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-build",
+      "original_folder": "replica-build",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-build"
+      ],
+      "sha256_tree": "7b159d6e76f70fd301afe4d5d4c8005b6daef37f7c75f2651311cc56343efbb0",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-deploy",
+      "original_folder": "replica-deploy",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-deploy"
+      ],
+      "sha256_tree": "d45e93a5fbe8a608f2d89e66399cbaa65c7f012281de9edeaafaf43156905ba1",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-design",
+      "original_folder": "replica-design",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-design"
+      ],
+      "sha256_tree": "5f9ca754e243f9f5aba154a36287251c64992667a0bc603571cf736d90cf72cd",
+      "file_count": 3,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-diff",
+      "original_folder": "replica-diff",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-diff"
+      ],
+      "sha256_tree": "749ad1de79d1e2e5adefb4fe99876d0e65f443ffe6b73f0c7e3c7caea95c4360",
+      "file_count": 3,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-entrepreneur",
+      "original_folder": "replica-entrepreneur",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-entrepreneur"
+      ],
+      "sha256_tree": "ef89470b69c28dad4cd9fe1618008ea7511e7e35d16c2936a52e1882f6e96854",
+      "file_count": 3,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-launch",
+      "original_folder": "replica-launch",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-launch"
+      ],
+      "sha256_tree": "0a6ee6fe617e6ba289895a1611df240dd7df2ef2d64e5be123406204e3b0f21b",
+      "file_count": 3,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-recon",
+      "original_folder": "replica-recon",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-recon"
+      ],
+      "sha256_tree": "f3ba8c36449176583dda2a2707ea389b474ac3f6da893e69e79bc7136404f2d3",
+      "file_count": 3,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "replica-test",
+      "original_folder": "replica-test",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.agents/skills/replica-test"
+      ],
+      "sha256_tree": "b587bbb18e705d21e2c14750f411f2ce468c3aa7fba5c10c020dfda1191a6f94",
+      "file_count": 4,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "brainstorming",
+      "original_folder": "brainstorming",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/brainstorming",
+        "/workspace/strengthside/.claude/skills/brainstorming",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/brainstorming",
+        "/workspace/strengthside/.cursor/skills/brainstorming",
+        "/workspace/strengthside/vendor/skills/brainstorming"
+      ],
+      "sha256_tree": "05ce01f7e8758c33cd1edb0c7dc40562f4d9b4e2f306a1197c220bfb656519d1",
+      "file_count": 8,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "cavecrew",
+      "original_folder": "cavecrew",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/cavecrew",
+        "/workspace/strengthside/.claude/skills/cavecrew",
+        "/workspace/strengthside/vendor/skills/cavecrew"
+      ],
+      "sha256_tree": "c5527c994fbd4c22b36714e3b124a0f167a533d114ab164fb1d35e2123533917",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "caveman--variant-2",
+      "original_folder": "caveman",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/caveman",
+        "/workspace/strengthside/.claude/skills/caveman",
+        "/workspace/strengthside/vendor/skills/caveman"
+      ],
+      "sha256_tree": "59e1fe0d3eeb4189ee5c467efde567672e5cacb41f157c477a6152ca907d44ea",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "caveman-commit",
+      "original_folder": "caveman-commit",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/caveman-commit",
+        "/workspace/strengthside/.claude/skills/caveman-commit",
+        "/workspace/strengthside/vendor/skills/caveman-commit"
+      ],
+      "sha256_tree": "790a4eeace0be35c6691faf923518ba5bd50f1f1305d1101d09dd4971be94e00",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "caveman-compress",
+      "original_folder": "caveman-compress",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/caveman-compress",
+        "/workspace/strengthside/.claude/skills/caveman-compress",
+        "/workspace/strengthside/vendor/skills/caveman-compress"
+      ],
+      "sha256_tree": "a2b5aef97c588b2f462c32f416d57932b631a7d5188f3cf80bc7ed70defe899e",
+      "file_count": 10,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "caveman-help",
+      "original_folder": "caveman-help",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/caveman-help",
+        "/workspace/strengthside/.claude/skills/caveman-help",
+        "/workspace/strengthside/vendor/skills/caveman-help"
+      ],
+      "sha256_tree": "c76fd4aa86ad557eee62aacbd4b9dd46499fe3913910e7d596d20d094296b984",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "caveman-review",
+      "original_folder": "caveman-review",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/caveman-review",
+        "/workspace/strengthside/.claude/skills/caveman-review",
+        "/workspace/strengthside/vendor/skills/caveman-review"
+      ],
+      "sha256_tree": "fb7214a1c5793bae6ba8b1be4329e2e6f40dbec6dd911dfb335ad29f09c316a1",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "caveman-stats",
+      "original_folder": "caveman-stats",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/caveman-stats",
+        "/workspace/strengthside/.claude/skills/caveman-stats",
+        "/workspace/strengthside/vendor/skills/caveman-stats"
+      ],
+      "sha256_tree": "57c7db449641379e2afd1389fdb17cec8f33d9c8e25b1d28093937b4431895e8",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "dispatching-parallel-agents",
+      "original_folder": "dispatching-parallel-agents",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/dispatching-parallel-agents",
+        "/workspace/strengthside/.claude/skills/dispatching-parallel-agents",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/dispatching-parallel-agents",
+        "/workspace/strengthside/.cursor/skills/dispatching-parallel-agents",
+        "/workspace/strengthside/vendor/skills/dispatching-parallel-agents"
+      ],
+      "sha256_tree": "b011107f17188e0b2898bb1856b5bac8b49537cc86e737c82126558a235bd62a",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "executing-plans",
+      "original_folder": "executing-plans",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/executing-plans",
+        "/workspace/strengthside/.claude/skills/executing-plans",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/executing-plans",
+        "/workspace/strengthside/.cursor/skills/executing-plans",
+        "/workspace/strengthside/vendor/skills/executing-plans"
+      ],
+      "sha256_tree": "78a07800ee99a5861ae10be59d79fad085fdca10444e8aaeb2691597e357cff8",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "finishing-a-development-branch",
+      "original_folder": "finishing-a-development-branch",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/finishing-a-development-branch",
+        "/workspace/strengthside/.claude/skills/finishing-a-development-branch",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/finishing-a-development-branch",
+        "/workspace/strengthside/.cursor/skills/finishing-a-development-branch",
+        "/workspace/strengthside/vendor/skills/finishing-a-development-branch"
+      ],
+      "sha256_tree": "4f571e7befb8b0946d9d7770232c818812412e9ab1dfb811f847edfba1fc6275",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "frontend-design--variant-2",
+      "original_folder": "frontend-design",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/frontend-design",
+        "/workspace/strengthside/.claude/skills/frontend-design",
+        "/workspace/strengthside/vendor/skills/frontend-design"
+      ],
+      "sha256_tree": "91d03deef0b9f3a9ea0326acef4cf141a3c5612a3d80754958da10481e8579ad",
+      "file_count": 3,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "install-skill",
+      "original_folder": "install-skill",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/install-skill",
+        "/workspace/strengthside/.claude/skills/install-skill",
+        "/workspace/strengthside/vendor/skills/install-skill"
+      ],
+      "sha256_tree": "d40c953fc5cf209d6ea286eae19dfcac221c8668118c2c8fa61d23e36706b4c7",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "receiving-code-review",
+      "original_folder": "receiving-code-review",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/receiving-code-review",
+        "/workspace/strengthside/.claude/skills/receiving-code-review",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/receiving-code-review",
+        "/workspace/strengthside/.cursor/skills/receiving-code-review",
+        "/workspace/strengthside/vendor/skills/receiving-code-review"
+      ],
+      "sha256_tree": "59361179fc9225173e0c145ffd9bafbf9fdbf8b43ce3dc308497a0b4f83a6063",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "requesting-code-review",
+      "original_folder": "requesting-code-review",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/requesting-code-review",
+        "/workspace/strengthside/.claude/skills/requesting-code-review",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/requesting-code-review",
+        "/workspace/strengthside/.cursor/skills/requesting-code-review",
+        "/workspace/strengthside/vendor/skills/requesting-code-review"
+      ],
+      "sha256_tree": "e2a981680b7b1eeb367fe00c76a9656c8d571541c68823dc1f704b984b704b19",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "session-start-hook",
+      "original_folder": "session-start-hook",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/session-start-hook",
+        "/workspace/strengthside/.claude/skills/session-start-hook",
+        "/workspace/strengthside/vendor/skills/session-start-hook"
+      ],
+      "sha256_tree": "bdc8e300b63c36f1449b84fdb51f0349477dca12036555f77e2be725ebab5187",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "subagent-driven-development",
+      "original_folder": "subagent-driven-development",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/subagent-driven-development",
+        "/workspace/strengthside/.claude/skills/subagent-driven-development",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/subagent-driven-development",
+        "/workspace/strengthside/.cursor/skills/subagent-driven-development",
+        "/workspace/strengthside/vendor/skills/subagent-driven-development"
+      ],
+      "sha256_tree": "851b31cda32d1c9e320b6747bf45223453edae4dfe31a8584ced113ce4d7de4d",
+      "file_count": 7,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "supabase",
+      "original_folder": "supabase",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/supabase",
+        "/workspace/strengthside/.claude/skills/supabase",
+        "/workspace/strengthside/vendor/skills/supabase"
+      ],
+      "sha256_tree": "d2cdedee3c3b771c6c1458cdc7efce8bff6aceb7cb33f10f3f759a4b331ce8c9",
+      "file_count": 4,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "supabase-postgres-best-practices",
+      "original_folder": "supabase-postgres-best-practices",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/supabase-postgres-best-practices",
+        "/workspace/strengthside/.claude/skills/supabase-postgres-best-practices",
+        "/workspace/strengthside/vendor/skills/supabase-postgres-best-practices"
+      ],
+      "sha256_tree": "5766a8e9524c3c2a81041409be237c3baf515aa04a135871a21dd351682d173f",
+      "file_count": 36,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "systematic-debugging",
+      "original_folder": "systematic-debugging",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/systematic-debugging",
+        "/workspace/strengthside/.claude/skills/systematic-debugging",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/systematic-debugging",
+        "/workspace/strengthside/.cursor/skills/systematic-debugging",
+        "/workspace/strengthside/vendor/skills/systematic-debugging"
+      ],
+      "sha256_tree": "5ab44290779cd788c3c38cb9a132c26cf36e3f5c897574f645f73ed37ef999da",
+      "file_count": 11,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "test-driven-development",
+      "original_folder": "test-driven-development",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/test-driven-development",
+        "/workspace/strengthside/.claude/skills/test-driven-development",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/test-driven-development",
+        "/workspace/strengthside/.cursor/skills/test-driven-development",
+        "/workspace/strengthside/vendor/skills/test-driven-development"
+      ],
+      "sha256_tree": "a4126a9c5f17be3c228aa9e5755898ade283448b86099f56f40852e8c14532be",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "ui-ux-pro-max",
+      "original_folder": "ui-ux-pro-max",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/ui-ux-pro-max",
+        "/workspace/strengthside/.claude/skills/ui-ux-pro-max",
+        "/workspace/strengthside/vendor/skills/ui-ux-pro-max"
+      ],
+      "sha256_tree": "2a0ef1094f6c630509b4933fb26f1d36c8f470fede132d64899dcbfdc856c49b",
+      "file_count": 46,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "using-git-worktrees",
+      "original_folder": "using-git-worktrees",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/using-git-worktrees",
+        "/workspace/strengthside/.claude/skills/using-git-worktrees",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/using-git-worktrees",
+        "/workspace/strengthside/.cursor/skills/using-git-worktrees",
+        "/workspace/strengthside/vendor/skills/using-git-worktrees"
+      ],
+      "sha256_tree": "48c8a1040e378e0cb7208107294e3afa9067b9370c3f33b49a443eb6b7528b0d",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "using-superpowers",
+      "original_folder": "using-superpowers",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/using-superpowers",
+        "/workspace/strengthside/.claude/skills/using-superpowers",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/using-superpowers",
+        "/workspace/strengthside/.cursor/skills/using-superpowers",
+        "/workspace/strengthside/vendor/skills/using-superpowers"
+      ],
+      "sha256_tree": "7559a33b257709a2faddaa31863907b41e5ae0cdb2fc03cde6b9f9fd002e7713",
+      "file_count": 6,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "verification-before-completion",
+      "original_folder": "verification-before-completion",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/verification-before-completion",
+        "/workspace/strengthside/.claude/skills/verification-before-completion",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/verification-before-completion",
+        "/workspace/strengthside/.cursor/skills/verification-before-completion",
+        "/workspace/strengthside/vendor/skills/verification-before-completion"
+      ],
+      "sha256_tree": "b529822bdac4b197b180fe12225cff86b930b65910435103c10622df7f041651",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "writing-plans",
+      "original_folder": "writing-plans",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/writing-plans",
+        "/workspace/strengthside/.claude/skills/writing-plans",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/writing-plans",
+        "/workspace/strengthside/.cursor/skills/writing-plans",
+        "/workspace/strengthside/vendor/skills/writing-plans"
+      ],
+      "sha256_tree": "f020814ff4009bb3eb668de8dcaa5985f2fe712284fe0bca8a8d4aa3ce6cf3f1",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "writing-skills",
+      "original_folder": "writing-skills",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/vendor/skills/writing-skills",
+        "/workspace/strengthside/.claude/skills/writing-skills",
+        "/workspace/strengthside-daily-checkin/.cursor/skills/writing-skills",
+        "/workspace/strengthside/.cursor/skills/writing-skills",
+        "/workspace/strengthside/vendor/skills/writing-skills"
+      ],
+      "sha256_tree": "ad215c6a3c0b237ef8c375a059adb739bfe40f37fae6504f0c1bc4002592bfee",
+      "file_count": 7,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "agentic",
+      "original_folder": "agentic",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/agentic"
+      ],
+      "sha256_tree": "540555fad7d6cabc83d6055d4f9ad053cfcae0748be54187037731f8a2adc320",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "ant",
+      "original_folder": "ant",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/ant"
+      ],
+      "sha256_tree": "ff2dbe48d86e5606c7acc98d2690dd048f4108394f9fdd73f7c5b2261a08c224",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "artistic",
+      "original_folder": "artistic",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/artistic"
+      ],
+      "sha256_tree": "fc2252f9227e67441d4a5e55350846f177a9992773671acb8666f2fd57ebe45a",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "basic",
+      "original_folder": "basic",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/basic"
+      ],
+      "sha256_tree": "3ae7192bfc7ace4eedacdab63503363268423245776b49d9b123e03b3484655e",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "bento",
+      "original_folder": "bento",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/bento"
+      ],
+      "sha256_tree": "f095989f9b5f5084332b44e544451a4bcce0089bbc65b51045519567180ea73c",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "bold",
+      "original_folder": "bold",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/bold"
+      ],
+      "sha256_tree": "ab7248e2175da3e180c386383bc362bbc180b7de02a169729aca073f016f24d3",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "brandkit",
+      "original_folder": "brandkit",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/brandkit"
+      ],
+      "sha256_tree": "b63012f3c3d21197e0185d3e9cc7ec40c589fb10e0b5a32a561739de31aa3f20",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "brutalism",
+      "original_folder": "brutalism",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/brutalism"
+      ],
+      "sha256_tree": "3bfccbf533a2ef61d136fd54bbca234328eda93c15318f148f92cefbd368e7e4",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "brutalist-skill",
+      "original_folder": "brutalist-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/brutalist-skill"
+      ],
+      "sha256_tree": "8fc355c4aadb7d29c53ca28bc41be3cd6eea765d121e3737c4dc2d0f90a8effa",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "cafe",
+      "original_folder": "cafe",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/cafe"
+      ],
+      "sha256_tree": "d1b18777aaf94d8e9d023b002b002d77705b95d70a779e6ca4c9029cbb5460cb",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "claude",
+      "original_folder": "claude",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/claude"
+      ],
+      "sha256_tree": "b122689a260de4fc943a562bad949118e3303de451982aa3fad820e712c87684",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "claymorphism",
+      "original_folder": "claymorphism",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/claymorphism"
+      ],
+      "sha256_tree": "b459affbe78e6018fc2339ea89d0c920d594ad0911001dcabd519151d780f5f2",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "clean",
+      "original_folder": "clean",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/clean"
+      ],
+      "sha256_tree": "5260b1674529ebf22dbcd254f6a2ce6a5f304bd976f2ca38fb67201f876b45ab",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "codex",
+      "original_folder": "codex",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/codex"
+      ],
+      "sha256_tree": "0b2e1acfb7df9ad7dab25d4707c3dc1e8dd281914ae05b23650c041959d57991",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "colorful",
+      "original_folder": "colorful",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/colorful"
+      ],
+      "sha256_tree": "2d09dfb743fcbcf6ef20ad59a8db4eb75a1d4ebaa0f5b4fbebb2f784ed831ec2",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "contemporary",
+      "original_folder": "contemporary",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/contemporary"
+      ],
+      "sha256_tree": "6f7f9a477e02085172332aacbc6849fab705442d6bd69e8bd584ad7db276d5fb",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "corporate",
+      "original_folder": "corporate",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/corporate"
+      ],
+      "sha256_tree": "861a213d6d8c62264577811542d685076c4f74b3e016beadce91d81ceaa56eb2",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "cosmic",
+      "original_folder": "cosmic",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/cosmic"
+      ],
+      "sha256_tree": "a79f27632577cd78ca473508126b22c1cc771c70f97767dc0aecac1c7b803722",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "creative",
+      "original_folder": "creative",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/creative"
+      ],
+      "sha256_tree": "a3aa768e350761d388c3f669e0e19eae67ce78452f25505d788cb6d0914649c3",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "dithered",
+      "original_folder": "dithered",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/dithered"
+      ],
+      "sha256_tree": "4b0e7c51d97b2ac1505b6df7c26ac6390f7f9ec9b27b5fd0eff89aeec1ac9e85",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "doodle",
+      "original_folder": "doodle",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/doodle"
+      ],
+      "sha256_tree": "d332ec6c520a6699741e841934941d2fceac338112d7d353544b63c1beb50e60",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "dramatic",
+      "original_folder": "dramatic",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/dramatic"
+      ],
+      "sha256_tree": "c7556566717d16f14eb7935179d1c920fed9823dab2667f39350ef3bfdf9b2f2",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "editorial",
+      "original_folder": "editorial",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/editorial"
+      ],
+      "sha256_tree": "e1520060a3f71ec27913bf6e892bb0a23b6bb7a599b39ea680ac47521c980bbb",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "enterprise",
+      "original_folder": "enterprise",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/enterprise"
+      ],
+      "sha256_tree": "eae501ecf01a07ad674670ae98d1eab66e834ec1ba2cae18c20aaab49ca0efc8",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "expressive",
+      "original_folder": "expressive",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/expressive"
+      ],
+      "sha256_tree": "2788cc8dca884ae5aa3acc1bbed51fa1777ecc76a146c532f673e175935170b2",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "fantasy",
+      "original_folder": "fantasy",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/fantasy"
+      ],
+      "sha256_tree": "c821430808221e6c5dae9038c381b0fc1d4889634a192c50a1c18a776fe99be7",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "fiction",
+      "original_folder": "fiction",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/fiction"
+      ],
+      "sha256_tree": "c67a6e6c674181c5696cec3726f76e5bbca0e68d5df7442c13d479200f316c7d",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "flat",
+      "original_folder": "flat",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/flat"
+      ],
+      "sha256_tree": "016fa071162ed671db350f8fd6870624cb9e1c21f9b25e0fab48f5a9c6c3e929",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "friendly",
+      "original_folder": "friendly",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/friendly"
+      ],
+      "sha256_tree": "6231dea29e93027da159eea40caeb258306d89e287beec01ae109e9aebf34bea",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "futuristic",
+      "original_folder": "futuristic",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/futuristic"
+      ],
+      "sha256_tree": "1c9bde7a7a0fad3349301c04b4081d23bab716eafe946ac135f49dc551e65f1b",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "geometric",
+      "original_folder": "geometric",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/geometric"
+      ],
+      "sha256_tree": "abad7cbfbc0313090a67b16e52bf388d5a5e5023647505625768b46e1d8c7c62",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "glassmorphism",
+      "original_folder": "glassmorphism",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/glassmorphism"
+      ],
+      "sha256_tree": "c252e09e7d990eeaced228aafa1384532ff0f02e955010dfc26a46c5f3d35862",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "gpt-tasteskill",
+      "original_folder": "gpt-tasteskill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/gpt-tasteskill"
+      ],
+      "sha256_tree": "cc8f0c601d8240a124e1d11634351a2be7b8a72fd807c75e5b6bf7afcd5ddee0",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "gradient",
+      "original_folder": "gradient",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/gradient"
+      ],
+      "sha256_tree": "f9a03db3d2396923508d96413f9e23287b4b9532fb8c12d4f25669cd858d2d58",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "image-to-code-skill",
+      "original_folder": "image-to-code-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/image-to-code-skill"
+      ],
+      "sha256_tree": "58517b03b2a01f4c9ba65861559d03df931400871bbc200978c975b24bb92c73",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "imagegen-frontend-mobile",
+      "original_folder": "imagegen-frontend-mobile",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/imagegen-frontend-mobile"
+      ],
+      "sha256_tree": "9ab7f4f6ce66a3cff02bbf5894e5bd5af50bf5d6ef0adffdc88e8fab772fe44f",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "imagegen-frontend-web",
+      "original_folder": "imagegen-frontend-web",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/imagegen-frontend-web"
+      ],
+      "sha256_tree": "65f5ae59fa317567809438310b1c54f78cd133426deb43e4d3d4ca4c8f541628",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "immersive",
+      "original_folder": "immersive",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/immersive"
+      ],
+      "sha256_tree": "25cd94fe0012f719bf878aa6f42e992dfac495a4e98f16310a7d58d61448b7bb",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "impeccable",
+      "original_folder": "impeccable",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/impeccable"
+      ],
+      "sha256_tree": "db0e16efb499018bc391583e3bdc0693a5b9b739c498e4bdd198eb2615eab924",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "levels",
+      "original_folder": "levels",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/levels"
+      ],
+      "sha256_tree": "36b48029457ccac9aff2511938074666a437fdbcbe173209d5070fa70ee36596",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "lingo",
+      "original_folder": "lingo",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/lingo"
+      ],
+      "sha256_tree": "456a547f6835e0e45bf2b3cbdf66bae60292a5dc1bf0fdb80871591129907d81",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "material",
+      "original_folder": "material",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/material"
+      ],
+      "sha256_tree": "df56c7346f3d12f4112c9d9ed028ce9dd26ba5be042e22afa98fb6f05c691a7c",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "matrix",
+      "original_folder": "matrix",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/matrix"
+      ],
+      "sha256_tree": "671f3de24f11b8b994ec145aa3d58dd605be121c4954a87c12e2631c25837fec",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "minimal",
+      "original_folder": "minimal",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/minimal"
+      ],
+      "sha256_tree": "0d76c8d85ee4cd854fb472d9ec64ee6aafa30f4d885e780f5cd3388d58176030",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "minimalist-skill",
+      "original_folder": "minimalist-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/minimalist-skill"
+      ],
+      "sha256_tree": "08873a3131d3be27bef9bf3304b310b16b44ca6e3561aebe532797be3443f6bd",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "modern",
+      "original_folder": "modern",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/modern"
+      ],
+      "sha256_tree": "7f3f070399b2be73135001528a84db0189629b2b8dea19275b0ab87dc401c458",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "mono",
+      "original_folder": "mono",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/mono"
+      ],
+      "sha256_tree": "16778d0940088fbab3aea9c454751f99e14cfc97c35eb4e45be4dfe3d57dd4bc",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "neobrutalism",
+      "original_folder": "neobrutalism",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/neobrutalism"
+      ],
+      "sha256_tree": "53dd3da4651bc1a9d7a2f826cdbba5ec7738cfb3407728f11929ca27a3355997",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "neon",
+      "original_folder": "neon",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/neon"
+      ],
+      "sha256_tree": "36b4671e723c420217dae5fc4e6ad95d109f37aaf706cbe72813b93ca8c6c1e5",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "neumorphism",
+      "original_folder": "neumorphism",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/neumorphism"
+      ],
+      "sha256_tree": "f233e9f16e96a2675256c73877f90b201650be9b79bcbbe50bd07737bce3d955",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "output-skill",
+      "original_folder": "output-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/output-skill"
+      ],
+      "sha256_tree": "26bd29ce4c5e02c7666b2d503609bf466bd32290822e91f0e984147048dbb924",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "pacman",
+      "original_folder": "pacman",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/pacman"
+      ],
+      "sha256_tree": "576f0bf5e213b923b25e7939ce3530c5cc9265acb10895a5ce533fec12c403ec",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "paper",
+      "original_folder": "paper",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/paper"
+      ],
+      "sha256_tree": "1411ce905410f89c4f9023d182e86a309180128d9efc461425f8e2b12f683334",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "perspective",
+      "original_folder": "perspective",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/perspective"
+      ],
+      "sha256_tree": "c18cbf073014eea5dab8e8e1db021cd323fdb8cf0234287cb80e439a7d2a05c2",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "playwright-cli",
+      "original_folder": "playwright-cli",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/playwright-cli"
+      ],
+      "sha256_tree": "2131a1568e4143c87329d5780c87d5007681259309da288caf5d2395a1078a42",
+      "file_count": 11,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "power",
+      "original_folder": "power",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/power"
+      ],
+      "sha256_tree": "d08f4aa02ff0aeb6e2a0ec3ee3da1fdc7e2100b83ad08c70c723a5cc9482c50e",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "premium",
+      "original_folder": "premium",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/premium"
+      ],
+      "sha256_tree": "5890697097fd3a3d1d131288b68e6082cb432842607732d0ea3c2226f0cf4d42",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "professional",
+      "original_folder": "professional",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/professional"
+      ],
+      "sha256_tree": "d828fa1920616a53c4731b38bcc1b759fd4278be948678740d671c20bf869901",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "pulse",
+      "original_folder": "pulse",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/pulse"
+      ],
+      "sha256_tree": "59df011e43c986d7af11989b508d5cdfd4ddae5a44b1e26f8ce920651928daa6",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "redesign-skill",
+      "original_folder": "redesign-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/redesign-skill"
+      ],
+      "sha256_tree": "b405eee0e0e80fc243f731d9aa368bca307e356db7e6157d27101d369dac6726",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "refined",
+      "original_folder": "refined",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/refined"
+      ],
+      "sha256_tree": "e193776de1628457b4fad34c36fc125ca00c5383f21042ab17ba0fd488ce137b",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "retro",
+      "original_folder": "retro",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/retro"
+      ],
+      "sha256_tree": "882a9079cd9c0c93f570fb466be392154fba9e35495a02d8278844292bcc2ed6",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "riso",
+      "original_folder": "riso",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/riso"
+      ],
+      "sha256_tree": "4f56112e420fcb37effbfcc72ea85bf085320124c077e0a6b0b4d058c6fb29bc",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "roku",
+      "original_folder": "roku",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/roku"
+      ],
+      "sha256_tree": "4f3578a4beb6058f8a9cfa8af501cd2b87918d7da4768010fdd1ec856db990bc",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "sega",
+      "original_folder": "sega",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/sega"
+      ],
+      "sha256_tree": "b9ada835b51cfe1ba92a63408a516df2ff8bd909eba0549111c50674c067c684",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "shadcn",
+      "original_folder": "shadcn",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/shadcn"
+      ],
+      "sha256_tree": "c3bbcb5f728f88651298c09cb6d05764bd8985892f976071fd0ee8d6ea468d17",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "sketch",
+      "original_folder": "sketch",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/sketch"
+      ],
+      "sha256_tree": "fb69edd3b90f99f64afb34e6a169073363adee5bd8fdeafd3873524ec91d9623",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "skeumorphism",
+      "original_folder": "skeumorphism",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/skeumorphism"
+      ],
+      "sha256_tree": "16ec4b5ba7151246d988e0e37c645eeaa5566d9c180eeb16484e9b5512f98830",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "sleek",
+      "original_folder": "sleek",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/sleek"
+      ],
+      "sha256_tree": "0c9e8f44c0cef9d8e5a8b617f42ba8e7ce744d5a1608c1015622d8e1a250eb7d",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "soft-skill",
+      "original_folder": "soft-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/soft-skill"
+      ],
+      "sha256_tree": "7db385e4c5370e5a7fca9704a1361b056e4504ea6a03924bb86f33a4f00b5c73",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "spacious",
+      "original_folder": "spacious",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/spacious"
+      ],
+      "sha256_tree": "5fee2e3cff9ebc7295db6a9e8940768bf2ef2f532993177296aadbe1d0c96769",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "square",
+      "original_folder": "square",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/square"
+      ],
+      "sha256_tree": "2cd125492826decb6fdf30147b5ba484e5c42c9557c68b32b9109616aca7961a",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "stitch",
+      "original_folder": "stitch",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/stitch"
+      ],
+      "sha256_tree": "4a7509109d97f8771d50425016883033234b545446b4eb7e404bfce764c2b25e",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "stitch-skill",
+      "original_folder": "stitch-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/stitch-skill"
+      ],
+      "sha256_tree": "13322f38406cd3abf16ba45e35bdc9b18002d0153a79b4612b97aefc65d5a335",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "storytelling",
+      "original_folder": "storytelling",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/storytelling"
+      ],
+      "sha256_tree": "7bf43f82476d8bff5af80b55725af3848f3e9f44dc742293349ee7ba43e8ec69",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "taste-skill",
+      "original_folder": "taste-skill",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/taste-skill"
+      ],
+      "sha256_tree": "6d838b246d0e35d0b53f4f23f98ba7a1dd561937e64f7d0c7553b0928e376c3e",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "taste-skill-v1",
+      "original_folder": "taste-skill-v1",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/taste-skill-v1"
+      ],
+      "sha256_tree": "d704ab912c4d0ca954ffa858983da755ae4cd5cad9ba22554db5557382f5bd34",
+      "file_count": 1,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "terracotta",
+      "original_folder": "terracotta",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/terracotta"
+      ],
+      "sha256_tree": "14a1960d7a0bff96f17fcbd181f7520de072a2e03dc18721b59a73ccf4d75242",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "tetris",
+      "original_folder": "tetris",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/tetris"
+      ],
+      "sha256_tree": "354cb59ca6771db68f801d450fd41e82d66130efa651248620f794da12f84ebb",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "vibrant",
+      "original_folder": "vibrant",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/vibrant"
+      ],
+      "sha256_tree": "28d9f0b88c6018ea286003ccca31cab28687f4e063f5c354908d4e984f091bbf",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "vintage",
+      "original_folder": "vintage",
+      "source_locations": [
+        "/workspace/strengthside/.claude/skills/vintage"
+      ],
+      "sha256_tree": "22933453b56e0328a425aacc6772ea1ba32795fc8fce147bea77cefb99222839",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "banner-design",
+      "original_folder": "banner-design",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.cursor/skills/banner-design",
+        "/workspace/strengthside/.cursor/skills/banner-design"
+      ],
+      "sha256_tree": "2d091c7f9fd9e9c2403f7e94ea30fbe6e8be37a6d8b03c4716441e1f16184da6",
+      "file_count": 2,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "brand",
+      "original_folder": "brand",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.cursor/skills/brand",
+        "/workspace/strengthside/.cursor/skills/brand"
+      ],
+      "sha256_tree": "1fd43f9acaa0cde70ab949e2745a04dc2af746bcf3c0a230b8276e216a8186cb",
+      "file_count": 18,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "design",
+      "original_folder": "design",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.cursor/skills/design",
+        "/workspace/strengthside/.cursor/skills/design"
+      ],
+      "sha256_tree": "f1312950d31788b8c914f6bb65739e8035c1d252da71fdbe53ad544fc98f9974",
+      "file_count": 35,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "design-system",
+      "original_folder": "design-system",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.cursor/skills/design-system",
+        "/workspace/strengthside/.cursor/skills/design-system"
+      ],
+      "sha256_tree": "ae55d8b42b186c274fda4c9523d421305bb63526caa2aacec321b4328c632341",
+      "file_count": 27,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "slides",
+      "original_folder": "slides",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.cursor/skills/slides",
+        "/workspace/strengthside/.cursor/skills/slides"
+      ],
+      "sha256_tree": "1249dd10019bdeb0bc76fc07f1a105c4567fc63daf112908b1866b9b8a630179",
+      "file_count": 6,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "ui-styling",
+      "original_folder": "ui-styling",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.cursor/skills/ui-styling",
+        "/workspace/strengthside/.cursor/skills/ui-styling"
+      ],
+      "sha256_tree": "94d19be2871c5463104b06ae5b036e7ada0b9372a9080e71802cb0deb3893b64",
+      "file_count": 16,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "ui-ux-pro-max--variant-2",
+      "original_folder": "ui-ux-pro-max",
+      "source_locations": [
+        "/workspace/strengthside-daily-checkin/.cursor/skills/ui-ux-pro-max",
+        "/workspace/strengthside/.cursor/skills/ui-ux-pro-max"
+      ],
+      "sha256_tree": "4c1d94e43eaa6f80d215a105a35fd5039a600f4ee573f6f798a581acab968e43",
+      "file_count": 68,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "graphify",
+      "original_folder": "graphify",
+      "source_locations": [
+        "/home/agent/.claude/skills/graphify"
+      ],
+      "sha256_tree": "5c7e805898dfca9e027a81e2d736f61cfead4da57f9256c8377e91ce79017d38",
+      "file_count": 10,
+      "valid_frontmatter": true,
+      "kind": "local-skill"
+    },
+    {
+      "folder": "documents",
+      "original_folder": "documents",
+      "source_locations": [
+        "/home/agent/.codex/skills/builtins/documents"
+      ],
+      "sha256_tree": "0bc2b8147709c7293c1b6899f506388ba10041d3425529475e6a53cc18b74692",
+      "file_count": 78,
+      "valid_frontmatter": true,
+      "kind": "platform-builtin"
+    },
+    {
+      "folder": "pdf",
+      "original_folder": "pdf",
+      "source_locations": [
+        "/home/agent/.codex/skills/builtins/pdf"
+      ],
+      "sha256_tree": "5de34cf66f28312ee2b1866e9560b1bb8470e00e4f4d396a6fe8f634c896a00d",
+      "file_count": 4,
+      "valid_frontmatter": true,
+      "kind": "platform-builtin"
+    },
+    {
+      "folder": "presentations",
+      "original_folder": "presentations",
+      "source_locations": [
+        "/home/agent/.codex/skills/builtins/presentations"
+      ],
+      "sha256_tree": "44a54794edb4db47104b5315611bc1e3f9e5ef44f55af988768cd026f1568e96",
+      "file_count": 59,
+      "valid_frontmatter": true,
+      "kind": "platform-builtin"
+    },
+    {
+      "folder": "spreadsheets",
+      "original_folder": "spreadsheets",
+      "source_locations": [
+        "/home/agent/.codex/skills/builtins/spreadsheets"
+      ],
+      "sha256_tree": "da2d2209eb7215f3ebb1ef56e73c877eeafded4fb90eed96d79ec550a2ed12a9",
+      "file_count": 19,
+      "valid_frontmatter": true,
+      "kind": "platform-builtin"
+    }
+  ],
+  "excluded_files": []
+}
