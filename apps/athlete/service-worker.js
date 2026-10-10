@@ -1,5 +1,5 @@
-const CACHE = 'the-brain-v20';
-const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './timer.js', './native-bridge.js', './strength-only.js', './load-engine.js', './capgo-updates.js', './strength-config.js', './hybrid-sc.js', './hybrid-integrations.js', './connectors/whoop.js', './vendor/supabase.min.js'];
+const CACHE = 'strength-brain-v21';
+const ASSETS = ['./', './index.html', './app.js', './home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './timer.js', './native-bridge.js', './strength-only.js', './load-engine.js', './strength-brain.js', './strength-memory.js', './capgo-updates.js', './strength-config.js', './hybrid-sc.js', './hybrid-integrations.js', './connectors/whoop.js', './vendor/supabase.min.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

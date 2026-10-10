@@ -19,6 +19,7 @@
 
   function persist(next) {
     root.S.session = next;
+    root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     paint();
@@ -505,25 +506,25 @@
   function activeSetHtml(s, page, log, dockAction = false) {
     const flow = setFlow(s, page);
     const id = esc(page.id);
-    const target = EFFORTS.includes(page.targetEffort) ? page.targetEffort : null;
+    const target = flow.rows[flow.index]?.targetEffort || root.StrengthBrain.target(page,flow.rows[flow.index],flow.index);
     const chosen = EFFORTS.includes(flow.draft.effort) ? flow.draft.effort : null;
     const position = EFFORTS.indexOf(chosen || target || 'average');
     const done = flow.index < 0;
     const rows = flow.rows;
     const repTarget = page.targetReps == null ? 'MAX' : page.targetRepMax > page.targetReps ? `${page.targetReps}–${page.targetRepMax}` : page.targetReps;
-    const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>Set ${i + 1} · ${page.logMode === 'kg' ? `${esc(r.kg)} kg × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
+    const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Warm-up':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(r.kg)} kg × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
-      <p class="log-demo-note">Demo load adjustment · 1 kg steps</p><p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
+      <p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
       <section class="log-active-set" data-exercise="${id}">
-        <div class="log-set-heading"><h3>${done ? `All ${rows.length} sets recorded` : `${flow.rest ? 'Next · ' : ''}Set ${flow.index + 1} of ${rows.length}`}</h3>${done ? '' : `<span>${esc(repTarget)} reps</span>`}</div>
+        <div class="log-set-heading"><h3>${done ? `All ${rows.length} sets recorded` : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Warm-up ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)} reps</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
-        ${flow.adjustment && !flow.rest ? `<p class="log-note log-load-decision">${esc(flow.adjustment.reason)}</p>` : ""}<div class="log-active-fields">
+<div class="log-active-fields">
           <label>Reps completed<input class="log-cell" type="number" inputmode="numeric" min="0" step="1" value="${esc(flow.draft.reps)}" oninput="Logger.setField('${id}','reps',this.value)"></label>
           ${page.logMode === 'kg' ? `<label>Weight (kg)<input class="log-cell" type="number" inputmode="decimal" min="0" step="any" value="${esc(flow.draft.kg)}" oninput="Logger.setField('${id}','kg',this.value)"></label>` : ''}
         </div>
         ${target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>'}
-        ${flow.rest ? `<p class="log-note">${flow.adjustment ? esc(flow.adjustment.reason) : "Set saved. Review the next set; adjust the weight if needed."}</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : `
+        ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed.</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : `
         <div class="log-effort-inline">
           <div class="log-effort-heading"><label id="effortHeading-${id}" for="setEffort-${id}">${chosen ? 'This set felt' : target ? 'This set should feel' : 'How did this set feel?'}</label><strong id="effortValue-${id}">${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : target ? target === 'medium' ? 'Medium' : effortShort(target) : 'Choose effort'}</strong></div>
           <input id="setEffort-${id}" class="log-effort-slider" type="range" min="0" max="4" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onpointerup="Logger.setEffort('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.setEffort('${id}',this.value)}">
@@ -793,14 +794,18 @@
       const rows = next.logs[memberId].sets;
       const index = rows.findIndex(r => !r.logged);
       let adjustment = null;
-      if (!f.editing && index >= 0 && lift.logMode === 'kg') {
-        adjustment = DemoLoadEngine.next({kg,reps,miss:patch.miss,effort:patch.effort,target:lift.targetEffort,minReps:lift.targetReps});
-        rows[index].kg = adjustment.kg;
-        rows[f.index].loadDecision = adjustment;
+      if (index >= 0 && lift.logMode === 'kg') {
+        const source = rows.slice(0,index).filter(r=>r.logged).at(-1);
+        if (source) {
+          adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index});
+          rows[index].kg = adjustment.kg;
+          rows[index].targetEffort = adjustment.target;
+          source.loadDecision = adjustment;
+        }
       }
       const r = rows[index];
       next.loggerSetFlow = { ...(next.loggerSetFlow || {}), [memberId]: {
-        index, rest: index >= 0, editing: false, adjustment,
+        index, rest: !f.editing && index >= 0, editing: false, adjustment,
         draft: { reps: r && r.reps != null ? r.reps : '', kg: r && r.kg != null ? r.kg : '', effort: null, miss: false },
       } };
       if (!f.editing) {
@@ -902,11 +907,13 @@
         log.sets.push({
           reps: lift.logMode === 'max' ? null : lift.targetReps,
           kg: null,
+          id: root.crypto.randomUUID(),
+          purpose: 'working',
           cells: {},
           logged: false,
           miss: false,
         });
-      } else if (log.sets.length > 1) log.sets.pop();
+      } else if (log.sets.filter(r=>r.purpose!=='ramp').length > 1) log.sets.pop();
       persist(s);
     },
     sheet(kind) { sheet = kind; paint(); },

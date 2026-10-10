@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'strength-capgo-v1.2.4';
+const APP_BUILD = 'strength-brain-v1.3.0';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -74,6 +74,7 @@ function refreshHybridOccupancy() {
 }
 
 function save() {
+  if (window.StrengthMemory) StrengthMemory.capture(S.session);
   if (S.session && S.session.liftMemory) {
     S.liftMemory = Object.assign({}, S.liftMemory || {}, S.session.liftMemory);
   }
