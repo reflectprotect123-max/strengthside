@@ -4,6 +4,7 @@
   const positive=n=>Number.isFinite(Number(n))&&Number(n)>0;
   const clone=x=>JSON.parse(JSON.stringify(x));
   function key(page) {
+    // Preserve the historical namespace only for records that predate catalogue metadata.
     return [page.exerciseId||String(page.title||'').trim().toLowerCase().replace(/\s+/g,' '),page.equipmentId||'default',page.loadConvention||'total',page.loadUnit||'kg'].join('|');
   }
   function eligible(page){return Core.supported(page);}
@@ -39,7 +40,8 @@
       page.setTargets=targets;
       const h=history(records,page,s.id),first=targets.find(t=>t.purpose==='working'),prior=h.latest;
       let working=null,confidence='unknown';
-      const samePrescription=prior&&JSON.stringify(prior.page.setTargets||[prior.page.targetReps,prior.page.targetRepMax])===JSON.stringify(page.setTargets||[page.targetReps,page.targetRepMax]);
+      let samePrescription=false;
+      if(prior)try{samePrescription=JSON.stringify(T.normalize(prior.page))===JSON.stringify(T.normalize(page));}catch{}
       if(samePrescription&&positive(prior.nextKg)){working=prior.nextKg;confidence='history';}
       else if(positive(h.rolling)&&first&&RTS.percent(first.reps.min,7)){working=E.floor(h.rolling*RTS.percent(first.reps.min,7),page);confidence='history';}
       else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}

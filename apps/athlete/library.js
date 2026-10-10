@@ -2,18 +2,18 @@
   const TRACK = root.TrainingCore.definitions;
 
   const SEED_EXERCISES = [
-    'Bench Press',
-    'Lat Pull Downs',
-    'Back Squat',
-    'Front Squat',
-    'Snatch Grip Rack Deadlift',
-    'Barbell Lateral Squat',
-    'Goblet Box Squat',
-    'Reverse Hypers',
-    'Double Leg Banded Leg Curls',
-    'Garhammer Raises',
-    'Farmer Carry',
-    'Backwards Sled Drag',
+    ['bench_press','Bench Press','barbell','total','main',20,2.5],
+    ['lat_pull_downs','Lat Pull Downs','machine','total','main'],
+    ['back_squat','Back Squat','barbell','total','main',20,2.5],
+    ['front_squat','Front Squat','barbell','total','main',20,2.5],
+    ['snatch_grip_rack_deadlift','Snatch Grip Rack Deadlift','barbell','total','main',20,2.5],
+    ['barbell_lateral_squat','Barbell Lateral Squat','barbell','total','main',20,2.5],
+    ['goblet_box_squat','Goblet Box Squat','dumbbell','single','accessory',1],
+    ['reverse_hypers','Reverse Hypers','machine','total','accessory'],
+    ['double_leg_banded_leg_curls','Double Leg Banded Leg Curls','band','total','accessory'],
+    ['garhammer_raises','Garhammer Raises','bodyweight','bodyweight','accessory'],
+    ['farmer_carry','Farmer Carry','dumbbell','per_hand','carry',1],
+    ['backwards_sled_drag','Backwards Sled Drag','sled','total','carry'],
   ];
 
   const SEED_CIRCUITS = [
@@ -31,11 +31,32 @@
     return JSON.parse(JSON.stringify(v));
   }
 
+  function inferredMetadata(title='') {
+    const value=String(title);
+    if(/farmer|suitcase|carry/i.test(value))return {equipmentId:/dumbbell|\bdb\b/i.test(value)?'dumbbell':null,loadConvention:'per_hand',exerciseType:'carry'};
+    if(/plank|\bhold\b/i.test(value))return {equipmentId:'bodyweight',loadConvention:'bodyweight',exerciseType:'hold'};
+    if(/goblet/i.test(value))return {equipmentId:'dumbbell',loadConvention:'single',exerciseType:'accessory',minimumKg:1};
+    if(/dumbbell|\bdb\b/i.test(value))return {equipmentId:'dumbbell',loadConvention:'per_hand',exerciseType:/curl|extension|raise|fly|flye|calf|kickback/i.test(value)?'accessory':null,minimumKg:1};
+    if(/barbell/i.test(value))return {equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5};
+    if(/^(?:back squat|front squat|bench press|snatch grip rack deadlift)$/i.test(value.trim()))return {equipmentId:'barbell',loadConvention:'total',exerciseType:'main',minimumKg:20,equipmentStepKg:2.5};
+    return {};
+  }
+
+  function canonicalBlock(block) {
+    const b={...block};
+    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','restSec','demoStartingKg'])delete b[key];
+    return b;
+  }
+
+  function exerciseRecord(exercise) {
+    const inferred=inferredMetadata(exercise.title),merged={...inferred,...exercise};
+    return Object.fromEntries(Object.entries(merged).filter(([,value])=>value!=null));
+  }
+
   function seedCatalog() {
     return {
-      exercises: SEED_EXERCISES.map((title) => ({
-        id: nid('ex'),
-        title,
+      exercises: SEED_EXERCISES.map(([id,title,equipmentId,loadConvention,exerciseType,minimumKg,equipmentStepKg]) => exerciseRecord({
+        id:`ex_${id}`,title,equipmentId,loadConvention,exerciseType,minimumKg,equipmentStepKg,
         columns: title === 'Garhammer Raises' ? ['reps'] : ['reps', 'weight_kg'],
       })),
       circuits: SEED_CIRCUITS.map((c) => ({
@@ -61,17 +82,23 @@
       templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: (t.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
         const reps = parseRepTarget(b.repTarget);
         // Preserve ranges saved before Reps and Rep Range had separate entry rules.
-        return reps && reps.min !== reps.max && (b.columns || []).includes('reps') && !(b.columns || []).includes('meters')
-          ? { ...b, columns: b.columns.map(c => c === 'reps' ? 'reps_range' : c) } : b;
+        return canonicalBlock(reps && reps.min !== reps.max && (b.columns || []).includes('reps') && !(b.columns || []).includes('meters')
+          ? { ...b, columns: b.columns.map(c => c === 'reps' ? 'reps_range' : c) } : b);
       }) })) : [],
       catalog: state.catalog && Array.isArray(state.catalog.exercises)
-        ? state.catalog
+        ? {...state.catalog,exercises:state.catalog.exercises.map(exerciseRecord)}
         : seedCatalog(),
       assignments: state.assignments && typeof state.assignments === 'object' ? state.assignments : {},
     };
     const templateIds = new Set(next.templates.map(t => t.id));
     next.assignments = Object.fromEntries(Object.entries(next.assignments).filter(([, id]) => templateIds.has(id)));
     if (!next.catalog.exercises.length && !next.catalog.circuits.length) next.catalog = seedCatalog();
+    const byId=new Map(next.catalog.exercises.map(x=>[x.id,x])),byTitle=new Map(next.catalog.exercises.map(x=>[String(x.title||'').trim().toLowerCase(),x]));
+    for(const template of next.templates)for(const block of template.blocks||[])if(block.kind==='lift'){
+      const hit=byId.get(block.exerciseId)||byTitle.get(String(block.title||'').trim().toLowerCase());
+      if(hit){block.exerciseId=hit.id;for(const key of ['equipmentId','loadConvention','exerciseType','minimumKg','equipmentStepKg','availableLoads'])if(block[key]==null&&hit[key]!=null)block[key]=clone(hit[key]);}
+      else Object.assign(block,{...inferredMetadata(block.title),...block});
+    }
     return next;
   }
 
@@ -121,17 +148,19 @@
     return st;
   }
 
-  function addExercise(state, tid, { title, setCount, columns, notes, catalogId, restSec } = {}) {
+  function addExercise(state, tid, { title, setCount, columns, notes, catalogId } = {}) {
     const st = clone(ensure(state));
     const t = st.templates.find((x) => x.id === tid);
     if (!t) return st;
     let cols = Array.isArray(columns) && columns.length ? columns.slice() : ['reps', 'weight_kg'];
     let name = title || 'Exercise';
+    let metadata=inferredMetadata(name),exerciseId=null;
     if (catalogId) {
       const hit = st.catalog.exercises.find((c) => c.id === catalogId);
       if (hit) {
         name = hit.title;
         cols = (hit.columns || cols).slice();
+        exerciseId=hit.id;metadata=exerciseRecord(hit);
       }
     }
     cols = cols.filter((k) => k && k !== 'none');
@@ -144,7 +173,8 @@
       repTarget: cols.includes('reps_range') ? '8-12' : '8',
       columns: cols,
       notes: Array.isArray(notes) ? notes : [],
-      restSec: restSec == null ? 120 : Number(restSec) || 0,
+      exerciseId,
+      ...Object.fromEntries(['equipmentId','loadConvention','exerciseType','minimumKg','equipmentStepKg','availableLoads'].filter(key=>metadata[key]!=null).map(key=>[key,clone(metadata[key])])),
       groupId: null,
     });
     return st;
@@ -178,6 +208,7 @@
     const b = t.blocks.find((x) => x.id === bid);
     if (!b) return st;
     Object.assign(b, patch);
+    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','restSec','demoStartingKg'])delete b[key];
     if (Array.isArray(b.columns)) b.columns = b.columns.filter((k) => k && k !== 'none');
     if (Array.isArray(patch.setTargets)) {
       const targets=root.StrengthTargets.normalize({...b,setTargets:patch.setTargets});
@@ -293,19 +324,16 @@
         const hasReps=(b.columns||[]).some(c=>c==='reps'||c==='reps_range');
         const targetInput={...b,repTarget:b.repTarget||((b.columns||[]).includes('reps_range')?'8-12':'8')};
         const setTargets=hasReps?root.StrengthTargets.normalize(targetInput):null;
-        const first=setTargets?.find(t=>t.purpose==='working');
         blocks.push({
           kind: 'lift',
+          targetContractVersion: 2,
           letter: b.letter,
           title: b.title,
           prescription: rxFor(Array.isArray(b.setTargets)?{...b,setTargets}:b),
-          repMin: first?.reps?.min,
-          repMax: first?.reps?.max,
           setTargets: setTargets?clone(setTargets):null,
           notes: b.notes || [],
           columns: (b.columns || ['reps']).slice(),
           setCount: setTargets?.length||b.setCount,
-          restSec: b.restSec,
           exerciseId: b.exerciseId,
           equipmentId: b.equipmentId,
           equipmentStepKg: b.equipmentStepKg,
@@ -353,11 +381,11 @@
   function createCatalogExercise(state, { title, columns } = {}) {
     const st = clone(ensure(state));
     const cols = (columns || ['reps']).filter((k) => k && k !== 'none');
-    st.catalog.exercises.unshift({
+    st.catalog.exercises.unshift(exerciseRecord({
       id: nid('ex'),
       title: String(title || 'Exercise').trim() || 'Exercise',
       columns: cols.length ? cols : ['reps'],
-    });
+    }));
     return st;
   }
 

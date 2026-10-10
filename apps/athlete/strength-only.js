@@ -21,7 +21,6 @@
       workout.blockIndex = newIndex >= 0 ? newIndex : Math.min(workout.blockIndex || 0, workout.pages.length - 1);
       for (const id of removedIds) {
         if (workout.logs) delete workout.logs[id];
-        if (workout.workingMax) delete workout.workingMax[id];
       }
     }
     return workout;

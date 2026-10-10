@@ -30,7 +30,7 @@
         purpose:target?.purpose||'working',
         workingIndex:targets.slice(0,i).filter(t=>t.purpose!=='warmup').length,
         reps: target?.purpose==='amrap'||page.logMode === 'max' ? null : target?.reps?.min??page.targetReps,
-        kg: i === 0 && page.logMode === 'kg' ? page.demoStartingKg : null,
+        kg: null,
         cells: {},
         logged: false,
         miss: false,
@@ -93,16 +93,17 @@
   }
 
   function pageFromBlock(block) {
-    const rx = parseRx(block.prescription);
-    const structured = root.TrainingCore.repTarget(block.repMin != null ? `${block.repMin}-${block.repMax ?? block.repMin}` : '');
-    if(structured){rx.targetReps=structured.min;rx.targetRepMax=structured.max;rx.isMax=false;}
     const cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
+    let setTargets=Array.isArray(block.setTargets)?JSON.parse(JSON.stringify(block.setTargets)):null;
+    if(!setTargets&&cols.some(c=>c==='reps'||c==='reps_range')){
+      try{setTargets=JSON.parse(JSON.stringify(root.StrengthTargets.normalize(block)));}catch{}
+    }
+    const rx=setTargets?{setCount:setTargets.length,targetReps:null,targetRepMax:null,isMax:false}
+      :block.targetContractVersion===2?{setCount:Math.max(1,Number(block.setCount)||1),targetReps:null,targetRepMax:null,isMax:false}
+      :parseRx(block.prescription);
     const mode = cols.length && !cols.includes('weight_kg') && !cols.includes('weight_lb') && !cols.includes('weight_pct') && !cols.includes('lwp')
       ? (rx.isMax ? 'max' : 'reps')
       : logModeFor(block, rx);
-    const setTargets=Array.isArray(block.setTargets)?JSON.parse(JSON.stringify(block.setTargets)):null;
-    const first=setTargets?.find(t=>t.purpose==='working');
-    if(first?.reps){rx.targetReps=first.reps.min;rx.targetRepMax=first.reps.max;rx.isMax=false;}
     return {
       id: block.letter || block.title,
       letter: block.letter || '',
@@ -119,17 +120,13 @@
       section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
       setCount: mode === 'complete' ? 0 : (setTargets?.length||Number(block.setCount) || rx.setCount),
       setTargets,
-      targetReps: rx.targetReps,
-      targetRepMax: rx.targetRepMax,
-      targetEffort: effortLabel(block.targetEffort) ? block.targetEffort : block.targetEffort === 'medium' ? 'average' : block.kind === 'lift' ? 'average' : null,
-      restSec: Number(block.restSec) > 0 ? Number(block.restSec) : null,
-      demoStartingKg: Number(block.demoStartingKg) > 0 ? Number(block.demoStartingKg) : null,
+      ...(setTargets||block.targetContractVersion===2?{}:{targetReps:rx.targetReps,targetRepMax:rx.targetRepMax}),
       exerciseId: block.exerciseId || block.libraryExerciseId || null,
       equipmentId: block.equipmentId || null,
-      equipmentStepKg: Number(block.equipmentStepKg) > 0 ? Number(block.equipmentStepKg) : 2.5,
+      equipmentStepKg: Number(block.equipmentStepKg) > 0 ? Number(block.equipmentStepKg) : null,
       availableLoads: Array.isArray(block.availableLoads) ? block.availableLoads : [],
-      minimumKg: Number(block.minimumKg) || 0,
-      loadConvention: block.loadConvention || 'total',
+      minimumKg: block.minimumKg==null?null:Number(block.minimumKg),
+      loadConvention: block.loadConvention || null,
       loadUnit: cols.includes('weight_lb') ? 'lb' : 'kg',
       exerciseType: block.exerciseType || null,
       rampCount: block.rampCount,
@@ -175,7 +172,6 @@
           footer: '',
           section: a.section,
           setCount: 0,
-          targetReps: null,
           members: group,
         });
         i = j - 1;
@@ -190,7 +186,6 @@
       kind: 'doneHub',
       logMode: 'doneHub',
       setCount: 0,
-      targetReps: null,
     });
     return pages;
   }
@@ -217,7 +212,6 @@
       startedAt: Date.now(),
       pages,
       logs: {},
-      workingMax: {},
       liftMemory: {},
       feel: { intensity: null, durationMin: 0, note: '' },
       unit: 'kg',
@@ -282,7 +276,6 @@
     return s;
   }
 
-  function effortLabel(value) { return root.TrainingCore.efforts.includes(root.TrainingCore.effort(value)); }
   function canLogRow(row,page) { return root.TrainingCore.validateRow(row,page).ok; }
 
   function logSet(session, setIndex, patch, memberId, options = {}) {
@@ -343,13 +336,6 @@
       }
     }
     return { reps, kg };
-  }
-
-  function setWorkingMax(session, exerciseId, value) {
-    const s = clone(session);
-    s.workingMax = s.workingMax || {};
-    s.workingMax[exerciseId] = Number(value);
-    return s;
   }
 
   function openFeel(session) {
@@ -435,7 +421,6 @@
     logIdsForPage,
     memberOf,
     totals,
-    setWorkingMax,
     openFeel,
     setFeel,
     finishToSummary,

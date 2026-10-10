@@ -1040,9 +1040,10 @@ if ('serviceWorker' in navigator) {
 
 function trySliderDemo() {
  const date=today();
- const plan={title:'Slider demo',instructions:'Sample loads, not a prescribed workout. Choose your rest timer; log each set to try the adjustments.',blocks:[
- {kind:'lift',letter:'A',title:'Back Squat',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,equipmentStepKg:1,columns:['reps','weight_kg'],notes:[]},
- {kind:'lift',letter:'B',title:'Bench Press',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,equipmentStepKg:1,columns:['reps','weight_kg'],notes:[]}]};
+ const targets=id=>[0,1,2].map(i=>({id:`${id}:set:${i}`,purpose:'working',reps:{min:5,max:5},loadRule:{kind:'adaptive'},toFailure:false}));
+ const plan={title:'Slider demo',instructions:'Choose your rest timer; log each set to try the adjustments.',blocks:[
+ {kind:'lift',letter:'A',title:'Back Squat',prescription:'3 × 5',setTargets:targets('slider-squat'),equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,columns:['reps','weight_kg'],notes:[]},
+ {kind:'lift',letter:'B',title:'Bench Press',prescription:'3 × 5',setTargets:targets('slider-bench'),equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,columns:['reps','weight_kg'],notes:[]}]};
  S.selectedDate=date;S.tab='training';
  // Start explicitly without replacing a user's assigned workout or archived history.
  const old=S.session; if(!old?.demo) S.sliderPreviousSession=old; S.session=null; S.sliderDemoOpening=true;

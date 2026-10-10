@@ -98,7 +98,8 @@ test('authored reps and ranges reach the session and progression engine', () => 
     st=Lib.patchBlock(st,tid,bid,{repTarget:Lib.parseRepTarget(value).text,targetEffort:'max_effort'});
     const block=Lib.compile(st.templates[0]).blocks.find(b=>b.kind==='lift');
     const page=HybridSession.pagesFromPlan({blocks:[block]})[0];
-    assert.equal(page.targetReps,min);assert.equal(page.targetRepMax,max);
+    assert.equal(page.targetReps,undefined);assert.equal(page.targetRepMax,undefined);
+    assert.deepEqual(StrengthTargets.normalize(page)[0].reps,{min,max});
     assert.equal(block.targetEffort,undefined);assert.equal(StrengthBrain.target(page), 'average');
     const sets=Array.from({length:3},()=>({kg:40,reps:min,effort:'average',logged:true,purpose:'working'}));
     if(min!==max) assert.equal(StrengthBrain.review(page,sets).nextKg,40);
@@ -132,4 +133,18 @@ test('compile preserves arbitrary set targets and final first-working-weight AMR
  assert.deepEqual(lift.setTargets.map(t=>t.reps?.min??null),[10,8,6,null]);
  assert.equal(lift.setTargets[3].loadRule.kind,'first_working_set');assert.equal(lift.setCount,4);
  assert.equal(lift.prescription,'10 / 8 / 6 / AMRAP');
+});
+
+test('builder stores stable invisible exercise metadata and removes obsolete fields',()=>{
+ let st=Lib.createTemplate(Lib.emptyState(),{title:'Metadata'}),tid=st.templates[0].id;
+ const squat=st.catalog.exercises.find(x=>x.title==='Back Squat');
+ st=Lib.addExercise(st,tid,{catalogId:squat.id});const block=st.templates[0].blocks[0];
+ assert.equal(block.exerciseId,'ex_back_squat');assert.equal(block.equipmentId,'barbell');
+ assert.equal(block.loadConvention,'total');assert.equal(block.minimumKg,20);assert.equal(block.equipmentStepKg,2.5);
+ for(const key of ['restSec','targetEffort','demoStartingKg','repMin','repMax','targetReps','targetRepMax'])assert.equal(key in block,false,key);
+ const renamed=Lib.patchBlock(st,tid,block.id,{title:'Competition Squat',targetEffort:'hard',restSec:60,demoStartingKg:100}).templates[0].blocks[0];
+ assert.equal(renamed.exerciseId,'ex_back_squat');assert.equal(renamed.equipmentId,'barbell');
+ assert.equal('targetEffort' in renamed,false);assert.equal('restSec' in renamed,false);assert.equal('demoStartingKg' in renamed,false);
+ st=Lib.createCatalogExercise(st,{title:'Dumbbell Curl',columns:['reps','weight_kg']});const curl=st.catalog.exercises[0];
+ assert.equal(curl.equipmentId,'dumbbell');assert.equal(curl.loadConvention,'per_hand');assert.equal(curl.minimumKg,1);
 });

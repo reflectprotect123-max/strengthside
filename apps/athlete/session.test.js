@@ -186,26 +186,24 @@ test('logged working set does not derive lift memory or a next-session load', ()
     liftMemory: s.liftMemory,
   });
   assert.equal(s2.logs.B.sets[0].kg, null);
-  assert.equal(s2.workingMax.B, undefined);
+  assert.equal('workingMax' in s2, false);
 });
 
 test('legacy lift memory does not seed first kg or working max', () => {
   const liftMemory = { 'snatch grip rack deadlift': { lastKg: 100, e1rmKg: 116.7 } };
   let s = HybridSession.startSession({ date: '2026-09-08', plan: demoPlan, letter: 'B', liftMemory });
   assert.equal(s.logs.B.sets[0].kg, null);
-  assert.equal(s.workingMax.B, undefined);
+  assert.equal('workingMax' in s, false);
   s.logs.B.sets[0].kg = 90;
   s = HybridSession.seedOpeningLoads(s, liftMemory);
   assert.equal(s.logs.B.sets[0].kg, 90);
-  assert.equal(s.workingMax.B, undefined);
+  assert.equal('workingMax' in s, false);
 });
 
-test('manual working max is stored without changing a set or lift memory', () => {
+test('manual working max path is absent', () => {
   const s = HybridSession.startSession({ date: '2026-09-08', plan: demoPlan, letter: 'B' });
-  const next = HybridSession.setWorkingMax(s, 'B', 115);
-  assert.equal(next.workingMax.B, 115);
-  assert.equal(next.logs.B.sets[0].kg, null);
-  assert.deepEqual(next.liftMemory, {});
+  assert.equal('workingMax' in s,false);
+  assert.equal(HybridSession.setWorkingMax,undefined);
 });
 
 test('warmup complete does not write liftMemory', () => {

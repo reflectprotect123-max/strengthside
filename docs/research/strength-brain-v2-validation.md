@@ -5,12 +5,15 @@ Validated on 10 October 2026 from `feat/strength-brain-v2`. This report covers t
 ## Supported behavior
 
 - The builder accepts shared rep targets, arbitrary per-set rep targets such as 10/8/6 or 5/3/1, and an explicit final AMRAP. It does not ask the coach to select effort or equipment increments.
+- Builder exercises carry stable hidden catalogue identity, equipment, load convention, minimum, and increment metadata. Renaming a scheduled exercise no longer changes that identity.
+- New builder records no longer write hidden rest prescriptions, target effort, demo starting loads, or duplicate rep aliases. Old text prescriptions are read only for legacy sessions.
 - The session compiler adds two ramp sets for supported main lifts. Ramp results calibrate the current workout but do not become e1RM evidence.
 - The logger records the actual weight, reps, effort slider value, and selected rest context. Athletes can override every suggested load.
 - A final first-set-last AMRAP resolves from the actual first working-set load. Editing that source before the AMRAP updates its pending load; editing the source after the AMRAP is complete does not rewrite the completed result.
 - For a 6–8 target, six reps at Average holds the next load. Progression is rounded to declared equipment increments and obeys caps.
 - Only eligible completed working evidence updates the exercise estimate. Failed sets, Easy sets, ramps, unsupported movements, holds, and carries do not produce an e1RM.
 - Each exercise is learned independently. Replaying records in chronological order produces one exposure per qualifying session. Edits replace derived evidence, deletes invalidate it, retries are idempotent, and account data stays isolated.
+- Estimated 1RM is read-only brain output. The obsolete manual working-max entry path has been removed.
 - Set records persist the authored target, actual result, prescription signature, model version, source IDs, source signature, and rest context so derived estimates can be replayed rather than trusted as permanent facts.
 
 ## Automated verification
@@ -50,7 +53,7 @@ A local debug APK was staged from the athlete app and built with Gradle/JDK 21. 
 - Package: `com.hybrid.strength`
 - Version: `1.3.4` (`134`)
 - Minimum/target SDK: 24/36
-- Size: 77,977,944 bytes
-- APK SHA-256: `b43603940fcadd99afa2473cd02ea7d1bff1a31ed5950ec76d8ff7dc370619fe`
+- Size: 77,993,698 bytes
+- APK SHA-256: `9c072623316e679629a78eae2d51554751b52a4555cb27142ae88eeef33c0595`
 - Signature verification: valid APK v2 Android debug signature
-- The packaged `strength-memory.js` SHA-256 exactly matches the tested source file.
+- The packaged builder, logger, session, and strength-brain files exactly match the tested source files.

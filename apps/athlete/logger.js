@@ -3,7 +3,6 @@
   const COACH = 'Train with intent. Log every set. Leave the gym already recovering. Rest as prescribed — the clock comes next.';
 
   let pad = null;
-  let sheet = null;
   let toast = '';
   let toastTimer = 0;
   let clockTimer = 0;
@@ -62,7 +61,6 @@
   function close() {
     root.S.loggerOpen = false;
     pad = null;
-    sheet = null;
     if (typeof root.save === 'function') root.save();
     const el = document.getElementById('logger');
     if (el) el.classList.add('hidden');
@@ -109,7 +107,7 @@
       root.S.timer = HybridTimer.create();
       lastBeep = '';
     }
-    pad = null; sheet = null;
+    pad = null;
     persist(next);
   }
 
@@ -449,12 +447,12 @@
 
   function sideHtml(s, page) {
     const past = root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
-    const wm = past.rolling ? Math.round(past.rolling * 10) / 10 : (s.workingMax && s.workingMax[page.id]) || '';
+    const wm = past.rolling ? Math.round(past.rolling * 10) / 10 : '';
     return `
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
         <div class="log-side">
-          <div class="log-side-row"><span>EST. 1RM</span><button type="button" class="log-add" onclick="Logger.sheet('wm')">${wm ? esc(wm) + ' >' : 'Add >'}</button></div>
+          <div class="log-side-row"><span>EST. 1RM</span><span>${wm ? esc(wm) : 'Learning'}</span></div>
           <div class="log-side-row"><span>LAST</span><span>${past.latest ? esc(past.latest.rows.filter(r=>r.logged && r.purpose!=='ramp').at(-1)?.kg || '') + ' kg' : 'None'}</span></div>
         </div>
       </div>`;
@@ -515,7 +513,7 @@
   function activeSetHtml(s, page, log, dockAction = false) {
     const flow = setFlow(s, page);
     const id = esc(page.id);
-    const target = flow.rows[flow.index]?.targetEffort || root.StrengthBrain.target(page,flow.rows[flow.index],flow.index);
+    const target = root.StrengthBrain.target(page,flow.rows[flow.index],flow.index);
     const chosen = EFFORTS.includes(flow.draft.effort) ? flow.draft.effort : null;
     const position = EFFORTS.indexOf(chosen || target || 'average');
     const done = flow.index < 0;
@@ -668,30 +666,6 @@
       </div>`;
   }
 
-  function sheetHtml(s) {
-    if (!sheet) return '';
-    if (sheet === 'goal') {
-      return `
-        <div class="log-sheet" onclick="if(event.target===this)Logger.sheet(null)">
-          <div class="log-sheet-card">
-            <h2>Set a new goal</h2>
-            <p>Track a target for this lift. Hybrid keeps this on the phone for now.</p>
-            <button type="button" class="log-primary" onclick="Logger.sheet(null)">Got it</button>
-          </div>
-        </div>`;
-    }
-    const page = HybridSession.currentPage(s);
-    const cur = (s.workingMax && s.workingMax[page.id]) || '';
-    return `
-      <div class="log-sheet" onclick="if(event.target===this)Logger.sheet(null)">
-        <div class="log-sheet-card">
-          <h2>Working max</h2>
-          <input id="wmInput" type="number" inputmode="decimal" value="${esc(cur)}" placeholder="kg">
-          <button type="button" class="log-primary" onclick="Logger.saveWm()">Save</button>
-        </div>
-      </div>`;
-  }
-
   function blockHtml(s) {
     const page = HybridSession.currentPage(s);
     const log = s.logs[page.id] || { completed: false, sets: [], note: '' };
@@ -715,7 +689,7 @@
         ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
         ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
-    return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${sheetHtml(s)}${timerOverlayHtml()}`;
+    return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
   }
 
   function paint() {
@@ -817,7 +791,6 @@
         if (source) {
           adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
           rows[index].kg = adjustment.kg;
-          rows[index].targetEffort = adjustment.target;
           source.loadDecision = adjustment;
         }
       }
@@ -901,8 +874,10 @@
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const log = s.logs[lift.id];
       if (dir > 0) {
+        let reps=lift.logMode==='max'?null:lift.targetReps;
+        try{const last=root.StrengthTargets.normalize(lift).filter(t=>t.purpose==='working').at(-1);if(last?.reps)reps=last.reps.min;}catch{}
         log.sets.push({
-          reps: lift.logMode === 'max' ? null : lift.targetReps,
+          reps,
           kg: null,
           id: root.crypto.randomUUID(),
           purpose: 'working',
@@ -912,14 +887,6 @@
         });
       } else if (log.sets.filter(r=>r.purpose!=='ramp').length > 1) log.sets.pop();
       persist(s);
-    },
-    sheet(kind) { sheet = kind; paint(); },
-    saveWm() {
-      const input = document.getElementById('wmInput');
-      const page = HybridSession.currentPage(session());
-      persist(HybridSession.setWorkingMax(session(), page.id, input && input.value));
-      sheet = null;
-      paint();
     },
     doneTraining() { pad = null; persist(HybridSession.openFeel(session())); },
     addExercise() {
