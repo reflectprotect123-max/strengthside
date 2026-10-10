@@ -3,30 +3,30 @@
   "hooks": {
     "beforeSubmitPrompt": [
       {
-        "command": "\"/home/ubuntu/.bun/bin/bun\" \"/home/ubuntu/claude-mem/plugin/scripts/worker-service.cjs\" hook cursor session-init"
+        "command": "node scripts/cursor-memory-hook.mjs session-init"
       },
       {
-        "command": "\"/home/ubuntu/.bun/bin/bun\" \"/home/ubuntu/claude-mem/plugin/scripts/worker-service.cjs\" hook cursor context"
+        "command": "node scripts/cursor-memory-hook.mjs context"
       }
     ],
     "afterMCPExecution": [
       {
-        "command": "\"/home/ubuntu/.bun/bin/bun\" \"/home/ubuntu/claude-mem/plugin/scripts/worker-service.cjs\" hook cursor observation"
+        "command": "node scripts/cursor-memory-hook.mjs observation"
       }
     ],
     "afterShellExecution": [
       {
-        "command": "\"/home/ubuntu/.bun/bin/bun\" \"/home/ubuntu/claude-mem/plugin/scripts/worker-service.cjs\" hook cursor observation"
+        "command": "node scripts/cursor-memory-hook.mjs observation"
       }
     ],
     "afterFileEdit": [
       {
-        "command": "\"/home/ubuntu/.bun/bin/bun\" \"/home/ubuntu/claude-mem/plugin/scripts/worker-service.cjs\" hook cursor file-edit"
+        "command": "node scripts/cursor-memory-hook.mjs file-edit"
       }
     ],
     "stop": [
       {
-        "command": "\"/home/ubuntu/.bun/bin/bun\" \"/home/ubuntu/claude-mem/plugin/scripts/worker-service.cjs\" hook cursor summarize"
+        "command": "node scripts/cursor-memory-hook.mjs summarize"
       }
     ]
   }

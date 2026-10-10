@@ -1,0 +1,63 @@
+---
+alwaysApply: true
+description: Current strength app architecture, verification, and release guardrails
+---
+
+# Strength brain v2
+
+The active athlete app is `apps/athlete`; Android wraps its staged output in `apps/mobile/capacitor`. The current implementation branch is `feat/strength-brain-v2`.
+
+Before changing adaptive strength behavior, read:
+
+- `docs/superpowers/specs/2026-10-11-strength-brain-v2-design.md`
+- `docs/superpowers/plans/2026-10-11-strength-brain-v2.md`
+- `docs/research/strength-brain-v2-validation.md`
+- `docs/training-contracts.md`
+
+Treat older descriptions in `handoff.md` as historical when they conflict with these documents or the current tests.
+
+## Ownership
+
+- `apps/shared/strength-targets.js`: authored set intent.
+- `apps/shared/strength-equipment.js`: equipment grids and starter loads.
+- `apps/shared/strength-rts.js`: attributed RPE/percentage lookup data.
+- `apps/shared/strength-policy.js`: frozen, versioned policy.
+- `apps/shared/strength-brain-core.js`: pure calculations and learning.
+- `apps/athlete/strength-brain.js`: compatibility, seeding, and history adapter.
+- `apps/athlete/strength-memory.js`: replayable local/cloud evidence.
+- `apps/athlete/library*.js`: builder UI.
+- `apps/athlete/session.js`: session compilation and target snapshots.
+- `apps/athlete/logger.js`: actual workout logging.
+
+Edit canonical shared modules under `apps/shared`, then run `node scripts/sync-training-core.mjs`. Do not independently edit generated athlete or coach copies.
+
+## Product rules
+
+- The coach can enter arbitrary shared or per-set reps, including 5/3/1 and 10/8/6.
+- A final AMRAP is explicit and automatically uses the actual first working-set load.
+- Supported main lifts get two ramp sets. Ramps calibrate the workout and never become e1RM evidence.
+- The athlete records actual effort with the existing slider. The builder does not ask for target effort or equipment increments.
+- Every suggested load remains editable by the athlete.
+- Holds, carries, failed sets, Easy sets, and ramp sets do not produce e1RM evidence.
+- Evidence is replayed chronologically; edits replace it, deletes invalidate it, retries are idempotent, and accounts remain isolated.
+- Keep one implementation of each formula. Extend the canonical modules instead of adding calculations to UI files.
+
+## Verification
+
+Run focused tests while editing, then before claiming completion run:
+
+```bash
+pnpm run verify
+```
+
+For browser-only work:
+
+```bash
+PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium pnpm run check:browser
+```
+
+Adapt the Chromium path to the local machine. Do not weaken, delete, or skip a failing regression to make a change pass.
+
+## Release boundary
+
+Do not run Capgo, deploy Supabase, merge to `main`, publish a release, or change production secrets unless the user explicitly requests that exact action after reviewing the finished change. Local debug builds are allowed. Never place credentials in documentation, prompts, commits, logs, or chat.
