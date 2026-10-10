@@ -51,9 +51,9 @@ These are synthetic product tests. They establish repeatability and software con
 A local debug APK was staged from the athlete app and built with Gradle/JDK 21. Its ZIP contents include the v2 target, equipment, RTS, policy, core, adapter, and memory modules. The APK is for direct review and device testing; it is not a release-signed production build.
 
 - Package: `com.hybrid.strength`
-- Version: `1.3.4` (`134`)
+- Version: `1.3.5` (`135`)
 - Minimum/target SDK: 24/36
-- Size: 77,993,698 bytes
-- APK SHA-256: `9c072623316e679629a78eae2d51554751b52a4555cb27142ae88eeef33c0595`
+- Size: 77,974,463 bytes
+- APK SHA-256: `17d3869ce26aafb76dbe07309ea5b144dd892af01478340163d7534d65f6c9eb`
 - Signature verification: valid APK v2 Android debug signature
 - The packaged builder, logger, session, and strength-brain files exactly match the tested source files.
