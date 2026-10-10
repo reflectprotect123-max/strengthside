@@ -101,7 +101,7 @@
       if (prev && prev.kind === 'lift' && b.kind === 'lift' && prev.groupId && prev.groupId === b.groupId) {
         body += `<div class="lib-ss">− Superset</div>`;
       }
-      const meta = b.kind === 'circuit' ? 'For Completion' : `${b.setCount || 3} sets`;
+      const meta = b.kind === 'circuit' ? 'For Completion' : root.HybridLibrary.rxFor(b);
       body += `<article class="lib-block">
         <div class="lib-block-top">
           <span class="lib-letter">${esc(b.letter)}</span>
@@ -160,12 +160,16 @@
     const c2 = (b.columns && b.columns[1]) || 'none';
     return `<div class="lib-sheet" onclick="if(event.target===this)LibraryView.closeSheet()">
       <div class="lib-sheet-card">
-        <h2>Edit exercise</h2><div class="lib-field"><label for="targetDifficulty">Target difficulty</label><select id="targetDifficulty" onchange="LibraryView.patchBlock({targetEffort:this.value})">${['very_easy','easy','average','hard','max_effort'].map((key)=>`<option value="${key}" ${key===(b.targetEffort || 'average')?'selected':''}>${({very_easy:'Very Easy',easy:'Easy',average:'Average',hard:'Hard',max_effort:'Max Effort'})[key]}</option>`).join('')}</select></div>
+        <h2>Edit exercise</h2>
         <div class="lib-field"><label>Title</label><input value="${esc(b.title)}" onchange="LibraryView.patchBlock({title:this.value})"></div>
-        <div class="lib-field"><label for="equipmentStepKg">Smallest weight increase (kg)</label><input id="equipmentStepKg" type="number" min="0.1" step="0.1" value="${esc(b.equipmentStepKg || 2.5)}" onchange="LibraryView.patchBlock({equipmentStepKg:Number(this.value)})"></div>
         <div class="lib-field"><label>Sets</label>
           <input type="number" min="1" max="12" value="${esc(b.setCount || 3)}" onchange="LibraryView.patchBlock({setCount:Number(this.value)})">
         </div>
+        ${(b.columns || ['reps']).some(c => ['reps','reps_range'].includes(c)) && !(b.columns || []).includes('meters') ? `<div class="lib-field">
+          <label for="libRepTarget">Reps / rep range</label>
+          <input id="libRepTarget" type="text" inputmode="text" placeholder="8 or 6-8" value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onchange="LibraryView.setRepTarget(this.value)" aria-describedby="libRepHelp">
+          <p id="libRepHelp" role="status">${esc(u.repError || 'Enter a rep count or range, for example 8 or 6-8.')}</p>
+        </div>` : ''}
         <div class="lib-field"><label>What do you want to track?</label>
           <div class="lib-cols">
             <select onchange="LibraryView.setCols(this.value, document.getElementById('libCol2').value)">
@@ -228,7 +232,12 @@
         <div class="lib-sheet-card">
           <h2>New Exercise</h2>
           <div class="lib-field"><label>Title</label><input id="libNewTitle" value="${esc(d.title || '')}" placeholder="Title"></div>
-          <div class="lib-field"><label>What do you want to track?</label>
+          ${(b.columns || ['reps']).some(c => ['reps','reps_range'].includes(c)) && !(b.columns || []).includes('meters') ? `<div class="lib-field">
+          <label for="libRepTarget">Reps / rep range</label>
+          <input id="libRepTarget" type="text" inputmode="text" placeholder="8 or 6-8" value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onchange="LibraryView.setRepTarget(this.value)" aria-describedby="libRepHelp">
+          <p id="libRepHelp" role="status">${esc(u.repError || 'Enter a rep count or range, for example 8 or 6-8.')}</p>
+        </div>` : ''}
+        <div class="lib-field"><label>What do you want to track?</label>
             <div class="lib-cols">
               <select id="libNewC1">${trackOptions(d.c1 || 'reps')}</select>
               <select id="libNewC2">${trackOptions(d.c2 || 'none')}</select>
@@ -243,7 +252,12 @@
         <div class="lib-sheet-card">
           <h2>New Circuit</h2>
           <div class="lib-field"><label>Title</label><input id="libNewTitle" value="${esc(d.title || '')}"></div>
-          <div class="lib-field"><label>What do you want to track?</label>
+          ${(b.columns || ['reps']).some(c => ['reps','reps_range'].includes(c)) && !(b.columns || []).includes('meters') ? `<div class="lib-field">
+          <label for="libRepTarget">Reps / rep range</label>
+          <input id="libRepTarget" type="text" inputmode="text" placeholder="8 or 6-8" value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onchange="LibraryView.setRepTarget(this.value)" aria-describedby="libRepHelp">
+          <p id="libRepHelp" role="status">${esc(u.repError || 'Enter a rep count or range, for example 8 or 6-8.')}</p>
+        </div>` : ''}
+        <div class="lib-field"><label>What do you want to track?</label>
             <select disabled><option>For Completion</option></select>
           </div>
           <div class="lib-field"><label>Instructions</label><textarea id="libNewInstr" placeholder="Ex. 3 rounds for time">${esc(d.instructions || '')}</textarea></div>
@@ -350,9 +364,18 @@
       root.S.library = st;
       go('edit', { tid: ui().tid, bid: null });
     },
-    editBlock(bid) { root.S.libUi.bid = bid; save(); },
+    editBlock(bid) { root.S.libUi.bid = bid; root.S.libUi.repError = null; save(); },
     closeSheet() { root.S.libUi.bid = null; save(); },
     patchBlock(patch) { setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch)); },
+    setRepTarget(value) {
+      const parsed = root.HybridLibrary.parseRepTarget(value);
+      if (!parsed) { root.S.libUi.repError = 'Enter positive whole reps, with the lower number first: 8 or 6-8.'; save(); return; }
+      root.S.libUi.repError = null;
+      root.S.library = root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, { repTarget: parsed.text });
+      const help = root.document?.getElementById('libRepHelp');
+      if (help) help.textContent = 'Enter a rep count or range, for example 8 or 6-8.';
+      save({ paint: false });
+    },
     setCols(c1, c2) {
       const cols = [c1, c2].filter((k) => k && k !== 'none');
       setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, { columns: cols.length ? cols : ['reps'] }));

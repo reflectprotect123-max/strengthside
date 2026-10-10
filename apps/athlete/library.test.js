@@ -80,3 +80,23 @@ test('create catalog exercise with reps + meters is searchable', () => {
   assert.equal(hits[0].title, 'Bendh');
   assert.deepEqual(hits[0].columns, ['reps', 'meters']);
 });
+
+test('authored reps and ranges reach the session and progression engine', () => {
+  require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
+  require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain.js'));
+  let st = Lib.createTemplate(Lib.emptyState(), {title:'Rep targets'});
+  const tid=st.templates[0].id;
+  st=Lib.addExercise(st,tid,{title:'Back Squat',setCount:3,columns:['reps','weight_kg']});
+  const bid=st.templates[0].blocks[0].id;
+  for (const [value,min,max] of [['5',5,5],['6–8',6,8]]) {
+    st=Lib.patchBlock(st,tid,bid,{repTarget:Lib.parseRepTarget(value).text,targetEffort:'max_effort'});
+    const block=Lib.compile(st.templates[0]).blocks.find(b=>b.kind==='lift');
+    const page=HybridSession.pagesFromPlan({blocks:[block]})[0];
+    assert.equal(page.targetReps,min);assert.equal(page.targetRepMax,max);
+    assert.equal(block.targetEffort,undefined);assert.equal(StrengthBrain.target(page), 'average');
+    const sets=Array.from({length:3},()=>({kg:40,reps:min,effort:'average',logged:true,purpose:'working'}));
+    if(min!==max) assert.equal(StrengthBrain.review(page,sets).nextKg,40);
+    sets.forEach(s=>s.reps=max);assert.equal(StrengthBrain.review(page,sets).nextKg,42.5);
+  }
+  for(const value of ['','0','8-6','2.5','6-','-8','8-10-12']) assert.equal(Lib.parseRepTarget(value),null,value);
+});

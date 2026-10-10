@@ -57,3 +57,14 @@ test('builder posts selected date and preserves existing workout days', () => {
  globalThis.alert=()=>{warned=true;};LibraryView.calendar(tid,true);LibraryView.setDate('2026-11-16');LibraryView.confirmDate();
  assert.equal(warned,true);assert.equal(S.library.assignments['2026-11-16'],undefined);
 });
+
+test('exercise builder accepts authored reps without exposing engine controls', () => {
+  const tid=S.library.templates[0].id;
+  S.library=HybridLibrary.addExercise(S.library,tid,{title:'Squat'});
+  const bid=S.library.templates[0].blocks.at(-1).id;
+  LibraryView.open(tid);LibraryView.editBlock(bid);
+  assert.match(LibraryView.html(),/Reps \/ rep range/);
+  assert.doesNotMatch(LibraryView.html(),/Target difficulty|Smallest weight/);
+  LibraryView.setRepTarget('6–8');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6-8');
+  LibraryView.setRepTarget('8-6');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6-8');assert.match(LibraryView.html(),/lower number first/);
+});
