@@ -37,7 +37,9 @@
     let authored=block.setTargets;
     if(authored==null) {
       if(!Number.isSafeInteger(block.setCount)||block.setCount<1)throw new RangeError('Set count must be a positive integer.');
-      const range=block.repMin!=null||block.repMax!=null?reps({min:block.repMin,max:block.repMax??block.repMin}):reps(block.repTarget);
+      const range=block.repMin!=null||block.repMax!=null?reps({min:block.repMin,max:block.repMax??block.repMin})
+        :block.repTarget!=null?reps(block.repTarget)
+        :block.targetRepMax!=null?reps({min:block.targetReps,max:block.targetRepMax}):reps(block.targetReps);
       if(!range)throw new RangeError('Enter a positive integer rep target or an increasing rep range.');
       authored=Array.from({length:block.setCount},()=>({purpose:'working',reps:range,loadRule:{kind:'adaptive'},toFailure:false}));
     }
@@ -59,10 +61,7 @@
     if(row?.purpose==='ramp') {
       return {id:`${page.id||'block'}:warmup:${index}`,purpose:'warmup',reps:reps(row.reps??page.repTarget)||targets.find(t=>t.reps)?.reps||null,loadRule:{kind:'adaptive'},toFailure:false};
     }
-    if(row?.targetId) {
-      const target=targets.find(t=>t.id===row.targetId);
-      if(target)return target;
-    }
+    if(row?.targetId!=null)return targets.find(t=>t.id===row.targetId)||null;
     return working(targets)[row?.workingIndex??index]||null;
   }
   function resolveReference(target,rows) {

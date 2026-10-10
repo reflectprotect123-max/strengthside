@@ -62,7 +62,14 @@ test('row resolution prefers targetId, uses workingIndex and maps ramps to warmu
  assert.equal(T.forRow(page,{purpose:'ramp',workingIndex:0,reps:5},0).purpose,'warmup');
  assert.equal(T.forRow(page,{},0).id,targets[1].id);
  assert.equal(T.forRow(page,{workingIndex:10},0),null);
+ assert.equal(T.forRow(page,{targetId:'missing',workingIndex:0},0),null);
  assert.equal(T.working(targets).length,3);
+});
+test('legacy session page aliases resolve ranges without overriding authored prescriptions',()=>{
+ const page={id:'legacy',setCount:3,targetReps:6,targetRepMax:8};
+ assert.deepEqual(plain(T.forRow(page,{workingIndex:1},0).reps),{min:6,max:8});
+ assert.deepEqual(plain(T.normalize({...page,repTarget:'20-25'})[0].reps),{min:20,max:25});
+ assert.deepEqual(plain(T.normalize({...page,repMin:3,repMax:5})[0].reps),{min:3,max:5});
 });
 test('reference uses actual first ordinary working row only, excluding ramps and AMRAP',()=>{
  const target=amrap();
