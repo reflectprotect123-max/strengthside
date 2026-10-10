@@ -15,7 +15,7 @@ This release also contains the agreed deterministic strength brain: up to two ra
 - Phone browser: home measurements, dated missing data, both questionnaires, daily halo, persistence, history dates, narrow layouts and training navigation.
 - Strength browser: two ramps, slider logging, automatic rest reuse, 3×8 progression, local individual-set records, reload and next-session starting load.
 - Regression tests: concurrent sync, delayed response after account switch, physiological dates, zero steps, retained history, question snapshot round trip, native OAuth state and return routing.
-- Supabase: live isolated-user authentication and unsigned-request rejection; memory table and sync RPC deployed. Test users are removed after checks.
+- Supabase: live isolated-user authentication and unsigned-request rejection; memory table and sync RPC deployed; a real browser saved a set and morning answers, and a separate browser restored both from Supabase. Test users are removed after checks.
 - Actual WHOOP consent and Android browser-to-app return still need a physical phone and the athlete's own WHOOP login. Mocked browser/API tests do not establish that physical-device result.
 
 Source changes are reviewable on GitHub. No credential values are included in the app or source archive; the public Supabase anon key remains public by design.
