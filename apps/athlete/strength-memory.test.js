@@ -59,13 +59,14 @@ test('set evidence snapshots authored targets and selected rest context',()=>{
 });
 
 test('chronological replay learns one exposure per session and replaces edited evidence',()=>{
- const {M}=create(),a=session(),b=session();a.startedAt=1;b.startedAt=2;
+ const {M}=create(),a=session(),b=session();a.startedAt=10;b.startedAt=2;
  M.capture(a);M.capture(b);
  let state=M.replay('squat|default|total|kg');
  assert.equal(state.exposures,2);assert.equal(state.confidence,'provisional');
- const prior=state.freshE1rm,signature=state.evidence[0].sourceSignature;
+ assert.equal(JSON.stringify(state.evidence.map(e=>e.sessionId)),JSON.stringify([b.id,a.id]));
+ const prior=state.freshE1rm,signature=state.evidence[1].sourceSignature;
  a.logs.A.sets[0].kg=50;M.capture(a);state=M.replay('squat|default|total|kg');
- assert.equal(state.exposures,2);assert.notEqual(state.freshE1rm,prior);assert.notEqual(state.evidence[0].sourceSignature,signature);
+ assert.equal(state.exposures,2);assert.notEqual(state.freshE1rm,prior);assert.notEqual(state.evidence[1].sourceSignature,signature);
  M.removeSession(a.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,1);
  M.removeSession(b.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,0);assert.equal(state.freshE1rm,null);
 });

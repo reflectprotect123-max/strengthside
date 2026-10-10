@@ -1,0 +1,26 @@
+import {test,expect} from 'playwright/test';
+
+async function actualNumber(page,label,value){await page.getByLabel(label,{exact:true}).click();const pad=page.locator('.log-pad');for(const key of String(value))await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();}
+async function builder(page){await page.goto('/');await page.getByRole('heading',{name:'Today',exact:true}).waitFor();await page.getByRole('button',{name:'Add',exact:true}).click();await page.getByRole('button',{name:'Create session',exact:true}).click();}
+async function setReps(page,label,value){await page.getByLabel(label,{exact:true}).click();const pad=page.getByRole('dialog',{name:'Reps keypad'});for(const key of String(value))await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();}
+async function log(page,kg,reps,effort=2){await actualNumber(page,'Weight (kg)',kg);await actualNumber(page,'Reps completed',reps);const slider=page.getByRole('slider',{name:'Actual set effort'});await slider.press('Home');for(let i=0;i<effort;i++)await slider.press('ArrowRight');await page.getByRole('button',{name:/^(Log set|Save changes)$/,exact:true}).click();}
+async function addSquat(page){await builder(page);await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();await page.getByRole('button',{name:'Edit',exact:true}).click();}
+async function scheduleAndStart(page){await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.getByRole('button',{name:'Got It',exact:true}).click();}
+async function completeWarmups(page){for(const kg of [10,20]){await log(page,kg,5,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();}}
+
+test('10 8 6 plus final AMRAP keeps authored targets and immutable completed actuals',async({page},testInfo)=>{
+ await addSquat(page);await page.getByRole('button',{name:'Edit each set',exact:true}).click();await setReps(page,'Set 1 reps',10);await setReps(page,'Set 2 reps',8);await setReps(page,'Set 3 reps',6);await page.getByRole('button',{name:'Add final AMRAP',exact:true}).click();
+ await expect(page.getByLabel('Set 4 AMRAP')).toContainText('Set 1 weight');await expect(page.getByLabel('Target difficulty')).toHaveCount(0);await page.getByRole('button',{name:'Done',exact:true}).click();await expect(page.locator('.lib-block')).toContainText('10 / 8 / 6 / AMRAP');await scheduleAndStart(page);
+ expect(await page.evaluate(()=>{const p=HybridSession.currentPage(S.session);return S.session.logs[p.id].sets.filter(r=>r.purpose!=='ramp').map(r=>({purpose:r.purpose,reps:r.reps,rule:p.setTargets.find(t=>t.id===r.targetId)?.loadRule}));})).toEqual([{purpose:'working',reps:10,rule:{kind:'adaptive'}},{purpose:'working',reps:8,rule:{kind:'adaptive'}},{purpose:'working',reps:6,rule:{kind:'adaptive'}},{purpose:'amrap',reps:null,rule:{kind:'first_working_set'}}]);
+ await completeWarmups(page);await log(page,40,10);await page.getByRole('button',{name:'Edit set 3 of Back Squat',exact:true}).click();await log(page,41,10);
+ for(const [kg,reps] of [[42.5,8],[45,6]]){await expect(page.locator('.log-set-heading span')).toHaveText(`${reps} reps`);await log(page,kg,reps);await page.getByRole('button',{name:'Start next set',exact:true}).click();}
+ await expect(page.locator('.log-set-heading span')).toHaveText('AMRAP');await expect(page.getByLabel('Weight (kg)')).toHaveValue('41');await log(page,41,12,3);
+ await page.screenshot({path:testInfo.outputPath('completed-10-8-6-amrap.png'),fullPage:true});await testInfo.attach('Completed 10 8 6 plus AMRAP',{path:testInfo.outputPath('completed-10-8-6-amrap.png'),contentType:'image/png'});
+ await page.getByRole('button',{name:'Edit set 3 of Back Squat',exact:true}).click();await log(page,42,10);
+ expect(await page.evaluate(()=>{const rows=S.session.logs[HybridSession.currentPage(S.session).id].sets.filter(r=>r.purpose!=='ramp');return {first:rows[0].kg,amrap:rows.at(-1).kg,amrapLogged:rows.at(-1).logged};})).toEqual({first:42,amrap:41,amrapLogged:true});
+});
+
+test('six reps at Average inside a 6 to 8 range holds load and accepts an override',async({page})=>{
+ await addSquat(page);await page.getByLabel('First metric').selectOption('reps_range');await page.getByLabel('Rep range',{exact:true}).click();const pad=page.getByRole('dialog',{name:'Rep range keypad'});for(const key of ['6','–','8'])await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();await page.getByRole('button',{name:'Done',exact:true}).click();await scheduleAndStart(page);await completeWarmups(page);
+ await log(page,40,6,2);await expect(page.getByLabel('Weight (kg)')).toHaveValue('40');await page.getByRole('button',{name:'Start next set',exact:true}).click();await actualNumber(page,'Weight (kg)',43);await expect(page.getByLabel('Weight (kg)')).toHaveValue('43');
+});

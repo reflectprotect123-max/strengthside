@@ -53,6 +53,10 @@
   function currentSets(exerciseKey) {
     return Object.values(memory.records).filter(r=>r.kind==='set'&&!r.deleted&&r.exerciseKey===exerciseKey&&r.payload?.row&&r.payload?.page);
   }
+  function timeValue(value) {
+    const numeric=Number(value);if(Number.isFinite(numeric))return numeric;
+    const parsed=Date.parse(value);return Number.isFinite(parsed)?parsed:0;
+  }
   function replay(exerciseKey) {
     const sessions=new Map();
     for(const record of currentSets(exerciseKey)) {
@@ -61,11 +65,12 @@
     }
     let state={freshE1rm:null,exposures:0,confidence:'unknown',modelVersion:root.StrengthBrain.VERSION,lastSourceSignature:null};
     const evidence=[];
-    for(const bucket of [...sessions.values()].sort((a,b)=>String(a.at).localeCompare(String(b.at))||a.sessionId.localeCompare(b.sessionId))) {
+    for(const bucket of [...sessions.values()].sort((a,b)=>timeValue(a.at)-timeValue(b.at)||a.sessionId.localeCompare(b.sessionId))) {
       bucket.records.sort((a,b)=>(a.payload.row.ordinal||0)-(b.payload.row.ordinal||0));
       const result=root.StrengthBrain.review(bucket.page,bucket.records.map(r=>r.payload.row));
       if(!Number.isFinite(Number(result.e1rm))||Number(result.e1rm)<=0||!result.sourceSetIds?.length)continue;
-      const sourceSignature=signature(bucket.records.map(r=>({id:r.id,revision:r.localRevision||0,content:fingerprint(r)})));
+      const sourceIds=new Set(result.sourceSetIds),sourceRecords=bucket.records.filter(r=>sourceIds.has(r.id));
+      const sourceSignature=signature(sourceRecords.map(r=>({id:r.id,revision:r.localRevision||0,content:fingerprint(r)})));
       state=root.StrengthBrainCore.learn(state,{estimate:result.e1rm,sourceSignature,modelVersion:root.StrengthBrain.VERSION});
       evidence.push({sessionId:bucket.sessionId,estimate:result.e1rm,sourceSignature,sourceSetIds:result.sourceSetIds});
     }
