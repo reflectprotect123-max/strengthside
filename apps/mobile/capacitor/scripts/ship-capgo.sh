@@ -11,4 +11,4 @@ cd "$ROOT"
 if [[ ! -x node_modules/.bin/cap ]]; then npm ci --no-fund --no-audit; fi
 npx --yes @capgo/cli@8.70.0 bundle upload com.hybrid.strength \
   --path ../../athlete --channel strength-live --bundle "$CAPGO_BUNDLE_VERSION" \
-  --min-update-version 1.2.4 --self-assign --fail-on-incompatible
+  --min-update-version 1.3.0 --self-assign --fail-on-incompatible
