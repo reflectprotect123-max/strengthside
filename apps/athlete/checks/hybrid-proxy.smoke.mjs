@@ -11,8 +11,8 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(dir, '..');
 const fnDir = join(appRoot, 'netlify/functions');
 const requiredFns = [
-  'integrations-status.mjs',
-  'integrations-disconnect.mjs',
+  'strength-whoop-status.mjs',
+  'strength-whoop-disconnect.mjs',
   'whoop-connect.mjs',
   'whoop-sync.mjs',
   'concept2-connect.mjs',
@@ -110,8 +110,8 @@ vm.createContext(sandbox);
 vm.runInContext(readFileSync(join(appRoot,'whoop-common.js'),'utf8'),sandbox);
 vm.runInContext(whoopJs, sandbox);
 await sandbox.Whoop.refreshStatus();
-if (!String(sandbox.lastFetch || '').includes('/functions/v1/integrations-status')) {
-  throw new Error('expected Edge integrations-status URL, got: ' + sandbox.lastFetch);
+if (!String(sandbox.lastFetch || '').includes('/functions/v1/strength-whoop-status')) {
+  throw new Error('expected Edge strength-whoop-status URL, got: ' + sandbox.lastFetch);
 }
 if (!String(sandbox.lastFetch || '').includes('product=strength')) {
   throw new Error('expected product=strength on Edge URL, got: ' + sandbox.lastFetch);

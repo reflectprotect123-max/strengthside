@@ -16,8 +16,8 @@
   const FN = {
     connect: 'whoop-connect',
     sync: 'whoop-sync',
-    status: 'integrations-status',
-    disconnect: 'integrations-disconnect',
+    status: 'strength-whoop-status',
+    disconnect: 'strength-whoop-disconnect',
     coach: 'brain-coach'
   };
   function functionName(path) {

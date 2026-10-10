@@ -9,20 +9,24 @@ STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/supabase/functions"
 cp -R "$ROOT/supabase/functions/_shared" "$STAGE/supabase/functions/"
-for name in whoop-sync whoop-connect whoop-callback integrations-status integrations-disconnect; do cp -R "$ROOT/supabase/functions/$name" "$STAGE/supabase/functions/"; done
+for name in whoop-sync whoop-connect whoop-callback strength-whoop-status strength-whoop-disconnect; do cp -R "$ROOT/supabase/functions/$name" "$STAGE/supabase/functions/"; done
 cat > "$STAGE/supabase/config.toml" <<'CONFIG'
 project_id = "strength-shared-whoop"
 [functions.whoop-sync]
 verify_jwt = true
 [functions.whoop-connect]
 verify_jwt = true
-[functions.integrations-status]
+[functions.strength-whoop-status]
 verify_jwt = true
-[functions.integrations-disconnect]
+[functions.strength-whoop-disconnect]
 verify_jwt = true
 [functions.whoop-callback]
 verify_jwt = false
 CONFIG
 cd "$STAGE"
 # Publish callback before the client begins using the new return target.
-for name in integrations-status integrations-disconnect whoop-callback whoop-connect whoop-sync; do "$CLI" functions deploy "$name" --project-ref "$REF" --use-api; done
+read -r -a TARGETS <<< "${STRENGTH_WHOOP_TARGETS:-strength-whoop-status strength-whoop-disconnect whoop-callback whoop-connect whoop-sync}"
+for name in "${TARGETS[@]}"; do
+  case "$name" in strength-whoop-status|strength-whoop-disconnect|whoop-callback|whoop-connect|whoop-sync) ;; *) echo "Unsupported WHOOP deployment target" >&2; exit 1 ;; esac
+  "$CLI" functions deploy "$name" --project-ref "$REF" --use-api
+done

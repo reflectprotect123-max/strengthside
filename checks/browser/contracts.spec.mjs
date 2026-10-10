@@ -1,8 +1,8 @@
 import {test,expect} from 'playwright/test';
 test('WHOOP account routes use Supabase while coach text uses its separate owner',async({page})=>{
  await page.goto('/');await page.getByRole('heading',{name:'Today',exact:true}).waitFor();
- const routes=await page.evaluate(()=>Object.fromEntries(['whoop-connect','whoop-sync','integrations-status','integrations-disconnect','brain-coach'].map(k=>[k,Whoop.fnUrl(k)])));
- for(const key of ['whoop-connect','whoop-sync','integrations-status','integrations-disconnect'])expect(routes[key]).toContain('/functions/v1/'+key+'?product=strength');
+ const routes=await page.evaluate(()=>Object.fromEntries(['whoop-connect','whoop-sync','strength-whoop-status','strength-whoop-disconnect','brain-coach'].map(k=>[k,Whoop.fnUrl(k)])));
+ for(const key of ['whoop-connect','whoop-sync','strength-whoop-status','strength-whoop-disconnect'])expect(routes[key]).toContain('/functions/v1/'+key+'?product=strength');
  expect(routes['brain-coach']).toBe('https://thehybridengine1.netlify.app/.netlify/functions/brain-coach?product=strength');
 });
 test('saving a generic metric stays a draft; missed sets and edits update memory explicitly',async({page})=>{
