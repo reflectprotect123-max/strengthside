@@ -1,5 +1,5 @@
 import {readFileSync,writeFileSync} from 'node:fs';
-for(const name of ['training-core','whoop-common','strength-targets']) {
+for(const name of ['training-core','whoop-common','strength-targets','strength-equipment']) {
 const source=readFileSync(new URL(`../apps/shared/${name}.js`,import.meta.url),'utf8');
 for(const app of ['athlete','coach']) {
  const path=new URL(`../apps/${app}/${name}.js`,import.meta.url);
