@@ -232,11 +232,6 @@
         <div class="lib-sheet-card">
           <h2>New Exercise</h2>
           <div class="lib-field"><label>Title</label><input id="libNewTitle" value="${esc(d.title || '')}" placeholder="Title"></div>
-          ${(b.columns || ['reps']).some(c => ['reps','reps_range'].includes(c)) && !(b.columns || []).includes('meters') ? `<div class="lib-field">
-          <label for="libRepTarget">Reps / rep range</label>
-          <input id="libRepTarget" type="text" inputmode="text" placeholder="8 or 6-8" value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onchange="LibraryView.setRepTarget(this.value)" aria-describedby="libRepHelp">
-          <p id="libRepHelp" role="status">${esc(u.repError || 'Enter a rep count or range, for example 8 or 6-8.')}</p>
-        </div>` : ''}
         <div class="lib-field"><label>What do you want to track?</label>
             <div class="lib-cols">
               <select id="libNewC1">${trackOptions(d.c1 || 'reps')}</select>
@@ -252,11 +247,6 @@
         <div class="lib-sheet-card">
           <h2>New Circuit</h2>
           <div class="lib-field"><label>Title</label><input id="libNewTitle" value="${esc(d.title || '')}"></div>
-          ${(b.columns || ['reps']).some(c => ['reps','reps_range'].includes(c)) && !(b.columns || []).includes('meters') ? `<div class="lib-field">
-          <label for="libRepTarget">Reps / rep range</label>
-          <input id="libRepTarget" type="text" inputmode="text" placeholder="8 or 6-8" value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onchange="LibraryView.setRepTarget(this.value)" aria-describedby="libRepHelp">
-          <p id="libRepHelp" role="status">${esc(u.repError || 'Enter a rep count or range, for example 8 or 6-8.')}</p>
-        </div>` : ''}
         <div class="lib-field"><label>What do you want to track?</label>
             <select disabled><option>For Completion</option></select>
           </div>
