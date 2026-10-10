@@ -45,8 +45,9 @@
       const atMin=reduced===kg&&E.floor(kg-EPSILON,page)==null;
       return response(reduced,label,atMin?'minimum_reached':'reduce_after_incomplete','low',p);
     }
-    if(nextTarget.purpose==='warmup') {
-      const next=['very_easy','easy'].includes(row.effort)?E.round(E.next(kg,page)??kg,kg,page,{upCap:p.warmupUpCap,downCap:p.downCap}):kg;
+    if(nextTarget.purpose==='warmup'||currentTarget?.purpose==='warmup'||row.purpose==='ramp') {
+      // Warmups are today's reversible calibration: advance at most one real equipment step.
+      const next=['very_easy','easy'].includes(row.effort)?E.next(kg,page)??kg:kg;
       return response(next,label,next>kg?'warmup_step':'warmup_hold','directional',p);
     }
     if(['very_easy','easy'].includes(row.effort)) {

@@ -54,6 +54,13 @@ test('zero reps reduce and equipment minimum reports a reason',()=>{
  const result=B.suggest({page:p,row:row('a:set:0',0,10,null,{miss:true}),nextRow:{targetId:'a:set:1'},index:1});
  assert.equal(result.kg,10);assert.equal(result.reason,'minimum_reached');
 });
+test('Easy warmup advances exactly one feasible equipment step even on a coarse low load',()=>{
+ const p=page([5]);p.setTargets=[{id:'a:warmup:1',purpose:'warmup',reps:{min:5,max:5},loadRule:{kind:'adaptive'},toFailure:false},...p.setTargets];
+ const result=B.suggest({page:p,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0});
+ assert.equal(result.kg,11);assert.equal(result.reason,'warmup_step');
+ const coarse={...p,equipmentStepKg:2.5};assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0}).kg,12.5);
+ assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:12.5,effort:'easy'},nextRow:{targetId:'a:set:0',purpose:'working'},index:1}).kg,15);
+});
 test('AMRAP references actual first working load and never mutates it',()=>{
  const p=page([10]);p.setTargets.push({id:'a:set:1',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
  const first=row('a:set:0',10,31,'average'),result=B.suggest({page:p,row:first,nextRow:{targetId:'a:set:1'},index:1,state:{rows:[{purpose:'ramp',logged:true,kg:10},first]}});

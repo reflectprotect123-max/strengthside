@@ -3,49 +3,50 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
-const ctx=vm.createContext({crypto:webcrypto});vm.runInContext(readFileSync(new URL('./training-core.js',import.meta.url),'utf8'),ctx);vm.runInContext(readFileSync(new URL('./strength-brain.js',import.meta.url),'utf8'),ctx);
+const ctx=vm.createContext({crypto:webcrypto});
+for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-brain-core','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
 const B=ctx.StrengthBrain;
-const page={id:'A',title:'Squat',kind:'lift',logMode:'kg',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,columns:['reps','weight_kg']};
-const row=(reps=8,effort='average',kg=40)=>({reps,effort,kg,logged:true,purpose:'working'});
-test('lower boundary holds; upper boundary across full prescription earns exactly one step',()=>{
- assert.equal(B.review(page,[row(6),row(6),row(6)]).nextKg,40);
- assert.equal(B.review(page,[row(),row(),row(7)]).nextKg,40);
- assert.equal(B.review(page,[row(),row(),row(8,'hard')]).nextKg,41);
- assert.equal(B.review(page,[row(),row(),row(8,'max_effort')]).nextKg,40);
- assert.equal(B.review(page,[row(),row()]).earned,false);
+const targets=[0,1,2].map(i=>({id:`A:set:${i}`,purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'},toFailure:false}));
+const page={id:'A',title:'Squat',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'total',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,minimumKg:0,columns:['reps','weight_kg'],setTargets:targets};
+const row=(i=0,reps=8,effort='average',kg=40)=>({id:`r${i}`,targetId:`A:set:${i}`,reps,effort,kg,logged:true,purpose:'working',workingIndex:i});
+
+test('adapter delegates per-set range progression to the canonical core',()=>{
+ assert.equal(B.review(page,[row(0,6),row(1,6),row(2,6)]).nextKg,40);
+ assert.equal(B.review(page,[row(0),row(1),row(2)]).nextKg,41);
+ assert.equal(B.review(page,[row(0),row(1),row(2,8,'hard')]).earned,false);
 });
-test('mixed loads calibrate without a progression bonus',()=>assert.equal(B.review(page,[row(8,'average',40),row(8,'average',42),row(8,'hard',42)]).nextKg,42));
-test('e1RM uses effort, ignores ramps, failures, easy sets and holds',()=>{
- assert.equal(B.estimate(row(8,'hard'),page),52);
- assert.equal(B.estimate({...row(8,'hard'),purpose:'ramp'},page),null);
- assert.equal(B.estimate({...row(8,'hard'),miss:true},page),null);
- assert.equal(B.estimate(row(8,'easy'),page),null);
- assert.equal(B.estimate(row(8,'hard'),{...page,title:'Farmer Carry'}),null);
- assert.equal(B.estimate(row(1,'max_effort',80),page),80);
+test('RTS estimate ignores ramps failures Easy and unsupported movements',()=>{
+ assert.ok(B.estimate(row(0,8,'hard'),page)>40);
+ assert.equal(B.estimate({...row(),purpose:'ramp'},page),null);
+ assert.equal(B.estimate({...row(),miss:true},page),null);
+ assert.equal(B.estimate(row(0,8,'easy'),page),null);
+ assert.equal(B.estimate(row(),{...page,title:'Farmer Carry'}),null);
 });
-test('coarse equipment never bypasses an upward cap',()=>{
- assert.equal(B.next({page:{...page,equipmentStepKg:2},row:row(6,'easy',4),nextRow:{purpose:'working'}}).kg,4);
- assert.equal(B.round(33.45,31,{...page,equipmentStepKg:1}),32);
- assert.equal(B.round(45,40,{...page,availableLoads:[40,50]}),40);
+test('equipment aliases preserve caps and declared grids',()=>{
+ assert.equal(B.stepUp(40,page,.05),41);assert.equal(B.round(45,40,{...page,availableLoads:[40,50]}),40);
+ assert.equal(B.equipment(page).step,1);
 });
-test('two unknown ramps, no invented load and same slider target; accessory gets no ramps',()=>{
- const session={id:webcrypto.randomUUID(),pages:[page,{...page,id:'B',title:'Curl',exerciseType:'accessory'}],logs:{A:{sets:[{}, {}, {}]},B:{sets:[{}, {}, {}]}}};
+test('seed is idempotent, creates two main warmups and no accessory warmups',()=>{
+ const accessory={...page,id:'B',title:'Curl',exerciseType:'accessory',setTargets:targets.map((t,i)=>({...t,id:`B:set:${i}`}))};
+ const session={id:webcrypto.randomUUID(),pages:[page,accessory],logs:{A:{sets:targets.map(t=>({targetId:t.id}))},B:{sets:accessory.setTargets.map(t=>({targetId:t.id}))}}};
  const seeded=B.seed(session,{});
- assert.equal(seeded.logs.A.sets.length,5);assert.equal(seeded.logs.A.sets[0].kg,null);
- assert.equal(seeded.logs.B.sets.length,3);assert.equal(B.target(page,seeded.logs.A.sets[0],0),'easy');
- assert.equal(B.seed(seeded,{}).logs.A.sets.length,5);
+ assert.equal(seeded.logs.A.sets.filter(r=>r.purpose==='ramp').length,2);assert.equal(seeded.logs.B.sets.length,3);
+ assert.equal(B.seed(seeded,{}).logs.A.sets.length,5);assert.equal(B.target(page,seeded.logs.A.sets[0],0),'easy');
 });
-test('history is exercise-specific and latest three session estimates are averaged',()=>{
- const records={};[40,42,44,46].forEach((kg,i)=>{const r=row(6,'hard',kg);records[i]={kind:'set',sessionId:'s'+i,exerciseKey:B.key(page),payload:{page,row:r,sessionStartedAt:i+1}};});
- const expected=[42,44,46].reduce((s,w)=>s+w*(1+7/30),0)/3;
- assert.ok(Math.abs(B.history(records,page).rolling-expected)<1e-8);
+test('recognized cold start is provisional and manual actuals remain untouched',()=>{
+ const db={...page,id:'D',title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',setTargets:targets.map((t,i)=>({...t,id:`D:set:${i}`}))};
+ const session={id:'s',pages:[db],logs:{D:{sets:db.setTargets.map(t=>({targetId:t.id}))}}};
+ const seeded=B.seed(session,{});assert.equal(seeded.pages[0].workingKg,5);assert.equal(seeded.pages[0].startConfidence,'provisional');
+ const actual=row(0,8,'average',18),decision=B.next({page:db,row:actual,nextRow:{targetId:'D:set:1'},index:1,state:{rows:[actual]}});
+ assert.equal(actual.kg,18);assert.ok(Number.isFinite(decision.kg));
+});
+test('history is exercise-specific and averages the latest three fresh estimates',()=>{
+ const records={};[40,42,44,46].forEach((kg,i)=>{const r=row(0,6,'hard',kg);records[i]={kind:'set',sessionId:'s'+i,exerciseKey:B.key(page),payload:{page,row:{...r,ordinal:0},sessionStartedAt:i+1}};});
+ const h=B.history(records,page);assert.equal(h.sessions,3);assert.ok(h.rolling>44);
  assert.equal(B.history(records,{...page,title:'Bench'}).rolling,null);
 });
-test('incomplete and max effort cannot increase next weight',()=>{
- for(const r of [{...row(4),miss:true},row(6,'max_effort')])assert.ok(B.next({page,row:r,nextRow:{purpose:'working'}}).kg<40);
-});
-test('unexpected Hard reduces early work but may hold for the intended final Hard set',()=>{
- const early=B.next({page,row:row(6,'hard'),nextRow:{purpose:'working',workingIndex:1},index:3});
- const final=B.next({page,row:row(6,'hard'),nextRow:{purpose:'working',workingIndex:2},index:4});
- assert.ok(early.kg<40);assert.equal(final.kg,40);assert.equal(final.target,'hard');
+test('pending AMRAP uses actual first working weight and unresolved sources remain blank',()=>{
+ const amrap={id:'A:set:3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false},p={...page,setTargets:[...targets,amrap],setCount:4};
+ const first=row(0,8,'average',31);assert.equal(B.next({page:p,row:row(2),nextRow:{targetId:amrap.id},index:3,state:{rows:[first]}}).kg,31);
+ assert.equal(B.next({page:p,row:row(2),nextRow:{targetId:amrap.id},index:3,state:{rows:[{...first,miss:true}]}}).kg,null);
 });

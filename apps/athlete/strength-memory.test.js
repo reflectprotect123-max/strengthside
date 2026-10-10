@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';import {webcrypto} from 'node:crypto';
 function create(store=new Map()) {
  const c=vm.createContext({crypto:webcrypto,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},setTimeout:()=>1,clearTimeout:()=>{},console,addEventListener:()=>{}});
- for(const f of ['training-core.js','strength-brain.js','strength-memory.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
+ for(const f of ['training-core.js','strength-targets.js','strength-equipment.js','strength-rts.js','strength-policy.js','strength-brain-core.js','strength-brain.js','strength-memory.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
  return {M:c.StrengthMemory,store};
 }
 function session(){return {id:webcrypto.randomUUID(),startedAt:10,date:'2026-10-10',pages:[{id:'A',title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,purpose:'working'}]}}};}

@@ -520,13 +520,14 @@
     const position = EFFORTS.indexOf(chosen || target || 'average');
     const done = flow.index < 0;
     const rows = flow.rows;
-    const repTarget = flow.rows[flow.index]?.purpose === 'ramp' ? page.targetReps : page.targetReps == null ? 'MAX' : page.targetRepMax > page.targetReps ? `${page.targetReps}–${page.targetRepMax}` : page.targetReps;
+    const activeRow=flow.rows[flow.index];let authored=null;try{authored=root.StrengthTargets.forRow(page,activeRow,flow.index);}catch{}
+    const repTarget = activeRow?.purpose==='ramp'?(activeRow.reps??page.targetReps):authored?.purpose==='amrap'?'AMRAP':authored?.reps?(authored.reps.max>authored.reps.min?`${authored.reps.min}–${authored.reps.max}`:authored.reps.min):page.targetReps == null?'MAX':page.targetRepMax>page.targetReps?`${page.targetReps}–${page.targetRepMax}`:page.targetReps;
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Warm-up':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(r.kg)} kg × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
       <section class="log-active-set" data-exercise="${id}">
-        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Warm-up ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)} reps</span>`}</div>
+        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Warm-up ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
           <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
@@ -812,7 +813,7 @@
       if (index >= 0 && lift.logMode === 'kg') {
         const source = rows.slice(0,index).filter(r=>r.logged).at(-1);
         if (source) {
-          adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index});
+          adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
           rows[index].kg = adjustment.kg;
           rows[index].targetEffort = adjustment.target;
           source.loadDecision = adjustment;
