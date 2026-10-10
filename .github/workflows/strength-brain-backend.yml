@@ -4,10 +4,16 @@ on:
     branches: [codex/strength-brain-today]
     paths: ['supabase/migrations/20261010120000_strength_brain_memory.sql', '.github/workflows/strength-brain-backend.yml', 'checks/sql/strength-brain-memory-test.sql']
   workflow_dispatch:
+    inputs:
+      deploy_whoop_accounts:
+        description: Deploy only the namespaced strength WHOOP account endpoints
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   deploy:
+    if: ${{ !inputs.deploy_whoop_accounts }}
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -33,3 +39,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/deploy-strength-brain.mjs
+
+  whoop_accounts:
+    if: ${{ inputs.deploy_whoop_accounts }}
+    uses: ./.github/workflows/strength-whoop-backend.yml
+    secrets: inherit

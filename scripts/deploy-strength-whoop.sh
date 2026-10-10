@@ -16,10 +16,11 @@ project_id = "strength-shared-whoop"
 verify_jwt = true
 [functions.whoop-connect]
 verify_jwt = true
+# These routes verify ES256/legacy user tokens with getUser in the handler.
 [functions.strength-whoop-status]
-verify_jwt = true
+verify_jwt = false
 [functions.strength-whoop-disconnect]
-verify_jwt = true
+verify_jwt = false
 [functions.whoop-callback]
 verify_jwt = false
 CONFIG

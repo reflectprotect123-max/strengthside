@@ -11,8 +11,8 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(dir, '..');
 const fnDir = join(appRoot, 'netlify/functions');
 const requiredFns = [
-  'strength-whoop-status.mjs',
-  'strength-whoop-disconnect.mjs',
+  'integrations-status.mjs',
+  'integrations-disconnect.mjs',
   'whoop-connect.mjs',
   'whoop-sync.mjs',
   'concept2-connect.mjs',
