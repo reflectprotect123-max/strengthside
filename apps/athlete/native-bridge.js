@@ -12,7 +12,7 @@
   }
   async function queue(bundle) {
     const p = plugin(); if (!p || !bundle?.id) return;
-    if (!newer(bundle.version, info.current || '1.3.0')) return emit({ status: 'current', message: 'Your app is up to date.' });
+    if (!newer(bundle.version, info.current || '1.3.1')) return emit({ status: 'current', message: 'Your app is up to date.' });
     await p.setMultiDelay({ delayConditions: [{ kind: 'kill' }] });
     await p.next({ id: bundle.id }); pending = bundle;
     return emit({ status: 'ready', next: bundle.version, message: 'Update ready. Restart after your workout.' });
@@ -27,7 +27,7 @@
       emit({ status: 'checking', message: 'Checking for updates…' });
       try {
         const current = await p.current();
-        const bundled = '1.3.0';
+        const bundled = '1.3.1';
         const installed = current.bundle?.version === 'builtin' ? current.native : current.bundle?.version;
         const floor = newer(installed, bundled) ? installed : bundled;
         emit({ current: floor });

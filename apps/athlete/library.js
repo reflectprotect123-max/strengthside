@@ -250,12 +250,21 @@
     return lines.map((text, i) => ({ n: i + 1, text }));
   }
 
+  function parseRepTarget(value) {
+    const match = String(value || '').trim().match(/^(\d+)\s*(?:[-–—]\s*(\d+))?$/);
+    if (!match) return null;
+    const min = Number(match[1]), max = Number(match[2] || match[1]);
+    if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || min < 1 || max < min) return null;
+    return { min, max, text: min === max ? String(min) : `${min}-${max}` };
+  }
+
   function rxFor(block) {
     const sets = Math.max(1, Number(block.setCount) || 3);
     const cols = block.columns || ['reps'];
-    const repBit = cols[0] === 'reps_range' ? '8-12' : cols[0] === 'reps' ? '8' : '';
+    const hasReps = cols.some(c => c === 'reps' || c === 'reps_range');
+    const repBit = hasReps ? (parseRepTarget(block.repTarget)?.text || (cols.includes('reps_range') ? '8-12' : '8')) : '';
     if (cols.includes('meters')) return repBit ? `${sets} x ${repBit} m` : `${sets} x m`;
-    if (cols[0] === 'reps' || cols[0] === 'reps_range') return `${sets} x ${repBit}`;
+    if (hasReps) return `${sets} x ${repBit}`;
     if (cols[0] === 'seconds' || cols[0] === 'time_mmss') return `${sets} x time`;
     return `${sets} sets`;
   }
@@ -306,7 +315,6 @@
           loadConvention: b.loadConvention,
           exerciseType: b.exerciseType,
           rampCount: b.rampCount,
-          targetEffort: b.targetEffort || 'average',
           section,
         });
       }
@@ -404,6 +412,8 @@
     unlinkSuperset,
     lettered,
     compile,
+    parseRepTarget,
+    rxFor,
     assignDate,
     unassignDate,
     planForDate,

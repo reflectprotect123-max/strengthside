@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'strength-brain-v1.3.0';
+const APP_BUILD = 'strength-brain-v1.3.1';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
