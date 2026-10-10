@@ -1,12 +1,13 @@
 (function (root) {
   function parseRx(prescription) {
     const raw = String(prescription || '');
-    const m = raw.match(/(\d+)\s*[x×]\s*(\d+|MAX)/i);
-    if (!m) return { setCount: 3, targetReps: 8, isMax: false };
+    const m = raw.match(/(\d+)\s*[x×]\s*(\d+|MAX)(?:\s*[-–—]\s*(\d+))?/i);
+    if (!m) return { setCount: 3, targetReps: 8, targetRepMax: 8, isMax: false };
     const isMax = String(m[2]).toUpperCase() === 'MAX';
     return {
       setCount: Number(m[1]),
       targetReps: isMax ? null : Number(m[2]),
+      targetRepMax: isMax ? null : Math.max(Number(m[2]), Number(m[3] || m[2])),
       isMax,
     };
   }
@@ -24,7 +25,7 @@
     for (let i = 0; i < page.setCount; i++) {
       rows.push({
         reps: page.logMode === 'max' ? null : page.targetReps,
-        kg: null,
+        kg: i === 0 && page.logMode === 'kg' ? page.demoStartingKg : null,
         cells: {},
         logged: false,
         miss: false,
@@ -108,14 +109,18 @@
       section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
       setCount: mode === 'complete' ? 0 : (Number(block.setCount) || rx.setCount),
       targetReps: rx.targetReps,
-      columns: cols.length ? cols : (mode === 'kg' ? ['reps', 'weight_kg'] : cols),
+      targetRepMax: rx.targetRepMax,
+      targetEffort: effortLabel(block.targetEffort) ? block.targetEffort : block.targetEffort === 'medium' ? 'average' : block.kind === 'lift' ? 'average' : null,
+      restSec: Number(block.restSec) > 0 ? Number(block.restSec) : null,
+      demoStartingKg: Number(block.demoStartingKg) > 0 ? Number(block.demoStartingKg) : null,
+      columns: cols,
     };
   }
 
   function pagesFromPlan(plan) {
     const members = [];
     for (const block of (plan && plan.blocks) || []) {
-      if (!block || block.kind === 'section') continue;
+      if (!block || !['lift', 'warmup', 'recovery'].includes(block.kind)) continue;
       members.push(pageFromBlock(block));
     }
     const pages = [];
@@ -175,24 +180,12 @@
     return session;
   }
 
-  function memoryKey(title) {
-    return String(title || '').trim().toLowerCase();
-  }
-
-  function seedOpeningLoads(session, liftMemory) {
-    session.liftMemory = Object.assign({}, liftMemory || {}, session.liftMemory || {});
-    session.workingMax = session.workingMax || {};
-    return session;
-  }
-
-  function startSession({ date, plan, letter, existing, liftMemory } = {}) {
+  function startSession({ date, plan, letter, existing } = {}) {
     const pages = pagesFromPlan(plan);
-    const memory = liftMemory || (existing && existing.liftMemory) || {};
     if (existing && existing.date === date && existing.phase !== 'summary' && !letter) {
       const s = clone(existing);
       s.pages = pages;
-      s.liftMemory = Object.assign({}, memory, s.liftMemory || {});
-      return seedOpeningLoads(attachLogs(s), s.liftMemory);
+      return attachLogs(s);
     }
     const session = attachLogs({
       date,
@@ -204,7 +197,7 @@
       pages,
       logs: {},
       workingMax: {},
-      liftMemory: Object.assign({}, memory),
+      liftMemory: {},
       feel: { intensity: null, durationMin: 0, note: '' },
       unit: 'kg',
     });
@@ -212,7 +205,7 @@
       const idx = pages.findIndex((p) => pageMatchesLetter(p, letter));
       session.blockIndex = idx >= 0 ? idx : 0;
     }
-    return seedOpeningLoads(session, memory);
+    return session;
   }
 
   function ackQuote(session) {
@@ -269,7 +262,8 @@
   }
 
   function effortLabel(effort) {
-    return effort === 'easy' || effort === 'medium' || effort === 'hard';
+    if (effort === "medium") effort = "average";
+    return ['very_easy','easy','average','hard','max_effort'].includes(effort);
   }
 
   function canLogRow(row, liftPage) {
@@ -277,8 +271,8 @@
     if (!effortLabel(row.effort)) return false;
     const hasReps = row.reps != null && row.reps !== '';
     const hasKg = row.kg != null && row.kg !== '';
-    const isMax = liftPage && liftPage.logMode === 'max';
-    return hasReps && (hasKg || isMax);
+    const needsKg = liftPage && liftPage.logMode === 'kg';
+    return hasReps && (!needsKg || hasKg);
   }
 
   function logSet(session, setIndex, patch, memberId) {
@@ -349,11 +343,11 @@
 
   function openFeel(session) {
     const s = clone(session);
+    s.phase = 'feel';
     const started = s.startedAt || Date.now();
     const mins = Math.max(1, Math.round((Date.now() - started) / 60000));
     s.feel = s.feel || {};
     if (!s.feel.durationMin) s.feel.durationMin = mins;
-    s.phase = 'summary';
     return s;
   }
 
@@ -415,6 +409,7 @@
   const HybridSession = {
     parseRx,
     pagesFromPlan,
+    seedOpeningLoads: (session) => session,
     startSession,
     ackQuote,
     ackCoach,
@@ -426,8 +421,6 @@
     logSet,
     toggleLogged,
     autofillFrom,
-    seedOpeningLoads,
-    memoryKey,
     logIdsForPage,
     memberOf,
     totals,

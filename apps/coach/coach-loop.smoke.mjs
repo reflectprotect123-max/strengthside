@@ -11,7 +11,8 @@ const src = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 const html = readFileSync(join(dir, 'coach.html'), 'utf8');
 const legacyApp = readFileSync(join(dir, 'index.html'), 'utf8');
 const whoopBridge = readFileSync(join(dir, 'whoop.js'), 'utf8');
-for (const token of ['function readinessScore(', 'function decisionFromScore(', 'function athRecoveryGateOverlay(']) {
+const coachColumns = readFileSync(join(dir, 'log-columns.js'), 'utf8');
+for (const token of ['readinessScore', 'decisionFromScore', 'athRecoveryGateOverlay'].map((name) => `function ${name}(`)) {
   if (legacyApp.includes(token)) throw new Error(`${token} must be removed`);
 }
 for (const token of ['readinessColor', 'mainLimiter', 'backgroundLoad', 'recoveryPenalty', 'wearablePenalty', 'biologicalCost']) {

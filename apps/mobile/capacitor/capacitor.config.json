@@ -1,7 +1,7 @@
 {
-  "appId": "com.hybrid.athlete",
-  "appName": "The Hybrid Engine",
-  "webDir": "../../athlete/conditioning",
+  "appId": "com.hybrid.strength",
+  "appName": "Hybrid Strength",
+  "webDir": "../../athlete",
   "server": {
     "androidScheme": "https"
   },
@@ -14,15 +14,6 @@
         "camera"
       ]
     },
-    "CapacitorUpdater": {
-      "appId": "com.hybrid.athlete",
-      "autoUpdate": "onlyDownload",
-      "defaultChannel": "engine-html",
-      "appReadyTimeout": 30000,
-      "responseTimeout": 20,
-      "allowSetDefaultChannel": false,
-      "persistDefaultChannelOnReinstall": false
-    },
     "BluetoothLe": {
       "displayStrings": {
         "scanning": "Scanning\u2026",
@@ -30,6 +21,14 @@
         "availableDevices": "Available devices",
         "noDeviceFound": "No device found"
       }
+    },
+    "CapacitorUpdater": {
+      "appId": "com.hybrid.strength",
+      "autoUpdate": "onlyDownload",
+      "defaultChannel": "strength-live",
+      "appReadyTimeout": 30000,
+      "responseTimeout": 20,
+      "allowSetDefaultChannel": false
     }
   }
 }

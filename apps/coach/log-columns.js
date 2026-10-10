@@ -655,8 +655,8 @@
     const loadKind = load ? load.kind : 'weight_kg';
     const loadVal = load ? (load.values || [])[0] == null ? '' : load.values[0] : '';
     if (!pinned) {
-      return `<details class="rx-overrides rx-advanced"><summary>Pin opening load (optional)</summary>
-        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave blank — the engine sets load from working max, progression, and in-session autoreg. Only pin if you need a fixed kg, % WM, or LWP delta on set 1.</p>
+      return `<details class="rx-overrides rx-advanced"><summary>Set opening load (optional)</summary>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Enter a load if this session has a prescribed target. Otherwise the athlete records the actual load.</p>
         <div class="rx-grid cols-2" style="margin-top:8px">
           <div class="field"><label>Load type</label>
             <select class="logcol-kind" onchange="LogColumns.onPinLoadKind(this.value)">${loadKindsOptionsHtml(loadKind)}</select></div>
@@ -665,21 +665,21 @@
         </div>
       </details>`;
     }
-    return `<details class="rx-overrides rx-advanced" open><summary>Pin opening load (optional)</summary>
+    return `<details class="rx-overrides rx-advanced" open><summary>Set opening load (optional)</summary>
       <div class="rx-grid cols-2" style="margin-top:8px">
         <div class="field"><label>Load type</label>
           <select class="logcol-kind" onchange="LogColumns.onPinLoadKind(this.value)">${loadKindsOptionsHtml(loadKind)}</select></div>
         <div class="field"><label>Set 1 value</label>
           <input value="${String(loadVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onPinLoadValue(this.value)" oninput="LogColumns.onPinLoadValue(this.value)"></div>
       </div>
-      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedLoad()">Clear — use autopilot load</button>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedLoad()">Clear prescribed load</button>
     </details>`;
   }
 
   function builderPinVolumeHtml() {
     if (sheet.autopilotVolume) {
-      return `<details class="rx-overrides rx-advanced"><summary>Pin sets &amp; reps (optional)</summary>
-        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Leave on autopilot — engine picks sets × reps from history, calibration, and recovery. Pin only when you need a fixed prescription.</p>
+      return `<details class="rx-overrides rx-advanced"><summary>Set sets &amp; reps</summary>
+        <p class="muted" style="margin:8px 0;font-size:11px;line-height:1.45">Enter the prescribed sets and reps. No automatic target is calculated.</p>
         <div class="rx-grid cols-2" style="margin-top:8px">
           <div class="field"><label>Sets</label>
             <input id="pinSetsVal" type="number" min="1" max="12" placeholder="3" onchange="LogColumns.pinVolume(Number(this.value), document.getElementById('pinRepsVal').value)"></div>
@@ -691,14 +691,14 @@
     const effort = effortColumn() || { kind: 'reps', values: ['8'] };
     const meta = kindMeta(effort.kind);
     const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
-    return `<details class="rx-overrides rx-advanced" open><summary>Pin sets &amp; reps (optional)</summary>
+    return `<details class="rx-overrides rx-advanced" open><summary>Set sets &amp; reps</summary>
       <div class="rx-grid cols-2" style="margin-top:8px">
         <div class="field"><label>Sets</label>
           <input type="number" min="1" max="12" value="${sheet.sets}" onchange="LogColumns.resizeSets(Number(this.value)); LogColumns.setAutopilotVolume(false)"></div>
         <div class="field"><label>${meta.loggerLabel}</label>
           <input value="${String(repsVal).replace(/"/g, '&quot;')}" onchange="LogColumns.onSimpleReps(this.value); LogColumns.setAutopilotVolume(false)"></div>
       </div>
-      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedVolume()">Clear — use autopilot volume</button>
+      <button type="button" class="btn ghost small" style="margin-top:8px" onclick="LogColumns.clearPinnedVolume()">Clear prescribed sets &amp; reps</button>
     </details>`;
   }
 
@@ -709,8 +709,8 @@
     const repsVal = (effort.values || [])[0] == null ? '' : effort.values[0];
     const ph = meta.placeholder || '8 or 6-8';
     const pinnedLoad = hasPinnedLoad();
-    const loadLabel = pinnedLoad ? kindMeta(loadColumn().kind).label : 'Autopilot';
-    const volumeLabel = sheet.autopilotVolume ? 'Autopilot' : `${sheet.sets} × ${repsVal || '—'}`;
+    const loadLabel = pinnedLoad ? kindMeta(loadColumn().kind).label : 'Not prescribed';
+    const volumeLabel = sheet.autopilotVolume ? 'Not prescribed' : `${sheet.sets} × ${repsVal || '—'}`;
     const effortFields = sheet.autopilotVolume
       ? ''
       : `<div class="rx-grid cols-2" style="margin-top:12px">
@@ -726,15 +726,15 @@
         ${builderOverridesTableHtml()}
       </details>`;
     const cardClass = compact ? 'card rx-prescription-card compact' : 'card rx-prescription-card';
-    const cardMeta = compact ? 'Engine handles volume and load.' : 'Engine handles volume + load · in-session autoreg after set 1';
+    const cardMeta = 'Coach-prescribed targets; athlete logs the actual work.';
     const pinVolume = compact ? '' : builderPinVolumeHtml();
     const pinLoad = compact ? '' : builderPinLoadHtml();
     return `<div class="${cardClass}" id="builderPrescriptionCard" style="margin-top:10px">
       <div class="title">Prescription</div>
       <div class="meta">${cardMeta}</div>
-      <div class="autopilot-strip"><span class="autopilot-label">Volume</span><span class="autopilot-value">${volumeLabel}</span>${compact ? '' : '<span class="autopilot-note">History, calibration, recovery — you do not enter sets × reps here</span>'}</div>
+      <div class="autopilot-strip"><span class="autopilot-label">Volume</span><span class="autopilot-value">${volumeLabel}</span></div>
       ${effortFields}
-      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span>${compact ? '' : '<span class="autopilot-note">Working max + progression — you do not enter kg here</span>'}</div>
+      <div class="autopilot-strip"><span class="autopilot-label">Load</span><span class="autopilot-value">${loadLabel}</span></div>
       ${pinVolume}
       ${pinLoad}
       ${overrideSection}
@@ -1017,8 +1017,7 @@
         return `<div><span class="mini">${meta.loggerLabel}</span><input type="number" value="${val}" onchange="updateSet(${rowIndex},'${field}',this.value)"></div>`;
       })
       .join('');
-    const rirLabel = isLast ? 'RIR · counts' : 'RIR';
-    const rir = `<div><span class="mini">${rirLabel}</span><input type="number" min="0" max="10" value="${row.rir || ''}" onchange="updateSet(${rowIndex},'rir',this.value)" aria-label="${isLast ? 'RIR on last set for progression' : 'RIR set ' + row.n}"></div>`;
+    const rir = `<div><span class="mini">RIR</span><input type="number" min="0" max="10" value="${row.rir || ''}" onchange="updateSet(${rowIndex},'rir',this.value)" aria-label="RIR set ${row.n}"></div>`;
     return cells + rir;
   }
 
@@ -1132,8 +1131,6 @@
               : r.target == null
                 ? ''
                 : String(r.target);
-          const e1rm =
-            typeof global.rowE1rmHint === 'function' ? global.rowE1rmHint(r) : '';
           return (
             `<div class=editrow><div class=setnum>${r.extra ? 'EX' : r.n}<span class=target>${esc(
               target,
@@ -1152,7 +1149,7 @@
               r.extra
                 ? `deleteCompletedRow('${sessionId}','${taskId}','${exId}','${r.id}')`
                 : `toggleCompletedDone('${sessionId}','${taskId}','${exId}','${r.id}')`
-            }">${r.extra ? '×' : r.done ? 'Logged' : 'Log'}</button>${e1rm}</div>`
+            }">${r.extra ? '×' : r.done ? 'Logged' : 'Log'}</button></div>`
           );
         })
         .join('')}</div>` +

@@ -35,6 +35,7 @@ const state = {
 const window = {};
 const html = runInNewContext(`${js}\ngaugeRowHtml()`, {
   window,
+  StrengthOnly: { cleanState: state => state },
   localStorage: { getItem: () => JSON.stringify(state) },
   document: { addEventListener: () => {} },
   navigator: {},

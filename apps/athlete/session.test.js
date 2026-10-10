@@ -154,12 +154,16 @@ test('logSet with effort marks logged', () => {
 test('doneTraining skips feel phase', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'done' });
   s = HybridSession.openFeel(s);
+  assert.equal(s.phase, 'feel');
+  s = HybridSession.finishToSummary(s);
   assert.equal(s.phase, 'summary');
 });
 
 test('feel then finish lands on summary', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'done' });
   s = HybridSession.openFeel(s);
+  assert.equal(s.phase, 'feel');
+  s = HybridSession.finishToSummary(s);
   assert.equal(s.phase, 'summary');
 });
 

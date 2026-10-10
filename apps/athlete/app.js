@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'THE-brain-v9';
+const APP_BUILD = 'strength-capgo-v1.2.4';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -55,7 +55,7 @@ function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState();
-    const parsed = JSON.parse(raw);
+    const parsed = StrengthOnly.cleanState(JSON.parse(raw));
     if (!parsed || parsed.build !== BRAIN_BUILD) return defaultState();
     return {
       ...defaultState(),
@@ -77,7 +77,7 @@ function save() {
   if (S.session && S.session.liftMemory) {
     S.liftMemory = Object.assign({}, S.liftMemory || {}, S.session.liftMemory);
   }
-  if (S.session && S.session.date) {
+  if (S.session && S.session.date && !S.session.demo && !S.sliderDemoOpening) {
     S.sessions = S.sessions || {};
     S.sessions[S.session.date] = S.session;
   }
@@ -584,7 +584,7 @@ function openLibraryForDay() {
 }
 
 function meAppSectionHtml() {
-  const otaLine = otaInfo.current ? `Channel ${esc(otaInfo.current)}` : `Build ${esc(APP_BUILD)}`;
+  const otaLine = window.NativeBridge?.isNative() ? 'Live updates · strength-live · reopen to apply' : 'Browser preview';
   return `
     ${otaBannerHtml()}
     <div class="card account-compact">
@@ -592,7 +592,7 @@ function meAppSectionHtml() {
       <p class="stub">${otaLine} · ${esc(APP_BUILD)}</p>
       <div class="account-actions">
         <button type="button" class="btn" onclick="openHistory()">Training history</button>
-        <button type="button" class="btn" onclick="lookForAppUpdate()">Look for app update</button>
+        <button type="button" class="btn" onclick="trySliderDemo()">Try slider demo</button>
       </div>
     </div>`;
 }
@@ -1003,5 +1003,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  if (window.NativeBridge?.isNative()) {
+    // Capgo owns native bundles; browser caches must not serve an older UI.
+    navigator.serviceWorker.getRegistrations().then(registrations =>
+      Promise.all(registrations.map(registration => registration.unregister()))
+    ).then(() => caches.keys()).then(keys =>
+      Promise.all(keys.filter(key => key.startsWith('hybrid-')).map(key => caches.delete(key)))
+    ).catch(() => {});
+  } else {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  }
+}
+
+
+function trySliderDemo() {
+ const date=today();
+ const plan={title:'Slider demo',instructions:'Sample loads, not a prescribed workout. Choose your rest timer; log each set to try the adjustments.',blocks:[
+ {kind:'lift',letter:'A',title:'Back Squat',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,columns:['reps','weight_kg'],notes:[]},
+ {kind:'lift',letter:'B',title:'Bench Press',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,columns:['reps','weight_kg'],notes:[]}]};
+ S.selectedDate=date;S.tab='training';
+ // Start explicitly without replacing a user's assigned workout or archived history.
+ const old=S.session; if(!old?.demo) S.sliderPreviousSession=old; S.session=null; S.sliderDemoOpening=true;
+ Logger.open({date,letter:'A',plan}); S.session.demo=true; delete S.sliderDemoOpening; save();
 }
