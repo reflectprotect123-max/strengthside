@@ -23,7 +23,11 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Check bundled strength screens
-        run: node apps/athlete/checks/athlete-app.smoke.mjs
+        run: |
+          node scripts/sync-training-core.mjs --check
+          node scripts/generate-strength-release.mjs --check
+          node apps/athlete/checks/athlete-app.smoke.mjs
+          node scripts/stage-athlete.mjs apps/mobile/capacitor/www
       - name: Install and sync native updater
         working-directory: apps/mobile/capacitor
         run: |

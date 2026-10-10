@@ -1,7 +1,7 @@
 /** Deterministic strength rules. No conditioning/recovery changes in this release. */
 (function(root) {
   const VERSION='strength-v1.0.0';
-  const RIR={easy:6,average:3,medium:3,hard:1,max_effort:0};
+  const RIR=root.TrainingCore.rir;
   const positive=n=>Number.isFinite(Number(n))&&Number(n)>0;
   const clone=x=>JSON.parse(JSON.stringify(x));
   function key(page) {

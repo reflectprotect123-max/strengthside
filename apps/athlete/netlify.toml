@@ -1,4 +1,4 @@
-# The Brain — athlete product. WHOOP/Concept2 proxy-only → thehybridengine1.
+# Athlete runtime. WHOOP uses Supabase; retained Netlify proxies serve legacy consumers and coach text.
 [build]
   base = "."
   publish = "."

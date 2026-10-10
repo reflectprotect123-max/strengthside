@@ -1,7 +1,7 @@
 {
   "appId": "com.hybrid.strength",
   "appName": "Hybrid Strength",
-  "webDir": "../../athlete",
+  "webDir": "www",
   "server": {
     "androidScheme": "https"
   },

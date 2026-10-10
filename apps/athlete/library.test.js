@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
+require(join(dirname(fileURLToPath(import.meta.url)), 'training-core.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'library.js'));
 const Lib = globalThis.HybridLibrary;
 

@@ -1,5 +1,5 @@
-const CACHE = 'strength-brain-v22';
-const ASSETS = ['./', './index.html', './app.js', './home.css', './strength-home.js', './strength-home.css', './logger.css', './library.css', './session.js', './library.js', './library-ui.js', './plan-sync.js', './logger.js', './timer.js', './native-bridge.js', './strength-only.js', './load-engine.js', './strength-brain.js', './strength-memory.js', './capgo-updates.js', './strength-config.js', './hybrid-sc.js', './hybrid-integrations.js', './connectors/whoop.js', './vendor/supabase.min.js'];
+const CACHE = 'strength-brain-1.3.4';
+const ASSETS = ["./","./app.js","./assets/hpp-logo.jpg","./capgo-updates.js","./connectors/whoop.js","./home.css","./hybrid-integrations.js","./hybrid-sc.js","./index.html","./library-ui.js","./library.css","./library.js","./logger.css","./logger.js","./native-bridge.js","./plan-sync.js","./release.js","./session.js","./strength-brain.js","./strength-config.js","./strength-home.css","./strength-home.js","./strength-memory.js","./strength-only.js","./timer.js","./training-core.js","./vendor/supabase.min.js","./whoop-common.js"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

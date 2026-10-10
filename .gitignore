@@ -52,3 +52,9 @@ evidence-platform/**/*.egg-info/
 evidence-platform/.pytest_cache/
 evidence-platform/runtime/*.db-shm
 evidence-platform/runtime/*.db-wal
+
+# Playwright verification artifacts
+test-results/
+
+# Generated validated native web bundle
+apps/mobile/capacitor/www/

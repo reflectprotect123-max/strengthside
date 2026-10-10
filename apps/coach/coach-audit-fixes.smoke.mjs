@@ -11,11 +11,11 @@ const loopSrc = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 const syncSrc = readFileSync(join(dir, 'coach-sync.js'), 'utf8');
 const cloudSrc = readFileSync(join(dir, 'coach-cloud.js'), 'utf8');
 const nutSrc = readFileSync(join(dir, 'coach-nutrition.js'), 'utf8');
-const strengthSyncSrc = readFileSync(join(dir, 'strength-sync.js'), 'utf8');
+
 const logColsSrc = readFileSync(join(dir, 'log-columns.js'), 'utf8');
 const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 const viewsSrc = readFileSync(join(dir, 'coach-views.js'), 'utf8');
-const indexHtml = readFileSync(join(dir, 'index.html'), 'utf8');
+const indexHtml = readFileSync(join(dir, '../../archive/legacy-athlete/index.html'), 'utf8');
 
 const sandbox = { console, module: { exports: {} }, globalThis: {} };
 sandbox.globalThis = sandbox;
@@ -181,10 +181,15 @@ if (!syncSrc.includes('athleteEmailFromState')) {
   if (b.targetWatts != null) throw new Error('empty targetWatts should clear field');
 }
 
-// strength-sync: active sessions protected from remote overwrite
-if (!strengthSyncSrc.includes("local.status === 'active'")) {
-  throw new Error('strength-sync missing active session guard');
-}
+// Current athlete sessions preserve recorded results and calibration when a template changes.
+const athlete = {};
+vm.runInNewContext(readFileSync(join(dir,'../athlete/training-core.js'),'utf8'),athlete);
+vm.runInNewContext(readFileSync(join(dir,'../athlete/session.js'),'utf8'),athlete);
+const active = athlete.HybridSession.startSession({date:'2026-10-11',plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 6-8'}]}});
+active.pages[0].workingKg=40;
+active.logs.A.sets[0]={reps:6,kg:40,effort:'hard',logged:true,cells:{}};
+const resumed = athlete.HybridSession.startSession({date:active.date,existing:active,plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 10-12'}]}});
+if(resumed.pages[0].targetReps!==6||resumed.pages[0].workingKg!==40||!resumed.logs.A.sets[0].logged)throw new Error('active athlete session overwritten by edited template');
 
 // log-columns: weight_kg syncs to ex.load
 if (!logColsSrc.includes("loadCol.kind === 'weight_kg'")) {

@@ -3,7 +3,7 @@
 # Site defaults to slug "thehybridsystem" (confirmed from successful deploy logs).
 # Optional: NETLIFY_SITE_ID — UUID or slug. If set to a URL by mistake, ignored.
 #
-# WHOOP contract: athlete site is PROXY-ONLY → thehybridengine1.
+# WHOOP contract: strength client uses Supabase; legacy Netlify proxies remain for other consumers.
 # Ownership smoke runs BEFORE deploy; live smoke runs AFTER.
 name: Deploy athlete Netlify
 
@@ -20,6 +20,10 @@ on:
       - 'packages/adaptive/**'
       - 'apps/mobile/capacitor/android/app/src/main/**'
       - 'scripts/deploy-athlete.mjs'
+      - 'scripts/stage-athlete.mjs'
+      - 'scripts/generate-strength-release.mjs'
+      - 'scripts/sync-training-core.mjs'
+      - 'apps/shared/**'
 
 jobs:
   deploy:
@@ -38,7 +42,7 @@ jobs:
       - name: Build athlete bundles
         run: bash scripts/sync-athlete-app.sh
 
-      - name: WHOOP ownership gate (block real-handler cutover)
+      - name: WHOOP routing gate
         run: node apps/athlete/checks/whoop-ownership.smoke.mjs
 
       - name: WHOOP deep-link gate (Android OAuth return)

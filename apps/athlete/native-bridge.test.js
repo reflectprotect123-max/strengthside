@@ -6,7 +6,7 @@ const source = readFileSync(new URL('./native-bridge.js', import.meta.url),'utf8
 function setup(latest = {version:'1.3.2',url:'https://example.com/update.zip'}) {
   const calls=[];
   const updater={ current:async()=>({native:'1.3.1',bundle:{version:'builtin'}}),getLatest:async()=>{calls.push('check');return latest;},download:async()=>{calls.push('download');return {id:'new',version:latest.version};},setMultiDelay:async()=>calls.push('delay'),next:async()=>calls.push('next'),reload:async()=>calls.push('reload') };
-  const root={Capacitor:{isNativePlatform:()=>true,Plugins:{CapacitorUpdater:updater}},S:{session:{phase:'block'}},save:()=>calls.push('save')};
+  const root={StrengthRelease:{version:'1.3.1'},Capacitor:{isNativePlatform:()=>true,Plugins:{CapacitorUpdater:updater}},S:{session:{phase:'block'}},save:()=>calls.push('save')};
   vm.runInNewContext(source,{window:root}); return {root,calls,updater};
 }
 test('manual check coalesces, downloads and queues; unfinished workout is saved before restart',async()=>{

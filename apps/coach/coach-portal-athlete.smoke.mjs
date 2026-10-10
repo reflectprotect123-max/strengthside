@@ -37,7 +37,7 @@ if (!state.sessions[0].coachWithdrawn) throw new Error('coachWithdrawn flag');
 
 if (typeof Sync.formatStatusLine() !== 'string') throw new Error('formatStatusLine string');
 
-const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const html = readFileSync(join(dir, '../../archive/legacy-athlete/index.html'), 'utf8');
 if (!html.includes('function coachControlsStrength(')) throw new Error('coachControlsStrength missing');
 if (!html.includes('function athleteHasActiveCoachStrength(')) throw new Error('athleteHasActiveCoachStrength missing');
 if (!html.includes('coach-rx-active')) throw new Error('coach-rx-active class missing');

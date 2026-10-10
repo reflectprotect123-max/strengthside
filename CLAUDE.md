@@ -1,3 +1,7 @@
+## Current runtime reference
+
+For current strength implementation and ownership, read `docs/training-contracts.md`. Historical engine removal notes below remain background; StrengthBrain now implements deterministic strength progression. Athlete WHOOP uses Supabase; the Netlify owner still serves legacy consumers and coach text.
+
 # Claude Code operating contract — TheStrengthEngine
 
 This repository is **the product**: the Hybrid HTML athlete app (manual

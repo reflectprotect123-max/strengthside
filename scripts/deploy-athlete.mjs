@@ -3,7 +3,8 @@
  * Deploy athlete HTML app + proxy functions to thehybridsystem.
  * Stages a flat bundle so index.html is served at / not /apps/athlete/.
  */
-import { cpSync, existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { stageAthlete } from './stage-athlete.mjs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,14 +48,7 @@ if (!siteId) fail('Could not resolve athlete site id (thehybridsystem)');
 
 const stage = mkdtempSync(join(tmpdir(), 'athlete-deploy-'));
 console.log(`Staging flat athlete bundle at ${stage}`);
-for (const rel of [
-  'index.html', 'app.js', 'home.css',
-  'native-bridge.js', 'service-worker.js', 'netlify.toml', 'package.json',
-  'connectors', 'vendor', 'netlify',
-]) {
-  const from = join(source, rel);
-  if (existsSync(from)) cpSync(from, join(stage, rel), { recursive: true });
-}
+stageAthlete(stage,{includeCoach:true});
 
 console.log(`Deploying athlete site=${siteId}`);
 const deploy = spawnSync(

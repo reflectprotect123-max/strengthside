@@ -54,7 +54,7 @@
     Object.keys(shared.checkin || {}).forEach((iso) => {
       const slice = sliceCheckin(shared.checkin[iso]);
       if (!slice) return;
-      S.checkin[iso] = Object.assign({}, S.checkin[iso] || {}, slice);
+      S.checkin[iso] = Object.assign({}, slice, S.checkin[iso] || {});
     });
     return S;
   }

@@ -1,0 +1,28 @@
+name: Strength WHOOP backend
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/_shared/**'
+      - 'supabase/functions/whoop-*/**'
+      - 'supabase/functions/integrations-*/**'
+      - 'scripts/deploy-strength-whoop.sh'
+      - '.github/workflows/strength-whoop-backend.yml'
+permissions:
+  contents: read
+concurrency:
+  group: strength-whoop-backend
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.78.1
+      - name: Deploy authenticated WHOOP account routes and OAuth handlers
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: bash scripts/deploy-strength-whoop.sh

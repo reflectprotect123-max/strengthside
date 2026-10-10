@@ -27,20 +27,13 @@
     const base = resolveProxyBase();
     return base ? base.replace(/\/$/, '') + rel : rel;
   }
-  let sb = null;
   const ui = { busy: false, message: '' };
 
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
-  function client() {
-    if (sb) return sb;
-    if (!global.supabase || !global.supabase.createClient) throw new Error('Supabase SDK failed to load');
-    sb = global.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: global.localStorage }
-    });
-    return sb;
-  }
+  const client = global.WhoopCommon.clientFactory(()=>({url:SUPABASE_URL,key:SUPABASE_ANON}));
+
   async function token() {
     const { data, error } = await client().auth.getSession();
     if (error) throw error;
@@ -74,12 +67,8 @@
   // `today` and `S` are let/const in the HTML script, so they are NOT on window.
   // Resolve them explicitly — otherwise applyNormalized silently no-ops and Home
   // keeps the fixture recovery/HRV/RHR values after a "WHOOP synced" toast.
-  function todayIso() {
-    if (typeof global.today === 'function') return global.today();
-    const d = new Date();
-    const tz = d.getTimezoneOffset() * 60000;
-    return new Date(d.getTime() - tz).toISOString().slice(0, 10);
-  }
+  const todayIso = global.WhoopCommon.todayIso;
+
   function appState() {
     if (global.S && typeof global.S === 'object') return global.S;
     return null;
@@ -186,18 +175,8 @@
     const line = document.getElementById('whoopSleepLine');
     if (line) line.textContent = metaLine();
   }
-  async function refreshStatus() {
-    const body = await api(FN.status);
-    const whoop = (body && body.whoop) || {};
-    const w = st();
-    w.connected = !!whoop.connected;
-    w.lastSyncAt = whoop.lastSyncAt || w.lastSyncAt;
-    w.sampleDate = whoop.sampleDate || w.sampleDate;
-    if (whoop.normalized) applyNormalized(whoop.normalized, { syncedAt: whoop.lastSyncAt, sampleDate: whoop.sampleDate });
-    w.email = await email();
-    if (typeof global.save === 'function') global.save();
-    return body;
-  }
+  async function refreshStatus(){return global.WhoopCommon.refreshStatus({api,route:FN.status,state:st,apply:applyNormalized,email});}
+
   function refreshVisibleUi() {
     renderPanels();
     // Sleep overview: rebuild metrics without re-entering auto-sync.
@@ -261,19 +240,8 @@
       throw err;
     } finally { ui.busy = false; renderPanels(); }
   }
-  async function disconnect() {
-    if (ui.busy) return;
-    if (!global.confirm('Disconnect WHOOP for this account?')) return;
-    ui.busy = true; ui.message = 'Disconnecting…'; renderPanels();
-    try {
-      await api(FN.disconnect, { method: 'POST', query: { provider: 'whoop' } });
-      const w = st();
-      w.connected = false; w.lastSyncAt = null; w.sampleDate = null; w.lastNormalized = null;
-      if (typeof global.save === 'function') global.save();
-      ui.message = 'WHOOP disconnected';
-    } catch (err) { ui.message = err.message || 'Disconnect failed'; }
-    finally { ui.busy = false; renderPanels(); }
-  }
+  async function disconnect(){return global.WhoopCommon.disconnect({ui,api,route:FN.disconnect,state:st,paint:renderPanels});}
+
   async function syncAll() {
     if (ui.busy) return;
     ui.busy = true;

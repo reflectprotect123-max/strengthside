@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const dir = dirname(fileURLToPath(import.meta.url));
-const src = readFileSync(join(dir, 'log-columns.js'), 'utf8');
-const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const src = readFileSync(join(dir,'training-core.js'),'utf8')+'\n'+readFileSync(join(dir, 'log-columns.js'), 'utf8');
+const html = readFileSync(join(dir, '../../archive/legacy-athlete/index.html'), 'utf8');
 const coachHtml = readFileSync(join(dir, 'coach.html'), 'utf8');
 
 if (!html.includes('log-columns.js')) throw new Error('index.html missing log-columns.js');

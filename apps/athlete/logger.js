@@ -87,6 +87,13 @@
     paint();
   }
 
+  function startChosenRest(s,page) {
+    const selected=(s.restChoices||{})[page.id];
+    if(!selected)return;
+    let timer=HybridTimer.choose(timerState(),'rest');
+    timer=HybridTimer.start(HybridTimer.quickStart(timer,selected),Date.now());
+    timer.display='docked';root.S.timer=timer;
+  }
   function rememberRest(timer) {
     const s = session();
     if (!s || timer.mode !== 'rest' || !Number.isFinite(timer.config.restMs) || timer.config.restMs <= 0) return;
@@ -455,7 +462,7 @@
 
   function colField(key) {
     if (key === 'reps' || key === 'reps_range') return 'reps';
-    if (key === 'weight_kg' || key === 'weight_lb' || key === 'weight_pct' || key === 'lwp') return 'kg';
+    if (key === 'weight_kg') return 'kg';
     return key;
   }
 
@@ -474,7 +481,7 @@
 
   function effortShort(effort) { return ({very_easy:'Very Easy',easy:'Easy',average:'Average',hard:'Hard',max_effort:'Max Effort'})[effort] || '—'; }
 
-  const EFFORTS = ['very_easy', 'easy', 'average', 'hard', 'max_effort'];
+  const EFFORTS = root.TrainingCore.efforts;
   const EFFORT_COPY = { very_easy: 'Very light effort.', easy: 'Could have done 5–7 more reps.', average: 'Could have done 3–4 more reps.', hard: 'Could have done 1 or 2 more reps.', max_effort: 'Could not do any more reps.' };
 
   function setFlow(s, page) {
@@ -522,8 +529,8 @@
         <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Warm-up ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)} reps</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
-          <label>Reps completed<input class="log-cell" type="number" inputmode="numeric" min="0" step="1" value="${esc(flow.draft.reps)}" oninput="Logger.setField('${id}','reps',this.value)"></label>
-          ${page.logMode === 'kg' ? `<label>Weight (kg)<input class="log-cell" type="number" inputmode="decimal" min="0" step="any" value="${esc(flow.draft.kg)}" oninput="Logger.setField('${id}','kg',this.value)"></label>` : ''}
+          <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
+          ${page.logMode === 'kg' ? `<label>Weight (kg)<input class="log-cell" type="text" readonly value="${esc(flow.draft.kg)}" onclick="Logger.focusDraftPad('${id}','kg')"></label>` : ''}
         </div>
         ${target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>'}
         ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed.</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : `
@@ -563,7 +570,7 @@
       const tds = cols.map((k) => {
         const field = colField(k);
         const focus = pad && pad.memberId === page.id && pad.setIndex === i && pad.field === field;
-        const val = cellVal(row, field);
+        const val = root.TrainingCore.format(cellVal(row, field),k);
         const ph = field === 'reps' && row.reps == null;
         return `<td><button type="button" class="log-cell${focus ? ' focus' : ''}${ph ? ' ph' : ''}" onclick="Logger.focusPad('${mid}',${i},'${esc(field)}')">${esc(val)}</button></td>`;
       }).join('');
@@ -571,7 +578,7 @@
         <td>${i + 1}</td>
         ${tds}
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
-      </tr>`;
+      </tr><tr><td colspan="${cols.length+2}"><label class="log-note">This set felt: <span id="rowEffort-${mid}-${i}">${esc(row.effort ? effortShort(row.effort) : 'Choose effort')}</span><input class="log-effort-slider" type="range" min="0" max="4" step="1" value="${Math.max(0,EFFORTS.indexOf(row.effort||'average'))}" aria-label="Actual effort for set ${i+1}" oninput="Logger.rateRow('${mid}',${i},this.value)" onpointerup="Logger.rateRow('${mid}',${i},this.value)"></label><button type="button" class="log-set-incomplete" aria-label="Did Not Complete set ${i+1}" aria-pressed="${!!row.miss}" onclick="Logger.markMissRow('${mid}',${i})">Did Not Complete</button></td></tr>`;
     }).join('');
     return `
       <p class="log-rx">${esc(page.prescription)}</p>
@@ -638,26 +645,23 @@
   function padHtml() {
     if (!pad) return '';
     const unit = (session().unit || 'kg') === 'lb' ? 'lb' : 'kg';
-    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', pad.field === 'reps' ? null : '.', '0', '⌫'];
+    const keys = root.TrainingCore.keys(pad);
     const keyBtns = keys.map((k) => k === null ? '<span></span>' : `<button type="button" onclick="Logger.padKey('${k}')">${k}</button>`).join('');
     return `
-      <div class="log-pad">
+      <div class="log-pad" role="dialog" aria-label="Number entry keypad">
         <div class="log-pad-head">
           <div>
             <span class="log-pad-val">${esc(pad.buffer || '0')}</span>
-            ${pad.field === 'kg' ? `<span class="log-unit">
-              <button type="button" class="${unit === 'kg' ? 'on' : ''}" onclick="Logger.unit('kg')">Kg</button>
-              <button type="button" class="${unit === 'lb' ? 'on' : ''}" onclick="Logger.unit('lb')">Lb</button>
-            </span>` : `<span style="margin-left:8px;opacity:.6">${esc((root.HybridLibrary && HybridLibrary.trackLabel(pad.field)) || pad.field).toUpperCase()}</span>`}
+            <span style="margin-left:8px;opacity:.6">${esc(root.TrainingCore.metric(pad.key)?.label || pad.key).toUpperCase()}</span>
           </div>
           <button type="button" onclick="Logger.closePad()">⌄</button>
         </div>
-        <div class="log-keys">
+        <p class="log-set-error" role="status">${esc(pad.error||'')}</p><div class="log-keys">
           ${keyBtns}
           <div class="log-pad-side" style="grid-column:4;grid-row:1 / span 4">
-            <button type="button" class="blue" onclick="Logger.padLog()">Log</button>
-            <button type="button" class="blue" onclick="Logger.padAutofill()">Autofill</button>
-            <button type="button" class="log-miss${pad.miss ? ' on' : ''}" onclick="Logger.padMiss()">Miss</button>
+            <button type="button" class="blue" onclick="Logger.padLog()">Save</button>
+            ${pad.draft ? '' : '<button type="button" class="blue" onclick="Logger.padAutofill()">Autofill</button>'}
+            <button type="button" onclick="Logger.padClear()">Clear</button>${pad.key === 'lwp' ? '<button type="button" onclick="Logger.padKey(\'-\')">−</button>' : ''}
           </div>
         </div>
       </div>`;
@@ -796,14 +800,11 @@
       const f = setFlow(s, lift);
       if (f.index < 0 || f.rest) return;
       const reps = Number(f.draft.reps), kg = Number(f.draft.kg);
-      let error = '';
-      if (f.draft.reps === '' || !Number.isInteger(reps) || reps < 0) error = 'Enter the reps you actually completed.';
-      else if (lift.logMode === 'kg' && (f.draft.kg === '' || f.draft.kg == null || !Number.isFinite(kg) || kg < 0)) error = 'Enter a valid weight in kg.';
-      else if (!f.draft.miss && reps === 0) error = 'For zero reps, select Did Not Complete.';
-      else if (!f.draft.miss && !EFFORTS.includes(f.draft.effort)) error = 'Choose an effort or select Did Not Complete.';
+      const candidate={...f.draft,reps:f.draft.reps===''?null:reps,kg:f.draft.kg===''||f.draft.kg==null?null:kg};
+      const error=root.TrainingCore.validateRow(candidate,lift).error;
       if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
       const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
-      if (lift.logMode === 'kg') patch.kg = kg;
+      if (lift.logMode === 'kg') patch.kg = Number.isFinite(kg) ? kg : null;
       const next = HybridSession.logSet(s, f.index, patch, memberId);
       const rows = next.logs[memberId].sets;
       const index = rows.findIndex(r => !r.logged && !r.skipped);
@@ -822,15 +823,7 @@
         index, rest: !f.editing && index >= 0, editing: false, adjustment,
         draft: { reps: r && r.reps != null ? r.reps : '', kg: r && r.kg != null ? r.kg : '', effort: null, miss: false },
       } };
-      if (!f.editing) {
-        const selected = (s.restChoices || {})[page.id];
-        if (selected) {
-          let timer = HybridTimer.choose(timerState(), 'rest');
-          timer = HybridTimer.start(HybridTimer.quickStart(timer, selected), Date.now());
-          timer.display = 'docked';
-          root.S.timer = timer;
-        }
-      }
+      if (!f.editing) startChosenRest(s,page);
       persist(next);
     },
     gotQuote() {
@@ -854,60 +847,44 @@
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[setIndex];
       const seed = field === 'kg' ? row.kg : field === 'reps' ? row.reps : (row.cells && row.cells[field]);
-      pad = { memberId: lift.id, setIndex, field, buffer: seed == null ? '' : String(seed), miss: !!row.miss };
+      pad = { ...root.TrainingCore.numberEntry(seed,{key:field === 'kg' ? 'weight_kg' : field}),memberId:lift.id,setIndex,field,miss:!!row.miss };
       paint();
     },
     closePad() { pad = null; paint(); },
     padKey(k) {
       if (!pad) return;
-      if (k === '⌫') pad.buffer = String(pad.buffer || '').slice(0, -1);
-      else {
-        if (!/^\d$/.test(k) && !(k === '.' && pad.field !== 'reps' && !pad.buffer.includes('.'))) return;
-        pad.buffer = `${pad.buffer || ''}${k}`.replace(/^0+(\d)/, '$1');
-      }
-      paint();
+      pad = root.TrainingCore.numberKey(pad,k); paint();
     },
+    padClear() { if(pad){pad=root.TrainingCore.numberKey(pad,'clear');paint();} },
+    focusDraftPad(memberId,field) {const page=HybridSession.currentPage(session());const lift=page.logMode==='superset'?HybridSession.memberOf(page,memberId):page;const f=setFlow(session(),lift);pad={...root.TrainingCore.numberEntry(f.draft[field],{key:field==='kg'?'weight_kg':'reps'}),memberId,field,draft:true};paint();},
+    markMissRow(memberId,index) {const row=session().logs[memberId].sets[index];persist(HybridSession.logSet(session(),index,{miss:!row.miss},memberId,{commit:false}));},
+    rateRow(memberId,index,value) {const effort=EFFORTS[Number(value)];root.S.session=HybridSession.logSet(session(),index,{effort},memberId,{commit:false});if(typeof root.save==='function')root.save();const label=document.getElementById(`rowEffort-${memberId}-${index}`);if(label)label.textContent=effortShort(effort);const checks=document.querySelectorAll('.log-check');if(checks[index]){checks[index].classList.remove('on');checks[index].textContent='';}},
+
     padMiss() { if (pad) { pad.miss = !pad.miss; paint(); } },
     padLog() {
-      if (!pad) return;
-      const n = Number(pad.buffer);
-      const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = n;
-      else if (pad.field === 'reps') patch.reps = n;
-      else patch.cells = { [pad.field]: n };
-      let s = HybridSession.logSet(session(), pad.setIndex, patch, pad.memberId);
-      if (pad.field === 'kg' && n > 0) {
-        const page = HybridSession.currentPage(s);
-        const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, pad.memberId) : page;
-        const prev = Math.max(0, ...s.logs[lift.id].sets.filter((r, i) => i !== pad.setIndex && r.logged).map((r) => r.kg || 0));
-        if (n >= prev && lift.targetReps) {
-          toast = `New ${lift.targetReps} Rep Max!`;
-          clearTimeout(toastTimer);
-          toastTimer = setTimeout(() => { toast = ''; paint(); }, 2200);
-        }
-      }
-      pad = null;
-      persist(s);
+      if(!pad)return;
+      const n=root.TrainingCore.parse(pad.buffer,pad.key);
+      if(n==null){pad.error='Enter a valid value.';paint();return;}
+      if(pad.draft){const entry=pad;pad=null;Logger.setField(entry.memberId,entry.field,n);paint();return;}
+      const patch=pad.field==='kg'?{kg:n}:pad.field==='reps'?{reps:n}:{cells:{[pad.field]:n}};
+      const next=HybridSession.logSet(session(),pad.setIndex,patch,pad.memberId,{commit:false});
+      pad=null;persist(next);
     },
     padAutofill() {
-      if (!pad) return;
-      const idx = pad.setIndex;
-      const n = Number(pad.buffer);
-      const patch = { miss: pad.miss };
-      if (pad.field === 'kg') patch.kg = n;
-      else if (pad.field === 'reps') patch.reps = n;
-      else patch.cells = { [pad.field]: n };
-      let s = HybridSession.logSet(session(), idx, patch, pad.memberId);
-      s = HybridSession.autofillFrom(s, idx, pad.memberId);
-      pad = null;
-      persist(s);
+      if(!pad||pad.draft)return;
+      const n=root.TrainingCore.parse(pad.buffer,pad.key);if(n==null){pad.error='Enter a valid value.';paint();return;}
+      const patch=pad.field==='kg'?{kg:n}:pad.field==='reps'?{reps:n}:{cells:{[pad.field]:n}};
+      let next=HybridSession.logSet(session(),pad.setIndex,patch,pad.memberId,{commit:false});
+      const rows=next.logs[pad.memberId].sets;
+      for(let i=pad.setIndex+1;i<rows.length;i++)if(!rows[i].logged)next=HybridSession.logSet(next,i,patch,pad.memberId,{commit:false});
+      pad=null;persist(next);
     },
     check(memberId, i) {
       const s = session();
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) persist(HybridSession.logSet(s, i, {}, lift.id));
+      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';startChosenRest(s,page);persist(HybridSession.logSet(s,i,{},lift.id));}
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {

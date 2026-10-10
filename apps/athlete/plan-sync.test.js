@@ -139,3 +139,22 @@ test('daily answers sync as individual dated entities without replacing WHOOP ob
  const plan=P.pack(s),record=plan.sessions.find(r=>r.kind==='daily_checkin');assert.equal(record.date,'2026-10-10');assert.equal(record.payload.whoopRecovery,undefined);
  const restored=P.applyPlan({checkin:{'2026-10-10':{whoopRecovery:75}}},plan);assert.equal(restored.checkin['2026-10-10'].whoopRecovery,75);assert.equal(restored.checkin['2026-10-10'].bedtimeQuestionnaire.alcoholDrinks,0);assert.ok(restored.dailyProgressCheckins['2026-10-10']);
 });
+
+test('deleted assignments and workout logs cannot return from a stale snapshot',()=>{
+ const original=P.pack(libState([{id:'tpl',title:'Squat',blocks:[]}],{assignments:{'2026-10-11':'tpl'},sessions:{'2026-10-11':{id:'workout'}}}));
+ const deleted=P.pack(libState([{id:'tpl',title:'Squat',blocks:[]}],{planSync:{lastPlan:original}}));
+ assert.ok(deleted.tombstones.some(t=>t.kind==='session'&&t.id==='asg_2026-10-11'));
+ assert.ok(deleted.tombstones.some(t=>t.kind==='session'&&t.id==='log_2026-10-11'));
+ const merged=P.mergePlan(deleted,original,{template:{},session:{}});
+ assert.equal(merged.plan.sessions.filter(s=>['assignment','log'].includes(s.kind)).length,0);
+});
+
+test('an explicitly re-added calendar assignment advances beyond its deletion revision',()=>{
+ const original=P.pack(libState([{id:'tpl',title:'Squat',blocks:[]}],{assignments:{'2026-10-11':'tpl'}}));
+ const deleted=P.pack(libState([{id:'tpl',title:'Squat',blocks:[]}],{planSync:{lastPlan:original}}));
+ const restored=P.pack(libState([{id:'tpl',title:'Squat',blocks:[]}],{assignments:{'2026-10-11':'tpl'},planSync:{lastPlan:deleted}}));
+ const assignment=restored.sessions.find(s=>s.kind==='assignment'),tomb=deleted.tombstones.find(t=>t.id===assignment.id);
+ assert.ok(assignment._meta.rev>tomb.rev);
+ const merged=P.mergePlan(restored,deleted,{template:{},session:{}});
+ assert.equal(merged.plan.sessions.filter(s=>s.kind==='assignment').length,1);
+});

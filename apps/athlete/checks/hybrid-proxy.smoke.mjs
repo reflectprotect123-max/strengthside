@@ -66,7 +66,7 @@ if (!existsSync(join(fnDir, 'brain-coach.mjs'))) {
 }
 const appJs = readFileSync(join(appRoot, 'app.js'), 'utf8');
 if (!appJs.includes("Whoop.fnUrl('brain-coach')")) {
-  throw new Error('askCoach must use Whoop.fnUrl so Capacitor hits Edge brain-coach');
+  throw new Error('askCoach must use Whoop.fnUrl so Capacitor uses the configured coach owner');
 }
 const whoopJs = readFileSync(join(appRoot, 'connectors/whoop.js'), 'utf8');
 if (!whoopJs.includes('resolveProxyBase') || !whoopJs.includes('functions/v1')) {
@@ -100,13 +100,14 @@ const sandbox = {
   },
   location: { protocol: 'https:', hostname: 'localhost', pathname: '/' },
 };
-sandbox.setInterval = setInterval;
+sandbox.setInterval = () => 0;
 sandbox.clearInterval = clearInterval;
 sandbox.setTimeout = setTimeout;
 sandbox.URLSearchParams = URLSearchParams;
 sandbox.window = sandbox;
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
+vm.runInContext(readFileSync(join(appRoot,'whoop-common.js'),'utf8'),sandbox);
 vm.runInContext(whoopJs, sandbox);
 await sandbox.Whoop.refreshStatus();
 if (!String(sandbox.lastFetch || '').includes('/functions/v1/integrations-status')) {

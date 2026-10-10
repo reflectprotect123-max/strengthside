@@ -23,6 +23,7 @@ globalThis.render = () => {
   paints += 1;
 };
 
+require(join(dir, 'training-core.js'));
 require(join(dir, 'library.js'));
 globalThis.S.library = globalThis.HybridLibrary.emptyState();
 globalThis.S.library = globalThis.HybridLibrary.createTemplate(globalThis.S.library, { title: 'Upper Day' });

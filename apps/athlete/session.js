@@ -89,7 +89,9 @@
 
   function pageFromBlock(block) {
     const rx = parseRx(block.prescription);
-    const cols = Array.isArray(block.columns) ? block.columns.filter(Boolean) : [];
+    const structured = root.TrainingCore.repTarget(block.repMin != null ? `${block.repMin}-${block.repMax ?? block.repMin}` : '');
+    if(structured){rx.targetReps=structured.min;rx.targetRepMax=structured.max;rx.isMax=false;}
+    const cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
     const mode = cols.length && !cols.includes('weight_kg') && !cols.includes('weight_lb') && !cols.includes('weight_pct') && !cols.includes('lwp')
       ? (rx.isMax ? 'max' : 'reps')
       : logModeFor(block, rx);
@@ -119,6 +121,7 @@
       availableLoads: Array.isArray(block.availableLoads) ? block.availableLoads : [],
       minimumKg: Number(block.minimumKg) || 0,
       loadConvention: block.loadConvention || 'total',
+      loadUnit: cols.includes('weight_lb') ? 'lb' : 'kg',
       exerciseType: block.exerciseType || null,
       rampCount: block.rampCount,
       columns: cols,
@@ -191,8 +194,8 @@
   function startSession({ date, plan, letter, existing } = {}) {
     const pages = pagesFromPlan(plan);
     if (existing && existing.date === date && existing.phase !== 'summary' && !letter) {
-      const s = clone(existing);
-      s.pages = pages;
+      const s = root.TrainingCore.migrateSession(clone(existing));
+      s.pages = s.pages?.length ? s.pages : pages;
       return attachLogs(s);
     }
     const session = attachLogs({
@@ -270,21 +273,10 @@
     return s;
   }
 
-  function effortLabel(effort) {
-    if (effort === "medium") effort = "average";
-    return ['very_easy','easy','average','hard','max_effort'].includes(effort);
-  }
+  function effortLabel(value) { return root.TrainingCore.efforts.includes(root.TrainingCore.effort(value)); }
+  function canLogRow(row,page) { return root.TrainingCore.validateRow(row,page).ok; }
 
-  function canLogRow(row, liftPage) {
-    if (row.miss) return true;
-    if (!effortLabel(row.effort)) return false;
-    const hasReps = row.reps != null && row.reps !== '';
-    const hasKg = row.kg != null && row.kg !== '';
-    const needsKg = liftPage && liftPage.logMode === 'kg';
-    return hasReps && (!needsKg || hasKg);
-  }
-
-  function logSet(session, setIndex, patch, memberId) {
+  function logSet(session, setIndex, patch, memberId, options = {}) {
     const s = clone(session);
     const page = currentPage(s);
     const log = getLog(s, page, memberId);
@@ -298,7 +290,7 @@
     }
     if (patch.miss != null) row.miss = !!patch.miss;
     if (patch.effort !== undefined) row.effort = patch.effort;
-    row.logged = canLogRow(row, liftPage);
+    row.logged = options.commit === false ? false : canLogRow(row, liftPage);
     return s;
   }
 
@@ -308,7 +300,7 @@
     const log = getLog(s, page, memberId);
     const row = log.sets[setIndex];
     if (!row) return s;
-    row.logged = !row.logged;
+    row.logged = row.logged ? false : canLogRow(row, page.logMode === 'superset' ? memberOf(page, memberId) : page);
     return s;
   }
 

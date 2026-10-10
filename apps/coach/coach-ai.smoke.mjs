@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const dir = dirname(fileURLToPath(import.meta.url));
-const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const html = readFileSync(join(dir, '../../archive/legacy-athlete/index.html'), 'utf8');
 
 if (existsSync(join(dir, 'coach-ai.js'))) throw new Error('retired coach intent parser still ships');
 for (const token of ['coach-ai.js', 'CoachAI.', 'llmRecoveryGate', 'enrichSessionWithCoachIntent']) {

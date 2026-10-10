@@ -27,6 +27,8 @@ for (const needle of [
   'Edit prescription',
   'Target RIR',
   'builderPrescriptionHtml',
+  'training-core.js',
+  'whoop-common.js',
   'log-columns.js',
   'removeBlk',
   'prep-textarea',

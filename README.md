@@ -1,3 +1,7 @@
+# Current implementation
+
+See [training contracts and release workflow](docs/training-contracts.md) for the current strength APK, shared rules and Supabase WHOOP routes. The older roadmap below describes historical layouts and is not the current runtime inventory.
+
 # THE Hybrid System — athlete app (strengthside)
 
 **One product:** the Hybrid HTML athlete app — spine (`@hybrid/brain`) + branches (Strength / Engine / Nutrition screens).

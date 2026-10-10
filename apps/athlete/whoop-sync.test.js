@@ -1,5 +1,6 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {runInNewContext} from 'node:vm';
-const connector=readFileSync(new URL('./connectors/whoop.js',import.meta.url),'utf8');
+const common=readFileSync(new URL('./whoop-common.js',import.meta.url),'utf8');
+const connector=common+'\n'+readFileSync(new URL('./connectors/whoop.js',import.meta.url),'utf8');
 function fixture(fetch){const state={accountId:'athlete-a',settings:{whoop:{}},checkin:{}};const window={S:state,STRENGTH_CONFIG:{supabaseUrl:'https://example.test',supabaseAnon:'anon',hybridProduct:'strength'},today:()=> '2026-10-10',dailyCheckin:date=>state.checkin[date]||=( {date}),supabase:{createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'athlete-token',user:{id:'athlete-a',email:'a@example.test'}}}})}})},save(){},setInterval:()=>0};runInNewContext(connector,{window,URL,URLSearchParams,Date,document:{getElementById:()=>null},fetch});return window;}
 test('simultaneous refreshes issue one WHOOP request through the shared strength owner lane',async()=>{
  let finish,count=0,request;const w=fixture(async(url,opts)=>{count++;request={url,opts};await new Promise(r=>finish=r);return {ok:true,json:async()=>({connected:true,normalized:{date:'2026-10-10',recoveryScore:70}})};});

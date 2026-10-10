@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';import {webcrypto} from 'node:crypto';
 function create(store=new Map()) {
  const c=vm.createContext({crypto:webcrypto,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},setTimeout:()=>1,clearTimeout:()=>{},console,addEventListener:()=>{}});
- for(const f of ['strength-brain.js','strength-memory.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
+ for(const f of ['training-core.js','strength-brain.js','strength-memory.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
  return {M:c.StrengthMemory,store};
 }
 function session(){return {id:webcrypto.randomUUID(),startedAt:10,date:'2026-10-10',pages:[{id:'A',title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,purpose:'working'}]}}};}
@@ -38,4 +38,11 @@ test('a lost response is acknowledged from identical cloud evidence without dupl
  const remote=local.map(r=>({record_id:r.id,session_id:r.sessionId,exercise_key:r.exerciseKey,kind:r.kind,deleted:r.deleted,payload:r.payload,revision:1}));
  const result=await M.sync({userId:async()=> 'athlete',pull:async()=>remote,push:async()=>{writes++;return {ok:true}}});
  assert.equal(result.ok,true);assert.equal(writes,0);assert.equal(M.getStatus().pending,0);
+});
+
+test('explicit session removal tombstones its sets and estimates without touching other sessions',()=>{
+ const {M}=create(),a=session(),b=session();b.id=webcrypto.randomUUID();
+ M.capture(a);M.capture(b);M.removeSession(a.id);
+ assert.ok(Object.values(M.records()).filter(r=>r.sessionId===a.id).every(r=>r.deleted));
+ assert.ok(Object.values(M.records()).filter(r=>r.sessionId===b.id).every(r=>!r.deleted));
 });

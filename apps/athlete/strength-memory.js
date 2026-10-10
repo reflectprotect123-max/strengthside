@@ -35,6 +35,7 @@
   }
   function capture(session) {
     if(!session||session.demo)return;
+    root.TrainingCore.migrateSession(session);
     session.id=session.id||root.crypto.randomUUID();
     const alive=new Set();
     session.brainEstimateIds=session.brainEstimateIds||{};
@@ -109,9 +110,13 @@
     finally{busy=false;if(Object.keys(memory.pending).length&&status.lastError&&!/conflict|Concurrent/.test(status.lastError))schedule(Math.min(60000,5000*2**Math.min(retry++,4)));}
   }
   function schedule(ms=1500) {if(timer)root.clearTimeout(timer);timer=root.setTimeout(()=>{timer=null;sync().catch(()=>{});},ms);}
+  function removeSession(sessionId) {
+    for(const record of Object.values(memory.records))if(record.sessionId===sessionId&&!record.deleted)put({...record,deleted:true});
+    persist();schedule();
+  }
   function records(){return memory.records;}
   function getStatus(){return {...status,pending:Object.keys(memory.pending).length};}
-  root.StrengthMemory={capture,records,sync,schedule,restore,getStatus,bind,ownerId:()=>memory.ownerId};
+  root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,ownerId:()=>memory.ownerId};
   root.addEventListener?.('online',()=>schedule(0));
   root.addEventListener?.('visibilitychange',()=>{if(root.document?.visibilityState==='visible')schedule(0);});
   restore().then(()=>schedule(0));

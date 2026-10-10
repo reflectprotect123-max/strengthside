@@ -27,7 +27,7 @@
       emit({ status: 'checking', message: 'Checking for updates…' });
       try {
         const current = await p.current();
-        const bundled = '1.3.1';
+        const bundled = root.StrengthRelease.version;
         const installed = current.bundle?.version === 'builtin' ? current.native : current.bundle?.version;
         const floor = newer(installed, bundled) ? installed : bundled;
         emit({ current: floor });

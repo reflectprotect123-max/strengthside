@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
-const ctx=vm.createContext({crypto:webcrypto});vm.runInContext(readFileSync(new URL('./strength-brain.js',import.meta.url),'utf8'),ctx);
+const ctx=vm.createContext({crypto:webcrypto});vm.runInContext(readFileSync(new URL('./training-core.js',import.meta.url),'utf8'),ctx);vm.runInContext(readFileSync(new URL('./strength-brain.js',import.meta.url),'utf8'),ctx);
 const B=ctx.StrengthBrain;
 const page={id:'A',title:'Squat',kind:'lift',logMode:'kg',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,columns:['reps','weight_kg']};
 const row=(reps=8,effort='average',kg=40)=>({reps,effort,kg,logged:true,purpose:'working'});

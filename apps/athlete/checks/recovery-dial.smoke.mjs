@@ -32,8 +32,9 @@ const state = {
   settings: { whoop: { connected: true } },
   checkin: { [sampleDate]: { whoopRecovery: 72, whoopSleepPerformance: 84, whoopStrain: 9.2 } },
 };
-const window = {};
-const html = runInNewContext(`${js}\ngaugeRowHtml()`, {
+const window = {StrengthRelease:JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)),'..','release.json'),'utf8'))};
+const core = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'training-core.js'),'utf8');
+const html = runInNewContext(`${core}\n${js}\ngaugeRowHtml()`, {
   window,
   StrengthOnly: { cleanState: state => state },
   localStorage: { getItem: () => JSON.stringify(state) },

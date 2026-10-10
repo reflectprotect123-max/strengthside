@@ -38,7 +38,7 @@ const window = {
   setInterval: () => 0,
   save: () => {},
 };
-const connector = readFileSync(new URL('../connectors/whoop.js', import.meta.url), 'utf8');
+const connector = readFileSync(new URL('../whoop-common.js', import.meta.url),'utf8')+'\n'+readFileSync(new URL('../connectors/whoop.js', import.meta.url), 'utf8');
 runInNewContext(connector, { window, URLSearchParams, Date, fetch: window.fetch });
 await window.Whoop.refreshStatus();
 const checkin = checkins[sampleDate];

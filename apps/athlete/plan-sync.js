@@ -52,6 +52,7 @@
     const idx = { template: {}, session: {} };
     (lastPlan && lastPlan.templates || []).forEach((t) => { idx.template[t.id] = t; });
     (lastPlan && lastPlan.sessions || []).forEach((t) => { idx.session[t.id] = t; });
+    for(const tomb of lastPlan?.tombstones||[])if(idx[tomb.kind]&&(!idx[tomb.kind][tomb.id]||(idx[tomb.kind][tomb.id]._meta?.rev||0)<=tomb.rev))idx[tomb.kind][tomb.id]={id:tomb.id,_meta:{rev:tomb.rev,bodyFp:'deleted'}};
     return idx;
   }
 
@@ -101,7 +102,9 @@
         tombstones.push({ id, kind: 'template', rev });
       }
     }
-    const still = tombstones.filter((t) => t.kind !== 'template' || !liveTpls.has(t.id));
+    const liveSessions = new Set(sessions.map(row=>row.id));
+    for(const [id,previous] of Object.entries(prev.session))if(!liveSessions.has(id)&&!tombstones.some(t=>t.id===id&&t.kind==='session'))tombstones.push({id,kind:'session',rev:(previous._meta?.rev||0)+1});
+    const still = tombstones.filter(t=>t.kind==='template'?!liveTpls.has(t.id):t.kind==='session'?!liveSessions.has(t.id):true);
 
     return {
       domain: DOMAIN,
@@ -125,15 +128,16 @@
     const ackMap = (acks && acks[kind]) || {};
     for (const id of ids) {
       const tomb = tombFor[id];
-      const L = local[id];
-      const R = remote[id];
+      let L = local[id];
+      let R = remote[id];
       const lrev = L && L._meta ? Number(L._meta.rev) || 0 : 0;
       const rrev = R && R._meta ? Number(R._meta.rev) || 0 : 0;
       const ack = Number(ackMap[id]) || 0;
       if (tomb) {
         const trev = Number(tomb.rev) || 0;
         if ((!L || lrev <= trev) && (!R || rrev <= trev)) continue;
-        if (L && lrev > trev) continue;
+        if(L&&lrev<=trev)L=undefined;
+        if(R&&rrev<=trev)R=undefined;
       }
       if (L && R) {
         if (bodyHash(L) === bodyHash(R)) {
@@ -200,7 +204,17 @@
       catalog,
       assignments,
     };
+    if(root.StrengthMemory) {
+      const liveIds=new Set(Object.values(sessions).map(s=>s.id).filter(Boolean));
+      for(const old of Object.values(next.sessions||{}))if(old?.id&&!liveIds.has(old.id))root.StrengthMemory.removeSession(old.id);
+      for(const session of Object.values(sessions))root.StrengthMemory.capture(session);
+    }
     next.sessions = sessions;
+    if(next.session?.id) {
+      const merged=Object.values(sessions).find(s=>s.id===next.session.id);
+      if(merged)next.session=merged;
+      else if((plan.tombstones||[]).some(t=>t.kind==='session'&&t.id==='log_'+next.session.date)){next.session=null;next.loggerOpen=false;next.timer=null;}
+    }
     next.planSync = next.planSync || { acks: { template: {}, session: {} }, snapshotRev: 0 };
     next.planSync.lastPlan = plan;
     return next;

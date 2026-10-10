@@ -59,3 +59,9 @@ test('wearable cache cannot cross athlete accounts',()=>{
  const b={accountId:'b',settings:{whoop:{}},checkin:{}};H.mergeIntoState(b);assert.equal(Object.keys(b.checkin).length,0);
  const a={accountId:'a',settings:{whoop:{}},checkin:{}};H.mergeIntoState(a);assert.equal(a.checkin['2026-10-10'].sleepHours,8);assert.equal(a.checkin['2026-10-10'].steps,0);
 });
+
+test('legacy shared cache cannot overwrite newer dated readings or manual answers',()=>{
+ const {H}=loadIntegrations();H.persistWhoop({accountId:'a',settings:{whoop:{connected:true}},checkin:{'2026-10-10':{sleepHours:6}}},'2026-10-10');
+ const current={accountId:'a',settings:{whoop:{}},checkin:{'2026-10-10':{sleepHours:8,subjectiveRecovery:{soreness:2}}}};
+ H.mergeIntoState(current);assert.equal(current.checkin['2026-10-10'].sleepHours,8);assert.equal(current.checkin['2026-10-10'].subjectiveRecovery.soreness,2);
+});

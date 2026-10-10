@@ -282,7 +282,7 @@
 
   function numberPadHtml() {
     if (!numberPad) return '';
-    const keys = ['1','2','3','4','5','6','7','8','9',numberPad.range ? '–' : null,'0','⌫'];
+    const keys = root.TrainingCore.keys(numberPad);
     return `<div class="lib-number-backdrop" role="dialog" aria-label="${numberPad.field === 'sets' ? 'Sets' : numberPad.range ? 'Rep range' : 'Reps'} keypad">
       <div class="log-pad lib-number-pad">
         <div class="log-pad-head"><div><span class="log-pad-val" aria-live="polite">${esc(numberPad.buffer || '0')}</span></div><button type="button" aria-label="Cancel number entry" onclick="LibraryView.closeNumberPad()">⌄</button></div>
@@ -375,18 +375,14 @@
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
       if (!b || !['sets','reps'].includes(field)) return;
       const range = field === 'reps' && (b.columns || []).includes('reps_range');
-      numberPad = { field, range, buffer: String(field === 'sets' ? b.setCount || 3 : b.repTarget || (range ? '8-12' : '8')), fresh: true };
+      numberPad = { ...root.TrainingCore.numberEntry(null,{key:'reps',range}), field, buffer: String(field === 'sets' ? b.setCount || 3 : b.repTarget || (range ? '8-12' : '8')) };
       save();
     },
     closeNumberPad() { numberPad = null; save(); },
     clearNumberPad() { if (numberPad) { numberPad.buffer = ''; numberPad.fresh = false; numberPad.error = ''; save(); } },
     numberKey(key) {
       if (!numberPad) return;
-      if (key === '⌫') numberPad.buffer = numberPad.buffer.slice(0,-1);
-      else if (/^\d$/.test(key)) numberPad.buffer = (numberPad.fresh ? '' : numberPad.buffer) + key;
-      else if (key === '–' && numberPad.range && /^\d+$/.test(numberPad.buffer)) numberPad.buffer += '-';
-      else return;
-      numberPad.fresh = false; numberPad.error = ''; save();
+      numberPad = root.TrainingCore.numberKey(numberPad,key); save();
     },
     saveNumberPad() {
       if (!numberPad) return;

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
+require(join(here, 'training-core.js'));
 require(join(here, 'session.js'));
 const HybridSession = globalThis.HybridSession;
 
@@ -218,4 +219,20 @@ test('logging a set records athlete input without changing a future target', () 
   assert.equal('ruleVersion' in s.logs.B, false);
   assert.equal('strengthClose' in s, false);
   assert.equal(s.logs.B.sets[1].kg, originalSecondKg);
+});
+
+test('metric rows save drafts separately and complete only after required values and actual effort',()=>{
+ const p={blocks:[{kind:'lift',letter:'A',title:'Plank',setCount:1,columns:['seconds'],prescription:'1 x time'}]};
+ let s=HybridSession.ackCoach(HybridSession.startSession({date:'2026-10-11',plan:p}));
+ s=HybridSession.logSet(s,0,{cells:{seconds:30},effort:'hard'},'A',{commit:false});assert.equal(s.logs.A.sets[0].logged,false);
+ s=HybridSession.logSet(s,0,{},'A');assert.equal(s.logs.A.sets[0].logged,true);
+ s=HybridSession.logSet(s,0,{cells:{seconds:''}},'A',{commit:false});assert.equal(s.logs.A.sets[0].logged,false);
+ s=HybridSession.toggleLogged(s,0,'A');assert.equal(s.logs.A.sets[0].logged,false);
+});
+
+test('reopening an active workout preserves captured targets and calibration when its template changes',()=>{
+ let s=HybridSession.startSession({date:'2026-10-11',plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 6-8'}]}});
+ s.pages[0].workingKg=40;s.pages[0].startConfidence='history';s.brainSeeded=true;
+ const reopened=HybridSession.startSession({date:s.date,existing:s,plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 10-12'}]}});
+ assert.equal(reopened.pages[0].targetReps,6);assert.equal(reopened.pages[0].workingKg,40);assert.equal(reopened.brainSeeded,true);
 });

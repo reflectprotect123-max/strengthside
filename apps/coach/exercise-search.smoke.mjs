@@ -9,7 +9,7 @@ import vm from 'node:vm';
 const dir = dirname(fileURLToPath(import.meta.url));
 const indexSrc = readFileSync(join(dir, 'exercise-search-index.js'), 'utf8');
 const searchSrc = readFileSync(join(dir, 'exercise-search.js'), 'utf8');
-const html = readFileSync(join(dir, 'index.html'), 'utf8');
+const html = readFileSync(join(dir, '../../archive/legacy-athlete/index.html'), 'utf8');
 
 const sandbox = { window: {}, console };
 sandbox.window = sandbox;

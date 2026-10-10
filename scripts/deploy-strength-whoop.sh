@@ -9,16 +9,20 @@ STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/supabase/functions"
 cp -R "$ROOT/supabase/functions/_shared" "$STAGE/supabase/functions/"
-for name in whoop-sync whoop-connect whoop-callback; do cp -R "$ROOT/supabase/functions/$name" "$STAGE/supabase/functions/"; done
+for name in whoop-sync whoop-connect whoop-callback integrations-status integrations-disconnect; do cp -R "$ROOT/supabase/functions/$name" "$STAGE/supabase/functions/"; done
 cat > "$STAGE/supabase/config.toml" <<'CONFIG'
 project_id = "strength-shared-whoop"
 [functions.whoop-sync]
 verify_jwt = true
 [functions.whoop-connect]
 verify_jwt = true
+[functions.integrations-status]
+verify_jwt = true
+[functions.integrations-disconnect]
+verify_jwt = true
 [functions.whoop-callback]
 verify_jwt = false
 CONFIG
 cd "$STAGE"
 # Publish callback before the client begins using the new return target.
-for name in whoop-callback whoop-connect whoop-sync; do "$CLI" functions deploy "$name" --project-ref "$REF" --use-api; done
+for name in integrations-status integrations-disconnect whoop-callback whoop-connect whoop-sync; do "$CLI" functions deploy "$name" --project-ref "$REF" --use-api; done

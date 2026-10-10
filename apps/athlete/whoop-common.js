@@ -1,0 +1,8 @@
+/** Shared WHOOP frontend mechanics; product adapters own routes and views. */
+(function(root){
+ function clientFactory(config){let sb;return function(){if(sb)return sb;if(!root.supabase?.createClient)throw new Error('Supabase SDK failed to load');const c=config();return sb=root.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:root.localStorage}});};}
+ function todayIso(){if(typeof root.today==='function')return root.today();const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+ async function refreshStatus({api,route,state,apply,email}){const body=await api(route),whoop=body?.whoop||{},w=state();w.connected=!!whoop.connected;w.lastSyncAt=whoop.lastSyncAt||w.lastSyncAt;w.sampleDate=whoop.sampleDate||w.sampleDate;if(whoop.normalized)apply(whoop.normalized,{syncedAt:whoop.lastSyncAt,sampleDate:whoop.sampleDate});w.email=await email();if(typeof root.save==='function')root.save();return body;}
+ async function disconnect({ui,api,route,state,paint}){if(ui.busy||!root.confirm('Disconnect WHOOP for this account?'))return;ui.busy=true;ui.message='Disconnecting…';paint();try{await api(route,{method:'POST',query:{provider:'whoop'}});Object.assign(state(),{connected:false,lastSyncAt:null,sampleDate:null,lastNormalized:null});if(typeof root.save==='function')root.save();ui.message='WHOOP disconnected';}catch(err){ui.message=err.message||'Disconnect failed';}finally{ui.busy=false;paint();}}
+ root.WhoopCommon={clientFactory,todayIso,refreshStatus,disconnect};
+})(typeof window!=='undefined'?window:globalThis);

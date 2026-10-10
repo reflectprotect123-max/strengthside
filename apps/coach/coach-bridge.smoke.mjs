@@ -11,7 +11,7 @@ const bridgeSrc = readFileSync(join(dir, 'coach-bridge.js'), 'utf8');
 const syncSrc = readFileSync(join(dir, 'coach-sync.js'), 'utf8');
 const loopSrc = readFileSync(join(dir, 'coach-loop.js'), 'utf8');
 const html = readFileSync(join(dir, 'coach.html'), 'utf8');
-const indexHtml = readFileSync(join(dir, 'index.html'), 'utf8');
+const indexHtml = readFileSync(join(dir, '../../archive/legacy-athlete/index.html'), 'utf8');
 
 for (const needle of ['coach-bridge.js', 'coach-views.js', 'CoachViews.init']) {
   if (!html.includes(needle)) throw new Error(`coach.html missing ${needle}`);

@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'strength-brain-v1.3.3';
+const APP_BUILD = window.StrengthRelease.build;
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -76,6 +76,8 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState();
     const parsed = StrengthOnly.cleanState(JSON.parse(raw));
+    window.TrainingCore.migrateSession(parsed.session);
+    Object.values(parsed.sessions||{}).forEach(window.TrainingCore.migrateSession);
     if (!parsed || parsed.build !== BRAIN_BUILD) return defaultState();
     return {
       ...defaultState(),
@@ -749,10 +751,11 @@ function progressHtml() {
   const c = dailyCheckin(today(), false) || {};
   const sessions = completedSessions();
   const recent = sessions.slice(0, 3);
+  const readings = StrengthHome.selection(StrengthHome.records(S),today(),today()).metrics;
   const whoop = [
-    ['Sleep', c.whoopSleepPerformance, '%'],
-    ['Recovery', c.whoopRecovery, '%'],
-    ['Strain', c.whoopStrain, ''],
+    ['Sleep', readings.sleepPerformance?.value, '%'],
+    ['Recovery', readings.recovery?.value, '%'],
+    ['Strain', readings.strain?.value, ''],
   ].map(([label, value, unit]) => `<div class="progress-metric"><span>${label}</span><b>${value === '' || value == null ? '—' : `${esc(value)}${unit}`}</b></div>`).join('');
   const workoutRows = recent.length
     ? recent.map((session) => {
@@ -952,13 +955,11 @@ async function askCoach() {
   try {
     const coachUrl = (window.Whoop && typeof Whoop.fnUrl === 'function')
       ? Whoop.fnUrl('brain-coach')
-      : String((window.STRENGTH_CONFIG && STRENGTH_CONFIG.supabaseUrl) || 'https://orysjncrksmdfabpuftd.supabase.co').replace(/\/$/, '') + '/functions/v1/brain-coach';
+      : String(window.STRENGTH_CONFIG.coachProxyOrigin).replace(/\/$/, '') + '/.netlify/functions/brain-coach?product=strength';
     const res = await fetch(coachUrl, {
       method: 'POST',
       headers: {
         authorization: 'Bearer ' + (await Whoop.token()),
-        apikey: (window.STRENGTH_CONFIG && STRENGTH_CONFIG.supabaseAnon) || '',
-        'x-hybrid-product': 'strength',
         'content-type': 'application/json',
       },
       body: JSON.stringify({
