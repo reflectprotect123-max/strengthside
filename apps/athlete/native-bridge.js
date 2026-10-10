@@ -15,7 +15,7 @@
     if (!newer(bundle.version, info.current || '1.3.1')) return emit({ status: 'current', message: 'Your app is up to date.' });
     await p.setMultiDelay({ delayConditions: [{ kind: 'kill' }] });
     await p.next({ id: bundle.id }); pending = bundle;
-    return emit({ status: 'ready', next: bundle.version, message: 'Update ready. Restart after your workout.' });
+    return emit({ status: 'ready', next: bundle.version, message: 'Update ready. Restart now; your workout will be saved.' });
   }
   async function probeLiveUpdate(options = {}) {
     if (!isNative()) return emit({ status: 'browser', message: 'Updates are available in the installed APK.' });
@@ -46,10 +46,17 @@
     return checking;
   }
   async function applyLiveUpdate() {
-    const session = root.S?.session;
-    if (session && session.phase !== 'summary') { emit({ message: 'Finish your workout before restarting.' }); return 'busy'; }
-    if (!pending || !plugin()) return 'unavailable';
-    try { if (root.save) root.save(); await plugin().reload(); return 'restarting'; }
+    const updater = plugin();
+    if (!pending || !updater) return 'unavailable';
+    // Manual restart is explicit: preserve the session instead of requiring completion.
+    try {
+      if (typeof root.save !== 'function') throw new Error('Save unavailable');
+      await root.save();
+    } catch (_) {
+      emit({ message: 'Could not save your workout. Restart cancelled; try again.' });
+      return 'save-error';
+    }
+    try { await updater.reload(); return 'restarting'; }
     catch (_) { emit({ status: 'error', message: 'Restart failed. Close and reopen the app to apply the update.' }); return 'error'; }
   }
   root.NativeBridge = { isNative, probeLiveUpdate, applyLiveUpdate, queueLiveUpdate: queue,
