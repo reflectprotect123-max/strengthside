@@ -50,7 +50,7 @@ must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px 
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');
-must(worker.includes("CACHE = 'strength-brain-v21'"), 'SW cache includes current brain release');
+must(worker.includes("CACHE = 'strength-brain-v22'"), 'SW cache includes current brain release');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes("url.origin !== self.location.origin"), 'SW does not intercept WHOOP Edge');
 must(readFileSync(join(root, 'plan-sync.js'), 'utf8').includes("DOMAIN_FALLBACK = 'strength'"), 'plan sync falls back to hosted strength domain');
 must(html.includes('hybrid-sc.js'), 'hybrid-sc.js in index.html');

@@ -20,7 +20,7 @@ export async function recordOAuthEvent(provider: string, event: Record<string, u
   }
 }
 
-export async function savePending(provider: string, state: string, identity: { owner: string; kind?: string; sid?: string | null; product?: string }) {
+export async function savePending(provider: string, state: string, identity: { owner: string; kind?: string; sid?: string | null; product?: string; appId?: string }) {
   if (!identity?.owner) throw new Error('Pending OAuth record needs an owner');
   const kind = identity.kind === 'user' || identity.kind === 'native' ? 'native' : 'browser';
   await setJson(`oauth:pending:${provider}:${state}`, {
@@ -28,6 +28,7 @@ export async function savePending(provider: string, state: string, identity: { o
     kind,
     sid: identity.sid ?? null,
     product: identity.product === 'strength' ? 'strength' : 'engine',
+    appId: identity.appId,
     createdAt: Date.now(),
   });
 }
@@ -43,7 +44,7 @@ export function pendingIsUsable(pending: any, expectedSid: string | undefined, n
     if (typeof pending?.sid !== 'string' || !pending.sid) return null;
     if (expectedSid !== undefined && pending.sid !== expectedSid) return null;
   }
-  return { owner, kind, sid: pending?.sid ?? null, createdAt, product: pending?.product === 'strength' ? 'strength' : 'engine' };
+  return { owner, kind, sid: pending?.sid ?? null, createdAt, product: pending?.product === 'strength' ? 'strength' : 'engine', appId: pending?.appId };
 }
 
 export async function consumePending(provider: string, state: string, expectedSid?: string) {

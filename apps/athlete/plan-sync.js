@@ -72,6 +72,12 @@
       const id = 'log_' + date;
       sessions.push(touch({ id, date, kind: 'log', payload: logs[date] }, prev.session[id]));
     }
+    for (const [date, checkin] of Object.entries(state?.checkin || {})) {
+      const payload = Object.fromEntries(['subjectiveRecovery', 'bedtimeQuestionnaire', 'subjectiveRecoveryDeferredAt'].filter(key => checkin[key] != null).map(key => [key, checkin[key]]));
+      if (!Object.keys(payload).length) continue;
+      const id = 'checkin_' + date;
+      sessions.push(touch({ id, date, kind: 'daily_checkin', payload }, prev.session[id]));
+    }
     const catalogId = 'catalog';
     const catalogEnt = touch({
       id: catalogId,
@@ -180,6 +186,14 @@
       else if (row.kind === 'log' && row.date) sessions[row.date] = row.payload;
       else if (row.kind === 'catalog') catalog = { exercises: row.exercises || [], circuits: row.circuits || [] };
       else if (row.kind === 'lift_memory') next.liftMemory = row.memory || {};
+      else if (row.kind === 'daily_checkin' && row.date) {
+        next.checkin = next.checkin || {};
+        next.checkin[row.date] = { ...next.checkin[row.date], ...row.payload };
+        if (row.payload?.subjectiveRecovery) {
+          next.dailyProgressCheckins = next.dailyProgressCheckins || {};
+          next.dailyProgressCheckins[row.date] = { at: row.payload.subjectiveRecovery.completedAt };
+        }
+      }
     });
     next.library = {
       templates: plan.templates || [],

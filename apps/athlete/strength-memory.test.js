@@ -32,3 +32,10 @@ test('concurrent cloud edit cannot silently overwrite pending local results',asy
 test('switching accounts archives each account and prevents cross-account uploads',async()=>{
  const {M}=create(),s=session();await M.bind('a');M.capture(s);await M.bind('b');assert.equal(M.getStatus().pending,0);await M.bind('a');assert.equal(M.getStatus().pending,2);
 });
+
+test('a lost response is acknowledged from identical cloud evidence without duplicate write',async()=>{
+ const {M}=create(),s=session();M.capture(s);const local=Object.values(M.records());let writes=0;
+ const remote=local.map(r=>({record_id:r.id,session_id:r.sessionId,exercise_key:r.exerciseKey,kind:r.kind,deleted:r.deleted,payload:r.payload,revision:1}));
+ const result=await M.sync({userId:async()=> 'athlete',pull:async()=>remote,push:async()=>{writes++;return {ok:true}}});
+ assert.equal(result.ok,true);assert.equal(writes,0);assert.equal(M.getStatus().pending,0);
+});

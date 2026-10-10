@@ -19,7 +19,7 @@ function loadIntegrations() {
 
 test('mergeIntoState copies shared whoop into house state', () => {
   const { H, store } = loadIntegrations();
-  store['HYBRID_SC_integrations_v1'] = JSON.stringify({
+  store['HYBRID_SC_integrations_v1:device'] = JSON.stringify({
     whoop: { connected: true, lastSyncAt: '2026-09-15T10:00:00Z', email: 'a@b.com' },
     checkin: { '2026-09-15': { whoopRecovery: 72, whoopStrain: 8.4 } },
   });
@@ -48,8 +48,14 @@ test('persistWhoop writes whoop + checkin fields for today', () => {
     },
   };
   H.persistWhoop(S, '2026-09-15');
-  const shared = JSON.parse(store['HYBRID_SC_integrations_v1']);
+  const shared = JSON.parse(store['HYBRID_SC_integrations_v1:device']);
   assert.equal(shared.whoop.connected, true);
   assert.equal(shared.checkin['2026-09-15'].whoopRecovery, 80);
   assert.equal(shared.checkin['2026-09-15'].whoopStrain, 9.1);
+});
+
+test('wearable cache cannot cross athlete accounts',()=>{
+ const {H}=loadIntegrations();H.persistWhoop({accountId:'a',settings:{whoop:{connected:true}},checkin:{'2026-10-10':{sleepHours:8,steps:0}}},'2026-10-10');
+ const b={accountId:'b',settings:{whoop:{}},checkin:{}};H.mergeIntoState(b);assert.equal(Object.keys(b.checkin).length,0);
+ const a={accountId:'a',settings:{whoop:{}},checkin:{}};H.mergeIntoState(a);assert.equal(a.checkin['2026-10-10'].sleepHours,8);assert.equal(a.checkin['2026-10-10'].steps,0);
 });

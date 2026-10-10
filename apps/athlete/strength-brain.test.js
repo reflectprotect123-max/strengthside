@@ -44,3 +44,8 @@ test('history is exercise-specific and latest three session estimates are averag
 test('incomplete and max effort cannot increase next weight',()=>{
  for(const r of [{...row(4),miss:true},row(6,'max_effort')])assert.ok(B.next({page,row:r,nextRow:{purpose:'working'}}).kg<40);
 });
+test('unexpected Hard reduces early work but may hold for the intended final Hard set',()=>{
+ const early=B.next({page,row:row(6,'hard'),nextRow:{purpose:'working',workingIndex:1},index:3});
+ const final=B.next({page,row:row(6,'hard'),nextRow:{purpose:'working',workingIndex:2},index:4});
+ assert.ok(early.kg<40);assert.equal(final.kg,40);assert.equal(final.target,'hard');
+});

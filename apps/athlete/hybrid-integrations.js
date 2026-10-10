@@ -1,16 +1,16 @@
 (function (global) {
   const STORAGE_KEY = 'HYBRID_SC_integrations_v1';
   const WHOOP_CHECKIN_KEYS = [
-    'whoopRecovery', 'hrv', 'restingHr', 'whoopSleepPerformance', 'whoopStrain',
+    'sleepHours', 'steps', 'whoopRecovery', 'hrv', 'restingHr', 'whoopSleepPerformance', 'whoopStrain',
     'whoopSyncedAt', 'whoopSampleDate', 'updatedAt',
   ];
 
   let foregroundBound = false;
   let bootSyncPromise = null;
 
-  function readShared() {
+  function readShared(accountId) {
     try {
-      const raw = global.localStorage && global.localStorage.getItem(STORAGE_KEY);
+      const raw = global.localStorage && global.localStorage.getItem(STORAGE_KEY + (accountId ? ':' + accountId : ':device'));
       if (!raw) return { whoop: null, checkin: {} };
       const parsed = JSON.parse(raw);
       return {
@@ -22,9 +22,9 @@
     }
   }
 
-  function writeShared(data) {
+  function writeShared(data, accountId) {
     if (!global.localStorage) return;
-    global.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    global.localStorage.setItem(STORAGE_KEY + (accountId ? ':' + accountId : ':device'), JSON.stringify({
       whoop: data.whoop || null,
       checkin: data.checkin || {},
     }));
@@ -41,7 +41,7 @@
 
   function mergeIntoState(S) {
     if (!S || typeof S !== 'object') return S;
-    const shared = readShared();
+    const shared = readShared(S.accountId);
     S.settings = S.settings || {};
     if (shared.whoop) {
       S.settings.whoop = Object.assign(
@@ -61,12 +61,12 @@
 
   function persistWhoop(S, iso) {
     if (!S || typeof S !== 'object') return;
-    const shared = readShared();
+    const shared = readShared(S.accountId);
     shared.whoop = Object.assign({}, shared.whoop || {}, S.settings && S.settings.whoop ? S.settings.whoop : {});
     shared.checkin = shared.checkin || {};
     const slice = sliceCheckin(S.checkin && S.checkin[iso]);
     if (slice) shared.checkin[iso] = Object.assign({}, sliceCheckin(shared.checkin[iso]) || {}, slice);
-    writeShared(shared);
+    writeShared(shared, S.accountId);
   }
 
   async function syncWhoopFull() {

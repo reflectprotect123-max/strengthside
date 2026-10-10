@@ -12,6 +12,7 @@ const defaultState = () => ({
   settings: { whoop: { connected: false, lastSyncAt: null, email: null } },
   coachHistory: [],
   dailyProgressCheckins: {},
+  whoopHistory: [],
   published: {},
   goals: [],
   fabOpen: false,
@@ -36,6 +37,14 @@ function bindStrengthAccount(uid) {
     window.S = S;
   }
   S.accountId = uid;
+  if (window.HybridIntegrations) HybridIntegrations.mergeIntoState(S);
+}
+
+function signOutStrengthAccount() {
+  if (S.accountId) localStorage.setItem(STORAGE_KEY + ':account:' + S.accountId, JSON.stringify(S));
+  S = defaultState();
+  window.S = S;
+  save();
 }
 
 function resetBlankSlate(keepAuth = true) {
@@ -357,7 +366,7 @@ function trainingHomeHtml() {
     </div>`;
 }
 
-const homeHtml = trainingHomeHtml;
+const homeHtml = () => window.StrengthHome ? StrengthHome.html() : trainingHomeHtml();
 
 /** Reference plan from HPP training screen (screenshot match). */
 const TRAINING_DEMO = {
@@ -676,10 +685,10 @@ function meHtml() {
         ${meAppSectionHtml()}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
-          <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p>
+          <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p><p class="stub" id="whoopAccountStatus" role="status">${esc(window.Whoop?.uiMessage() || '')}</p>
           <div class="account-actions">
             ${w.connected
-              ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button>'
+              ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button><button type="button" class="btn" onclick="StrengthHome.importAll()">Import WHOOP history</button>'
               : '<button type="button" class="btn" onclick="Whoop.connect()">Connect WHOOP</button>'}
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
@@ -1031,8 +1040,8 @@ if ('serviceWorker' in navigator) {
 function trySliderDemo() {
  const date=today();
  const plan={title:'Slider demo',instructions:'Sample loads, not a prescribed workout. Choose your rest timer; log each set to try the adjustments.',blocks:[
- {kind:'lift',letter:'A',title:'Back Squat',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,columns:['reps','weight_kg'],notes:[]},
- {kind:'lift',letter:'B',title:'Bench Press',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,columns:['reps','weight_kg'],notes:[]}]};
+ {kind:'lift',letter:'A',title:'Back Squat',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,equipmentStepKg:1,columns:['reps','weight_kg'],notes:[]},
+ {kind:'lift',letter:'B',title:'Bench Press',prescription:'3 × 5',targetEffort:'average',demoStartingKg:31,equipmentStepKg:1,columns:['reps','weight_kg'],notes:[]}]};
  S.selectedDate=date;S.tab='training';
  // Start explicitly without replacing a user's assigned workout or archived history.
  const old=S.session; if(!old?.demo) S.sliderPreviousSession=old; S.session=null; S.sliderDemoOpening=true;

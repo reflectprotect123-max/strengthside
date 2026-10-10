@@ -240,6 +240,12 @@ export async function fetchWhoopSnapshot(token: string, { historyDays = 10, allH
   if (latest) Object.assign(normalized, {
     date: latest.date, recoveryScore: latest.recovery, hrvMs: latest.hrv, restingHr: latest.rhr,
   });
+  const metricDates: Record<string,string> = {};
+  for(const key of ['sleepPerformance','strain']){
+    const observed=dailyMetrics.filter((r: any)=>typeof r[key]==='number').at(-1);
+    if(observed){(normalized as any)[key]=observed[key];metricDates[key]=observed.date;}
+  }
+  Object.assign(normalized,{metricDates});
   return {
     recovery, cycle, sleep, workout, normalized, dailyMetrics,
     dailyStrain: extractDailyStrain(recordsOf(cycle)),

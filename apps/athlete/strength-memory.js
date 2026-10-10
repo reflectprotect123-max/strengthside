@@ -46,10 +46,10 @@
         if(!row.logged&&!memory.records[row.id])return;
         put({id:row.id,sessionId:session.id,exerciseKey:root.StrengthBrain.key(page),kind:'set',deleted:!row.logged,payload:{page:{...page},row:{...row,ordinal:index},sessionStartedAt:session.startedAt,date:session.date}});
       });
-      if(root.StrengthBrain.eligible(page)) {
+      if(root.StrengthBrain.eligible(page) && (rows.some(r=>r.logged) || session.brainEstimateIds[page.id])) {
         const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
         const result=root.StrengthBrain.review(page,rows);
-        put({id,sessionId:session.id,exerciseKey:root.StrengthBrain.key(page),kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,sourceSetIds:rows.filter(r=>r.logged).map(r=>r.id),sessionStartedAt:session.startedAt,date:session.date}});
+        put({id,sessionId:session.id,exerciseKey:root.StrengthBrain.key(page),kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,sourceSetIds:rows.filter(r=>r.logged && r.purpose!=='ramp').map(r=>r.id),rollingE1rm:root.StrengthBrain.history(memory.records,page).rolling,sessionStartedAt:session.startedAt,date:session.date}});
       }
     }
     for(const r of Object.values(memory.records))if(r.kind==='set'&&r.sessionId===session.id&&!alive.has(r.id)&&!r.deleted)put({...r,deleted:true});

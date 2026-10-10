@@ -48,7 +48,8 @@
     } else {
       root.S.session = HS.startSession({ date: d, plan: p, existing });
     }
-    root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
+    if (p.title === 'Slider demo') root.S.session.demo = true;
+    else root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');
@@ -478,7 +479,7 @@
 
   function setFlow(s, page) {
     const rows = (s.logs[page.id] && s.logs[page.id].sets) || [];
-    const pending = rows.findIndex((r) => !r.logged);
+    const pending = rows.findIndex((r) => !r.logged && !r.skipped);
     const saved = (s.loggerSetFlow || {})[page.id] || {};
     const index = Number.isInteger(saved.index) && rows[saved.index] && (saved.editing || !rows[saved.index].logged)
       ? saved.index : pending;
@@ -533,6 +534,7 @@
           <p class="log-note" id="effortHelp-${id}">${flow.draft.miss ? 'Enter the reps you actually completed.' : chosen ? EFFORT_COPY[chosen] : 'Rate the actual effort after completing your set.'}</p>
         </div>
         <button type="button" class="log-set-incomplete" aria-pressed="${!!flow.draft.miss}" onclick="Logger.setIncomplete('${id}')">Did Not Complete</button>
+        ${rows[flow.index]?.purpose === 'ramp' ? `<button type="button" class="log-set-skip" onclick="Logger.skipRamp('${id}')">Skip warm-up</button>` : ''}
         <p class="log-set-error" role="status">${esc(flow.error || '')}</p>
         ${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`}`}`}
       </section>
@@ -775,6 +777,17 @@
       const t = timerState();
       if (t.mode === 'rest' && t.display === 'docked') persistTimer(HybridTimer.stop(t));
     },
+    skipRamp(memberId) {
+      const s = JSON.parse(JSON.stringify(session()));
+      const page = HybridSession.currentPage(s);
+      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
+      const f = setFlow(s, lift), rows = s.logs[memberId].sets;
+      if (rows[f.index]?.purpose !== 'ramp' || rows[f.index].logged) return;
+      rows[f.index].skipped = true;
+      const index = rows.findIndex(r=>!r.logged && !r.skipped), row = rows[index];
+      s.loggerSetFlow = {...(s.loggerSetFlow||{}),[memberId]:{index,rest:false,editing:false,draft:{reps:row?.reps??'',kg:row?.kg??'',effort:null,miss:false}}};
+      persist(s);
+    },
     saveSet(memberId) {
       const s = session();
       const page = HybridSession.currentPage(s);
@@ -793,7 +806,7 @@
       if (lift.logMode === 'kg') patch.kg = kg;
       const next = HybridSession.logSet(s, f.index, patch, memberId);
       const rows = next.logs[memberId].sets;
-      const index = rows.findIndex(r => !r.logged);
+      const index = rows.findIndex(r => !r.logged && !r.skipped);
       let adjustment = null;
       if (index >= 0 && lift.logMode === 'kg') {
         const source = rows.slice(0,index).filter(r=>r.logged).at(-1);
