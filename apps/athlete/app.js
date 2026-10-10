@@ -1,6 +1,6 @@
 const BRAIN_BUILD = 'THE-brain-v1';
 const STORAGE_KEY = 'THE-brain-v1';
-const APP_BUILD = 'strength-brain-v1.3.2';
+const APP_BUILD = 'strength-brain-v1.3.3';
 
 let otaInfo = { status: '', current: '', next: '', latest: '' };
 
@@ -658,7 +658,9 @@ async function refreshOtaStatus(force) {
 async function applyOtaUpdate() {
   if (!window.NativeBridge || typeof NativeBridge.applyLiveUpdate !== 'function') return;
   const r = await NativeBridge.applyLiveUpdate();
-  if (r === 'error' || r === 'unavailable') {
+  if (r === 'save-error') {
+    window.alert('Your workout could not be saved, so the app has not restarted. Try again.');
+  } else if (r === 'error' || r === 'unavailable') {
     window.alert('Could not restart into the update. Close the app fully and open it again.');
   }
 }
