@@ -46,3 +46,14 @@ test('picker search also patches #libResults without render()', () => {
   assert.equal(paints, 0);
   assert.match(results.innerHTML, /Bench Press/);
 });
+
+test('builder posts selected date and preserves existing workout days', () => {
+ const tid = S.library.templates[0].id;
+ LibraryView.open(tid);
+ assert.match(LibraryView.html(), /Post to calendar/);
+ LibraryView.calendar(tid,true);LibraryView.setDate('2026-11-15');
+ LibraryView.confirmDate();assert.equal(S.library.assignments['2026-11-15'],tid);assert.equal(S.tab,'training');
+ S.sessions={'2026-11-16':{phase:'summary'}};let warned=false;
+ globalThis.alert=()=>{warned=true;};LibraryView.calendar(tid,true);LibraryView.setDate('2026-11-16');LibraryView.confirmDate();
+ assert.equal(warned,true);assert.equal(S.library.assignments['2026-11-16'],undefined);
+});
