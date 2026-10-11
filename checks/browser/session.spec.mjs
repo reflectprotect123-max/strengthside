@@ -1,6 +1,6 @@
 async function actualNumber(page,label,value){await page.getByLabel(label,{exact:true}).click();const pad=page.locator('.log-pad');for(const key of String(value))await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();}
 import {test,expect} from 'playwright/test';
-async function enterNumber(page,label,value){await page.getByLabel(label,{exact:true}).click();const pad=page.getByRole('dialog',{name:label+' keypad'});for(const key of value)await pad.getByRole('button',{name:key==='-'?'–':key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();}
+async function enterSetReps(page,n,value){await page.getByRole('button',{name:`Set ${n} reps`,exact:true}).click();const pad=page.getByRole('dialog',{name:'Reps keypad'});for(const key of value)await pad.getByRole('button',{name:key==='-'?'–':key,exact:true}).click();await pad.getByRole('button',{name:'Close keypad',exact:true}).click();}
 async function builder(page){await page.goto('/');await page.getByRole('heading',{name:'Today',exact:true}).waitFor();await page.getByRole('button',{name:'Add',exact:true}).click();await page.getByRole('button',{name:'Create session',exact:true}).click();}
 test('custom exercise and custom circuit creation',async({page})=>{
  await builder(page);await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Create New Exercise'}).click();
@@ -16,12 +16,11 @@ test('build, schedule, play full session, reopen history and check next session'
  const title=page.locator('.lib-field').filter({has:page.locator('label',{hasText:/^Title$/})}).locator('input');
  await title.fill('Full CLI strength session');await title.press('Tab');
  await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();
- await page.getByRole('button',{name:'Edit',exact:true}).click();await expect(page.getByLabel('Target difficulty')).toHaveCount(0);await expect(page.getByLabel('Smallest weight increase (kg)')).toHaveCount(0);
- await page.getByLabel('First metric').selectOption('reps_range');await enterNumber(page,'Rep range','6-8');await page.getByRole('button',{name:'Done',exact:true}).click();
+ await expect(page.getByLabel('Target difficulty')).toHaveCount(0);await expect(page.getByLabel('Smallest weight increase (kg)')).toHaveCount(0);
+ for(const n of [1,2,3])await enterSetReps(page,n,'6-8');
  await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Create New Exercise'}).click();await page.locator('#libNewTitle').fill('Dumbbell Curl');await page.locator('#libNewC2').selectOption('weight_kg');await page.getByRole('button',{name:'Create',exact:true}).click();
- await page.locator('.lib-block').last().getByRole('button',{name:'Edit',exact:true}).click();
- await enterNumber(page,'Sets','2');
- await enterNumber(page,'Reps','5');await page.getByRole('button',{name:'Done',exact:true}).click();
+ await page.getByRole('button',{name:'Remove a set',exact:true}).last().click();
+ for(const n of [1,2])await page.locator('.lib-block').last().getByRole('button',{name:`Set ${n} reps`,exact:true}).click().then(async()=>{const pad=page.getByRole('dialog',{name:'Reps keypad'});await pad.getByRole('button',{name:'5',exact:true}).click();await pad.getByRole('button',{name:'Close keypad',exact:true}).click();});
  await expect(page.locator('.lib-block').first()).toContainText('3 x 6-8');await expect(page.locator('.lib-block').last()).toContainText('2 x 5');
  await page.getByRole('button',{name:'Post to calendar',exact:true}).click();const day=await page.getByLabel('Session date').inputValue();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
  await page.reload();await expect(page.locator('.trn-block--lift')).toHaveCount(2);await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.getByRole('button',{name:'Got It',exact:true}).click();
@@ -46,11 +45,15 @@ test('build, schedule, play full session, reopen history and check next session'
 });
 
 
-test('builder keypad shows dash only for Rep Range and preserves cancelled input',async({page},testInfo)=>{
- await builder(page);await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();await page.getByRole('button',{name:'Edit',exact:true}).click();
- await page.getByLabel('Reps',{exact:true}).click();let pad=page.getByRole('dialog');await expect(pad.getByRole('button',{name:'–',exact:true})).toHaveCount(0);await expect(pad.getByRole('button',{name:'.',exact:true})).toHaveCount(0);await pad.getByRole('button',{name:'9',exact:true}).click();await pad.getByRole('button',{name:'Cancel number entry'}).click();await expect(page.getByLabel('Reps',{exact:true})).toHaveValue('8');
- await page.getByLabel('First metric').selectOption('reps_range');await page.getByLabel('Rep range',{exact:true}).click();await page.screenshot({path:testInfo.outputPath('builder-range-keypad.png'),fullPage:true});await page.getByRole('button',{name:'Cancel number entry'}).click();await enterNumber(page,'Rep range','12-20');await expect(page.getByLabel('Rep range',{exact:true})).toHaveValue('12-20');
- await page.getByLabel('First metric').selectOption('reps');await expect(page.getByLabel('Reps',{exact:true})).toHaveValue('12');await page.getByRole('button',{name:'Done',exact:true}).click();await expect(page.locator('.lib-block')).toContainText('3 x 12');await page.reload();await expect(page.locator('.lib-block')).toContainText('3 x 12');
+test('builder keypad matches the outline logger pad and keeps a typed range',async({page},testInfo)=>{
+ await builder(page);await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();
+ await page.getByRole('button',{name:'Set 1 reps',exact:true}).click();const pad=page.getByRole('dialog',{name:'Reps keypad'});
+ await expect(pad.getByRole('button',{name:'Save',exact:true})).toHaveCount(0);await expect(pad.getByRole('button',{name:'–',exact:true})).toBeVisible();await expect(pad.getByRole('button',{name:'.',exact:true})).toHaveCount(0);
+ await page.screenshot({path:testInfo.outputPath('builder-range-keypad.png'),fullPage:true});
+ for(const key of ['1','2','–','2','0'])await pad.getByRole('button',{name:key,exact:true}).click();
+ await pad.getByRole('button',{name:'Close keypad',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Set 1 reps',exact:true})).toHaveText('12-20');
+ await expect(page.locator('.lib-block')).toContainText('12-20');await page.reload();await expect(page.locator('.lib-block')).toContainText('12-20');
 });
 
 test('logger numeric keypad uses whole reps and decimal weights',async({page})=>{

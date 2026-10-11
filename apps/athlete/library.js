@@ -281,7 +281,13 @@
   const parseRepTarget = root.TrainingCore.repTarget;
 
   function rxFor(block) {
-    if(Array.isArray(block.setTargets)&&!(block.columns||[]).includes('meters'))return block.setTargets.map(t=>t.purpose==='amrap'?'AMRAP':t.reps.min===t.reps.max?String(t.reps.min):`${t.reps.min}-${t.reps.max}`).join(' / ');
+    if(Array.isArray(block.setTargets)&&!(block.columns||[]).includes('meters')){
+      const text=t=>t.purpose==='amrap'?'AMRAP':t.reps.min===t.reps.max?String(t.reps.min):`${t.reps.min}-${t.reps.max}`;
+      const work=block.setTargets.filter(t=>t.purpose!=='amrap').map(text);
+      const same=work.length>0&&work.every(t=>t===work[0]);
+      const body=same?`${work.length} x ${work[0]}`:work.join(' / ');
+      return block.setTargets.some(t=>t.purpose==='amrap')?`${body} / AMRAP`:body;
+    }
     const sets = Math.max(1, Number(block.setCount) || 3);
     const cols = block.columns || ['reps'];
     const hasReps = cols.some(c => c === 'reps' || c === 'reps_range');

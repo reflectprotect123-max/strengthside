@@ -65,7 +65,7 @@ test('exercise builder accepts authored reps without exposing engine controls', 
   S.library=HybridLibrary.addExercise(S.library,tid,{title:'Squat'});
   const bid=S.library.templates[0].blocks.at(-1).id;
   LibraryView.open(tid);LibraryView.editBlock(bid);
-  assert.match(LibraryView.html(),/>Reps<\/label>/);
+  assert.match(LibraryView.html(),/>Reps</);
   LibraryView.setCols('reps_range','weight_kg');
   assert.doesNotMatch(LibraryView.html(),/Target difficulty|Smallest weight/);
   LibraryView.setRepTarget('6–8');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6-8');
@@ -78,23 +78,27 @@ test('new exercise and circuit forms render without editor-only block references
 });
 
 
-test('numeric keypad follows the selected metric and cancels without changing values', () => {
+test('photo keypad edits one set in place and keeps a dash key', () => {
  const tid=S.library.templates[0].id;const bid=S.library.templates[0].blocks.at(-1).id;
  LibraryView.open(tid);LibraryView.editBlock(bid);LibraryView.setCols('reps','weight_kg');
- LibraryView.openNumberPad('reps');assert.doesNotMatch(LibraryView.html(),/numberKey\('–'\)/);
- LibraryView.numberKey('9');LibraryView.closeNumberPad();assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6');
- LibraryView.setRepTarget('10-12');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'6');
- LibraryView.setCols('reps_range','weight_kg');LibraryView.openNumberPad('reps');assert.match(LibraryView.html(),/numberKey\('–'\)/);
- for(const key of ['1','2','–','2','0']) LibraryView.numberKey(key);LibraryView.saveNumberPad();
+ LibraryView.openNumberPad('set:0');
+ assert.match(LibraryView.html(),/class="photo-key"/);
+ assert.match(LibraryView.html(),/numberKey\('–'\)/);
+ assert.doesNotMatch(LibraryView.html(),/class="blue"/);
+ LibraryView.numberKey('9');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'9');
+ LibraryView.closeNumberPad();
+ LibraryView.setRepTarget('10-12');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'9');
+ LibraryView.setCols('reps_range','weight_kg');LibraryView.openNumberPad('set:0');
+ for(const key of ['1','2','–','2','0']) LibraryView.numberKey(key);
  assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'12-20');
  LibraryView.setCols('reps','weight_kg');assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).repTarget,'12');
- LibraryView.openNumberPad('sets');LibraryView.numberKey('0');LibraryView.saveNumberPad();assert.match(LibraryView.html(),/Enter 1–12 sets/);LibraryView.closeNumberPad();
 });
 
 test('per-set editor accepts unequal reps and authors final AMRAP automatically',()=>{
  const tid=S.library.templates[0].id,bid=S.library.templates[0].blocks.at(-1).id;
- LibraryView.open(tid);LibraryView.editBlock(bid);LibraryView.editEachSet();
- assert.match(LibraryView.html(),/Each set/);LibraryView.setTargetReps(0,'10');LibraryView.setTargetReps(1,'8');LibraryView.setTargetReps(2,'6');LibraryView.toggleAmrap();
+ LibraryView.open(tid);LibraryView.editBlock(bid);
+ assert.match(LibraryView.html(),/Set 1 reps/);assert.match(LibraryView.html(),/Add final AMRAP/);
+ LibraryView.setTargetReps(0,'10');LibraryView.setTargetReps(1,'8');LibraryView.setTargetReps(2,'6');LibraryView.toggleAmrap();
  const block=HybridLibrary.template(S.library,tid).blocks.at(-1);
  assert.deepEqual(block.setTargets.map(t=>t.reps?.min??null),[10,8,6,null]);
  assert.equal(block.setTargets[3].loadRule.kind,'first_working_set');

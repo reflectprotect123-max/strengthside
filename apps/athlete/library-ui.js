@@ -103,7 +103,7 @@
         body += `<div class="lib-ss">− Superset</div>`;
       }
       const meta = b.kind === 'circuit' ? 'For Completion' : root.HybridLibrary.rxFor(b);
-      body += `<article class="lib-block">
+      body += b.kind === 'lift' ? exerciseCardHtml(b) : `<article class="lib-block">
         <div class="lib-block-top">
           <span class="lib-letter">${esc(b.letter)}</span>
           <div style="flex:1">
@@ -142,6 +142,48 @@
       </div>`;
   }
 
+  function blockTargets(b) {
+    try { return root.StrengthTargets.normalize({ ...b, repTarget: b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8') }); }
+    catch { return []; }
+  }
+  function repText(target) {
+    if (!target?.reps) return '';
+    return target.reps.min === target.reps.max ? String(target.reps.min) : `${target.reps.min}-${target.reps.max}`;
+  }
+  function exerciseCardHtml(b) {
+    const targets = blockTargets(b);
+    const unit = (b.columns || []).includes('weight_lb') ? 'Lb' : 'Kg';
+    const rows = targets.map((t, i) => {
+      const n = i + 1;
+      if (t.purpose === 'amrap') {
+        return `<span>${n}</span><div class="lib-cell" aria-label="Set ${n} AMRAP">AMRAP</div><div class="lib-cell">Set 1 weight</div>`;
+      }
+      return `<span>${n}</span><button type="button" class="lib-cell" aria-label="Set ${n} reps" onclick="LibraryView.openNumberPad('set:${i}','${esc(b.id)}')">${esc(repText(t))}</button><div class="lib-cell"></div>`;
+    }).join('');
+    const amrap = targets.at(-1)?.purpose === 'amrap';
+    return `<article class="lib-block lib-ex" data-block="${esc(b.id)}">
+      <div class="lib-ex-top">
+        <span class="lib-letter">${esc(b.letter)}</span>
+        <h3>${esc(b.title)}</h3>
+        <button type="button" class="lib-danger" aria-label="Delete ${esc(b.title)}" onclick="LibraryView.removeBlock('${esc(b.id)}')">Delete</button>
+        <button type="button" class="lib-done" onclick="LibraryView.closeNumberPad()">Done</button>
+      </div>
+      <div class="meta">${esc(root.HybridLibrary.rxFor(b))}</div>
+      <label class="lib-notes"><textarea placeholder="Add notes or instructions here" onchange="LibraryView.patchBlock({notes:this.value.split('\\n').filter(Boolean)},'${esc(b.id)}')">${esc((b.notes || []).join('\n'))}</textarea></label>
+      <div class="lib-grid">
+        <span></span><div class="lib-grid-h">Reps</div><div class="lib-grid-h">${unit}</div>
+        ${rows}
+      </div>
+      <p role="status">${esc(ui().repError || ui().targetError || '')}</p>
+      <div class="lib-stepper">
+        <button type="button" class="lib-step" aria-label="Remove a set" onclick="LibraryView.nudgeSets(-1,'${esc(b.id)}')">−</button>
+        <span>Set</span>
+        <button type="button" class="lib-step" aria-label="Add a set" onclick="LibraryView.nudgeSets(1,'${esc(b.id)}')">+</button>
+      </div>
+      <button type="button" class="lib-text-btn" onclick="LibraryView.toggleAmrap('${esc(b.id)}')">${amrap ? 'Remove AMRAP' : 'Add final AMRAP'}</button>
+    </article>`;
+  }
+
   function editSheetHtml() {
     const u = ui();
     if (u.screen !== 'edit' || !u.bid) return '';
@@ -157,37 +199,7 @@
           <button type="button" class="lib-primary" onclick="LibraryView.closeSheet()">Done</button>
         </div></div>`;
     }
-    const c1 = (b.columns && b.columns[0]) || 'reps';
-    const c2 = (b.columns && b.columns[1]) || 'none';
-    let targets=[];try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||((b.columns||[]).includes('reps_range')?'8-12':'8')});}catch{}
-    const perSet=u.perSet||Array.isArray(b.setTargets);
-    const targetRows=perSet?`<div class="lib-field"><label>Each set</label>${targets.map((t,i)=>`<div class="lib-cols" style="align-items:center;margin:6px 0"><span>${i+1}</span>${t.purpose==='amrap'?`<button type="button" class="lib-chip" aria-label="Set ${i+1} AMRAP">AMRAP · Set 1 weight</button>`:`<input readonly aria-label="Set ${i+1} reps" value="${esc(t.reps.min===t.reps.max?t.reps.min:`${t.reps.min}-${t.reps.max}`)}" onclick="LibraryView.openNumberPad('set:${i}')">`}${i===targets.length-1?`<button type="button" class="lib-text-btn" onclick="LibraryView.toggleAmrap()">${t.purpose==='amrap'?'Remove AMRAP':'Add final AMRAP'}</button>`:''}</div>`).join('')}<p role="status">${esc(u.targetError||'The brain chooses difficulty and load automatically.')}</p></div>`:'';
-    return `<div class="lib-sheet" onclick="if(event.target===this)LibraryView.closeSheet()">
-      <div class="lib-sheet-card">
-        <h2>Edit exercise</h2>
-        <div class="lib-field"><label>Title</label><input value="${esc(b.title)}" onchange="LibraryView.patchBlock({title:this.value})"></div>
-        <div class="lib-field"><label for="libSets">Sets</label>
-          <input id="libSets" readonly value="${esc(b.setCount || 3)}" onclick="LibraryView.openNumberPad('sets')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();LibraryView.openNumberPad('sets')}">
-        </div>
-        ${(b.columns || ['reps']).some(c => ['reps','reps_range'].includes(c)) && !(b.columns || []).includes('meters') ? `<div class="lib-field">
-          <label for="libRepTarget">${(b.columns || []).includes('reps_range') ? 'Rep range' : 'Reps'}</label>
-          <input id="libRepTarget" readonly value="${esc(b.repTarget || ((b.columns || []).includes('reps_range') ? '8-12' : '8'))}" onclick="LibraryView.openNumberPad('reps')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();LibraryView.openNumberPad('reps')}" aria-describedby="libRepHelp">
-          <p id="libRepHelp" role="status">${esc(u.repError || ((b.columns || []).includes('reps_range') ? 'Enter a rep range, for example 6-8.' : 'Enter a whole rep count, for example 8.'))}</p>
-        </div>` : ''}
-        ${(b.columns || ['reps']).some(c=>['reps','reps_range'].includes(c))?`<button type="button" class="lib-chip" onclick="LibraryView.editEachSet()">${perSet?'Use same reps':'Edit each set'}</button>${targetRows}`:''}
-        <div class="lib-field"><label>What do you want to track?</label>
-          <div class="lib-cols">
-            <select id="libCol1" aria-label="First metric" onchange="LibraryView.setCols(this.value, document.getElementById('libCol2').value)">
-              ${trackOptions(c1)}
-            </select>
-            <select id="libCol2" aria-label="Second metric" onchange="LibraryView.setCols('${esc(c1)}', this.value)">
-              ${trackOptions(c2)}
-            </select>
-          </div>
-        </div>
-        <div class="lib-field"><label>Notes</label><textarea onchange="LibraryView.patchBlock({notes:this.value.split('\\n').filter(Boolean)})">${esc((b.notes || []).join('\n'))}</textarea></div>
-        <button type="button" class="lib-primary" onclick="LibraryView.closeSheet()">Done</button>
-      </div></div>`;
+    return '';
   }
 
   function pickerHtml() {
@@ -284,17 +296,34 @@
       </div>`;
   }
 
+  function splitPad(buffer) {
+    const text = String(buffer || '');
+    const dash = text.indexOf('-');
+    return dash < 0 ? { left: text, dash: false, right: '' } : { left: text.slice(0, dash), dash: true, right: text.slice(dash + 1) };
+  }
+  function padValueHtml(pad) {
+    const parts = splitPad(pad.buffer);
+    const mark = (text, on) => on ? `<span class="photo-caret">${esc(text || '')}</span>` : esc(text);
+    if (!parts.dash) return mark(parts.left || '0', true);
+    return `${mark(parts.left, pad.side !== 'right')}-${mark(parts.right, pad.side === 'right')}`;
+  }
   function numberPadHtml() {
     if (!numberPad) return '';
-    const keys = root.TrainingCore.keys(numberPad);
-    return `<div class="lib-number-backdrop" role="dialog" aria-label="${numberPad.field === 'sets' ? 'Sets' : numberPad.range ? 'Rep range' : 'Reps'} keypad">
-      <div class="log-pad lib-number-pad">
-        <div class="log-pad-head"><div><span class="log-pad-val" aria-live="polite">${esc(numberPad.buffer || '0')}</span></div><button type="button" aria-label="Cancel number entry" onclick="LibraryView.closeNumberPad()">⌄</button></div>
-        <p role="status">${esc(numberPad.error || '')}</p>
-        <div class="log-keys">${keys.map(k => k === null ? '<span></span>' : `<button type="button" onclick="LibraryView.numberKey('${k}')">${k}</button>`).join('')}
-          <div class="log-pad-side" style="grid-column:4;grid-row:1 / span 4"><button type="button" class="blue" onclick="LibraryView.saveNumberPad()">Save</button><button type="button" class="blue" onclick="LibraryView.clearNumberPad()">Clear</button></div>
-        </div>
-      </div></div>`;
+    const key = (label, col, row, extra='') => `<button type="button" class="photo-key${extra}" style="grid-column:${col};grid-row:${row}" onclick="LibraryView.numberKey('${label}')">${label === '⌫' ? '⌫' : label}</button>`;
+    return `<div class="photo-pad" role="dialog" aria-label="Reps keypad">
+      <div class="photo-pad-top">
+        <div class="photo-pad-val" aria-live="polite">${padValueHtml(numberPad)}</div>
+        <span class="photo-pad-unit">REPS</span>
+        <button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="LibraryView.closeNumberPad()">⌄</button>
+      </div>
+      <div class="photo-pad-grid">
+        ${key('1',1,1)}${key('2',2,1)}${key('3',3,1)}${key('>',4,1)}
+        ${key('4',1,2)}${key('5',2,2)}${key('6',3,2)}${key('<',4,2)}
+        ${key('7',1,3)}${key('8',2,3)}${key('9',3,3)}
+        ${key('–',1,4)}${key('0',2,4)}${key('⌫',3,4,' photo-key-bs')}
+      </div>
+      <p role="status">${esc(numberPad.error || '')}</p>
+    </div>`;
   }
 
   function html() {
@@ -374,37 +403,52 @@
     },
     editBlock(bid) { numberPad = null; root.S.libUi.bid = bid; root.S.libUi.repError = null; root.S.libUi.targetError=null; save(); },
     closeSheet() { numberPad = null; root.S.libUi.bid = null; save(); },
-    patchBlock(patch) { setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch)); },
-    openNumberPad(field) {
-      const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
-      if (!b || (!['sets','reps'].includes(field)&&!/^set:\d+$/.test(field))) return;
-      const range = field !== 'sets' && (b.columns || []).includes('reps_range');
-      let value=field === 'sets' ? b.setCount || 3 : b.repTarget || (range ? '8-12' : '8');
-      if(/^set:\d+$/.test(field)){
-        let targets=[];try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||(range?'8-12':'8')});}catch{}
-        const t=targets[Number(field.split(':')[1])];if(!t||t.purpose==='amrap')return;
-        value=t.reps.min===t.reps.max?t.reps.min:`${t.reps.min}-${t.reps.max}`;
-      }
-      numberPad = { ...root.TrainingCore.numberEntry(null,{key:'reps',range}), field, buffer: String(value) };
+    patchBlock(patch, bid) { if (bid) root.S.libUi.bid = bid; setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch)); },
+    openNumberPad(field, bid) {
+      if (bid) root.S.libUi.bid = bid;
+      const use = field === 'reps' ? 'set:0' : field;
+      if (!/^set:\d+$/.test(use)) return;
+      const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(x => x.id === ui().bid);
+      const targets = b ? blockTargets(b) : [];
+      const target = targets[Number(use.split(':')[1])];
+      if (!b || !target || target.purpose === 'amrap') return;
+      numberPad = { field: use, buffer: repText(target), fresh: true, side: 'left', error: '' };
       save();
     },
     closeNumberPad() { numberPad = null; save(); },
-    clearNumberPad() { if (numberPad) { numberPad.buffer = ''; numberPad.fresh = false; numberPad.error = ''; save(); } },
     numberKey(key) {
       if (!numberPad) return;
-      numberPad = root.TrainingCore.numberKey(numberPad,key); save();
-    },
-    saveNumberPad() {
-      if (!numberPad) return;
+      const parts = splitPad(numberPad.buffer);
+      const side = numberPad.side === 'right' && parts.dash ? 'right' : 'left';
+      if (key === '>' || key === '–' || key === '-') { parts.dash = true; numberPad.side = 'right'; numberPad.fresh = true; }
+      else if (key === '<') { numberPad.side = 'left'; numberPad.fresh = true; }
+      else if (key === '⌫') {
+        if (side === 'right' && parts.right) parts.right = parts.right.slice(0, -1);
+        else if (side === 'right') { parts.dash = false; numberPad.side = 'left'; }
+        else parts.left = parts.left.slice(0, -1);
+        numberPad.fresh = false;
+      } else if (/^\d$/.test(key)) {
+        if (side === 'right') parts.right = numberPad.fresh ? key : parts.right + key;
+        else parts.left = numberPad.fresh ? key : parts.left + key;
+        numberPad.fresh = false;
+      } else return;
+      numberPad.buffer = parts.dash ? `${parts.left}-${parts.right}` : parts.left;
+      numberPad.error = '';
       const parsed = root.HybridLibrary.parseRepTarget(numberPad.buffer);
-      if (!parsed || (!numberPad.range && parsed.min !== parsed.max) || (numberPad.field === 'sets' && parsed.max > 12)) {
-        numberPad.error = numberPad.field === 'sets' ? 'Enter 1–12 sets.' : numberPad.range ? 'Enter positive whole reps, with the lower number first.' : 'Enter one positive whole rep count.';
-        save(); return;
-      }
-      const field = numberPad.field; numberPad = null;
-      if (field === 'sets') LibraryView.patchBlock({setCount: parsed.min});
-      else if(/^set:\d+$/.test(field))LibraryView.setTargetReps(Number(field.split(':')[1]),parsed.text);
-      else { LibraryView.setRepTarget(parsed.text); save(); }
+      if (parsed) LibraryView.setTargetReps(Number(numberPad.field.split(':')[1]), parsed.text);
+      else save();
+    },
+    saveNumberPad() { LibraryView.closeNumberPad(); },
+    nudgeSets(dir, bid) {
+      if (bid) root.S.libUi.bid = bid;
+      const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(x => x.id === ui().bid);
+      if (!b) return;
+      const targets = blockTargets(b);
+      const amrap = targets.filter(t => t.purpose === 'amrap');
+      const work = targets.filter(t => t.purpose !== 'amrap');
+      if (dir > 0 && work.length < 12) work.push({ purpose: 'working', reps: work.at(-1)?.reps || { min: 8, max: 8 }, loadRule: { kind: 'adaptive' }, toFailure: false });
+      else if (dir < 0 && work.length > 1) work.pop();
+      LibraryView.patchBlock({ setTargets: work.concat(amrap) });
     },
     setRepTarget(value) {
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
@@ -424,9 +468,12 @@
       const b=root.HybridLibrary.template(lib(),ui().tid)?.blocks.find(b=>b.id===ui().bid),parsed=root.HybridLibrary.parseRepTarget(value);if(!b||!parsed)return;
       let targets;try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||'8'});}catch(e){root.S.libUi.targetError=e.message;save();return;}
       targets[index]={...targets[index],purpose:'working',reps:{min:parsed.min,max:parsed.max},loadRule:{kind:'adaptive'},toFailure:false};
-      try{root.StrengthTargets.validate(targets);root.S.libUi.targetError=null;LibraryView.patchBlock({setTargets:targets});}catch(e){root.S.libUi.targetError=e.message;save();}
+      const range=targets.some(t=>t.purpose==='working'&&t.reps&&t.reps.max>t.reps.min);
+      const columns=(b.columns||['reps']).map(c=>c==='reps'||c==='reps_range'?(range?'reps_range':'reps'):c);
+      try{root.StrengthTargets.validate(targets);root.S.libUi.targetError=null;LibraryView.patchBlock({setTargets:targets,columns});}catch(e){root.S.libUi.targetError=e.message;save();}
     },
-    toggleAmrap(){
+    toggleAmrap(bid){
+      if (bid) root.S.libUi.bid = bid;
       const b=root.HybridLibrary.template(lib(),ui().tid)?.blocks.find(b=>b.id===ui().bid);if(!b)return;
       let targets;try{targets=root.StrengthTargets.normalize({...b,repTarget:b.repTarget||'8'});}catch(e){root.S.libUi.targetError=e.message;save();return;}
       const last=targets.at(-1);
