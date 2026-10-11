@@ -1,0 +1,12 @@
+---
+description: Shared skill pack, build workflow and Codex review ownership
+alwaysApply: true
+---
+
+# Skills and build workflow
+
+Read `docs/cursor-setup.md` at the start of work. Run `node scripts/setup-cursor-skills.mjs --check`; if files are missing, run it without `--check`. It preserves differing local files: report conflicts rather than overwriting them.
+
+The complete saved collection is in `.agents`. Cursor's active skills are in `.cursor/skills`. Select the few relevant skills for the task and read their SKILL.md before applying them; do not load every design style or activate compression automatically. Existing app design and the user's instructions take precedence over generic skill examples. Confirm required tools exist before promising browser access, image generation, Bluetooth or cloud access.
+
+Cursor implements and tests on one owned branch. Codex reviews, resolves integration issues, and handles merging and releases when the user authorizes them. Cursor must hand back a draft PR with tests, limitations and any release requirements. Do not merge, publish Capgo, deploy services, change production configuration, or commit directly to main. These are workflow rules, not a replacement for GitHub access controls.

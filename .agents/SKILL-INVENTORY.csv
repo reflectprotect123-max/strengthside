@@ -1,0 +1,135 @@
+archive_folder,kind,files,valid_frontmatter,source_locations
+caveman,local-skill,2,True,/workspace/strengthside-daily-checkin/.agents/skills/caveman; /workspace/strengthside-daily-checkin/.cursor/skills/caveman; /workspace/strengthside/.cursor/skills/caveman; /workspace/strengthside/.agents/skills/caveman
+frontend-design,local-skill,2,True,/workspace/strengthside-daily-checkin/.agents/skills/frontend-design; /workspace/strengthside-daily-checkin/.cursor/skills/frontend-design; /workspace/strengthside/.cursor/skills/frontend-design; /workspace/strengthside/.agents/skills/frontend-design
+mem-search,local-skill,1,True,/workspace/strengthside-daily-checkin/.agents/skills/mem-search; /workspace/strengthside-daily-checkin/.cursor/skills/mem-search; /workspace/strengthside/.cursor/skills/mem-search; /workspace/strengthside/.agents/skills/mem-search
+replica-architect,local-skill,2,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-architect
+replica-backend,local-skill,1,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-backend
+replica-brand,local-skill,2,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-brand
+replica-build,local-skill,1,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-build
+replica-deploy,local-skill,2,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-deploy
+replica-design,local-skill,3,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-design
+replica-diff,local-skill,3,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-diff
+replica-entrepreneur,local-skill,3,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-entrepreneur
+replica-launch,local-skill,3,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-launch
+replica-recon,local-skill,3,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-recon
+replica-test,local-skill,4,True,/workspace/strengthside-daily-checkin/.agents/skills/replica-test
+brainstorming,local-skill,8,True,/workspace/strengthside-daily-checkin/vendor/skills/brainstorming; /workspace/strengthside/.claude/skills/brainstorming; /workspace/strengthside-daily-checkin/.cursor/skills/brainstorming; /workspace/strengthside/.cursor/skills/brainstorming; /workspace/strengthside/vendor/skills/brainstorming
+cavecrew,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/cavecrew; /workspace/strengthside/.claude/skills/cavecrew; /workspace/strengthside/vendor/skills/cavecrew
+caveman--variant-2,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/caveman; /workspace/strengthside/.claude/skills/caveman; /workspace/strengthside/vendor/skills/caveman
+caveman-commit,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/caveman-commit; /workspace/strengthside/.claude/skills/caveman-commit; /workspace/strengthside/vendor/skills/caveman-commit
+caveman-compress,local-skill,10,True,/workspace/strengthside-daily-checkin/vendor/skills/caveman-compress; /workspace/strengthside/.claude/skills/caveman-compress; /workspace/strengthside/vendor/skills/caveman-compress
+caveman-help,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/caveman-help; /workspace/strengthside/.claude/skills/caveman-help; /workspace/strengthside/vendor/skills/caveman-help
+caveman-review,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/caveman-review; /workspace/strengthside/.claude/skills/caveman-review; /workspace/strengthside/vendor/skills/caveman-review
+caveman-stats,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/caveman-stats; /workspace/strengthside/.claude/skills/caveman-stats; /workspace/strengthside/vendor/skills/caveman-stats
+dispatching-parallel-agents,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/dispatching-parallel-agents; /workspace/strengthside/.claude/skills/dispatching-parallel-agents; /workspace/strengthside-daily-checkin/.cursor/skills/dispatching-parallel-agents; /workspace/strengthside/.cursor/skills/dispatching-parallel-agents; /workspace/strengthside/vendor/skills/dispatching-parallel-agents
+executing-plans,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/executing-plans; /workspace/strengthside/.claude/skills/executing-plans; /workspace/strengthside-daily-checkin/.cursor/skills/executing-plans; /workspace/strengthside/.cursor/skills/executing-plans; /workspace/strengthside/vendor/skills/executing-plans
+finishing-a-development-branch,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/finishing-a-development-branch; /workspace/strengthside/.claude/skills/finishing-a-development-branch; /workspace/strengthside-daily-checkin/.cursor/skills/finishing-a-development-branch; /workspace/strengthside/.cursor/skills/finishing-a-development-branch; /workspace/strengthside/vendor/skills/finishing-a-development-branch
+frontend-design--variant-2,local-skill,3,True,/workspace/strengthside-daily-checkin/vendor/skills/frontend-design; /workspace/strengthside/.claude/skills/frontend-design; /workspace/strengthside/vendor/skills/frontend-design
+install-skill,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/install-skill; /workspace/strengthside/.claude/skills/install-skill; /workspace/strengthside/vendor/skills/install-skill
+receiving-code-review,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/receiving-code-review; /workspace/strengthside/.claude/skills/receiving-code-review; /workspace/strengthside-daily-checkin/.cursor/skills/receiving-code-review; /workspace/strengthside/.cursor/skills/receiving-code-review; /workspace/strengthside/vendor/skills/receiving-code-review
+requesting-code-review,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/requesting-code-review; /workspace/strengthside/.claude/skills/requesting-code-review; /workspace/strengthside-daily-checkin/.cursor/skills/requesting-code-review; /workspace/strengthside/.cursor/skills/requesting-code-review; /workspace/strengthside/vendor/skills/requesting-code-review
+session-start-hook,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/session-start-hook; /workspace/strengthside/.claude/skills/session-start-hook; /workspace/strengthside/vendor/skills/session-start-hook
+subagent-driven-development,local-skill,7,True,/workspace/strengthside-daily-checkin/vendor/skills/subagent-driven-development; /workspace/strengthside/.claude/skills/subagent-driven-development; /workspace/strengthside-daily-checkin/.cursor/skills/subagent-driven-development; /workspace/strengthside/.cursor/skills/subagent-driven-development; /workspace/strengthside/vendor/skills/subagent-driven-development
+supabase,local-skill,4,True,/workspace/strengthside-daily-checkin/vendor/skills/supabase; /workspace/strengthside/.claude/skills/supabase; /workspace/strengthside/vendor/skills/supabase
+supabase-postgres-best-practices,local-skill,36,True,/workspace/strengthside-daily-checkin/vendor/skills/supabase-postgres-best-practices; /workspace/strengthside/.claude/skills/supabase-postgres-best-practices; /workspace/strengthside/vendor/skills/supabase-postgres-best-practices
+systematic-debugging,local-skill,11,True,/workspace/strengthside-daily-checkin/vendor/skills/systematic-debugging; /workspace/strengthside/.claude/skills/systematic-debugging; /workspace/strengthside-daily-checkin/.cursor/skills/systematic-debugging; /workspace/strengthside/.cursor/skills/systematic-debugging; /workspace/strengthside/vendor/skills/systematic-debugging
+test-driven-development,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/test-driven-development; /workspace/strengthside/.claude/skills/test-driven-development; /workspace/strengthside-daily-checkin/.cursor/skills/test-driven-development; /workspace/strengthside/.cursor/skills/test-driven-development; /workspace/strengthside/vendor/skills/test-driven-development
+ui-ux-pro-max,local-skill,46,True,/workspace/strengthside-daily-checkin/vendor/skills/ui-ux-pro-max; /workspace/strengthside/.claude/skills/ui-ux-pro-max; /workspace/strengthside/vendor/skills/ui-ux-pro-max
+using-git-worktrees,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/using-git-worktrees; /workspace/strengthside/.claude/skills/using-git-worktrees; /workspace/strengthside-daily-checkin/.cursor/skills/using-git-worktrees; /workspace/strengthside/.cursor/skills/using-git-worktrees; /workspace/strengthside/vendor/skills/using-git-worktrees
+using-superpowers,local-skill,6,True,/workspace/strengthside-daily-checkin/vendor/skills/using-superpowers; /workspace/strengthside/.claude/skills/using-superpowers; /workspace/strengthside-daily-checkin/.cursor/skills/using-superpowers; /workspace/strengthside/.cursor/skills/using-superpowers; /workspace/strengthside/vendor/skills/using-superpowers
+verification-before-completion,local-skill,1,True,/workspace/strengthside-daily-checkin/vendor/skills/verification-before-completion; /workspace/strengthside/.claude/skills/verification-before-completion; /workspace/strengthside-daily-checkin/.cursor/skills/verification-before-completion; /workspace/strengthside/.cursor/skills/verification-before-completion; /workspace/strengthside/vendor/skills/verification-before-completion
+writing-plans,local-skill,2,True,/workspace/strengthside-daily-checkin/vendor/skills/writing-plans; /workspace/strengthside/.claude/skills/writing-plans; /workspace/strengthside-daily-checkin/.cursor/skills/writing-plans; /workspace/strengthside/.cursor/skills/writing-plans; /workspace/strengthside/vendor/skills/writing-plans
+writing-skills,local-skill,7,True,/workspace/strengthside-daily-checkin/vendor/skills/writing-skills; /workspace/strengthside/.claude/skills/writing-skills; /workspace/strengthside-daily-checkin/.cursor/skills/writing-skills; /workspace/strengthside/.cursor/skills/writing-skills; /workspace/strengthside/vendor/skills/writing-skills
+agentic,local-skill,2,True,/workspace/strengthside/.claude/skills/agentic
+ant,local-skill,2,True,/workspace/strengthside/.claude/skills/ant
+artistic,local-skill,2,True,/workspace/strengthside/.claude/skills/artistic
+basic,local-skill,2,True,/workspace/strengthside/.claude/skills/basic
+bento,local-skill,2,True,/workspace/strengthside/.claude/skills/bento
+bold,local-skill,2,True,/workspace/strengthside/.claude/skills/bold
+brandkit,local-skill,1,True,/workspace/strengthside/.claude/skills/brandkit
+brutalism,local-skill,2,True,/workspace/strengthside/.claude/skills/brutalism
+brutalist-skill,local-skill,1,True,/workspace/strengthside/.claude/skills/brutalist-skill
+cafe,local-skill,2,True,/workspace/strengthside/.claude/skills/cafe
+claude,local-skill,2,True,/workspace/strengthside/.claude/skills/claude
+claymorphism,local-skill,2,True,/workspace/strengthside/.claude/skills/claymorphism
+clean,local-skill,2,True,/workspace/strengthside/.claude/skills/clean
+codex,local-skill,2,True,/workspace/strengthside/.claude/skills/codex
+colorful,local-skill,2,True,/workspace/strengthside/.claude/skills/colorful
+contemporary,local-skill,2,True,/workspace/strengthside/.claude/skills/contemporary
+corporate,local-skill,2,True,/workspace/strengthside/.claude/skills/corporate
+cosmic,local-skill,2,True,/workspace/strengthside/.claude/skills/cosmic
+creative,local-skill,2,True,/workspace/strengthside/.claude/skills/creative
+dithered,local-skill,2,True,/workspace/strengthside/.claude/skills/dithered
+doodle,local-skill,2,True,/workspace/strengthside/.claude/skills/doodle
+dramatic,local-skill,2,True,/workspace/strengthside/.claude/skills/dramatic
+editorial,local-skill,2,True,/workspace/strengthside/.claude/skills/editorial
+enterprise,local-skill,2,True,/workspace/strengthside/.claude/skills/enterprise
+expressive,local-skill,2,True,/workspace/strengthside/.claude/skills/expressive
+fantasy,local-skill,2,True,/workspace/strengthside/.claude/skills/fantasy
+fiction,local-skill,2,True,/workspace/strengthside/.claude/skills/fiction
+flat,local-skill,2,True,/workspace/strengthside/.claude/skills/flat
+friendly,local-skill,2,True,/workspace/strengthside/.claude/skills/friendly
+futuristic,local-skill,2,True,/workspace/strengthside/.claude/skills/futuristic
+geometric,local-skill,2,True,/workspace/strengthside/.claude/skills/geometric
+glassmorphism,local-skill,2,True,/workspace/strengthside/.claude/skills/glassmorphism
+gpt-tasteskill,local-skill,1,True,/workspace/strengthside/.claude/skills/gpt-tasteskill
+gradient,local-skill,2,True,/workspace/strengthside/.claude/skills/gradient
+image-to-code-skill,local-skill,1,True,/workspace/strengthside/.claude/skills/image-to-code-skill
+imagegen-frontend-mobile,local-skill,1,True,/workspace/strengthside/.claude/skills/imagegen-frontend-mobile
+imagegen-frontend-web,local-skill,1,True,/workspace/strengthside/.claude/skills/imagegen-frontend-web
+immersive,local-skill,2,True,/workspace/strengthside/.claude/skills/immersive
+impeccable,local-skill,2,True,/workspace/strengthside/.claude/skills/impeccable
+levels,local-skill,2,True,/workspace/strengthside/.claude/skills/levels
+lingo,local-skill,2,True,/workspace/strengthside/.claude/skills/lingo
+material,local-skill,2,True,/workspace/strengthside/.claude/skills/material
+matrix,local-skill,2,True,/workspace/strengthside/.claude/skills/matrix
+minimal,local-skill,2,True,/workspace/strengthside/.claude/skills/minimal
+minimalist-skill,local-skill,1,True,/workspace/strengthside/.claude/skills/minimalist-skill
+modern,local-skill,2,True,/workspace/strengthside/.claude/skills/modern
+mono,local-skill,2,True,/workspace/strengthside/.claude/skills/mono
+neobrutalism,local-skill,2,True,/workspace/strengthside/.claude/skills/neobrutalism
+neon,local-skill,2,True,/workspace/strengthside/.claude/skills/neon
+neumorphism,local-skill,2,True,/workspace/strengthside/.claude/skills/neumorphism
+output-skill,local-skill,1,True,/workspace/strengthside/.claude/skills/output-skill
+pacman,local-skill,2,True,/workspace/strengthside/.claude/skills/pacman
+paper,local-skill,2,True,/workspace/strengthside/.claude/skills/paper
+perspective,local-skill,2,True,/workspace/strengthside/.claude/skills/perspective
+playwright-cli,local-skill,11,True,/workspace/strengthside/.claude/skills/playwright-cli
+power,local-skill,2,True,/workspace/strengthside/.claude/skills/power
+premium,local-skill,2,True,/workspace/strengthside/.claude/skills/premium
+professional,local-skill,2,True,/workspace/strengthside/.claude/skills/professional
+pulse,local-skill,2,True,/workspace/strengthside/.claude/skills/pulse
+redesign-skill,local-skill,1,True,/workspace/strengthside/.claude/skills/redesign-skill
+refined,local-skill,2,True,/workspace/strengthside/.claude/skills/refined
+retro,local-skill,2,True,/workspace/strengthside/.claude/skills/retro
+riso,local-skill,2,True,/workspace/strengthside/.claude/skills/riso
+roku,local-skill,2,True,/workspace/strengthside/.claude/skills/roku
+sega,local-skill,2,True,/workspace/strengthside/.claude/skills/sega
+shadcn,local-skill,2,True,/workspace/strengthside/.claude/skills/shadcn
+sketch,local-skill,2,True,/workspace/strengthside/.claude/skills/sketch
+skeumorphism,local-skill,2,True,/workspace/strengthside/.claude/skills/skeumorphism
+sleek,local-skill,2,True,/workspace/strengthside/.claude/skills/sleek
+soft-skill,local-skill,1,True,/workspace/strengthside/.claude/skills/soft-skill
+spacious,local-skill,2,True,/workspace/strengthside/.claude/skills/spacious
+square,local-skill,2,True,/workspace/strengthside/.claude/skills/square
+stitch,local-skill,2,True,/workspace/strengthside/.claude/skills/stitch
+stitch-skill,local-skill,2,True,/workspace/strengthside/.claude/skills/stitch-skill
+storytelling,local-skill,2,True,/workspace/strengthside/.claude/skills/storytelling
+taste-skill,local-skill,1,True,/workspace/strengthside/.claude/skills/taste-skill
+taste-skill-v1,local-skill,1,True,/workspace/strengthside/.claude/skills/taste-skill-v1
+terracotta,local-skill,2,True,/workspace/strengthside/.claude/skills/terracotta
+tetris,local-skill,2,True,/workspace/strengthside/.claude/skills/tetris
+vibrant,local-skill,2,True,/workspace/strengthside/.claude/skills/vibrant
+vintage,local-skill,2,True,/workspace/strengthside/.claude/skills/vintage
+banner-design,local-skill,2,True,/workspace/strengthside-daily-checkin/.cursor/skills/banner-design; /workspace/strengthside/.cursor/skills/banner-design
+brand,local-skill,18,True,/workspace/strengthside-daily-checkin/.cursor/skills/brand; /workspace/strengthside/.cursor/skills/brand
+design,local-skill,35,True,/workspace/strengthside-daily-checkin/.cursor/skills/design; /workspace/strengthside/.cursor/skills/design
+design-system,local-skill,27,True,/workspace/strengthside-daily-checkin/.cursor/skills/design-system; /workspace/strengthside/.cursor/skills/design-system
+slides,local-skill,6,True,/workspace/strengthside-daily-checkin/.cursor/skills/slides; /workspace/strengthside/.cursor/skills/slides
+ui-styling,local-skill,16,True,/workspace/strengthside-daily-checkin/.cursor/skills/ui-styling; /workspace/strengthside/.cursor/skills/ui-styling
+ui-ux-pro-max--variant-2,local-skill,68,True,/workspace/strengthside-daily-checkin/.cursor/skills/ui-ux-pro-max; /workspace/strengthside/.cursor/skills/ui-ux-pro-max
+graphify,local-skill,10,True,/home/agent/.claude/skills/graphify
+documents,platform-builtin,78,True,/home/agent/.codex/skills/builtins/documents
+pdf,platform-builtin,4,True,/home/agent/.codex/skills/builtins/pdf
+presentations,platform-builtin,59,True,/home/agent/.codex/skills/builtins/presentations
+spreadsheets,platform-builtin,19,True,/home/agent/.codex/skills/builtins/spreadsheets
