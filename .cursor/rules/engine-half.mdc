@@ -1,0 +1,40 @@
+---
+description: Engine half ownership inside the shared strengthside repo
+globs: packages/adaptive/**/*,apps/athlete/conditioning/**/*,apps/engine-web/**/*,scripts/conditioning/**/*
+alwaysApply: false
+---
+
+# Engine half
+
+This repo holds two halves. This chat owns the **conditioning engine** only. Read `docs/ownership-halves.md` before editing.
+
+- Branch: `cursor/engine-<short-task>` from the current engine line. A known remote is `origin/codex/engine-web-cloudflare`. Confirm that checkout contains an engine root before editing.
+- Lane check: `pnpm run verify:engine`.
+- Capgo channel for this half is `engine-html`. Do not publish unless the user explicitly authorizes that release.
+- Do not merge to `main` from this chat unless the user explicitly asks.
+
+## Owned paths
+
+- `packages/adaptive/**` — Open / Next / Close conditioning math
+- `apps/athlete/conditioning/**` — engine HTML
+- `apps/engine-web/**` — hosted engine web
+- `scripts/conditioning/**` — engine build and zone configuration
+
+## Strength half is out of bounds
+
+Do not edit these in an engine branch:
+
+- `apps/shared/strength-*.js`
+- `apps/shared/training-core.js`
+- `apps/athlete/strength-*.js`
+- `apps/athlete/library*.js`
+- `apps/athlete/logger.js`
+- `apps/athlete/session.js`
+- `apps/athlete/release.json`
+- `checks/browser/strength-brain-v2.spec.mjs`
+
+`origin/main` can be a strength-only tree. `pnpm run verify:engine` exits 1 there until an engine root is checked out. Switch branches. Do not copy engine files onto `main` to make the command pass.
+
+## Shared files
+
+Stop and report overlap before editing `supabase/`, `apps/athlete/hybrid-integrations.js`, `apps/athlete/plan-sync.js`, `apps/athlete/whoop-common.js`, or `apps/shared/whoop-common.js`. One half edits a shared file at a time.

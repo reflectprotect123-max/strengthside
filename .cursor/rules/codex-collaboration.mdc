@@ -8,7 +8,8 @@ description: GitHub handoff rules for Cursor and Codex collaboration
 Read `docs/cursor-codex-workflow.md` before making changes.
 
 - Treat `origin/main` as the shared source of truth and start new work from an up-to-date `main`.
-- Work on one bounded `cursor/<short-task-name>` branch. Do not commit directly to `main`.
+- Pick one half before editing. Read `docs/ownership-halves.md`. Strength work uses `cursor/strength-<short-task>` and `pnpm run verify:strength`. Engine work uses `cursor/engine-<short-task>` and `pnpm run verify:engine`. Do not edit the other half in the same branch.
+- Work on one bounded branch. Do not commit directly to `main`.
 - Do not edit files that Codex is actively changing. If ownership is unclear, stop and report the overlap.
 - Inspect the current implementation and tests before editing; historical handoff documents may describe older branches.
 - Preserve the existing builder, logger, adaptive-brain, memory, and metric contracts unless the user's task explicitly changes one.

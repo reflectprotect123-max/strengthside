@@ -18,6 +18,8 @@ jobs:
           PGVER=$(ls /usr/lib/postgresql | sort -V | tail -1)
           sudo apt-get install -y "postgresql-$PGVER-pgvector"
       - run: pnpm install --frozen-lockfile
+      # verify includes check:browser, so this job needs its own browser install.
+      - run: pnpm exec playwright install --with-deps chromium
       # Blank slate 2026-09-03: core S&C engines deleted. `verify` is the single list.
       - run: pnpm run verify
       - name: Migrations apply (no environment gaps permitted here)
