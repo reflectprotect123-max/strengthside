@@ -10,8 +10,8 @@ This repo holds two halves. This chat owns the **conditioning engine** only. Rea
 
 - Branch: `cursor/engine-<short-task>` from the current engine line. A known remote is `origin/codex/engine-web-cloudflare`. Confirm that checkout contains an engine root before editing.
 - Lane check: `pnpm run verify:engine`.
-- Capgo channel for this half is `engine-html`. Do not publish unless the user explicitly authorizes that release.
-- Do not merge to `main` from this chat unless the user explicitly asks.
+- Capgo channel for this half is `engine-html`. Cursor hands releases to Codex; it does not publish.
+- Open a draft PR for Codex review. Cursor does not merge to `main`.
 
 ## Owned paths
 

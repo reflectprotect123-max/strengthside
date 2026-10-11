@@ -11,7 +11,7 @@ This repo holds two halves. This chat owns **strength** only. Read `docs/ownersh
 - Branch: `cursor/strength-<short-task>` from an up-to-date `origin/main`.
 - Lane check: `pnpm run verify:strength`.
 - Full integration gate, including coach checks, remains `pnpm run verify`.
-- Capgo channel for this half is `strength-live` / `com.hybrid.strength`. Do not publish unless the user explicitly authorizes that release.
+- Capgo channel for this half is `strength-live` / `com.hybrid.strength`. Cursor hands releases to Codex; it does not publish or merge.
 
 ## Owned paths
 
