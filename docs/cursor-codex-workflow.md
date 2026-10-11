@@ -16,6 +16,7 @@ Open `reflectprotect123-max/strengthside`, then run the checkout commands for th
 
 Before editing, Cursor must read:
 
+- `docs/cursor-setup.md` and check its skills with `node scripts/setup-cursor-skills.mjs --check`
 - `docs/ownership-halves.md`
 - `.cursor/rules/strength-half.mdc` or `.cursor/rules/engine-half.mdc`
 - `.cursor/rules/strength-brain-v2.mdc` for strength-half work
@@ -27,7 +28,7 @@ Keep each branch limited to one clear task. Do not have Cursor and Codex edit th
 
 ## Cursor's handoff
 
-Cursor should commit and push its branch, then report:
+Cursor should commit and push its branch, open a draft PR for Codex, then report:
 
 - branch name
 - commit hash

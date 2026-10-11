@@ -15,4 +15,4 @@ Read `docs/cursor-codex-workflow.md` before making changes.
 - Preserve the existing builder, logger, adaptive-brain, memory, and metric contracts unless the user's task explicitly changes one.
 - Add meaningful regression coverage and run the focused checks for the behavior changed.
 - Commit and push the Cursor branch, then report its branch, commit, changed files, tests, and limitations so Codex can review it.
-- Do not merge to `main`, run Capgo, deploy Supabase, publish releases, or change production configuration without the user's explicit authorization for that exact action.
+- Cursor does not merge or publish. Open a draft PR and hand it to Codex, which owns review, integration, merging and Capgo releases. Codex merges or releases only with the user's authorization for that action.
