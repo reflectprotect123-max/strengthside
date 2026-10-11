@@ -104,3 +104,26 @@ test('per-set editor accepts unequal reps and authors final AMRAP automatically'
  assert.equal(block.setTargets[3].loadRule.kind,'first_working_set');
  assert.doesNotMatch(LibraryView.html(),/Target difficulty|Smallest weight|Starting weight/);
 });
+
+test('inline builder restores metric selectors and reflects non-rep metrics without changing the logger contract',()=>{
+ const tid=S.library.templates[0].id,bid=S.library.templates[0].blocks.at(-1).id;
+ LibraryView.open(tid);LibraryView.editBlock(bid);
+ let html=LibraryView.html();
+ assert.match(html,/What do you want to track\?/);
+ assert.match(html,/First metric for Squat/);
+ assert.match(html,/Weight \(kg\)/);
+ LibraryView.setCols('seconds','none',bid);
+ const block=HybridLibrary.template(S.library,tid).blocks.at(-1);
+ assert.deepEqual(block.columns,['seconds']);
+ html=LibraryView.html();
+ assert.match(html,/>Seconds</);
+ assert.doesNotMatch(html,/Set 1 reps|Add final AMRAP/);
+ const before=block.setCount;
+ LibraryView.nudgeSets(1,bid);
+ assert.equal(HybridLibrary.template(S.library,tid).blocks.at(-1).setCount,before+1);
+ LibraryView.setCols('meters','weight_kg',bid);
+ assert.deepEqual(HybridLibrary.template(S.library,tid).blocks.at(-1).columns,['meters','weight_kg']);
+ html=LibraryView.html();
+ assert.match(html,/>Meters</);
+ assert.match(html,/>Weight \(kg\)</);
+});

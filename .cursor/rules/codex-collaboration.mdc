@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+description: GitHub handoff rules for Cursor and Codex collaboration
+---
+
+# Cursor and Codex collaboration
+
+Read `docs/cursor-codex-workflow.md` before making changes.
+
+- Treat `origin/main` as the shared source of truth and start new work from an up-to-date `main`.
+- Work on one bounded `cursor/<short-task-name>` branch. Do not commit directly to `main`.
+- Do not edit files that Codex is actively changing. If ownership is unclear, stop and report the overlap.
+- Inspect the current implementation and tests before editing; historical handoff documents may describe older branches.
+- Preserve the existing builder, logger, adaptive-brain, memory, and metric contracts unless the user's task explicitly changes one.
+- Add meaningful regression coverage and run the focused checks for the behavior changed.
+- Commit and push the Cursor branch, then report its branch, commit, changed files, tests, and limitations so Codex can review it.
+- Do not merge to `main`, run Capgo, deploy Supabase, publish releases, or change production configuration without the user's explicit authorization for that exact action.

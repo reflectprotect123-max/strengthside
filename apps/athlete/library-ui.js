@@ -150,17 +150,36 @@
     if (!target?.reps) return '';
     return target.reps.min === target.reps.max ? String(target.reps.min) : `${target.reps.min}-${target.reps.max}`;
   }
+  function isRepMetric(key) {
+    return key === 'reps' || key === 'reps_range';
+  }
+  function metricHeader(key) {
+    return key ? root.HybridLibrary.trackLabel(key) : '';
+  }
   function exerciseCardHtml(b) {
-    const targets = blockTargets(b);
-    const unit = (b.columns || []).includes('weight_lb') ? 'Lb' : 'Kg';
-    const rows = targets.map((t, i) => {
-      const n = i + 1;
-      if (t.purpose === 'amrap') {
-        return `<span>${n}</span><div class="lib-cell" aria-label="Set ${n} AMRAP">AMRAP</div><div class="lib-cell">Set 1 weight</div>`;
+    const columns = (b.columns && b.columns.length ? b.columns : ['reps']).slice(0, 2);
+    const c1 = columns[0] || 'reps';
+    const c2 = columns[1] || 'none';
+    const hasReps = columns.some(isRepMetric);
+    const targets = hasReps ? blockTargets(b) : [];
+    const rowCount = hasReps ? targets.length : Math.max(1, Number(b.setCount) || 3);
+    const rowMetricHtml = (key, target, n, i) => {
+      if (!key || key === 'none') return '<div></div>';
+      if (isRepMetric(key)) {
+        if (target?.purpose === 'amrap') return `<div class="lib-cell" aria-label="Set ${n} AMRAP">AMRAP</div>`;
+        return `<button type="button" class="lib-cell" aria-label="Set ${n} reps" onclick="LibraryView.openNumberPad('set:${i}','${esc(b.id)}')">${esc(repText(target))}</button>`;
       }
-      return `<span>${n}</span><button type="button" class="lib-cell" aria-label="Set ${n} reps" onclick="LibraryView.openNumberPad('set:${i}','${esc(b.id)}')">${esc(repText(t))}</button><div class="lib-cell"></div>`;
+      if (target?.purpose === 'amrap' && (key === 'weight_kg' || key === 'weight_lb')) return '<div class="lib-cell">Set 1 weight</div>';
+      return '<div class="lib-cell"></div>';
+    };
+    const rows = Array.from({ length: rowCount }, (_, i) => {
+      const t = targets[i];
+      const n = i + 1;
+      return `<span>${n}</span>${rowMetricHtml(c1, t, n, i)}${rowMetricHtml(c2, t, n, i)}`;
     }).join('');
     const amrap = targets.at(-1)?.purpose === 'amrap';
+    const metric1Id = `libMetric1_${b.id}`;
+    const metric2Id = `libMetric2_${b.id}`;
     return `<article class="lib-block lib-ex" data-block="${esc(b.id)}">
       <div class="lib-ex-top">
         <span class="lib-letter">${esc(b.letter)}</span>
@@ -170,8 +189,15 @@
       </div>
       <div class="meta">${esc(root.HybridLibrary.rxFor(b))}</div>
       <label class="lib-notes"><textarea placeholder="Add notes or instructions here" onchange="LibraryView.patchBlock({notes:this.value.split('\\n').filter(Boolean)},'${esc(b.id)}')">${esc((b.notes || []).join('\n'))}</textarea></label>
+      <div class="lib-field lib-metrics">
+        <label>What do you want to track?</label>
+        <div class="lib-cols">
+          <select id="${esc(metric1Id)}" aria-label="First metric for ${esc(b.title)}" onchange="LibraryView.setCols(this.value,document.getElementById('${esc(metric2Id)}').value,'${esc(b.id)}')">${trackOptions(c1)}</select>
+          <select id="${esc(metric2Id)}" aria-label="Second metric for ${esc(b.title)}" onchange="LibraryView.setCols(document.getElementById('${esc(metric1Id)}').value,this.value,'${esc(b.id)}')">${trackOptions(c2)}</select>
+        </div>
+      </div>
       <div class="lib-grid">
-        <span></span><div class="lib-grid-h">Reps</div><div class="lib-grid-h">${unit}</div>
+        <span></span><div class="lib-grid-h">${esc(metricHeader(c1))}</div><div class="lib-grid-h">${esc(metricHeader(c2))}</div>
         ${rows}
       </div>
       <p role="status">${esc(ui().repError || ui().targetError || '')}</p>
@@ -180,7 +206,7 @@
         <span>Set</span>
         <button type="button" class="lib-step" aria-label="Add a set" onclick="LibraryView.nudgeSets(1,'${esc(b.id)}')">+</button>
       </div>
-      <button type="button" class="lib-text-btn" onclick="LibraryView.toggleAmrap('${esc(b.id)}')">${amrap ? 'Remove AMRAP' : 'Add final AMRAP'}</button>
+      ${hasReps ? `<button type="button" class="lib-text-btn" onclick="LibraryView.toggleAmrap('${esc(b.id)}')">${amrap ? 'Remove AMRAP' : 'Add final AMRAP'}</button>` : ''}
     </article>`;
   }
 
@@ -443,6 +469,11 @@
       if (bid) root.S.libUi.bid = bid;
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(x => x.id === ui().bid);
       if (!b) return;
+      if (!(b.columns || []).some(isRepMetric)) {
+        const count = Math.max(1, Math.min(12, (Number(b.setCount) || 3) + (dir > 0 ? 1 : -1)));
+        LibraryView.patchBlock({ setCount: count });
+        return;
+      }
       const targets = blockTargets(b);
       const amrap = targets.filter(t => t.purpose === 'amrap');
       const work = targets.filter(t => t.purpose !== 'amrap');
@@ -482,14 +513,20 @@
       const valid=root.StrengthTargets.validate(targets);if(!valid.valid){root.S.libUi.targetError=valid.error;save();return;}
       root.S.libUi.targetError=null;LibraryView.patchBlock({setTargets:targets});
     },
-    setCols(c1, c2) {
+    setCols(c1, c2, bid) {
+      if (bid) root.S.libUi.bid = bid;
       const cols = [c1, c2].filter((k) => k && k !== 'none');
       const columns = cols.length ? cols : ['reps'];
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
       const parsed = root.HybridLibrary.parseRepTarget(b?.repTarget);
       const patch = {columns};
+      const hasReps = columns.some(isRepMetric);
+      if (!hasReps && Array.isArray(b?.setTargets)) {
+        patch.setCount = b.setTargets.length;
+        patch.setTargets = undefined;
+      }
       if (parsed && !columns.includes('reps_range')) patch.repTarget = String(parsed.min);
-      if(Array.isArray(b?.setTargets)&&!columns.includes('reps_range'))patch.setTargets=b.setTargets.map(t=>t.purpose==='amrap'?t:{...t,reps:{min:t.reps.min,max:t.reps.min}});
+      if(hasReps&&Array.isArray(b?.setTargets)&&!columns.includes('reps_range'))patch.setTargets=b.setTargets.map(t=>t.purpose==='amrap'?t:{...t,reps:{min:t.reps.min,max:t.reps.min}});
       numberPad = null; root.S.libUi.repError = null;
       setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch));
     },

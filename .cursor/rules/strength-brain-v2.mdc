@@ -5,7 +5,7 @@ description: Current strength app architecture, verification, and release guardr
 
 # Strength brain v2
 
-The active athlete app is `apps/athlete`; Android wraps its staged output in `apps/mobile/capacitor`. The current implementation branch is `feat/strength-brain-v2`.
+The active athlete app is `apps/athlete`; Android wraps its staged output in `apps/mobile/capacitor`. The integrated implementation lives on `main`; create a task branch before editing.
 
 Before changing adaptive strength behavior, read:
 

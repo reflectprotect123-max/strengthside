@@ -324,6 +324,7 @@
 .lib-done { min-height: 36px; padding: 0 14px; border: 1px solid #3a3a3c; border-radius: 10px; background: #1c1c1e; color: #fff; }
 .lib-notes { display: block; margin: 14px 0; }
 .lib-notes textarea { width: 100%; min-height: 72px; box-sizing: border-box; background: transparent; border: 1px solid #3a3a3c; border-radius: 12px; padding: 12px; color: #fff; }
+.lib-metrics { margin: 0 0 14px; }
 .lib-grid { display: grid; grid-template-columns: 36px 1fr 1fr; gap: 10px 12px; align-items: center; }
 .lib-grid-h { color: #1ba3ff; font-weight: 650; }
 .lib-cell { min-height: 44px; border-radius: 10px; background: #1c1c1e; color: #fff; width: 100%; }
