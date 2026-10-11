@@ -2,20 +2,23 @@
 
 GitHub `main` is the shared source of truth for the strength app. Cursor does bounded implementation work on a `cursor/*` branch; Codex reviews the diff, runs the integration checks, fixes any cross-system issues, and merges accepted work when the user explicitly asks.
 
+## Two halves, one repo
+
+Strength and the conditioning engine stay in this repo and are worked separately. Read `docs/ownership-halves.md` before editing.
+
+- Strength: branch `cursor/strength-<short-task>` from `origin/main`. Run `pnpm run verify:strength`.
+- Engine: branch `cursor/engine-<short-task>` from the current engine line. Run `pnpm run verify:engine`.
+- One branch edits one half. Shared Supabase and WHOOP files need a single owner for that change.
+
 ## Starting work in Cursor
 
-Open `reflectprotect123-max/strengthside`, then run:
-
-```bash
-git fetch origin
-git switch main
-git pull --ff-only
-git switch -c cursor/<short-task-name>
-```
+Open `reflectprotect123-max/strengthside`, then run the checkout commands for the half you are changing (`docs/ownership-halves.md`).
 
 Before editing, Cursor must read:
 
-- `.cursor/rules/strength-brain-v2.mdc`
+- `docs/ownership-halves.md`
+- `.cursor/rules/strength-half.mdc` or `.cursor/rules/engine-half.mdc`
+- `.cursor/rules/strength-brain-v2.mdc` for strength-half work
 - `.cursor/rules/codex-collaboration.mdc`
 - this document
 - any task-specific handoff under `docs/`

@@ -44,7 +44,7 @@ Edit canonical shared modules under `apps/shared`, then run `node scripts/sync-t
 
 ## Verification
 
-Run focused tests while editing, then before claiming completion run:
+Run focused tests while editing. The strength lane gate is `pnpm run verify:strength`. Before claiming a cross-system change is ready, run:
 
 ```bash
 pnpm run verify
