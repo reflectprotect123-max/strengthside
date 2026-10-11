@@ -955,7 +955,7 @@ async function askCoach() {
   try {
     const coachUrl = (window.Whoop && typeof Whoop.fnUrl === 'function')
       ? Whoop.fnUrl('brain-coach')
-      : String(window.STRENGTH_CONFIG.coachProxyOrigin).replace(/\/$/, '') + '/.netlify/functions/brain-coach?product=strength';
+      : String(window.STRENGTH_CONFIG.supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co').replace(/\/$/, '') + '/functions/v1/brain-coach?product=strength';
     const res = await fetch(coachUrl, {
       method: 'POST',
       headers: {

@@ -1,9 +1,9 @@
 import {test,expect} from 'playwright/test';
-test('WHOOP account routes use Supabase while coach text uses its separate owner',async({page})=>{
+test('WHOOP and coach use the same Supabase Edge base',async({page})=>{
  await page.goto('/');await page.getByRole('heading',{name:'Today',exact:true}).waitFor();
  const routes=await page.evaluate(()=>Object.fromEntries(['whoop-connect','whoop-sync','strength-whoop-status','strength-whoop-disconnect','brain-coach'].map(k=>[k,Whoop.fnUrl(k)])));
- for(const key of ['whoop-connect','whoop-sync','strength-whoop-status','strength-whoop-disconnect'])expect(routes[key]).toContain('/functions/v1/'+key+'?product=strength');
- expect(routes['brain-coach']).toBe('https://thehybridengine1.netlify.app/.netlify/functions/brain-coach?product=strength');
+ for(const key of ['whoop-connect','whoop-sync','strength-whoop-status','strength-whoop-disconnect','brain-coach'])expect(routes[key]).toContain('/functions/v1/'+key+'?product=strength');
+ expect(routes['brain-coach']).toBe('https://orysjncrksmdfabpuftd.supabase.co/functions/v1/brain-coach?product=strength');
 });
 test('saving a generic metric stays a draft; missed sets and edits update memory explicitly',async({page})=>{
  await page.goto('/');await page.getByRole('button',{name:'Add',exact:true}).click();await page.getByRole('button',{name:'Create session',exact:true}).click();await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Create New Exercise'}).click();await page.locator('#libNewTitle').fill('Plank Hold');await page.locator('#libNewC1').selectOption('time_mmss');await page.getByRole('button',{name:'Create',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.getByRole('button',{name:'Got It',exact:true}).click();

@@ -30,7 +30,6 @@
     const name = functionName(path);
     const params = Object.assign({ product: hybridProduct() }, query || {});
     const q = '?' + new URLSearchParams(params);
-    if(name === 'brain-coach') return String(cfg().coachProxyOrigin).replace(/\/$/, '') + '/.netlify/functions/' + name + q;
     return resolveProxyBase() + '/' + name + q;
   }
   const ui = { busy: false, message: '' };
