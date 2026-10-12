@@ -12,6 +12,8 @@ require(join(dirname(fileURLToPath(import.meta.url)), 'strength-rts.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'strength-policy.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain-core.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'library.js'));
+require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain.js'));
+require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
 const Lib = globalThis.HybridLibrary;
 
 test('track lock includes reps kg meters and for completion', () => {
@@ -88,7 +90,9 @@ test('create catalog exercise with reps + meters is searchable', () => {
 });
 
 test('authored reps and ranges reach the session and progression engine', () => {
-      let st = Lib.createTemplate(Lib.emptyState(), {title:'Rep targets'});
+  require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
+  require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain.js'));
+  let st = Lib.createTemplate(Lib.emptyState(), {title:'Rep targets'});
   const tid=st.templates[0].id;
   st=Lib.addExercise(st,tid,{title:'Back Squat',setCount:3,columns:['reps','weight_kg']});
   const bid=st.templates[0].blocks[0].id;
@@ -135,8 +139,43 @@ test('warmup, cooldown, and tempo compile for display without changing the reps 
   assert.match(lift.prescription, /^3 x 8 · 31X0$/);
   assert.equal(lift.setTargets[0].reps.min, 8);
   assert.equal(lift.tempo, '31X0');
+  assert.deepEqual(HybridSession.parseRx(lift.prescription), { setCount: 3, targetReps: 8, targetRepMax: 8, isMax: false });
   st = Lib.placeTextBlock(st, tid, { role: 'warmup', instructions: '   ' });
   assert.equal(Lib.compile(st.templates[0]).blocks.some((b) => b.kind === 'warmup'), false);
+});
+
+test('tempo does not change the kilograms the brain would load', () => {
+  let st = Lib.createTemplate(Lib.emptyState(), { title: 'Monday' });
+  const tid = st.templates[0].id;
+  st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 3, columns: ['reps', 'weight_kg'] });
+  const bid = st.templates[0].blocks.find((b) => b.kind === 'lift').id;
+  st = Lib.patchBlock(st, tid, bid, { repTarget: '5', tempo: '31X0' });
+  const marked = HybridSession.pagesFromPlan(Lib.compile(st.templates[0])).find((p) => p.title === 'Back Squat');
+  st = Lib.patchBlock(st, tid, bid, { tempo: '' });
+  const plain = HybridSession.pagesFromPlan(Lib.compile(st.templates[0])).find((p) => p.title === 'Back Squat');
+  const decide = (page, reps, effort) => {
+    const row = { id: 'r0', targetId: page.setTargets[0].id, reps, effort, kg: 100, logged: true, purpose: 'working', workingIndex: 0 };
+    return StrengthBrain.next({ page, row, nextRow: { targetId: page.setTargets[1].id }, index: 1, state: { rows: [row] } });
+  };
+  assert.equal(marked.prescription, '3 x 5 · 31X0');
+  assert.equal(plain.prescription, '3 x 5');
+  assert.equal(marked.setCount, 3);
+  assert.deepEqual(marked.setTargets.map((t) => t.reps), plain.setTargets.map((t) => t.reps));
+  assert.deepEqual(decide(marked, 5, 'average'), decide(plain, 5, 'average'));
+  assert.deepEqual(decide(marked, 5, 'hard'), decide(plain, 5, 'hard'));
+  assert.equal(decide(marked, 5, 'average').kg, 100);
+  assert.equal(decide(marked, 5, 'average').reason, 'combined_projection_hold');
+  let hold = Lib.createTemplate(Lib.emptyState(), { title: 'Hold' });
+  const hid = hold.templates[0].id;
+  hold = Lib.addExercise(hold, hid, { title: 'Plank Hold', setCount: 3, columns: ['time_mmss'] });
+  const plank = hold.templates[0].blocks.find((b) => b.kind === 'lift').id;
+  hold = Lib.patchBlock(hold, hid, plank, { tempo: '31X0' });
+  const timed = Lib.compile(hold.templates[0]).blocks.find((b) => b.kind === 'lift');
+  const timedPage = HybridSession.pagesFromPlan(Lib.compile(hold.templates[0])).find((p) => p.title === 'Plank Hold');
+  assert.equal(timed.prescription, '3 x time · 31X0');
+  assert.equal(timedPage.setCount, 3);
+  assert.deepEqual(HybridSession.parseRx('3 x time · 31X0'), HybridSession.parseRx('3 x time'));
+  assert.deepEqual(HybridSession.parseRx('3x12'), { setCount: 3, targetReps: 12, targetRepMax: 12, isMax: false });
 });
 
 test('compile preserves arbitrary set targets and final first-working-weight AMRAP',()=>{

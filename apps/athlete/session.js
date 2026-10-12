@@ -1,6 +1,6 @@
 (function (root) {
   function parseRx(prescription) {
-    const raw = String(prescription || '');
+    const raw = String(prescription || '').replace(/\s·\s[0-9X]{4}(?=\s|$)/gi, '');
     const m = raw.match(/(\d+)\s*[x×]\s*(\d+|MAX)(?:\s*[-–—]\s*(\d+))?/i);
     if (!m) return { setCount: 3, targetReps: 8, targetRepMax: 8, isMax: false };
     const isMax = String(m[2]).toUpperCase() === 'MAX';
