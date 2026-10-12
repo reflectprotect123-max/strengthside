@@ -211,6 +211,22 @@
   padding: 4px;
 }
 
+.lib-wizard-next {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: var(--nav-h);
+  width: min(100%, 430px);
+  margin: 0;
+  padding: 10px 16px 14px;
+  background: #000;
+  z-index: 16;
+  box-sizing: border-box;
+}
+.shell-screen--library:has(.lib-wizard-next) {
+  padding-bottom: calc(var(--nav-h) + 88px);
+}
+
 .lib-row-btns {
   display: flex;
   gap: 12px;
@@ -326,8 +342,11 @@
 .lib-notes textarea { width: 100%; min-height: 72px; box-sizing: border-box; background: transparent; border: 1px solid #3a3a3c; border-radius: 12px; padding: 12px; color: #fff; }
 .lib-metrics { margin: 0 0 14px; }
 .lib-grid { display: grid; grid-template-columns: 36px 1fr 1fr; gap: 10px 12px; align-items: center; }
+.lib-grid.tempo-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: end; }
 .lib-grid-h { color: #1ba3ff; font-weight: 650; }
-.lib-cell { min-height: 44px; border-radius: 10px; background: #1c1c1e; color: #fff; width: 100%; }
+.lib-grid.tempo-grid .lib-grid-h { display: grid; gap: 6px; min-width: 0; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+.lib-cell { min-height: 44px; border-radius: 10px; background: #1c1c1e; color: #fff; width: 100%; box-sizing: border-box; }
+.lib-grid.tempo-grid .lib-cell { text-align: center; font-size: 22px; padding: 0; }
 .lib-stepper { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 18px; }
 .lib-step { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #1ba3ff; background: transparent; color: #1ba3ff; font-size: 28px; line-height: 1; }
 .photo-pad { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; max-width: 430px; margin: 0 auto; background: #141414; color: #fff; border-radius: 18px 18px 0 0; padding: 16px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }

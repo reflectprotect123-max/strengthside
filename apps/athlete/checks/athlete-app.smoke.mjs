@@ -36,6 +36,12 @@ must(html.includes('id="coachSheet"'), 'coach lives in + sheet');
 must(!html.includes('data-tab="chat"'), 'no Chat tab — coach is + only');
 must(js.includes("Whoop.fnUrl('brain-coach')"), 'coach uses Edge brain-coach on native');
 must(js.includes('function trainingTabHtml'), 'training tab screen');
+{
+  const trainingDay = js.slice(js.indexOf('function trainingBlocksHtml'), js.indexOf('function trainingTabHtml'));
+  must(!trainingDay.includes('Create session') && !trainingDay.includes('Add Exercise'), 'training day logs a session; building stays in the library');
+  must(html.includes('id="fabCreateSession"'), 'create session stays on the add menu');
+  must(js.includes("getElementById('fabCreateSession')"), 'training hides create session');
+}
 must(js.includes('TRAINING_DEMO'), 'HPP training demo plan');
 must(css.includes('.shell-screen--training'), 'training screen styles');
 must(css.includes('.trn-scroll'), 'training scroll container');

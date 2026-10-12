@@ -88,9 +88,7 @@ test('create catalog exercise with reps + meters is searchable', () => {
 });
 
 test('authored reps and ranges reach the session and progression engine', () => {
-  require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
-  require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain.js'));
-  let st = Lib.createTemplate(Lib.emptyState(), {title:'Rep targets'});
+      let st = Lib.createTemplate(Lib.emptyState(), {title:'Rep targets'});
   const tid=st.templates[0].id;
   st=Lib.addExercise(st,tid,{title:'Back Squat',setCount:3,columns:['reps','weight_kg']});
   const bid=st.templates[0].blocks[0].id;
@@ -120,6 +118,25 @@ test('older authored ranges retain their target and select Rep Range on upgrade'
  const lib=HybridLibrary.ensure({templates:[{id:'old',blocks:[{kind:'lift',columns:['reps','weight_kg'],repTarget:'6-8'}]}],assignments:{},catalog:{exercises:[],circuits:[]}});
  assert.deepEqual(lib.templates[0].blocks[0].columns,['reps_range','weight_kg']);
  assert.equal(lib.templates[0].blocks[0].repTarget,'6-8');
+});
+
+test('warmup, cooldown, and tempo compile for display without changing the reps the brain reads', () => {
+  let st = Lib.createTemplate(Lib.emptyState(), { title: 'Monday Strength', instructions: 'Stay strict on the lowering.' });
+  const tid = st.templates[0].id;
+  st = Lib.placeTextBlock(st, tid, { role: 'warmup', title: 'Warm-up', instructions: 'Foam roll hamstrings' });
+  st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 3, columns: ['reps', 'weight_kg'] });
+  const bid = st.templates[0].blocks.find((b) => b.kind === 'lift').id;
+  st = Lib.patchBlock(st, tid, bid, { tempo: '31X0' });
+  st = Lib.placeTextBlock(st, tid, { role: 'cooldown', title: 'Cool-down', instructions: 'Walk five minutes' });
+  const plan = Lib.compile(st.templates[0]);
+  const lift = plan.blocks.find((b) => b.kind === 'lift');
+  assert.equal(plan.blocks.find((b) => b.kind === 'warmup').title, 'Warm-up');
+  assert.equal(plan.blocks.find((b) => b.kind === 'recovery').title, 'Cool-down');
+  assert.match(lift.prescription, /^3 x 8 · 31X0$/);
+  assert.equal(lift.setTargets[0].reps.min, 8);
+  assert.equal(lift.tempo, '31X0');
+  st = Lib.placeTextBlock(st, tid, { role: 'warmup', instructions: '   ' });
+  assert.equal(Lib.compile(st.templates[0]).blocks.some((b) => b.kind === 'warmup'), false);
 });
 
 test('compile preserves arbitrary set targets and final first-working-weight AMRAP',()=>{
