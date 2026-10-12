@@ -542,11 +542,7 @@ function trnRecoveryHtml(block) {
 function trainingBlocksHtml(iso) {
   const plan = trainingPlanForDate(iso);
   if (!plan || !plan.blocks || !plan.blocks.length) {
-    return `<p class="trn-empty">Nothing scheduled for this day yet.</p>
-    <button type="button" class="trn-add-exercise" onclick="openLibraryForDay()">
-      <span class="trn-add-icon" aria-hidden="true">+</span>
-      <span>Add Exercise</span>
-    </button>`;
+    return `<p class="trn-empty">Nothing scheduled for this day yet.</p>`;
   }
   const head = plan.title
     ? `<div class="trn-session-name">${esc(plan.title)}</div>`
@@ -568,11 +564,7 @@ function trainingBlocksHtml(iso) {
     .join('');
   return `
     ${head}
-    ${body}
-    <button type="button" class="trn-add-exercise" onclick="openLibraryForDay()">
-      <span class="trn-add-icon" aria-hidden="true">+</span>
-      <span>Add Exercise</span>
-    </button>`;
+    ${body}`;
 }
 
 function trainingTabHtml() {
@@ -844,10 +836,14 @@ function closeFab() {
 function syncFab() {
   const layer = document.getElementById('fabLayer');
   if (!layer) return;
-  const show = !S.loggerOpen;
+  const wizardScreens = new Set(['instructions', 'warmup', 'exercises', 'picker', 'newEx', 'newCirc', 'reps', 'tempo', 'cooldown', 'overview', 'calendar']);
+  const building = S.tab === 'library' && S.libUi && S.libUi.flow === 'wizard' && wizardScreens.has(S.libUi.screen);
+  const show = !S.loggerOpen && !building;
   layer.classList.toggle('hidden', !show);
   layer.classList.toggle('open', !!S.fabOpen);
   layer.classList.toggle('fab-layer--training', S.tab === 'training');
+  const createBtn = document.getElementById('fabCreateSession');
+  if (createBtn) createBtn.classList.toggle('hidden', S.tab === 'training');
 }
 
 function fabAction(kind) {
@@ -955,7 +951,7 @@ async function askCoach() {
   try {
     const coachUrl = (window.Whoop && typeof Whoop.fnUrl === 'function')
       ? Whoop.fnUrl('brain-coach')
-      : String(window.STRENGTH_CONFIG.coachProxyOrigin).replace(/\/$/, '') + '/.netlify/functions/brain-coach?product=strength';
+      : String(window.STRENGTH_CONFIG.supabaseUrl || 'https://orysjncrksmdfabpuftd.supabase.co').replace(/\/$/, '') + '/functions/v1/brain-coach?product=strength';
     const res = await fetch(coachUrl, {
       method: 'POST',
       headers: {

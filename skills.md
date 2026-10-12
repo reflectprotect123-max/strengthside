@@ -1,5 +1,16 @@
 # Claude skills and plugins — the canonical record
 
+## Cursor and Codex saved collection — 11 October 2026
+
+The additional saved collection is recorded in `.agents/inventory.json`: 131
+unique active skills, three alternate versions and two cloud instruction
+snapshots. Cursor's complete active copy is tracked under `.cursor/skills`.
+`node scripts/setup-cursor-skills.mjs --check` verifies every expected file;
+running without `--check` restores missing files without overwriting differences.
+Cursor's existing UI/UX Pro Max variant is preserved. Cloud snapshots and
+platform-specific skills do not transfer host tools or credentials. See
+`docs/cursor-setup.md` for build requirements and the Cursor-to-Codex handoff.
+
 **This file is the single record of every Claude skill and plugin this project
 depends on. `scripts/ensure-skills.sh` is its executable half.**
 

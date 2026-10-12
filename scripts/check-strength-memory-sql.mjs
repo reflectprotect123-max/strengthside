@@ -14,12 +14,14 @@ try {
   run('docker',['run','-d','--name',name,'--mount',`type=bind,src=${root},dst=/repo,readonly`,'-e','POSTGRES_HOST_AUTH_METHOD=trust','postgres:17-bookworm']);
   let ready=false;
   for(let attempt=0;attempt<30;attempt++) {
-    const probe=spawnSync('docker',['exec',name,'pg_isready','-U','postgres'],{encoding:'utf8'});
+    // The image's temporary init server accepts Unix sockets before restarting.
+    // TCP becomes available only when the final server is ready for the tests.
+    const probe=spawnSync('docker',['exec',name,'pg_isready','-h','127.0.0.1','-U','postgres'],{encoding:'utf8'});
     if(probe.status===0){ready=true;break;}
     await new Promise(resolve=>setTimeout(resolve,500));
   }
   if(!ready)throw new Error('Throwaway Postgres did not become ready');
-  const output=run('docker',['exec','-w','/repo',name,'psql','-U','postgres','-v','ON_ERROR_STOP=1','-f','checks/sql/strength-brain-memory-test.sql']);
+  const output=run('docker',['exec','-w','/repo',name,'psql','-h','127.0.0.1','-U','postgres','-v','ON_ERROR_STOP=1','-f','checks/sql/strength-brain-memory-test.sql']);
   process.stdout.write(output);
 } finally {
   spawnSync('docker',['rm','-f',name],{encoding:'utf8'});

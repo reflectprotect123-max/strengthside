@@ -221,6 +221,31 @@
     return st;
   }
 
+  function placeTextBlock(state, tid, { role, title, instructions } = {}) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t || (role !== 'warmup' && role !== 'cooldown')) return st;
+    t.blocks = (t.blocks || []).filter((b) => b.role !== role);
+    const text = String(instructions || '').trim();
+    if (!text) return st;
+    const block = {
+      id: nid('blk'),
+      kind: 'circuit',
+      role,
+      title: title || (role === 'cooldown' ? 'Cool-down' : 'Warm-up'),
+      instructions: text,
+      track: 'for_completion',
+    };
+    if (role === 'cooldown') t.blocks.push(block);
+    else t.blocks.unshift(block);
+    return st;
+  }
+
+  function tempoText(value) {
+    const chars = String(value || '').toUpperCase().replace(/[^0-9X]/g, '').slice(0, 4);
+    return chars.length === 4 ? chars : '';
+  }
+
   function linkSuperset(state, tid, aId, bId) {
     const st = clone(ensure(state));
     const t = st.templates.find((x) => x.id === tid);
@@ -330,12 +355,15 @@
         const hasReps=(b.columns||[]).some(c=>c==='reps'||c==='reps_range');
         const targetInput={...b,repTarget:b.repTarget||((b.columns||[]).includes('reps_range')?'8-12':'8')};
         const setTargets=hasReps?root.StrengthTargets.normalize(targetInput):null;
+        const rx = rxFor(Array.isArray(b.setTargets)?{...b,setTargets}:b);
+        const tempo = tempoText(b.tempo);
         blocks.push({
           kind: 'lift',
           targetContractVersion: 2,
           letter: b.letter,
           title: b.title,
-          prescription: rxFor(Array.isArray(b.setTargets)?{...b,setTargets}:b),
+          prescription: tempo ? `${rx} · ${tempo}` : rx,
+          tempo: tempo || undefined,
           setTargets: setTargets?clone(setTargets):null,
           notes: b.notes || [],
           columns: (b.columns || ['reps']).slice(),
@@ -441,6 +469,8 @@
     removeBlock,
     moveBlock,
     patchBlock,
+    placeTextBlock,
+    tempoText,
     linkSuperset,
     unlinkSuperset,
     lettered,

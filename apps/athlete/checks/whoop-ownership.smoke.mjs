@@ -24,8 +24,10 @@ must(whoopJs.includes('x-hybrid-product') && whoopJs.includes('hybridProduct()')
 must(whoopJs.includes('Browser.open'), 'native WHOOP opens Capacitor Browser');
 must(whoopJs.includes('appUrlOpen'), 'native WHOOP listens for deep link');
 must(!whoopJs.includes('thehybridsystem.netlify.app'), 'whoop must not call dead athlete Netlify WHOOP');
-must(whoopJs.includes("if(name === 'brain-coach')"), 'coach text has a separate owner route');
+must(!whoopJs.includes('netlify/functions'), 'coach uses the same Supabase Edge base as WHOOP');
+must(whoopJs.includes("coach: 'brain-coach'"), 'coach function name is brain-coach');
 must(app.includes("Whoop.fnUrl('brain-coach')"), 'coach uses explicit owner route via Whoop.fnUrl');
+must(app.includes('/functions/v1/brain-coach'), 'coach fallback is Supabase Edge');
 const nativeConfig = JSON.parse(readFileSync(join(appRoot, '../mobile/capacitor/capacitor.config.json'), 'utf8'));
 must(nativeConfig.plugins?.CapacitorUpdater?.defaultChannel === 'strength-live', 'OTA pins Strength Capgo channel');
 

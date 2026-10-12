@@ -5,7 +5,7 @@ description: Current strength app architecture, verification, and release guardr
 
 # Strength brain v2
 
-The active athlete app is `apps/athlete`; Android wraps its staged output in `apps/mobile/capacitor`. The current implementation branch is `feat/strength-brain-v2`.
+The active athlete app is `apps/athlete`; Android wraps its staged output in `apps/mobile/capacitor`. The integrated implementation lives on `main`; create a task branch before editing.
 
 Before changing adaptive strength behavior, read:
 
@@ -44,7 +44,7 @@ Edit canonical shared modules under `apps/shared`, then run `node scripts/sync-t
 
 ## Verification
 
-Run focused tests while editing, then before claiming completion run:
+Run focused tests while editing. The strength lane gate is `pnpm run verify:strength`. Before claiming a cross-system change is ready, run:
 
 ```bash
 pnpm run verify
