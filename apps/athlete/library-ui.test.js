@@ -177,3 +177,77 @@ test('creating a session walks instructions, warm-up, the exercise picker, reps,
   assert.equal(plan.blocks.find((b) => b.title === 'Back Squat').prescription.endsWith('31X0'), true);
   assert.equal(plan.blocks.find((b) => b.title === 'Bench Press').tempo, undefined);
 });
+
+test('leaving or posting the wizard returns later edits to the normal editor', () => {
+  LibraryView.create();
+  const tid = S.libUi.tid;
+  LibraryView.goList();
+  assert.equal(S.libUi.flow, null);
+  LibraryView.open(tid);
+  LibraryView.picker('exercises');
+  assert.equal(S.libUi.screen, 'picker');
+  LibraryView.create();
+  LibraryView.calendar(S.libUi.tid, true);
+  LibraryView.setDate('2026-12-02');
+  LibraryView.confirmDate();
+  assert.equal(S.libUi.screen, 'list');
+  assert.equal(S.libUi.flow, null);
+});
+
+test('next on reps with every lift deleted moves to cool-down', () => {
+  LibraryView.create();
+  const tid = S.libUi.tid;
+  const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
+  S.libUi.tab = 'exercises';
+  LibraryView.togglePick(squat.id);
+  LibraryView.addPicked(false);
+  LibraryView.wizardNext();
+  const bid = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  LibraryView.removeBlock(bid);
+  assert.doesNotThrow(() => LibraryView.wizardNext());
+  assert.equal(S.libUi.screen, 'cooldown');
+});
+
+test('changing wizard lifts closes the reps keypad before it can write', () => {
+  LibraryView.create();
+  const tid = S.libUi.tid;
+  const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
+  const bench = S.library.catalog.exercises.find((e) => e.title === 'Bench Press');
+  S.libUi.tab = 'exercises';
+  LibraryView.togglePick(squat.id);
+  LibraryView.addPicked(false);
+  LibraryView.togglePick(bench.id);
+  LibraryView.addPicked(false);
+  LibraryView.wizardNext();
+  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  LibraryView.openNumberPad('set:0', first);
+  assert.match(LibraryView.html(), /Reps keypad/);
+  LibraryView.wizardNext();
+  assert.doesNotMatch(LibraryView.html(), /Reps keypad/);
+  LibraryView.numberKey('6');
+  const lifts = HybridLibrary.template(S.library, tid).blocks.filter((b) => b.kind === 'lift');
+  assert.equal(lifts[0].repTarget, '8');
+  assert.equal(lifts[1].repTarget, '8');
+});
+
+test('deleting the open block drops its keypad and selection', () => {
+  LibraryView.create();
+  const tid = S.libUi.tid;
+  const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
+  const bench = S.library.catalog.exercises.find((e) => e.title === 'Bench Press');
+  S.libUi.tab = 'exercises';
+  LibraryView.togglePick(squat.id);
+  LibraryView.addPicked(false);
+  LibraryView.togglePick(bench.id);
+  LibraryView.addPicked(false);
+  LibraryView.wizardNext();
+  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  LibraryView.openNumberPad('set:0', first);
+  LibraryView.removeBlock(first);
+  assert.equal(S.libUi.bid, null);
+  assert.doesNotMatch(LibraryView.html(), /Reps keypad/);
+  LibraryView.numberKey('4');
+  const left = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift');
+  assert.equal(left.title, 'Bench Press');
+  assert.equal(left.repTarget, '8');
+});

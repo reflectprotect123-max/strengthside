@@ -40,7 +40,10 @@
   }
 
   function go(screen, extra) {
-    root.S.libUi = { ...ui(), screen, ...(extra || {}) };
+    numberPad = null;
+    const next = { ...ui(), screen, ...(extra || {}) };
+    if (screen === 'list' || screen === 'edit') next.flow = null;
+    root.S.libUi = next;
     save();
   }
 
@@ -602,10 +605,12 @@
         return go('reps', { liftIndex: 0, bid: groups[0][0].id });
       }
       if (s === 'reps') {
+        if (!groups.length) return go('cooldown', { liftIndex: 0, bid: null });
         if (index + 1 < groups.length) return go('reps', { liftIndex: index + 1, bid: groups[index + 1][0].id });
         return go('tempo', { liftIndex: 0, bid: groups[0][0].id });
       }
       if (s === 'tempo') {
+        if (!groups.length) return go('cooldown', { liftIndex: 0, bid: null });
         if (index + 1 < groups.length) return go('tempo', { liftIndex: index + 1, bid: groups[index + 1][0].id });
         return go('cooldown', { liftIndex: 0 });
       }
@@ -619,12 +624,12 @@
       if (s === 'warmup') return go('instructions');
       if (s === 'exercises' || s === 'picker') return go('warmup');
       if (s === 'reps') {
-        if (index > 0) return go('reps', { liftIndex: index - 1, bid: groups[index - 1][0].id });
-        return go('exercises', { selected: [] });
+        if (index > 0 && groups[index - 1]) return go('reps', { liftIndex: index - 1, bid: groups[index - 1][0].id });
+        return go('exercises', { selected: [], bid: null });
       }
       if (s === 'tempo') {
-        if (index > 0) return go('tempo', { liftIndex: index - 1, bid: groups[index - 1][0].id });
-        if (!groups.length) return go('exercises', { selected: [] });
+        if (index > 0 && groups[index - 1]) return go('tempo', { liftIndex: index - 1, bid: groups[index - 1][0].id });
+        if (!groups.length) return go('exercises', { selected: [], bid: null });
         return go('reps', { liftIndex: groups.length - 1, bid: groups.at(-1)[0].id });
       }
       if (s === 'cooldown') {
@@ -736,7 +741,11 @@
       numberPad = null; root.S.libUi.repError = null;
       setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch));
     },
-    removeBlock(bid) { setLib(root.HybridLibrary.removeBlock(lib(), ui().tid, bid)); },
+    removeBlock(bid) {
+      numberPad = null;
+      if (ui().bid === bid) root.S.libUi.bid = null;
+      setLib(root.HybridLibrary.removeBlock(lib(), ui().tid, bid));
+    },
     reorder() {
       const t = root.HybridLibrary.template(lib(), ui().tid);
       if (!t || t.blocks.length < 2) return;
