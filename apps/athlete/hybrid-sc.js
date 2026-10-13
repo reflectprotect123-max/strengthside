@@ -55,8 +55,12 @@
   function lockerCardHtml() {
     return `
     <div class="card account-compact locker-card">
-      <div class="eyebrow">HYBRID STRENGTH</div>
-      <p class="stub">Strength training, sessions and progress.</p>
+      <div class="eyebrow">HYBRID S&amp;C</div>
+      <p class="stub">One login. Strength and Engine stay in their own lockers.</p>
+      <div class="locker-switch" role="group" aria-label="Locker">
+        <button type="button" class="btn primary" aria-pressed="true" onclick="switchHybridLocker('strength')">Strength</button>
+        <button type="button" class="btn" aria-pressed="false" onclick="switchHybridLocker('engine')">Engine</button>
+      </div>
     </div>`;
   }
 

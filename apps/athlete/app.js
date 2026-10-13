@@ -668,6 +668,12 @@ async function lookForAppUpdate() {
 
 }
 
+function switchHybridLocker(next) {
+  if (next !== 'engine') return;
+  save();
+  location.assign('engine/index.html');
+}
+
 function meHtml() {
   const w = S.settings.whoop || {};
   if (w.email) {
@@ -988,6 +994,7 @@ window.touchRecord = function () {
 window.num = num;
 window.resetBlankSlate = resetBlankSlate;
 window.setTab = setTab;
+window.switchHybridLocker = switchHybridLocker;
 window.selectDate = selectDate;
 window.goToday = goToday;
 window.toggleFab = toggleFab;

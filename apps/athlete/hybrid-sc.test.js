@@ -31,10 +31,13 @@ test('occupancy and calendar dots contain Strength only', () => {
   assert.equal(H.dotsHtml('2026-09-13', occ), '');
 });
 
-test('brand and account card expose no conditioning switch', () => {
-  const html = H.brandHtml() + H.lockerCardHtml();
-  assert.match(html, /HYBRID STRENGTH/);
-  assert.doesNotMatch(html, /Engine|Conditioning|switchHybridLocker/i);
+test('brand stays Strength; account card carries the Strength | Engine switch', () => {
+  assert.match(H.brandHtml(), /HYBRID STRENGTH/);
+  const card = H.lockerCardHtml();
+  assert.match(card, /role="group" aria-label="Locker"/);
+  assert.match(card, /aria-pressed="true" onclick="switchHybridLocker\('strength'\)">Strength</);
+  assert.match(card, /aria-pressed="false" onclick="switchHybridLocker\('engine'\)">Engine</);
+  assert.doesNotMatch(card, /plan sync|copy training/i);
 });
 
 test('applyOccupancyToState stores only Strength dates', () => {
