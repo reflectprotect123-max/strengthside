@@ -758,8 +758,13 @@ button {
 .progress-section-head .btn { min-height: 34px; padding: 5px 10px; font-size: 11px; }
 .progress-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
 .progress-metric { min-width: 0; padding: 12px 8px; border-radius: 10px; background: var(--oled-raised); text-align: center; }
-.progress-metric span, .progress-row small { display: block; color: var(--oled-muted); font-size: 10px; }
+.progress-metric span, .progress-metric small, .progress-row small { display: block; color: var(--oled-muted); font-size: 10px; }
 .progress-metric b { display: block; margin-top: 3px; font-size: 16px; }
+.progress-trends { margin-top: 16px; }
+.progress-trend { margin-top: 12px; }
+.progress-trend > span { color: var(--oled-muted); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+.progress-chart { width: 100%; height: auto; display: block; }
+.progress-trend-range { display: flex; justify-content: space-between; color: var(--oled-muted); font-size: 10px; }
 .progress-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--oled-line); }
 .progress-row b { display: block; font-size: 14px; }
 .progress-row > span { color: var(--oled-muted); font-size: 12px; white-space: nowrap; }

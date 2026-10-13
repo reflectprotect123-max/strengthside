@@ -62,6 +62,27 @@ test('routine sync retains previously imported history and reports its limited f
   assert.equal(body.historyTruncated, true);
 });
 
+test('day history asks for two records and leaves the stored archive in place', async () => {
+  pageCount = 0;
+  const limits = [];
+  const previous = globalThis.fetch;
+  globalThis.fetch = async url => {
+    const u = new URL(url);
+    if (u.pathname.endsWith('/recovery')) limits.push(Number(u.searchParams.get('limit')));
+    return previous(url);
+  };
+  try {
+    const body = await (await handler(request('?history=day'))).json();
+    assert.deepEqual(limits, [2]);
+    assert.equal(pageCount, 1);
+    assert.equal(body.historyTruncated, true);
+    assert.equal(body.dailyMetrics.length, 151);
+    assert.equal((await api.loadData('whoop', 's:test-user')).dailyMetrics.length, 151);
+  } finally {
+    globalThis.fetch = previous;
+  }
+});
+
 test('missing or invalid login cannot retrieve history or make WHOOP requests', async () => {
   pageCount = 0;
   for (const headers of [{}, { authorization: 'Bearer invalid-session' }]) {
