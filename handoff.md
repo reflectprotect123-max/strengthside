@@ -1,5 +1,18 @@
 # Handoff — TheStrengthEngine
 
+> **CURRENT HANDOFF — 14 October 2026:** Start with
+> [Cursor: shared session builder, Engine and adaptive learning](docs/cursor-handoff-engine-session-builder.md).
+> It covers the current Strength/Engine install, the three recent audits, the
+> exact mixed-session example, reuse of the 12 Blue/Green/Red methods, the
+> cleaned exercise catalogue, known strength-learning faults and staged delivery.
+>
+> The product checkpoint below this notice is historical. Its old app IDs,
+> deployment targets and ship ritual must not be used for this task. Current
+> reviewed main is `5f9db1f5`, release `1.3.10`, one install `com.hybrid.strength`.
+> Do not release, deploy, overwrite athlete data or change numerical policy merely
+> because this handoff exists. Work in bounded branches and hand changes to Codex
+> for integration review.
+
 > **Engine HTML release — 3 October 2026:** PR #228 merged. Capgo **1.1.6**
 > is live on **engine-html**, using the Android **1.1.1** shell. WHOOP sync
 > backend now imports main-sleep hours; Home keeps per-metric source dates.
