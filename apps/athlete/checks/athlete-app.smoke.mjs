@@ -36,6 +36,12 @@ must(html.includes('id="coachSheet"'), 'coach lives in + sheet');
 must(!html.includes('data-tab="chat"'), 'no Chat tab — coach is + only');
 must(js.includes("Whoop.fnUrl('brain-coach')"), 'coach uses Edge brain-coach on native');
 must(js.includes('function trainingTabHtml'), 'training tab screen');
+{
+  const trainingDay = js.slice(js.indexOf('function trainingBlocksHtml'), js.indexOf('function trainingTabHtml'));
+  must(!trainingDay.includes('Create session') && !trainingDay.includes('Add Exercise'), 'training day logs a session; building stays in the library');
+  must(html.includes('id="fabCreateSession"'), 'create session stays on the add menu');
+  must(js.includes("getElementById('fabCreateSession')"), 'training hides create session');
+}
 must(js.includes('TRAINING_DEMO'), 'HPP training demo plan');
 must(css.includes('.shell-screen--training'), 'training screen styles');
 must(css.includes('.trn-scroll'), 'training scroll container');
@@ -63,8 +69,17 @@ must(js.includes('HybridIntegrations.mergeIntoState'), 'shared WHOOP merges on l
 must(html.includes('Hybrid Strength'), 'Hybrid Strength title');
 must(js.includes('HybridSc.brandHtml()'), 'Home brand uses the Strength-only brand');
 must(js.includes('HybridSc.dotsHtml') && js.includes('S.hybridOccupancy'), 'calendar dots from hybrid occupancy');
-must(js.includes('HybridSc.lockerCardHtml()'), 'Me shows the Strength product card');
-must(!js.includes('switchHybridLocker'), 'no conditioning locker switch');
+must(js.includes('HybridSc.lockerCardHtml()'), 'Me shows the Strength | Engine switch card');
+must(js.includes('window.switchHybridLocker = switchHybridLocker') && js.includes("location.assign('engine/index.html')"), 'Me switch walks to the Engine house');
+{
+  const enginePath = join(root, 'engine/index.html');
+  must(existsSync(enginePath), 'Engine house exists at engine/index.html');
+  const engineHtml = existsSync(enginePath) ? readFileSync(enginePath, 'utf8') : '';
+  must(engineHtml.split('<script src="hallway.js"></script>').length === 2, 'Engine house loads the hallway once');
+  must(engineHtml.includes("const NATIVE_APP_ID = 'com.hybrid.strength';"), 'Engine WHOOP returns to this install');
+  must(engineHtml.includes("getLatest({channel:'strength-live'})") && !engineHtml.includes('engine-html'), 'Engine updates ride the Strength channel');
+  must(existsSync(join(root, 'engine/native-plugins.js')), 'Engine native plugins staged beside it');
+}
 must(!js.includes('engine_side') && !js.includes('peekEngineOccupancy'), 'no conditioning calendar sync');
 must(readFileSync(join(root, 'timer.js'), 'utf8').includes('Rest Timer'), 'rest timer picker');
 must(readFileSync(join(root, 'logger.js'), 'utf8').includes('Select Timer'), 'Select Timer chrome');
