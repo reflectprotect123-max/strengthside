@@ -226,8 +226,9 @@ function extractDailyRecovery(recoveryRecords: any[]) {
 }
 
 // STRENGTHSIDE-DESIGNED: bounded import of WHOOP observations, not a recovery formula.
-export async function fetchWhoopSnapshot(token: string, { historyDays = 10, allHistory = false } = {}) {
-  const count = allHistory ? 10000 : Math.max(7, Math.min(120, Math.round(finiteNumber(historyDays) ?? 10)));
+export async function fetchWhoopSnapshot(token: string, { historyDays = 10, allHistory = false, minimumDays = 7 } = {}) {
+  const floor = Math.max(1, Math.round(finiteNumber(minimumDays) ?? 7));
+  const count = allHistory ? 10000 : Math.max(floor, Math.min(120, Math.round(finiteNumber(historyDays) ?? 10)));
   const [recovery, cycle, sleep, workout] = await Promise.all([
     fetchCollection('/recovery', token, count),
     fetchCollection('/cycle', token, count),

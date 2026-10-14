@@ -27,15 +27,15 @@ async function refreshWithoutDiscardingRotation(owner: string, currentToken: any
   }
 }
 
-async function fetchSnapshotForOwner(owner: string, initialToken: any, historyDays: number, allHistory = false) {
+async function fetchSnapshotForOwner(owner: string, initialToken: any, historyDays: number, allHistory = false, minimumDays = 7) {
   let token = initialToken;
   if (tokenNeedsRefresh(token) && token.refresh_token) token = await refreshWithoutDiscardingRotation(owner, token);
   try {
-    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays, allHistory }) };
+    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays, allHistory, minimumDays }) };
   } catch (error) {
     if (!isWhoopUnauthorized(error) || !token.refresh_token) throw error;
     token = await refreshWithoutDiscardingRotation(owner, token);
-    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays, allHistory }) };
+    return { token, snapshot: await fetchWhoopSnapshot(token.access_token, { historyDays, allHistory, minimumDays }) };
   }
 }
 
@@ -55,9 +55,12 @@ Deno.serve(async (req) => {
     if (!token) return json({ connected: false }, 401);
     const params = new URL(req.url).searchParams;
     const backfill = params.get('backfill') === '1';
-    const allHistory = params.get('history') === 'all';
-    const historyDays = backfill ? 100 : 10;
-    const { snapshot } = await fetchSnapshotForOwner(owner, token, historyDays, allHistory);
+    const history = params.get('history');
+    const allHistory = history === 'all';
+    const dayHistory = history === 'day';
+    const historyDays = dayHistory ? 2 : (backfill ? 100 : 10);
+    const minimumDays = dayHistory ? 2 : 7;
+    const { snapshot } = await fetchSnapshotForOwner(owner, token, historyDays, allHistory, minimumDays);
     const saved = await syncRecord('whoop', owner, snapshot);
     return json({
       connected: true,

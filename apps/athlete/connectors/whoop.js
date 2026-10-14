@@ -267,21 +267,22 @@
   async function performSync(opts) {
     if (!opts.quiet) { ui.busy = true; ui.message = 'Syncing WHOOP…'; renderPanels(); }
     try {
-      const query = { backfill: '1', history: opts.full ? 'all' : 'recent' };
-      const body = await api(FN.sync, { query });
+      const plan = global.WhoopCommon.historyQuery(st(), opts);
+      const body = await api(FN.sync, { query: plan.query });
       let applied = false;
       if (body?.normalized) applied = !!applyNormalized(body.normalized, { syncedAt: body.syncedAt, sampleDate: body.normalized.date });
       const state = appState();
       const count = state && global.StrengthHome ? global.StrengthHome.importHistory(state, body || {}, todayIso()) : 0;
-      if (state && global.HybridIntegrations) {
-        for (const row of state.whoopHistory || []) global.HybridIntegrations.persistWhoop(state, row.date);
-      }
       const w = st();
       w.connected = body?.connected !== false;
       w.lastSyncAt = body?.syncedAt || new Date().toISOString();
+      global.WhoopCommon.noteHistoryBackfill(w, body, plan.pullAll);
+      if (state && global.HybridIntegrations) {
+        for (const row of state.whoopHistory || []) global.HybridIntegrations.persistWhoop(state, row.date);
+      }
       if (typeof global.save === 'function') global.save();
       ui.message = count || applied ? 'WHOOP synced · recovery, sleep and dated readings updated' : 'WHOOP connected · no dated readings available yet';
-      if (body?.historyTruncated) ui.message += ' · Older history reached the server limit';
+      if (plan.pullAll && body?.historyTruncated) ui.message += ' · Older history reached the server limit';
       if (typeof global.render === 'function') global.render();
       return body;
     } catch (err) {
