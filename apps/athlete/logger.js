@@ -803,6 +803,14 @@
         if (source) {
           adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
           rows[index].kg = adjustment.kg;
+          const lifted = Number(source.kg);
+          if ((source.purpose === 'ramp' || source.purpose === 'warmup') && Number.isFinite(lifted)) {
+            for (let i = index + 1; i < rows.length; i++) {
+              const later = rows[i];
+              if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
+              if (later.kg == null || Number(later.kg) < lifted) later.kg = lifted;
+            }
+          }
           source.loadDecision = adjustment;
         }
       }

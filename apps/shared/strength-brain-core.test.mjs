@@ -60,10 +60,22 @@ test('Easy warmup advances exactly one feasible equipment step even on a coarse 
  assert.equal(result.kg,11);assert.equal(result.reason,'warmup_step');
  const coarse={...p,equipmentStepKg:2.5};assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0}).kg,12.5);
  const ontoWork={page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:12.5,effort:'easy'},nextRow:{targetId:'a:set:0',purpose:'working'},index:1};
- assert.equal(B.suggest(ontoWork).kg,null);
+ assert.equal(B.suggest(ontoWork).kg,12.5);
  assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:40}}).kg,40);
  assert.equal(B.suggest({...ontoWork,page:{...coarse,workingKg:60}}).kg,60);
- assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:0}}).kg,0);
+ assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:0}}).kg,12.5);
+});
+test('a warmup heavier than the plan raises the work sets to the weight just lifted',()=>{
+ const p={...page([10,10,10]),workingKg:90,equipmentId:'barbell',equipmentStepKg:2.5,minimumKg:20,title:'Back Squat'};
+ const work={targetId:'a:set:0',purpose:'working',kg:90};
+ const heavy={purpose:'ramp',logged:true,reps:10,kg:100,effort:'average'};
+ assert.equal(B.suggest({page:p,row:heavy,nextRow:work,index:2,state:{rows:[heavy,work]}}).kg,100);
+ const light={...heavy,kg:60};
+ assert.equal(B.suggest({page:p,row:light,nextRow:work,index:2,state:{rows:[light,work]}}).kg,90);
+ const second=B.suggest({page:{...p,workingKg:0},row:{...heavy,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp',kg:0},index:1,state:{rows:[heavy]}});
+ assert.equal(second.kg,100);
+ const later=B.suggest({page:p,row:{targetId:'a:set:0',purpose:'working',logged:true,reps:10,kg:100,effort:'average'},nextRow:{targetId:'a:set:1',purpose:'working',kg:90},index:3,state:{freshE1rm:140,rows:[{purpose:'ramp',logged:true,kg:100,reps:10},{purpose:'working',logged:true,kg:100,reps:10,effort:'average'}]}});
+ assert.equal(later.kg,100);
 });
 test('AMRAP references actual first working load and never mutates it',()=>{
  const p=page([10]);p.setTargets.push({id:'a:set:1',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
