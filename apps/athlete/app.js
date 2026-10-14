@@ -111,9 +111,10 @@ function save() {
 }
 
 function today() {
-  const d = new Date();
-  const tz = d.getTimezoneOffset() * 60000;
-  return new Date(d.getTime() - tz).toISOString().slice(0, 10);
+  if (window.WhoopCommon && typeof WhoopCommon.sydneyToday === 'function') return WhoopCommon.sydneyToday();
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const get = (type) => parts.find((part) => part.type === type).value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
 }
 
 function addDays(iso, n) {
@@ -751,10 +752,14 @@ function progressHtml() {
   const recent = sessions.slice(0, 3);
   const readings = StrengthHome.selection(StrengthHome.records(S),today(),today()).metrics;
   const whoop = [
-    ['Sleep', readings.sleepPerformance?.value, '%'],
-    ['Recovery', readings.recovery?.value, '%'],
-    ['Strain', readings.strain?.value, ''],
-  ].map(([label, value, unit]) => `<div class="progress-metric"><span>${label}</span><b>${value === '' || value == null ? '—' : `${esc(value)}${unit}`}</b></div>`).join('');
+    ['Sleep', readings.sleepPerformance, '%'],
+    ['Recovery', readings.recovery, '%'],
+    ['Strain', readings.strain, ''],
+  ].map(([label, metric, unit]) => {
+    const value = metric?.value;
+    const dated = metric?.date && metric.date !== today() ? `<small>${esc(metric.date)}</small>` : '';
+    return `<div class="progress-metric"><span>${label}</span><b>${value === '' || value == null ? '—' : `${esc(value)}${unit}`}</b>${dated}</div>`;
+  }).join('');
   const workoutRows = recent.length
     ? recent.map((session) => {
       const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
@@ -781,6 +786,7 @@ function progressHtml() {
     <section class="card progress-section">
       <p class="eyebrow">WHOOP readings</p>
       <div class="progress-metrics">${whoop}</div>
+      ${whoopTrendHtml()}
     </section>
     <section class="card progress-section">
       <div class="progress-section-head"><p class="eyebrow">Strength history</p><button type="button" class="btn" onclick="openHistory()">See all</button></div>
@@ -791,6 +797,28 @@ function progressHtml() {
       ${goals}
     </section>
   </div>`;
+}
+
+function whoopTrendHtml() {
+  if (!window.ProgressChart || !window.StrengthHome) return '';
+  const rows = StrengthHome.records(S);
+  const end = today();
+  const start = rows[0] && rows[0].date ? rows[0].date : end;
+  const metrics = [
+    ['recovery', 'Recovery', 'var(--recovery-high)'],
+    ['hrv', 'HRV', 'var(--trn-blue)'],
+    ['rhr', 'Resting HR', 'var(--trn-blue)'],
+    ['sleep', 'Sleep', 'var(--sleep)'],
+  ];
+  const charts = metrics.map(([key, label, color]) => {
+    const drawn = ProgressChart.trend(rows, key, { start, end });
+    if (!drawn) return '';
+    const line = drawn.points.map((point) => `${point.x},${point.y}`).join(' ');
+    const dots = drawn.points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="3" fill="${color}"><title>${esc(point.date)}: ${esc(point.value)}</title></circle>`).join('');
+    return `<div class="progress-trend"><span>${label}</span><svg class="progress-chart" viewBox="0 0 320 110" role="img" aria-label="${esc(label)} trend; ${drawn.count} measurements"><path d="M12 94H308" stroke="currentColor" opacity="0.25"/><polyline fill="none" stroke="${color}" stroke-width="2" points="${line}"/>${dots}</svg><div class="progress-trend-range"><span>${esc(drawn.start)}</span><span>${esc(drawn.end)}</span></div></div>`;
+  }).join('');
+  if (!charts) return '';
+  return `<div class="progress-trends">${charts}<p class="stub">Lines connect recorded days. Days without a WHOOP score stay empty.</p></div>`;
 }
 
 function completeDailyProgressCheckin() {
