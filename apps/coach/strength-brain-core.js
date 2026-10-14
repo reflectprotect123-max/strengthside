@@ -37,7 +37,7 @@
       const ref=T.resolveReference(nextTarget,state.rows||[]);
       return response(ref,label,ref==null?'reference_unresolved':'first_working_set','exact_reference',p);
     }
-    if(!supported(page)||!positive(kg)||!nextTarget)return response(row?.kg??null,label,'unsupported_or_unknown','unknown',p);
+    if(!supported(page)||finiteLoad(kg)==null||!nextTarget)return response(finiteLoad(kg)!=null?kg:row?.kg??null,label,'unsupported_or_unknown','unknown',p);
     const currentTarget=targetFor(page,row,Math.max(0,index-1));
     const reps=Number(row.reps),miss=!!row.miss||!Number.isInteger(reps)||reps<1||(ordinary(currentTarget)&&reps<currentTarget.reps.min);
     if(miss||row.effort==='max_effort') {
@@ -46,8 +46,17 @@
       return response(reduced,label,atMin?'minimum_reached':'reduce_after_incomplete','low',p);
     }
     if(nextTarget.purpose==='warmup'||currentTarget?.purpose==='warmup'||row.purpose==='ramp') {
-      // Warmups are today's reversible calibration: advance at most one real equipment step.
-      const next=['very_easy','easy'].includes(row.effort)?E.next(kg,page)??kg:kg;
+      // A warm-up may calibrate the next warm-up. It cannot replace the planned work weight.
+      if(nextTarget.purpose==='working') {
+        const held=finiteLoad(nextRow?.kg),planned=finiteLoad(page?.workingKg);
+        const keep=held!=null?held:planned!=null?planned:null;
+        return response(keep,label,'working_load',keep==null?'unknown':'exact_reference',p);
+      }
+      const seeded=finiteLoad(nextRow?.kg);
+      let next=['very_easy','easy'].includes(row.effort)?E.next(kg,page)??kg:kg;
+      if(seeded!=null&&seeded>=next)next=seeded;
+      const ceiling=finiteLoad(page?.workingKg);
+      if(ceiling!=null&&next>ceiling)next=seeded!=null&&seeded<=ceiling?seeded:ceiling;
       return response(next,label,next>kg?'warmup_step':'warmup_hold','directional',p);
     }
     if(['very_easy','easy'].includes(row.effort)) {
@@ -63,6 +72,7 @@
     const result=E.round(raw,kg,page,{upCap:p.upCap,downCap:p.downCap});
     return response(result,label,result>kg?'combined_projection_up':result<kg?'combined_projection_down':'combined_projection_hold','broad',p);
   }
+  function finiteLoad(n){const x=Number(n);return Number.isFinite(x)&&x>=0?x:null;}
   const EPSILON=1e-7;
   function review(page,rows=[]) {
     let targets=[];try{targets=T.normalize(page);}catch{}

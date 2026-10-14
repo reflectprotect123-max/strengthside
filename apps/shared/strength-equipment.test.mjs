@@ -40,14 +40,16 @@ test('upward caps hold and coarse downward reductions stop at known minimum',()=
 });
 test('declared bar minima and offsets are respected',()=>{
  const bar={equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,title:'Bench Press'};
- assert.equal(E.starter(bar).kg,20);assert.equal(E.floor(19,bar),null);assert.equal(E.next(20,bar),22.5);
- assert.equal(E.next(1000,bar),1002.5);assert.equal(E.round(1,20,bar,{downCap:.1}),20);
+ assert.equal(E.starter(bar).kg,0);assert.equal(E.label(bar,0),'empty bar');assert.equal(E.label(bar,20),'20');
+ assert.equal(E.floor(0,bar),0);assert.equal(E.next(0,bar),2.5);assert.equal(E.floor(19,bar),17.5);assert.equal(E.next(20,bar),22.5);
+ assert.equal(E.next(1000,bar),1002.5);assert.equal(E.round(1,20,bar,{downCap:.1}),17.5);
  assert.equal(E.next(15,{...bar,minimumKg:15}),17.5);
  assert.equal(E.starter({...bar,minimumKg:undefined}).kg,null);
- assert.equal(E.starter({...bar,minimumKg:undefined,barWeightKg:15}).kg,15);
- assert.equal(E.starter({...bar,minimumKg:20,barWeightKg:15}).kg,20);
- assert.equal(E.floor(17,{...bar,minimumKg:15,equipmentStepKg:4}),15);
- assert.equal(E.next(15,{...bar,minimumKg:15,equipmentStepKg:4}),19);
+ assert.equal(E.starter({...bar,minimumKg:undefined,barWeightKg:15}).kg,0);
+ assert.equal(E.starter({...bar,minimumKg:20,barWeightKg:15}).kg,0);
+ assert.equal(E.label({...bar,minimumKg:15},0),'empty bar');
+ assert.equal(E.floor(17,{...bar,minimumKg:15,equipmentStepKg:4}),16);
+ assert.equal(E.next(0,{...bar,minimumKg:15,equipmentStepKg:4}),4);
 });
 test('versioned provisional exercise starters use exact conventions and defaults',()=>{
  for(const [title,kg] of [['Lateral Raise',2],['Dumbbell Curl',4],['Dumbbell Bench Press',5],['DB Overhead Press',4],['DB Row',6]]) {

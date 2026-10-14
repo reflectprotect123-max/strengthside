@@ -59,7 +59,11 @@ test('Easy warmup advances exactly one feasible equipment step even on a coarse 
  const result=B.suggest({page:p,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0});
  assert.equal(result.kg,11);assert.equal(result.reason,'warmup_step');
  const coarse={...p,equipmentStepKg:2.5};assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0}).kg,12.5);
- assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:12.5,effort:'easy'},nextRow:{targetId:'a:set:0',purpose:'working'},index:1}).kg,15);
+ const ontoWork={page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:12.5,effort:'easy'},nextRow:{targetId:'a:set:0',purpose:'working'},index:1};
+ assert.equal(B.suggest(ontoWork).kg,null);
+ assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:40}}).kg,40);
+ assert.equal(B.suggest({...ontoWork,page:{...coarse,workingKg:60}}).kg,60);
+ assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:0}}).kg,0);
 });
 test('AMRAP references actual first working load and never mutates it',()=>{
  const p=page([10]);p.setTargets.push({id:'a:set:1',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});

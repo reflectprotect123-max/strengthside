@@ -49,9 +49,14 @@
       const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
       const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
       const count=page.rampCount===0?0:main?2:page.rampCount===2?2:0;
-      const firstRamp=positive(working)?E.floor(working*.5,page):null;
-      const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i===0?firstRamp:null,cells:{},logged:false,miss:false}));
-      const authored=log.sets.map((row,i)=>({...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||targets[i]?.id,purpose:targets[i]?.purpose||'working',workingIndex:i,kg:count?null:i===0?working??row.kg:row.kg}));
+      const bar=page.equipmentId==='barbell'||/\bbarbell\b/i.test(page.title||'');
+      const known=Number.isFinite(Number(working))&&Number(working)>=0;
+      const belowWork=known&&working>0?E.floor(working*.5,page):null;
+      const step=E.next(0,page);
+      const second=belowWork>0&&belowWork<working?belowWork:step!=null&&step<working?step:0;
+      const rampLoad=bar&&known?[0,second]:[known&&working>0?belowWork:null,null];
+      const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i<rampLoad.length?rampLoad[i]:null,cells:{},logged:false,miss:false}));
+      const authored=log.sets.map((row,i)=>({...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||targets[i]?.id,purpose:targets[i]?.purpose||'working',workingIndex:i,kg:known?working:i===0?working??row.kg:row.kg}));
       log.sets=ramps.concat(authored);
     }
     s.brainSeeded=true;return s;
