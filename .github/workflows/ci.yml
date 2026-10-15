@@ -21,6 +21,7 @@ jobs:
       # verify includes check:browser, so this job needs its own browser install.
       - run: pnpm exec playwright install --with-deps chromium
       # Blank slate 2026-09-03: core S&C engines deleted. `verify` is the single list.
+      # Required real database checks run in verify and fail if Docker/Postgres is unavailable.
       - run: pnpm run verify
       - name: Migrations apply (no environment gaps permitted here)
         run: |
