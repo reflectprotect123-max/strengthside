@@ -34,3 +34,12 @@ test('paired policies receive identical external day and feedback schedules',()=
  const baseline=runScenario({...input,policy:'default'}),online=runScenario({...input,policy:'online'});
  assert.equal(baseline.metrics.exogenousFingerprint,online.metrics.exogenousFingerprint);
 });
+
+test('an athlete-adjusted second warm-up carries into work and finished history without extra sets',()=>{
+ const r=runScenario({seed:912731,policy:'default',scenario:'athlete-calibrated',sessions:4});
+ const first=r.decisions.filter(d=>d.session===0),ramps=first.filter(d=>d.purpose==='ramp');
+ assert.equal(ramps.length,2);assert.ok(ramps[1].displayKg>ramps[0].displayKg);
+ assert.ok(first.find(d=>d.purpose==='working').displayKg>=ramps[1].displayKg);
+ assert.ok(r.decisions.find(d=>d.session===1&&d.purpose==='working').displayKg>0);
+ for(const key of ['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'])assert.equal(r.metrics[key],0,key);
+});

@@ -58,3 +58,23 @@ test('Android-size touch effort and a double tap cannot log the next set acciden
  const facts=await page.evaluate(()=>{const rows=S.session.logs[S.session.pages[0].id].sets;return {logged:rows.filter(r=>r.logged).length,effort:rows[0].effort,sets:Object.values(StrengthMemory.records()).filter(r=>r.kind==='set').length};});
  expect(facts).toEqual({logged:1,effort:'hard',sets:1});expect(errors).toEqual([]);
 });
+
+test('warm-up entry calibrates working load and later Hard work vetoes an Easy-first increase',async({page})=>{
+ await addSquat(page);await page.evaluate(()=>StrengthMemory.bind('browser-athlete'));
+ for(let i=0;i<3;i++)await setReps(page,`Set ${i+1} reps`,5);
+ await scheduleAndStart(page);await completeWarmups(page);
+ await expect(page.getByLabel('Weight (kg)',{exact:true})).toHaveValue('20');
+ await log(page,40,5,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();
+ await log(page,40,5,2);await page.getByRole('button',{name:'Start next set',exact:true}).click();
+ await log(page,40,5,3);
+ await page.getByRole('button',{name:'Next →',exact:true}).click();await page.getByRole('button',{name:'Done Training',exact:true}).click();
+ await page.getByRole('button',{name:'3',exact:true}).click();await page.getByRole('button',{name:'Finish Session',exact:true}).click();
+ await expect(page.locator('.log-sum')).toBeVisible();
+ await page.reload();
+ const result=await page.evaluate(()=>{
+  const records=StrengthMemory.records(),fact=Object.values(records).find(r=>r.kind==='set'&&r.payload.row.purpose==='working');
+  const h=StrengthBrain.history(records,fact.payload.page);
+  return {next:h.latest.nextKg,accepted:h.accepted,rows:Object.values(records).filter(r=>r.kind==='set').length};
+ });
+ expect(result).toEqual({next:40,accepted:0,rows:5});
+});

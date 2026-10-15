@@ -1,16 +1,72 @@
 {
-  "trainingSeeds": [912731,1912731,2912731],
-  "evaluationSeeds": [4912731,5912731,6912731],
+  "trainingSeeds": [
+    912731,
+    1912731,
+    2912731
+  ],
+  "evaluationSeeds": [
+    8201473,
+    9302581,
+    10403689
+  ],
   "scenarios": {
-    "cold-start": {"group":"cold-start"},
-    "alternating-tempo-10-8-6": {"group":"alternating-tempo","alternateTempo":true},
-    "noisy-feedback": {"group":"noisy-feedback","noise":2,"bias":1},
-    "coarse-equipment": {"group":"coarse-equipment","dumbbell":true},
-    "short-rest": {"group":"short-rest","shortRest":true},
-    "recovery-drift": {"group":"recovery-drift","layoff":true},
-    "ranges": {"group":"ranges","range":true},
-    "bar-15": {"group":"bar-15","barKg":15},
-    "manual-off-grid": {"group":"manual-off-grid","dumbbell":true,"manual":18},
-    "high-reps": {"group":"high-reps","highReps":true}
-  }
+    "cold-start": {
+      "group": "cold-start"
+    },
+    "alternating-tempo-10-8-6": {
+      "group": "alternating-tempo",
+      "alternateTempo": true
+    },
+    "noisy-feedback": {
+      "group": "noisy-feedback",
+      "noise": 2,
+      "bias": 1
+    },
+    "coarse-equipment": {
+      "group": "coarse-equipment",
+      "dumbbell": true
+    },
+    "short-rest": {
+      "group": "short-rest",
+      "shortRest": true
+    },
+    "recovery-drift": {
+      "group": "recovery-drift",
+      "layoff": true
+    },
+    "ranges": {
+      "group": "ranges",
+      "range": true
+    },
+    "bar-15": {
+      "group": "bar-15",
+      "barKg": 15
+    },
+    "manual-off-grid": {
+      "group": "manual-off-grid",
+      "dumbbell": true,
+      "manual": 18
+    },
+    "high-reps": {
+      "group": "high-reps",
+      "highReps": true
+    },
+    "athlete-calibrated": {
+      "group": "athlete-calibrated",
+      "athleteCalibration": true,
+      "variedReps": true
+    },
+    "athlete-calibrated-noisy": {
+      "group": "athlete-calibrated-noisy",
+      "athleteCalibration": true,
+      "variedReps": true,
+      "noise": 2,
+      "bias": 1
+    }
+  },
+  "previousEvaluationSeeds": [
+    4912731,
+    5912731,
+    6912731
+  ]
 }

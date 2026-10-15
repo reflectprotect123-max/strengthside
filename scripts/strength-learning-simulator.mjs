@@ -23,7 +23,7 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
  const trueK=.015+random()*.045,base=config.dumbbell?18+random()*35:65+random()*110;
  const truthSchedule=[],decisions=[],metrics={sets:0,hits:0,misses:0,error:0,invalid:0,equipmentViolations:0,excessiveJumps:0,actualMutations:0,wrongReferences:0,accepted:0,updates:0,firstUpdate:null};
  for(let session=0;session<sessions;session++){
-  const nums=config.highReps?[20,25,20]:config.range?[6,6,6]:session%2?[5,3,1]:[10,8,6];
+  const nums=config.highReps?[20,25,20]:config.range?[6,6,6]:config.variedReps?[[5,3,1],[8,6,4],[10,8,6]][session%3]:session%2?[5,3,1]:[10,8,6];
   const tempo=config.alternateTempo?(session%2?'33X1':'20X1'):'20X1';
   const targets=nums.map((n,i)=>({id:`A:set:${i}`,purpose:'working',reps:{min:n,max:config.range?8:n},loadRule:{kind:'adaptive'},toFailure:false}));
   targets.push({id:'A:set:3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
@@ -37,6 +37,13 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
   truthSchedule.push([day,feedbackNoise]);
   for(let i=0;i<rows.length;i++){
    let row=rows[i],kg=row.kg;
+   // Explicit athlete action through the existing load input, NOT an engine
+   // estimate. Only the second ramp of the first session is adjusted. This
+   // separate arm measures response to an informed input, not cold acquisition.
+   if(config.athleteCalibration&&session===0&&row.purpose==='ramp'&&i===1){
+    const desiredPhysical=base*.72;
+    kg=E.floor(C.display(desiredPhysical,page),page);
+   }
    if(config.manual&&session===1&&row.purpose==='working'&&row.workingIndex===0)kg=config.manual;
    if(row.purpose==='amrap'){
     const ref=rows.find(r=>r.purpose==='working');if(kg!==(!ref.miss?ref.kg:null))metrics.wrongReferences++;
@@ -110,7 +117,7 @@ export function summarizeReport(report){
  const pass=violations===0&&overall.targetHitDifference.mean>=0&&overall.targetHitDifference.low>-.01&&overall.missRateDifference.high<=.005&&Object.values(groups).every(g=>g.targetHitDifference.low>-.03&&g.missRateDifference.high<=.01);
  return {...report,overall,groups,violations,bootstrapUnit:'seed + athlete, with all repeated scenarios kept together',analysisSha256:digest(readFileSync(fileURLToPath(import.meta.url))),gate:{pass,shippingMode:'default',candidateMode:'shadow-only pending staging and outcome gates'}};
 }
-export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-start','alternating-tempo-10-8-6','noisy-feedback','coarse-equipment','short-rest','recovery-drift']}={}){
+export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-start','alternating-tempo-10-8-6','noisy-feedback','coarse-equipment','short-rest','recovery-drift','athlete-calibrated','athlete-calibrated-noisy']}={}){
  const tasks=[];
  for(const scenario of scenarios)for(const seed of registered.evaluation)for(let athlete=0;athlete<athletesPerSeed;athlete++){
   tasks.push({seed,scenario,athlete,sessions,index:tasks.length});
@@ -120,7 +127,7 @@ export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-s
   const w=new Worker(new URL(import.meta.url),{workerData:{batch}});let received=false;
   w.once('message',rows=>{received=true;resolve(rows);});w.once('error',reject);w.once('exit',code=>{if(code!==0||!received)reject(Error('Simulation worker failed: '+code));});
  })))).flat().sort((a,b)=>a.index-b.index).map(({index,...r})=>r);
- return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Scores all ordinary working sets including the first; the old prototype excluded the first.','Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
+ return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'fresh independent evaluation through actual session/seed/capture/next/replay; cold and explicitly athlete-calibrated arms; paired athlete-cluster 10000-resample bootstrap',limitations:['Scores all ordinary working sets including the first; the old prototype excluded the first.','Athlete-calibrated arms provide an informed second warm-up weight once; they do not demonstrate automatic capacity discovery. Report these arms separately from cold starts.','Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
 }
 if(!isMainThread){
  const results=[];
