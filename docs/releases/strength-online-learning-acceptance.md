@@ -1,6 +1,6 @@
 # Strength online learning: implementation and release acceptance
 
-16 October 2026 (Australia/Sydney). **Release held. No merge, hosted migration deployment or Capgo publication has occurred.** Conditioning and the separate builder redesign remain parked. The user requested direct implementation/review, without subagents.
+16 October 2026 (Australia/Sydney). **Production rollout held. The user subsequently authorized merging the completed code with the conservative default retained; hosted migration deployment and Capgo publication remain separate.** Conditioning and the separate builder redesign remain parked. The user requested direct implementation/review, without subagents.
 
 ## Reviewed implementation
 
@@ -85,4 +85,8 @@ Work was completed inline after the user stopped delegation. Behavioral regressi
 
 The early evaluation attempts were stopped without reading outcomes while integration/performance and training-fixture defects were corrected. Scenario truth, registered seed partition and acceptance margins were not tuned against evaluation results. Final results identify actual loaded source hashes. The old teacher-informed simulator remains explicitly labelled a legacy diagnostic, not evidence for online rollout.
 
-Rollback rehearsal clears derived cache/diagnostics and returns to default while retaining raw records and pending uploads. Actual installed-device rollback remains unrun. Production rollout requires the outstanding device, staging, latency and outcome gates plus a separate release instruction. Keep this PR draft and do not merge or run Capgo while mandatory gates remain unrun or failed.
+Rollback rehearsal clears derived cache/diagnostics and returns to default while retaining raw records and pending uploads. Actual installed-device rollback remains unrun. Production rollout requires the outstanding device, staging, latency and outcome gates plus a separate release instruction. The user’s subsequent merge instruction authorizes code integration with the experimental learner disabled. The remaining gates still block candidate activation and production rollout; no Capgo or hosted migration deployment is included in that merge instruction.
+
+## Integration follow-up
+
+Main advanced to `2c2c3f77` with the planning/handoff PRs already merged. The sole integration conflict was the next-session browser assertion; it retains explicit empty-bar/ramp checks from main and the implementation branch’s owner/error/clock handling. Runtime source and candidate policy are unchanged. The user explicitly authorized merging all completed work; that supersedes the earlier draft-only merge hold, while keeping the learner disabled and preserving deployment gates.

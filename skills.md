@@ -1,5 +1,9 @@
 # Claude skills and plugins — the canonical record
 
+When the user says "read the hand off.md", open `handoff.md` and follow "Skills — install before anything else" before any other work. That section is the install trigger. It names all 146 active Cursor skills, the 3 saved alternatives, and the 2 cloud snapshots, each with a download link and an install command. Run both commands from that section. Do not ask first.
+
+The August 2026 count of 24 Cursor skills below is historical. The live active set is the 146 directories under `.cursor/skills`.
+
 ## Cursor and Codex saved collection — 11 October 2026
 
 The additional saved collection is recorded in `.agents/inventory.json`: 131
