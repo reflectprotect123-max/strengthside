@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const sandbox={};
-for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-brain-core'])
+for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core'])
   vm.runInNewContext(readFileSync(join(ROOT,'apps/shared',`${name}.js`),'utf8'),{window:sandbox});
 const B=sandbox.StrengthBrainCore,E=sandbox.StrengthEquipment,RTS=sandbox.StrengthRTS;
 
@@ -35,11 +35,11 @@ function targetList(id,program,withAmrap){
 }
 function pageFor(cohort,program,withAmrap){
   const id=`${cohort.exercise.toLowerCase().replace(/\W+/g,'-')}-${program.map(x=>typeof x==='number'?x:x.min+'-'+x.max).join('-')}`;
-  return {id,title:cohort.exercise,kind:'lift',logMode:'kg',columns:['reps','weight_kg'],...cohort,setTargets:targetList(id,program,withAmrap)};
+  return {id,exerciseId:cohort.exercise,title:cohort.exercise,kind:'lift',logMode:'kg',columns:['reps','weight_kg'],...cohort,setTargets:targetList(id,program,withAmrap)};
 }
 function startingLoad(page,fresh1rm){
   const first=page.setTargets[0].reps.min,pct=1/(1+first*.033),raw=fresh1rm*pct*.72;
-  return E.floor(raw,page)??E.starter(page).kg??(E.profile(page).min||null);
+  return E.floor(B.display(raw,page),page)??E.starter(page).kg??(E.profile(page).min||null);
 }
 function performance({load,capacity,target,cohort,fatigue,rirBias,noise,model}){
   const effective=capacity*(1-fatigue),ratio=load/effective;
@@ -63,7 +63,7 @@ function stratum(cohortName,cohort,policy,seed,exposures){
       const day=base*(1+growth*exposure)*(1+normal(random)*.035);
       const signature=page.setTargets.filter(x=>x.purpose==='working').map(x=>`${x.reps.min}-${x.reps.max}`).join('/');
       let load=prescriptionLoads.get(signature);
-      if(load==null&&memory.freshE1rm&&RTS.percent(page.setTargets[0].reps.min,7))load=E.floor(memory.freshE1rm*RTS.percent(page.setTargets[0].reps.min,7),page);
+      if(load==null&&memory.freshE1rm&&RTS.percent(page.setTargets[0].reps.min,7))load=E.floor(B.display(memory.freshE1rm*RTS.percent(page.setTargets[0].reps.min,7),page),page);
       load=load??startingLoad(page,day);if(!Number.isFinite(load)||load<0){metrics.invalid++;continue;}
       const restStress=exposure%7===3?.025:0,supersetStress=exposure%11===6?.02:0;
       const rows=[];
@@ -76,19 +76,22 @@ function stratum(cohortName,cohort,policy,seed,exposures){
           const result=B.suggest({page,row:rows.at(-1),nextRow:{targetId:target.id,purpose:'amrap'},index:i,state:{rows,policy}});
           if(result.kg!==referenced)metrics.wrongReferences++;
           if(rows[0]?.kg!==before)metrics.actualMutations++;
-          if(result.kg!=null){const max=Math.max(0,Math.floor((day*(1-fatigue)/result.kg-1)/cohort.endurance));rows.push({id:`${seed}-${a}-${exposure}-amrap`,targetId:target.id,purpose:'amrap',logged:true,reps:max,kg:result.kg,effort:'max_effort'});}
+          if(result.kg!=null){const max=Math.max(0,Math.floor((day*(1-fatigue)/B.normalized(result.kg,page).externalKg-1)/cohort.endurance));rows.push({id:`${seed}-${a}-${exposure}-amrap`,targetId:target.id,purpose:'amrap',logged:true,reps:max,kg:result.kg,effort:'max_effort'});}
           continue;
         }
         const ideal=day*(1-fatigue)/(1+target.reps.min*cohort.endurance)*.94;
-        if(load<ideal*.90)metrics.underloaded++;
-        const outcome=performance({load,capacity:day,target,cohort,fatigue,rirBias,noise:Math.round(normal(random)),model});
+        if(B.normalized(load,page).externalKg<ideal*.90)metrics.underloaded++;
+        const outcome=performance({load:B.normalized(load,page).externalKg,capacity:day,target,cohort,fatigue,rirBias,noise:Math.round(normal(random)),model});
         const row={id:`${seed}-${a}-${exposure}-${i}`,targetId:target.id,purpose:'working',logged:true,reps:outcome.actual,kg:load,effort:outcome.effort,miss:outcome.miss};
         rows.push(row);metrics.sets++;if(outcome.miss)metrics.misses++;
         if(i<page.setTargets.filter(x=>x.purpose==='working').length-1){
           const next=page.setTargets[i+1],decision=B.suggest({page,row,nextRow:{targetId:next.id,purpose:next.purpose},index:i+1,state:{freshE1rm:memory.freshE1rm,rows,policy}});
           if(!Number.isFinite(decision.kg)||decision.kg<0)metrics.invalid++;
           const p=E.profile(page);if(p.loads.length&&p.step===0&&!p.loads.includes(decision.kg))metrics.equipmentViolations++;
-          if(decision.kg>load*(1+policy.upCap)+1e-8)metrics.capViolations++;
+          const currentMass=B.normalized(load,page).externalKg,nextMass=B.normalized(decision.kg,page)?.externalKg;
+          const changing=next.reps.min!==target.reps.min,minimum=B.normalized(p.min,page)?.externalKg;
+          const escape=Math.abs(currentMass-minimum)<1e-8&&decision.kg===E.next(load,page);
+          if(!escape&&nextMass>currentMass*(1+(changing?.1:policy.upCap))+1e-8)metrics.capViolations++;
           load=decision.kg??load;
         }
         fatigue+=cohort.stepFatigue;
@@ -145,10 +148,10 @@ export function runMatrix(){
   const holdoutCandidate=combine(holdoutSeeds.map(seed=>simulate({seed,exposures:50,policy:selected})));
   const holdoutGate=gate(holdoutBase,holdoutCandidate),frozen=holdoutGate.pass?selected:BASELINE;
   const policyHash=createHash('sha256').update(JSON.stringify(frozen)).digest('hex');
-  return {schemaVersion:1,assumptions:{capacityModels:['Epley inverse','Brzycki inverse','.025-.031 perturbed endurance'],effortBias:'integer -2..2 RIR plus noise',dayVariation:'approximately 3.5%',warmups:2,restAndSupersetFatigue:'0..4.5%',programs:['10/8/6','5/3/1','3x6-8','20/25','periodic final AMRAP'],exposures:[12,50]},tuneSeeds,holdoutSeeds,tuning,selectedBeforeHoldout:selected,holdout:{baseline:holdoutBase,candidate:holdoutCandidate,gate:holdoutGate},frozenPolicy:frozen,frozenPolicyHash:policyHash,rejectedAfterHoldout:holdoutGate.pass?null:selected.version};
+  return {schemaVersion:2,protocol:'Legacy diagnostic: teacher-informed initial loads and legacy summary learner; not evidence for online rollout. Physical input semantics corrected for current runtime.',assumptions:{capacityModels:['Epley inverse','Brzycki inverse','.025-.031 perturbed endurance'],effortBias:'integer -2..2 RIR plus noise',dayVariation:'approximately 3.5%',warmups:2,restAndSupersetFatigue:'0..4.5%',programs:['10/8/6','5/3/1','3x6-8','20/25','periodic final AMRAP'],exposures:[12,50]},tuneSeeds,holdoutSeeds,tuning,selectedBeforeHoldout:selected,holdout:{baseline:holdoutBase,candidate:holdoutCandidate,gate:holdoutGate},frozenPolicy:frozen,frozenPolicyHash:policyHash,rejectedAfterHoldout:holdoutGate.pass?null:selected.version};
 }
 function markdown(report){
-  const h=report.holdout;return `# Strength brain v2 simulation\n\nThis is synthetic product testing, not clinical safety or proof of real-athlete accuracy. Candidate selection used tuning seeds only. Holdout failure falls back to the conservative policy without retuning.\n\n- Selected on tuning: ${report.selectedBeforeHoldout.version}\n- Holdout gate: ${h.gate.pass?'PASS':'FAIL'}${h.gate.reasons.length?` (${h.gate.reasons.join(', ')})`:''}\n- Frozen policy: ${report.frozenPolicy.version}\n- Frozen parameter SHA-256: ${report.frozenPolicyHash}\n- Holdout sets: ${h.candidate.aggregate.sets}\n- Baseline miss rate: ${(h.baseline.aggregate.missRate*100).toFixed(2)}%\n- Candidate miss rate: ${(h.candidate.aggregate.missRate*100).toFixed(2)}%\n- Baseline underloading: ${(h.baseline.aggregate.underloadRate*100).toFixed(2)}%\n- Candidate underloading: ${(h.candidate.aggregate.underloadRate*100).toFixed(2)}%\n- Software invariant violations: ${Object.values(h.candidate.aggregate.invariants).reduce((a,b)=>a+b,0)}\n\nThe aggressive tuning winner was rejected because it increased holdout underloading. The app therefore keeps the conservative policy. Assumptions and per-stratum denominators are recorded in the adjacent JSON. Real athlete observations are still required.\n`;
+  const h=report.holdout;return `# Strength brain v2 simulation\n\nLegacy diagnostic with teacher-informed starts and summary learning; not an online-learning acceptance test. Physical bar mass is now included. This is synthetic product testing, not clinical safety or proof of real-athlete accuracy. Candidate selection used tuning seeds only. Holdout failure falls back to the conservative policy without retuning.\n\n- Selected on tuning: ${report.selectedBeforeHoldout.version}\n- Holdout gate: ${h.gate.pass?'PASS':'FAIL'}${h.gate.reasons.length?` (${h.gate.reasons.join(', ')})`:''}\n- Frozen policy: ${report.frozenPolicy.version}\n- Frozen parameter SHA-256: ${report.frozenPolicyHash}\n- Holdout sets: ${h.candidate.aggregate.sets}\n- Baseline miss rate: ${(h.baseline.aggregate.missRate*100).toFixed(2)}%\n- Candidate miss rate: ${(h.candidate.aggregate.missRate*100).toFixed(2)}%\n- Baseline underloading: ${(h.baseline.aggregate.underloadRate*100).toFixed(2)}%\n- Candidate underloading: ${(h.candidate.aggregate.underloadRate*100).toFixed(2)}%\n- Software invariant violations: ${Object.values(h.candidate.aggregate.invariants).reduce((a,b)=>a+b,0)}\n\n${h.gate.pass?'The selected policy passed this legacy diagnostic.':'The selected policy failed this legacy diagnostic and conservative fallback was retained.'} The app therefore keeps the conservative policy. Assumptions and per-stratum denominators are recorded in the adjacent JSON. Real athlete observations are still required.\n`;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   const arg=process.argv.indexOf('--report-dir'),dir=resolve(arg>=0?process.argv[arg+1]:join(ROOT,'docs/research'));
