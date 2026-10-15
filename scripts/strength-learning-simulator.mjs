@@ -95,13 +95,13 @@ export function bootstrap(values,resamples=10000){
 export function summarizePairs(rows){
  const clusters=new Map();
  for(const row of rows){const key=JSON.stringify([row.seed,row.athlete]);const bucket=clusters.get(key)||[];bucket.push(row);clusters.set(key,bucket);}
- const independent=[...clusters.values()];
+ const independent=[...clusters.values()],fitted=rows.filter(r=>r.candidate.firstUpdate!=null);
  return {athletes:independent.length,scenarioPairs:rows.length,sets:rows.reduce((s,r)=>s+r.candidate.sets,0),
   targetHitDifference:bootstrap(independent.map(bucket=>mean(bucket.map(r=>r.candidate.targetHit-r.baseline.targetHit)))),
   missRateDifference:bootstrap(independent.map(bucket=>mean(bucket.map(r=>r.candidate.missRate-r.baseline.missRate)))),
   baselineTargetHit:mean(rows.map(r=>r.baseline.targetHit)),onlineTargetHit:mean(rows.map(r=>r.candidate.targetHit)),
   baselineMiss:mean(rows.map(r=>r.baseline.missRate)),onlineMiss:mean(rows.map(r=>r.candidate.missRate)),
-  onlineFirstUpdate:mean(rows.filter(r=>r.candidate.firstUpdate!=null).map(r=>r.candidate.firstUpdate)),neverFitted:rows.filter(r=>!r.candidate.updates).length};
+  onlineFirstUpdate:fitted.length?mean(fitted.map(r=>r.candidate.firstUpdate)):null,neverFitted:rows.length-fitted.length};
 }
 export function summarizeReport(report){
  const results=report.results,overall=summarizePairs(results),groups=Object.fromEntries([...new Set(results.map(r=>r.scenario))].map(g=>[g,summarizePairs(results.filter(r=>r.scenario===g))]));
@@ -120,7 +120,7 @@ export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-s
   const w=new Worker(new URL(import.meta.url),{workerData:{batch}});let received=false;
   w.once('message',rows=>{received=true;resolve(rows);});w.once('error',reject);w.once('exit',code=>{if(code!==0||!received)reject(Error('Simulation worker failed: '+code));});
  })))).flat().sort((a,b)=>a.index-b.index).map(({index,...r})=>r);
- return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
+ return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Scores all ordinary working sets including the first; the old prototype excluded the first.','Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
 }
 if(!isMainThread){
  const results=[];
