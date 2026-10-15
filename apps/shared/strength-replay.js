@@ -21,8 +21,9 @@
     return record?.payload?.ownerId===ownerId&&['ownerId','athleteId','athlete_id'].every(key=>!Object.prototype.hasOwnProperty.call(record,key)||record[key]===ownerId);
   }
   function context(record) {
-    const p=record.payload,page=p?.page,raw=page?.loadConvention;
-    const convention=['barbell_total','barbell_plates'].includes(raw)?'barbell_total':raw;
+    const p=record.payload,page=p?.page,load=root.StrengthContext.normalizeLoad(p?.normalizedLoad);
+    if(!load)return null;
+    const convention=['barbell_total','barbell_plates'].includes(load.convention)?'barbell_total':load.convention;
     try{return root.StrengthContext.key({athleteId:p.ownerId,exerciseId:page?.exerciseId,equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
     catch{return null;}
   }
@@ -59,10 +60,10 @@
     if(!Number.isSafeInteger(reps)||reps<0||(reps===0&&!row.miss)||actual==null||actual<0)return {reason:'invalid_actual'};
     const normalized=root.StrengthContext.normalizeLoad(p.normalizedLoad);
     if(!normalized||!normalized.eligible||root.StrengthContext.classifyLegacy(p)!=='known_legacy_version')return {reason:'ambiguous_load'};
-    if(normalized.rawValue!==actual||normalized.rawUnit!==page.loadUnit||normalized.convention!==page.loadConvention||
-      (['barbell_total','barbell_plates'].includes(normalized.convention)&&normalized.barKg!==number(page.barWeightKg)))return {reason:'load_actual_mismatch'};
+    const expected=root.StrengthLoad.fromPage({page,value:actual,provenance:normalized.provenance});
+    if(!expected||Object.keys(expected).some(key=>expected[key]!==normalized[key]))return {reason:'load_actual_mismatch'};
     const supported=(!page.columns||Array.isArray(page.columns))&&root.StrengthBrainCore.supported({...page,loadUnit:'kg'});
-    if(!supported||normalized.convention==='added_bodyweight'||[p,page,row].some(source=>source.modelEligible===false||source.model!=null))return {reason:'unsupported_model'};
+    if(!supported||page.equipmentId==='bodyweight'||normalized.convention==='added_bodyweight'||[p,page,row].some(source=>source.modelEligible===false||source.model!=null))return {reason:'unsupported_model'};
     const effort=row.effort==='medium'?'average':row.effort;
     const rir=Object.prototype.hasOwnProperty.call(RIR,effort)?RIR[effort]:null;
     if(rir==null&&!row.miss)return {reason:'invalid_effort'};

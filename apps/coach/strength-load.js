@@ -23,6 +23,24 @@
     // Eligibility here establishes provenance only. Movement/model eligibility belongs to policy.
     return {version:3,rawValue,rawUnit:unit,convention,externalKg,barKg:barbell(convention)?barKg:null,provenance,eligible:provenance!=='ambiguous_legacy'};
   }
+  function fromPage({page,value,provenance}={}) {
+    if(!page||typeof page!=='object')return null;
+    let convention=page.loadConvention;
+    if(convention==='total') {
+      // This is an explicit current-input mapping, never a legacy trust rule.
+      const id=page.equipmentId;
+      if(typeof id!=='string'||!id||id.trim()!==id)return null;
+      const equipment=id.toLowerCase();
+      convention=equipment==='barbell'?'barbell_plates':equipment==='bodyweight'?'added_bodyweight':'single';
+    } else if(convention==='bodyweight')convention='added_bodyweight';
+    let barKg=null;
+    if(barbell(convention)) {
+      // An invalid explicitly declared bar must not silently fall back to a minimum.
+      const declared=page.barWeightKg??page.minimumKg;
+      if(declared!=null){barKg=positive(declared);if(barKg==null)return null;}
+    }
+    return normalize({value,unit:page.loadUnit,convention,barKg,provenance});
+  }
   function displayKg(normalized,convention,barKg) {
     if(!normalized||normalized.version!==3||typeof normalized.externalKg!=='number'||number(normalized.externalKg)==null)return null;
     if(typeof normalized.rawValue!=='number'||number(normalized.rawValue)==null||!['kg','lb'].includes(normalized.rawUnit))return null;
@@ -37,5 +55,5 @@
     const kg=normalized.externalKg-mass;
     return kg>=0?kg:null;
   }
-  root.StrengthLoad={normalize,displayKg};
+  root.StrengthLoad={normalize,fromPage,displayKg};
 })(typeof window!=='undefined'?window:globalThis);

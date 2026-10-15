@@ -137,3 +137,49 @@ test('malformed facts stay excluded without coercing null blank or invalid sessi
  }
  assert.equal(replay([null,{},false]).accepted,0);
 });
+
+test('preserved production total/minimumKg page replays from its verified plates envelope',()=>{
+ const r=record('production',1,40);Object.assign(r.payload.page,{loadConvention:'total',minimumKg:20});delete r.payload.page.barWeightKg;
+ r.payload.normalizedLoad=Load.normalize({value:40,unit:'kg',convention:'barbell_plates',barKg:20,provenance:'explicit'});
+ const before=JSON.stringify(r),state=replay([r]);
+ assert.equal(state.accepted,1);assert.equal(state.rows[0].weight,60);assert.equal(state.ledger.length,1);assert.equal(state.latestFirst.page.loadConvention,'total');assert.equal(state.latestFirst.page.minimumKg,20);
+ assert.equal(JSON.stringify(r),before);assert.equal(r.payload.row.kg,40);
+ const frozen=clone(r);Object.freeze(frozen.payload.page);Object.freeze(frozen.payload.normalizedLoad);Object.freeze(frozen.payload.row);Object.freeze(frozen.payload);Object.freeze(frozen);
+ assert.equal(JSON.stringify(replay([frozen])),JSON.stringify(state));
+});
+test('canonical pages accept minimumKg fallback and keep total distinct from plates',()=>{
+ for(const convention of ['barbell_total','barbell_plates']) {
+  const r=record(convention,1,40);Object.assign(r.payload.page,{loadConvention:convention,minimumKg:20});delete r.payload.page.barWeightKg;
+  r.payload.normalizedLoad=Load.normalize({value:40,unit:'kg',convention,barKg:20,provenance:'explicit'});
+  const state=replay([r]);assert.equal(state.accepted,1);assert.equal(state.rows[0].weight,convention==='barbell_total'?40:60);
+ }
+ const r=record('generic',1,30);Object.assign(r.payload.page,{equipmentId:'machine',loadConvention:'total',minimumKg:0});delete r.payload.page.barWeightKg;
+ r.payload.normalizedLoad=Load.normalize({value:30,unit:'kg',convention:'single',provenance:'explicit'});
+ const contextKey=JSON.stringify(['a','squat','machine','single','2-0-X-1']);assert.equal(R.replay([r],{...options,contextKey}).rows[0].weight,30);
+});
+test('production aliases cannot infer historical trust and reject contradictory bar unit or convention',()=>{
+ const base=record('production',1,40);Object.assign(base.payload.page,{loadConvention:'total',minimumKg:20});delete base.payload.page.barWeightKg;
+ base.payload.normalizedLoad=Load.normalize({value:40,unit:'kg',convention:'barbell_plates',barKg:20,provenance:'explicit'});
+ for(const change of [r=>delete r.payload.normalizedLoad,r=>r.payload.normalizedLoad=Load.normalize({value:40,unit:'kg',convention:'barbell_plates',barKg:20,provenance:'ambiguous_legacy'}),r=>r.payload.normalizedLoad=Load.normalize({value:40,unit:'kg',convention:'barbell_plates',barKg:15,provenance:'explicit'}),r=>r.payload.page.loadUnit='lb',r=>r.payload.page.loadConvention='barbell_total']){
+  const r=clone(base);change(r);assert.equal(replay([r]).accepted,0);
+ }
+});
+test('bodyweight total and belt-load aliases remain history without fitting a system load',()=>{
+ for(const loadConvention of ['total','bodyweight','added_bodyweight']) {
+  const r=record(`belt-${loadConvention}`,1,10);Object.assign(r.payload.page,{equipmentId:'bodyweight',loadConvention});delete r.payload.page.barWeightKg;
+  r.payload.normalizedLoad=Load.normalize({value:10,unit:'kg',convention:'added_bodyweight',provenance:'explicit'});
+  const contextKey=JSON.stringify(['a','squat','bodyweight','added_bodyweight','2-0-X-1']);
+  const state=R.replay([r],{...options,contextKey});assert.equal(state.accepted,0);assert.equal(state.startingScale,null);assert.equal(state.ledger.length,1);assert.equal(state.ledger[0].payload.row.kg,10);
+  assert.ok(state.diagnostics.some(d=>d.reason==='unsupported_model'));
+ }
+ const forged=record('forged-system',1,10);Object.assign(forged.payload.page,{equipmentId:'bodyweight',loadConvention:'total'});delete forged.payload.page.barWeightKg;
+ forged.payload.normalizedLoad=Load.normalize({value:10,unit:'kg',convention:'single',provenance:'explicit'});
+ const contextKey=JSON.stringify(['a','squat','bodyweight','single','2-0-X-1']);assert.equal(R.replay([forged],{...options,contextKey}).accepted,0);
+});
+test('bodyweight equipment cannot fit from an incorrectly declared single-load envelope',()=>{
+ const r=record('dip',1,20);
+ r.payload.page={...r.payload.page,title:'Weighted Dip',equipmentId:'bodyweight',loadConvention:'single',barWeightKg:null};
+ r.payload.normalizedLoad={...r.payload.normalizedLoad,convention:'single',barKg:null};
+ const contextKey=JSON.stringify(['a','squat','bodyweight','single','2-0-X-1']);
+ assert.equal(R.replay([r],{ownerId:'a',contextKey}).accepted,0);
+});

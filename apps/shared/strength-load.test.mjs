@@ -97,3 +97,50 @@ test('shared harness loads dependencies once and never silently skips missing ex
   for(const name of ['TrainingCore','StrengthTargets','StrengthEquipment','StrengthRTS','StrengthPolicy','StrengthLoad','StrengthBrainCore'])assert.ok(root[name],name);
   assert.throws(()=>loadStrength(['missing-strength-module']),/ENOENT/);
 });
+
+test('fromPage resolves the preserved production bar total alias and minimumKg explicitly',()=>{
+  for(const barKg of [15,20]) {
+    const page={equipmentId:'barbell',loadConvention:'total',minimumKg:barKg,loadUnit:'kg'};
+    const normalized=L.fromPage({page,value:40,provenance:'explicit'});
+    assert.deepEqual(plain(normalized),plain(L.normalize(input(40,'barbell_plates',{barKg}))));
+    assert.equal(L.fromPage({page,value:0,provenance:'explicit'}).externalKg,barKg);
+  }
+});
+test('fromPage preserves canonical bar forms and declared barWeightKg takes precedence',()=>{
+  for(const convention of ['barbell_total','barbell_plates'])for(const metadata of [{minimumKg:20},{barWeightKg:20},{barWeightKg:15,minimumKg:20}]) {
+    const page={equipmentId:'barbell',loadConvention:convention,loadUnit:'kg',...metadata};
+    const normalized=L.fromPage({page,value:40,provenance:'explicit'});
+    assert.equal(normalized.convention,convention);assert.equal(normalized.barKg,metadata.barWeightKg??metadata.minimumKg);
+    assert.equal(normalized.externalKg,40+(convention==='barbell_plates'?normalized.barKg:0));
+  }
+  assert.equal(L.fromPage({page:{loadConvention:'barbell_total',loadUnit:'kg'},value:60,provenance:'explicit'}).externalKg,60);
+});
+test('fromPage resolves generic total as single and keeps per-hand and single semantics',()=>{
+  for(const [raw,canonical] of [['total','single'],['per_hand','per_hand'],['single','single'],['added_bodyweight','added_bodyweight']]) {
+    const page={equipmentId:'dumbbell',loadConvention:raw,loadUnit:'lb',minimumKg:1};
+    const normalized=L.fromPage({page,value:20,provenance:'explicit'});
+    assert.equal(normalized.convention,canonical);assert.equal(normalized.externalKg,20*.45359237);assert.equal(normalized.barKg,null);
+  }
+});
+test('fromPage requires supplied provenance and never infers history conventions from title date or magnitude',()=>{
+  const page={equipmentId:'barbell',loadConvention:'total',minimumKg:20,loadUnit:'kg',title:'Barbell Squat'};
+  for(const provenance of [undefined,null,'bad'])assert.equal(L.fromPage({page,value:40,provenance}),null);
+  const ambiguous=L.fromPage({page,value:40,provenance:'ambiguous_legacy'});assert.equal(ambiguous.eligible,false);assert.equal(ambiguous.provenance,'ambiguous_legacy');
+  for(const change of [{loadConvention:undefined},{loadUnit:undefined},{minimumKg:undefined},{barWeightKg:0},{barWeightKg:'bad'},{minimumKg:0}])assert.equal(L.fromPage({page:{...page,...change},value:40,provenance:'explicit'}),null);
+  assert.equal(L.fromPage({page:{title:'Barbell Squat',date:'2026-10-15',loadUnit:'kg'},value:100,provenance:'explicit'}),null);
+  assert.equal(L.fromPage({page:{loadConvention:'total',loadUnit:'kg',title:'Barbell Squat'},value:40,provenance:'explicit'}),null);
+  assert.equal(L.fromPage(),null);
+});
+test('fromPage never treats bodyweight total or belt-load aliases as a single system load',()=>{
+  for(const loadConvention of ['total','bodyweight','added_bodyweight']) {
+    const page={equipmentId:'bodyweight',loadConvention,loadUnit:'kg'};
+    const normalized=L.fromPage({page,value:0,provenance:'explicit'});
+    assert.equal(normalized.convention,'added_bodyweight');assert.equal(normalized.externalKg,0);
+    assert.equal(normalized.barKg,null);assert.equal(normalized.rawValue,0);
+  }
+});
+test('fromPage keeps frozen page metadata and raw actuals unchanged',()=>{
+  const page=Object.freeze({equipmentId:'barbell',loadConvention:'total',minimumKg:20,loadUnit:'kg'});
+  const args=Object.freeze({page,value:'40',provenance:'explicit'}),before=JSON.stringify(args);
+  const normalized=L.fromPage(args);assert.equal(normalized.externalKg,60);assert.equal(normalized.rawValue,40);assert.equal(JSON.stringify(args),before);
+});
