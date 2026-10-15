@@ -64,11 +64,12 @@ test('audit CLI is aggregate-only, read-only, classifies unknown metadata and re
  const dir=mkdtempSync(join(tmpdir(),'strength-audit-'));
  try {
   const file=join(dir,'records.json');
-  const fact={kind:'set',payload:{page:{kind:'lift',title:'Back Squat',logMode:'kg',columns:['reps','weight_kg']},row:{kg:40,reps:6},normalizedLoad:load()}};
+  const fact={kind:'set',payload:{page:{equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,kind:'lift',title:'Back Squat',logMode:'kg',columns:['reps','weight_kg']},row:{kg:40,reps:6},normalizedLoad:load()}};
   const legacy=kg=>({...fact,payload:{...fact.payload,contractVersion:2,page:{...fact.payload.page,loadConvention:'total'},row:{kg,reps:6},normalizedLoad:undefined}});
   const records=[fact,legacy(60),legacy(0),
    {...fact,payload:{...fact.payload,normalizedLoad:{...load(),version:99}}},
    {...fact,payload:{...fact.payload,normalizedLoad:load({convention:'added_bodyweight'})}},
+   {...fact,payload:{...fact.payload,page:{...fact.payload.page,title:{toString:1}}}},
    {...fact,kind:'session_estimate'},{...fact,deleted:true},
    {...fact,payload:{...fact.payload,row:{kg:null}}},
    {...fact,payload:{...fact.payload,page:{...fact.payload.page,title:'Farmer Carry'}}},
@@ -79,7 +80,7 @@ test('audit CLI is aggregate-only, read-only, classifies unknown metadata and re
   const raw=JSON.stringify({records});writeFileSync(file,raw);
   const run=(...args)=>spawnSync(process.execPath,['scripts/audit-strength-evidence.mjs',file,...args],{cwd:new URL('../../',import.meta.url),encoding:'utf8'});
   const result=run();assert.equal(result.status,0,result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout),{total:13,known:2,ambiguous:3,unsupported:8});
+  assert.deepEqual(JSON.parse(result.stdout),{total:14,known:2,ambiguous:3,unsupported:9});
   assert.equal(readFileSync(file,'utf8'),raw);assert.ok(!result.stdout.includes('Back Squat'));
   assert.notEqual(run('--backfill').status,0);
   for(const shape of [[fact],{records:{one:fact}}]){

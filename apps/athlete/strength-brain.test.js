@@ -4,10 +4,10 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 const ctx=vm.createContext({crypto:webcrypto});
-for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-brain-core','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
+for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
 const B=ctx.StrengthBrain;
 const targets=[0,1,2].map(i=>({id:`A:set:${i}`,purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'},toFailure:false}));
-const page={id:'A',title:'Squat',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'total',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,minimumKg:0,columns:['reps','weight_kg'],setTargets:targets};
+const page={equipmentId:'machine',id:'A',title:'Squat',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'total',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,minimumKg:0,columns:['reps','weight_kg'],setTargets:targets};
 const row=(i=0,reps=8,effort='average',kg=40)=>({id:`r${i}`,targetId:`A:set:${i}`,reps,effort,kg,logged:true,purpose:'working',workingIndex:i});
 
 test('learning context requires canonical identity, keeps tempo and owner separate, and unifies normalized bars',()=>{
@@ -23,9 +23,9 @@ test('learning context requires canonical identity, keeps tempo and owner separa
  assert.equal(normalized.externalKg,60);assert.equal(normalized.rawValue,40);
 });
 test('legacy history key and facts remain readable independently of the new context',()=>{
- const canonical={...page,exerciseId:'squat',equipmentId:'barbell'};
+ const canonical={...page,exerciseId:'squat',equipmentId:'barbell',minimumKg:20};
  assert.equal(B.key(canonical),'squat|barbell|total|kg');
- assert.equal(B.key(page),'squat|default|total|kg');
+ assert.equal(B.key(page),'squat|machine|total|kg');
  const records={old:{id:'old',localRevision:3,kind:'set',sessionId:'past',exerciseKey:B.key(canonical),payload:{contractVersion:2,page:canonical,row:row(0,6,'hard',60),sessionStartedAt:1}}};
  const before=JSON.stringify(records);assert.equal(B.history(records,{...canonical,title:'Renamed'}).sessions,1);assert.equal(JSON.stringify(records),before);
 });
@@ -78,7 +78,7 @@ test('10/8/6 opens with a heavier bar as the reps come down',()=>{
  const records={old:{kind:'set',sessionId:'past',exerciseKey:B.key(wave),payload:{page:wave,row:prior,sessionStartedAt:1}}};
  const seeded=B.seed({id:'s',pages:[wave],logs:{A:{sets:reps.map(t=>({targetId:t.id}))}}},records);
  assert.equal(seeded.pages[0].workingKg,90);
- assert.deepEqual(Array.from(seeded.logs.A.sets,r=>r.kg),[0,45,90,95,105]);
+ assert.deepEqual(Array.from(seeded.logs.A.sets,r=>r.kg),[0,45,90,95,100]);
 });
 test('recognized cold start is provisional and manual actuals remain untouched',()=>{
  const db={...page,id:'D',title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',setTargets:targets.map((t,i)=>({...t,id:`D:set:${i}`}))};

@@ -10,7 +10,7 @@ if(args.length!==1||args[0].startsWith('-')) {
 } else {
  try {
   const root={};
-  for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-brain-core'])vm.runInNewContext(readFileSync(new URL(`../apps/shared/${name}.js`,import.meta.url),'utf8'),{window:root});
+  for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core'])vm.runInNewContext(readFileSync(new URL(`../apps/shared/${name}.js`,import.meta.url),'utf8'),{window:root});
   const parsed=JSON.parse(readFileSync(args[0],'utf8'));
   const input=Array.isArray(parsed)?parsed:parsed?.records;
   if(!input||typeof input!=='object')throw new Error('Expected a records array or object');
@@ -21,7 +21,7 @@ if(args.length!==1||args[0].startsWith('-')) {
    const actual=['number','string'].includes(typeof weight)&&String(weight).trim()!==''&&Number.isFinite(Number(weight))&&Number(weight)>=0;
    const load=root.StrengthContext.normalizeLoad(payload?.normalizedLoad);
    const matchesActual=!load||load.rawValue===Number(weight);
-   const supported=page&&typeof page==='object'&&(!page.columns||Array.isArray(page.columns))&&root.StrengthBrainCore.supported({...page,loadUnit:load?'kg':page.loadUnit});
+   const supported=page&&typeof page==='object'&&typeof page.title==='string'&&(!page.columns||Array.isArray(page.columns))&&root.StrengthBrainCore.supported({...page,loadUnit:load?'kg':page.loadUnit});
    // Movement support is separate from load provenance; never infer convention from a title.
    if(record?.kind!=='set'||record.deleted||!actual||!matchesActual||!supported||load?.convention==='added_bodyweight')counts.unsupported++;
    else if(root.StrengthContext.classifyLegacy(payload)==='known_legacy_version')counts.known++;

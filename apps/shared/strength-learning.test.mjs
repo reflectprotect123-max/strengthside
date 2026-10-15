@@ -81,3 +81,7 @@ test('fast calibration follows precise, directional, miss precedence and bounds'
  for(const bad of [NaN,Infinity,-1,0])assert.equal(L.updateStart(bad,r,2.5),null);
  assert.equal(L.updateStart(Number.MAX_VALUE,{...r,rir:5},Number.MAX_VALUE),Number.MAX_VALUE);
 });
+test('precise starting calibration moves exactly halfway when no clamp binds',()=>{
+ const k=L.initial().k,observation=row(0,{reps:5,weight:104*L.fraction(8,k)});
+ assert.ok(Math.abs(L.updateStart(100,observation,10)-102)<1e-10);
+});

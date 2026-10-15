@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';import {webcrypto} from 'node:crypto';
 function create(store=new Map()) {
  const c=vm.createContext({crypto:webcrypto,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},setTimeout:()=>1,clearTimeout:()=>{},console,addEventListener:()=>{}});
- for(const f of ['training-core.js','strength-targets.js','strength-equipment.js','strength-rts.js','strength-policy.js','strength-brain-core.js','strength-brain.js','strength-memory.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
+ for(const f of ['training-core.js','strength-targets.js','strength-equipment.js','strength-rts.js','strength-policy.js','strength-load.js','strength-context.js','strength-learning.js','strength-replay.js','strength-brain-core.js','strength-brain.js','strength-memory.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
  return {M:c.StrengthMemory,store};
 }
-function session(){return {id:webcrypto.randomUUID(),startedAt:10,date:'2026-10-10',pages:[{id:'A',title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,purpose:'working'}]}}};}
+function session(){return {id:webcrypto.randomUUID(),startedAt:10,date:'2026-10-10',pages:[{id:'A',equipmentId:'machine',loadUnit:'kg',loadConvention:'total',minimumKg:0,equipmentStepKg:1,title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,purpose:'working'}]}}};}
 test('offline records survive restart; duplicate capture does not enqueue duplicate evidence',()=>{
  const {M,store}=create(),s=session();M.capture(s);const id=s.logs.A.sets[0].id;
  M.capture(s);assert.equal(M.records()[id].localRevision,1);assert.equal(M.getStatus().pending,2);
@@ -61,20 +61,20 @@ test('set evidence snapshots authored targets and selected rest context',()=>{
 test('chronological replay learns one exposure per session and replaces edited evidence',()=>{
  const {M}=create(),a=session(),b=session();a.startedAt=10;b.startedAt=2;
  M.capture(a);M.capture(b);
- let state=M.replay('squat|default|total|kg');
+ let state=M.replay('squat|machine|total|kg');
  assert.equal(state.exposures,2);assert.equal(state.confidence,'provisional');
  assert.equal(JSON.stringify(state.evidence.map(e=>e.sessionId)),JSON.stringify([b.id,a.id]));
  const prior=state.freshE1rm,signature=state.evidence[1].sourceSignature;
- a.logs.A.sets[0].kg=50;M.capture(a);state=M.replay('squat|default|total|kg');
+ a.logs.A.sets[0].kg=50;M.capture(a);state=M.replay('squat|machine|total|kg');
  assert.equal(state.exposures,2);assert.notEqual(state.freshE1rm,prior);assert.notEqual(state.evidence[1].sourceSignature,signature);
- M.removeSession(a.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,1);
- M.removeSession(b.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,0);assert.equal(state.freshE1rm,null);
+ M.removeSession(a.id);state=M.replay('squat|machine|total|kg');assert.equal(state.exposures,1);
+ M.removeSession(b.id);state=M.replay('squat|machine|total|kg');assert.equal(state.exposures,0);assert.equal(state.freshE1rm,null);
 });
 
 test('derived estimate carries traceable model and source metadata without trusting old estimates',()=>{
  const {M}=create(),s=session();M.capture(s);
  const estimate=Object.values(M.records()).find(r=>r.kind==='session_estimate');
  assert.equal(estimate.payload.exposures,1);assert.equal(estimate.payload.confidence,'provisional');
- assert.equal(estimate.payload.modelVersion,'strength-v2-conservative');assert.match(estimate.payload.sourceSignature,/^fnv1a32:/);
+ assert.equal(estimate.payload.modelVersion,'strength-v3-conservative');assert.match(estimate.payload.sourceSignature,/^fnv1a32:/);
  assert.equal(JSON.stringify(estimate.payload.sourceSetIds),JSON.stringify([s.logs.A.sets[0].id]));
 });

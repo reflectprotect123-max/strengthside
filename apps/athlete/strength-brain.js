@@ -43,14 +43,14 @@
       let samePrescription=false;
       if(prior)try{samePrescription=JSON.stringify(T.normalize(prior.page))===JSON.stringify(T.normalize(page));}catch{}
       if(samePrescription&&positive(prior.nextKg)){working=prior.nextKg;confidence='history';}
-      else if(positive(h.rolling)&&first&&RTS.percent(first.reps.min,7)){working=E.floor(h.rolling*RTS.percent(first.reps.min,7),page);confidence='history';}
+      else if(positive(h.rolling)&&first&&root.StrengthLearning.fraction(first.reps.min+3,root.StrengthLearning.initial().k)){working=E.floor(Core.display(h.rolling*root.StrengthLearning.fraction(first.reps.min+3,root.StrengthLearning.initial().k),page),page);confidence='history';}
       else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}
       page.workingKg=working;page.startConfidence=confidence;
       const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
       const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
       const count=page.rampCount===0?0:main?2:page.rampCount===2?2:0;
       const bar=page.equipmentId==='barbell'||/\bbarbell\b/i.test(page.title||'');
-      const known=Number.isFinite(Number(working))&&Number(working)>=0;
+      const known=typeof working==='number'&&Number.isFinite(working)&&working>=0;
       const belowWork=known&&working>0?E.floor(working*.5,page):null;
       const step=E.next(0,page);
       const second=belowWork>0&&belowWork<working?belowWork:step!=null&&step<working?step:0;
