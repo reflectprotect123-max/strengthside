@@ -115,3 +115,12 @@ test('a removed secondary row receives finish lifecycle and does not block the f
  assert.equal(M.records()[removed].deleted,true);assert.equal(M.records()[removed].payload.completed,true);
  assert.equal(M.replay('squat|machine|total|kg').exposures,1);
 });
+test('successive reps/effort edits or an unlog do not certify an ambiguous legacy weight',()=>{
+ for(const unlog of [false,true]){
+  const {M,ctx}=create();let s=session();delete s.logs.A.sets[0].context;s.phase='block';s.blockIndex=0;s.completedAt=null;
+  if(unlog)s=ctx.HybridSession.toggleLogged(s,0);
+  else s=ctx.HybridSession.logSet(s,0,{reps:6},undefined,{commit:false});
+  s=ctx.HybridSession.logSet(s,0,{effort:'average'});M.capture(s);
+  assert.equal(Object.values(M.records()).find(r=>r.kind==='set').payload.normalizedLoad,null);
+ }
+});

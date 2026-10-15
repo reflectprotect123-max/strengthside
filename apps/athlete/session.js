@@ -302,7 +302,7 @@
     if (patch.miss != null) row.miss = !!patch.miss;
     if (patch.effort !== undefined) row.effort = patch.effort;
     if (patch.context && typeof patch.context === 'object') row.context = { ...(row.context || {}), ...patch.context };
-    if(root.StrengthLoad&&(!wasLogged||row.context?.inputVersion===3||(patch.kg!=null&&Number(patch.kg)!==previousKg))) {
+    if(root.StrengthLoad&&((!wasLogged&&!row.context?.loadAmbiguous)||row.context?.inputVersion===3||(patch.kg!=null&&Number(patch.kg)!==previousKg))) {
       row.context={...(row.context||{}),inputVersion:3,normalizedLoad:root.StrengthLoad.fromPage({page:liftPage,value:row.kg,provenance:'explicit'})};
     } else if(wasLogged&&!row.context?.normalizedLoad) row.context={...(row.context||{}),loadAmbiguous:true};
     row.logged = options.commit === false ? false : canLogRow(row, liftPage);
@@ -315,6 +315,7 @@
     const log = getLog(s, page, memberId);
     const row = log.sets[setIndex];
     if (!row) return s;
+    if(row.logged&&row.context?.inputVersion!==3&&!root.StrengthContext?.normalizeLoad(row.context?.normalizedLoad)?.eligible)row.context={...(row.context||{}),loadAmbiguous:true};
     row.logged = row.logged ? false : canLogRow(row, page.logMode === 'superset' ? memberOf(page, memberId) : page);
     return s;
   }
