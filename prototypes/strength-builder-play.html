@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strength builder play</title>
+<link rel="stylesheet" href="../apps/athlete/home.css">
+<link rel="stylesheet" href="../apps/athlete/library.css">
+<style>
+  html, body { background: #050505; }
+  body { min-height: 100dvh; display: grid; justify-items: center; align-content: start; padding: 28px 16px 48px; }
+  .play-note { color: #8e8e93; font-size: 13px; margin: 0 0 12px; max-width: 390px; }
+  .play-restart { color: #1ba3ff; font-weight: 600; margin: 0 0 14px; min-height: 36px; }
+  .phone {
+    width: min(100%, 390px);
+    height: min(844px, calc(100dvh - 96px));
+    position: relative;
+    overflow: hidden;
+    background: #000;
+    border: 8px solid #1c1c1e;
+    border-radius: 32px;
+  }
+  .phone .viewport { height: 100%; overflow: auto; }
+  .phone .bottom-nav,
+  .phone .lib-wizard-next,
+  .phone .photo-pad { position: absolute; left: 0; right: 0; width: 100%; max-width: none; transform: none; }
+  .phone .lib-wizard-next { bottom: 72px; }
+  .phone.has-pad .shell-screen--library { padding-bottom: 390px; }
+  .phone .shell-screen--library { min-height: 100%; }
+  .focus-cell { background: #3a3a3c; }
+  .sum { margin: 2px 0 0; color: #8e8e93; font-size: 13px; font-weight: 500; }
+  .lib-block h3 { font-size: 16px; }
+  .open-card h3 { font-size: 26px; }
+  .tap-card { width: 100%; text-align: left; background: none; }
+</style>
+</head>
+<body>
+<p class="play-note">Play the builder. Notes, then pick the lifts once. Next exercise stays on this screen.</p>
+<button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
+<div class="phone" id="phone">
+  <div class="viewport" id="view"></div>
+</div>
+<script>
+(function () {
+  const CATALOG = [
+    ['back_squat', 'Back Squat'],
+    ['bench_press', 'Bench Press'],
+    ['lat_pull_downs', 'Lat Pull Downs'],
+    ['front_squat', 'Front Squat'],
+    ['romanian_deadlift', 'Romanian Deadlift'],
+    ['goblet_box_squat', 'Goblet Box Squat'],
+    ['reverse_hypers', 'Reverse Hypers'],
+    ['farmer_carry', 'Farmer Carry']
+  ];
+  const PRESET = {
+    back_squat: { metric: 'reps', sets: ['10', '8', '6'], tempo: ['2', '0', 'X', '1'] },
+    bench_press: { metric: 'range', sets: ['6-8', '6-8', '6-8'], tempo: ['3', '3', 'X', '1'] },
+    lat_pull_downs: { metric: 'reps', sets: ['10', '10', '10'], tempo: ['', '', '', ''] }
+  };
+  const KEY = 'strength-builder-play';
+
+  function fresh() {
+    return {
+      screen: 'notes',
+      title: 'Lower Strength',
+      instructions: '',
+      warmup: '',
+      cooldown: '',
+      query: '',
+      selected: [],
+      superset: [],
+      blocks: [],
+      activeId: null,
+      pad: null,
+      date: new Date().toISOString().slice(0, 10),
+      posted: ''
+    };
+  }
+  let state = load();
+  function load() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+      if (saved && saved.screen) return saved;
+    } catch (e) {}
+    return fresh();
+  }
+  function save() { sessionStorage.setItem(KEY, JSON.stringify(state)); }
+  function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function block(id) { return state.blocks.find((b) => b.id === id); }
+  function letters() {
+    const used = {};
+    let n = 0;
+    state.blocks.forEach((b) => {
+      if (b.groupId) {
+        if (!used[b.groupId]) used[b.groupId] = String.fromCharCode(65 + n++);
+        const mates = state.blocks.filter((x) => x.groupId === b.groupId);
+        b.letter = used[b.groupId] + (mates.length > 1 ? String(mates.indexOf(b) + 1) : '');
+      } else b.letter = String.fromCharCode(65 + n++);
+    });
+  }
+  function rx(b) {
+    const work = b.sets.filter((s) => !s.amrap).map((s) => s.text || '0');
+    const same = work.length && work.every((t) => t === work[0]);
+    const body = same ? work.length + ' x ' + work[0] : work.join(' / ');
+    return b.sets.some((s) => s.amrap) ? body + ' / AMRAP' : body;
+  }
+  function tempoText(b) {
+    const t = (b.tempo || ['', '', '', '']).join('');
+    return t.trim() ? t : '';
+  }
+  function summary(b) {
+    const tempo = tempoText(b);
+    return rx(b) + (tempo ? ' · ' + tempo : '');
+  }
+
+  function nav() {
+    return `<nav class="bottom-nav">
+      <button type="button" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z"/></svg><span>Home</span></button>
+      <button type="button" data-tab="training"><svg viewBox="0 0 24 24"><path d="M7 3v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2V3H7zm0 4h10v10H7V7z"/></svg><span>Training</span></button>
+      <button type="button" data-tab="progress"><svg viewBox="0 0 40 40"><path d="M6 17 20 4l14 13M6 25 20 12l14 13M6 33 20 20l14 13" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="square"/></svg><span>Progress</span></button>
+      <button type="button" class="active" data-tab="library"><svg viewBox="0 0 24 24"><path d="M6 4h11a2 2 0 0 1 2 2v13H8a2 2 0 0 1-2-2V4zm2 14h9V6H8v12zM4 6h1v14H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/></svg><span>Library</span></button>
+      <button type="button" data-tab="me"><img class="nav-me-logo" src="../apps/athlete/assets/hpp-logo.jpg" width="22" height="22" alt=""><span>Me</span></button>
+    </nav>`;
+  }
+  function nextBar(label, action) {
+    const cls = label === 'Post to calendar' ? 'lib-primary' : 'btn oled-cta';
+    return `<div class="lib-wizard-next"><button type="button" class="${cls}" onclick="${action}">${esc(label)}</button></div>`;
+  }
+
+  function notesHtml() {
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row"><span class="lib-back"></span><h1>Notes</h1></div>
+      <div class="lib-field"><label for="playTitle">Title</label><input id="playTitle" value="${esc(state.title)}" oninput="Play.field('title', this.value)"></div>
+      <div class="lib-field"><label for="playInstr">Session instructions</label><textarea id="playInstr" placeholder="Coach notes for Start Session" oninput="Play.field('instructions', this.value)">${esc(state.instructions)}</textarea></div>
+      <div class="lib-field"><label for="playWarm">Warm-up</label><textarea id="playWarm" placeholder="Optional" oninput="Play.field('warmup', this.value)">${esc(state.warmup)}</textarea></div>
+      <div class="lib-field"><label for="playCool">Cool-down</label><textarea id="playCool" placeholder="Optional" oninput="Play.field('cooldown', this.value)">${esc(state.cooldown)}</textarea></div>
+      ${nextBar('Next', 'Play.goPick()')}
+      ${nav()}
+    </div>`;
+  }
+
+  function pickHtml() {
+    const q = state.query.trim().toLowerCase();
+    const rows = CATALOG.filter(([, title]) => title.toLowerCase().includes(q)).map(([id, title]) => {
+      const on = state.selected.includes(id);
+      const have = state.blocks.some((b) => b.catalogId === id);
+      return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="Play.togglePick('${id}')"><b>${esc(title)}</b><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
+    }).join('') || '<div class="lib-empty">No results.</div>';
+    const n = state.selected.length;
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row">
+        <button type="button" class="lib-back" aria-label="Back" onclick="Play.backPick()">←</button>
+        <h1>Exercises</h1>
+        <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.markSuperset()">Superset</button>
+        <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addPicked()">Add${n ? ' (' + n + ')' : ''}</button>
+      </div>
+      <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
+      <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
+      <div id="libResults">${rows}</div>
+      ${state.superset.length ? '<p class="lib-empty">Superset: ' + esc(state.superset.map((id) => CATALOG.find((c) => c[0] === id)[1]).join(' · ')) + '</p>' : ''}
+      ${nextBar('Next', 'Play.addPicked()')}
+      ${nav()}
+    </div>`;
+  }
+
+  function setRows(b) {
+    const h1 = b.metric === 'range' ? 'Rep Range' : 'Reps';
+    return b.sets.map((s, i) => {
+      const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === i;
+      const rep = s.amrap ? '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>' : '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' reps" onclick="Play.openPad(\'' + b.id + '\',' + i + ')">' + esc(s.text || '0') + '</button>';
+      const weight = s.amrap ? '<div class="lib-cell">Set 1 weight</div>' : '<div class="lib-cell"></div>';
+      return '<span>' + (i + 1) + '</span>' + rep + weight;
+    }).join('');
+  }
+  function editorHtml() {
+    letters();
+    let body = '';
+    if (state.instructions || state.warmup || state.cooldown) {
+      const bits = [state.instructions, state.warmup, state.cooldown].filter(Boolean);
+      body += '<article class="lib-block"><div class="lib-block-top"><div style="flex:1"><h3>Instructions</h3><p class="sum">' + esc(bits.join(' · ')) + '</p></div></div></article>';
+    }
+    state.blocks.forEach((b, i) => {
+      const prev = state.blocks[i - 1];
+      if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
+      if (b.id !== state.activeId) {
+        body += '<article class="lib-block"><button type="button" class="tap-card" onclick="Play.openBlock(\'' + b.id + '\')"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><div class="meta">' + esc(summary(b)) + '</div></div></div></button></article>';
+        return;
+      }
+      const tempo = b.tempo || ['', '', '', ''];
+      const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
+      body += '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button><button type="button" class="lib-done" onclick="Play.closePad()">Done</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="range"' + (b.metric === 'range' ? ' selected' : '') + '>Rep Range</option></select><select aria-label="Second metric" disabled><option>Weight (kg)</option></select></div></div><div class="lib-grid"><span></span><div class="lib-grid-h">' + (b.metric === 'range' ? 'Rep Range' : 'Reps') + '</div><div class="lib-grid-h">Weight (kg)</div>' + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
+    });
+    const posted = state.posted ? '<p class="lib-empty">' + esc(state.posted) + '</p>' : '';
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goPick()">←</button><h1>Session Template</h1><button type="button" class="lib-text-btn" onclick="Play.reorder()">Reorder</button></div>
+      <div class="lib-field"><label for="editTitle">Title</label><input id="editTitle" value="${esc(state.title)}" oninput="Play.field('title', this.value)"></div>
+      ${body}
+      <div class="lib-row-btns"><button type="button" onclick="Play.goPick()">+ Add Exercise</button><button type="button" disabled>+ Add Circuit</button></div>
+      <div style="padding:0 16px 24px"><button type="button" class="lib-primary" onclick="Play.calendar()">Post to calendar</button></div>
+      ${posted}
+      ${state.blocks.length ? '<div style="padding:0 16px 20px"><button type="button" class="btn oled-cta" onclick="Play.nextExercise()">Next exercise</button></div>' : ''}
+      ${padHtml()}
+    </div>`;
+  }
+  function padHtml() {
+    if (!state.pad) return '';
+    const b = block(state.pad.blockId);
+    if (!b) return '';
+    const parts = split(state.pad.buffer);
+    const mark = (text, on) => on ? '<span class="photo-caret">' + esc(text || '') + '</span>' : esc(text);
+    const val = !parts.dash ? mark(parts.left || '0', true) : mark(parts.left, state.pad.side !== 'right') + '-' + mark(parts.right, state.pad.side === 'right');
+    const key = (label, col, row, extra) => '<button type="button" class="photo-key' + (extra || '') + '" style="grid-column:' + col + ';grid-row:' + row + '" onclick="Play.key(\'' + label + '\')">' + (label === '⌫' ? '⌫' : label) + '</button>';
+    return '<div class="photo-pad" role="dialog" aria-label="Reps keypad"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">REPS</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || '') + '</p></div>';
+  }
+  function calendarHtml() {
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.openEditor()">←</button><h1>Post to calendar</h1></div>
+      <div class="lib-field"><label for="sessionPostDate">Session date</label><input id="sessionPostDate" type="date" value="${esc(state.date)}" onchange="Play.field('date', this.value)"></div>
+      <p class="lib-empty" style="text-align:left;padding:0 16px 12px">Lands on your Training tab only.</p>
+      <div style="padding:0 16px"><button type="button" class="lib-primary" onclick="Play.confirmDate()">Post to calendar</button></div>
+      <p class="lib-empty">${esc(state.title)}</p>
+    </div>`;
+  }
+
+  function split(buffer) {
+    const text = String(buffer || '');
+    const dash = text.indexOf('-');
+    return dash < 0 ? { left: text, dash: false, right: '' } : { left: text.slice(0, dash), dash: true, right: text.slice(dash + 1) };
+  }
+  function applyBuffer() {
+    const b = block(state.pad.blockId);
+    const set = b && b.sets[state.pad.setIndex];
+    if (!set || set.amrap) return;
+    const parts = split(state.pad.buffer);
+    if (b.metric !== 'range') {
+      set.text = (parts.left || '0').replace(/\D/g, '') || '0';
+      return;
+    }
+    if (!parts.dash) set.text = parts.left || '0';
+    else set.text = (parts.left || '0') + '-' + (parts.right || parts.left || '0');
+  }
+
+  function render(scrollToOpen) {
+    letters();
+    save();
+    const phone = document.getElementById('phone');
+    const view = document.getElementById('view');
+    const y = view.scrollTop;
+    phone.classList.toggle('has-pad', state.screen === 'edit' && !!state.pad);
+    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'pick' ? pickHtml() : state.screen === 'calendar' ? calendarHtml() : editorHtml();
+    view.innerHTML = '<div class="shell">' + html + '</div>';
+    if (scrollToOpen) view.querySelector('.open-card')?.scrollIntoView({ block: 'start' });
+    else view.scrollTop = y;
+  }
+
+  function makeBlock(catalogId, groupId) {
+    const title = CATALOG.find((c) => c[0] === catalogId)[1];
+    const preset = PRESET[catalogId] || { metric: 'reps', sets: ['8', '8', '8'], tempo: ['', '', '', ''] };
+    return {
+      id: catalogId + '-' + Math.random().toString(36).slice(2, 7),
+      catalogId, title, groupId: groupId || null,
+      metric: preset.metric,
+      sets: preset.sets.map((text) => ({ text, amrap: false })),
+      tempo: preset.tempo.slice(),
+      notes: '',
+      notice: ''
+    };
+  }
+
+  const Play = {
+    restart() { state = fresh(); render(); },
+    field(key, value) { state[key] = value; save(); },
+    goPick() { state.screen = 'pick'; state.pad = null; render(); },
+    backPick() { state.screen = state.blocks.length ? 'edit' : 'notes'; render(true); },
+    search(value) {
+      state.query = value;
+      save();
+      const box = document.getElementById('libResults');
+      if (!box) return render();
+      const hold = document.activeElement;
+      const html = pickHtml();
+      document.getElementById('view').innerHTML = '<div class="shell">' + html + '</div>';
+      const input = document.querySelector('.lib-search input');
+      if (input) { input.focus(); input.setSelectionRange(value.length, value.length); }
+      else hold?.focus?.();
+    },
+    togglePick(id) {
+      if (state.blocks.some((b) => b.catalogId === id)) return;
+      const at = state.selected.indexOf(id);
+      if (at >= 0) state.selected.splice(at, 1);
+      else state.selected.push(id);
+      if (!state.selected.includes(id)) state.superset = state.superset.filter((x) => x !== id);
+      render();
+    },
+    markSuperset() {
+      if (state.selected.length < 2) return;
+      state.superset = state.selected.slice();
+      render();
+    },
+    addPicked() {
+      if (!state.selected.length && state.blocks.length) { state.screen = 'edit'; render(true); return; }
+      if (!state.selected.length) return;
+      const group = state.superset.length >= 2 ? 'ss-' + Date.now() : null;
+      state.selected.forEach((id) => {
+        if (state.blocks.some((b) => b.catalogId === id)) return;
+        state.blocks.push(makeBlock(id, group && state.superset.includes(id) ? group : null));
+      });
+      state.selected = [];
+      state.superset = [];
+      state.query = '';
+      state.screen = 'edit';
+      if (!state.activeId || !block(state.activeId)) state.activeId = state.blocks[0].id;
+      Play.openBlock(state.activeId);
+    },
+    openEditor() { state.screen = 'edit'; render(true); },
+    openBlock(id) {
+      state.screen = 'edit';
+      state.activeId = id;
+      const b = block(id);
+      const index = Math.max(0, b.sets.findIndex((s) => !s.amrap));
+      Play.openPad(id, index < 0 ? 0 : index, true);
+    },
+    openPad(id, index, scroll) {
+      const b = block(id);
+      const set = b.sets[index];
+      state.activeId = id;
+      if (!set || set.amrap) { state.pad = null; render(scroll); return; }
+      state.pad = { blockId: id, setIndex: index, buffer: set.text || '', side: 'left', fresh: true, error: '' };
+      render(scroll);
+    },
+    closePad() { state.pad = null; render(); },
+    nextExercise() {
+      if (!state.blocks.length) return;
+      const at = Math.max(0, state.blocks.findIndex((b) => b.id === state.activeId));
+      const next = state.blocks[(at + 1) % state.blocks.length];
+      Play.openBlock(next.id);
+    },
+    key(key) {
+      if (!state.pad) return;
+      const b = block(state.pad.blockId);
+      const parts = split(state.pad.buffer);
+      const side = state.pad.side === 'right' && parts.dash ? 'right' : 'left';
+      state.pad.error = '';
+      if (key === '>' || key === '–' || key === '-') {
+        if (b.metric !== 'range') { state.pad.error = 'Range needs Rep Range.'; render(); return; }
+        parts.dash = true; state.pad.side = 'right'; state.pad.fresh = true;
+      } else if (key === '<') { state.pad.side = 'left'; state.pad.fresh = true; }
+      else if (key === '⌫') {
+        if (side === 'right' && parts.right) parts.right = parts.right.slice(0, -1);
+        else if (side === 'right') { parts.dash = false; state.pad.side = 'left'; }
+        else parts.left = parts.left.slice(0, -1);
+        state.pad.fresh = false;
+      } else if (/^\d$/.test(key)) {
+        if (side === 'right') parts.right = state.pad.fresh ? key : parts.right + key;
+        else parts.left = state.pad.fresh ? key : parts.left + key;
+        state.pad.fresh = false;
+      } else return;
+      state.pad.buffer = parts.dash ? parts.left + '-' + parts.right : parts.left;
+      applyBuffer();
+      render();
+    },
+    metric(id, metric) {
+      const b = block(id);
+      if (b.metric === 'range' && metric === 'reps') {
+        b.sets.forEach((s) => { if (!s.amrap && String(s.text).includes('-')) s.text = String(s.text).split('-')[0] || '0'; });
+        b.notice = 'Range became the lower number.';
+      } else b.notice = '';
+      b.metric = metric;
+      if (state.pad && state.pad.blockId === id) {
+        const set = b.sets[state.pad.setIndex];
+        state.pad.buffer = set && !set.amrap ? set.text : '';
+        state.pad.side = 'left';
+        if (metric !== 'range') state.pad.buffer = String(state.pad.buffer).split('-')[0];
+      }
+      render();
+    },
+    tempo(id, index, value) {
+      const b = block(id);
+      b.tempo[index] = String(value || '').slice(0, 1);
+      save();
+    },
+    notes(id, value) { block(id).notes = value; save(); },
+    nudge(id, dir) {
+      const b = block(id);
+      const amrap = b.sets.filter((s) => s.amrap);
+      const work = b.sets.filter((s) => !s.amrap);
+      if (dir < 0 && work.length > 1) work.pop();
+      if (dir > 0 && work.length < 12) work.push({ text: work.at(-1)?.text || '8', amrap: false });
+      b.sets = work.concat(amrap.slice(0, 1));
+      if (state.pad && state.pad.blockId === id && state.pad.setIndex >= b.sets.length) state.pad = null;
+      render();
+    },
+    amrap(id) {
+      const b = block(id);
+      if (b.sets.at(-1)?.amrap) b.sets.pop();
+      else b.sets.push({ text: '', amrap: true });
+      if (state.pad && state.pad.blockId === id && b.sets[state.pad.setIndex]?.amrap) state.pad = null;
+      render();
+    },
+    removeBlock(id) {
+      state.blocks = state.blocks.filter((b) => b.id !== id);
+      if (state.pad && state.pad.blockId === id) state.pad = null;
+      state.activeId = state.blocks[0]?.id || null;
+      if (state.activeId) Play.openBlock(state.activeId);
+      else render();
+    },
+    reorder() {
+      const at = state.blocks.findIndex((b) => b.id === state.activeId);
+      if (at <= 0) return;
+      const [item] = state.blocks.splice(at, 1);
+      state.blocks.splice(at - 1, 0, item);
+      render(true);
+    },
+    calendar() { state.screen = 'calendar'; state.pad = null; render(); },
+    confirmDate() {
+      state.posted = 'Posted ' + state.title + ' on ' + state.date + '.';
+      state.screen = 'edit';
+      render(true);
+    }
+  };
+  window.Play = Play;
+  document.addEventListener('keydown', (event) => {
+    if (!state.pad) return;
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (event.key === 'Backspace') { event.preventDefault(); Play.key('⌫'); }
+    else if (/^\d$/.test(event.key)) Play.key(event.key);
+    else if (event.key === '-' ) Play.key('–');
+  });
+  render(state.screen === 'edit');
+})();
+</script>
+</body>
+</html>
