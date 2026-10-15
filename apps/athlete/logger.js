@@ -803,12 +803,12 @@
         if (source) {
           adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
           rows[index].kg = adjustment.kg;
-          const lifted = Number(source.kg);
-          if ((source.purpose === 'ramp' || source.purpose === 'warmup') && Number.isFinite(lifted)) {
+          if ((source.purpose === 'ramp' || source.purpose === 'warmup') && adjustment) {
             for (let i = index + 1; i < rows.length; i++) {
               const later = rows[i];
               if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
-              if (later.kg == null || Number(later.kg) < lifted) later.kg = lifted;
+              const adj = StrengthBrain.next({page:lift,row:source,nextRow:later,index:i,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
+              if (adj && Number.isFinite(Number(adj.kg)) && (later.kg == null || Number(adj.kg) > Number(later.kg))) later.kg = adj.kg;
             }
           }
           source.loadDecision = adjustment;

@@ -56,7 +56,12 @@
       const second=belowWork>0&&belowWork<working?belowWork:step!=null&&step<working?step:0;
       const rampLoad=bar&&known?[0,second]:[known&&working>0?belowWork:null,null];
       const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i<rampLoad.length?rampLoad[i]:null,cells:{},logged:false,miss:false}));
-      const authored=log.sets.map((row,i)=>({...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||targets[i]?.id,purpose:targets[i]?.purpose||'working',workingIndex:i,kg:known?working:i===0?working??row.kg:row.kg}));
+      const authored=log.sets.map((row,i)=>{
+        const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
+        const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)?Core.matchLoad(working,from,reps,page):null;
+        const kg=matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
+        return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg};
+      });
       log.sets=ramps.concat(authored);
     }
     s.brainSeeded=true;return s;

@@ -51,6 +51,15 @@ test('barbell warmups start at the empty bar and leave the work weight in place'
  const held=B.next({page:seeded.pages[0],row:{...rows[0],logged:true,reps:6,effort:'easy',kg:0},nextRow:rows[2],index:2,state:{rows}});
  assert.equal(held.kg,60);
 });
+test('10/8/6 opens with a heavier bar as the reps come down',()=>{
+ const reps=[10,8,6].map((n,i)=>({id:`A:set:${i}`,purpose:'working',reps:{min:n,max:n},loadRule:{kind:'adaptive'},toFailure:false}));
+ const wave={...page,title:'Back Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,setTargets:reps,setCount:3,targetReps:10};
+ const prior={id:'old',targetId:'A:set:0',reps:10,effort:'average',kg:90,logged:true,purpose:'working',ordinal:0};
+ const records={old:{kind:'set',sessionId:'past',exerciseKey:B.key(wave),payload:{page:wave,row:prior,sessionStartedAt:1}}};
+ const seeded=B.seed({id:'s',pages:[wave],logs:{A:{sets:reps.map(t=>({targetId:t.id}))}}},records);
+ assert.equal(seeded.pages[0].workingKg,90);
+ assert.deepEqual(Array.from(seeded.logs.A.sets,r=>r.kg),[0,45,90,95,105]);
+});
 test('recognized cold start is provisional and manual actuals remain untouched',()=>{
  const db={...page,id:'D',title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',setTargets:targets.map((t,i)=>({...t,id:`D:set:${i}`}))};
  const session={id:'s',pages:[db],logs:{D:{sets:db.setTargets.map(t=>({targetId:t.id}))}}};
