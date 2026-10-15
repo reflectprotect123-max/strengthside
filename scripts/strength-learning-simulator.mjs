@@ -120,16 +120,21 @@ export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-s
   const w=new Worker(new URL(import.meta.url),{workerData:{batch}});let received=false;
   w.once('message',rows=>{received=true;resolve(rows);});w.once('error',reject);w.once('exit',code=>{if(code!==0||!received)reject(Error('Simulation worker failed: '+code));});
  })))).flat().sort((a,b)=>a.index-b.index).map(({index,...r})=>r);
- return summarizeReport({schemaVersion:1,sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
+ return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
 }
 if(!isMainThread){
- const results=workerData.batch.map(({index,sessions,...input})=>({index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics}));
+ const results=[];
+ for(const {index,sessions,...input} of workerData.batch){
+  results.push({index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics});
+  // Let completed native-restore promises settle between independent VM runs.
+  await new Promise(resolve=>setImmediate(resolve));
+ }
  parentPort.postMessage(results);
 }
 if(isMainThread&&process.argv[1]===fileURLToPath(import.meta.url)&&process.argv.includes('--check-report')){
  const report=JSON.parse(readFileSync(new URL('../docs/research/strength-online-learning/production-results.json',import.meta.url),'utf8'));
  for(const [name,source] of sources)if(report.sourceSha256?.[name]!==digest(source))throw Error('Stale production evaluation: '+name);
- if(JSON.stringify(report.registered)!==JSON.stringify(registered)||report.violations!==0||report.gate.shippingMode!=='default'||!report.bootstrapUnit)throw Error('Invalid production evaluation evidence');
+ if(report.analysisSha256!==digest(readFileSync(fileURLToPath(import.meta.url)))||report.fixtureSha256!==digest(JSON.stringify(fixture))||JSON.stringify(report.registered)!==JSON.stringify(registered)||report.violations!==0||report.gate.shippingMode!=='default'||!report.bootstrapUnit)throw Error('Invalid production evaluation evidence');
  console.log('Production evaluation source hashes, registered seeds, clustered analysis and conservative rollout verified.');
 }
 if(isMainThread&&process.argv[1]===fileURLToPath(import.meta.url)&&!process.argv.includes('--check-report')){
@@ -139,7 +144,7 @@ if(isMainThread&&process.argv[1]===fileURLToPath(import.meta.url)&&!process.argv
   const saved=JSON.parse(readFileSync(new URL('production-results.json',dir),'utf8'));
   const repaired=await evaluate({athletesPerSeed:saved.athletesPerSeed,sessions:saved.sessions,scenarios:['noisy-feedback']});
   const replacements=new Map(repaired.results.map(r=>[JSON.stringify([r.seed,r.athlete]),r]));
-  report=summarizeReport({...saved,results:saved.results.map(r=>r.scenario==='noisy-feedback'?replacements.get(JSON.stringify([r.seed,r.athlete])):r),pairingCorrection:'Noisy feedback re-evaluated with a fixed per-session draw schedule before inspecting outcomes. Other scenarios draw no per-set noise and their trajectories are unchanged.'});
+  report=summarizeReport({...saved,fixtureSha256:saved.fixtureSha256??digest(JSON.stringify(fixture)),results:saved.results.map(r=>r.scenario==='noisy-feedback'?replacements.get(JSON.stringify([r.seed,r.athlete])):r),pairingCorrection:'Noisy feedback re-evaluated with a fixed per-session draw schedule before inspecting outcomes. Other scenarios draw no per-set noise and their trajectories are unchanged.'});
  }else report=process.argv.includes('--summarize-existing')?summarizeReport(JSON.parse(readFileSync(new URL('production-results.json',dir),'utf8'))):await evaluate();
  writeFileSync(new URL('production-results.json',dir),JSON.stringify(report,null,2)+'\n');
  writeFileSync(new URL('production-evaluation.md',dir),`# Production-path synthetic evaluation\n\n${report.protocol}. Evaluation seeds were registered before implementation and were not tuned.\n\nIndependent paired athletes: ${report.overall.athletes}; repeated scenario pairs: ${report.overall.scenarioPairs}; ordinary sets per policy: ${report.overall.sets}. Software invariant violations: ${report.violations}.\n\n|Metric|Default|Online|Paired difference (95% CI)|\n|---|---|---|---|\n|Target hit|${report.overall.baselineTargetHit}|${report.overall.onlineTargetHit}|${JSON.stringify(report.overall.targetHitDifference)}|\n|Miss|${report.overall.baselineMiss}|${report.overall.onlineMiss}|${JSON.stringify(report.overall.missRateDifference)}|\n\nStatistical gate: **${report.gate.pass?'PASS':'FAIL'}**. Shipping policy stays default. No release is authorized by these simulations.\n\n${report.limitations.map(s=>'- '+s).join('\n')}\n\nSee adjacent JSON for subgroup denominators, seed/athlete pairs, acquisition delays, load errors and all invariants.\n`);
