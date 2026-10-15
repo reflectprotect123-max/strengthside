@@ -1880,7 +1880,8 @@ button {
   .play-next { padding: 0 16px 20px; }
   .phone.has-pad .play-next { position: absolute; left: 0; right: 0; bottom: 448px; z-index: 70; padding-bottom: 0; }
   .play-confirm { text-align: left; padding: 4px 16px 12px; color: #fff; }
-  .lib-text-btn:disabled { color: #8e8e93; }
+  .lib-text-btn:disabled, .btn.oled-cta:disabled { color: #8e8e93; }
+  .btn.oled-cta:disabled { background: #1c1c1e; }
   .phone .shell-screen--library { min-height: 100%; }
   .focus-cell { background: #3a3a3c; }
   .sum { margin: 2px 0 0; color: #8e8e93; font-size: 13px; font-weight: 500; }
@@ -1890,7 +1891,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. One lift, then Next. Two or more, then Superset. Each confirm leads to the next.</p>
+<p class="play-note">One file. Save it, then open it in a browser. Add in the corner moves the ticked lifts on. Superset groups two or more.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -2010,14 +2011,15 @@ button {
       <div class="lib-head-row">
         <button type="button" class="lib-back" aria-label="Back" onclick="Play.backPick()">←</button>
         <h1>Exercises</h1>
-        <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.addSuperset()">Superset${n >= 2 ? ' (' + n + ')' : ''}</button>
+        <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.addSuperset()">Superset</button>
+        <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addSelected()">Add${n ? ' (' + n + ')' : ''}</button>
       </div>
       <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
       <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
       <div id="libResults">${rows}</div>
-      ${n === 1 ? '<p class="lib-empty">Next confirms this as a single.</p>' : ''}
-      ${n >= 2 ? '<p class="lib-empty">Superset confirms these ' + n + ' as one group.</p>' : ''}
-      ${nextBar(n >= 2 ? 'Superset' : 'Next', n >= 2 ? 'Play.addSuperset()' : 'Play.confirmSingle()', n < 2 && n !== 1 && !(n === 0 && state.blocks.length))}
+      ${n === 1 ? '<p class="lib-empty">Add moves this on as a single.</p>' : ''}
+      ${n >= 2 ? '<p class="lib-empty">Superset groups these ' + n + '. Add keeps each one single.</p>' : ''}
+      ${nextBar('Next', 'Play.confirmSingle()', n !== 1 && !(n === 0 && state.blocks.length))}
       ${nav()}
     </div>`;
   }
@@ -2167,6 +2169,10 @@ button {
         render(true);
         return;
       }
+      Play.commitSelected(false);
+    },
+    addSelected() {
+      if (!state.selected.length) return;
       Play.commitSelected(false);
     },
     addSuperset() {
