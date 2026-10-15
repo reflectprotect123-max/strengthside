@@ -4,15 +4,24 @@
   let busy=false,timer=null,retry=0,nativePending=null,nativeWriting=false;
   const status={pending:0,lastError:'',lastSyncAt:null};
   const empty=()=>({version:VERSION,ownerId:null,records:{},pending:{},revisions:{}});
-  let memory;
-  try{memory=JSON.parse(root.localStorage.getItem(KEY))||empty();}catch{memory=empty();}
-  if(memory.version!==VERSION)throw new Error('Unsupported strength memory version');
+  let memory,recoveryRaw=null,ownerEpoch=0,restorePromise=null;
+  function hydrate(value) {
+    if(!value||typeof value!=='object'||Array.isArray(value))return empty();
+    const dict=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
+    return {version:VERSION,ownerId:typeof value.ownerId==='string'?value.ownerId:null,
+      records:dict(value.records),pending:dict(value.pending),revisions:dict(value.revisions),conflicts:dict(value.conflicts)};
+  }
+  const raw=root.localStorage.getItem(KEY);
+  try{const parsed=raw?JSON.parse(raw):null;memory=hydrate(parsed);if(parsed&&parsed.version!==VERSION)recoveryRaw=raw;}
+  catch{memory=empty();recoveryRaw=raw;}
+  let durable=JSON.stringify(memory);
   function persist() {
-    root.localStorage.setItem(KEY,JSON.stringify(memory));
-    status.pending=Object.keys(memory.pending).length;
-    if(root.Capacitor?.isNativePlatform?.()) {
-      nativePending=JSON.stringify(memory);writeNative();
-    }
+    try{
+      if(recoveryRaw)root.localStorage.setItem(KEY+':recovery',recoveryRaw);
+      const data=JSON.stringify(memory);root.localStorage.setItem(KEY,data);durable=data;recoveryRaw=null;
+      status.pending=Object.keys(memory.pending).length;
+      if(root.Capacitor?.isNativePlatform?.()){nativePending=data;writeNative();}
+    }catch(e){memory=JSON.parse(durable);status.lastError='Could not save strength evidence: '+(e.message||'storage unavailable');throw e;}
   }
   function filesystem(){return root.Capacitor?.Plugins?.Filesystem||root.Capacitor?.registerPlugin?.('Filesystem');}
   async function writeNative() {
@@ -21,9 +30,17 @@
     try{await filesystem().writeFile({path:'strength-memory-v1.json',directory:'DATA',data,encoding:'utf8'});}catch(e){status.lastError='Native backup failed';console.warn('Strength memory native backup failed');}
     finally{nativeWriting=false;if(nativePending)writeNative();}
   }
-  async function restore() {
-    if(!root.Capacitor?.isNativePlatform?.()||root.localStorage.getItem(KEY))return;
-    try{const r=await filesystem().readFile({path:'strength-memory-v1.json',directory:'DATA',encoding:'utf8'});const saved=JSON.parse(r.data);if(saved.version===VERSION){memory=saved;persist();}}catch{/* First install has no backup. */}
+  function restore() {
+    if(restorePromise)return restorePromise;
+    if(!root.Capacitor?.isNativePlatform?.()||root.localStorage.getItem(KEY))return Promise.resolve();
+    const epoch=ownerEpoch,snapshot=durable;
+    restorePromise=(async()=>{
+      try{
+        const r=await filesystem().readFile({path:'strength-memory-v1.json',directory:'DATA',encoding:'utf8'});
+        if(epoch!==ownerEpoch||durable!==snapshot||root.localStorage.getItem(KEY))return;
+        memory=hydrate(JSON.parse(r.data));persist();
+      }catch{/* First install has no backup; existing facts are left untouched. */}
+    })();return restorePromise;
   }
   function clone(value){return value==null?value:JSON.parse(JSON.stringify(value));}
   function stable(value) {
@@ -52,7 +69,7 @@
   }
   function replay(exerciseKey,page) {
     page=page||Object.values(memory.records).find(r=>r.exerciseKey===exerciseKey&&r.payload?.page)?.payload.page;
-    return root.StrengthBrain.history(memory.records,page||{},undefined,memory.ownerId);
+    return root.StrengthBrain.history(records(),page||{},undefined,memory.ownerId);
   }
   function capture(session) {
     if(!session||session.demo)return;
@@ -94,16 +111,18 @@
     persist();schedule();
   }
   async function bind(uid) {
-    root.bindStrengthAccount?.(uid);
-    if(memory.ownerId&&memory.ownerId!==uid) {
-      root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
-      try{memory=JSON.parse(root.localStorage.getItem(KEY+':'+uid))||empty();}catch{memory=empty();}
+    if(memory.ownerId!==uid) {
+      if(memory.ownerId)root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
+      if(memory.ownerId){
+        try{memory=hydrate(JSON.parse(root.localStorage.getItem(KEY+':'+uid)));}catch{memory=empty();}
+      }
+      ownerEpoch++;
     }
     const adopt=memory.ownerId==null&&uid;
     memory.ownerId=uid;
     if(adopt)for(const r of Object.values(memory.records))if(r.payload?.ownerId==null)
       put({...r,payload:{...r.payload,ownerId:uid}});
-    persist();
+    persist();root.bindStrengthAccount?.(uid);
   }
   function ioDefault() {
     const sb=root.Whoop.client();
@@ -119,26 +138,38 @@
     if(busy)return {ok:false,reason:'busy'};
     busy=true;
     try {
-      const uid=await io.userId();if(!uid)return {ok:false,reason:'auth_required'};
+      const initialEpoch=ownerEpoch;
+      const uid=await io.userId();if(ownerEpoch!==initialEpoch)return {ok:false,reason:'account_changed'};if(!uid)return {ok:false,reason:'auth_required'};
       await bind(uid);
+      const syncEpoch=ownerEpoch;
+      const current=()=>ownerEpoch===syncEpoch&&memory.ownerId===uid;
       const remote=await io.pull(uid);
+      if(!current())return {ok:false,reason:'account_changed'};
       const conflicts=[];
       for(const r of remote) {
+        if(r.athlete_id!=null&&r.athlete_id!==uid)continue;
         const id=r.record_id,base=memory.revisions[id]||0;
+        if(typeof id!=='string'||!Number.isSafeInteger(r.revision)||r.revision<1||r.revision<base)continue;
         if(memory.pending[id]&&r.revision!==base){
-          const remoteRecord={sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:r.payload};
-          if(fingerprint(remoteRecord)===fingerprint(memory.records[id])){memory.revisions[id]=r.revision;delete memory.pending[id];continue;}
+          const remoteRecord={sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:clone(r.payload)};
+          if(fingerprint(remoteRecord)===fingerprint(memory.records[id])){memory.revisions[id]=r.revision;delete memory.pending[id];delete memory.conflicts?.[id];continue;}
+          (memory.conflicts||(memory.conflicts={}))[id]={id,localRevision:memory.records[id].localRevision,...remoteRecord};
           conflicts.push(id);continue;
         }
         memory.revisions[id]=r.revision;
-        if(!memory.pending[id])memory.records[id]={id,sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:r.payload,localRevision:r.revision};
+        if(!memory.pending[id]){
+          const next={id,sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:clone(r.payload)};
+          const old=memory.records[id];next.localRevision=old?(old.localRevision+(fingerprint(old)!==fingerprint(next)?1:0)):1;
+          memory.records[id]=next;delete memory.conflicts?.[id];
+        }
       }
       persist();
       if(conflicts.length){status.lastError='Concurrent edit requires reconciliation';return {ok:false,reason:'conflict',ids:conflicts};}
       const queued=Object.entries(memory.pending);
       for(let start=0;start<queued.length;start+=100) {
-        const entries=queued.slice(start,start+100),batch=entries.map(([id])=>{const r=memory.records[id];return {record_id:id,session_id:r.sessionId,exercise_key:r.exerciseKey,kind:r.kind,deleted:r.deleted,payload:r.payload,expected_revision:memory.revisions[id]||0};});
+        const entries=queued.slice(start,start+100),batch=entries.map(([id])=>{const r=memory.records[id];return {record_id:id,session_id:r.sessionId,exercise_key:r.exerciseKey,kind:r.kind,deleted:r.deleted,payload:clone(r.payload),expected_revision:memory.revisions[id]||0};});
         const result=await io.push(batch);
+        if(!current())return {ok:false,reason:'account_changed'};
         if(!result?.ok){status.lastError=result?.reason||'Sync failed';persist();return result||{ok:false,reason:'push_failed'};}
         for(const [id,rev] of entries) {
           memory.revisions[id]=(memory.revisions[id]||0)+1;
@@ -155,7 +186,12 @@
     for(const record of Object.values(memory.records))if(record.sessionId===sessionId&&!record.deleted)put({...record,deleted:true});
     persist();schedule();
   }
-  function records(){return memory.records;}
+  function records(){
+    const out={...memory.records};
+    for(const [id,remote] of Object.entries(memory.conflicts||{}))if(memory.records[id])
+      out['conflict:'+id]={...clone(remote),id,localRevision:memory.records[id].localRevision};
+    return out;
+  }
   function getStatus(){return {...status,pending:Object.keys(memory.pending).length};}
   root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,replay,ownerId:()=>memory.ownerId};
   root.addEventListener?.('online',()=>schedule(0));

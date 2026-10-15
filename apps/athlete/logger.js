@@ -17,10 +17,17 @@
   }
 
   function persist(next) {
+    const previous=root.S.session,wasOpen=root.S.loggerOpen;
     root.S.session = next;
     root.S.loggerOpen = true;
-    if (typeof root.save === 'function') root.save();
-    paint();
+    try{if (typeof root.save === 'function') root.save();}
+    catch(e){
+      root.S.session=previous;root.S.loggerOpen=wasOpen;
+      if(next?.date&&root.S.sessions?.[next.date]===next)root.S.sessions[next.date]=previous;
+      toast='Could not save. Free some storage and try again.';
+      paint();return false;
+    }
+    paint();return true;
   }
 
   function elapsed() {
