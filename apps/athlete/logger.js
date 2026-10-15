@@ -808,7 +808,7 @@
               const later = rows[i];
               if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
               const adj = StrengthBrain.next({page:lift,row:source,nextRow:later,index:i,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
-              if (adj && Number.isFinite(Number(adj.kg)) && (later.kg == null || Number(adj.kg) > Number(later.kg))) later.kg = adj.kg;
+              if (adj && typeof adj.kg==='number' && Number.isFinite(adj.kg)) later.kg = adj.kg;
             }
           }
           source.loadDecision = adjustment;

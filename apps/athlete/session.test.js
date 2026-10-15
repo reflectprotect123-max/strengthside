@@ -252,3 +252,10 @@ test('reopening an active workout preserves captured targets and calibration whe
  const reopened=HybridSession.startSession({date:s.date,existing:s,plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 10-12'}]}});
  assert.equal(reopened.pages[0].targetReps,6);assert.equal(reopened.pages[0].workingKg,40);assert.equal(reopened.brainSeeded,true);
 });
+test('tempo and completion lifecycle reach the real session without changing its prescription',()=>{
+ const p={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'33X1',prescription:'3 x 5'}]};
+ const s=HybridSession.startSession({date:'2026-10-16',plan:p});
+ assert.equal(s.pages[0].tempo,'33X1');
+ const done=HybridSession.finishToSummary(s);assert.ok(done.completedAt);
+ assert.equal(HybridSession.goToLetter(done,'A').completedAt,null);
+});

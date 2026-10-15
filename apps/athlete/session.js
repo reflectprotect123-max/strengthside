@@ -111,6 +111,8 @@
       kind: block.kind,
       logMode: mode,
       prescription: block.prescription || '',
+      tempo: block.tempo || null,
+      barWeightKg: block.barWeightKg ?? null,
       notes: block.notes || [],
       items: block.items || [],
       bullets: block.bullets || [],
@@ -208,6 +210,8 @@
       title: (plan && plan.title) || '',
       instructions: (plan && plan.instructions) || '',
       phase: letter ? 'block' : 'quote',
+      inputContractVersion:3,
+      completedAt:null,
       blockIndex: 0,
       startedAt: Date.now(),
       pages,
@@ -231,6 +235,7 @@
 
   function ackCoach(session) {
     const s = clone(session);
+    if(s.phase==='summary')s.completedAt=null;
     s.phase = 'block';
     s.blockIndex = s.blockIndex || 0;
     return s;
@@ -242,6 +247,7 @@
 
   function nextPage(session) {
     const s = clone(session);
+    if(s.phase==='summary')s.completedAt=null;
     s.phase = 'block';
     s.blockIndex = Math.min(s.pages.length - 1, (s.blockIndex || 0) + 1);
     return s;
@@ -249,6 +255,7 @@
 
   function prevPage(session) {
     const s = clone(session);
+    if(s.phase==='summary')s.completedAt=null;
     s.phase = 'block';
     s.blockIndex = Math.max(0, (s.blockIndex || 0) - 1);
     return s;
@@ -264,6 +271,7 @@
     const s = clone(session);
     const idx = s.pages.findIndex((p) => pageMatchesLetter(p, letter));
     if (idx >= 0) s.blockIndex = idx;
+    if(s.phase==='summary')s.completedAt=null;
     s.phase = 'block';
     return s;
   }
@@ -285,6 +293,7 @@
     const row = log.sets[setIndex];
     if (!row) return s;
     const liftPage = page.logMode === 'superset' ? memberOf(page, memberId) : page;
+    const wasLogged=row.logged,previousKg=row.kg;
     if (patch.reps != null) row.reps = Number(patch.reps);
     if (patch.kg != null) row.kg = Number(patch.kg);
     if (patch.cells && typeof patch.cells === 'object') {
@@ -293,6 +302,9 @@
     if (patch.miss != null) row.miss = !!patch.miss;
     if (patch.effort !== undefined) row.effort = patch.effort;
     if (patch.context && typeof patch.context === 'object') row.context = { ...(row.context || {}), ...patch.context };
+    if(root.StrengthLoad&&(!wasLogged||row.context?.inputVersion===3||(patch.kg!=null&&Number(patch.kg)!==previousKg))) {
+      row.context={...(row.context||{}),inputVersion:3,normalizedLoad:root.StrengthLoad.fromPage({page:liftPage,value:row.kg,provenance:'explicit'})};
+    } else if(wasLogged&&!row.context?.normalizedLoad) row.context={...(row.context||{}),loadAmbiguous:true};
     row.logged = options.commit === false ? false : canLogRow(row, liftPage);
     return s;
   }
@@ -357,6 +369,7 @@
   function finishToSummary(session) {
     const s = clone(session);
     s.phase = 'summary';
+    s.completedAt=new Date().toISOString();
     return s;
   }
 

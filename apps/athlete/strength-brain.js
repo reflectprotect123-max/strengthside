@@ -1,6 +1,6 @@
 /** Athlete compatibility and seeding adapter for the canonical v2 strength core. */
 (function(root) {
-  const VERSION=root.StrengthPolicy.version,RIR=root.TrainingCore.rir,Core=root.StrengthBrainCore,E=root.StrengthEquipment,T=root.StrengthTargets,RTS=root.StrengthRTS;
+  const VERSION=root.StrengthPolicy.version,RIR=root.TrainingCore.rir,Core=root.StrengthBrainCore,E=root.StrengthEquipment,T=root.StrengthTargets;
   const positive=n=>Number.isFinite(Number(n))&&Number(n)>0;
   const clone=x=>JSON.parse(JSON.stringify(x));
   function key(page) {
@@ -13,22 +13,32 @@
   function stepUp(kg,page,cap=.1){const n=E.next(kg,page);return n==null?kg:E.round(n,kg,page,{upCap:cap,downCap:cap});}
   function target(page,row,index){let t=null;try{t=T.forRow(page,row,index);}catch{}return t?.purpose==='warmup'?'easy':'average';}
   function next(args){
-    const h=args.state?.freshE1rm!=null?null:history(args.state?.records||{},args.page,args.state?.excludeSession);
-    return Core.suggest({...args,state:{...(args.state||{}),freshE1rm:args.state?.freshE1rm??h?.rolling,rows:args.state?.rows||[]}});
+    const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
+    return Core.suggest({...args,state:{...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]}});
   }
   const estimate=(row,page)=>Core.estimate(row,page);
   const review=(page,rows)=>Core.review(page,rows);
-  function history(records,page,excludeSession) {
-    const sessions=new Map();
-    for(const record of Object.values(records||{})) {
-      if(record.kind!=='set'||record.deleted||record.sessionId===excludeSession||record.exerciseKey!==key(page))continue;
-      const payload=record.payload;if(!payload?.row||!payload.page)continue;
-      const bucket=sessions.get(record.sessionId)||{page:payload.page,rows:[],at:payload.sessionStartedAt||0,sessionId:record.sessionId};
-      bucket.rows.push(payload.row);bucket.rows.sort((a,b)=>(a.ordinal||0)-(b.ordinal||0));sessions.set(record.sessionId,bucket);
+  function history(records,page,excludeSession,ownerId) {
+    ownerId=ownerId??root.StrengthMemory?.ownerId?.()??root.S?.accountId??null;
+    const load=Core.normalized(0,page),contextKey=learningContext({athleteId:ownerId,page,load});
+    const r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});
+    const evidence=r.evidence.map(e=>({...e,sessionId:e.observation.sessionId,
+      sourceSignature:'source-v3:'+JSON.stringify([e.observation.id,e.observation.revision,e.observation.weight,e.observation.reps,e.observation.rir,e.observation.miss]),
+      sourceSetIds:[e.observation.id]}));
+    let latest=null;
+    if(r.latestFirst&&!r.conflicted){
+      const e=r.latestFirst,rows=r.ledger.filter(x=>x.sessionId===e.observation.sessionId&&!x.deleted&&x.payload?.row).map(x=>x.payload.row);
+      const result=Core.review(e.page,rows);let nextKg=e.row.kg;
+      if(result.earned)nextKg=E.next(e.row.kg,e.page)??e.row.kg;
+      else if(e.observation.miss||['hard','max_effort'].includes(e.effort)){
+        const first=T.normalize(e.page).find(t=>t.purpose==='working');
+        nextKg=Core.suggest({page:e.page,row:e.row,nextRow:{targetId:first?.id},index:0,state:{learning:r,rows}}).kg;
+      }
+      latest={...e,...result,nextKg};
     }
-    const all=[...sessions.values()].sort((a,b)=>a.at-b.at).map(x=>({...x,...Core.review(x.page,x.rows)}));
-    const trusted=all.filter(x=>positive(x.e1rm)),recent=trusted.slice(-3),rolling=recent.length?recent.reduce((s,x)=>s+x.e1rm,0)/recent.length:null;
-    return {rolling,latest:all.filter(x=>positive(x.nextKg)&&x.calibrated).at(-1)||null,sessions:recent.length};
+    const freshE1rm=r.startingScale;
+    return {...r,evidence,contextKey,rolling:freshE1rm,freshE1rm,latest,sessions:r.accepted,exposures:r.accepted,
+      confidence:r.accepted===0?'unknown':r.updates>0?'personal':'provisional',modelVersion:VERSION};
   }
   function seed(session,records) {
     const s=clone(session);if(s.brainSeeded)return s;
@@ -40,11 +50,16 @@
       page.setTargets=targets;
       const h=history(records,page,s.id),first=targets.find(t=>t.purpose==='working'),prior=h.latest;
       let working=null,confidence='unknown';
-      let samePrescription=false;
-      if(prior)try{samePrescription=JSON.stringify(T.normalize(prior.page))===JSON.stringify(T.normalize(page));}catch{}
-      if(samePrescription&&positive(prior.nextKg)){working=prior.nextKg;confidence='history';}
-      else if(positive(h.rolling)&&first&&root.StrengthLearning.fraction(first.reps.min+3,root.StrengthLearning.initial().k)){working=E.floor(Core.display(h.rolling*root.StrengthLearning.fraction(first.reps.min+3,root.StrengthLearning.initial().k),page),page);confidence='history';}
-      else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}
+      const samePrescription=prior&&JSON.stringify(T.normalize(prior.page).map(({id,...t})=>t))===JSON.stringify(targets.map(({id,...t})=>t));
+      if(prior&&samePrescription&&Number.isFinite(prior.nextKg)){
+        const mass=Core.normalized(prior.nextKg,prior.page)?.externalKg;
+        working=mass==null?null:E.floor(Core.display(mass,page),page);confidence='history';
+      } else if(prior&&first){
+        const o=prior.observation,k=root.StrengthPolicy.learningMode==='online'?h.k:root.StrengthLearning.initial().k;
+        const mass=root.StrengthLearning.project({weight:o.weight,fromReps:o.reps,fromRir:o.rir,toReps:first.reps.min,targetRir:3,k});
+        const current=Core.display(o.weight,page);
+        working=mass==null?current:Core.guard(mass,current,page,{transition:o.reps!==first.reps.min,planned:current});confidence='history';
+      } else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}
       page.workingKg=working;page.startConfidence=confidence;
       const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
       const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;

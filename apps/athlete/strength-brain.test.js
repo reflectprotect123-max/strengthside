@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
-const ctx=vm.createContext({crypto:webcrypto});
+const ctx=vm.createContext({crypto:webcrypto,S:{accountId:'athlete'}});
 for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
 const B=ctx.StrengthBrain;
 const targets=[0,1,2].map(i=>({id:`A:set:${i}`,purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'},toFailure:false}));
-const page={equipmentId:'machine',id:'A',title:'Squat',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'total',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,minimumKg:0,columns:['reps','weight_kg'],setTargets:targets};
-const row=(i=0,reps=8,effort='average',kg=40)=>({id:`r${i}`,targetId:`A:set:${i}`,reps,effort,kg,logged:true,purpose:'working',workingIndex:i});
+const page={exerciseId:'squat',equipmentId:'machine',id:'A',title:'Squat',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'total',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,minimumKg:0,columns:['reps','weight_kg'],setTargets:targets};
+const row=(i=0,reps=8,effort='average',kg=40)=>({id:`r${i}`,targetId:`A:set:${i}`,reps,effort,kg,logged:true,miss:false,purpose:'working',workingIndex:i,ordinal:i});
+
+function record(p,r,{id='old',sessionId='past',startedAt=1}={}){
+ return {id,localRevision:1,deleted:false,kind:'set',sessionId,exerciseKey:B.key(p),payload:{contractVersion:3,ownerId:'athlete',completed:true,page:p,row:{...r,miss:false,workingIndex:0,ordinal:0},normalizedLoad:ctx.StrengthLoad.fromPage({page:p,value:r.kg,provenance:'explicit'}),sessionStartedAt:startedAt}};
+}
 
 test('learning context requires canonical identity, keeps tempo and owner separate, and unifies normalized bars',()=>{
  const canonical={...page,exerciseId:'squat',equipmentId:'barbell',tempo:'33x1'};
@@ -19,7 +23,7 @@ test('learning context requires canonical identity, keeps tempo and owner separa
  assert.equal(context(canonical,ctx.StrengthLoad.normalize({value:60,unit:'kg',convention:'barbell_total',barKg:20,provenance:'explicit'})),context());
  assert.equal(context(canonical,ctx.StrengthLoad.normalize({value:60/0.45359237,unit:'lb',convention:'barbell_total',barKg:20,provenance:'explicit'})),context());
  assert.notEqual(context({...canonical,tempo:'20X1'}),context());assert.notEqual(context({...canonical,tempo:null}),context());assert.notEqual(context(canonical,normalized,'b'),context());
- for(const [p,load,owner] of [[page,normalized,'a'],[{...canonical,exerciseId:null},normalized,'a'],[canonical,normalized,null],[{...canonical,equipmentId:''},normalized,'a'],[canonical,{...normalized,externalKg:999},'a'],[canonical,{...normalized,provenance:'ambiguous_legacy',eligible:false},'a']])assert.equal(context(p,load,owner),null);
+ for(const [p,load,owner] of [[{...page,exerciseId:null},normalized,'a'],[{...canonical,exerciseId:null},normalized,'a'],[canonical,normalized,null],[{...canonical,equipmentId:''},normalized,'a'],[canonical,{...normalized,externalKg:999},'a'],[canonical,{...normalized,provenance:'ambiguous_legacy',eligible:false},'a']])assert.equal(context(p,load,owner),null);
  assert.equal(normalized.externalKg,60);assert.equal(normalized.rawValue,40);
 });
 test('legacy history key and facts remain readable independently of the new context',()=>{
@@ -27,7 +31,7 @@ test('legacy history key and facts remain readable independently of the new cont
  assert.equal(B.key(canonical),'squat|barbell|total|kg');
  assert.equal(B.key(page),'squat|machine|total|kg');
  const records={old:{id:'old',localRevision:3,kind:'set',sessionId:'past',exerciseKey:B.key(canonical),payload:{contractVersion:2,page:canonical,row:row(0,6,'hard',60),sessionStartedAt:1}}};
- const before=JSON.stringify(records);assert.equal(B.history(records,{...canonical,title:'Renamed'}).sessions,1);assert.equal(JSON.stringify(records),before);
+ const before=JSON.stringify(records);assert.equal(B.history(records,{...canonical,title:'Renamed'}).sessions,0);assert.equal(JSON.stringify(records),before);
 });
 
 test('adapter delegates per-set range progression to the canonical core',()=>{
@@ -59,8 +63,8 @@ test('barbell warmups start at the empty bar and leave the work weight in place'
  const first=B.seed(cold,{});
  assert.equal(first.pages[0].workingKg,0);
  assert.deepEqual(Array.from(first.logs.A.sets,r=>r.kg),[0,0,0,0,0]);
- const prior={id:'old',targetId:'A:set:0',reps:6,effort:'hard',kg:60,logged:true,purpose:'working',ordinal:0};
- const records={old:{kind:'set',sessionId:'past',exerciseKey:B.key(bar),payload:{page:bar,row:prior,sessionStartedAt:1}}};
+ const prior={...row(0,6,'average',60),id:'old'};
+ const records={old:record(bar,prior)};
  const again={id:'s2',pages:[JSON.parse(JSON.stringify(bar))],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}};
  const seeded=B.seed(again,records);
  assert.equal(seeded.pages[0].workingKg,60);
@@ -75,7 +79,7 @@ test('10/8/6 opens with a heavier bar as the reps come down',()=>{
  const reps=[10,8,6].map((n,i)=>({id:`A:set:${i}`,purpose:'working',reps:{min:n,max:n},loadRule:{kind:'adaptive'},toFailure:false}));
  const wave={...page,title:'Back Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,setTargets:reps,setCount:3,targetReps:10};
  const prior={id:'old',targetId:'A:set:0',reps:10,effort:'average',kg:90,logged:true,purpose:'working',ordinal:0};
- const records={old:{kind:'set',sessionId:'past',exerciseKey:B.key(wave),payload:{page:wave,row:prior,sessionStartedAt:1}}};
+ const records={old:record(wave,prior)};
  const seeded=B.seed({id:'s',pages:[wave],logs:{A:{sets:reps.map(t=>({targetId:t.id}))}}},records);
  assert.equal(seeded.pages[0].workingKg,90);
  assert.deepEqual(Array.from(seeded.logs.A.sets,r=>r.kg),[0,45,90,95,100]);
@@ -87,10 +91,13 @@ test('recognized cold start is provisional and manual actuals remain untouched',
  const actual=row(0,8,'average',18),decision=B.next({page:db,row:actual,nextRow:{targetId:'D:set:1'},index:1,state:{rows:[actual]}});
  assert.equal(actual.kg,18);assert.ok(Number.isFinite(decision.kg));
 });
-test('history is exercise-specific and averages the latest three fresh estimates',()=>{
- const records={};[40,42,44,46].forEach((kg,i)=>{const r=row(0,6,'hard',kg);records[i]={kind:'set',sessionId:'s'+i,exerciseKey:B.key(page),payload:{page,row:{...r,ordinal:0},sessionStartedAt:i+1}};});
- const h=B.history(records,page);assert.equal(h.sessions,3);assert.ok(h.rolling>44);
- assert.equal(B.history(records,{...page,title:'Bench'}).rolling,null);
+test('history replays all canonical first-set facts and isolates exercise identity and tempo',()=>{
+ const records={};[40,42,44,46].forEach((kg,i)=>{records[i]=record(page,row(0,6,'hard',kg),{id:'r'+i,sessionId:'s'+i,startedAt:i+1});});
+ const h=B.history(records,page);assert.equal(h.sessions,4);assert.ok(h.rolling>46);
+ assert.equal(B.history(records,{...page,exerciseId:'bench'}).rolling,null);
+ assert.equal(B.history(records,{...page,tempo:'33X1'}).rolling,null);
+ assert.equal(B.history(records,{...page,title:'Renamed squat'}).rolling,h.rolling);
+ assert.equal(h.evidenceFingerprint,ctx.StrengthReplay.replay(Object.values(records),{ownerId:'athlete',contextKey:h.contextKey}).evidenceFingerprint);
 });
 test('pending AMRAP uses actual first working weight and unresolved sources remain blank',()=>{
  const amrap={id:'A:set:3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false},p={...page,setTargets:[...targets,amrap],setCount:4};

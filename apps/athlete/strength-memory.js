@@ -50,55 +50,47 @@
   function prescriptionSignature(page) {
     return signature({exerciseKey:root.StrengthBrain.key(page),targets:authoredTargets(page),columns:page.columns||[],logMode:page.logMode||null});
   }
-  function currentSets(exerciseKey) {
-    return Object.values(memory.records).filter(r=>r.kind==='set'&&!r.deleted&&r.exerciseKey===exerciseKey&&r.payload?.row&&r.payload?.page);
-  }
-  function timeValue(value) {
-    const numeric=Number(value);if(Number.isFinite(numeric))return numeric;
-    const parsed=Date.parse(value);return Number.isFinite(parsed)?parsed:0;
-  }
-  function replay(exerciseKey) {
-    const sessions=new Map();
-    for(const record of currentSets(exerciseKey)) {
-      const payload=record.payload,bucket=sessions.get(record.sessionId)||{page:payload.page,records:[],at:payload.sessionStartedAt||payload.date||0,sessionId:record.sessionId};
-      bucket.records.push(record);sessions.set(record.sessionId,bucket);
-    }
-    let state={freshE1rm:null,exposures:0,confidence:'unknown',modelVersion:root.StrengthBrain.VERSION,lastSourceSignature:null};
-    const evidence=[];
-    for(const bucket of [...sessions.values()].sort((a,b)=>timeValue(a.at)-timeValue(b.at)||a.sessionId.localeCompare(b.sessionId))) {
-      bucket.records.sort((a,b)=>(a.payload.row.ordinal||0)-(b.payload.row.ordinal||0));
-      const result=root.StrengthBrain.review(bucket.page,bucket.records.map(r=>r.payload.row));
-      if(!Number.isFinite(Number(result.e1rm))||Number(result.e1rm)<=0||!result.sourceSetIds?.length)continue;
-      const sourceIds=new Set(result.sourceSetIds),sourceRecords=bucket.records.filter(r=>sourceIds.has(r.id));
-      const sourceSignature=signature(sourceRecords.map(r=>({id:r.id,revision:r.localRevision||0,content:fingerprint(r)})));
-      state=root.StrengthBrainCore.learn(state,{estimate:result.e1rm,sourceSignature,modelVersion:root.StrengthBrain.VERSION});
-      evidence.push({sessionId:bucket.sessionId,estimate:result.e1rm,sourceSignature,sourceSetIds:result.sourceSetIds});
-    }
-    return {...state,evidence};
+  function replay(exerciseKey,page) {
+    page=page||Object.values(memory.records).find(r=>r.exerciseKey===exerciseKey&&r.payload?.page)?.payload.page;
+    return root.StrengthBrain.history(memory.records,page||{},undefined,memory.ownerId);
   }
   function capture(session) {
     if(!session||session.demo)return;
     root.TrainingCore.migrateSession(session);
     session.id=session.id||root.crypto.randomUUID();
-    const alive=new Set();
+    const alive=new Set(),completed=!!session.completedAt&&session.phase==='summary';
     session.brainEstimateIds=session.brainEstimateIds||{};
+    const pages=[];
     for(const outer of session.pages||[])for(const page of outer.members||[outer]) {
-      if(page.kind!=='lift')continue;
+      if(page.kind!=='lift')continue;pages.push(page);
       const rows=session.logs?.[page.id]?.sets||[],exerciseKey=root.StrengthBrain.key(page),targets=authoredTargets(page);
+      let workingIndex=0;
       rows.forEach((row,index)=>{
         row.id=row.id||root.crypto.randomUUID();alive.add(row.id);
+        const position=['ramp','warmup'].includes(row.purpose)?-1:workingIndex++;
         if(!row.logged&&!memory.records[row.id])return;
-        put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:2,authoredTargets:targets,page:clone(page),row:{...clone(row),ordinal:index,context:clone(row.context||{})},sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
+        const target=position>=0?targets?.filter(t=>t.purpose!=='warmup')[position]:null;
+        const snapshot={...clone(row),targetId:row.targetId||target?.id||null,workingIndex:position,ordinal:index,context:clone(row.context||{})};
+        const candidate=root.StrengthContext.normalizeLoad(row.context?.normalizedLoad||memory.records[row.id]?.payload?.normalizedLoad);
+        const expected=candidate&&root.StrengthLoad.fromPage({page,value:row.kg,provenance:candidate.provenance});
+        const normalizedLoad=expected&&JSON.stringify(candidate)===JSON.stringify(expected)?candidate:null;
+        put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:3,ownerId:memory.ownerId,
+          normalizedLoad,completed,authoredTargets:targets,page:clone(page),row:snapshot,sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
       });
-      for(const record of Object.values(memory.records))if(record.kind==='set'&&record.sessionId===session.id&&record.exerciseKey===exerciseKey&&!alive.has(record.id)&&!record.deleted)put({...record,deleted:true});
-      if(root.StrengthBrain.eligible(page) && (rows.some(r=>r.logged) || session.brainEstimateIds[page.id])) {
-        const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
-        const result=root.StrengthBrain.review(page,rows),state=replay(exerciseKey);
-        const ownEvidence=state.evidence.find(e=>e.sessionId===session.id);
-        put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,sourceSetIds:result.sourceSetIds||[],sourceSignature:ownEvidence?.sourceSignature||null,prescriptionSignature:prescriptionSignature(page),freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date}});
-      }
     }
-    for(const r of Object.values(memory.records))if(r.kind==='set'&&r.sessionId===session.id&&!alive.has(r.id)&&!r.deleted)put({...r,deleted:true});
+    // Lifecycle is a session fact: deleted rows also receive finish/reopen snapshots.
+    for(const record of Object.values(memory.records))if(record.kind==='set'&&record.sessionId===session.id&&!alive.has(record.id))
+      put({...record,deleted:true,payload:{...record.payload,completed}});
+    for(const page of pages){
+      const rows=session.logs?.[page.id]?.sets||[],exerciseKey=root.StrengthBrain.key(page);
+      if(!root.StrengthBrain.eligible(page)&&!session.brainEstimateIds[page.id])continue;
+      if(!rows.some(r=>r.logged)&&!session.brainEstimateIds[page.id])continue;
+      const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
+      const result=root.StrengthBrain.review(page,rows),state=replay(exerciseKey,page),own=state.evidence.find(e=>e.sessionId===session.id);
+      put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,completed,
+        sourceSetIds:own?.sourceSetIds||[],sourceSignature:own?.sourceSignature||null,prescriptionSignature:prescriptionSignature(page),
+        freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date}});
+    }
     persist();schedule();
   }
   async function bind(uid) {
@@ -107,7 +99,11 @@
       root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
       try{memory=JSON.parse(root.localStorage.getItem(KEY+':'+uid))||empty();}catch{memory=empty();}
     }
-    memory.ownerId=uid;persist();
+    const adopt=memory.ownerId==null&&uid;
+    memory.ownerId=uid;
+    if(adopt)for(const r of Object.values(memory.records))if(r.payload?.ownerId==null)
+      put({...r,payload:{...r.payload,ownerId:uid}});
+    persist();
   }
   function ioDefault() {
     const sb=root.Whoop.client();
