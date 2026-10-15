@@ -83,7 +83,9 @@
         const o=prior.observation,k=root.StrengthPolicy.learningMode==='online'?h.k:root.StrengthLearning.initial().k;
         const mass=root.StrengthLearning.project({weight:o.weight,fromReps:o.reps,fromRir:o.rir,toReps:first.reps.min,targetRir:3,k});
         const current=Core.display(o.weight,page);
-        working=mass==null?current:Core.guard(mass,current,page,{transition:o.reps!==first.reps.min,planned:current});confidence='history';
+        const directional=['very_easy','easy'].includes(prior.effort)&&first.reps.min<=o.reps;
+        const nextMass=directional?Core.normalized(prior.nextKg,prior.page)?.externalKg:null;
+        working=mass==null?(nextMass!=null?E.floor(Core.display(nextMass,page),page):current):Core.guard(mass,current,page,{transition:o.reps!==first.reps.min,planned:current});confidence='history';
       } else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}
       page.workingKg=working;page.startConfidence=confidence;
       const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');

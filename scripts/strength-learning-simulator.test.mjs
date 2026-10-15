@@ -9,7 +9,7 @@ test('production decisions are deterministic and use physical bars',()=>{
 });
 test('cold starts contain no supplied teacher load and Easy-only evidence makes progress',()=>{
  const r=runScenario({seed:912731,policy:'default',scenario:'cold-start',sessions:8});
- assert.equal(r.decisions[0].displayKg,0);assert.ok(r.decisions.some(d=>d.session>0&&d.displayKg>0));
+ assert.equal(r.decisions[0].displayKg,0);const first=r.decisions.filter(d=>d.targetId==='A:set:0');assert.ok(first.at(-1).displayKg>first[0].displayKg,'alternating prescriptions must not trap the first work set at its cold start');
  assert.equal(r.metrics.invalid,0);
 });
 test('coarse inventory, changed targets, noise and short rest retain actuals and correct references',()=>{

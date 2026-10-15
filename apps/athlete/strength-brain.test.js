@@ -110,3 +110,10 @@ test('Easy-only finished range evidence raises a later seed one step without inv
  const seeded=B.seed({id:'next',pages:[page],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
  assert.equal(seeded.pages[0].workingKg,41);
 });
+test('Easy-only calibration advances when next week asks fewer reps without inventing a precise RIR',()=>{
+ const records={old:record(page,row(0,6,'easy',40))};
+ const next={...page,setTargets:targets.map(t=>({...t,reps:{min:5,max:5}}))};
+ const seeded=B.seed({id:'next',pages:[next],logs:{A:{sets:next.setTargets.map(t=>({targetId:t.id}))}}},records);
+ assert.equal(seeded.pages[0].workingKg,41);
+ assert.equal(B.history(records,page).rolling,null);
+});
