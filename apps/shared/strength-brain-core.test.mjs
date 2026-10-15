@@ -115,3 +115,13 @@ test('minimum equipment load escapes Easy deadlock and bodyweight has no fake ex
  assert.equal(B.suggest({page:p,row:row('a:set:0',5,0,'easy'),nextRow:{targetId:'a:set:1'},index:1}).kg,2.5);
  assert.equal(B.estimate(row('a:set:0',5,20,'average'),{...p,equipmentId:'bodyweight',title:'Weighted Dip'}),null);
 });
+
+test('reducing load on comparable work cannot earn a heavier session even when all reps are completed',()=>{
+ for(const reps of [[8,8,8],[10,8,6]]){
+  const p=page(reps),rows=p.setTargets.map((t,i)=>row(t.id,reps[i],40-i*5,'average'));
+  assert.equal(B.review(p,rows).earned,false);
+  assert.equal(B.review(p,rows).nextKg,40);
+ }
+ const p=page([5,8,10]),rows=p.setTargets.map((t,i)=>row(t.id,[5,8,10][i],40-i*3,'average'));
+ assert.equal(B.review(p,rows).earned,true,'more reps may legitimately use lighter weights');
+});

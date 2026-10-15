@@ -56,7 +56,7 @@
           (row.miss||['hard','max_effort'].includes(row.effort)||Number(row.reps)<target.reps.min);
       });
       if(result.earned)nextKg=E.next(e.row.kg,e.page)??e.row.kg;
-      else if(!laterStruggle&&!e.observation.miss&&['very_easy','easy'].includes(e.effort))nextKg=E.next(e.row.kg,e.page)??e.row.kg;
+      else if(!laterStruggle&&!result.loadReduced&&!e.observation.miss&&['very_easy','easy'].includes(e.effort))nextKg=E.next(e.row.kg,e.page)??e.row.kg;
       else if(e.observation.miss||['hard','max_effort'].includes(e.effort)){
         const first=T.normalize(e.page).find(t=>t.purpose==='working');
         nextKg=Core.suggest({page:e.page,row:e.row,nextRow:{targetId:first?.id},index:0,state:{learning:r,rows}}).kg;

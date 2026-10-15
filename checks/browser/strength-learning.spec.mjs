@@ -59,14 +59,14 @@ test('Android-size touch effort and a double tap cannot log the next set acciden
  expect(facts).toEqual({logged:1,effort:'hard',sets:1});expect(errors).toEqual([]);
 });
 
-test('warm-up entry calibrates working load and later Hard work vetoes an Easy-first increase',async({page})=>{
+for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'backed-off load'}])test(`warm-up calibrates work and later ${last.label} vetoes an Easy-first increase`,async({page})=>{
  await addSquat(page);await page.evaluate(()=>StrengthMemory.bind('browser-athlete'));
  for(let i=0;i<3;i++)await setReps(page,`Set ${i+1} reps`,5);
  await scheduleAndStart(page);await completeWarmups(page);
  await expect(page.getByLabel('Weight (kg)',{exact:true})).toHaveValue('20');
  await log(page,40,5,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();
  await log(page,40,5,2);await page.getByRole('button',{name:'Start next set',exact:true}).click();
- await log(page,40,5,3);
+ await log(page,last.kg,5,last.effort);
  await page.getByRole('button',{name:'Next →',exact:true}).click();await page.getByRole('button',{name:'Done Training',exact:true}).click();
  await page.getByRole('button',{name:'3',exact:true}).click();await page.getByRole('button',{name:'Finish Session',exact:true}).click();
  await expect(page.locator('.log-sum')).toBeVisible();

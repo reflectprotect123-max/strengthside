@@ -156,3 +156,11 @@ test('a first-set-last AMRAP at failure does not veto ordinary-work progression'
  const r=record(p,actual,{id:'amrap'});r.payload.row=actual;records[r.id]=r;
  const h=B.history(records,p);assert.equal(h.latest.nextKg,41);assert.equal(h.accepted,0);
 });
+
+test('backing off a later comparable load vetoes Easy-first seeding without fitting later work',()=>{
+ const records={first:record(page,row(0,8,'easy',40))};
+ for(let i=1;i<3;i++){
+  const actual=row(i,8,'easy',35-i),r=record(page,actual,{id:'later-'+i});r.payload.row=actual;records[r.id]=r;
+ }
+ const h=B.history(records,page);assert.equal(h.latest.nextKg,40);assert.equal(h.latest.loadReduced,true);assert.equal(h.accepted,0);
+});

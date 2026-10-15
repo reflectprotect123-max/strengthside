@@ -110,11 +110,16 @@
     const linked=workRows.some(r=>r?.targetId);
     for(let i=0;i<ordinaryTargets.length;i++)matched.push(linked?workRows.find(r=>r?.targetId===ordinaryTargets[i].id)||null:workRows[i]||null);
     const complete=ordinaryTargets.length>0&&matched.every(r=>r?.logged&&!r.deleted&&!r.skipped);
-    const earned=complete&&matched.every((r,i)=>!r.miss&&Number(r.reps)>=ordinaryTargets[i].reps.max&&effortRank[r.effort]!=null&&effortRank[r.effort]<=effortRank.average);
     const first=matched[0],e1rm=first?estimate(first,page):null;
     const firstKg=finiteLoad(first?.kg);
+    // Finishing reps after backing off the load is not the same achievement.
+    // Only compare equal/fewer-rep targets: higher-rep sets may be lighter.
+    const loadReduced=firstKg!=null&&matched.some((r,i)=>r?.logged&&!r.deleted&&!r.skipped&&
+      ordinaryTargets[i].reps.max<=ordinaryTargets[0].reps.max&&
+      (finiteLoad(r.kg)==null||finiteLoad(r.kg)<firstKg-1e-8));
+    const earned=complete&&firstKg!=null&&!loadReduced&&matched.every((r,i)=>!r.miss&&Number(r.reps)>=ordinaryTargets[i].reps.max&&effortRank[r.effort]!=null&&effortRank[r.effort]<=effortRank.average);
     const nextKg=firstKg==null?null:earned?(E.next(firstKg,page)??firstKg):firstKg;
-    return {e1rm,nextKg,earned,calibrated:positive(e1rm),complete,ruleVersion:DEFAULT.version,sourceSetIds:positive(e1rm)&&first?.id?[first.id]:[]};
+    return {e1rm,nextKg,earned,loadReduced,calibrated:positive(e1rm),complete,ruleVersion:DEFAULT.version,sourceSetIds:positive(e1rm)&&first?.id?[first.id]:[]};
   }
   root.StrengthBrainCore={suggest,estimate,review,learn,supported,matchLoad,guard,normalized,display};
 })(typeof window!=='undefined'?window:globalThis);
