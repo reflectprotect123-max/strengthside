@@ -48,3 +48,13 @@ test('logging out removes the previous owner’s evidence from active memory',as
  await page.evaluate(()=>StrengthMemory.bind('a'));
  expect(await page.evaluate(()=>Object.keys(StrengthMemory.records()).length)).toBeGreaterThan(0);
 });
+test('Android-size touch effort and a double tap cannot log the next set accidentally',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await addSquat(page);await scheduleAndStart(page);await actualNumber(page,'Weight (kg)',10);await actualNumber(page,'Reps completed',5);
+ const slider=page.getByRole('slider',{name:'Actual set effort'}),box=await slider.boundingBox();
+ await page.touchscreen.tap(box.x+box.width*.75,box.y+box.height/2);
+ await expect(slider).toHaveAttribute('aria-valuetext','Hard');
+ await page.getByRole('button',{name:'Log set',exact:true}).dblclick();
+ const facts=await page.evaluate(()=>{const rows=S.session.logs[S.session.pages[0].id].sets;return {logged:rows.filter(r=>r.logged).length,effort:rows[0].effort,sets:Object.values(StrengthMemory.records()).filter(r=>r.kind==='set').length};});
+ expect(facts).toEqual({logged:1,effort:'hard',sets:1});expect(errors).toEqual([]);
+});
