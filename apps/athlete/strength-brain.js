@@ -66,5 +66,12 @@
     }
     s.brainSeeded=true;return s;
   }
-  root.StrengthBrain={VERSION,RIR,key,eligible,equipment,round,stepUp,target,next,estimate,review,history,seed};
+  function learningContext({athleteId,page,load}={}) {
+    const context=root.StrengthContext,normalized=context?.normalizeLoad(load);
+    if(!normalized?.eligible)return null;
+    const convention=['barbell_plates','barbell_total'].includes(normalized.convention)?'barbell_total':normalized.convention;
+    try{return context.key({athleteId,exerciseId:page?.exerciseId,equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
+    catch{return null;}
+  }
+  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,seed};
 })(typeof window!=='undefined'?window:globalThis);
