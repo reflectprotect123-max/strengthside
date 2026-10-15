@@ -1871,11 +1871,16 @@ button {
     border-radius: 32px;
   }
   .phone .viewport { height: 100%; overflow: auto; }
+  .phone .shell { position: static; }
   .phone .bottom-nav,
   .phone .lib-wizard-next,
   .phone .photo-pad { position: absolute; left: 0; right: 0; width: 100%; max-width: none; transform: none; }
   .phone .lib-wizard-next { bottom: 72px; }
-  .phone.has-pad .shell-screen--library { padding-bottom: 390px; }
+  .phone.has-pad .shell-screen--library { padding-bottom: 530px; }
+  .play-next { padding: 0 16px 20px; }
+  .phone.has-pad .play-next { position: absolute; left: 0; right: 0; bottom: 448px; z-index: 70; padding-bottom: 0; }
+  .play-confirm { text-align: left; padding: 4px 16px 12px; color: #fff; }
+  .lib-text-btn:disabled { color: #8e8e93; }
   .phone .shell-screen--library { min-height: 100%; }
   .focus-cell { background: #3a3a3c; }
   .sum { margin: 2px 0 0; color: #8e8e93; font-size: 13px; font-weight: 500; }
@@ -1885,7 +1890,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. Notes, then pick the lifts once. Next exercise stays on this screen.</p>
+<p class="play-note">One file. Save it, then open it in a browser. One lift, then Next. Two or more, then Superset. Each confirm leads to the next.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -1923,7 +1928,9 @@ button {
       activeId: null,
       pad: null,
       date: new Date().toISOString().slice(0, 10),
-      posted: ''
+      posted: '',
+      confirm: '',
+      confirmAnchor: ''
     };
   }
   let state = load();
@@ -1974,9 +1981,9 @@ button {
       <button type="button" data-tab="me"><img class="nav-me-logo" src="data:image/jpeg;base64,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" width="22" height="22" alt=""><span>Me</span></button>
     </nav>`;
   }
-  function nextBar(label, action) {
+  function nextBar(label, action, disabled) {
     const cls = label === 'Post to calendar' ? 'lib-primary' : 'btn oled-cta';
-    return `<div class="lib-wizard-next"><button type="button" class="${cls}" onclick="${action}">${esc(label)}</button></div>`;
+    return `<div class="lib-wizard-next"><button type="button" class="${cls}" ${disabled ? 'disabled' : ''} onclick="${action}">${esc(label)}</button></div>`;
   }
 
   function notesHtml() {
@@ -2003,13 +2010,14 @@ button {
       <div class="lib-head-row">
         <button type="button" class="lib-back" aria-label="Back" onclick="Play.backPick()">←</button>
         <h1>Exercises</h1>
-        <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addPicked()">${n >= 2 ? 'Superset (' + n + ')' : 'Add' + (n ? ' (' + n + ')' : '')}</button>
+        <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.addSuperset()">Superset${n >= 2 ? ' (' + n + ')' : ''}</button>
       </div>
       <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
       <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
       <div id="libResults">${rows}</div>
-      ${n >= 2 ? '<p class="lib-empty">These ' + n + ' go in as one superset.</p>' : ''}
-      ${nextBar(n >= 2 ? 'Add superset' : 'Next', 'Play.addPicked()')}
+      ${n === 1 ? '<p class="lib-empty">Next confirms this as a single.</p>' : ''}
+      ${n >= 2 ? '<p class="lib-empty">Superset confirms these ' + n + ' as one group.</p>' : ''}
+      ${nextBar(n >= 2 ? 'Superset' : 'Next', n >= 2 ? 'Play.addSuperset()' : 'Play.confirmSingle()', n < 2 && n !== 1 && !(n === 0 && state.blocks.length))}
       ${nav()}
     </div>`;
   }
@@ -2034,6 +2042,7 @@ button {
     const activeGroup = active && active.groupId;
     state.blocks.forEach((b, i) => {
       const prev = state.blocks[i - 1];
+      if (state.confirm && b.id === state.confirmAnchor) body += '<p class="lib-empty play-confirm" role="status">' + esc(state.confirm) + '</p>';
       if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
       const groupedOpen = activeGroup && b.groupId === activeGroup;
       if (b.id !== state.activeId && !groupedOpen) {
@@ -2052,7 +2061,7 @@ button {
       <div class="lib-row-btns"><button type="button" onclick="Play.goPick()">+ Add Exercise</button><button type="button" disabled>+ Add Circuit</button></div>
       <div style="padding:0 16px 24px"><button type="button" class="lib-primary" onclick="Play.calendar()">Post to calendar</button></div>
       ${posted}
-      ${state.blocks.length ? '<div style="padding:0 16px 20px"><button type="button" class="btn oled-cta" onclick="Play.nextExercise()">Next exercise</button></div>' : ''}
+      ${state.blocks.length ? '<div class="play-next"><button type="button" class="btn oled-cta" onclick="Play.goPick()">Next</button></div>' : ''}
       ${padHtml()}
     </div>`;
   }
@@ -2100,11 +2109,14 @@ button {
     const phone = document.getElementById('phone');
     const view = document.getElementById('view');
     const y = view.scrollTop;
+    const previous = render.screen;
     phone.classList.toggle('has-pad', state.screen === 'edit' && !!state.pad);
     const html = state.screen === 'notes' ? notesHtml() : state.screen === 'pick' ? pickHtml() : state.screen === 'calendar' ? calendarHtml() : editorHtml();
     view.innerHTML = '<div class="shell">' + html + '</div>';
-    if (scrollToOpen) view.querySelector('.open-card')?.scrollIntoView({ block: 'start' });
+    if (scrollToOpen) (view.querySelector('.play-confirm') || view.querySelector('.open-card'))?.scrollIntoView({ block: 'start' });
+    else if (state.screen !== previous) view.scrollTop = 0;
     else view.scrollTop = y;
+    render.screen = state.screen;
   }
 
   function makeBlock(catalogId, groupId) {
@@ -2145,10 +2157,24 @@ button {
       else state.selected.push(id);
       render();
     },
-    addPicked() {
-      if (!state.selected.length && state.blocks.length) { state.screen = 'edit'; render(true); return; }
-      if (!state.selected.length) return;
-      const group = state.selected.length >= 2 ? 'ss-' + Date.now() : null;
+    confirmSingle() {
+      if (state.selected.length > 1) return;
+      if (!state.selected.length) {
+        if (!state.blocks.length) return;
+        state.confirm = '';
+        state.confirmAnchor = '';
+        state.screen = 'edit';
+        render(true);
+        return;
+      }
+      Play.commitSelected(false);
+    },
+    addSuperset() {
+      if (state.selected.length < 2) return;
+      Play.commitSelected(true);
+    },
+    commitSelected(asSuperset) {
+      const group = asSuperset ? 'ss-' + Date.now() : null;
       const added = [];
       state.selected.forEach((id) => {
         if (state.blocks.some((b) => b.catalogId === id)) return;
@@ -2159,9 +2185,12 @@ button {
       state.selected = [];
       state.superset = [];
       state.query = '';
+      letters();
+      const names = added.map((b) => b.letter + ' ' + b.title).join(', ');
+      state.confirm = added.length ? (asSuperset ? 'Superset confirmed: ' + names : 'Single confirmed: ' + names) : '';
+      state.confirmAnchor = added[0] ? added[0].id : '';
       state.screen = 'edit';
-      const focus = added[0] || block(state.activeId) || state.blocks[0];
-      if (focus) Play.openBlock(focus.id);
+      if (added[0]) Play.openBlock(added[0].id);
       else render(true);
     },
     openEditor() { state.screen = 'edit'; render(true); },
@@ -2181,12 +2210,6 @@ button {
       render(scroll);
     },
     closePad() { state.pad = null; render(); },
-    nextExercise() {
-      if (!state.blocks.length) return;
-      const at = Math.max(0, state.blocks.findIndex((b) => b.id === state.activeId));
-      const next = state.blocks[(at + 1) % state.blocks.length];
-      Play.openBlock(next.id);
-    },
     key(key) {
       if (!state.pad) return;
       const b = block(state.pad.blockId);
