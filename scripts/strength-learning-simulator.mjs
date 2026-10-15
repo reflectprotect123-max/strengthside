@@ -21,7 +21,7 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
  const random=rng(seed+athlete*997),{ctx}=runtime(seed+athlete,policy),B=ctx.StrengthBrain,C=ctx.StrengthBrainCore,M=ctx.StrengthMemory,H=ctx.HybridSession,E=ctx.StrengthEquipment;
  // Truth remains in this test driver, never in a page, record or policy argument.
  const trueK=.015+random()*.045,base=config.dumbbell?18+random()*35:65+random()*110;
- const decisions=[],metrics={sets:0,hits:0,misses:0,error:0,invalid:0,equipmentViolations:0,excessiveJumps:0,actualMutations:0,wrongReferences:0,accepted:0,updates:0,firstUpdate:null};
+ const truthSchedule=[],decisions=[],metrics={sets:0,hits:0,misses:0,error:0,invalid:0,equipmentViolations:0,excessiveJumps:0,actualMutations:0,wrongReferences:0,accepted:0,updates:0,firstUpdate:null};
  for(let session=0;session<sessions;session++){
   const nums=config.highReps?[20,25,20]:config.range?[6,6,6]:session%2?[5,3,1]:[10,8,6];
   const tempo=config.alternateTempo?(session%2?'33X1':'20X1'):'20X1';
@@ -31,6 +31,10 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
   let s=B.seed(H.startSession({date:'2026-10-16',plan:{blocks:[p]},letter:'A'}),M.records());s.startedAt=session*86400000+1000;s.id=`10000000-0000-4000-8000-${session.toString(16).padStart(12,'0')}`;
   const page=s.pages[0];let rows=s.logs.A.sets;
   const day=base*(1+session*.001)*(1+(random()-.5)*.035)*(config.alternateTempo&&session%2?.88:1)*(config.layoff&&session>=16?.9:1);
+  // Draw feedback before any policy-dependent skipped AMRAP. Both policies
+  // must receive the same exogenous noise on subsequent sets and days.
+  const feedbackNoise=Array.from({length:rows.length},()=>config.noise?Math.round((random()-.5)*config.noise*2):0);
+  truthSchedule.push([day,feedbackNoise]);
   for(let i=0;i<rows.length;i++){
    let row=rows[i],kg=row.kg;
    if(config.manual&&session===1&&row.purpose==='working'&&row.workingIndex===0)kg=config.manual;
@@ -47,7 +51,7 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
    const exponent=athlete%3===1?1.06:athlete%3===2?.96:1;
    const max=Math.max(0,Math.floor(1+((capacity/mass)**(1/exponent)-1)/trueK));
    const actual=row.purpose==='amrap'?max:Math.min(reps,max),rir=max-actual;
-   const perceived=rir+(config.bias||0)+(config.noise?Math.round((random()-.5)*config.noise*2):0);
+   const perceived=rir+(config.bias||0)+feedbackNoise[i];
    const effort=row.purpose==='amrap'?'max_effort':perceived>=7?'very_easy':perceived>=5?'easy':perceived>=3?'average':perceived>=1?'hard':'max_effort';
    if(row.purpose==='working'){
     metrics.sets++;metrics.hits+=rir>=2&&rir<=4?1:0;metrics.misses+=actual<reps?1:0;
@@ -78,6 +82,7 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
   s=H.finishToSummary(s);M.capture(s);const state=M.replay(B.key(page),page);
   metrics.accepted=state.accepted;metrics.updates=state.updates;if(state.updates&&metrics.firstUpdate==null)metrics.firstUpdate=session+1;
  }
+ metrics.exogenousFingerprint=digest(JSON.stringify(truthSchedule));
  metrics.targetHit=metrics.hits/(metrics.sets||1);metrics.missRate=metrics.misses/(metrics.sets||1);metrics.meanLoadError=metrics.error/(metrics.sets||1);
  return {seed,policy,scenario,athlete,decisions,metrics};
 }
@@ -87,9 +92,27 @@ export function bootstrap(values,resamples=10000){
  for(let b=0;b<resamples;b++){let sum=0;for(let i=0;i<values.length;i++)sum+=values[Math.floor(random()*values.length)];samples.push(sum/values.length);}
  samples.sort((a,b)=>a-b);return {mean:mean(values),low:samples[Math.floor(resamples*.025)],high:samples[Math.floor(resamples*.975)]};
 }
-export async function evaluate({athletesPerSeed=6,sessions=32}={}){
+export function summarizePairs(rows){
+ const clusters=new Map();
+ for(const row of rows){const key=JSON.stringify([row.seed,row.athlete]);const bucket=clusters.get(key)||[];bucket.push(row);clusters.set(key,bucket);}
+ const independent=[...clusters.values()];
+ return {athletes:independent.length,scenarioPairs:rows.length,sets:rows.reduce((s,r)=>s+r.candidate.sets,0),
+  targetHitDifference:bootstrap(independent.map(bucket=>mean(bucket.map(r=>r.candidate.targetHit-r.baseline.targetHit)))),
+  missRateDifference:bootstrap(independent.map(bucket=>mean(bucket.map(r=>r.candidate.missRate-r.baseline.missRate)))),
+  baselineTargetHit:mean(rows.map(r=>r.baseline.targetHit)),onlineTargetHit:mean(rows.map(r=>r.candidate.targetHit)),
+  baselineMiss:mean(rows.map(r=>r.baseline.missRate)),onlineMiss:mean(rows.map(r=>r.candidate.missRate)),
+  onlineFirstUpdate:mean(rows.filter(r=>r.candidate.firstUpdate!=null).map(r=>r.candidate.firstUpdate)),neverFitted:rows.filter(r=>!r.candidate.updates).length};
+}
+export function summarizeReport(report){
+ const results=report.results,overall=summarizePairs(results),groups=Object.fromEntries([...new Set(results.map(r=>r.scenario))].map(g=>[g,summarizePairs(results.filter(r=>r.scenario===g))]));
+ const keys=['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'];
+ const violations=results.reduce((n,r)=>n+keys.reduce((s,k)=>s+r.candidate[k]+r.baseline[k],0),0);
+ const pass=violations===0&&overall.targetHitDifference.mean>=0&&overall.targetHitDifference.low>-.01&&overall.missRateDifference.high<=.005&&Object.values(groups).every(g=>g.targetHitDifference.low>-.03&&g.missRateDifference.high<=.01);
+ return {...report,overall,groups,violations,bootstrapUnit:'seed + athlete, with all repeated scenarios kept together',analysisSha256:digest(readFileSync(fileURLToPath(import.meta.url))),gate:{pass,shippingMode:'default',candidateMode:'shadow-only pending staging and outcome gates'}};
+}
+export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-start','alternating-tempo-10-8-6','noisy-feedback','coarse-equipment','short-rest','recovery-drift']}={}){
  const tasks=[];
- for(const scenario of ['cold-start','alternating-tempo-10-8-6','noisy-feedback','coarse-equipment','short-rest','recovery-drift'])for(const seed of registered.evaluation)for(let athlete=0;athlete<athletesPerSeed;athlete++){
+ for(const scenario of scenarios)for(const seed of registered.evaluation)for(let athlete=0;athlete<athletesPerSeed;athlete++){
   tasks.push({seed,scenario,athlete,sessions,index:tasks.length});
  }
  const batches=Array.from({length:4},(_,i)=>tasks.filter((_,j)=>j%4===i));
@@ -97,20 +120,28 @@ export async function evaluate({athletesPerSeed=6,sessions=32}={}){
   const w=new Worker(new URL(import.meta.url),{workerData:{batch}});let received=false;
   w.once('message',rows=>{received=true;resolve(rows);});w.once('error',reject);w.once('exit',code=>{if(code!==0||!received)reject(Error('Simulation worker failed: '+code));});
  })))).flat().sort((a,b)=>a.index-b.index).map(({index,...r})=>r);
- function summarize(rows){return {athletes:rows.length,sets:rows.reduce((s,r)=>s+r.candidate.sets,0),targetHitDifference:bootstrap(rows.map(r=>r.candidate.targetHit-r.baseline.targetHit)),missRateDifference:bootstrap(rows.map(r=>r.candidate.missRate-r.baseline.missRate)),baselineTargetHit:mean(rows.map(r=>r.baseline.targetHit)),onlineTargetHit:mean(rows.map(r=>r.candidate.targetHit)),baselineMiss:mean(rows.map(r=>r.baseline.missRate)),onlineMiss:mean(rows.map(r=>r.candidate.missRate)),onlineFirstUpdate:mean(rows.filter(r=>r.candidate.firstUpdate!=null).map(r=>r.candidate.firstUpdate)),neverFitted:rows.filter(r=>!r.candidate.updates).length};}
- const overall=summarize(results),groups=Object.fromEntries([...new Set(results.map(r=>r.scenario))].map(g=>[g,summarize(results.filter(r=>r.scenario===g))]));
- const invariantKeys=['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'];
- const violations=results.reduce((n,r)=>n+invariantKeys.reduce((s,k)=>s+r.candidate[k]+r.baseline[k],0),0);
- const pass=violations===0&&overall.targetHitDifference.mean>=0&&overall.targetHitDifference.low>-.01&&overall.missRateDifference.high<=.005&&Object.values(groups).every(g=>g.targetHitDifference.low>-.03&&g.missRateDifference.high<=.01);
- return {schemaVersion:1,sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],overall,groups,violations,gate:{pass,shippingMode:'default',candidateMode:'shadow-only pending staging and outcome gates'},results};
+ return summarizeReport({schemaVersion:1,sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
 }
 if(!isMainThread){
  const results=workerData.batch.map(({index,sessions,...input})=>({index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics}));
  parentPort.postMessage(results);
 }
-if(isMainThread&&process.argv[1]===fileURLToPath(import.meta.url)){
- const report=await evaluate();const dir=new URL('../docs/research/strength-online-learning/',import.meta.url);
+if(isMainThread&&process.argv[1]===fileURLToPath(import.meta.url)&&process.argv.includes('--check-report')){
+ const report=JSON.parse(readFileSync(new URL('../docs/research/strength-online-learning/production-results.json',import.meta.url),'utf8'));
+ for(const [name,source] of sources)if(report.sourceSha256?.[name]!==digest(source))throw Error('Stale production evaluation: '+name);
+ if(JSON.stringify(report.registered)!==JSON.stringify(registered)||report.violations!==0||report.gate.shippingMode!=='default'||!report.bootstrapUnit)throw Error('Invalid production evaluation evidence');
+ console.log('Production evaluation source hashes, registered seeds, clustered analysis and conservative rollout verified.');
+}
+if(isMainThread&&process.argv[1]===fileURLToPath(import.meta.url)&&!process.argv.includes('--check-report')){
+ const dir=new URL('../docs/research/strength-online-learning/',import.meta.url);
+ let report;
+ if(process.argv.includes('--repair-noisy-pairing')){
+  const saved=JSON.parse(readFileSync(new URL('production-results.json',dir),'utf8'));
+  const repaired=await evaluate({athletesPerSeed:saved.athletesPerSeed,sessions:saved.sessions,scenarios:['noisy-feedback']});
+  const replacements=new Map(repaired.results.map(r=>[JSON.stringify([r.seed,r.athlete]),r]));
+  report=summarizeReport({...saved,results:saved.results.map(r=>r.scenario==='noisy-feedback'?replacements.get(JSON.stringify([r.seed,r.athlete])):r),pairingCorrection:'Noisy feedback re-evaluated with a fixed per-session draw schedule before inspecting outcomes. Other scenarios draw no per-set noise and their trajectories are unchanged.'});
+ }else report=process.argv.includes('--summarize-existing')?summarizeReport(JSON.parse(readFileSync(new URL('production-results.json',dir),'utf8'))):await evaluate();
  writeFileSync(new URL('production-results.json',dir),JSON.stringify(report,null,2)+'\n');
- writeFileSync(new URL('production-evaluation.md',dir),`# Production-path synthetic evaluation\n\n${report.protocol}. Evaluation seeds were registered before implementation and were not tuned.\n\nPaired clusters: ${report.overall.athletes}; ordinary sets per policy: ${report.overall.sets}. Software invariant violations: ${report.violations}.\n\n|Metric|Default|Online|Paired difference (95% CI)|\n|---|---|---|---|\n|Target hit|${report.overall.baselineTargetHit}|${report.overall.onlineTargetHit}|${JSON.stringify(report.overall.targetHitDifference)}|\n|Miss|${report.overall.baselineMiss}|${report.overall.onlineMiss}|${JSON.stringify(report.overall.missRateDifference)}|\n\nStatistical gate: **${report.gate.pass?'PASS':'FAIL'}**. Shipping policy stays default. No release is authorized by these simulations.\n\n${report.limitations.map(s=>'- '+s).join('\n')}\n\nSee adjacent JSON for subgroup denominators, seed/athlete pairs, acquisition delays, load errors and all invariants.\n`);
+ writeFileSync(new URL('production-evaluation.md',dir),`# Production-path synthetic evaluation\n\n${report.protocol}. Evaluation seeds were registered before implementation and were not tuned.\n\nIndependent paired athletes: ${report.overall.athletes}; repeated scenario pairs: ${report.overall.scenarioPairs}; ordinary sets per policy: ${report.overall.sets}. Software invariant violations: ${report.violations}.\n\n|Metric|Default|Online|Paired difference (95% CI)|\n|---|---|---|---|\n|Target hit|${report.overall.baselineTargetHit}|${report.overall.onlineTargetHit}|${JSON.stringify(report.overall.targetHitDifference)}|\n|Miss|${report.overall.baselineMiss}|${report.overall.onlineMiss}|${JSON.stringify(report.overall.missRateDifference)}|\n\nStatistical gate: **${report.gate.pass?'PASS':'FAIL'}**. Shipping policy stays default. No release is authorized by these simulations.\n\n${report.limitations.map(s=>'- '+s).join('\n')}\n\nSee adjacent JSON for subgroup denominators, seed/athlete pairs, acquisition delays, load errors and all invariants.\n`);
  console.log(JSON.stringify({overall:report.overall,violations:report.violations,gate:report.gate}));
 }

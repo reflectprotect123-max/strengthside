@@ -23,3 +23,14 @@ test('bootstrap resamples paired athletes and preregistered seeds are disjoint',
  assert.ok(registered.training.every(s=>!registered.evaluation.includes(s)));
  assert.throws(()=>runScenario({scenario:'unknown'}),/Unknown/);
 });
+test('repeating a scenario for the same athlete does not inflate the bootstrap sample size',async()=>{
+ const {summarizePairs}=await import('./strength-learning-simulator.mjs');
+ const pair={seed:1,athlete:0,baseline:{sets:3,targetHit:.5,missRate:0},candidate:{sets:3,targetHit:.6,missRate:0,updates:1,firstUpdate:8}};
+ const result=summarizePairs([{...pair,scenario:'a'},{...pair,scenario:'b'}]);
+ assert.equal(result.athletes,1);assert.equal(result.scenarioPairs,2);assert.ok(Math.abs(result.targetHitDifference.mean-.1)<1e-10);
+});
+test('paired policies receive identical external day and feedback schedules',()=>{
+ const input={seed:912731,scenario:'noisy-feedback',sessions:20};
+ const baseline=runScenario({...input,policy:'default'}),online=runScenario({...input,policy:'online'});
+ assert.equal(baseline.metrics.exogenousFingerprint,online.metrics.exogenousFingerprint);
+});
