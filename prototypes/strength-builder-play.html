@@ -2003,14 +2003,13 @@ button {
       <div class="lib-head-row">
         <button type="button" class="lib-back" aria-label="Back" onclick="Play.backPick()">←</button>
         <h1>Exercises</h1>
-        <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.markSuperset()">Superset</button>
-        <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addPicked()">Add${n ? ' (' + n + ')' : ''}</button>
+        <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addPicked()">${n >= 2 ? 'Superset (' + n + ')' : 'Add' + (n ? ' (' + n + ')' : '')}</button>
       </div>
       <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
       <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
       <div id="libResults">${rows}</div>
-      ${state.superset.length ? '<p class="lib-empty">Superset: ' + esc(state.superset.map((id) => CATALOG.find((c) => c[0] === id)[1]).join(' · ')) + '</p>' : ''}
-      ${nextBar('Next', 'Play.addPicked()')}
+      ${n >= 2 ? '<p class="lib-empty">These ' + n + ' go in as one superset.</p>' : ''}
+      ${nextBar(n >= 2 ? 'Add superset' : 'Next', 'Play.addPicked()')}
       ${nav()}
     </div>`;
   }
@@ -2031,10 +2030,13 @@ button {
       const bits = [state.instructions, state.warmup, state.cooldown].filter(Boolean);
       body += '<article class="lib-block"><div class="lib-block-top"><div style="flex:1"><h3>Instructions</h3><p class="sum">' + esc(bits.join(' · ')) + '</p></div></div></article>';
     }
+    const active = block(state.activeId);
+    const activeGroup = active && active.groupId;
     state.blocks.forEach((b, i) => {
       const prev = state.blocks[i - 1];
       if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
-      if (b.id !== state.activeId) {
+      const groupedOpen = activeGroup && b.groupId === activeGroup;
+      if (b.id !== state.activeId && !groupedOpen) {
         body += '<article class="lib-block"><button type="button" class="tap-card" onclick="Play.openBlock(\'' + b.id + '\')"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><div class="meta">' + esc(summary(b)) + '</div></div></div></button></article>';
         return;
       }
@@ -2141,28 +2143,26 @@ button {
       const at = state.selected.indexOf(id);
       if (at >= 0) state.selected.splice(at, 1);
       else state.selected.push(id);
-      if (!state.selected.includes(id)) state.superset = state.superset.filter((x) => x !== id);
-      render();
-    },
-    markSuperset() {
-      if (state.selected.length < 2) return;
-      state.superset = state.selected.slice();
       render();
     },
     addPicked() {
       if (!state.selected.length && state.blocks.length) { state.screen = 'edit'; render(true); return; }
       if (!state.selected.length) return;
-      const group = state.superset.length >= 2 ? 'ss-' + Date.now() : null;
+      const group = state.selected.length >= 2 ? 'ss-' + Date.now() : null;
+      const added = [];
       state.selected.forEach((id) => {
         if (state.blocks.some((b) => b.catalogId === id)) return;
-        state.blocks.push(makeBlock(id, group && state.superset.includes(id) ? group : null));
+        const made = makeBlock(id, group);
+        state.blocks.push(made);
+        added.push(made);
       });
       state.selected = [];
       state.superset = [];
       state.query = '';
       state.screen = 'edit';
-      if (!state.activeId || !block(state.activeId)) state.activeId = state.blocks[0].id;
-      Play.openBlock(state.activeId);
+      const focus = added[0] || block(state.activeId) || state.blocks[0];
+      if (focus) Play.openBlock(focus.id);
+      else render(true);
     },
     openEditor() { state.screen = 'edit'; render(true); },
     openBlock(id) {
