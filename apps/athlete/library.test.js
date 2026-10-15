@@ -208,3 +208,10 @@ test('builder stores stable invisible exercise metadata and removes obsolete fie
  st=Lib.createCatalogExercise(st,{title:'Dumbbell Curl',columns:['reps','weight_kg']});const curl=st.catalog.exercises[0];
  assert.equal(curl.equipmentId,'dumbbell');assert.equal(curl.loadConvention,'per_hand');assert.equal(curl.minimumKg,1);
 });
+test('an explicitly declared 15 kg bar reaches the logger without changing fields or targets',()=>{
+ let st=Lib.createTemplate(Lib.emptyState(),{title:'Light bar'}),tid=st.templates[0].id;
+ st=Lib.createCatalogExercise(st,{title:'Training Bar Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,barWeightKg:15,equipmentStepKg:2.5,columns:['reps','weight_kg']});
+ st=Lib.addExercise(st,tid,{catalogId:st.catalog.exercises[0].id});
+ const plan=Lib.compile(st.templates[0]),p=HybridSession.pagesFromPlan(plan)[0];
+ assert.equal(p.barWeightKg,15);assert.equal(globalThis.StrengthLoad.fromPage({page:p,value:0,provenance:'explicit'}).externalKg,15);
+});
