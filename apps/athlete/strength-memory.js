@@ -112,10 +112,10 @@
   }
   async function bind(uid) {
     if(memory.ownerId!==uid) {
-      if(memory.ownerId)root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
-      if(memory.ownerId){
-        try{memory=hydrate(JSON.parse(root.localStorage.getItem(KEY+':'+uid)));}catch{memory=empty();}
-      }
+      if(memory.ownerId||Object.keys(memory.records).length)root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
+      const archived=root.localStorage.getItem(KEY+':'+uid);
+      if(archived){try{memory=hydrate(JSON.parse(archived));}catch{memory=empty();}}
+      else if(memory.ownerId)memory=empty();
       ownerEpoch++;
     }
     const adopt=memory.ownerId==null&&uid;

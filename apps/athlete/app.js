@@ -41,6 +41,7 @@ function bindStrengthAccount(uid) {
 }
 
 function signOutStrengthAccount() {
+  if (window.StrengthMemory) StrengthMemory.bind(null).catch(()=>{});
   if (S.accountId) localStorage.setItem(STORAGE_KEY + ':account:' + S.accountId, JSON.stringify(S));
   S = defaultState();
   window.S = S;

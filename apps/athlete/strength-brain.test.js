@@ -93,7 +93,7 @@ test('recognized cold start is provisional and manual actuals remain untouched',
 });
 test('history replays all canonical first-set facts and isolates exercise identity and tempo',()=>{
  const records={};[40,42,44,46].forEach((kg,i)=>{records[i]=record(page,row(0,6,'hard',kg),{id:'r'+i,sessionId:'s'+i,startedAt:i+1});});
- const h=B.history(records,page);assert.equal(h.sessions,4);assert.ok(h.rolling>46);
+ const h=B.history(records,page);assert.equal(h.sessions,4);assert.ok(h.rolling>46);assert.equal(h.latest.rows[0].kg,46);
  assert.equal(B.history(records,{...page,exerciseId:'bench'}).rolling,null);
  assert.equal(B.history(records,{...page,tempo:'33X1'}).rolling,null);
  assert.equal(B.history(records,{...page,title:'Renamed squat'}).rolling,h.rolling);
@@ -103,4 +103,10 @@ test('pending AMRAP uses actual first working weight and unresolved sources rema
  const amrap={id:'A:set:3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false},p={...page,setTargets:[...targets,amrap],setCount:4};
  const first=row(0,8,'average',31);assert.equal(B.next({page:p,row:row(2),nextRow:{targetId:amrap.id},index:3,state:{rows:[first]}}).kg,31);
  assert.equal(B.next({page:p,row:row(2),nextRow:{targetId:amrap.id},index:3,state:{rows:[{...first,miss:true}]}}).kg,null);
+});
+test('Easy-only finished range evidence raises a later seed one step without inventing an e1RM',()=>{
+ const prior=row(0,6,'easy',40),records={old:record(page,prior)};
+ const h=B.history(records,page);assert.equal(h.accepted,0);assert.equal(h.rolling,null);
+ const seeded=B.seed({id:'next',pages:[page],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
+ assert.equal(seeded.pages[0].workingKg,41);
 });

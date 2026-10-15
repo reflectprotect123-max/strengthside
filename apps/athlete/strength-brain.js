@@ -27,14 +27,14 @@
       sourceSetIds:[e.observation.id]}));
     let latest=null;
     if(r.latestFirst&&!r.conflicted){
-      const e=r.latestFirst,rows=r.ledger.filter(x=>x.sessionId===e.observation.sessionId&&!x.deleted&&x.payload?.row).map(x=>x.payload.row);
+      const e=r.latestFirst,rows=r.ledger.filter(x=>x.sessionId===e.observation.sessionId&&!x.deleted&&x.payload?.row).map(x=>x.payload.row).sort((a,b)=>a.ordinal-b.ordinal);
       const result=Core.review(e.page,rows);let nextKg=e.row.kg;
       if(result.earned)nextKg=E.next(e.row.kg,e.page)??e.row.kg;
-      else if(e.observation.miss||['hard','max_effort'].includes(e.effort)){
+      else if(e.observation.miss||['very_easy','easy','hard','max_effort'].includes(e.effort)){
         const first=T.normalize(e.page).find(t=>t.purpose==='working');
         nextKg=Core.suggest({page:e.page,row:e.row,nextRow:{targetId:first?.id},index:0,state:{learning:r,rows}}).kg;
       }
-      latest={...e,...result,nextKg};
+      latest={...e,...result,nextKg,rows};
     }
     const freshE1rm=r.startingScale;
     return {...r,evidence,contextKey,rolling:freshE1rm,freshE1rm,latest,sessions:r.accepted,exposures:r.accepted,

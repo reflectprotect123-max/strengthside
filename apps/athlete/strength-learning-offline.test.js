@@ -72,3 +72,8 @@ test('remote revisions do not regress local revisions after multiple offline edi
  await M.sync({userId:async()=> 'a',pull:async()=>[remote],push:async()=>({ok:true})});
  assert.equal(M.records()[id].localRevision,5);
 });
+test('logout then login restores the archived owner rather than adopting an empty device ledger',async()=>{
+ const {M}=boot();await M.bind('a');M.capture(workout());const before=JSON.stringify(M.records());
+ await M.bind(null);assert.equal(Object.keys(M.records()).length,0);
+ await M.bind('a');assert.equal(JSON.stringify(M.records()),before);
+});
