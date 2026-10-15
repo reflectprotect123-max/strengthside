@@ -1449,6 +1449,7 @@ button {
 .log-active-fields { display: flex; gap: 12px; }
 .log-active-fields label { flex: 1; min-width: 0; color: rgba(255,255,255,.72); font-size: 14px; }
 .log-active-fields input { display: block; min-height: 76px; margin-top: 8px; font-size: 32px; font-variant-numeric: tabular-nums; }
+.log-active-fields input[value="empty bar"] { font-size: 22px; letter-spacing: 0; }
 .log-active-fields input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
 .log-active-fields input::-webkit-inner-spin-button, .log-active-fields input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .log-active-fields input:focus-visible { outline: 2px solid #1ba3ff; outline-offset: 2px; }

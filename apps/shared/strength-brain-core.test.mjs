@@ -59,7 +59,42 @@ test('Easy warmup advances exactly one feasible equipment step even on a coarse 
  const result=B.suggest({page:p,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0});
  assert.equal(result.kg,11);assert.equal(result.reason,'warmup_step');
  const coarse={...p,equipmentStepKg:2.5};assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0}).kg,12.5);
- assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:12.5,effort:'easy'},nextRow:{targetId:'a:set:0',purpose:'working'},index:1}).kg,15);
+ const ontoWork={page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:12.5,effort:'easy'},nextRow:{targetId:'a:set:0',purpose:'working'},index:1};
+ assert.equal(B.suggest(ontoWork).kg,12.5);
+ assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:40}}).kg,40);
+ assert.equal(B.suggest({...ontoWork,page:{...coarse,workingKg:60}}).kg,60);
+ assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:0}}).kg,12.5);
+});
+test('a warmup heavier than the plan raises the work sets to the weight just lifted',()=>{
+ const p={...page([10,10,10]),workingKg:90,equipmentId:'barbell',equipmentStepKg:2.5,minimumKg:20,title:'Back Squat'};
+ const work={targetId:'a:set:0',purpose:'working',kg:90};
+ const heavy={purpose:'ramp',logged:true,reps:10,kg:100,effort:'average'};
+ assert.equal(B.suggest({page:p,row:heavy,nextRow:work,index:2,state:{rows:[heavy,work]}}).kg,100);
+ const light={...heavy,kg:60};
+ assert.equal(B.suggest({page:p,row:light,nextRow:work,index:2,state:{rows:[light,work]}}).kg,90);
+ const bar={equipmentId:'barbell',equipmentStepKg:2.5,minimumKg:20,title:'Back Squat'};
+ const eight={...page([8,8,8]),workingKg:90,...bar};
+ assert.equal(B.suggest({page:eight,row:heavy,nextRow:{targetId:'a:set:0',purpose:'working',kg:100},index:2,state:{rows:[heavy]}}).kg,107.5);
+ assert.equal(B.suggest({page:eight,row:light,nextRow:{targetId:'a:set:0',purpose:'working',kg:90},index:2,state:{rows:[light]}}).kg,90);
+ const six={...page([6,6,6]),workingKg:90,...bar};
+ assert.equal(B.suggest({page:six,row:heavy,nextRow:{targetId:'a:set:0',purpose:'working',kg:100},index:2,state:{rows:[heavy]}}).kg,115);
+ assert.equal(B.suggest({page:eight,row:{...heavy,effort:'hard'},nextRow:{targetId:'a:set:0',purpose:'working',kg:90},index:2,state:{rows:[heavy]}}).kg,100);
+ const longer={...page([10]),workingKg:80,...bar};
+ assert.equal(B.suggest({page:longer,row:{purpose:'ramp',logged:true,reps:8,kg:100,effort:'average'},nextRow:{targetId:'a:set:0',purpose:'working',kg:80},index:1,state:{rows:[heavy]}}).kg,90);
+ assert.equal(B.suggest({page:eight,row:{...heavy,miss:true},nextRow:{targetId:'a:set:0',purpose:'working',kg:100},index:2,state:{rows:[heavy]}}).kg,90);
+ const stayed=B.suggest({page:eight,row:{targetId:'a:set:0',purpose:'working',logged:true,reps:8,kg:107.5,effort:'average'},nextRow:{targetId:'a:set:1',purpose:'working',kg:107.5},index:3,state:{freshE1rm:140,rows:[{purpose:'ramp',logged:true,reps:10,kg:100,effort:'average'},{purpose:'working',logged:true,reps:8,kg:107.5,effort:'average'}]}});
+ assert.equal(stayed.kg,107.5);
+ const second=B.suggest({page:{...p,workingKg:0},row:{...heavy,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp',kg:0},index:1,state:{rows:[heavy]}});
+ assert.equal(second.kg,100);
+ const later=B.suggest({page:p,row:{targetId:'a:set:0',purpose:'working',logged:true,reps:10,kg:100,effort:'average'},nextRow:{targetId:'a:set:1',purpose:'working',kg:90},index:3,state:{freshE1rm:140,rows:[{purpose:'ramp',logged:true,kg:100,reps:10},{purpose:'working',logged:true,kg:100,reps:10,effort:'average'}]}});
+ assert.equal(later.kg,100);
+});
+test('a finished set moves the next rep target onto the same chart load',()=>{
+ const wave={...page([10,8,6]),workingKg:90,equipmentId:'barbell',equipmentStepKg:2.5,minimumKg:20,title:'Back Squat'};
+ const done={targetId:'a:set:0',purpose:'working',logged:true,reps:10,kg:90,effort:'average'};
+ assert.equal(B.suggest({page:wave,row:done,nextRow:{targetId:'a:set:1',purpose:'working',kg:95},index:1,state:{rows:[done]}}).kg,95);
+ const light={...done,kg:80};
+ assert.equal(B.suggest({page:wave,row:light,nextRow:{targetId:'a:set:1',purpose:'working',kg:95},index:1,state:{rows:[light]}}).kg,85);
 });
 test('AMRAP references actual first working load and never mutates it',()=>{
  const p=page([10]);p.setTargets.push({id:'a:set:1',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});

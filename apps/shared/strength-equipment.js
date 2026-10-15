@@ -33,7 +33,8 @@
       return {loads,step:0,min:loads[0]??0,convention:m.convention,unit:m.unit};
     }
     const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?number(page.equipmentStepKg):0;
-    const min=m.db?Math.max(1,m.declared??1):m.bar||m.grid?m.declared:0;
+    // The bar's own kilograms stay off the rack. 0 is the empty bar; 20 or 15 only names which bar.
+    const min=m.db?Math.max(1,m.declared??1):m.bar?0:m.grid?m.declared:0;
     const loads=m.db?[1,2,3,4,5,6,7,8,9,10,12.5,15,17.5,20].filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
     return {loads,step,min,convention:m.convention,unit:m.unit};
   }
@@ -84,7 +85,7 @@
     const title=String(page.title||'').trim();
     if(m.bar) {
       if(!/\b(bench|press|squat|deadlift|row)\b/i.test(title))return unknown('unknown_exercise');
-      desired=m.declared;
+      desired=0;
     } else if(m.db&&m.convention==='single'&&/\bgoblet squat\b/i.test(title))desired=6;
     else if(m.db&&m.convention==='per_hand') {
       if(/\blateral raise\b/i.test(title))desired=2;
@@ -98,5 +99,10 @@
     if(kg==null)return unknown('no_available_load');
     return {kg,confidence:'provisional',reason:VERSION+':provisional_exercise_default'};
   }
-  root.StrengthEquipment={profile,floor,next,round,starter};
+  function label(page={},kg) {
+    if(kg==null||kg==='')return '';
+    const n=number(kg);if(n==null)return '';
+    return metadata(page).bar&&n===0?'empty bar':String(n);
+  }
+  root.StrengthEquipment={profile,floor,next,round,starter,label};
 })(typeof window!=='undefined'?window:globalThis);
