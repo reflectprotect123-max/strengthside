@@ -124,3 +124,8 @@ test('successive reps/effort edits or an unlog do not certify an ambiguous legac
   assert.equal(Object.values(M.records()).find(r=>r.kind==='set').payload.normalizedLoad,null);
  }
 });
+test('resuming a legacy session preserves raw actuals and marks their load semantics uncertain',()=>{
+ const {ctx}=create();const old=session();old.phase='block';delete old.logs.A.sets[0].context;
+ const resumed=ctx.HybridSession.startSession({date:old.date,existing:old,plan:{blocks:[]}});
+ const r=resumed.logs.A.sets[0];assert.equal(r.kg,40);assert.equal(r.context.loadAmbiguous,true);
+});

@@ -4,7 +4,7 @@ import {runtime} from '../../scripts/strength-learning-simulator.mjs';
 function page(){return {id:'A',kind:'lift',logMode:'kg',title:'Press',exerciseId:'press',equipmentId:'machine',loadConvention:'total',loadUnit:'kg',minimumKg:0,equipmentStepKg:.5,columns:['reps','weight_kg'],setTargets:[10,8].map((n,i)=>({id:'A:set:'+i,purpose:'working',reps:{min:n,max:n},loadRule:{kind:'adaptive'},toFailure:false}))};}
 function args(p=page()){const row={targetId:'A:set:0',purpose:'working',kg:40,reps:10,effort:'average',logged:true,miss:false};return {page:p,row,nextRow:{targetId:'A:set:1',kg:42},index:1,state:{rows:[row],learning:{version:'online-v1',k:.08,conflicted:false}}};}
 test('shipping policy is default and shadow returns exactly the default visible decision',()=>{
- const {ctx}=runtime();assert.equal(ctx.StrengthPolicy.learningMode,'default');
+ const {ctx}=runtime();assert.equal(ctx.StrengthPolicy.learningMode,'default');assert.equal(ctx.StrengthPolicy.learningVersion,'online-v1');
  const a=args(),baseline=ctx.StrengthBrain.next(a);ctx.StrengthPolicy.learningMode='shadow';
  assert.deepEqual(ctx.StrengthBrain.next(a),baseline);assert.equal(ctx.StrengthBrain.diagnostics().length,1);
  ctx.StrengthPolicy.learningMode='online';assert.notDeepEqual(ctx.StrengthBrain.next(a),baseline);

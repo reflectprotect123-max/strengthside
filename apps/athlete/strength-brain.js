@@ -1,10 +1,9 @@
-/** Athlete compatibility and seeding adapter for the canonical v2 strength core. */
+/** Athlete seeding adapter for the canonical strength policy and evidence replay. */
 (function(root) {
   const VERSION=root.StrengthPolicy.version,RIR=root.TrainingCore.rir,Core=root.StrengthBrainCore,E=root.StrengthEquipment,T=root.StrengthTargets;
   let replayCache=new WeakMap();
   const diagnosticEvents=[];
   function freeze(value){if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
-  const positive=n=>Number.isFinite(Number(n))&&Number(n)>0;
   const clone=x=>JSON.parse(JSON.stringify(x));
   function key(page) {
     // Preserve the historical namespace only for records that predate catalogue metadata.
@@ -49,7 +48,8 @@
       const e=r.latestFirst,rows=r.ledger.filter(x=>x.sessionId===e.observation.sessionId&&!x.deleted&&x.payload?.row).map(x=>x.payload.row).sort((a,b)=>a.ordinal-b.ordinal);
       const result=Core.review(e.page,rows);let nextKg=e.row.kg;
       if(result.earned)nextKg=E.next(e.row.kg,e.page)??e.row.kg;
-      else if(e.observation.miss||['very_easy','easy','hard','max_effort'].includes(e.effort)){
+      else if(!e.observation.miss&&['very_easy','easy'].includes(e.effort))nextKg=E.next(e.row.kg,e.page)??e.row.kg;
+      else if(e.observation.miss||['hard','max_effort'].includes(e.effort)){
         const first=T.normalize(e.page).find(t=>t.purpose==='working');
         nextKg=Core.suggest({page:e.page,row:e.row,nextRow:{targetId:first?.id},index:0,state:{learning:r,rows}}).kg;
       }
@@ -76,7 +76,7 @@
       const h=history(records,page,s.id),first=targets.find(t=>t.purpose==='working'),prior=h.latest;
       let working=null,confidence='unknown';
       const samePrescription=prior&&JSON.stringify(T.normalize(prior.page).map(({id,...t})=>t))===JSON.stringify(targets.map(({id,...t})=>t));
-      if(prior&&samePrescription&&Number.isFinite(prior.nextKg)){
+      if(prior&&(samePrescription||prior.observation.miss||prior.effort==='max_effort')&&Number.isFinite(prior.nextKg)){
         const mass=Core.normalized(prior.nextKg,prior.page)?.externalKg;
         working=mass==null?null:E.floor(Core.display(mass,page),page);confidence='history';
       } else if(prior&&first){

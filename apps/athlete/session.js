@@ -202,6 +202,9 @@
     if (existing && existing.date === date && existing.phase !== 'summary' && !letter) {
       const s = root.TrainingCore.migrateSession(clone(existing));
       s.pages = s.pages?.length ? s.pages : pages;
+      for(const log of Object.values(s.logs||{}))for(const row of log.sets||[])
+        if(row.logged&&row.context?.inputVersion!==3&&!root.StrengthContext?.normalizeLoad(row.context?.normalizedLoad)?.eligible)
+          row.context={...(row.context||{}),loadAmbiguous:true};
       return attachLogs(s);
     }
     const session = attachLogs({
