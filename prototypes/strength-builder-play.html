@@ -1891,7 +1891,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. Add in the corner moves the ticked lifts on. Superset groups two or more.</p>
+<p class="play-note">One file. Save it, then open it in a browser. Add every lift first. Superset groups two or more. Next then goes lift by lift.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -2017,11 +2017,25 @@ button {
       <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
       <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
       <div id="libResults">${rows}</div>
-      ${n === 1 ? '<p class="lib-empty">Add moves this on as a single.</p>' : ''}
-      ${n >= 2 ? '<p class="lib-empty">Superset groups these ' + n + '. Add keeps each one single.</p>' : ''}
-      ${nextBar('Next', 'Play.confirmSingle()', n !== 1 && !(n === 0 && state.blocks.length))}
+      ${n === 1 ? '<p class="lib-empty">Add puts this on the list. Next starts once every lift is in.</p>' : ''}
+      ${n >= 2 ? '<p class="lib-empty">Superset groups these ' + n + '. Add keeps each one on the list.</p>' : ''}
+      ${state.blocks.length && !n ? '<p class="lib-empty">Next goes through these lift by lift.</p>' : ''}
+      ${chosenHtml()}
+      ${nextBar('Next', 'Play.startLifts()', n !== 0 || !state.blocks.length)}
       ${nav()}
     </div>`;
+  }
+
+  function chosenHtml() {
+    letters();
+    if (!state.blocks.length) return '';
+    let body = state.confirm ? '<p class="lib-empty play-confirm" role="status">' + esc(state.confirm) + '</p>' : '';
+    state.blocks.forEach((b, i) => {
+      const prev = state.blocks[i - 1];
+      if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
+      body += '<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3></div></div></article>';
+    });
+    return body;
   }
 
   function setRows(b) {
@@ -2040,14 +2054,11 @@ button {
       const bits = [state.instructions, state.warmup, state.cooldown].filter(Boolean);
       body += '<article class="lib-block"><div class="lib-block-top"><div style="flex:1"><h3>Instructions</h3><p class="sum">' + esc(bits.join(' · ')) + '</p></div></div></article>';
     }
-    const active = block(state.activeId);
-    const activeGroup = active && active.groupId;
+    const at = state.blocks.findIndex((b) => b.id === state.activeId);
     state.blocks.forEach((b, i) => {
       const prev = state.blocks[i - 1];
-      if (state.confirm && b.id === state.confirmAnchor) body += '<p class="lib-empty play-confirm" role="status">' + esc(state.confirm) + '</p>';
       if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
-      const groupedOpen = activeGroup && b.groupId === activeGroup;
-      if (b.id !== state.activeId && !groupedOpen) {
+      if (b.id !== state.activeId) {
         body += '<article class="lib-block"><button type="button" class="tap-card" onclick="Play.openBlock(\'' + b.id + '\')"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><div class="meta">' + esc(summary(b)) + '</div></div></div></button></article>';
         return;
       }
@@ -2063,7 +2074,7 @@ button {
       <div class="lib-row-btns"><button type="button" onclick="Play.goPick()">+ Add Exercise</button><button type="button" disabled>+ Add Circuit</button></div>
       <div style="padding:0 16px 24px"><button type="button" class="lib-primary" onclick="Play.calendar()">Post to calendar</button></div>
       ${posted}
-      ${state.blocks.length ? '<div class="play-next"><button type="button" class="btn oled-cta" onclick="Play.goPick()">Next</button></div>' : ''}
+      ${at >= 0 && at < state.blocks.length - 1 ? '<div class="play-next"><button type="button" class="btn oled-cta" onclick="Play.nextLift()">Next</button></div>' : ''}
       ${padHtml()}
     </div>`;
   }
@@ -2159,18 +2170,6 @@ button {
       else state.selected.push(id);
       render();
     },
-    confirmSingle() {
-      if (state.selected.length > 1) return;
-      if (!state.selected.length) {
-        if (!state.blocks.length) return;
-        state.confirm = '';
-        state.confirmAnchor = '';
-        state.screen = 'edit';
-        render(true);
-        return;
-      }
-      Play.commitSelected(false);
-    },
     addSelected() {
       if (!state.selected.length) return;
       Play.commitSelected(false);
@@ -2193,11 +2192,22 @@ button {
       state.query = '';
       letters();
       const names = added.map((b) => b.letter + ' ' + b.title).join(', ');
-      state.confirm = added.length ? (asSuperset ? 'Superset confirmed: ' + names : 'Single confirmed: ' + names) : '';
+      state.confirm = added.length ? (asSuperset ? 'Added superset: ' + names : 'Added: ' + names) : '';
       state.confirmAnchor = added[0] ? added[0].id : '';
-      state.screen = 'edit';
-      if (added[0]) Play.openBlock(added[0].id);
-      else render(true);
+      state.screen = 'pick';
+      render(true);
+    },
+    startLifts() {
+      if (state.selected.length || !state.blocks.length) return;
+      state.confirm = '';
+      state.confirmAnchor = '';
+      Play.openBlock(state.blocks[0].id);
+    },
+    nextLift() {
+      const at = state.blocks.findIndex((b) => b.id === state.activeId);
+      const next = state.blocks[at + 1];
+      if (!next) return;
+      Play.openBlock(next.id);
     },
     openEditor() { state.screen = 'edit'; render(true); },
     openBlock(id) {
