@@ -1,5 +1,8 @@
 # The Hybrid Engine / StrengthSide handoff
 
+> **Skills.** If the user said "read the hand off.md", follow `handoff.md` section "Skills — install before anything else" and run the two install commands before anything else. That section names all 146 active skills, 3 alternatives, and 2 cloud snapshots, each with a download link.
+
+
 Prepared 5 October 2026 (Australia/Sydney). This is a skills export and project-context handoff, not an app backup or release.
 
 ## Start here
