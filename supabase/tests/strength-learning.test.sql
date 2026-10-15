@@ -19,6 +19,7 @@ begin
  for bad in select value from jsonb_array_elements(jsonb_build_array(
    null,'{}'::jsonb,'null'::jsonb,
    batch||jsonb_build_array(batch->0),
+   jsonb_build_array(jsonb_set(batch->0,'{record_id}','"cccccccc-cccc-4ccc-8ccc-ccccccccccc1"'),jsonb_set(batch->0,'{record_id}','"CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCC1"')),
    jsonb_build_array(jsonb_set(batch->0,'{record_id}','"invalid-uuid"')),
    jsonb_build_array(jsonb_set(batch->0,'{expected_revision}','-1')),
    jsonb_build_array(jsonb_set(batch->0,'{payload}','[]')),
@@ -51,4 +52,4 @@ do $$declare rejected boolean:=false;begin
  if not rejected then raise exception 'Anon executed RPC';end if;
 end $$;
 rollback;
-select 'PASS: mixed-v2/v3, JWT ownership, 8 malformed/atomic batches, stale-batch atomicity, tombstone, B isolation, anon denial' as result;
+select 'PASS: mixed-v2/v3, JWT ownership, 9 malformed/atomic batches, stale-batch atomicity, tombstone, B isolation, anon denial' as result;

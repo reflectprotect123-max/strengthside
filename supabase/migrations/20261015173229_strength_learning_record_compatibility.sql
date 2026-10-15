@@ -1,4 +1,4 @@
--- Preserve v2/v3 payload compatibility; reject SQL NULL requests atomically.
+-- Preserve v2/v3 payload compatibility; reject NULL requests and UUID aliases atomically.
 begin;
 create or replace function public.sync_strength_brain_records(p_records jsonb)
 returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
@@ -7,7 +7,7 @@ begin
   if uid is null then raise exception 'Authentication required' using errcode='42501'; end if;
   if jsonb_typeof(p_records) is distinct from 'array' or jsonb_array_length(p_records)>100 then raise exception 'Expected at most 100 records'; end if;
   perform pg_advisory_xact_lock(hashtextextended(uid::text,0));
-  if (select count(*)<>count(distinct value->>'record_id') from jsonb_array_elements(p_records)) then raise exception 'Duplicate record IDs'; end if;
+  if (select count(*)<>count(distinct (value->>'record_id')::uuid) from jsonb_array_elements(p_records)) then raise exception 'Duplicate record IDs'; end if;
   for item in select value from jsonb_array_elements(p_records) loop
     rid:=(item->>'record_id')::uuid; expected:=(item->>'expected_revision')::bigint;
     if rid is null or expected is null or expected<0 or item->>'kind' not in ('set','session_estimate') or (item->>'session_id') is null or coalesce(item->>'exercise_key','')='' or jsonb_typeof(item->'payload') is distinct from 'object' or octet_length((item->'payload')::text)>200000 then raise exception 'Invalid strength record'; end if;
