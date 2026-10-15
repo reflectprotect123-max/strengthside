@@ -77,7 +77,8 @@
       page:clone(page),row:clone(row),normalizedLoad:normalized}};
   }
   function replay(records,{ownerId,contextKey,excludeSessionId}={}) {
-    const L=root.StrengthLearning;
+    const L=root.StrengthLearning,contextCache=new WeakMap();
+    const keyOf=record=>{if(!contextCache.has(record))contextCache.set(record,context(record));return contextCache.get(record);};
     const diagnostics=[],byId=new Map();
     const diagnostic=(record,reason)=>diagnostics.push({id:record.id,sessionId:record.sessionId??null,reason});
     // Resolve revisions before eligibility, so deletion/reopen/context edits cannot resurrect old evidence.
@@ -89,24 +90,27 @@
     }
     const ledger=[],latest=[];let conflicted=false;
     for(const [id,entry] of [...byId].sort((a,b)=>compare(a[0],b[0]))) {
-      const variants=new Map(entry.variants.map(record=>{const raw=fact(record);return [serial(raw),raw];}));
-      const all=[...variants].sort((a,b)=>compare(a[0],b[0])).map(pair=>pair[1]);
+      // Most IDs have one latest fact. Canonicalize only conflicts and the scoped
+      // output ledger; cloning every unrelated payload blocks large histories.
+      const variants=entry.variants.length===1?null:new Map(entry.variants.map(record=>{const raw=fact(record);return [serial(raw),raw];}));
+      const all=variants?[...variants].sort((a,b)=>compare(a[0],b[0])).map(pair=>pair[1]):entry.variants;
       const owned=all.filter(record=>text(ownerId)&&ownerMatches(record,ownerId));
       if(!owned.length)continue;
-      const scoped=owned.filter(record=>record.kind==='set'&&context(record)===contextKey);
+      const scoped=owned.filter(record=>record.kind==='set'&&keyOf(record)===contextKey);
       if(all.length>1){
         // A context with unresolved conflicting actuals uses the default curve until resolved.
         if(scoped.length){conflicted=true;ledger.push({id,localRevision:entry.revision,conflicts:scoped});diagnostic(scoped[0],'conflicting_revision');}
         continue;
       }
-      if(scoped.length)ledger.push(all[0]);
-      latest.push(all[0]);
+      const selected=scoped.length?fact(all[0]):all[0];
+      if(scoped.length)ledger.push(selected);
+      latest.push(selected);
     }
     latest.sort(order);
     const sessions=new Map();
     for(const record of latest) {
       if(record.kind!=='set')continue;
-      if(!text(record.sessionId)||typeof record.deleted!=='boolean'){if(context(record)===contextKey)diagnostic(record,'invalid_record');continue;}
+      if(!text(record.sessionId)||typeof record.deleted!=='boolean'){if(keyOf(record)===contextKey)diagnostic(record,'invalid_record');continue;}
       const bucket=sessions.get(record.sessionId)||[];bucket.push(record);sessions.set(record.sessionId,bucket);
     }
     // updateStart anchors this scale at fixed k0, not the evolving personal k.
@@ -114,7 +118,7 @@
     let state=L.initial(),startingScale=null;
     const evidence=[],sessionGates=[];
     for(const bucket of sessions.values()) {
-      const relevant=bucket.filter(record=>context(record)===contextKey);
+      const relevant=bucket.filter(record=>keyOf(record)===contextKey);
       if(!relevant.length)continue;
       sessionGates.push({sessionId:bucket[0].sessionId,completed:bucket.every(record=>record.payload.completed===true),times:[...new Set(bucket.map(time))].sort(compare)});
       if(bucket[0].sessionId===excludeSessionId)continue;

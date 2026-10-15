@@ -4,7 +4,9 @@
   let busy=false,timer=null,retry=0,nativePending=null,nativeWriting=false;
   const status={pending:0,lastError:'',lastSyncAt:null};
   const empty=()=>({version:VERSION,ownerId:null,records:{},pending:{},revisions:{}});
-  let memory,recoveryRaw=null,ownerEpoch=0,restorePromise=null;
+  let memory,recoveryRaw=null,ownerEpoch=0,restorePromise=null,factsEpoch=0,snapshotEpoch=-1,snapshot=null;
+  const snapshots=new WeakSet(),frozenRecords=new WeakMap();
+  function freeze(value){if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
   function hydrate(value) {
     if(!value||typeof value!=='object'||Array.isArray(value))return empty();
     const dict=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
@@ -21,7 +23,7 @@
       const data=JSON.stringify(memory);root.localStorage.setItem(KEY,data);durable=data;recoveryRaw=null;
       status.pending=Object.keys(memory.pending).length;
       if(root.Capacitor?.isNativePlatform?.()){nativePending=data;writeNative();}
-    }catch(e){memory=JSON.parse(durable);status.lastError='Could not save strength evidence: '+(e.message||'storage unavailable');throw e;}
+    }catch(e){memory=JSON.parse(durable);factsEpoch++;status.lastError='Could not save strength evidence: '+(e.message||'storage unavailable');throw e;}
   }
   function filesystem(){return root.Capacitor?.Plugins?.Filesystem||root.Capacitor?.registerPlugin?.('Filesystem');}
   async function writeNative() {
@@ -38,7 +40,7 @@
       try{
         const r=await filesystem().readFile({path:'strength-memory-v1.json',directory:'DATA',encoding:'utf8'});
         if(epoch!==ownerEpoch||durable!==snapshot||root.localStorage.getItem(KEY))return;
-        memory=hydrate(JSON.parse(r.data));persist();
+        memory=hydrate(JSON.parse(r.data));factsEpoch++;persist();
       }catch{/* First install has no backup; existing facts are left untouched. */}
     })();return restorePromise;
   }
@@ -58,7 +60,7 @@
     const old=memory.records[record.id];
     if(old&&fingerprint(old)===fingerprint(record))return;
     const rev=(old?.localRevision||0)+1;
-    memory.records[record.id]={...record,localRevision:rev};
+    memory.records[record.id]={...record,localRevision:rev};factsEpoch++;
     memory.pending[record.id]=rev;
   }
   function authoredTargets(page) {
@@ -88,8 +90,8 @@
         if(!row.logged&&!memory.records[row.id])return;
         const target=position>=0?targets?.filter(t=>t.purpose!=='warmup')[position]:null;
         const snapshot={...clone(row),targetId:row.targetId||target?.id||null,workingIndex:position,ordinal:index,context:clone(row.context||{})};
-        const candidate=root.StrengthContext.normalizeLoad(row.context?.normalizedLoad||memory.records[row.id]?.payload?.normalizedLoad);
-        const expected=candidate&&root.StrengthLoad.fromPage({page,value:row.kg,provenance:candidate.provenance});
+        const candidate=root.StrengthContext?.normalizeLoad(row.context?.normalizedLoad||memory.records[row.id]?.payload?.normalizedLoad);
+        const expected=candidate&&root.StrengthLoad?.fromPage({page,value:row.kg,provenance:candidate.provenance});
         const normalizedLoad=expected&&JSON.stringify(candidate)===JSON.stringify(expected)?candidate:null;
         put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:3,ownerId:memory.ownerId,
           normalizedLoad,completed,authoredTargets:targets,page:clone(page),row:snapshot,sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
@@ -116,7 +118,7 @@
       const archived=root.localStorage.getItem(KEY+':'+uid);
       if(archived){try{memory=hydrate(JSON.parse(archived));}catch{memory=empty();}}
       else if(memory.ownerId)memory=empty();
-      ownerEpoch++;
+      ownerEpoch++;factsEpoch++;
     }
     const adopt=memory.ownerId==null&&uid;
     memory.ownerId=uid;
@@ -152,15 +154,16 @@
         if(typeof id!=='string'||!Number.isSafeInteger(r.revision)||r.revision<1||r.revision<base)continue;
         if(memory.pending[id]&&r.revision!==base){
           const remoteRecord={sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:clone(r.payload)};
-          if(fingerprint(remoteRecord)===fingerprint(memory.records[id])){memory.revisions[id]=r.revision;delete memory.pending[id];delete memory.conflicts?.[id];continue;}
+          if(fingerprint(remoteRecord)===fingerprint(memory.records[id])){memory.revisions[id]=r.revision;delete memory.pending[id];delete memory.conflicts?.[id];factsEpoch++;continue;}
           (memory.conflicts||(memory.conflicts={}))[id]={id,localRevision:memory.records[id].localRevision,...remoteRecord};
-          conflicts.push(id);continue;
+          factsEpoch++;conflicts.push(id);continue;
         }
         memory.revisions[id]=r.revision;
         if(!memory.pending[id]){
           const next={id,sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:clone(r.payload)};
           const old=memory.records[id];next.localRevision=old?(old.localRevision+(fingerprint(old)!==fingerprint(next)?1:0)):1;
-          memory.records[id]=next;delete memory.conflicts?.[id];
+          if(!old||fingerprint(old)!==fingerprint(next)){memory.records[id]=next;factsEpoch++;}
+          if(memory.conflicts?.[id]){delete memory.conflicts[id];factsEpoch++;}
         }
       }
       persist();
@@ -187,13 +190,18 @@
     persist();schedule();
   }
   function records(){
-    const out={...memory.records};
+    if(snapshot&&snapshotEpoch===factsEpoch)return snapshot;
+    const out={};
+    for(const [id,r] of Object.entries(memory.records)){
+      if(!r||typeof r!=='object')continue;
+      let frozen=frozenRecords.get(r);if(!frozen){frozen=freeze(clone(r));frozenRecords.set(r,frozen);}out[id]=frozen;
+    }
     for(const [id,remote] of Object.entries(memory.conflicts||{}))if(memory.records[id])
-      out['conflict:'+id]={...clone(remote),id,localRevision:memory.records[id].localRevision};
-    return out;
+      out['conflict:'+id]=freeze({...clone(remote),id,localRevision:memory.records[id].localRevision});
+    snapshot=Object.freeze(out);snapshotEpoch=factsEpoch;snapshots.add(snapshot);return snapshot;
   }
   function getStatus(){return {...status,pending:Object.keys(memory.pending).length};}
-  root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,replay,ownerId:()=>memory.ownerId};
+  root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,replay,ownerId:()=>memory.ownerId,isSnapshot:value=>snapshots.has(value)};
   root.addEventListener?.('online',()=>schedule(0));
   root.addEventListener?.('visibilitychange',()=>{if(root.document?.visibilityState==='visible')schedule(0);});
   restore().then(()=>schedule(0));

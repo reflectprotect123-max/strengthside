@@ -97,7 +97,8 @@
     const rpe=effortRpe[row.effort],targetReps=nextTarget.reps?.min;
     if(rpe==null)return response(kg,label,'unknown_effort','unknown',p);
     const fromReps=Number(currentTarget?.reps?.min),transition=Number.isInteger(fromReps)&&fromReps!==targetReps;
-    const k=p.learningMode==='online'&&!state.learning?.conflicted?state.learning?.k:root.StrengthLearning.initial().k;
+    const candidate=state.learning?.k,valid=state.learning?.version==='online-v1'&&Number.isFinite(candidate)&&candidate>=.01&&candidate<=.08;
+    const k=p.learningMode==='online'&&valid&&!state.learning?.conflicted?candidate:root.StrengthLearning.initial().k;
     const physical=root.StrengthLearning.project({weight:mass,fromReps:reps,fromRir:10-rpe,toReps:targetReps,targetRir:3,k:k??root.StrengthLearning.initial().k});
     if(physical==null)return response(kg,label,'outside_chart_hold','low',p);
     const out=guard(physical,kg,page,{p,transition,planned:nextRow?.kg});

@@ -1,6 +1,9 @@
 /** Athlete compatibility and seeding adapter for the canonical v2 strength core. */
 (function(root) {
   const VERSION=root.StrengthPolicy.version,RIR=root.TrainingCore.rir,Core=root.StrengthBrainCore,E=root.StrengthEquipment,T=root.StrengthTargets;
+  let replayCache=new WeakMap();
+  const diagnosticEvents=[];
+  function freeze(value){if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
   const positive=n=>Number.isFinite(Number(n))&&Number(n)>0;
   const clone=x=>JSON.parse(JSON.stringify(x));
   function key(page) {
@@ -14,14 +17,30 @@
   function target(page,row,index){let t=null;try{t=T.forRow(page,row,index);}catch{}return t?.purpose==='warmup'?'easy':'average';}
   function next(args){
     const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
-    return Core.suggest({...args,state:{...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]}});
+    const state={...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]};
+    const mode=state.policy?.learningMode??root.StrengthPolicy.learningMode;
+    const run=learningMode=>Core.suggest({...args,state:{...state,policy:{...state.policy,learningMode}}});
+    const baseline=run('default');
+    if(mode!=='online'&&mode!=='shadow')return baseline;
+    let candidate;try{candidate=run('online');}catch{return baseline;}
+    if(!Number.isFinite(candidate.kg)&&baseline.kg!=null)return baseline;
+    if(mode==='online')return candidate;
+    let hash=2166136261;for(const c of h.contextKey||'unknown'){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619);}
+    diagnosticEvents.push({contextHash:(hash>>>0).toString(16),model:VERSION,reason:candidate.reason,delta:candidate.kg!=null&&baseline.kg!=null?candidate.kg-baseline.kg:null});
+    if(diagnosticEvents.length>64)diagnosticEvents.shift();return baseline;
   }
   const estimate=(row,page)=>Core.estimate(row,page);
   const review=(page,rows)=>Core.review(page,rows);
   function history(records,page,excludeSession,ownerId) {
     ownerId=ownerId??root.StrengthMemory?.ownerId?.()??root.S?.accountId??null;
     const load=Core.normalized(0,page),contextKey=learningContext({athleteId:ownerId,page,load});
-    const r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});
+    const cacheable=root.StrengthMemory?.isSnapshot?.(records);
+    const cacheKey=JSON.stringify([ownerId,contextKey,excludeSession??null,VERSION]);
+    let cached=cacheable?replayCache.get(records):null;
+    if(cached?.has(cacheKey))return cached.get(cacheKey);
+    const fallback={version:'online-v1',k:root.StrengthLearning?.initial().k??.0333/1.0333,rows:[],accepted:0,updates:0,startingScale:null,evidenceFingerprint:'unavailable',conflicted:false,ledger:[],diagnostics:[],evidence:[],latestFirst:null};
+    let r=fallback;
+    try{if(root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
     const evidence=r.evidence.map(e=>({...e,sessionId:e.observation.sessionId,
       sourceSignature:'source-v3:'+JSON.stringify([e.observation.id,e.observation.revision,e.observation.weight,e.observation.reps,e.observation.rir,e.observation.miss]),
       sourceSetIds:[e.observation.id]}));
@@ -37,8 +56,14 @@
       latest={...e,...result,nextKg,rows};
     }
     const freshE1rm=r.startingScale;
-    return {...r,evidence,contextKey,rolling:freshE1rm,freshE1rm,latest,sessions:r.accepted,exposures:r.accepted,
+    const result={...r,evidence,contextKey,rolling:freshE1rm,freshE1rm,latest,sessions:r.accepted,exposures:r.accepted,
       confidence:r.accepted===0?'unknown':r.updates>0?'personal':'provisional',modelVersion:VERSION};
+    if(cacheable){
+      if(!cached){cached=new Map();replayCache.set(records,cached);}
+      if(cached.size>=32)cached.delete(cached.keys().next().value);
+      cached.set(cacheKey,freeze(result));
+    }
+    return result;
   }
   function seed(session,records) {
     const s=clone(session);if(s.brainSeeded)return s;
@@ -88,5 +113,5 @@
     try{return context.key({athleteId,exerciseId:page?.exerciseId,equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
     catch{return null;}
   }
-  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,seed};
+  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,seed,clearCache(){replayCache=new WeakMap();diagnosticEvents.length=0;},diagnostics:()=>diagnosticEvents.map(e=>({...e}))};
 })(typeof window!=='undefined'?window:globalThis);
