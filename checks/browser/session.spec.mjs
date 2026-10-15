@@ -13,6 +13,7 @@ test('custom exercise and custom circuit creation',async({page})=>{
 test('build, schedule, play full session, reopen history and check next session',async({page},testInfo)=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await builder(page);
+ await page.evaluate(()=>StrengthMemory.bind('browser-athlete'));
  const title=page.locator('.lib-field').filter({has:page.locator('label',{hasText:/^Title$/})}).locator('input');
  await title.fill('Full CLI strength session');await title.press('Tab');
  await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();
@@ -43,9 +44,9 @@ test('build, schedule, play full session, reopen history and check next session'
  await expect(page.locator('.log-sum')).toBeVisible({timeout:5000});await expect(page.locator('.log-stat').filter({hasText:/^Sets/})).toContainText('5');await expect(page.locator('.log-stat').filter({hasText:/^Reps/})).toContainText('34');
  expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set').length)).toBe(7);
  await page.screenshot({path:testInfo.outputPath('full-session-summary.png'),fullPage:true});await testInfo.attach('Completed session summary',{path:testInfo.outputPath('full-session-summary.png'),contentType:'image/png'});
- await page.getByRole('button',{name:'Close',exact:true}).click();await page.locator('[data-tab=me]').click();await page.getByRole('button',{name:'Training history',exact:true}).click();await expect(page.locator('.history-session')).toContainText('5 sets · 34 reps');await page.reload();await expect(page.locator('.history-session')).toContainText('Full CLI strength session');
+ await page.clock.resume();await page.getByRole('button',{name:'Close',exact:true}).click();await page.locator('[data-tab=me]').click();await page.getByRole('button',{name:'Training history',exact:true}).click();await expect(page.locator('.history-session')).toContainText('5 sets · 34 reps');await page.reload();await expect(page.locator('.history-session')).toContainText('Full CLI strength session');
  await page.locator('[data-tab=library]').click();await page.getByRole('button',{name:'Add to calendar',exact:true}).click();const tomorrow=await page.evaluate(d=>{const date=new Date(d+'T12:00:00');date.setDate(date.getDate()+1);return date.toISOString().slice(0,10);},day);await page.getByLabel('Session date').fill(tomorrow);await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.locator('.trn-block--lift').first().click();
- expect(await page.evaluate(()=>S.session.pages[0].workingKg)).toBe(42.5);await expect(page.getByText('Warm-up 1 of 2',{exact:true})).toBeVisible();await expect(page.getByLabel('Weight (kg)')).toHaveValue('empty bar');expect(await page.evaluate(()=>{const squat=S.session.pages[0];return S.session.logs[squat.id].sets.filter(r=>r.purpose==='ramp').map(r=>r.kg);})).toEqual([0,20]);expect(errors).toEqual([]);
+ expect(await page.evaluate(()=>S.session.pages[0].workingKg)).toBe(42.5);expect(errors).toEqual([]);await expect(page.getByText('Warm-up 1 of 2',{exact:true})).toBeVisible();await expect(page.getByLabel('Weight (kg)')).toHaveValue('empty bar');expect(await page.evaluate(()=>{const squat=S.session.pages[0];return S.session.logs[squat.id].sets.filter(r=>r.purpose==='ramp').map(r=>r.kg);})).toEqual([0,20]);expect(errors).toEqual([]);
  await page.screenshot({path:testInfo.outputPath('next-session-load.png'),fullPage:true});
 });
 

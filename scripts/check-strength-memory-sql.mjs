@@ -10,6 +10,7 @@ const run=(command,args,options={})=>{
   return result.stdout||'';
 };
 
+export async function checkStrengthSql(extraFile=null) {
 try {
   run('docker',['run','-d','--name',name,'--mount',`type=bind,src=${root},dst=/repo,readonly`,'-e','POSTGRES_HOST_AUTH_METHOD=trust','postgres:17-bookworm']);
   let ready=false;
@@ -23,6 +24,13 @@ try {
   if(!ready)throw new Error('Throwaway Postgres did not become ready');
   const output=run('docker',['exec','-w','/repo',name,'psql','-h','127.0.0.1','-U','postgres','-v','ON_ERROR_STOP=1','-f','checks/sql/strength-brain-memory-test.sql']);
   process.stdout.write(output);
+  if(extraFile){
+    process.stdout.write(run('docker',['exec','-w','/repo',name,'psql','-h','127.0.0.1','-U','postgres','-v','ON_ERROR_STOP=1','-f','supabase/migrations/20261015173229_strength_learning_record_compatibility.sql']));
+    process.stdout.write(run('docker',['exec','-w','/repo',name,'psql','-h','127.0.0.1','-U','postgres','-v','ON_ERROR_STOP=1','-f',extraFile]));
+  }
 } finally {
   spawnSync('docker',['rm','-f',name],{encoding:'utf8'});
 }
+
+}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))await checkStrengthSql();

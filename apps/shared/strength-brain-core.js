@@ -1,25 +1,31 @@
-/** Pure strength calculations. UI/session compatibility lives in athlete/strength-brain.js. */
+/** Canonical strength policy. Physical load maths is separate from display/rack units. */
 (function(root) {
-  const T=root.StrengthTargets,E=root.StrengthEquipment,RTS=root.StrengthRTS,DEFAULT=root.StrengthPolicy;
-  const effortRpe={average:7,medium:7,hard:9,max_effort:10};
+  const T=root.StrengthTargets,E=root.StrengthEquipment,DEFAULT=root.StrengthPolicy;
+  const effortRpe={average:7,medium:7,hard:9};
   const effortRank={very_easy:0,easy:1,average:2,medium:2,hard:3,max_effort:4};
-  const positive=n=>Number.isFinite(Number(n))&&Number(n)>0;
+  const positive=n=>typeof n==='number'&&Number.isFinite(n)&&n>0;
   const ordinary=t=>t&&t.purpose==='working';
+  function finiteLoad(n){if(!['number','string'].includes(typeof n)||String(n).trim()==='')return null;const x=Number(n);return Number.isFinite(x)&&x>=0?x:null;}
   function policy(state){return {...DEFAULT,...(state?.policy||{})};}
+  function normalized(kg,page) {return root.StrengthLoad?.fromPage({page,value:kg,provenance:'explicit'})??null;}
+  function display(physical,page){const n=normalized(0,page);return n?root.StrengthLoad.displayKg({...n,externalKg:physical},n.convention,n.barKg):null;}
   function supported(page) {
     const columns=page?.columns||[];
-    return page?.kind==='lift'&&page?.loadUnit!=='lb'&&(page?.logMode==='kg'||columns.includes('weight_kg'))&&
+    if(!Array.isArray(columns))return false;
+    const n=normalized(0,page);
+    return !!n&&n.convention!=='added_bodyweight'&&page.equipmentId!=='bodyweight'&&page.kind==='lift'&&page.loadUnit==='kg'&&
+      columns.some(c=>c==='reps'||c==='reps_range')&&columns.includes('weight_kg')&&
       !/carry|farmer|suitcase|\bhold\b|plank|\bclean\b|\bsnatch\b|\bjump\b/i.test(page.title||'')&&
       !columns.some(c=>!['reps','reps_range','weight_kg'].includes(c));
   }
   function targetFor(page,row,index){try{return T.forRow(page,row,index);}catch{return null;}}
   function intended(target){return target?.purpose==='warmup'?'easy':'average';}
   function estimate(row,page) {
-    if(!supported(page)||!row?.logged||row.deleted||row.skipped||row.miss||row.purpose==='ramp'||row.purpose==='warmup'||row.purpose==='amrap'||!positive(row.kg))return null;
-    const reps=Number(row.reps),rpe=effortRpe[row.effort];
-    if(!Number.isInteger(reps)||rpe==null)return null;
-    const pct=RTS.percent(reps,rpe);
-    return pct?Number(row.kg)/pct:null;
+    if(!supported(page)||!row?.logged||row.deleted||row.skipped||row.miss||row.context?.loadAmbiguous||['ramp','warmup','amrap'].includes(row.purpose))return null;
+    const reps=finiteLoad(row.reps),rpe=effortRpe[row.effort],n=normalized(row.kg,page);
+    if(!Number.isInteger(reps)||reps<1||reps>12||rpe==null||!positive(n?.externalKg))return null;
+    const pct=root.StrengthLearning?.fraction(reps+10-rpe,root.StrengthLearning.initial().k);
+    return pct?n.externalKg/pct:null;
   }
   function sameSource(previous,evidence){return previous?.lastSourceSignature&&previous.lastSourceSignature===evidence?.sourceSignature;}
   function learn(previous={},evidence={}) {
@@ -31,98 +37,73 @@
     return base;
   }
   function response(kg,target,reason,confidence,p){return {kg,target,ruleVersion:p.version,reason,confidence};}
+  function guard(physical,current,page,{transition=false,planned=null,p=DEFAULT}={}) {
+    const source=normalized(current,page);if(!source||!Number.isFinite(physical)||physical<0)return finiteLoad(current);
+    const raw=display(physical,page);if(raw==null)return finiteLoad(current);
+    const mass=source.externalKg,profile=E.profile(page),minimum=normalized(profile.min,page)?.externalKg;
+    if(Math.abs(physical-mass)<1e-8)return finiteLoad(current);
+    const up=physical>mass,next=E.next(current,page);
+    let low=Math.max(minimum??0,mass*(1-p.downCap)),high=mass;
+    if(up){
+      const plan=finiteLoad(planned),rung=E.next(plan??current,page);
+      const stepLimit=normalized(rung,page)?.externalKg??mass;
+      high=Math.max(mass,Math.min(mass*(1+(transition ? .1 : p.upCap)),stepLimit));
+      if(!transition&&minimum!=null&&Math.abs(mass-minimum)<1e-8&&next!=null)high=normalized(next,page).externalKg;
+      low=mass;
+    }
+    const values=[current,raw,display(low,page),display(high,page)];
+    const loads=[current];
+    for(const value of values){if(value==null)continue;const f=E.floor(value,page);if(f!=null){loads.push(f);const n=E.next(f,page);if(n!=null)loads.push(n);}}
+    let allowed=[...new Set(loads)].filter(kg=>{const m=normalized(kg,page)?.externalKg;return m!=null&&m>=low-1e-8&&m<=high+1e-8;});
+    if(!up&&!allowed.some(kg=>kg<current-1e-8)) {
+      const lower=E.floor(current-1e-7,page);return lower??finiteLoad(current);
+    }
+    allowed.sort((a,b)=>Math.abs(a-raw)-Math.abs(b-raw)||a-b);
+    return allowed[0]??finiteLoad(current);
+  }
+  function matchLoad(kg,fromReps,toReps,page,fromRpe=7,toRpe=7,k=root.StrengthLearning?.initial().k){
+    const source=normalized(kg,page);if(!source)return null;
+    const physical=root.StrengthLearning?.project({weight:source.externalKg,fromReps:Number(fromReps),fromRir:10-fromRpe,toReps:Number(toReps),targetRir:10-toRpe,k});
+    const raw=physical==null?null:display(physical,page);return raw==null?null:E.floor(raw,page);
+  }
   function suggest({page,row,nextRow,index=0,state={}}) {
-    const p=policy(state),nextTarget=targetFor(page,nextRow,index),label=intended(nextTarget),kg=Number(row?.kg);
+    const p=policy(state),nextTarget=targetFor(page,nextRow,index),label=intended(nextTarget),kg=finiteLoad(row?.kg);
+    if(nextRow?.logged)return response(finiteLoad(nextRow.kg),label,'logged_actual','exact_reference',p);
     if(nextTarget?.loadRule?.kind==='first_working_set') {
-      const ref=T.resolveReference(nextTarget,state.rows||[]);
-      return response(ref,label,ref==null?'reference_unresolved':'first_working_set','exact_reference',p);
+      const ref=T.resolveReference(nextTarget,state.rows||[]);return response(ref,label,ref==null?'reference_unresolved':'first_working_set','exact_reference',p);
     }
-    if(!supported(page)||finiteLoad(kg)==null||!nextTarget)return response(finiteLoad(kg)!=null?kg:row?.kg??null,label,'unsupported_or_unknown','unknown',p);
-    const currentTarget=targetFor(page,row,Math.max(0,index-1));
-    const reps=Number(row.reps),miss=!!row.miss||!Number.isInteger(reps)||reps<1||(ordinary(currentTarget)&&reps<currentTarget.reps.min);
-    if(miss||row.effort==='max_effort') {
-      const reduced=E.round(kg*(1-p.downCap),kg,page,{upCap:p.upCap,downCap:p.downCap});
-      const atMin=reduced===kg&&E.floor(kg-EPSILON,page)==null;
-      return response(reduced,label,atMin?'minimum_reached':'reduce_after_incomplete','low',p);
+    if(!supported(page)||!root.StrengthLearning||!E||kg==null||!nextTarget||row?.context?.loadAmbiguous)return response(kg,label,'unsupported_or_unknown','unknown',p);
+    const mass=normalized(kg,page).externalKg,currentTarget=targetFor(page,row,Math.max(0,index-1));
+    const reps=finiteLoad(row.reps),miss=!!row.miss||!Number.isInteger(reps)||reps<1||(ordinary(currentTarget)&&reps<currentTarget.reps.min);
+    if(miss||row.effort==='max_effort'){
+      const reduced=guard(mass*(1-p.downCap),kg,page,{p});
+      return response(reduced,label,reduced===kg?'minimum_reached':'reduce_after_incomplete','low',p);
     }
-    if(nextTarget.purpose==='warmup'||currentTarget?.purpose==='warmup'||row.purpose==='ramp') {
-      // A lighter warm-up leaves the plan alone. A heavier one is converted onto each work-set's own reps.
-      const lifted=finiteLoad(kg);
-      if(nextTarget.purpose==='working') {
-        const held=finiteLoad(nextRow?.kg),planned=finiteLoad(page?.workingKg);
-        let keep=planLoad(page,nextTarget,held,planned);
-        const candidate=provenLoad(page,row,nextTarget);
-        if(candidate!=null&&(keep==null||candidate>keep))keep=candidate;
-        return response(keep,label,'working_load',keep==null?'unknown':'exact_reference',p);
-      }
-      const seeded=finiteLoad(nextRow?.kg);
-      let next=['very_easy','easy'].includes(row.effort)?E.next(kg,page)??kg:kg;
-      if(seeded!=null&&seeded>=next)next=seeded;
-      if(lifted!=null&&lifted>next)next=lifted;
-      let ceiling=finiteLoad(page?.workingKg);
-      if(ceiling!=null&&lifted!=null&&lifted>ceiling)ceiling=lifted;
-      if(ceiling!=null&&next>ceiling)next=ceiling;
-      return response(next,label,next>kg?'warmup_step':'warmup_hold','directional',p);
+    const warm=nextTarget.purpose==='warmup'||['warmup','ramp'].includes(row.purpose);
+    const easy=['very_easy','easy'].includes(row.effort);
+    if(warm&&nextTarget.purpose==='warmup'){
+      let next=easy?E.next(kg,page)??kg:kg;
+      if(!easy&&row.effort==='hard')next=guard(mass*.9,kg,page,{p});
+      return response(next,label,next>kg?'warmup_step':next<kg?'reduce_after_incomplete':'warmup_hold','directional',p);
     }
-    if(['very_easy','easy'].includes(row.effort)) {
-      const next=E.next(kg,page),moved=next==null?kg:E.round(next,kg,page,{upCap:p.upCap,downCap:p.downCap});
-      return response(moved,label,moved>kg?'easy_directional_step':'easy_hold','directional',p);
+    if(warm&&easy){
+      const planned=finiteLoad(nextRow?.kg)??finiteLoad(page.workingKg);
+      return response(Math.max(kg,planned??kg),label,'working_load','provisional',p);
     }
-    const targetReps=nextTarget.reps?.min,observed=estimate(row,page);
-    const today=positive(state.todayE1rm)?Number(state.todayE1rm):positive(state.freshE1rm)?Number(state.freshE1rm):observed;
-    const pct=RTS.percent(targetReps,7);
-    if(!positive(today)||!pct)return response(kg,label,'outside_chart_hold','low',p);
-    const blended=positive(observed)&&positive(state.freshE1rm)?Number(state.freshE1rm)*(1-p.observationBlend)+observed*p.observationBlend:today;
-    const raw=blended*pct;
-    let result=E.round(raw,kg,page,{upCap:p.upCap,downCap:p.downCap});
-    const fromReps=Number(currentTarget?.reps?.min),toReps=Number(nextTarget.reps?.min);
-    const converted=matchLoad(kg,row.reps,toReps,page,effortRpe[row.effort]||7,7);
-    const repsChanged=Number.isInteger(fromReps)&&Number.isInteger(toReps)&&fromReps!==toReps;
-    // The visible plan already names a load for these reps. Move that load with the chart.
-    // Callers that omit it, including the session simulator, keep the capped blend.
-    if(repsChanged&&finiteLoad(nextRow?.kg)!=null&&converted!=null)result=converted;
-    else {
-      const warmed=sessionFloor(page,state.rows,nextTarget);
-      if(warmed!=null&&result!=null&&result<warmed)result=warmed;
+    if(easy){
+      const next=E.next(kg,page),physical=next==null?mass:normalized(next,page).externalKg;
+      const out=guard(physical,kg,page,{p});return response(out,label,out>kg?'easy_directional_step':'easy_hold','directional',p);
     }
-    return response(result,label,result>kg?'combined_projection_up':result<kg?'combined_projection_down':'combined_projection_hold','broad',p);
+    const rpe=effortRpe[row.effort],targetReps=nextTarget.reps?.min;
+    if(rpe==null)return response(kg,label,'unknown_effort','unknown',p);
+    const fromReps=Number(currentTarget?.reps?.min),transition=Number.isInteger(fromReps)&&fromReps!==targetReps;
+    const candidate=state.learning?.k,valid=state.learning?.version==='online-v1'&&Number.isFinite(candidate)&&candidate>=.01&&candidate<=.08;
+    const k=p.learningMode==='online'&&valid&&!state.learning?.conflicted?candidate:root.StrengthLearning.initial().k;
+    const physical=root.StrengthLearning.project({weight:mass,fromReps:reps,fromRir:10-rpe,toReps:targetReps,targetRir:3,k:k??root.StrengthLearning.initial().k});
+    if(physical==null)return response(kg,label,'outside_chart_hold','low',p);
+    const out=guard(physical,kg,page,{p,transition,planned:nextRow?.kg});
+    return response(out,label,out>kg?'combined_projection_up':out<kg?'combined_projection_down':'combined_projection_hold','broad',p);
   }
-  function finiteLoad(n){const x=Number(n);return Number.isFinite(x)&&x>=0?x:null;}
-  function matchLoad(kg,fromReps,toReps,page,fromRpe=7,toRpe=7){
-    const lifted=finiteLoad(kg);
-    if(lifted==null)return null;
-    const from=Number(fromReps),to=Number(toReps);
-    if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to<1)return null;
-    const source=RTS.percent(from,fromRpe),target=RTS.percent(to,toRpe);
-    if(!source||!target)return null;
-    return E.floor(lifted*target/source,page);
-  }
-  function firstWorkReps(page){
-    try{const reps=Number(T.normalize(page).find(t=>t.purpose==='working')?.reps?.min);return Number.isInteger(reps)?reps:null;}catch{return null;}
-  }
-  function planLoad(page,nextTarget,held,planned){
-    if(held!=null)return held;
-    if(planned==null)return null;
-    const from=firstWorkReps(page),to=Number(nextTarget?.reps?.min);
-    if(!Number.isInteger(from)||!Number.isInteger(to)||from===to)return planned;
-    return matchLoad(planned,from,to,page)??planned;
-  }
-  function provenLoad(page,row,nextTarget){
-    const lifted=finiteLoad(row?.kg);
-    if(lifted==null)return null;
-    const matched=matchLoad(lifted,row?.reps,nextTarget?.reps?.min,page,effortRpe[row?.effort]||7,7);
-    return matched!=null?matched:lifted;
-  }
-  function sessionFloor(page,rows,nextTarget){
-    let best=null;
-    for(const row of rows||[]){
-      if(!row?.logged||row.deleted||row.skipped||(row.purpose!=='ramp'&&row.purpose!=='warmup'))continue;
-      const kg=provenLoad(page,row,nextTarget);
-      if(kg!=null&&(best==null||kg>best))best=kg;
-    }
-    return best;
-  }
-  const EPSILON=1e-7;
   function review(page,rows=[]) {
     let targets=[];try{targets=T.normalize(page);}catch{}
     const ordinaryTargets=targets.filter(ordinary),matched=[],workRows=rows.filter(r=>r?.purpose!=='ramp'&&r?.purpose!=='warmup'&&r?.purpose!=='amrap');
@@ -131,9 +112,9 @@
     const complete=ordinaryTargets.length>0&&matched.every(r=>r?.logged&&!r.deleted&&!r.skipped);
     const earned=complete&&matched.every((r,i)=>!r.miss&&Number(r.reps)>=ordinaryTargets[i].reps.max&&effortRank[r.effort]!=null&&effortRank[r.effort]<=effortRank.average);
     const first=matched[0],e1rm=first?estimate(first,page):null;
-    const firstKg=positive(first?.kg)?Number(first.kg):null;
+    const firstKg=finiteLoad(first?.kg);
     const nextKg=firstKg==null?null:earned?(E.next(firstKg,page)??firstKg):firstKg;
     return {e1rm,nextKg,earned,calibrated:positive(e1rm),complete,ruleVersion:DEFAULT.version,sourceSetIds:positive(e1rm)&&first?.id?[first.id]:[]};
   }
-  root.StrengthBrainCore={suggest,estimate,review,learn,supported,matchLoad};
+  root.StrengthBrainCore={suggest,estimate,review,learn,supported,matchLoad,guard,normalized,display};
 })(typeof window!=='undefined'?window:globalThis);

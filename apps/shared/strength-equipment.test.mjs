@@ -84,3 +84,31 @@ test('legacy unspecified rack uses declared generic steps without inventing a st
  assert.equal(E.floor(2,offset),null);assert.equal(E.round(1,3,offset,{downCap:.1}),3);
  assert.equal(E.next(1e12+3,offset),1e12+7);
 });
+
+test('explicit canonical bar conventions keep their grids in the displayed units',()=>{
+ for(const barWeightKg of [15,20]) {
+  const page={equipmentId:'barbell',loadConvention:'barbell_plates',loadUnit:'kg',barWeightKg,equipmentStepKg:2.5,title:'Bench Press'};
+  assert.equal(E.floor(0,page),0);assert.equal(E.next(0,page),2.5);
+  assert.equal(E.starter(page).kg,0);assert.equal(E.label(page,0),'empty bar');
+  const total={...page,loadConvention:'barbell_total'};
+  assert.equal(E.floor(barWeightKg-1,total),null);
+  assert.equal(E.floor(barWeightKg,total),barWeightKg);
+  assert.equal(E.next(barWeightKg,total),barWeightKg+2.5);
+  assert.equal(E.starter(total).kg,barWeightKg);assert.equal(E.label(total,barWeightKg),'empty bar');
+  assert.equal(E.label(total,0),'0');
+  assert.deepEqual(plain(E.profile({...page,availableLoads:[0,10,20]}).loads),[0,10,20]);
+ }
+});
+
+test('canonical bar mass is explicit and positive without changing legacy total semantics',()=>{
+ const page={equipmentId:'barbell',loadConvention:'barbell_plates',loadUnit:'kg',equipmentStepKg:2.5,title:'Squat'};
+ for(const barWeightKg of [undefined,null,0,-15,NaN,Infinity,true,'']) {
+  assert.equal(E.starter({...page,barWeightKg}).kg,null);
+  assert.equal(E.next(0,{...page,barWeightKg}),null);
+ }
+ assert.equal(E.next(0,{...page,barWeightKg:0,minimumKg:0}),null);
+ assert.equal(E.next(0,{...page,barWeightKg:-15,minimumKg:20}),null);
+ const legacy={...page,loadConvention:'total',minimumKg:20,equipmentStepKg:2.5};
+ assert.equal(E.starter(legacy).kg,0);assert.equal(E.next(0,legacy),2.5);
+ assert.equal(E.profile(legacy).convention,'total');assert.equal(E.label(legacy,0),'empty bar');
+});

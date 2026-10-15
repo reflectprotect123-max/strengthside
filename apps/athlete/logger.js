@@ -17,10 +17,17 @@
   }
 
   function persist(next) {
+    const previous=root.S.session,wasOpen=root.S.loggerOpen;
     root.S.session = next;
     root.S.loggerOpen = true;
-    if (typeof root.save === 'function') root.save();
-    paint();
+    try{if (typeof root.save === 'function') root.save();}
+    catch(e){
+      root.S.session=previous;root.S.loggerOpen=wasOpen;
+      if(next?.date&&root.S.sessions?.[next.date]===next)root.S.sessions[next.date]=previous;
+      toast='Could not save. Free some storage and try again.';
+      paint();return false;
+    }
+    paint();return true;
   }
 
   function elapsed() {
@@ -808,7 +815,7 @@
               const later = rows[i];
               if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
               const adj = StrengthBrain.next({page:lift,row:source,nextRow:later,index:i,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
-              if (adj && Number.isFinite(Number(adj.kg)) && (later.kg == null || Number(adj.kg) > Number(later.kg))) later.kg = adj.kg;
+              if (adj && typeof adj.kg==='number' && Number.isFinite(adj.kg)) later.kg = adj.kg;
             }
           }
           source.loadDecision = adjustment;

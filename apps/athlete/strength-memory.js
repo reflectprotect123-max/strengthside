@@ -4,15 +4,26 @@
   let busy=false,timer=null,retry=0,nativePending=null,nativeWriting=false;
   const status={pending:0,lastError:'',lastSyncAt:null};
   const empty=()=>({version:VERSION,ownerId:null,records:{},pending:{},revisions:{}});
-  let memory;
-  try{memory=JSON.parse(root.localStorage.getItem(KEY))||empty();}catch{memory=empty();}
-  if(memory.version!==VERSION)throw new Error('Unsupported strength memory version');
+  let memory,recoveryRaw=null,ownerEpoch=0,restorePromise=null,factsEpoch=0,snapshotEpoch=-1,snapshot=null;
+  const snapshots=new WeakSet(),frozenRecords=new WeakMap();
+  function freeze(value){if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
+  function hydrate(value) {
+    if(!value||typeof value!=='object'||Array.isArray(value))return empty();
+    const dict=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
+    return {version:VERSION,ownerId:typeof value.ownerId==='string'?value.ownerId:null,
+      records:dict(value.records),pending:dict(value.pending),revisions:dict(value.revisions),conflicts:dict(value.conflicts)};
+  }
+  const raw=root.localStorage.getItem(KEY);
+  try{const parsed=raw?JSON.parse(raw):null;memory=hydrate(parsed);if(parsed&&parsed.version!==VERSION)recoveryRaw=raw;}
+  catch{memory=empty();recoveryRaw=raw;}
+  let durable=JSON.stringify(memory);
   function persist() {
-    root.localStorage.setItem(KEY,JSON.stringify(memory));
-    status.pending=Object.keys(memory.pending).length;
-    if(root.Capacitor?.isNativePlatform?.()) {
-      nativePending=JSON.stringify(memory);writeNative();
-    }
+    try{
+      if(recoveryRaw)root.localStorage.setItem(KEY+':recovery',recoveryRaw);
+      const data=JSON.stringify(memory);root.localStorage.setItem(KEY,data);durable=data;recoveryRaw=null;
+      status.pending=Object.keys(memory.pending).length;
+      if(root.Capacitor?.isNativePlatform?.()){nativePending=data;writeNative();}
+    }catch(e){memory=JSON.parse(durable);factsEpoch++;status.lastError='Could not save strength evidence: '+(e.message||'storage unavailable');throw e;}
   }
   function filesystem(){return root.Capacitor?.Plugins?.Filesystem||root.Capacitor?.registerPlugin?.('Filesystem');}
   async function writeNative() {
@@ -21,9 +32,17 @@
     try{await filesystem().writeFile({path:'strength-memory-v1.json',directory:'DATA',data,encoding:'utf8'});}catch(e){status.lastError='Native backup failed';console.warn('Strength memory native backup failed');}
     finally{nativeWriting=false;if(nativePending)writeNative();}
   }
-  async function restore() {
-    if(!root.Capacitor?.isNativePlatform?.()||root.localStorage.getItem(KEY))return;
-    try{const r=await filesystem().readFile({path:'strength-memory-v1.json',directory:'DATA',encoding:'utf8'});const saved=JSON.parse(r.data);if(saved.version===VERSION){memory=saved;persist();}}catch{/* First install has no backup. */}
+  function restore() {
+    if(restorePromise)return restorePromise;
+    if(!root.Capacitor?.isNativePlatform?.()||root.localStorage.getItem(KEY))return Promise.resolve();
+    const epoch=ownerEpoch,snapshot=durable;
+    restorePromise=(async()=>{
+      try{
+        const r=await filesystem().readFile({path:'strength-memory-v1.json',directory:'DATA',encoding:'utf8'});
+        if(epoch!==ownerEpoch||durable!==snapshot||root.localStorage.getItem(KEY))return;
+        memory=hydrate(JSON.parse(r.data));factsEpoch++;persist();
+      }catch{/* First install has no backup; existing facts are left untouched. */}
+    })();return restorePromise;
   }
   function clone(value){return value==null?value:JSON.parse(JSON.stringify(value));}
   function stable(value) {
@@ -41,7 +60,7 @@
     const old=memory.records[record.id];
     if(old&&fingerprint(old)===fingerprint(record))return;
     const rev=(old?.localRevision||0)+1;
-    memory.records[record.id]={...record,localRevision:rev};
+    memory.records[record.id]={...record,localRevision:rev};factsEpoch++;
     memory.pending[record.id]=rev;
   }
   function authoredTargets(page) {
@@ -50,64 +69,62 @@
   function prescriptionSignature(page) {
     return signature({exerciseKey:root.StrengthBrain.key(page),targets:authoredTargets(page),columns:page.columns||[],logMode:page.logMode||null});
   }
-  function currentSets(exerciseKey) {
-    return Object.values(memory.records).filter(r=>r.kind==='set'&&!r.deleted&&r.exerciseKey===exerciseKey&&r.payload?.row&&r.payload?.page);
-  }
-  function timeValue(value) {
-    const numeric=Number(value);if(Number.isFinite(numeric))return numeric;
-    const parsed=Date.parse(value);return Number.isFinite(parsed)?parsed:0;
-  }
-  function replay(exerciseKey) {
-    const sessions=new Map();
-    for(const record of currentSets(exerciseKey)) {
-      const payload=record.payload,bucket=sessions.get(record.sessionId)||{page:payload.page,records:[],at:payload.sessionStartedAt||payload.date||0,sessionId:record.sessionId};
-      bucket.records.push(record);sessions.set(record.sessionId,bucket);
-    }
-    let state={freshE1rm:null,exposures:0,confidence:'unknown',modelVersion:root.StrengthBrain.VERSION,lastSourceSignature:null};
-    const evidence=[];
-    for(const bucket of [...sessions.values()].sort((a,b)=>timeValue(a.at)-timeValue(b.at)||a.sessionId.localeCompare(b.sessionId))) {
-      bucket.records.sort((a,b)=>(a.payload.row.ordinal||0)-(b.payload.row.ordinal||0));
-      const result=root.StrengthBrain.review(bucket.page,bucket.records.map(r=>r.payload.row));
-      if(!Number.isFinite(Number(result.e1rm))||Number(result.e1rm)<=0||!result.sourceSetIds?.length)continue;
-      const sourceIds=new Set(result.sourceSetIds),sourceRecords=bucket.records.filter(r=>sourceIds.has(r.id));
-      const sourceSignature=signature(sourceRecords.map(r=>({id:r.id,revision:r.localRevision||0,content:fingerprint(r)})));
-      state=root.StrengthBrainCore.learn(state,{estimate:result.e1rm,sourceSignature,modelVersion:root.StrengthBrain.VERSION});
-      evidence.push({sessionId:bucket.sessionId,estimate:result.e1rm,sourceSignature,sourceSetIds:result.sourceSetIds});
-    }
-    return {...state,evidence};
+  function replay(exerciseKey,page) {
+    page=page||Object.values(memory.records).find(r=>r.exerciseKey===exerciseKey&&r.payload?.page)?.payload.page;
+    return root.StrengthBrain.history(records(),page||{},undefined,memory.ownerId);
   }
   function capture(session) {
     if(!session||session.demo)return;
     root.TrainingCore.migrateSession(session);
     session.id=session.id||root.crypto.randomUUID();
-    const alive=new Set();
+    const alive=new Set(),completed=!!session.completedAt&&session.phase==='summary';
     session.brainEstimateIds=session.brainEstimateIds||{};
+    const pages=[];
     for(const outer of session.pages||[])for(const page of outer.members||[outer]) {
-      if(page.kind!=='lift')continue;
+      if(page.kind!=='lift')continue;pages.push(page);
       const rows=session.logs?.[page.id]?.sets||[],exerciseKey=root.StrengthBrain.key(page),targets=authoredTargets(page);
+      let workingIndex=0;
       rows.forEach((row,index)=>{
         row.id=row.id||root.crypto.randomUUID();alive.add(row.id);
+        const position=['ramp','warmup'].includes(row.purpose)?-1:workingIndex++;
         if(!row.logged&&!memory.records[row.id])return;
-        put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:2,authoredTargets:targets,page:clone(page),row:{...clone(row),ordinal:index,context:clone(row.context||{})},sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
+        const target=position>=0?targets?.filter(t=>t.purpose!=='warmup')[position]:null;
+        const snapshot={...clone(row),targetId:row.targetId||target?.id||null,workingIndex:position,ordinal:index,context:clone(row.context||{})};
+        const candidate=root.StrengthContext?.normalizeLoad(row.context?.normalizedLoad||memory.records[row.id]?.payload?.normalizedLoad);
+        const expected=candidate&&root.StrengthLoad?.fromPage({page,value:row.kg,provenance:candidate.provenance});
+        const normalizedLoad=expected&&JSON.stringify(candidate)===JSON.stringify(expected)?candidate:null;
+        put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:3,ownerId:memory.ownerId,
+          normalizedLoad,completed,authoredTargets:targets,page:clone(page),row:snapshot,sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
       });
-      for(const record of Object.values(memory.records))if(record.kind==='set'&&record.sessionId===session.id&&record.exerciseKey===exerciseKey&&!alive.has(record.id)&&!record.deleted)put({...record,deleted:true});
-      if(root.StrengthBrain.eligible(page) && (rows.some(r=>r.logged) || session.brainEstimateIds[page.id])) {
-        const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
-        const result=root.StrengthBrain.review(page,rows),state=replay(exerciseKey);
-        const ownEvidence=state.evidence.find(e=>e.sessionId===session.id);
-        put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,sourceSetIds:result.sourceSetIds||[],sourceSignature:ownEvidence?.sourceSignature||null,prescriptionSignature:prescriptionSignature(page),freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date}});
-      }
     }
-    for(const r of Object.values(memory.records))if(r.kind==='set'&&r.sessionId===session.id&&!alive.has(r.id)&&!r.deleted)put({...r,deleted:true});
+    // Lifecycle is a session fact: deleted rows also receive finish/reopen snapshots.
+    for(const record of Object.values(memory.records))if(record.kind==='set'&&record.sessionId===session.id&&!alive.has(record.id))
+      put({...record,deleted:true,payload:{...record.payload,completed}});
+    for(const page of pages){
+      const rows=session.logs?.[page.id]?.sets||[],exerciseKey=root.StrengthBrain.key(page);
+      if(!root.StrengthBrain.eligible(page)&&!session.brainEstimateIds[page.id])continue;
+      if(!rows.some(r=>r.logged)&&!session.brainEstimateIds[page.id])continue;
+      const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
+      const result=root.StrengthBrain.review(page,rows),state=replay(exerciseKey,page),own=state.evidence.find(e=>e.sessionId===session.id);
+      put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,completed,
+        sourceSetIds:own?.sourceSetIds||[],sourceSignature:own?.sourceSignature||null,prescriptionSignature:prescriptionSignature(page),
+        freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date}});
+    }
     persist();schedule();
   }
   async function bind(uid) {
-    root.bindStrengthAccount?.(uid);
-    if(memory.ownerId&&memory.ownerId!==uid) {
-      root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
-      try{memory=JSON.parse(root.localStorage.getItem(KEY+':'+uid))||empty();}catch{memory=empty();}
+    if(memory.ownerId!==uid) {
+      if(memory.ownerId||Object.keys(memory.records).length)root.localStorage.setItem(KEY+':'+memory.ownerId,JSON.stringify(memory));
+      const archived=root.localStorage.getItem(KEY+':'+uid);
+      if(archived){try{memory=hydrate(JSON.parse(archived));}catch{memory=empty();}}
+      else if(memory.ownerId)memory=empty();
+      ownerEpoch++;factsEpoch++;
     }
-    memory.ownerId=uid;persist();
+    const adopt=memory.ownerId==null&&uid;
+    memory.ownerId=uid;
+    if(adopt)for(const r of Object.values(memory.records))if(r.payload?.ownerId==null)
+      put({...r,payload:{...r.payload,ownerId:uid}});
+    persist();root.bindStrengthAccount?.(uid);
   }
   function ioDefault() {
     const sb=root.Whoop.client();
@@ -123,26 +140,39 @@
     if(busy)return {ok:false,reason:'busy'};
     busy=true;
     try {
-      const uid=await io.userId();if(!uid)return {ok:false,reason:'auth_required'};
+      const initialEpoch=ownerEpoch;
+      const uid=await io.userId();if(ownerEpoch!==initialEpoch)return {ok:false,reason:'account_changed'};if(!uid)return {ok:false,reason:'auth_required'};
       await bind(uid);
+      const syncEpoch=ownerEpoch;
+      const current=()=>ownerEpoch===syncEpoch&&memory.ownerId===uid;
       const remote=await io.pull(uid);
+      if(!current())return {ok:false,reason:'account_changed'};
       const conflicts=[];
       for(const r of remote) {
+        if(r.athlete_id!=null&&r.athlete_id!==uid)continue;
         const id=r.record_id,base=memory.revisions[id]||0;
+        if(typeof id!=='string'||!Number.isSafeInteger(r.revision)||r.revision<1||r.revision<base)continue;
         if(memory.pending[id]&&r.revision!==base){
-          const remoteRecord={sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:r.payload};
-          if(fingerprint(remoteRecord)===fingerprint(memory.records[id])){memory.revisions[id]=r.revision;delete memory.pending[id];continue;}
-          conflicts.push(id);continue;
+          const remoteRecord={sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:clone(r.payload)};
+          if(fingerprint(remoteRecord)===fingerprint(memory.records[id])){memory.revisions[id]=r.revision;delete memory.pending[id];delete memory.conflicts?.[id];factsEpoch++;continue;}
+          (memory.conflicts||(memory.conflicts={}))[id]={id,localRevision:memory.records[id].localRevision,...remoteRecord};
+          factsEpoch++;conflicts.push(id);continue;
         }
         memory.revisions[id]=r.revision;
-        if(!memory.pending[id])memory.records[id]={id,sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:r.payload,localRevision:r.revision};
+        if(!memory.pending[id]){
+          const next={id,sessionId:r.session_id,exerciseKey:r.exercise_key,kind:r.kind,deleted:r.deleted,payload:clone(r.payload)};
+          const old=memory.records[id];next.localRevision=old?(old.localRevision+(fingerprint(old)!==fingerprint(next)?1:0)):1;
+          if(!old||fingerprint(old)!==fingerprint(next)){memory.records[id]=next;factsEpoch++;}
+          if(memory.conflicts?.[id]){delete memory.conflicts[id];factsEpoch++;}
+        }
       }
       persist();
       if(conflicts.length){status.lastError='Concurrent edit requires reconciliation';return {ok:false,reason:'conflict',ids:conflicts};}
       const queued=Object.entries(memory.pending);
       for(let start=0;start<queued.length;start+=100) {
-        const entries=queued.slice(start,start+100),batch=entries.map(([id])=>{const r=memory.records[id];return {record_id:id,session_id:r.sessionId,exercise_key:r.exerciseKey,kind:r.kind,deleted:r.deleted,payload:r.payload,expected_revision:memory.revisions[id]||0};});
+        const entries=queued.slice(start,start+100),batch=entries.map(([id])=>{const r=memory.records[id];return {record_id:id,session_id:r.sessionId,exercise_key:r.exerciseKey,kind:r.kind,deleted:r.deleted,payload:clone(r.payload),expected_revision:memory.revisions[id]||0};});
         const result=await io.push(batch);
+        if(!current())return {ok:false,reason:'account_changed'};
         if(!result?.ok){status.lastError=result?.reason||'Sync failed';persist();return result||{ok:false,reason:'push_failed'};}
         for(const [id,rev] of entries) {
           memory.revisions[id]=(memory.revisions[id]||0)+1;
@@ -159,9 +189,19 @@
     for(const record of Object.values(memory.records))if(record.sessionId===sessionId&&!record.deleted)put({...record,deleted:true});
     persist();schedule();
   }
-  function records(){return memory.records;}
+  function records(){
+    if(snapshot&&snapshotEpoch===factsEpoch)return snapshot;
+    const out={};
+    for(const [id,r] of Object.entries(memory.records)){
+      if(!r||typeof r!=='object')continue;
+      let frozen=frozenRecords.get(r);if(!frozen){frozen=freeze(clone(r));frozenRecords.set(r,frozen);}out[id]=frozen;
+    }
+    for(const [id,remote] of Object.entries(memory.conflicts||{}))if(memory.records[id])
+      out['conflict:'+id]=freeze({...clone(remote),id,localRevision:memory.records[id].localRevision});
+    snapshot=Object.freeze(out);snapshotEpoch=factsEpoch;snapshots.add(snapshot);return snapshot;
+  }
   function getStatus(){return {...status,pending:Object.keys(memory.pending).length};}
-  root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,replay,ownerId:()=>memory.ownerId};
+  root.StrengthMemory={capture,removeSession,records,sync,schedule,restore,getStatus,bind,replay,ownerId:()=>memory.ownerId,isSnapshot:value=>snapshots.has(value)};
   root.addEventListener?.('online',()=>schedule(0));
   root.addEventListener?.('visibilitychange',()=>{if(root.document?.visibilityState==='visible')schedule(0);});
   restore().then(()=>schedule(0));

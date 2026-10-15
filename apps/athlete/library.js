@@ -42,6 +42,8 @@
     return {};
   }
 
+  const LOAD_METADATA=['equipmentId','loadConvention','exerciseType','minimumKg','barWeightKg','equipmentStepKg','availableLoads'];
+
   function canonicalBlock(block) {
     const b={...block};
     for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','restSec','demoStartingKg'])delete b[key];
@@ -96,7 +98,7 @@
     const byId=new Map(next.catalog.exercises.map(x=>[x.id,x])),byTitle=new Map(next.catalog.exercises.map(x=>[String(x.title||'').trim().toLowerCase(),x]));
     for(const template of next.templates)for(const block of template.blocks||[])if(block.kind==='lift'){
       const hit=byId.get(block.exerciseId)||byTitle.get(String(block.title||'').trim().toLowerCase());
-      if(hit){block.exerciseId=hit.id;for(const key of ['equipmentId','loadConvention','exerciseType','minimumKg','equipmentStepKg','availableLoads'])if(block[key]==null&&hit[key]!=null)block[key]=clone(hit[key]);}
+      if(hit){block.exerciseId=hit.id;for(const key of LOAD_METADATA)if(block[key]==null&&hit[key]!=null)block[key]=clone(hit[key]);}
       else Object.assign(block,{...inferredMetadata(block.title),...block});
     }
     return next;
@@ -174,7 +176,7 @@
       columns: cols,
       notes: Array.isArray(notes) ? notes : [],
       exerciseId,
-      ...Object.fromEntries(['equipmentId','loadConvention','exerciseType','minimumKg','equipmentStepKg','availableLoads'].filter(key=>metadata[key]!=null).map(key=>[key,clone(metadata[key])])),
+      ...Object.fromEntries(LOAD_METADATA.filter(key=>metadata[key]!=null).map(key=>[key,clone(metadata[key])])),
       groupId: null,
     });
     return st;
@@ -373,6 +375,7 @@
           equipmentStepKg: b.equipmentStepKg,
           availableLoads: b.availableLoads,
           minimumKg: b.minimumKg,
+          barWeightKg: b.barWeightKg,
           loadConvention: b.loadConvention,
           exerciseType: b.exerciseType,
           rampCount: b.rampCount,
@@ -412,10 +415,11 @@
     return plan;
   }
 
-  function createCatalogExercise(state, { title, columns } = {}) {
+  function createCatalogExercise(state, { title, columns, ...metadata } = {}) {
     const st = clone(ensure(state));
     const cols = (columns || ['reps']).filter((k) => k && k !== 'none');
     st.catalog.exercises.unshift(exerciseRecord({
+      ...Object.fromEntries(LOAD_METADATA.filter(key=>metadata[key]!=null).map(key=>[key,clone(metadata[key])])),
       id: nid('ex'),
       title: String(title || 'Exercise').trim() || 'Exercise',
       columns: cols.length ? cols : ['reps'],

@@ -1,10 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';import {webcrypto} from 'node:crypto';
 function create(store=new Map()) {
+ if(!store.has('strength-memory-v1'))store.set('strength-memory-v1',JSON.stringify({version:1,ownerId:'athlete',records:{},pending:{},revisions:{}}));
  const c=vm.createContext({crypto:webcrypto,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},setTimeout:()=>1,clearTimeout:()=>{},console,addEventListener:()=>{}});
- for(const f of ['training-core.js','strength-targets.js','strength-equipment.js','strength-rts.js','strength-policy.js','strength-brain-core.js','strength-brain.js','strength-memory.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
- return {M:c.StrengthMemory,store};
+ for(const f of ['training-core.js','strength-targets.js','strength-equipment.js','strength-rts.js','strength-policy.js','strength-load.js','strength-context.js','strength-learning.js','strength-replay.js','strength-brain-core.js','strength-brain.js','strength-memory.js','session.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
+ return {M:c.StrengthMemory,store,ctx:c};
 }
-function session(){return {id:webcrypto.randomUUID(),startedAt:10,date:'2026-10-10',pages:[{id:'A',title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,purpose:'working'}]}}};}
+function session(){return {id:webcrypto.randomUUID(),phase:'summary',completedAt:'2026-10-16T00:00:00Z',startedAt:10,date:'2026-10-10',pages:[{id:'A',exerciseId:'squat',equipmentId:'machine',loadUnit:'kg',loadConvention:'total',minimumKg:0,equipmentStepKg:1,title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,miss:false,purpose:'working',context:{inputVersion:3,normalizedLoad:{version:3,rawValue:40,rawUnit:'kg',convention:'single',externalKg:40,barKg:null,provenance:'explicit',eligible:true}}}]}}};}
 test('offline records survive restart; duplicate capture does not enqueue duplicate evidence',()=>{
  const {M,store}=create(),s=session();M.capture(s);const id=s.logs.A.sets[0].id;
  M.capture(s);assert.equal(M.records()[id].localRevision,1);assert.equal(M.getStatus().pending,2);
@@ -53,7 +54,7 @@ test('set evidence snapshots authored targets and selected rest context',()=>{
  s.logs.A.sets[0].targetId='A:set:0';s.logs.A.sets[0].context={requestedRestSec:120,elapsedRestSec:null};
  M.capture(s);const set=Object.values(M.records()).find(r=>r.kind==='set');
  s.pages[0].setTargets[0].reps.max=99;
- assert.equal(set.payload.contractVersion,2);assert.equal(set.payload.authoredTargets[0].reps.max,8);
+ assert.equal(set.payload.contractVersion,3);assert.equal(set.payload.authoredTargets[0].reps.max,8);
  assert.equal(JSON.stringify(set.payload.row.context),JSON.stringify({requestedRestSec:120,elapsedRestSec:null}));
  assert.match(set.payload.prescriptionSignature,/^fnv1a32:/);
 });
@@ -61,20 +62,70 @@ test('set evidence snapshots authored targets and selected rest context',()=>{
 test('chronological replay learns one exposure per session and replaces edited evidence',()=>{
  const {M}=create(),a=session(),b=session();a.startedAt=10;b.startedAt=2;
  M.capture(a);M.capture(b);
- let state=M.replay('squat|default|total|kg');
+ let state=M.replay('squat|machine|total|kg');
  assert.equal(state.exposures,2);assert.equal(state.confidence,'provisional');
  assert.equal(JSON.stringify(state.evidence.map(e=>e.sessionId)),JSON.stringify([b.id,a.id]));
  const prior=state.freshE1rm,signature=state.evidence[1].sourceSignature;
- a.logs.A.sets[0].kg=50;M.capture(a);state=M.replay('squat|default|total|kg');
+ a.logs.A.sets[0].kg=50;a.logs.A.sets[0].context.normalizedLoad.rawValue=50;a.logs.A.sets[0].context.normalizedLoad.externalKg=50;M.capture(a);state=M.replay('squat|machine|total|kg');
  assert.equal(state.exposures,2);assert.notEqual(state.freshE1rm,prior);assert.notEqual(state.evidence[1].sourceSignature,signature);
- M.removeSession(a.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,1);
- M.removeSession(b.id);state=M.replay('squat|default|total|kg');assert.equal(state.exposures,0);assert.equal(state.freshE1rm,null);
+ M.removeSession(a.id);state=M.replay('squat|machine|total|kg');assert.equal(state.exposures,1);
+ M.removeSession(b.id);state=M.replay('squat|machine|total|kg');assert.equal(state.exposures,0);assert.equal(state.freshE1rm,null);
 });
 
 test('derived estimate carries traceable model and source metadata without trusting old estimates',()=>{
  const {M}=create(),s=session();M.capture(s);
  const estimate=Object.values(M.records()).find(r=>r.kind==='session_estimate');
  assert.equal(estimate.payload.exposures,1);assert.equal(estimate.payload.confidence,'provisional');
- assert.equal(estimate.payload.modelVersion,'strength-v2-conservative');assert.match(estimate.payload.sourceSignature,/^fnv1a32:/);
+ assert.equal(estimate.payload.modelVersion,'strength-v3-conservative');assert.match(estimate.payload.sourceSignature,/^source-v3:/);
  assert.equal(JSON.stringify(estimate.payload.sourceSetIds),JSON.stringify([s.logs.A.sets[0].id]));
+});
+test('completion and reopening gate durable learning without losing raw actuals',()=>{
+ const {M}=create(),s=session();s.completedAt=null;M.capture(s);
+ const id=s.logs.A.sets[0].id;assert.equal(M.records()[id].payload.completed,false);
+ s.completedAt='2026-10-16T00:00:00Z';M.capture(s);assert.equal(M.records()[id].payload.completed,true);
+ s.completedAt=null;M.capture(s);assert.equal(M.records()[id].payload.completed,false);
+ assert.equal(M.records()[id].payload.row.kg,40);
+});
+test('recapturing an old ambiguous logged row does not promote it to explicit normalized evidence',()=>{
+ const {M}=create(),s=session();delete s.logs.A.sets[0].context;M.capture(s);
+ assert.equal(Object.values(M.records()).find(r=>r.kind==='set').payload.normalizedLoad,null);
+});
+
+test('real logger facts survive two ramps, finish, reload, edit and next-session seeding',()=>{
+ const {M,store,ctx}=create(),HS=ctx.HybridSession;
+ const plan={blocks:[{kind:'lift',letter:'A',title:'Squat',exerciseId:'squat',equipmentId:'machine',loadUnit:'kg',loadConvention:'total',minimumKg:0,equipmentStepKg:1,columns:['reps','weight_kg'],setCount:3,targetReps:6,targetRepMax:8,setTargets:[0,1,2].map(i=>({id:'A:set:'+i,purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'},toFailure:false}))}]};
+ let s=ctx.StrengthBrain.seed(HS.startSession({date:'2026-10-16',plan}),M.records());
+ s=HS.ackCoach(HS.ackQuote(s));
+ assert.equal(s.logs.A.sets.length,5);
+ for(let i=0;i<5;i++)s=HS.logSet(s,i,{reps:6,kg:i<2?10:40,effort:i<2?'easy':'average'});
+ M.capture(s);assert.equal(M.replay('squat|machine|total|kg').exposures,0);
+ s=HS.finishToSummary(s);M.capture(s);
+ assert.equal(M.replay('squat|machine|total|kg').exposures,1);
+ const restored=create(store),next=()=>restored.ctx.StrengthBrain.seed(HS.startSession({date:'2026-10-17',plan}),restored.M.records());
+ assert.equal(next().pages[0].workingKg,40); // Bottom of 6–8 is a hold, not an earned increase.
+ const ids=s.logs.A.sets.map(r=>r.id);
+ s=HS.goToLetter(s,'A');s=HS.logSet(s,2,{kg:42});s=HS.finishToSummary(s);restored.M.capture(s);
+ assert.equal(next().pages[0].workingKg,42);
+ assert.equal(JSON.stringify(s.logs.A.sets.map(r=>r.id)),JSON.stringify(ids));
+});
+test('a removed secondary row receives finish lifecycle and does not block the first set',()=>{
+ const {M}=create(),s=session();s.phase='training';s.completedAt=null;
+ s.logs.A.sets.push({...s.logs.A.sets[0],id:webcrypto.randomUUID(),purpose:'ramp'});M.capture(s);
+ const removed=s.logs.A.sets.pop().id;s.phase='summary';s.completedAt='2026-10-16T01:00:00Z';M.capture(s);
+ assert.equal(M.records()[removed].deleted,true);assert.equal(M.records()[removed].payload.completed,true);
+ assert.equal(M.replay('squat|machine|total|kg').exposures,1);
+});
+test('successive reps/effort edits or an unlog do not certify an ambiguous legacy weight',()=>{
+ for(const unlog of [false,true]){
+  const {M,ctx}=create();let s=session();delete s.logs.A.sets[0].context;s.phase='block';s.blockIndex=0;s.completedAt=null;
+  if(unlog)s=ctx.HybridSession.toggleLogged(s,0);
+  else s=ctx.HybridSession.logSet(s,0,{reps:6},undefined,{commit:false});
+  s=ctx.HybridSession.logSet(s,0,{effort:'average'});M.capture(s);
+  assert.equal(Object.values(M.records()).find(r=>r.kind==='set').payload.normalizedLoad,null);
+ }
+});
+test('resuming a legacy session preserves raw actuals and marks their load semantics uncertain',()=>{
+ const {ctx}=create();const old=session();old.phase='block';delete old.logs.A.sets[0].context;
+ const resumed=ctx.HybridSession.startSession({date:old.date,existing:old,plan:{blocks:[]}});
+ const r=resumed.logs.A.sets[0];assert.equal(r.kg,40);assert.equal(r.context.loadAmbiguous,true);
 });

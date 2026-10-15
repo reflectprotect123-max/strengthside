@@ -1,0 +1,176 @@
+{
+  "runtimeSourceCommit": "eb9fa3f4b3eb0c2f5852a80092d36fc2188a7fc6",
+  "checks": {
+    "focused": {
+      "command": "node --test apps/shared/*.test.mjs apps/athlete/{strength-brain,strength-memory,strength-learning-offline,strength-learning-rollout,session,library}.test.js scripts/strength-learning-simulator.test.mjs",
+      "exitCode": 0,
+      "nodeTestRuns": [
+        190
+      ],
+      "nodeFailures": [
+        0
+      ],
+      "browserPassed": null,
+      "migrationsApplied": null,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-frozen-tests.log",
+      "logSha256": "3393148b0c9d0b3d2202fff4855771840af16f883ea0fc0dd8522041fe80c6be"
+    },
+    "requiredStrength": {
+      "command": "PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium pnpm run verify:strength",
+      "exitCode": 0,
+      "nodeTestRuns": [
+        3,
+        105,
+        48,
+        4,
+        4,
+        99,
+        10,
+        2
+      ],
+      "nodeFailures": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "browserPassed": 37,
+      "migrationsApplied": null,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-verify-reviewed.log",
+      "logSha256": "2c39ac85d9c30a8867ce03e155849342a180d66ee23fcac89afdd1bf6b791ec6"
+    },
+    "fullRepository": {
+      "command": "PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium pnpm run verify",
+      "exitCode": 0,
+      "nodeTestRuns": [
+        3,
+        105,
+        45,
+        4,
+        4,
+        99,
+        10,
+        2,
+        12
+      ],
+      "nodeFailures": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "browserPassed": 37,
+      "migrationsApplied": null,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-verify-all-final.log",
+      "logSha256": "a5cc1a7603fb6839338242ad5367e9aa0875caf002c40820be3ea2ced23a8b16"
+    },
+    "touchDoubleTap": {
+      "command": "Playwright CLI: strength-learning.spec.mjs -g Android-size touch",
+      "exitCode": 0,
+      "nodeTestRuns": [],
+      "nodeFailures": [],
+      "browserPassed": 1,
+      "migrationsApplied": null,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-browser-touch.log",
+      "logSha256": "b96268b0c1b6ed71ab8ce83a02ba87ed6a278886dc289a914b6d29c45ec8f186"
+    },
+    "simulatorUnit": {
+      "command": "node --test scripts/strength-learning-simulator.test.mjs",
+      "exitCode": 0,
+      "nodeTestRuns": [
+        6
+      ],
+      "nodeFailures": [
+        0
+      ],
+      "browserPassed": null,
+      "migrationsApplied": null,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-pairing-tests.log",
+      "logSha256": "41d53a2aec8d5c0269223f74d21de9f389382b08a2eddef91cfd63b7f6d075a1"
+    },
+    "databaseRedaction": {
+      "command": "node --test scripts/check-strength-learning-db.test.mjs",
+      "exitCode": 0,
+      "nodeTestRuns": [
+        3
+      ],
+      "nodeFailures": [
+        0
+      ],
+      "browserPassed": null,
+      "migrationsApplied": null,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-db-redaction-green.log",
+      "logSha256": "a9b2e894d330a8242d5f4b643273bc750470a27c62391d28a9a1c03ad4a3e8e6"
+    },
+    "realRecordDatabase": {
+      "command": "node scripts/check-strength-learning-db.mjs",
+      "exitCode": 0,
+      "nodeTestRuns": [],
+      "nodeFailures": [],
+      "browserPassed": null,
+      "migrationsApplied": null,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-db-reviewed.log",
+      "logSha256": "9c6270f34883e0c547e6daf02a784bc9068832d179a9bc06f4dd240d78a8ad79"
+    },
+    "allMigrations": {
+      "command": "Unchanged checks/migrations-apply.mjs in pgvector/pgvector:pg16 with mounted Node/repo",
+      "exitCode": 0,
+      "nodeTestRuns": [],
+      "nodeFailures": [],
+      "browserPassed": null,
+      "migrationsApplied": 8,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-full-migrations-docker.log",
+      "logSha256": "25e182fe24ff89142e13fa946b0c15598d4fcc6638ee22165bfa544ec121facf"
+    },
+    "fullRepositoryLatest": {
+      "command": "PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium pnpm run verify",
+      "sourceCommit": "5956c95a0b7d7c64fefc761abcb87739307fb6aa",
+      "exitCode": 0,
+      "nodeTestRuns": [
+        3,
+        105,
+        48,
+        3,
+        4,
+        6,
+        99,
+        10,
+        2,
+        12
+      ],
+      "nodeFailures": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "browserPassed": 38,
+      "hostMigrationSkip": true,
+      "log": "/workspace/artifacts/strength-online-learning/verification/strength-verify-all-latest.log",
+      "logSha256": "5b99f008ec0842516c090e5e91c3bffd555f86004a8ae39ba767ab07729d4584"
+    }
+  },
+  "notes": [
+    "Full/required verification preceded final evidence-only runner hardening; new simulator and redaction tests and real SQL lane were rerun separately.",
+    "Host-only all-migration SKIP is covered by the unchanged migration runner in real PostgreSQL16 with pgvector.",
+    "Node counts are per run; suites overlap and should not be added as unique tests.",
+    "37-case browser suite plus separate touch/double-tap case passed.",
+    "Physical Android and GoTrue/PostgREST staging validation remain unrun.",
+    "Latest full verify includes all evidence-runner hardening and all 38 browser scenarios; all commands completed successfully. The host migration SKIP remains separately covered by real Postgres16/pgvector evidence."
+  ]
+}
