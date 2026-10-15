@@ -1,5 +1,7 @@
 # Cursor handoff: strength learning
 
+Implementation status, test evidence and blocked release gates: [acceptance record](../../releases/strength-online-learning-acceptance.md). The planning snapshot below remains historical.
+
 Read these in order:
 
 1. [Design](../../superpowers/specs/2026-10-15-strength-online-learning-design.md)
