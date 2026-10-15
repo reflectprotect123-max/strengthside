@@ -19,11 +19,14 @@
   }
   function metadata(page) {
     const unit=page.loadUnit||'',convention=page.loadConvention||'',equipment=identity(page);
-    const declared=number(page.minimumKg)??number(page.barWeightKg);
+    const canonicalBar=['barbell_plates','barbell_total'].includes(convention);
+    const declared=canonicalBar?number(page.barWeightKg??page.minimumKg):(number(page.minimumKg)??number(page.barWeightKg));
     const db=equipment==='dumbbell'&&unit==='kg'&&['per_hand','single'].includes(convention);
-    const bar=equipment==='barbell'&&unit==='kg'&&convention==='total'&&declared!=null;
-    const grid=(number(page.equipmentStepKg)??0)>0&&declared!=null;
-    return {unit,convention,declared,db,bar,grid};
+    const bar=equipment==='barbell'&&unit==='kg'&&(canonicalBar?declared>0:convention==='total'&&declared!=null);
+    // Legacy `total` is the existing plates keypad convention, never a persisted-load inference.
+    const plates=convention==='total'||convention==='barbell_plates';
+    const grid=(number(page.equipmentStepKg)??0)>0&&declared!=null&&(!canonicalBar||bar);
+    return {unit,convention,declared,db,bar,plates,grid};
   }
   function profile(page={}) {
     const m=metadata(page);
@@ -33,8 +36,8 @@
       return {loads,step:0,min:loads[0]??0,convention:m.convention,unit:m.unit};
     }
     const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?number(page.equipmentStepKg):0;
-    // The bar's own kilograms stay off the rack. 0 is the empty bar; 20 or 15 only names which bar.
-    const min=m.db?Math.max(1,m.declared??1):m.bar?0:m.grid?m.declared:0;
+    // Grids remain in display units: plates start at 0; explicit totals include the bar.
+    const min=m.db?Math.max(1,m.declared??1):m.bar?(m.plates?0:m.declared):m.grid?m.declared:0;
     const loads=m.db?[1,2,3,4,5,6,7,8,9,10,12.5,15,17.5,20].filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
     return {loads,step,min,convention:m.convention,unit:m.unit};
   }
@@ -85,7 +88,7 @@
     const title=String(page.title||'').trim();
     if(m.bar) {
       if(!/\b(bench|press|squat|deadlift|row)\b/i.test(title))return unknown('unknown_exercise');
-      desired=0;
+      desired=m.plates?0:m.declared;
     } else if(m.db&&m.convention==='single'&&/\bgoblet squat\b/i.test(title))desired=6;
     else if(m.db&&m.convention==='per_hand') {
       if(/\blateral raise\b/i.test(title))desired=2;
@@ -102,7 +105,8 @@
   function label(page={},kg) {
     if(kg==null||kg==='')return '';
     const n=number(kg);if(n==null)return '';
-    return metadata(page).bar&&n===0?'empty bar':String(n);
+    const m=metadata(page);
+    return m.bar&&n===(m.plates?0:m.declared)?'empty bar':String(n);
   }
   root.StrengthEquipment={profile,floor,next,round,starter,label};
 })(typeof window!=='undefined'?window:globalThis);
