@@ -43,6 +43,29 @@ test('create opens the warm-up circuit instead of the note wizard', () => {
   globalThis.S.library = prior;
 });
 
+test('wizard back from warm-up and the exercise picker respects the new entry flow', () => {
+  const prior = globalThis.S.library;
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  LibraryView.create();
+  assert.equal(S.libUi.screen, 'warmup');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'list');
+  assert.equal(S.libUi.flow, null);
+
+  LibraryView.create();
+  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'edit');
+  LibraryView.picker('exercises');
+  assert.equal(S.libUi.screen, 'exercises');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'edit');
+  assert.equal(S.libUi.flow, 'wizard');
+  assert.match(LibraryView.html(), /Session instructions/);
+  assert.doesNotMatch(LibraryView.html(), />Instructions</);
+
+  globalThis.S.library = prior;
+});
+
 test('search does not full-render the shell (keeps the input focused)', () => {
   paints = 0;
   results.innerHTML = '';

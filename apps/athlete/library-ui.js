@@ -729,8 +729,11 @@
       const groups = liftGroups(currentTemplate());
       const index = ui().liftIndex || 0;
       if (s === 'instructions') return LibraryView.goList();
-      if (s === 'warmup') return go('instructions');
-      if (s === 'exercises' || s === 'picker') return go('warmup');
+      if (s === 'warmup') return LibraryView.goList();
+      if (s === 'exercises' || s === 'picker') {
+        if (ui().flow === 'wizard') return go('edit', { bid: null, selected: [], q: '', flow: 'wizard' });
+        return go('warmup');
+      }
       if (s === 'reps') {
         if (index > 0 && groups[index - 1]) return go('reps', { liftIndex: index - 1, bid: groups[index - 1][0].id });
         return go('exercises', { selected: [], bid: null });
