@@ -1938,6 +1938,14 @@ button {
     .play-restart { margin: 0; min-height: 44px; flex: none; }
     .phone { width: 100%; flex: 1 1 auto; min-height: 0; height: auto; border: 0; border-radius: 0; }
   }
+  .tempo-pick { margin: 14px 0 4px; }
+  .tempo-btn, .tempo-opt { min-height: 44px; border-radius: 12px; background: #1c1c1e; text-align: left; padding: 0 14px; }
+  .tempo-btn { color: #1ba3ff; font-weight: 700; letter-spacing: 0.04em; }
+  .tempo-menu { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .tempo-opt.on { color: #1ba3ff; }
+  .tempo-add { margin-top: 4px; }
+  .tempo-add .lib-grid-h span { color: #8e8e93; font-size: 11px; letter-spacing: 0; text-transform: none; font-weight: 500; }
+  .tempo-add .lib-primary { margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -2011,7 +2019,11 @@ button {
       date: new Date().toISOString().slice(0, 10),
       posted: '',
       creating: false,
-      draftTitle: ''
+      draftTitle: '',
+      tempoMenu: null,
+      tempoAdd: false,
+      tempoDraft: null,
+      tempoError: ''
     };
   }
   let state = load();
@@ -2022,6 +2034,10 @@ button {
         saved.blocks = saved.blocks || [];
         saved.pad = null;
         saved.creating = false;
+        saved.tempoMenu = null;
+        saved.tempoAdd = false;
+        saved.tempoDraft = null;
+        saved.tempoError = '';
         return saved;
       }
     } catch (e) {}
@@ -2091,13 +2107,38 @@ button {
     const unit = metric === 'reps' || metric === 'reps_range' ? 'reps' : metricName(metric);
     return '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + n + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(field === 'extra' ? (s.extra || '0') : (s.text || '0')) + '</button>';
   }
+  const TEMPO_KEY = 'strength-training-tempos';
+  function savedTempos() {
+    try {
+      const list = JSON.parse(localStorage.getItem(TEMPO_KEY) || '[]');
+      return Array.isArray(list) ? list.filter((item) => typeof item === 'string') : [];
+    } catch (e) { return []; }
+  }
+  function rememberTempo(text) {
+    const list = savedTempos();
+    if (list.includes(text)) return;
+    list.push(text);
+    localStorage.setItem(TEMPO_KEY, JSON.stringify(list));
+  }
+  function tempoText(b) { return (b.tempo || ['', '', '', '']).join(''); }
+  function tempoControl(b) {
+    const current = tempoText(b).trim();
+    const open = state.tempoMenu === b.id;
+    const options = savedTempos().map((text) => '<button type="button" class="tempo-opt' + (text === current ? ' on' : '') + '" onclick="Play.pickTempo(\'' + b.id + '\',\'' + text + '\')">' + esc(text) + '</button>').join('');
+    let add = '';
+    if (open && state.tempoAdd) {
+      const draft = state.tempoDraft || ['', '', '', ''];
+      const box = (index, name, hint, label) => '<label class="lib-grid-h">' + name + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(draft[index]) + '" oninput="Play.draftTempo(' + index + ', this.value)"><span>' + hint + '</span></label>';
+      add = '<div class="tempo-add"><div class="lib-grid tempo-grid">' + box(0, 'Lower', 'way down', 'Lower') + box(1, 'Pause', 'bottom', 'Bottom pause') + box(2, 'Lift', 'X means fast', 'Lift') + box(3, 'Pause', 'top', 'Top pause') + '</div><p role="status">' + esc(state.tempoError || '') + '</p><button type="button" class="lib-primary" onclick="Play.saveTempo(\'' + b.id + '\')">Save</button></div>';
+    }
+    const menu = open ? '<div class="tempo-menu">' + options + '<button type="button" class="tempo-opt" onclick="Play.beginTempo(\'' + b.id + '\')">Add tempo</button>' + add + '</div>' : '';
+    return '<div class="tempo-pick"><button type="button" class="tempo-btn" aria-label="Tempo for ' + esc(b.title) + '" onclick="Play.toggleTempo(\'' + b.id + '\')">' + esc(current || 'Tempo') + '</button>' + menu + '</div>';
+  }
   function cardHtml(b) {
     const amrap = b.sets.at(-1)?.amrap;
-    const tempo = b.tempo || ['', '', '', ''];
-    const phase = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" onchange="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
     const rows = b.sets.map((s, i) => '<span>' + (i + 1) + '</span>' + setCell(b, s, i, 'text') + setCell(b, s, i, 'extra')).join('');
     const amrapBtn = isRep(b.metric) ? '<button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button>' : '';
-    return '<article class="lib-block lib-ex" data-block="' + esc(b.catalogId) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button><button type="button" class="lib-done" onclick="Play.closePad()">Done</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" onchange="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select><select aria-label="Second metric for ' + esc(b.title) + '" onchange="Play.metric2(\'' + b.id + '\', this.value)">' + metricOptions(b.metric2 || 'none', true) + '</select></div></div><div class="lib-grid set-grid has-two"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div><div class="lib-grid-h">' + esc(metricName(b.metric2)) + '</div>' + rows + '</div><p role="status">' + esc(b.notice || '') + '</p><div class="lib-grid tempo-grid">' + phase(0, 'Lower') + phase(1, 'Pause') + phase(2, 'Lift') + phase(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set from ' + esc(b.title) + '" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set to ' + esc(b.title) + '" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div>' + amrapBtn + '</article>';
+    return '<article class="lib-block lib-ex" data-block="' + esc(b.catalogId) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button><button type="button" class="lib-done" onclick="Play.closePad()">Done</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" onchange="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select><select aria-label="Second metric for ' + esc(b.title) + '" onchange="Play.metric2(\'' + b.id + '\', this.value)">' + metricOptions(b.metric2 || 'none', true) + '</select></div></div><div class="lib-grid set-grid has-two"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div><div class="lib-grid-h">' + esc(metricName(b.metric2)) + '</div>' + rows + '</div><p role="status">' + esc(b.notice || '') + '</p>' + tempoControl(b) + '<div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set from ' + esc(b.title) + '" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set to ' + esc(b.title) + '" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div>' + amrapBtn + '</article>';
   }
   function editorHtml() {
     letters();
@@ -2276,12 +2317,49 @@ button {
       render();
     },
     notes(id, value) { const b = block(id); if (b) b.notes = value; save(); },
-    tempo(id, index, value) {
+    toggleTempo(id) {
+      state.tempoMenu = state.tempoMenu === id ? null : id;
+      state.tempoAdd = false;
+      state.tempoError = '';
+      state.pad = null;
+      render();
+    },
+    beginTempo(id) {
       const b = block(id);
-      if (!b) return;
-      b.tempo = b.tempo || ['', '', '', ''];
-      b.tempo[index] = String(value || '').slice(0, 1);
+      const tempo = (b && b.tempo) || ['', '', '', ''];
+      state.tempoMenu = id;
+      state.tempoAdd = true;
+      state.tempoError = '';
+      state.tempoDraft = tempo.map((part) => String(part || '').slice(0, 1));
+      render();
+    },
+    draftTempo(index, value) {
+      state.tempoDraft = state.tempoDraft || ['', '', '', ''];
+      state.tempoDraft[index] = String(value || '').slice(0, 1).toUpperCase();
       save();
+    },
+    pickTempo(id, text) {
+      const b = block(id);
+      if (!b || !/^[0-9X]{4}$/.test(text)) return;
+      b.tempo = text.split('');
+      state.tempoMenu = null;
+      state.tempoAdd = false;
+      render();
+    },
+    saveTempo(id) {
+      const b = block(id);
+      const draft = (state.tempoDraft || []).map((part) => String(part || '').toUpperCase());
+      if (!b || draft.length !== 4 || draft.some((part) => !/^[0-9X]$/.test(part))) {
+        state.tempoError = 'Use a number or X in each box.';
+        render();
+        return;
+      }
+      b.tempo = draft;
+      rememberTempo(draft.join(''));
+      state.tempoMenu = null;
+      state.tempoAdd = false;
+      state.tempoError = '';
+      render();
     },
     nudge(id, dir) {
       const b = block(id);

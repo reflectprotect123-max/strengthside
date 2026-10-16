@@ -44,6 +44,10 @@ function boot() {
       getItem(key) { return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null; },
       setItem(key, value) { store[key] = String(value); }
     },
+    localStorage: {
+      getItem(key) { return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null; },
+      setItem(key, value) { store[key] = String(value); }
+    },
     console
   };
   vm.createContext(context);
@@ -123,5 +127,26 @@ play.Play.calendar();
 must(play.view.innerHTML.includes('>Post to calendar<'), 'calendar did not open');
 play.Play.confirmDate();
 must(play.saved().posted && play.view.innerHTML.includes('Posted for ' + play.saved().posted), 'posting did not return to the session');
+
+play.Play.restart();
+const tempoSquat = byTitle(play, 'Back Squat');
+must(!play.view.innerHTML.includes('way down'), 'tempo boxes are open before Add');
+must(play.view.innerHTML.includes('>20X1<'), 'squat tempo button missing');
+play.Play.toggleTempo(tempoSquat.id);
+must(play.view.innerHTML.includes('>Add tempo<'), 'add tempo is missing');
+must(!play.view.innerHTML.includes('>22X1<'), 'a tempo was seeded into the list');
+play.Play.beginTempo(tempoSquat.id);
+must(play.view.innerHTML.includes('way down') && play.view.innerHTML.includes('X means fast'), 'the four boxes did not explain the tempo');
+play.Play.draftTempo(0, '2');
+play.Play.draftTempo(1, '2');
+play.Play.draftTempo(2, 'x');
+play.Play.draftTempo(3, '1');
+play.Play.saveTempo(tempoSquat.id);
+must(byTitle(play, 'Back Squat').tempo.join('') === '22X1', 'save did not set 22X1');
+play.Play.restart();
+const tempoAgain = byTitle(play, 'Back Squat');
+must(tempoAgain.tempo.join('') === '20X1', 'restart changed the seeded squat tempo');
+play.Play.toggleTempo(tempoAgain.id);
+must(play.view.innerHTML.includes('>22X1<'), 'the added tempo was forgotten');
 
 console.log('training play ok');
