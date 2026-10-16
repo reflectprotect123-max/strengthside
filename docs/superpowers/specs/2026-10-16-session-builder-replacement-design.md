@@ -28,7 +28,7 @@ Start Session uses the logger path already on this branch. Warm-up blocks use `r
 
 ## APK
 
-The athlete app is what the APK loads. After the Library and logger work, stage `apps/athlete` into the Capacitor shell and build a local debug APK with `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh`. Package `com.hybrid.strength`. That APK is for install and review. It is not a Play Store or Capgo release.
+The athlete app is what the Android shell loads. Package `com.hybrid.strength`. Channel Capgo `strength-live`. After the Library and logger work, stage `apps/athlete` and build a local debug APK with `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh` for review. Capgo publication of that build is the ship step and waits for an explicit publish yes. It is not part of the implementation tasks.
 
 ## Out of scope
 

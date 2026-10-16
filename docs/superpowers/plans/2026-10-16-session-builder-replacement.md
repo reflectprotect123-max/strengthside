@@ -17,7 +17,7 @@
 - Cool-down tracks only `seconds` and `reps`.
 - Builder metric list is Reps, Rep Range, Weight (lb), Weight (kg), Weight (%), Time (mm:ss), Seconds, Miles, Yards, Meters, and Feet. No target weight field.
 - Main-lift ramps stay two sets, labeled Ramp, with no skip control.
-- The last task builds a local debug APK from `apps/athlete` with `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh`. Package `com.hybrid.strength`. Do not run Capgo or publish a release.
+- Ship path is Capgo `strength-live`, package `com.hybrid.strength`, version file `apps/athlete/release.json`. The last implementation task builds a local debug APK with `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh` for review. Do not run `pnpm run ship:capgo` until the user explicitly says to publish that reviewed build.
 - Edit `apps/shared/training-core.js` only if a contract change is required, then run `node scripts/sync-training-core.mjs`. This plan does not require that.
 
 ---
