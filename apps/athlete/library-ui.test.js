@@ -30,6 +30,19 @@ globalThis.S.library = globalThis.HybridLibrary.emptyState();
 globalThis.S.library = globalThis.HybridLibrary.createTemplate(globalThis.S.library, { title: 'Upper Day' });
 require(join(dir, 'library-ui.js'));
 
+test('create opens the warm-up circuit instead of the note wizard', () => {
+  const prior = globalThis.S.library;
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  globalThis.LibraryView.create();
+  assert.equal(globalThis.S.libUi.screen, 'warmup');
+  const html = globalThis.LibraryView.html();
+  assert.match(html, /Warm-up/);
+  assert.match(html, /Bike/);
+  assert.match(html, /3:00|180/);
+  assert.doesNotMatch(html, /Session instructions/);
+  globalThis.S.library = prior;
+});
+
 test('search does not full-render the shell (keeps the input focused)', () => {
   paints = 0;
   results.innerHTML = '';
@@ -129,15 +142,17 @@ test('inline builder restores metric selectors and reflects non-rep metrics with
   assert.match(html,/>Weight \(kg\)</);
 });
 
-test('creating a session walks instructions, warm-up, the exercise picker, reps, tempo, cool-down, then the session', () => {
+test('creating a session walks warm-up, the exercise picker, reps, tempo, cool-down, then the session', () => {
   LibraryView.create();
   assert.equal(S.libUi.flow, 'wizard');
-  assert.match(LibraryView.html(), /Session instructions/);
+  assert.equal(S.libUi.screen, 'warmup');
+  assert.match(LibraryView.html(), />Warm-up</);
+  assert.match(LibraryView.html(), /Bike/);
   assert.match(LibraryView.html(), />Next</);
   LibraryView.wizardNext();
-  assert.match(LibraryView.html(), />Warm-up</);
-  LibraryView.setRoleText('warmup', 'Foam roll hamstrings');
-  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'edit');
+  assert.match(LibraryView.html(), /Session instructions/);
+  LibraryView.picker('exercises');
   assert.match(LibraryView.html(), /Superset/);
   assert.match(LibraryView.html(), /Create New Exercise/);
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
@@ -170,7 +185,7 @@ test('creating a session walks instructions, warm-up, the exercise picker, reps,
   const html = LibraryView.html();
   assert.match(html, /Post to calendar/);
   assert.match(html, /31X0/);
-  assert.match(html, /Warm-up/);
+  assert.match(html, /WARM-UP/);
   assert.match(html, /Cool-down/);
   assert.doesNotMatch(html, /Create session/);
   const plan = HybridLibrary.compile(HybridLibrary.template(S.library, S.libUi.tid));
@@ -197,12 +212,13 @@ test('leaving or posting the wizard returns later edits to the normal editor', (
 test('next on reps with every lift deleted moves to cool-down', () => {
   LibraryView.create();
   const tid = S.libUi.tid;
+  LibraryView.wizardNext();
+  LibraryView.picker('exercises');
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
-  S.libUi.tab = 'exercises';
   LibraryView.togglePick(squat.id);
   LibraryView.addPicked(false);
   LibraryView.wizardNext();
-  const bid = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  const bid = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role).id;
   LibraryView.removeBlock(bid);
   assert.doesNotThrow(() => LibraryView.wizardNext());
   assert.equal(S.libUi.screen, 'cooldown');
@@ -211,21 +227,23 @@ test('next on reps with every lift deleted moves to cool-down', () => {
 test('changing wizard lifts closes the reps keypad before it can write', () => {
   LibraryView.create();
   const tid = S.libUi.tid;
+  LibraryView.wizardNext();
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
   const bench = S.library.catalog.exercises.find((e) => e.title === 'Bench Press');
   S.libUi.tab = 'exercises';
+  LibraryView.picker('exercises');
   LibraryView.togglePick(squat.id);
   LibraryView.addPicked(false);
   LibraryView.togglePick(bench.id);
   LibraryView.addPicked(false);
   LibraryView.wizardNext();
-  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role).id;
   LibraryView.openNumberPad('set:0', first);
   assert.match(LibraryView.html(), /Reps keypad/);
   LibraryView.wizardNext();
   assert.doesNotMatch(LibraryView.html(), /Reps keypad/);
   LibraryView.numberKey('6');
-  const lifts = HybridLibrary.template(S.library, tid).blocks.filter((b) => b.kind === 'lift');
+  const lifts = HybridLibrary.template(S.library, tid).blocks.filter((b) => b.kind === 'lift' && !b.role);
   assert.equal(lifts[0].repTarget, '8');
   assert.equal(lifts[1].repTarget, '8');
 });
@@ -233,21 +251,23 @@ test('changing wizard lifts closes the reps keypad before it can write', () => {
 test('deleting the open block drops its keypad and selection', () => {
   LibraryView.create();
   const tid = S.libUi.tid;
+  LibraryView.wizardNext();
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
   const bench = S.library.catalog.exercises.find((e) => e.title === 'Bench Press');
   S.libUi.tab = 'exercises';
+  LibraryView.picker('exercises');
   LibraryView.togglePick(squat.id);
   LibraryView.addPicked(false);
   LibraryView.togglePick(bench.id);
   LibraryView.addPicked(false);
   LibraryView.wizardNext();
-  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role).id;
   LibraryView.openNumberPad('set:0', first);
   LibraryView.removeBlock(first);
   assert.equal(S.libUi.bid, null);
   assert.doesNotMatch(LibraryView.html(), /Reps keypad/);
   LibraryView.numberKey('4');
-  const left = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift');
+  const left = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role);
   assert.equal(left.title, 'Bench Press');
   assert.equal(left.repTarget, '8');
 });

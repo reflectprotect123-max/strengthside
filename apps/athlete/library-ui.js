@@ -25,12 +25,47 @@
     if (typeof root.render === 'function') root.render();
   }
 
+  const WARMUP_CATALOG = [
+    ['bike', 'Bike', 'seconds', '180'],
+    ['row', 'Row', 'seconds', '180'],
+    ['run', 'Run', 'seconds', '180'],
+    ['ski', 'Ski', 'seconds', '180'],
+    ['jump_rope', 'Jump Rope', 'seconds', '60'],
+    ['push_downs', 'Push Downs', 'reps', '10'],
+    ['hip_switch', '90/90 Hip Switch', 'reps', '8'],
+    ['band_pull_apart', 'Band Pull-Apart', 'reps', '15'],
+    ['arm_circle', 'Arm Circle', 'reps', '10'],
+    ['bodyweight_squat', 'Bodyweight Squat', 'reps', '10'],
+    ['glute_bridge', 'Glute Bridge', 'reps', '10'],
+    ['worlds_greatest', "World's Greatest Stretch", 'reps', '5'],
+    ['dead_bug', 'Dead Bug', 'reps', '8'],
+    ['inchworm', 'Inchworm', 'reps', '6'],
+    ['isometric_hold', 'Isometric Hold', 'seconds', '30', 3],
+    ['farmers_carry', 'Farmers Carry', 'meters', '20'],
+  ];
+
+  function prepCatalog(role) {
+    return role === 'warmup' ? WARMUP_CATALOG : [];
+  }
+
+  function prepRoundCount(t) {
+    const items = (t?.blocks || []).filter((b) => b.role === 'warmup');
+    return items.reduce((n, b) => Math.max(n, Number(b.setCount) || 0), 0) || 3;
+  }
+
+  function prepMetricLabel(key) {
+    if (key === 'seconds') return 'Seconds';
+    if (key === 'meters') return 'Meters';
+    return 'Reps';
+  }
+
   function refreshResults() {
     const doc = typeof document !== 'undefined' ? document : root.document;
     const el = doc && doc.getElementById && doc.getElementById('libResults');
     if (!el) return;
     const screen = ui().screen;
     if (screen === 'picker' || screen === 'exercises' || screen === 'newEx' || screen === 'newCirc') el.innerHTML = pickerRowsHtml();
+    else if (screen === 'warmup') el.innerHTML = prepCatalogRowsHtml('warmup');
     else if (screen === 'list') el.innerHTML = listCardsHtml();
   }
 
@@ -41,8 +76,10 @@
 
   function go(screen, extra) {
     numberPad = null;
-    const next = { ...ui(), screen, ...(extra || {}) };
-    if (screen === 'list' || screen === 'edit') next.flow = null;
+    const patch = extra || {};
+    const next = { ...ui(), screen, ...patch };
+    if (screen === 'list') next.flow = null;
+    else if (screen === 'edit' && !('flow' in patch)) next.flow = null;
     root.S.libUi = next;
     save();
   }
@@ -388,7 +425,7 @@
   }
 
   function liftGroups(t) {
-    const lifts = (t ? root.HybridLibrary.lettered(t) : []).filter((b) => b.kind === 'lift');
+    const lifts = (t ? root.HybridLibrary.lettered(t) : []).filter((b) => b.kind === 'lift' && !b.role);
     const groups = [];
     for (let i = 0; i < lifts.length; i++) {
       const group = [lifts[i]];
@@ -446,6 +483,41 @@
       </div>`);
   }
 
+  function prepCatalogRowsHtml(role) {
+    const items = (currentTemplate()?.blocks || []).filter((b) => b.role === role);
+    const q = String(ui().q || '').trim().toLowerCase();
+    const selected = new Set(ui().selected || []);
+    const rows = prepCatalog(role)
+      .filter((row) => row[1].toLowerCase().includes(q))
+      .map((row) => {
+        const have = items.some((b) => b.title === row[1]);
+        const on = selected.has(row[0]);
+        return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="LibraryView.togglePrepPick('${esc(row[0])}')"><b>${esc(row[1])}</b><span class="lib-unit">${esc(prepMetricLabel(row[2]))}</span><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
+      })
+      .join('');
+    return rows || '<div class="lib-empty">No results.</div>';
+  }
+
+  function prepCircuitHtml(role) {
+    const title = role === 'cooldown' ? 'Cool-down' : 'Warm-up';
+    const items = root.HybridLibrary.lettered(currentTemplate() || { blocks: [] }).filter((b) => b.role === role);
+    const listed = items.map((b) => `<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">${esc(b.letter)}</span><div style="flex:1"><h3>${esc(b.title)}</h3><p class="sum">${esc(root.HybridLibrary.rxFor(b))}</p></div></div></article>`).join('');
+    const n = (ui().selected || []).length;
+    const searchLabel = role === 'cooldown' ? 'Search cool-downs' : 'Search warm-ups';
+    return `
+      <div class="shell-screen shell-screen--library">
+        <div class="lib-head-row">
+          <button type="button" class="lib-back" aria-label="Back" onclick="LibraryView.wizardBack()">←</button>
+          <h1>${esc(title)}</h1>
+          <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="LibraryView.addPrepPicked('${role}')">Add${n ? ` (${n})` : ''}</button>
+        </div>
+        ${listed}
+        <div class="lib-search"><input value="${esc(ui().q || '')}" placeholder="${esc(searchLabel)}" aria-label="${esc(searchLabel)}" oninput="LibraryView.search(this.value)"></div>
+        <div id="libResults">${prepCatalogRowsHtml(role)}</div>
+        <div class="lib-wizard-next"><button type="button" class="btn oled-cta" onmousedown="event.preventDefault()" onclick="LibraryView.wizardNext()">Next</button></div>
+      </div>`;
+  }
+
   function repsStepHtml() {
     const groups = liftGroups(currentTemplate());
     const group = groups[ui().liftIndex || 0] || [];
@@ -496,7 +568,7 @@
   function html() {
     const s = ui().screen;
     if (s === 'instructions') return instructionsHtml();
-    if (s === 'warmup') return textStepHtml('Warm-up', 'warmup');
+    if (s === 'warmup') return prepCircuitHtml('warmup');
     if (s === 'cooldown') return textStepHtml('Cool-down', 'cooldown');
     if (s === 'reps') return repsStepHtml();
     if (s === 'tempo') return tempoStepHtml();
@@ -517,9 +589,9 @@
     create() {
       const next = root.HybridLibrary.createTemplate(lib(), {});
       root.S.library = next;
-      go('instructions', { tid: next.templates[0].id, flow: 'wizard', liftIndex: 0, bid: null, selected: [] });
+      go('warmup', { tid: next.templates[0].id, flow: 'wizard', liftIndex: 0, bid: null, selected: [], q: '' });
     },
-    open(tid) { go('edit', { tid, bid: null, q: '' }); },
+    open(tid) { go('edit', { tid, bid: null, q: '', flow: null }); },
     patchTpl(patch) {
       root.S.library = root.HybridLibrary.patchTemplate(lib(), ui().tid, patch);
       if (typeof root.save === 'function') root.save();
@@ -536,6 +608,42 @@
       else cur.add(id);
       root.S.libUi.selected = [...cur];
       save();
+    },
+    togglePrepPick(id) {
+      const role = ui().screen === 'warmup' ? 'warmup' : 'cooldown';
+      const row = prepCatalog(role).find((c) => c[0] === id);
+      if (!row) return;
+      const items = (currentTemplate()?.blocks || []).filter((b) => b.role === role);
+      if (items.some((b) => b.title === row[1])) return;
+      const cur = new Set(ui().selected || []);
+      if (cur.has(id)) cur.delete(id);
+      else cur.add(id);
+      root.S.libUi.selected = [...cur];
+      save();
+    },
+    addPrepPicked(role) {
+      const ids = ui().selected || [];
+      if (!ids.length) return;
+      const t = currentTemplate();
+      if (!t) return;
+      const rounds = prepRoundCount(t);
+      let st = lib();
+      for (const id of ids) {
+        const row = prepCatalog(role).find((c) => c[0] === id);
+        if (!row) continue;
+        if ((st.templates.find((x) => x.id === ui().tid)?.blocks || []).some((b) => b.role === role && b.title === row[1])) continue;
+        const opts = {
+          title: row[1],
+          columns: [row[2]],
+          setCount: rounds,
+          value: row[3],
+          role,
+        };
+        if (row[4]) opts.countIn = row[4];
+        st = root.HybridLibrary.addExercise(st, ui().tid, opts);
+      }
+      root.S.library = st;
+      go(role, { selected: [], q: ui().q || '' });
     },
     addPicked(asSuperset) {
       const u = ui();
@@ -599,7 +707,7 @@
       const groups = liftGroups(currentTemplate());
       const index = ui().liftIndex || 0;
       if (s === 'instructions') return go('warmup');
-      if (s === 'warmup') return go('exercises', { tab: ui().tab || 'exercises', q: '', selected: [] });
+      if (s === 'warmup') return go('edit', { bid: null, selected: [], q: '', flow: 'wizard' });
       if (s === 'exercises' || s === 'picker') {
         if (!groups.length) return go('cooldown', { liftIndex: 0 });
         return go('reps', { liftIndex: 0, bid: groups[0][0].id });
