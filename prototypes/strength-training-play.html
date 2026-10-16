@@ -2124,7 +2124,7 @@ button {
   function tempoControl(b) {
     const current = tempoText(b).trim();
     const open = state.tempoMenu === b.id;
-    const options = savedTempos().map((text) => '<button type="button" class="tempo-opt' + (text === current ? ' on' : '') + '" onclick="Play.pickTempo(\'' + b.id + '\',\'' + text + '\')">' + esc(text) + '</button>').join('');
+    const options = '<button type="button" class="tempo-opt' + (current ? '' : ' on') + '" onclick="Play.pickTempo(\'' + b.id + '\',\'\')">No tempo</button>' + savedTempos().map((text) => '<button type="button" class="tempo-opt' + (text === current ? ' on' : '') + '" onclick="Play.pickTempo(\'' + b.id + '\',\'' + text + '\')">' + esc(text) + '</button>').join('');
     let add = '';
     if (open && state.tempoAdd) {
       const draft = state.tempoDraft || ['', '', '', ''];
@@ -2132,7 +2132,7 @@ button {
       add = '<div class="tempo-add"><div class="lib-grid tempo-grid">' + box(0, 'Lower', 'way down', 'Lower') + box(1, 'Pause', 'bottom', 'Bottom pause') + box(2, 'Lift', 'X means fast', 'Lift') + box(3, 'Pause', 'top', 'Top pause') + '</div><p role="status">' + esc(state.tempoError || '') + '</p><button type="button" class="lib-primary" onclick="Play.saveTempo(\'' + b.id + '\')">Save</button></div>';
     }
     const menu = open ? '<div class="tempo-menu">' + options + '<button type="button" class="tempo-opt" onclick="Play.beginTempo(\'' + b.id + '\')">Add tempo</button>' + add + '</div>' : '';
-    return '<div class="tempo-pick"><button type="button" class="tempo-btn" aria-label="Tempo for ' + esc(b.title) + '" onclick="Play.toggleTempo(\'' + b.id + '\')">' + esc(current || 'Tempo') + '</button>' + menu + '</div>';
+    return '<div class="tempo-pick"><button type="button" class="tempo-btn" aria-label="Tempo for ' + esc(b.title) + '" onclick="Play.toggleTempo(\'' + b.id + '\')">' + esc(current || 'No tempo') + '</button>' + menu + '</div>';
   }
   function cardHtml(b) {
     const amrap = b.sets.at(-1)?.amrap;
@@ -2340,8 +2340,10 @@ button {
     },
     pickTempo(id, text) {
       const b = block(id);
-      if (!b || !/^[0-9X]{4}$/.test(text)) return;
-      b.tempo = text.split('');
+      if (!b) return;
+      if (text === '') b.tempo = ['', '', '', ''];
+      else if (/^[0-9X]{4}$/.test(text)) b.tempo = text.split('');
+      else return;
       state.tempoMenu = null;
       state.tempoAdd = false;
       render();

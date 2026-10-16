@@ -148,5 +148,9 @@ const tempoAgain = byTitle(play, 'Back Squat');
 must(tempoAgain.tempo.join('') === '20X1', 'restart changed the seeded squat tempo');
 play.Play.toggleTempo(tempoAgain.id);
 must(play.view.innerHTML.includes('>22X1<'), 'the added tempo was forgotten');
+must(play.view.innerHTML.includes('>No tempo<'), 'a lift without tempo does not offer No tempo');
+play.Play.pickTempo(byTitle(play, 'Bench Press').id, '');
+must(byTitle(play, 'Bench Press').tempo.join('') === '', 'No tempo left 33X1 on the bench');
+must(!play.view.innerHTML.includes('33X1'), 'the bench line still shows a tempo');
 
 console.log('training play ok');
