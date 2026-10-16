@@ -1858,7 +1858,7 @@ button {
 
 
   html, body { background: #050505; }
-  body { min-height: 100dvh; display: grid; justify-items: center; align-content: start; padding: 28px 16px 48px; }
+  body { position: relative; min-height: 100dvh; display: grid; justify-items: center; align-content: start; padding: 28px 16px 48px; }
   .play-note { color: #8e8e93; font-size: 13px; margin: 0 0 12px; max-width: 390px; }
   .play-restart { color: #1ba3ff; font-weight: 600; margin: 0 0 14px; min-height: 44px; padding: 0 8px; }
   .phone {
@@ -1911,18 +1911,25 @@ button {
   .lib-block h3 { font-size: 16px; }
   .open-card h3 { font-size: 26px; }
   .tap-card { width: 100%; text-align: left; background: none; }
-  .tm-start { width: 92px; height: 92px; border-radius: 50%; border: 4px solid #16ec06; background: radial-gradient(circle at 50% 45%, #145c14, #062406); color: #16ec06; font-weight: 700; font-size: 13px; display: grid; place-items: center; line-height: 1.1; flex: none; }
+  .tm-full { position: absolute; inset: 0; z-index: 30; background: #000; display: flex; flex-direction: column; padding: 8px 16px 16px; }
+  .tm-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tm-head h2 { margin: 0; font-size: 22px; font-weight: 600; }
+  .tm-setup { display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 8px; }
+  .tm-kicker { letter-spacing: 0.06em; font-size: 13px; color: rgba(255,255,255,.55); margin: 4px 0 0; }
+  .tm-quick { display: flex; flex-direction: column; gap: 4px; }
+  .tm-quick button { color: #1ba3ff; font-size: 20px; background: none; min-height: 40px; font-family: "Barlow Condensed", sans-serif; font-weight: 600; }
+  .tm-rule { width: 72%; border: 0; border-top: 1px solid rgba(255,255,255,.18); margin: 4px 0; }
+  .tm-custom { display: flex; align-items: center; gap: 12px; }
+  .tm-custom > button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #1ba3ff; color: #1ba3ff; font-size: 22px; background: none; }
+  .tm-ms { width: 64px; height: 56px; border: 2px solid #1ba3ff; border-radius: 10px; display: grid; place-items: center; line-height: 1; }
+  .tm-ms b { font-size: 22px; font-family: "Barlow Condensed", sans-serif; }
+  .tm-ms span { font-size: 11px; color: rgba(255,255,255,.5); }
+  .tm-start { width: 92px; height: 92px; border-radius: 50%; border: 4px solid #16ec06; background: radial-gradient(circle at 50% 45%, #145c14, #062406); color: #16ec06; font-weight: 700; font-size: 13px; display: grid; place-items: center; line-height: 1.1; }
   .tm-start span { display: block; font-size: 22px; }
-  .play-timed { display: flex; align-items: center; gap: 12px; }
-  .play-clock { width: 92px; height: 92px; position: relative; flex: none; }
-  .play-clock .tm-ring { width: 92px; height: 92px; display: block; }
-  .play-clock strong { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 600; }
-  .play-timed-work { display: grid; place-items: center; min-height: 240px; }
-  .play-timed-work .tm-start, .play-timed-work .play-clock { width: 176px; height: 176px; }
-  .play-timed-work .tm-ring { width: 176px; height: 176px; }
-  .play-timed-work .tm-start { font-size: 16px; }
-  .play-timed-work .tm-start span { font-size: 36px; }
-  .play-timed-work .play-clock strong { font-size: 42px; }
+  .tm-run { flex: 1; display: grid; place-items: center; position: relative; }
+  .tm-ring { width: min(78vw, 300px); height: min(78vw, 300px); }
+  .tm-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: "Barlow Condensed", sans-serif; }
+  .tm-face strong { font-size: 48px; font-weight: 600; letter-spacing: -0.03em; }
   @media (max-width: 520px) {
     html, body { height: 100%; }
     body { padding: 0; height: 100dvh; max-height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
@@ -1997,7 +2004,8 @@ button {
       posted: '',
       confirm: '',
       confirmAnchor: '',
-      clock: null
+      clock: null,
+      timer: null
     };
   }
   let state = load();
@@ -2009,6 +2017,7 @@ button {
         saved.cooldowns = saved.cooldowns || [];
         saved.blocks = saved.blocks || [];
         saved.clock = null;
+        saved.timer = null;
         return saved;
       }
     } catch (e) {}
@@ -2016,9 +2025,12 @@ button {
   }
   function save() {
     const clock = state.clock;
+    const timer = state.timer;
     state.clock = null;
+    state.timer = null;
     sessionStorage.setItem(KEY, JSON.stringify(state));
     state.clock = clock;
+    state.timer = timer;
   }
   function isTimedMetric(metric) { return metric === 'seconds' || metric === 'time_mmss'; }
   function durationMs(text) {
@@ -2037,12 +2049,34 @@ button {
     const left = clockLeft();
     const c = 2 * Math.PI * 46;
     const off = c * (1 - (state.clock.totalMs ? left / state.clock.totalMs : 0));
-    return '<div class="play-clock" data-clock="' + esc(id) + '-' + index + '-' + field + '"><svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle class="tm-arc" cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 50 50)"/></svg><strong>' + esc(formatClock(left)) + '</strong></div>';
+    return '<div class="tm-run" data-clock="' + esc(id) + '-' + index + '-' + field + '"><svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle class="tm-arc" cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 50 50)"/></svg><div class="tm-face"><strong>' + esc(formatClock(left)) + '</strong></div></div>';
   }
-  function startControl(id, index, field) {
-    const running = state.clock && state.clock.blockId === id && state.clock.setIndex === index && state.clock.field === field && clockLeft() > 0;
-    if (running) return ringHtml(id, index, field);
-    return '<button type="button" class="tm-start" aria-label="Start" onclick="Play.startClock(\'' + id + '\',' + index + ',\'' + field + '\')"><span>▶</span>Start</button>';
+  function writeDuration(id, index, field, ms) {
+    const b = block(id);
+    const set = b && b.sets[index];
+    if (!set) return;
+    const secs = String(Math.max(5, Math.round(ms / 1000)));
+    if (field === 'extra') set.extra = secs;
+    else set.text = secs;
+  }
+  function timerBody(id, index, field) {
+    const b = block(id);
+    const set = b && b.sets[index];
+    if (!b || !set) return '';
+    const which = field === 'extra' ? 'extra' : 'text';
+    const running = state.clock && state.clock.blockId === id && state.clock.setIndex === index && state.clock.field === which && clockLeft() > 0;
+    if (running) return ringHtml(id, index, which);
+    const total = durationMs(which === 'extra' ? set.extra : set.text) || 60000;
+    const m = Math.floor(total / 60000);
+    const s = String(Math.floor((total % 60000) / 1000)).padStart(2, '0');
+    const quick = [30000, 45000, 60000, 90000, 120000].map((ms) => '<button type="button" onclick="Play.quickTime(\'' + id + '\',' + index + ',\'' + which + '\',' + ms + ')">' + formatClock(ms) + '</button>').join('');
+    return '<div class="tm-setup"><p class="tm-kicker">Quick Start</p><div class="tm-quick">' + quick + '</div><hr class="tm-rule"><p class="tm-kicker">Customize</p><div class="tm-custom"><button type="button" aria-label="Less time" onclick="Play.nudgeTime(\'' + id + '\',' + index + ',\'' + which + '\',-1)">−</button><div class="tm-ms"><b>' + m + '</b><span>m</span></div><div class="tm-ms"><b>' + s + '</b><span>s</span></div><button type="button" aria-label="More time" onclick="Play.nudgeTime(\'' + id + '\',' + index + ',\'' + which + '\',1)">+</button></div><button type="button" class="tm-start" aria-label="Start" onclick="Play.beginTimer(\'' + id + '\',' + index + ',\'' + which + '\')"><span>▶</span>Start</button></div>';
+  }
+  function timerHtml() {
+    if (!state.timer) return '';
+    const b = block(state.timer.blockId);
+    if (!b) return '';
+    return '<div class="tm-full" role="dialog" aria-label="Timer"><div class="tm-head"><button type="button" class="lib-back" aria-label="Back" onclick="Play.closeTimer()">←</button><h2>' + esc(b.title) + '</h2></div>' + timerBody(state.timer.blockId, state.timer.setIndex, state.timer.field) + '</div>';
   }
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2160,7 +2194,7 @@ button {
     return items.map((b) => '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b)) + '</p></div><button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>').join('');
   }
   function prepCard(b) {
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b) + '</div><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b) + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
   }
   function prepEditorHtml(which) {
     letters();
@@ -2229,9 +2263,7 @@ button {
     if (s.amrap && field === 'text') return '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>';
     if (s.amrap) return '<div class="lib-cell"></div>';
     const raw = field === 'extra' ? (s.extra || '') : (s.text || '0');
-    const button = '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
-    if (isTimedMetric(metric) && !s.amrap) return '<div class="play-timed">' + button + startControl(b.id, i, field) + '</div>';
-    return button;
+    return '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
   }
   function setRows(b) {
     const two = !!columnMetric(b, 'extra');
@@ -2241,7 +2273,8 @@ button {
     if (b.prep) return prepCard(b);
     const tempo = b.tempo || ['', '', '', ''];
     const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid' + (columnMetric(b, 'extra') ? ' has-two' : '') + '"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + (columnMetric(b, 'extra') ? '<div class="lib-grid-h">' + esc(metricName(b.metric2)) + '</div>' : '') + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select><select aria-label="Second metric for ' + esc(b.title) + '" onchange="Play.metric2(\'' + b.id + '\', this.value)">' + metricOptions(b.metric2 || 'none', true) + '</select></div></div><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
+    const two = !!columnMetric(b, 'extra');
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select><select aria-label="Second metric for ' + esc(b.title) + '" onchange="Play.metric2(\'' + b.id + '\', this.value)">' + metricOptions(b.metric2 || 'none', true) + '</select></div></div><div class="lib-grid set-grid' + (two ? ' has-two' : '') + '"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + (two ? '<div class="lib-grid-h">' + esc(metricName(b.metric2)) + '</div>' : '') + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
   }
   function editorHtml() {
     letters();
@@ -2322,7 +2355,7 @@ button {
     const value = step.amrap
       ? '<div class="lib-cell">AMRAP</div><p class="lib-empty" style="text-align:left;padding:8px 0 0">As many reps as you can.</p>'
       : timedWarm
-        ? '<div class="play-timed-work">' + startControl(b.id, step.setIndex, 'text') + '</div>'
+        ? timerBody(b.id, step.setIndex, 'text')
         : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
     const last = state.workout.index >= steps.length - 1;
     const action = last
@@ -2385,7 +2418,7 @@ button {
     const editing = state.screen === 'edit' || state.screen === 'warmEdit' || state.screen === 'coolEdit' || state.screen === 'workout';
     phone.classList.toggle('has-pad', editing && !!state.pad);
     const html = state.screen === 'notes' ? notesHtml() : state.screen === 'warm' ? prepListHtml('warm') : state.screen === 'warmEdit' ? prepEditorHtml('warm') : state.screen === 'pick' ? pickHtml() : state.screen === 'cool' ? prepListHtml('cool') : state.screen === 'coolEdit' ? prepEditorHtml('cool') : state.screen === 'calendar' ? calendarHtml() : state.screen === 'workout' ? workoutHtml() : state.screen === 'finish' ? finishHtml() : editorHtml();
-    view.innerHTML = '<div class="shell">' + html + '</div>';
+    view.innerHTML = '<div class="shell">' + html + timerHtml() + '</div>';
     if (scrollToOpen && editing) view.scrollTop = 0;
     else if (scrollToOpen && state.confirmAnchor) view.querySelector('[data-added="' + state.confirmAnchor + '"]')?.scrollIntoView({ block: 'nearest' });
     else if (state.screen !== previous) view.scrollTop = 0;
@@ -2565,6 +2598,13 @@ button {
       const which = field === 'extra' ? 'extra' : 'text';
       state.activeId = id;
       if (!set || (set.amrap && which === 'text')) { state.pad = null; render(); return; }
+      if (isTimedMetric(columnMetric(b, which))) {
+        state.pad = null;
+        state.clock = null;
+        state.timer = { blockId: id, setIndex: index, field: which };
+        render();
+        return;
+      }
       const source = which === 'extra' ? (set.extra || '') : (state.screen === 'workout' ? (set.actual || set.text || '') : (set.text || ''));
       state.pad = { blockId: id, setIndex: index, field: which, buffer: state.screen === 'workout' ? String(source).split('-')[0] : source, side: 'left', fresh: true, error: '' };
       render();
@@ -2706,17 +2746,32 @@ button {
       state.screen = 'finish';
       state.pad = null;
       state.clock = null;
+      state.timer = null;
       render(true);
     },
-    startClock(id, index, field) {
+    closeTimer() { state.timer = null; state.clock = null; render(); },
+    beginTimer(id, index, field) {
+      const which = field === 'extra' ? 'extra' : 'text';
       const b = block(id);
       const set = b && b.sets[index];
-      const which = field === 'extra' ? 'extra' : 'text';
-      const metric = b ? columnMetric(b, which) : '';
       const total = set ? durationMs(which === 'extra' ? set.extra : set.text) : 0;
-      if (!b || !isTimedMetric(metric) || !total) return;
+      if (!b || !isTimedMetric(columnMetric(b, which)) || !total) return;
       state.pad = null;
       state.clock = { blockId: id, setIndex: index, field: which, totalMs: total, endsAt: Date.now() + total };
+      render();
+    },
+    nudgeTime(id, index, field, dir) {
+      const which = field === 'extra' ? 'extra' : 'text';
+      const b = block(id);
+      const set = b && b.sets[index];
+      const cur = set ? durationMs(which === 'extra' ? set.extra : set.text) || 60000 : 60000;
+      writeDuration(id, index, which, Math.max(5000, cur + dir * 5000));
+      state.clock = null;
+      render();
+    },
+    quickTime(id, index, field, ms) {
+      writeDuration(id, index, field === 'extra' ? 'extra' : 'text', ms);
+      state.clock = null;
       render();
     }
   };
