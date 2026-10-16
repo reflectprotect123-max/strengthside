@@ -19,6 +19,15 @@ require(join(dirname(fileURLToPath(import.meta.url)), 'library.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
 const Lib = globalThis.HybridLibrary;
+const SEED_WARMUP_BLOCKS = 5;
+
+function letterFor(tpl, title) {
+  return Lib.lettered(tpl).find((b) => b.title === title).letter;
+}
+
+function liftByTitle(plan, title) {
+  return plan.blocks.find((b) => b.kind === 'lift' && b.title === title);
+}
 
 test('a new template seeds the locked warm-up and an empty cool-down', () => {
   const st = Lib.createTemplate(Lib.emptyState(), { title: 'Lower Strength' });
@@ -48,12 +57,16 @@ test('create session template starts empty then letters A warmup B1 B2 B3 C', ()
   st = Lib.addCircuit(st, tid, { title: 'Bench Press Warm-Up', instructions: 'Foam roll\nPec stretch' });
   st = Lib.addExercise(st, tid, { title: 'Bench Press', setCount: 3, columns: ['reps', 'weight_kg'] });
   st = Lib.addExercise(st, tid, { title: 'Lat Pull Downs', setCount: 3, columns: ['reps', 'weight_kg'] });
-  st = Lib.linkSuperset(st, tid, st.templates[0].blocks[1].id, st.templates[0].blocks[2].id);
+  const blocks = () => st.templates[0].blocks;
+  st = Lib.linkSuperset(st, tid, blocks()[SEED_WARMUP_BLOCKS + 1].id, blocks()[SEED_WARMUP_BLOCKS + 2].id);
   st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 3, columns: ['reps', 'weight_kg'] });
-  st = Lib.linkSuperset(st, tid, st.templates[0].blocks[2].id, st.templates[0].blocks[3].id);
+  st = Lib.linkSuperset(st, tid, blocks()[SEED_WARMUP_BLOCKS + 2].id, blocks()[SEED_WARMUP_BLOCKS + 3].id);
   st = Lib.addExercise(st, tid, { title: 'Bendh', setCount: 3, columns: ['reps', 'meters'] });
-  const letters = Lib.lettered(st.templates[0]).map((b) => b.letter);
-  assert.deepEqual(letters, ['A', 'B1', 'B2', 'B3', 'C']);
+  const tpl = st.templates[0];
+  assert.deepEqual(
+    ['Bench Press Warm-Up', 'Bench Press', 'Lat Pull Downs', 'Back Squat', 'Bendh'].map((title) => letterFor(tpl, title)),
+    ['F', 'G1', 'G2', 'G3', 'H'],
+  );
 });
 
 test('compile plan maps complete + lifts + section labels for training/logger', () => {
@@ -69,7 +82,7 @@ test('compile plan maps complete + lifts + section labels for training/logger', 
   assert.ok(kinds.includes('warmup'));
   assert.ok(kinds.includes('lift'));
   assert.ok(kinds.includes('section'));
-  const lift = plan.blocks.find((b) => b.kind === 'lift');
+  const lift = liftByTitle(plan, 'Bench Press');
   assert.equal(lift.prescription.includes('5'), true);
   assert.deepEqual(lift.columns, ['reps', 'weight_kg']);
 });
@@ -90,7 +103,7 @@ test('reps plus meters compiles a metres prescription', () => {
   st = Lib.createTemplate(st, { title: 'Sled day' });
   const tid = st.templates[0].id;
   st = Lib.addExercise(st, tid, { title: 'Sled', setCount: 3, columns: ['reps', 'meters'] });
-  const lift = Lib.compile(st.templates[0]).blocks.find((b) => b.kind === 'lift');
+  const lift = liftByTitle(Lib.compile(st.templates[0]), 'Sled');
   assert.match(lift.prescription, /m/);
   assert.deepEqual(lift.columns, ['reps', 'meters']);
 });
@@ -109,10 +122,10 @@ test('authored reps and ranges reach the session and progression engine', () => 
   let st = Lib.createTemplate(Lib.emptyState(), {title:'Rep targets'});
   const tid=st.templates[0].id;
   st=Lib.addExercise(st,tid,{title:'Back Squat',setCount:3,columns:['reps','weight_kg']});
-  const bid=st.templates[0].blocks[0].id;
+  const bid=st.templates[0].blocks.find((b)=>b.title==='Back Squat').id;
   for (const [value,min,max] of [['1',1,1],['5',5,5],['3-5',3,5],['6–8',6,8],['12-20',12,20],['20-30',20,30],['50-100',50,100]]) {
     st=Lib.patchBlock(st,tid,bid,{repTarget:Lib.parseRepTarget(value).text,targetEffort:'max_effort'});
-    const block=Lib.compile(st.templates[0]).blocks.find(b=>b.kind==='lift');
+    const block=liftByTitle(Lib.compile(st.templates[0]), 'Back Squat');
     const page=HybridSession.pagesFromPlan({blocks:[block]})[0];
     assert.equal(page.targetReps,undefined);assert.equal(page.targetRepMax,undefined);
     assert.deepEqual(StrengthTargets.normalize(page)[0].reps,{min,max});
@@ -143,11 +156,11 @@ test('warmup, cooldown, and tempo compile for display without changing the reps 
   const tid = st.templates[0].id;
   st = Lib.placeTextBlock(st, tid, { role: 'warmup', title: 'Warm-up', instructions: 'Foam roll hamstrings' });
   st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 3, columns: ['reps', 'weight_kg'] });
-  const bid = st.templates[0].blocks.find((b) => b.kind === 'lift').id;
+  const bid = st.templates[0].blocks.find((b) => b.title === 'Back Squat').id;
   st = Lib.patchBlock(st, tid, bid, { tempo: '31X0' });
   st = Lib.placeTextBlock(st, tid, { role: 'cooldown', title: 'Cool-down', instructions: 'Walk five minutes' });
   const plan = Lib.compile(st.templates[0]);
-  const lift = plan.blocks.find((b) => b.kind === 'lift');
+  const lift = liftByTitle(plan, 'Back Squat');
   assert.equal(plan.blocks.find((b) => b.kind === 'warmup').title, 'Warm-up');
   assert.equal(plan.blocks.find((b) => b.kind === 'recovery').title, 'Cool-down');
   assert.match(lift.prescription, /^3 x 8 · 31X0$/);
@@ -162,7 +175,7 @@ test('tempo does not change the kilograms the brain would load', () => {
   let st = Lib.createTemplate(Lib.emptyState(), { title: 'Monday' });
   const tid = st.templates[0].id;
   st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 3, columns: ['reps', 'weight_kg'] });
-  const bid = st.templates[0].blocks.find((b) => b.kind === 'lift').id;
+  const bid = st.templates[0].blocks.find((b) => b.title === 'Back Squat').id;
   st = Lib.patchBlock(st, tid, bid, { repTarget: '5', tempo: '31X0' });
   const marked = HybridSession.pagesFromPlan(Lib.compile(st.templates[0])).find((p) => p.title === 'Back Squat');
   st = Lib.patchBlock(st, tid, bid, { tempo: '' });
@@ -182,9 +195,9 @@ test('tempo does not change the kilograms the brain would load', () => {
   let hold = Lib.createTemplate(Lib.emptyState(), { title: 'Hold' });
   const hid = hold.templates[0].id;
   hold = Lib.addExercise(hold, hid, { title: 'Plank Hold', setCount: 3, columns: ['time_mmss'] });
-  const plank = hold.templates[0].blocks.find((b) => b.kind === 'lift').id;
+  const plank = hold.templates[0].blocks.find((b) => b.title === 'Plank Hold').id;
   hold = Lib.patchBlock(hold, hid, plank, { tempo: '31X0' });
-  const timed = Lib.compile(hold.templates[0]).blocks.find((b) => b.kind === 'lift');
+  const timed = liftByTitle(Lib.compile(hold.templates[0]), 'Plank Hold');
   const timedPage = HybridSession.pagesFromPlan(Lib.compile(hold.templates[0])).find((p) => p.title === 'Plank Hold');
   assert.equal(timed.prescription, '3 x time · 31X0');
   assert.equal(timedPage.setCount, 3);
@@ -195,11 +208,11 @@ test('tempo does not change the kilograms the brain would load', () => {
 test('compile preserves arbitrary set targets and final first-working-weight AMRAP',()=>{
  let st=Lib.createTemplate(Lib.emptyState(),{title:'Wave'}),tid=st.templates[0].id;
  st=Lib.addExercise(st,tid,{title:'Squat',setCount:4,columns:['reps','weight_kg']});
- const bid=st.templates[0].blocks[0].id;
+ const bid=st.templates[0].blocks.find((b)=>b.title==='Squat').id;
  const reps=[10,8,6].map((n,i)=>({id:`${bid}:set:${i}`,purpose:'working',reps:{min:n,max:n},loadRule:{kind:'adaptive'},toFailure:false}));
  reps.push({id:`${bid}:set:3`,purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
  st=Lib.patchBlock(st,tid,bid,{setTargets:reps});
- const lift=Lib.compile(st.templates[0]).blocks.find(b=>b.kind==='lift');
+ const lift=liftByTitle(Lib.compile(st.templates[0]), 'Squat');
  assert.deepEqual(lift.setTargets.map(t=>t.reps?.min??null),[10,8,6,null]);
  assert.equal(lift.setTargets[3].loadRule.kind,'first_working_set');assert.equal(lift.setCount,4);
  assert.equal(lift.prescription,'10 / 8 / 6 / AMRAP');
@@ -208,11 +221,11 @@ test('compile preserves arbitrary set targets and final first-working-weight AMR
 test('builder stores stable invisible exercise metadata and removes obsolete fields',()=>{
  let st=Lib.createTemplate(Lib.emptyState(),{title:'Metadata'}),tid=st.templates[0].id;
  const squat=st.catalog.exercises.find(x=>x.title==='Back Squat');
- st=Lib.addExercise(st,tid,{catalogId:squat.id});const block=st.templates[0].blocks[0];
+ st=Lib.addExercise(st,tid,{catalogId:squat.id});const block=st.templates[0].blocks.find((b)=>b.exerciseId==='ex_back_squat');
  assert.equal(block.exerciseId,'ex_back_squat');assert.equal(block.equipmentId,'barbell');
  assert.equal(block.loadConvention,'total');assert.equal(block.minimumKg,20);assert.equal(block.equipmentStepKg,2.5);
  for(const key of ['restSec','targetEffort','demoStartingKg','repMin','repMax','targetReps','targetRepMax'])assert.equal(key in block,false,key);
- const renamed=Lib.patchBlock(st,tid,block.id,{title:'Competition Squat',targetEffort:'hard',restSec:60,demoStartingKg:100}).templates[0].blocks[0];
+ const renamed=Lib.patchBlock(st,tid,block.id,{title:'Competition Squat',targetEffort:'hard',restSec:60,demoStartingKg:100}).templates[0].blocks.find((b)=>b.id===block.id);
  assert.equal(renamed.exerciseId,'ex_back_squat');assert.equal(renamed.equipmentId,'barbell');
  assert.equal('targetEffort' in renamed,false);assert.equal('restSec' in renamed,false);assert.equal('demoStartingKg' in renamed,false);
  st=Lib.createCatalogExercise(st,{title:'Dumbbell Curl',columns:['reps','weight_kg']});const curl=st.catalog.exercises[0];
@@ -222,7 +235,7 @@ test('an explicitly declared 15 kg bar reaches the logger without changing field
  let st=Lib.createTemplate(Lib.emptyState(),{title:'Light bar'}),tid=st.templates[0].id;
  st=Lib.createCatalogExercise(st,{title:'Training Bar Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,barWeightKg:15,equipmentStepKg:2.5,columns:['reps','weight_kg']});
  st=Lib.addExercise(st,tid,{catalogId:st.catalog.exercises[0].id});
- const plan=Lib.compile(st.templates[0]),p=HybridSession.pagesFromPlan(plan)[0];
+ const plan=Lib.compile(st.templates[0]),p=HybridSession.pagesFromPlan(plan).find((page)=>page.title==='Training Bar Squat');
  assert.equal(p.barWeightKg,15);assert.equal(globalThis.StrengthLoad.fromPage({page:p,value:0,provenance:'explicit'}).externalKg,15);
 });
 
@@ -245,20 +258,23 @@ test('a warm-up circuit keeps its time, distance, and reps beside the working li
   st = Lib.patchBlock(st, tid, st.templates[0].blocks.at(-1).id, { tempo: '33X1' });
   const plan = Lib.compile(st.templates[0]);
   const lifts = plan.blocks.filter((b) => b.kind === 'lift');
-  assert.equal(lifts[0].prescription, '3 x 180 sec');
-  assert.equal(lifts[0].section, 'Warm-Up');
-  assert.equal(lifts[1].prescription, '3 x 30 sec');
-  assert.equal(lifts[1].countIn, 3);
-  assert.equal(lifts[2].prescription, '3 x 10');
-  assert.equal(lifts[3].prescription, '3 x 20 m');
-  assert.equal(lifts[4].prescription, '10 / 8 / 6 / AMRAP · 20X1');
-  assert.ok(lifts[4].columns.includes('weight_kg'));
-  assert.equal(lifts[5].prescription, '3 x 6-8 · 33X1');
+  const addedWarmupStart = SEED_WARMUP_BLOCKS;
+  assert.equal(lifts[addedWarmupStart].prescription, '3 x 180 sec');
+  assert.equal(lifts[addedWarmupStart].section, 'Warm-Up');
+  assert.equal(lifts[addedWarmupStart + 1].prescription, '3 x 30 sec');
+  assert.equal(lifts[addedWarmupStart + 1].countIn, 3);
+  assert.equal(lifts[addedWarmupStart + 2].prescription, '3 x 10');
+  assert.equal(lifts[addedWarmupStart + 3].prescription, '3 x 20 m');
+  assert.equal(lifts[addedWarmupStart + 4].prescription, '10 / 8 / 6 / AMRAP · 20X1');
+  assert.ok(lifts[addedWarmupStart + 4].columns.includes('weight_kg'));
+  assert.equal(lifts[addedWarmupStart + 5].prescription, '3 x 6-8 · 33X1');
   const names = HybridSession.pagesFromPlan(plan).map((p) => p.title);
-  assert.deepEqual(names.slice(0, 8), ['Bike', 'Isometric Hold', 'Push Downs', 'Farmers Carry', 'Bike', 'Isometric Hold', 'Push Downs', 'Farmers Carry']);
+  const customWarmupRound = ['Bike', 'Isometric Hold', 'Push Downs', 'Farmers Carry'];
+  assert.deepEqual(names.slice(SEED_WARMUP_BLOCKS, SEED_WARMUP_BLOCKS + customWarmupRound.length), customWarmupRound);
+  assert.deepEqual(names.slice(14, 14 + customWarmupRound.length), customWarmupRound);
   const session = HybridSession.startSession({ date: '2026-10-16', plan, letter: 'A' });
   const bike = session.pages[0];
-  const hold = session.pages[1];
+  const hold = session.pages.find((p) => p.title === 'Isometric Hold');
   assert.equal(bike.section, 'Warm-Up');
   assert.equal(bike.askEffort, false);
   assert.equal(session.logs[bike.id].sets[0].cells.seconds, '180');
@@ -276,16 +292,18 @@ test('a cool-down plays in rounds and only keeps seconds or reps', () => {
   const tid = st.templates[0].id;
   st = Lib.addExercise(st, tid, { title: 'Easy Bike', columns: ['seconds'], setCount: 3, value: '120', role: 'cooldown' });
   st = Lib.addExercise(st, tid, { title: 'Cat-Cow', columns: ['reps'], setCount: 3, value: '8', role: 'cooldown' });
-  const lifts = Lib.compile(st.templates[0]).blocks.filter((b) => b.kind === 'lift');
-  assert.equal(lifts[0].prescription, '3 x 120 sec');
-  assert.equal(lifts[0].section, 'Cool-Down');
-  assert.deepEqual(lifts[0].columns, ['seconds']);
-  assert.equal(lifts[1].prescription, '3 x 8');
-  assert.deepEqual(lifts[1].columns, ['reps']);
-  const names = HybridSession.pagesFromPlan(Lib.compile(st.templates[0])).map((p) => p.title);
-  assert.deepEqual(names.slice(0, 4), ['Easy Bike', 'Cat-Cow', 'Easy Bike', 'Cat-Cow']);
-  const session = HybridSession.startSession({ date: '2026-10-16', plan: Lib.compile(st.templates[0]), letter: 'A' });
-  const bike = session.pages[0];
+  const plan = Lib.compile(st.templates[0]);
+  const cooldownLifts = plan.blocks.filter((b) => b.kind === 'lift' && b.section === 'Cool-Down');
+  assert.equal(cooldownLifts[0].prescription, '3 x 120 sec');
+  assert.equal(cooldownLifts[0].section, 'Cool-Down');
+  assert.deepEqual(cooldownLifts[0].columns, ['seconds']);
+  assert.equal(cooldownLifts[1].prescription, '3 x 8');
+  assert.deepEqual(cooldownLifts[1].columns, ['reps']);
+  const names = HybridSession.pagesFromPlan(plan).map((p) => p.title);
+  const cooldownRound = ['Easy Bike', 'Cat-Cow'];
+  assert.deepEqual(names.filter((n) => cooldownRound.includes(n)).slice(0, 4), [...cooldownRound, ...cooldownRound]);
+  const session = HybridSession.startSession({ date: '2026-10-16', plan, letter: 'A' });
+  const bike = session.pages.find((p) => p.title === 'Easy Bike');
   assert.equal(bike.section, 'Cool-Down');
   assert.equal(bike.askEffort, false);
   assert.equal(session.logs[bike.id].sets[0].cells.seconds, '120');
