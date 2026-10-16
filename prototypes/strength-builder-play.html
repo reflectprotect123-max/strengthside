@@ -2222,7 +2222,7 @@ button {
         ? '<button type="button" class="btn oled-cta" onclick="Play.nextPrep()">Next</button>'
         : '<button type="button" class="btn oled-cta" onclick="Play.calendar()">Next</button>';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.goWarm()'}">←</button><h1>${heading}</h1></div>
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.backWarm()'}">←</button><h1>${heading}</h1></div>
       ${place}
       ${prepCard(b)}
       <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
@@ -2582,7 +2582,7 @@ button {
       if (which !== 'cool') {
         const steps = warmSteps();
         if (!steps.length) return;
-        Play.openWarmStep(steps[0], false);
+        Play.openWarmStep(steps[0], true);
         return;
       }
       state.activeId = items[0].id;
@@ -2606,12 +2606,28 @@ button {
     },
     advanceWarm() {
       const { steps, at } = warmAt();
+      const current = steps[at];
+      const here = current && block(current.blockId);
+      const finished = state.clock && state.clock.done && current && state.clock.blockId === current.blockId && state.clock.setIndex === current.setIndex;
+      if (here && isTimedMetric(here.metric) && !finished && !state.timer) {
+        Play.openWarmStep(current, true);
+        return;
+      }
       const next = steps[at + 1];
       state.clock = null;
       state.pad = null;
       state.timer = null;
       if (!next) { Play.goPick(); return; }
       Play.openWarmStep(next, true);
+    },
+    backWarm() {
+      const { steps, at } = warmAt();
+      const prev = at > 0 ? steps[at - 1] : null;
+      state.clock = null;
+      state.pad = null;
+      state.timer = null;
+      if (!prev) { Play.goWarm(); return; }
+      Play.openWarmStep(prev, false);
     },
     nextPrep() {
       const warm = state.warmups.some((b) => b.id === state.activeId);
