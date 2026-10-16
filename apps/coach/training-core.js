@@ -57,7 +57,7 @@
   function rowValue(row,key) {key=canonical(key);return key==='reps'||key==='reps_range'?row.reps:key==='weight_kg'?row.kg:row.cells?.[key];}
   function validateRow(row,page) {
     if(row.miss)return {ok:true,error:''};
-    if(!efforts.includes(effort(row.effort)))return {ok:false,error:'Choose an effort or select Did Not Complete.'};
+    if(page?.askEffort!==false && !efforts.includes(effort(row.effort)))return {ok:false,error:'Choose an effort or select Did Not Complete.'};
     const columns=page?.columns?.length?page.columns:page?.logMode==='kg'?['reps','weight_kg']:['reps'];
     for(const raw of columns){const key=canonical(raw);if(key==='for_completion')continue;const v=rowValue(row,key),n=parse(v,key);
       if(n==null||(['reps','reps_range'].includes(key)&&n<1))return {ok:false,error:`Enter a valid ${metric(key)?.label||key}.`};

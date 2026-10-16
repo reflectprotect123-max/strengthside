@@ -150,7 +150,7 @@
     return st;
   }
 
-  function addExercise(state, tid, { title, setCount, columns, notes, catalogId } = {}) {
+  function addExercise(state, tid, { title, setCount, columns, notes, catalogId, value, role, countIn } = {}) {
     const st = clone(ensure(state));
     const t = st.templates.find((x) => x.id === tid);
     if (!t) return st;
@@ -167,12 +167,17 @@
     }
     cols = cols.filter((k) => k && k !== 'none');
     if (!cols.length) cols = ['reps'];
+    const tracksReps = cols.some((c) => c === 'reps' || c === 'reps_range');
+    const prescribed = value != null && String(value).trim() ? String(value).trim() : '';
     t.blocks.push({
       id: nid('blk'),
       kind: 'lift',
       title: name,
       setCount: Math.max(1, Number(setCount) || 3),
-      repTarget: cols.includes('reps_range') ? '8-12' : '8',
+      repTarget: tracksReps && prescribed ? prescribed : (cols.includes('reps_range') ? '8-12' : '8'),
+      prescribed: !tracksReps && prescribed ? prescribed : '',
+      role: role === 'warmup' ? 'warmup' : null,
+      countIn: role === 'warmup' ? Math.max(0, Number(countIn) || 0) : 0,
       columns: cols,
       notes: Array.isArray(notes) ? notes : [],
       exerciseId,
@@ -319,13 +324,15 @@
     const cols = block.columns || ['reps'];
     const hasReps = cols.some(c => c === 'reps' || c === 'reps_range');
     const repBit = hasReps ? (parseRepTarget(block.repTarget)?.text || (cols.includes('reps_range') ? '8-12' : '8')) : '';
-    if (cols.includes('meters')) return repBit ? `${sets} x ${repBit} m` : `${sets} x m`;
+    const prescribed = String(block.prescribed || '').trim();
+    if (cols.includes('meters')) return prescribed ? `${sets} x ${prescribed} m` : (repBit ? `${sets} x ${repBit} m` : `${sets} x m`);
     if (hasReps) return `${sets} x ${repBit}`;
-    if (cols[0] === 'seconds' || cols[0] === 'time_mmss') return `${sets} x time`;
+    if (cols[0] === 'seconds' || cols[0] === 'time_mmss') return prescribed ? `${sets} x ${prescribed} sec` : `${sets} x time`;
     return `${sets} sets`;
   }
 
   function sectionFor(block) {
+    if (block.role === 'warmup') return 'Warm-Up';
     if (block.kind === 'circuit') {
       if (/recover|cool/i.test(block.title || '')) return 'Recovery';
       return 'Warm-Up';
@@ -354,8 +361,10 @@
           section,
         });
       } else {
-        const hasReps=(b.columns||[]).some(c=>c==='reps'||c==='reps_range');
-        const targetInput={...b,repTarget:b.repTarget||((b.columns||[]).includes('reps_range')?'8-12':'8')};
+        let columns = (b.columns || ['reps']).slice();
+        const hasReps=columns.some(c=>c==='reps'||c==='reps_range');
+        if (b.exerciseType === 'main' && hasReps && !columns.some((c) => c === 'weight_kg' || c === 'weight_lb' || c === 'weight_pct' || c === 'lwp')) columns.push('weight_kg');
+        const targetInput={...b,columns,repTarget:b.repTarget||(columns.includes('reps_range')?'8-12':'8')};
         const setTargets=hasReps?root.StrengthTargets.normalize(targetInput):null;
         const rx = rxFor(Array.isArray(b.setTargets)?{...b,setTargets}:b);
         const tempo = tempoText(b.tempo);
@@ -366,9 +375,12 @@
           title: b.title,
           prescription: tempo ? `${rx} · ${tempo}` : rx,
           tempo: tempo || undefined,
+          prescribed: b.prescribed || '',
+          countIn: Number(b.countIn) || 0,
+          role: b.role || null,
           setTargets: setTargets?clone(setTargets):null,
           notes: b.notes || [],
-          columns: (b.columns || ['reps']).slice(),
+          columns,
           setCount: setTargets?.length||b.setCount,
           exerciseId: b.exerciseId,
           equipmentId: b.equipmentId,

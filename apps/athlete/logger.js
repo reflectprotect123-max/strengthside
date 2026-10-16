@@ -254,6 +254,10 @@
   }
 
   function modeTitle(mode) {
+    if (mode === 'countdown') {
+      const page = session() && HybridSession.currentPage(session());
+      return page && page.title ? page.title : 'Countdown';
+    }
     if (mode === 'tabata') return 'Tabata Timer';
     if (mode === 'emom') return 'EMOM Timer';
     return (HybridTimer.PICKER.find((p) => p.id === mode) || {}).label || mode;
@@ -550,8 +554,8 @@
           <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
           ${page.logMode === 'kg' ? `<label>Weight (kg)<input class="log-cell" type="text" readonly value="${esc(weightText(page, flow.draft.kg))}" onclick="Logger.focusDraftPad('${id}','kg')"></label>` : ''}
         </div>
-        ${target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>'}
-        ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed.</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : `
+        ${page.askEffort === false ? '' : (target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>')}
+        ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed.</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : page.askEffort === false ? (dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`) : `
         <div class="log-effort-inline">
           <div class="log-effort-heading"><label id="effortHeading-${id}" for="setEffort-${id}">${chosen ? 'This set felt' : target ? 'This set should feel' : 'How did this set feel?'}</label><strong id="effortValue-${id}">${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : target ? target === 'medium' ? 'Medium' : effortShort(target) : 'Choose effort'}</strong></div>
           <input id="setEffort-${id}" class="log-effort-slider" type="range" min="0" max="4" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onpointerup="Logger.setEffort('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.setEffort('${id}',this.value)}">
@@ -596,7 +600,7 @@
         <td>${i + 1}</td>
         ${tds}
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
-      </tr><tr><td colspan="${cols.length+2}"><label class="log-note">This set felt: <span id="rowEffort-${mid}-${i}">${esc(row.effort ? effortShort(row.effort) : 'Choose effort')}</span><input class="log-effort-slider" type="range" min="0" max="4" step="1" value="${Math.max(0,EFFORTS.indexOf(row.effort||'average'))}" aria-label="Actual effort for set ${i+1}" oninput="Logger.rateRow('${mid}',${i},this.value)" onpointerup="Logger.rateRow('${mid}',${i},this.value)"></label><button type="button" class="log-set-incomplete" aria-label="Did Not Complete set ${i+1}" aria-pressed="${!!row.miss}" onclick="Logger.markMissRow('${mid}',${i})">Did Not Complete</button></td></tr>`;
+      </tr>${page.askEffort === false ? '' : `<tr><td colspan="${cols.length+2}"><label class="log-note">This set felt: <span id="rowEffort-${mid}-${i}">${esc(row.effort ? effortShort(row.effort) : 'Choose effort')}</span><input class="log-effort-slider" type="range" min="0" max="4" step="1" value="${Math.max(0,EFFORTS.indexOf(row.effort||'average'))}" aria-label="Actual effort for set ${i+1}" oninput="Logger.rateRow('${mid}',${i},this.value)" onpointerup="Logger.rateRow('${mid}',${i},this.value)"></label><button type="button" class="log-set-incomplete" aria-label="Did Not Complete set ${i+1}" aria-pressed="${!!row.miss}" onclick="Logger.markMissRow('${mid}',${i})">Did Not Complete</button></td></tr>`}`;
     }).join('');
     return `
       <p class="log-rx">${esc(page.prescription)}</p>
@@ -711,7 +715,28 @@
     return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
   }
 
+  function armWarmupClock() {
+    const s = session();
+    if (!s || s.phase !== 'block') return;
+    const page = HybridSession.currentPage(s);
+    const cols = page && page.columns || [];
+    if (!page || page.section !== 'Warm-Up' || !cols.includes('seconds')) return;
+    const total = Number(page.prescribed) * 1000;
+    if (!total) return;
+    const timer = timerState();
+    if (timer.view === 'running' || timer.view === 'countIn') return;
+    if (s.warmupClock === page.id) return;
+    s.warmupClock = page.id;
+    let next = HybridTimer.create();
+    next.mode = 'countdown';
+    next.config = { totalMs: total, countInMs: (Number(page.countIn) || 0) * 1000, plainCount: true };
+    next.view = 'setup';
+    next = HybridTimer.start(next, Date.now());
+    root.S.timer = next;
+  }
+
   function paint() {
+    armWarmupClock();
     const el = document.getElementById('logger');
     if (!el) return;
     const s = session();

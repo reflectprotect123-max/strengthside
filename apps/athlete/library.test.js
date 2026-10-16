@@ -215,3 +215,48 @@ test('an explicitly declared 15 kg bar reaches the logger without changing field
  const plan=Lib.compile(st.templates[0]),p=HybridSession.pagesFromPlan(plan)[0];
  assert.equal(p.barWeightKg,15);assert.equal(globalThis.StrengthLoad.fromPage({page:p,value:0,provenance:'explicit'}).externalKg,15);
 });
+
+test('a warm-up circuit keeps its time, distance, and reps beside the working lifts', () => {
+  let st = Lib.createTemplate(Lib.emptyState(), { title: 'Lower Strength' });
+  const tid = st.templates[0].id;
+  const add = (title, columns, value, extra = {}) => {
+    st = Lib.addExercise(st, tid, { title, columns, setCount: extra.setCount || 3, value, role: extra.role, countIn: extra.countIn });
+  };
+  add('Bike', ['seconds'], '180', { role: 'warmup' });
+  add('Isometric Hold', ['seconds'], '30', { role: 'warmup', countIn: 3 });
+  add('Push Downs', ['reps'], '10', { role: 'warmup' });
+  add('Farmers Carry', ['meters'], '20', { role: 'warmup' });
+  st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 4, columns: ['reps'] });
+  const squat = st.templates[0].blocks.at(-1).id;
+  const wave = [10, 8, 6].map((n, i) => ({ id: `${squat}:set:${i}`, purpose: 'working', reps: { min: n, max: n }, loadRule: { kind: 'adaptive' }, toFailure: false }));
+  wave.push({ id: `${squat}:set:3`, purpose: 'amrap', reps: null, loadRule: { kind: 'first_working_set' }, toFailure: false });
+  st = Lib.patchBlock(st, tid, squat, { setTargets: wave, tempo: '20X1' });
+  st = Lib.addExercise(st, tid, { title: 'Bench Press', setCount: 3, columns: ['reps_range'], value: '6-8' });
+  st = Lib.patchBlock(st, tid, st.templates[0].blocks.at(-1).id, { tempo: '33X1' });
+  const plan = Lib.compile(st.templates[0]);
+  const lifts = plan.blocks.filter((b) => b.kind === 'lift');
+  assert.equal(lifts[0].prescription, '3 x 180 sec');
+  assert.equal(lifts[0].section, 'Warm-Up');
+  assert.equal(lifts[1].prescription, '3 x 30 sec');
+  assert.equal(lifts[1].countIn, 3);
+  assert.equal(lifts[2].prescription, '3 x 10');
+  assert.equal(lifts[3].prescription, '3 x 20 m');
+  assert.equal(lifts[4].prescription, '10 / 8 / 6 / AMRAP · 20X1');
+  assert.ok(lifts[4].columns.includes('weight_kg'));
+  assert.equal(lifts[5].prescription, '3 x 6-8 · 33X1');
+  const names = HybridSession.pagesFromPlan(plan).map((p) => p.title);
+  assert.deepEqual(names.slice(0, 8), ['Bike', 'Isometric Hold', 'Push Downs', 'Farmers Carry', 'Bike', 'Isometric Hold', 'Push Downs', 'Farmers Carry']);
+  const session = HybridSession.startSession({ date: '2026-10-16', plan, letter: 'A' });
+  const bike = session.pages[0];
+  const hold = session.pages[1];
+  assert.equal(bike.section, 'Warm-Up');
+  assert.equal(bike.askEffort, false);
+  assert.equal(session.logs[bike.id].sets[0].cells.seconds, '180');
+  assert.equal(session.logs[bike.id].sets[0].purpose, 'warmup');
+  assert.equal(hold.countIn, 3);
+  assert.equal(session.logs[hold.id].sets[0].cells.seconds, '30');
+  assert.equal(globalThis.TrainingCore.validateRow(session.logs[bike.id].sets[0], bike).ok, true);
+  const squatPage = session.pages.find((p) => p.title === 'Back Squat');
+  assert.equal(squatPage.logMode, 'kg');
+  assert.equal(squatPage.askEffort, true);
+});
