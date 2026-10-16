@@ -30,7 +30,7 @@ test('build, schedule, play full session, reopen history and check next session'
  for(let i=0;i<4;i++)await page.getByRole('button',{name:'Next',exact:true}).click();
  await page.getByRole('button',{name:'Post to calendar',exact:true}).click();const day=await page.getByLabel('Session date').inputValue();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
  await page.reload();await expect(page.locator('.trn-block--lift')).toHaveCount(2);await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.getByRole('button',{name:'Got It',exact:true}).click();
- await expect(page.getByText('Warm-up 1 of 2',{exact:true})).toBeVisible();
+ await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
  async function log(kg,reps,effort){await actualNumber(page,'Weight (kg)',String(kg));await actualNumber(page,'Reps completed',String(reps));const slider=page.getByRole('slider',{name:'Actual set effort'});await slider.press('Home');for(let i=0;i<effort;i++)await slider.press('ArrowRight');await page.getByRole('button',{name:'Log set',exact:true}).click();}
  for(const kg of [10,20]){await log(kg,6,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();}
  await expect(page.getByText('Set 1 of 3',{exact:true})).toBeVisible();
@@ -46,7 +46,7 @@ test('build, schedule, play full session, reopen history and check next session'
  await page.screenshot({path:testInfo.outputPath('full-session-summary.png'),fullPage:true});await testInfo.attach('Completed session summary',{path:testInfo.outputPath('full-session-summary.png'),contentType:'image/png'});
  await page.clock.resume();await page.getByRole('button',{name:'Close',exact:true}).click();await page.locator('[data-tab=me]').click();await page.getByRole('button',{name:'Training history',exact:true}).click();await expect(page.locator('.history-session')).toContainText('5 sets · 34 reps');await page.reload();await expect(page.locator('.history-session')).toContainText('Full CLI strength session');
  await page.locator('[data-tab=library]').click();await page.getByRole('button',{name:'Add to calendar',exact:true}).click();const tomorrow=await page.evaluate(d=>{const date=new Date(d+'T12:00:00');date.setDate(date.getDate()+1);return date.toISOString().slice(0,10);},day);await page.getByLabel('Session date').fill(tomorrow);await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.locator('.trn-block--lift').first().click();
- expect(await page.evaluate(()=>S.session.pages[0].workingKg)).toBe(42.5);expect(errors).toEqual([]);await expect(page.getByText('Warm-up 1 of 2',{exact:true})).toBeVisible();await expect(page.getByLabel('Weight (kg)')).toHaveValue('empty bar');expect(await page.evaluate(()=>{const squat=S.session.pages[0];return S.session.logs[squat.id].sets.filter(r=>r.purpose==='ramp').map(r=>r.kg);})).toEqual([0,20]);expect(errors).toEqual([]);
+ expect(await page.evaluate(()=>S.session.pages[0].workingKg)).toBe(42.5);expect(errors).toEqual([]);await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();await expect(page.getByLabel('Weight (kg)')).toHaveValue('empty bar');expect(await page.evaluate(()=>{const squat=S.session.pages[0];return S.session.logs[squat.id].sets.filter(r=>r.purpose==='ramp').map(r=>r.kg);})).toEqual([0,20]);expect(errors).toEqual([]);
  await page.screenshot({path:testInfo.outputPath('next-session-load.png'),fullPage:true});
 });
 
