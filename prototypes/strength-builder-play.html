@@ -1898,7 +1898,6 @@ button {
   .phone .lib-grid.set-grid { grid-template-columns: 36px 1fr; }
   .lib-unit { color: #8e8e93; font-size: 13px; font-weight: 500; flex: none; }
   .play-actual { font-size: 32px; }
-  .play-section { display: flex; align-items: center; width: calc(100% - 32px); margin: 8px 16px 0; min-height: 44px; padding: 0; color: #8e8e93; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; text-align: left; }
   .play-next { padding: 0 16px 20px; }
   .play-confirm { text-align: left; padding: 4px 16px 8px; color: #fff; scroll-margin-top: 72px; }
   .play-step { margin: 4px 16px 8px; color: #8e8e93; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
@@ -1921,7 +1920,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. A full session is already here. Tap a section to change it. Start workout walks every set. Restart brings this sample back.</p>
+<p class="play-note">One file. Save it, then open it in a browser. Build the warm-up, the lifts, and the cool-down. Cool-down works like the warm-up. Start workout walks every set.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -1968,17 +1967,16 @@ button {
   const KEY = 'strength-builder-play';
 
   function fresh() {
-    const group = 'ss-sample';
     return {
-      screen: 'calendar',
+      screen: 'notes',
       title: 'Lower Strength',
       instructions: '',
       query: '',
       selected: [],
       superset: [],
-      warmups: [makePrep(WARMUPS, 'bike'), makePrep(WARMUPS, 'band_pull_apart')],
-      blocks: [makeBlock('back_squat', null), makeBlock('bench_press', group), makeBlock('lat_pull_downs', group)],
-      cooldowns: [makePrep(COOLDOWNS, 'walk'), makePrep(COOLDOWNS, 'couch_stretch')],
+      warmups: [],
+      blocks: [],
+      cooldowns: [],
       activeId: null,
       pad: null,
       workout: null,
@@ -2084,13 +2082,11 @@ button {
     const n = state.selected.length;
     const label = items.length ? 'Next' : 'Skip';
     const action = items.length ? 'Play.startPrep(\'' + which + '\')' : (cool ? 'Play.calendar()' : 'Play.goPick()');
-    const post = cool ? '<button type="button" class="lib-text-btn" aria-label="Post to calendar" onclick="Play.calendar()">Post</button>' : '';
     return `<div class="shell-screen shell-screen--library">
       <div class="lib-head-row">
-        <button type="button" class="lib-back" aria-label="Back" onclick="Play.calendar()">←</button>
+        <button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.backCool()' : 'Play.goNotes()'}">←</button>
         <h1>${cool ? 'Cool-down' : 'Warm-up'}</h1>
         <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addSelected()">Add${n ? ' (' + n + ')' : ''}</button>
-        ${post}
       </div>
       ${chosenPrepHtml(items)}
       ${n === 1 ? '<p class="lib-empty">Add keeps this on the list.</p>' : ''}
@@ -2119,11 +2115,10 @@ button {
     const action = !last
       ? '<button type="button" class="btn oled-cta" onclick="Play.nextPrep()">Next</button>'
       : cool
-        ? '<button type="button" class="btn oled-cta" disabled>Done</button>'
+        ? '<button type="button" class="btn oled-cta" onclick="Play.calendar()">Next</button>'
         : '<button type="button" class="btn oled-cta" onclick="Play.goPick()">Next</button>';
-    const post = cool && last ? '<button type="button" class="lib-text-btn" aria-label="Post to calendar" onclick="Play.calendar()">Post</button>' : '';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.goWarm()'}">←</button><h1>${at + 1} of ${items.length}</h1>${post}</div>
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.goWarm()'}">←</button><h1>${at + 1} of ${items.length}</h1></div>
       ${prepCard(b)}
       <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
     </div>`;
@@ -2140,7 +2135,7 @@ button {
     const n = state.selected.length;
     return `<div class="shell-screen shell-screen--library">
       <div class="lib-head-row">
-        <button type="button" class="lib-back" aria-label="Back" onclick="Play.calendar()">←</button>
+        <button type="button" class="lib-back" aria-label="Back" onclick="Play.backPick()">←</button>
         <h1>Exercises</h1>
         <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.addSuperset()">Superset</button>
         <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addSelected()">Add${n ? ' (' + n + ')' : ''}</button>
@@ -2234,12 +2229,12 @@ button {
   }
   function calendarHtml() {
     const ready = workoutSteps().length > 0;
-    const section = (title, items, action) => '<button type="button" class="play-section" onclick="' + action + '">' + title + '</button>' + (items.length ? sessionLines(items) : '<p class="lib-empty" style="text-align:left;padding:0 16px 8px">None yet</p>');
+    const section = (title, items) => items.length ? '<p class="play-step">' + title + '</p>' + sessionLines(items) : '';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goNotes()">←</button><h1>${esc(state.title || 'Workout')}</h1></div>
-      ${section('Warm-up', state.warmups, 'Play.goWarm()')}
-      ${section('Lifts', state.blocks, 'Play.goPick()')}
-      ${section('Cool-down', state.cooldowns, 'Play.goCool()')}
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backCalendar()">←</button><h1>${esc(state.title || 'Workout')}</h1></div>
+      ${section('Warm-up', state.warmups)}
+      ${section('Lifts', state.blocks)}
+      ${section('Cool-down', state.cooldowns)}
       <div style="padding:8px 16px 0"><button type="button" class="lib-primary" ${ready ? '' : 'disabled'} onclick="Play.startWorkout()">Start workout</button></div>
       <div class="lib-field"><label for="sessionPostDate">Session date</label><input id="sessionPostDate" type="date" value="${esc(state.date)}" onchange="Play.field('date', this.value)"></div>
       <div style="padding:0 16px"><button type="button" class="lib-text-btn" onclick="Play.confirmDate()">Post to calendar</button></div>
