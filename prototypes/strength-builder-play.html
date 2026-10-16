@@ -1930,6 +1930,7 @@ button {
   .tm-ring { width: min(78vw, 300px); height: min(78vw, 300px); }
   .tm-face { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: "Barlow Condensed", sans-serif; }
   .tm-face strong { font-size: 48px; font-weight: 600; letter-spacing: -0.03em; }
+  .tm-count strong { font-size: 96px; }
   @media (max-width: 520px) {
     html, body { height: 100%; }
     body { padding: 0; height: 100dvh; max-height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
@@ -2054,6 +2055,10 @@ button {
     const which = field === 'extra' ? 'extra' : 'text';
     const same = state.clock && state.clock.blockId === id && state.clock.setIndex === index && state.clock.field === which;
     const running = same && (state.clock.done || clockLeft() > 0);
+    if (running && state.clock.phase === 'count') {
+      const n = Math.max(1, Math.ceil(clockLeft() / 1000));
+      return '<div class="tm-run tm-count" data-count="' + esc(id) + '-' + index + '-' + which + '"><div class="tm-face"><strong>' + n + '</strong></div></div>';
+    }
     if (running) return ringHtml(id, index, which);
     const total = durationMs(which === 'extra' ? set.extra : set.text) || 60000;
     const m = Math.floor(total / 60000);
@@ -2298,7 +2303,8 @@ button {
       tempo: ['', '', '', ''],
       notes: '',
       notice: '',
-      prep: true
+      prep: true,
+      countIn: catalogId === 'isometric_hold' ? 3 : 0
     };
   }
 
@@ -2502,7 +2508,8 @@ button {
       const total = set ? durationMs(which === 'extra' ? set.extra : set.text) : 0;
       if (!b || !isTimedMetric(columnMetric(b, which)) || !total) return;
       state.pad = null;
-      state.clock = { blockId: id, setIndex: index, field: which, totalMs: total, endsAt: Date.now() + total, done: false };
+      const countIn = (b.countIn || 0) * 1000;
+      state.clock = { blockId: id, setIndex: index, field: which, phase: countIn ? 'count' : 'run', totalMs: total, endsAt: Date.now() + (countIn || total), done: false };
       render();
     },
     nudgeTime(id, index, field, dir) {
@@ -2522,10 +2529,21 @@ button {
   };
   window.Play = Play;
   setInterval(() => {
-    if (!state.clock) return;
+    if (!state.clock || state.clock.done) return;
     const left = clockLeft();
-    const node = document.querySelector('[data-clock="' + state.clock.blockId + '-' + state.clock.setIndex + '-' + state.clock.field + '"]');
-    if (state.clock.done) return;
+    const key = state.clock.blockId + '-' + state.clock.setIndex + '-' + state.clock.field;
+    if (state.clock.phase === 'count') {
+      if (left <= 0) {
+        state.clock.phase = 'run';
+        state.clock.endsAt = Date.now() + state.clock.totalMs;
+        render();
+        return;
+      }
+      const count = document.querySelector('[data-count="' + key + '"] strong');
+      if (count) count.textContent = String(Math.max(1, Math.ceil(left / 1000)));
+      return;
+    }
+    const node = document.querySelector('[data-clock="' + key + '"]');
     if (left <= 0) { state.clock.done = true; render(); return; }
     if (!node) return;
     const strong = node.querySelector('strong');
