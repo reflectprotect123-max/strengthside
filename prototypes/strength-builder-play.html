@@ -1872,14 +1872,25 @@ button {
   }
   .phone .viewport { height: 100%; overflow: auto; }
   .phone .shell { position: static; }
+  .phone .lib-head-row { position: sticky; top: 0; z-index: 4; background: #000; }
   .phone .bottom-nav,
   .phone .lib-wizard-next,
   .phone .photo-pad { position: absolute; left: 0; right: 0; width: 100%; max-width: none; transform: none; }
   .phone .lib-wizard-next { bottom: 72px; }
-  .phone.has-pad .shell-screen--library { padding-bottom: 530px; }
+  .phone .shell-screen--library { padding-bottom: 160px; }
+  .phone .play-dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 70; background: #000; }
+  .phone .play-dock .play-next { position: relative; bottom: auto; padding: 8px 16px 0; }
+  .phone .play-dock .photo-pad { position: relative; left: auto; right: auto; bottom: auto; width: 100%; }
+  .phone .photo-key { width: 56px; height: 56px; font-size: 22px; }
+  .phone .photo-pad { padding-top: 8px; }
+  .phone .photo-pad-val { font-size: 40px; }
+  .phone .photo-pad-grid { gap: 10px 8px; }
+  .phone.has-pad .shell-screen--library { padding-bottom: 430px; }
+  .phone .open-card .lib-notes textarea { min-height: 44px; }
   .play-next { padding: 0 16px 20px; }
-  .phone.has-pad .play-next { position: absolute; left: 0; right: 0; bottom: 448px; z-index: 70; padding-bottom: 0; }
-  .play-confirm { text-align: left; padding: 4px 16px 12px; color: #fff; }
+  .play-confirm { text-align: left; padding: 4px 16px 8px; color: #fff; scroll-margin-top: 72px; }
+  .play-step { margin: 4px 16px 8px; color: #8e8e93; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  .play-mate { margin: 0 16px 10px; color: #fff; font-size: 14px; }
   .lib-text-btn:disabled, .btn.oled-cta:disabled { color: #8e8e93; }
   .btn.oled-cta:disabled { background: #1c1c1e; }
   .phone .shell-screen--library { min-height: 100%; }
@@ -1888,6 +1899,13 @@ button {
   .lib-block h3 { font-size: 16px; }
   .open-card h3 { font-size: 26px; }
   .tap-card { width: 100%; text-align: left; background: none; }
+  @media (max-width: 520px) {
+    html, body { height: 100%; }
+    body { padding: 0; height: 100dvh; max-height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+    .play-note { display: none; }
+    .play-restart { margin: 0; min-height: 36px; flex: none; }
+    .phone { width: 100%; flex: 1 1 auto; min-height: 0; height: auto; border: 0; border-radius: 0; }
+  }
 </style>
 </head>
 <body>
@@ -2014,13 +2032,12 @@ button {
         <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.addSuperset()">Superset</button>
         <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addSelected()">Add${n ? ' (' + n + ')' : ''}</button>
       </div>
+      ${chosenHtml()}
+      ${n === 1 ? '<p class="lib-empty">Add keeps this on the list.</p>' : ''}
+      ${n >= 2 ? '<p class="lib-empty">Superset groups these ' + n + '.</p>' : ''}
       <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
       <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
       <div id="libResults">${rows}</div>
-      ${n === 1 ? '<p class="lib-empty">Add puts this on the list. Next starts once every lift is in.</p>' : ''}
-      ${n >= 2 ? '<p class="lib-empty">Superset groups these ' + n + '. Add keeps each one on the list.</p>' : ''}
-      ${state.blocks.length && !n ? '<p class="lib-empty">Next goes through these lift by lift.</p>' : ''}
-      ${chosenHtml()}
       ${nextBar('Next', 'Play.startLifts()', n !== 0 || !state.blocks.length)}
       ${nav()}
     </div>`;
@@ -2047,35 +2064,27 @@ button {
       return '<span>' + (i + 1) + '</span>' + rep + weight;
     }).join('');
   }
+  function openCard(b) {
+    const tempo = b.tempo || ['', '', '', ''];
+    const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid"><span></span><div class="lib-grid-h">' + (b.metric === 'range' ? 'Rep Range' : 'Reps') + '</div><div class="lib-grid-h">Weight (kg)</div>' + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="range"' + (b.metric === 'range' ? ' selected' : '') + '>Rep Range</option></select><select aria-label="Second metric" disabled><option>Weight (kg)</option></select></div></div><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
+  }
   function editorHtml() {
     letters();
-    let body = '';
-    if (state.instructions || state.warmup || state.cooldown) {
-      const bits = [state.instructions, state.warmup, state.cooldown].filter(Boolean);
-      body += '<article class="lib-block"><div class="lib-block-top"><div style="flex:1"><h3>Instructions</h3><p class="sum">' + esc(bits.join(' · ')) + '</p></div></div></article>';
-    }
-    const at = state.blocks.findIndex((b) => b.id === state.activeId);
-    state.blocks.forEach((b, i) => {
-      const prev = state.blocks[i - 1];
-      if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
-      if (b.id !== state.activeId) {
-        body += '<article class="lib-block"><button type="button" class="tap-card" onclick="Play.openBlock(\'' + b.id + '\')"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><div class="meta">' + esc(summary(b)) + '</div></div></div></button></article>';
-        return;
-      }
-      const tempo = b.tempo || ['', '', '', ''];
-      const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
-      body += '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button><button type="button" class="lib-done" onclick="Play.closePad()">Done</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="range"' + (b.metric === 'range' ? ' selected' : '') + '>Rep Range</option></select><select aria-label="Second metric" disabled><option>Weight (kg)</option></select></div></div><div class="lib-grid"><span></span><div class="lib-grid-h">' + (b.metric === 'range' ? 'Rep Range' : 'Reps') + '</div><div class="lib-grid-h">Weight (kg)</div>' + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
-    });
-    const posted = state.posted ? '<p class="lib-empty">' + esc(state.posted) + '</p>' : '';
+    const at = Math.max(0, state.blocks.findIndex((b) => b.id === state.activeId));
+    const b = state.blocks[at];
+    if (!b) return '';
+    const mates = b.groupId ? state.blocks.filter((x) => x.groupId === b.groupId) : [];
+    const mate = mates.length > 1 ? '<p class="play-mate">Superset ' + mates.map((x) => esc(x.letter)).join(' · ') + '</p>' : '';
+    const last = at >= state.blocks.length - 1;
+    const action = last
+      ? '<button type="button" class="btn oled-cta" onclick="Play.calendar()">Post to calendar</button>'
+      : '<button type="button" class="btn oled-cta" onclick="Play.nextLift()">Next</button>';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goPick()">←</button><h1>Session Template</h1><button type="button" class="lib-text-btn" onclick="Play.reorder()">Reorder</button></div>
-      <div class="lib-field"><label for="editTitle">Title</label><input id="editTitle" value="${esc(state.title)}" oninput="Play.field('title', this.value)"></div>
-      ${body}
-      <div class="lib-row-btns"><button type="button" onclick="Play.goPick()">+ Add Exercise</button><button type="button" disabled>+ Add Circuit</button></div>
-      <div style="padding:0 16px 24px"><button type="button" class="lib-primary" onclick="Play.calendar()">Post to calendar</button></div>
-      ${posted}
-      ${at >= 0 && at < state.blocks.length - 1 ? '<div class="play-next"><button type="button" class="btn oled-cta" onclick="Play.nextLift()">Next</button></div>' : ''}
-      ${padHtml()}
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goPick()">←</button><h1>${at + 1} of ${state.blocks.length}</h1></div>
+      ${mate}
+      ${openCard(b)}
+      <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
     </div>`;
   }
   function padHtml() {
@@ -2126,7 +2135,8 @@ button {
     phone.classList.toggle('has-pad', state.screen === 'edit' && !!state.pad);
     const html = state.screen === 'notes' ? notesHtml() : state.screen === 'pick' ? pickHtml() : state.screen === 'calendar' ? calendarHtml() : editorHtml();
     view.innerHTML = '<div class="shell">' + html + '</div>';
-    if (scrollToOpen) (view.querySelector('.play-confirm') || view.querySelector('.open-card'))?.scrollIntoView({ block: 'start' });
+    if (scrollToOpen && state.screen === 'edit') view.scrollTop = 0;
+    else if (scrollToOpen) view.querySelector('.play-confirm')?.scrollIntoView({ block: 'nearest' });
     else if (state.screen !== previous) view.scrollTop = 0;
     else view.scrollTop = y;
     render.screen = state.screen;
