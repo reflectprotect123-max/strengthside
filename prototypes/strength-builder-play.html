@@ -1896,6 +1896,7 @@ button {
   .phone .lib-ss { border: 0; border-radius: 0; background: none; padding: 2px 0; pointer-events: none; }
   .phone .lib-block-top { align-items: center; }
   .phone .lib-grid.set-grid { grid-template-columns: 36px 1fr; }
+  .lib-unit { color: #8e8e93; font-size: 13px; font-weight: 500; flex: none; }
   .play-next { padding: 0 16px 20px; }
   .play-confirm { text-align: left; padding: 4px 16px 8px; color: #fff; scroll-margin-top: 72px; }
   .play-step { margin: 4px 16px 8px; color: #8e8e93; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
@@ -1918,7 +1919,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. Add every lift first. Superset groups two or more. Next then goes lift by lift.</p>
+<p class="play-note">One file. Save it, then open it in a browser. Warm-up, then the lifts, then cool-down. Prep tracks reps, seconds, or meters.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -1940,6 +1941,28 @@ button {
     bench_press: { metric: 'range', sets: ['6-8', '6-8', '6-8'], tempo: ['3', '3', 'X', '1'] },
     lat_pull_downs: { metric: 'reps', sets: ['10', '10', '10'], tempo: ['', '', '', ''] }
   };
+  const WARMUPS = [
+    ['bike', 'Bike', 'seconds', ['180']],
+    ['row', 'Row', 'meters', ['500']],
+    ['jump_rope', 'Jump Rope', 'seconds', ['60']],
+    ['band_pull_apart', 'Band Pull-Apart', 'reps', ['15', '15']],
+    ['arm_circle', 'Arm Circle', 'reps', ['10', '10']],
+    ['bodyweight_squat', 'Bodyweight Squat', 'reps', ['10', '10']],
+    ['glute_bridge', 'Glute Bridge', 'reps', ['10', '10']],
+    ['worlds_greatest', 'World\'s Greatest Stretch', 'reps', ['5', '5']],
+    ['dead_bug', 'Dead Bug', 'reps', ['8', '8']],
+    ['inchworm', 'Inchworm', 'reps', ['6']]
+  ];
+  const COOLDOWNS = [
+    ['walk', 'Walk', 'meters', ['400']],
+    ['easy_bike', 'Easy Bike', 'seconds', ['180']],
+    ['couch_stretch', 'Couch Stretch', 'seconds', ['60', '60']],
+    ['pigeon', 'Pigeon', 'seconds', ['60', '60']],
+    ['hamstring_stretch', 'Hamstring Stretch', 'seconds', ['45', '45']],
+    ['breathing', 'Breathing', 'seconds', ['60']],
+    ['foam_roll', 'Foam Roll', 'seconds', ['60']],
+    ['childs_pose', 'Child\'s Pose', 'seconds', ['60']]
+  ];
   const KEY = 'strength-builder-play';
 
   function fresh() {
@@ -1947,12 +1970,12 @@ button {
       screen: 'notes',
       title: 'Lower Strength',
       instructions: '',
-      warmup: '',
-      cooldown: '',
       query: '',
       selected: [],
       superset: [],
+      warmups: [],
       blocks: [],
+      cooldowns: [],
       activeId: null,
       pad: null,
       date: new Date().toISOString().slice(0, 10),
@@ -1965,7 +1988,12 @@ button {
   function load() {
     try {
       const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
-      if (saved && saved.screen) return saved;
+      if (saved && saved.screen) {
+        saved.warmups = saved.warmups || [];
+        saved.cooldowns = saved.cooldowns || [];
+        saved.blocks = saved.blocks || [];
+        return saved;
+      }
     } catch (e) {}
     return fresh();
   }
@@ -1973,23 +2001,37 @@ button {
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
-  function block(id) { return state.blocks.find((b) => b.id === id); }
-  function letters() {
+  function block(id) {
+    return state.blocks.find((b) => b.id === id) || state.warmups.find((b) => b.id === id) || state.cooldowns.find((b) => b.id === id);
+  }
+  function lettersFor(blocks) {
     const used = {};
     let n = 0;
-    state.blocks.forEach((b) => {
+    blocks.forEach((b) => {
       if (b.groupId) {
         if (!used[b.groupId]) used[b.groupId] = String.fromCharCode(65 + n++);
-        const mates = state.blocks.filter((x) => x.groupId === b.groupId);
+        const mates = blocks.filter((x) => x.groupId === b.groupId);
         b.letter = used[b.groupId] + (mates.length > 1 ? String(mates.indexOf(b) + 1) : '');
       } else b.letter = String.fromCharCode(65 + n++);
     });
+  }
+  function letters() {
+    lettersFor(state.warmups);
+    lettersFor(state.blocks);
+    lettersFor(state.cooldowns);
+  }
+  function metricName(metric) {
+    if (metric === 'seconds') return 'Seconds';
+    if (metric === 'meters') return 'Meters';
+    if (metric === 'range') return 'Rep Range';
+    return 'Reps';
   }
   function rx(b) {
     const work = b.sets.filter((s) => !s.amrap).map((s) => s.text || '0');
     const same = work.length && work.every((t) => t === work[0]);
     const body = same ? work.length + ' x ' + work[0] : work.join(' / ');
-    return b.sets.some((s) => s.amrap) ? body + ' / AMRAP' : body;
+    const unit = b.metric === 'seconds' ? ' sec' : b.metric === 'meters' ? ' m' : '';
+    return (b.sets.some((s) => s.amrap) ? body + ' / AMRAP' : body) + unit;
   }
   function tempoText(b) {
     const t = (b.tempo || ['', '', '', '']).join('');
@@ -2019,10 +2061,67 @@ button {
       <div class="lib-head-row"><span class="lib-back"></span><h1>Notes</h1></div>
       <div class="lib-field"><label for="playTitle">Title</label><input id="playTitle" value="${esc(state.title)}" oninput="Play.field('title', this.value)"></div>
       <div class="lib-field"><label for="playInstr">Session instructions</label><textarea id="playInstr" placeholder="Coach notes for Start Session" oninput="Play.field('instructions', this.value)">${esc(state.instructions)}</textarea></div>
-      <div class="lib-field"><label for="playWarm">Warm-up</label><textarea id="playWarm" placeholder="Optional" oninput="Play.field('warmup', this.value)">${esc(state.warmup)}</textarea></div>
-      <div class="lib-field"><label for="playCool">Cool-down</label><textarea id="playCool" placeholder="Optional" oninput="Play.field('cooldown', this.value)">${esc(state.cooldown)}</textarea></div>
-      ${nextBar('Next', 'Play.goPick()')}
+      ${nextBar('Next', 'Play.goWarm()')}
       ${nav()}
+    </div>`;
+  }
+
+  function prepCatalog(which) { return which === 'cool' ? COOLDOWNS : WARMUPS; }
+  function prepItems(which) { return which === 'cool' ? state.cooldowns : state.warmups; }
+  function prepListHtml(which) {
+    const cool = which === 'cool';
+    const items = prepItems(which);
+    const q = state.query.trim().toLowerCase();
+    const rows = prepCatalog(which).filter((row) => row[1].toLowerCase().includes(q)).map((row) => {
+      const on = state.selected.includes(row[0]);
+      const have = items.some((b) => b.catalogId === row[0]);
+      return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="Play.togglePick('${row[0]}')"><b>${esc(row[1])}</b><span class="lib-unit">${esc(metricName(row[2]))}</span><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
+    }).join('') || '<div class="lib-empty">No results.</div>';
+    const n = state.selected.length;
+    const label = items.length ? 'Next' : 'Skip';
+    const action = items.length ? 'Play.startPrep(\'' + which + '\')' : (cool ? 'Play.calendar()' : 'Play.goPick()');
+    const post = cool ? '<button type="button" class="lib-text-btn" aria-label="Post to calendar" onclick="Play.calendar()">Post</button>' : '';
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row">
+        <button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.backCool()' : 'Play.goNotes()'}">←</button>
+        <h1>${cool ? 'Cool-down' : 'Warm-up'}</h1>
+        <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addSelected()">Add${n ? ' (' + n + ')' : ''}</button>
+        ${post}
+      </div>
+      ${chosenPrepHtml(items)}
+      ${n === 1 ? '<p class="lib-empty">Add keeps this on the list.</p>' : ''}
+      <div class="lib-search"><input value="${esc(state.query)}" placeholder="${cool ? 'Search cool-downs' : 'Search warm-ups'}" aria-label="${cool ? 'Search cool-downs' : 'Search warm-ups'}" oninput="Play.search(this.value)"></div>
+      <div id="libResults">${rows}</div>
+      ${nextBar(label, action, n !== 0)}
+      ${nav()}
+    </div>`;
+  }
+  function chosenPrepHtml(items) {
+    letters();
+    if (!items.length) return '';
+    return items.map((b) => '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b)) + '</p></div><button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>').join('');
+  }
+  function prepCard(b) {
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b) + '</div><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="seconds"' + (b.metric === 'seconds' ? ' selected' : '') + '>Seconds</option><option value="meters"' + (b.metric === 'meters' ? ' selected' : '') + '>Meters</option></select></div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
+  }
+  function prepEditorHtml(which) {
+    letters();
+    const cool = which === 'cool';
+    const items = prepItems(which);
+    const at = Math.max(0, items.findIndex((b) => b.id === state.activeId));
+    const b = items[at];
+    if (!b) return '';
+    const last = at >= items.length - 1;
+    const action = !last
+      ? '<button type="button" class="btn oled-cta" onclick="Play.nextPrep()">Next</button>'
+      : cool
+        ? '<button type="button" class="btn oled-cta" disabled>Done</button>'
+        : '<button type="button" class="btn oled-cta" onclick="Play.goPick()">Next</button>';
+    const post = cool && last ? '<button type="button" class="lib-text-btn" aria-label="Post to calendar" onclick="Play.calendar()">Post</button>' : '';
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.goWarm()'}">←</button><h1>${at + 1} of ${items.length}</h1>${post}</div>
+      ${prepCard(b)}
+      <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
     </div>`;
   }
 
@@ -2067,11 +2166,13 @@ button {
   function setRows(b) {
     return b.sets.map((s, i) => {
       const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === i;
-      const rep = s.amrap ? '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>' : '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' reps" onclick="Play.openPad(\'' + b.id + '\',' + i + ')">' + esc(s.text || '0') + '</button>';
+      const unit = b.metric === 'seconds' ? 'seconds' : b.metric === 'meters' ? 'meters' : 'reps';
+      const rep = s.amrap ? '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>' : '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + unit + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ')">' + esc(s.text || '0') + '</button>';
       return '<span>' + (i + 1) + '</span>' + rep;
     }).join('');
   }
   function openCard(b) {
+    if (b.prep) return prepCard(b);
     const tempo = b.tempo || ['', '', '', ''];
     const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
     return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + (b.metric === 'range' ? 'Rep Range' : 'Reps') + '</div>' + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="range"' + (b.metric === 'range' ? ' selected' : '') + '>Rep Range</option></select><select aria-label="Second metric" disabled><option>Weight (kg)</option></select></div></div><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
@@ -2085,9 +2186,9 @@ button {
     const mate = mates.length > 1 ? '<p class="play-mate">Superset ' + mates.map((x) => esc(x.letter)).join(' · ') + '</p>' : '';
     const last = at >= state.blocks.length - 1;
     const action = last
-      ? '<button type="button" class="btn oled-cta" disabled>Done</button>'
+      ? '<button type="button" class="btn oled-cta" onclick="Play.goCool()">Next</button>'
       : '<button type="button" class="btn oled-cta" onclick="Play.nextLift()">Next</button>';
-    const post = last ? '<button type="button" class="lib-text-btn" aria-label="Post to calendar" onclick="Play.calendar()">Post</button>' : '';
+    const post = '';
     return `<div class="shell-screen shell-screen--library">
       <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goPick()">←</button><h1>${at + 1} of ${state.blocks.length}</h1>${post}</div>
       ${mate}
@@ -2103,11 +2204,13 @@ button {
     const mark = (text, on) => on ? '<span class="photo-caret">' + esc(text || '') + '</span>' : esc(text);
     const val = !parts.dash ? mark(parts.left || '0', true) : mark(parts.left, state.pad.side !== 'right') + '-' + mark(parts.right, state.pad.side === 'right');
     const key = (label, col, row, extra) => '<button type="button" class="photo-key' + (extra || '') + '" style="grid-column:' + col + ';grid-row:' + row + '" onclick="Play.key(\'' + label + '\')">' + (label === '⌫' ? '⌫' : label) + '</button>';
-    return '<div class="photo-pad" role="dialog" aria-label="Reps keypad"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">REPS</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || '') + '</p></div>';
+    const unit = b.metric === 'seconds' ? 'SEC' : b.metric === 'meters' ? 'M' : 'REPS';
+    const padName = b.metric === 'seconds' ? 'Seconds keypad' : b.metric === 'meters' ? 'Meters keypad' : 'Reps keypad';
+    return '<div class="photo-pad" role="dialog" aria-label="' + padName + '"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">' + unit + '</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || '') + '</p></div>';
   }
   function calendarHtml() {
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.openEditor()">←</button><h1>Post to calendar</h1></div>
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backCalendar()">←</button><h1>Post to calendar</h1></div>
       <div class="lib-field"><label for="sessionPostDate">Session date</label><input id="sessionPostDate" type="date" value="${esc(state.date)}" onchange="Play.field('date', this.value)"></div>
       <p class="lib-empty" style="text-align:left;padding:0 16px 12px">Lands on your Training tab only.</p>
       <div style="padding:0 16px"><button type="button" class="lib-primary" onclick="Play.confirmDate()">Post to calendar</button></div>
@@ -2140,14 +2243,31 @@ button {
     const view = document.getElementById('view');
     const y = view.scrollTop;
     const previous = render.screen;
-    phone.classList.toggle('has-pad', state.screen === 'edit' && !!state.pad);
-    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'pick' ? pickHtml() : state.screen === 'calendar' ? calendarHtml() : editorHtml();
+    const editing = state.screen === 'edit' || state.screen === 'warmEdit' || state.screen === 'coolEdit';
+    phone.classList.toggle('has-pad', editing && !!state.pad);
+    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'warm' ? prepListHtml('warm') : state.screen === 'warmEdit' ? prepEditorHtml('warm') : state.screen === 'pick' ? pickHtml() : state.screen === 'cool' ? prepListHtml('cool') : state.screen === 'coolEdit' ? prepEditorHtml('cool') : state.screen === 'calendar' ? calendarHtml() : editorHtml();
     view.innerHTML = '<div class="shell">' + html + '</div>';
-    if (scrollToOpen && state.screen === 'edit') view.scrollTop = 0;
+    if (scrollToOpen && editing) view.scrollTop = 0;
     else if (scrollToOpen && state.confirmAnchor) view.querySelector('[data-added="' + state.confirmAnchor + '"]')?.scrollIntoView({ block: 'nearest' });
     else if (state.screen !== previous) view.scrollTop = 0;
     else view.scrollTop = y;
     render.screen = state.screen;
+  }
+
+  function makePrep(catalog, catalogId) {
+    const row = catalog.find((c) => c[0] === catalogId);
+    return {
+      id: catalogId + '-' + Math.random().toString(36).slice(2, 7),
+      catalogId,
+      title: row[1],
+      groupId: null,
+      metric: row[2],
+      sets: row[3].map((text) => ({ text, amrap: false })),
+      tempo: ['', '', '', ''],
+      notes: '',
+      notice: '',
+      prep: true
+    };
   }
 
   function makeBlock(catalogId, groupId) {
@@ -2167,22 +2287,48 @@ button {
   const Play = {
     restart() { state = fresh(); render(); },
     field(key, value) { state[key] = value; save(); },
-    goPick() { state.screen = 'pick'; state.pad = null; render(); },
-    backPick() { state.screen = state.blocks.length ? 'edit' : 'notes'; render(true); },
+    goNotes() { state.screen = 'notes'; state.pad = null; state.selected = []; state.query = ''; render(); },
+    goWarm() { state.screen = 'warm'; state.pad = null; state.selected = []; state.query = ''; render(); },
+    goPick() { state.screen = 'pick'; state.pad = null; state.selected = []; state.query = ''; render(); },
+    goCool() { state.screen = 'cool'; state.pad = null; state.selected = []; state.query = ''; render(); },
+    backPick() { state.pad = null; state.screen = state.blocks.length ? 'edit' : 'warm'; render(true); },
+    backCool() {
+      state.pad = null;
+      state.selected = [];
+      state.query = '';
+      if (state.blocks.length) {
+        state.activeId = state.blocks[state.blocks.length - 1].id;
+        state.screen = 'edit';
+      } else state.screen = 'pick';
+      render(true);
+    },
+    backCalendar() {
+      state.pad = null;
+      if (state.cooldowns.length) {
+        state.activeId = state.activeId && state.cooldowns.some((b) => b.id === state.activeId) ? state.activeId : state.cooldowns[state.cooldowns.length - 1].id;
+        state.screen = 'coolEdit';
+      } else state.screen = 'cool';
+      render(true);
+    },
     search(value) {
       state.query = value;
       save();
       const box = document.getElementById('libResults');
       if (!box) return render();
       const hold = document.activeElement;
-      const html = pickHtml();
+      const html = state.screen === 'warm' ? prepListHtml('warm') : state.screen === 'cool' ? prepListHtml('cool') : pickHtml();
       document.getElementById('view').innerHTML = '<div class="shell">' + html + '</div>';
       const input = document.querySelector('.lib-search input');
       if (input) { input.focus(); input.setSelectionRange(value.length, value.length); }
       else hold?.focus?.();
     },
+    laneItems() {
+      if (state.screen === 'warm' || state.screen === 'warmEdit') return state.warmups;
+      if (state.screen === 'cool' || state.screen === 'coolEdit') return state.cooldowns;
+      return state.blocks;
+    },
     togglePick(id) {
-      if (state.blocks.some((b) => b.catalogId === id)) return;
+      if (Play.laneItems().some((b) => b.catalogId === id)) return;
       const at = state.selected.indexOf(id);
       if (at >= 0) state.selected.splice(at, 1);
       else state.selected.push(id);
@@ -2197,6 +2343,24 @@ button {
       Play.commitSelected(true);
     },
     commitSelected(asSuperset) {
+      if (state.screen === 'warm' || state.screen === 'cool') {
+        const which = state.screen === 'cool' ? 'cool' : 'warm';
+        const items = prepItems(which);
+        const added = [];
+        state.selected.forEach((id) => {
+          if (items.some((b) => b.catalogId === id)) return;
+          const made = makePrep(prepCatalog(which), id);
+          items.push(made);
+          added.push(made);
+        });
+        state.selected = [];
+        state.query = '';
+        letters();
+        state.confirm = '';
+        state.confirmAnchor = added[0] ? added[0].id : '';
+        render(true);
+        return;
+      }
       const group = asSuperset ? 'ss-' + Date.now() : null;
       const added = [];
       state.selected.forEach((id) => {
@@ -2212,6 +2376,28 @@ button {
       state.confirm = '';
       state.confirmAnchor = added[0] ? added[0].id : '';
       state.screen = 'pick';
+      render(true);
+    },
+    startPrep(which) {
+      const items = prepItems(which);
+      if (state.selected.length || !items.length) return;
+      state.confirmAnchor = '';
+      state.activeId = items[0].id;
+      state.screen = which === 'cool' ? 'coolEdit' : 'warmEdit';
+      state.pad = null;
+      render(true);
+    },
+    nextPrep() {
+      const warm = state.warmups.some((b) => b.id === state.activeId);
+      const items = warm ? state.warmups : state.cooldowns;
+      const at = items.findIndex((b) => b.id === state.activeId);
+      const next = items[at + 1];
+      if (!next) {
+        if (warm) Play.goPick();
+        return;
+      }
+      state.activeId = next.id;
+      state.pad = null;
       render(true);
     },
     startLifts() {
@@ -2249,7 +2435,7 @@ button {
       const side = state.pad.side === 'right' && parts.dash ? 'right' : 'left';
       state.pad.error = '';
       if (key === '>' || key === '–' || key === '-') {
-        if (b.metric !== 'range') { state.pad.error = 'Range needs Rep Range.'; render(); return; }
+        if (b.metric !== 'range') { state.pad.error = b.prep ? 'One number.' : 'Range needs Rep Range.'; render(); return; }
         parts.dash = true; state.pad.side = 'right'; state.pad.fresh = true;
       } else if (key === '<') { state.pad.side = 'left'; state.pad.fresh = true; }
       else if (key === '⌫') {
@@ -2305,19 +2491,22 @@ button {
       render();
     },
     removeBlock(id) {
-      const at = state.blocks.findIndex((b) => b.id === id);
+      const key = state.warmups.some((b) => b.id === id) ? 'warmups' : state.cooldowns.some((b) => b.id === id) ? 'cooldowns' : 'blocks';
+      const at = state[key].findIndex((b) => b.id === id);
       const wasActive = state.activeId === id;
-      state.blocks = state.blocks.filter((b) => b.id !== id);
+      state[key] = state[key].filter((b) => b.id !== id);
       if (state.pad && state.pad.blockId === id) state.pad = null;
-      if (!state.blocks.length) {
+      if (!state[key].length) {
         state.activeId = null;
         state.pad = null;
-        if (state.screen === 'edit' || state.screen === 'calendar') state.screen = 'pick';
+        if (key === 'warmups' && state.screen === 'warmEdit') state.screen = 'warm';
+        if (key === 'cooldowns' && (state.screen === 'coolEdit' || state.screen === 'calendar')) state.screen = 'cool';
+        if (key === 'blocks' && (state.screen === 'edit' || state.screen === 'calendar')) state.screen = 'pick';
         render();
         return;
       }
       if (wasActive) {
-        state.activeId = (state.blocks[at] || state.blocks[at - 1] || state.blocks[0]).id;
+        state.activeId = (state[key][at] || state[key][at - 1] || state[key][0]).id;
         state.pad = null;
       }
       render();
