@@ -21,6 +21,7 @@ function must(cond, msg) {
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
 must(scripts.length === 1, 'expected one training script');
 must(!html.includes('LOCKED warm-up play'), 'training play must stay out of the warm-up lock');
+must(html.includes('LOCKED tempo dropdown'), 'tempo lock banner missing');
 
 function boot() {
   const store = {};
@@ -134,6 +135,7 @@ must(!play.view.innerHTML.includes('way down'), 'tempo boxes are open before Add
 must(play.view.innerHTML.includes('>20X1<'), 'squat tempo button missing');
 play.Play.toggleTempo(tempoSquat.id);
 must(play.view.innerHTML.includes('>Add tempo<'), 'add tempo is missing');
+must(play.view.innerHTML.indexOf('>No tempo<') < play.view.innerHTML.indexOf('>Add tempo<'), 'No tempo is not the first tempo choice');
 must(!play.view.innerHTML.includes('>22X1<'), 'a tempo was seeded into the list');
 play.Play.beginTempo(tempoSquat.id);
 must(play.view.innerHTML.includes('way down') && play.view.innerHTML.includes('X means fast'), 'the four boxes did not explain the tempo');
