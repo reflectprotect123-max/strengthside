@@ -1940,7 +1940,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. Build the warm-up, the lifts, and the cool-down. Cool-down works like the warm-up. Start workout walks every set.</p>
+<p class="play-note">One file. Save it, then open it in a browser. A warm-up is already in. Build the lifts, then the cool-down. Start workout walks every set.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -1988,13 +1988,13 @@ button {
 
   function fresh() {
     return {
-      screen: 'notes',
+      screen: 'warm',
       title: 'Lower Strength',
       instructions: '',
       query: '',
       selected: [],
       superset: [],
-      warmups: [],
+      warmups: ['bike', 'row', 'band_pull_apart', 'bodyweight_squat', 'worlds_greatest', 'dead_bug'].map((id) => makePrep(WARMUPS, id)),
       blocks: [],
       cooldowns: [],
       activeId: null,
