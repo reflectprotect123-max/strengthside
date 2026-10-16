@@ -1940,7 +1940,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. This is the warm-up: three rounds, then it starts again.</p>
+<p class="play-note">One file. Save it, then open it in a browser. The warm-up is three rounds. Bike, row, run, ski, and jump rope are timed.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -1949,7 +1949,9 @@ button {
 (function () {
   const WARMUPS = [
     ['bike', 'Bike', 'seconds', ['180']],
-    ['row', 'Row', 'meters', ['500']],
+    ['row', 'Row', 'seconds', ['180']],
+    ['run', 'Run', 'seconds', ['180']],
+    ['ski', 'Ski', 'seconds', ['180']],
     ['jump_rope', 'Jump Rope', 'seconds', ['60']],
     ['band_pull_apart', 'Band Pull-Apart', 'reps', ['15', '15']],
     ['arm_circle', 'Arm Circle', 'reps', ['10', '10']],
@@ -1979,7 +1981,7 @@ button {
       query: '',
       selected: [],
       superset: [],
-      warmups: ['bike', 'row', 'band_pull_apart', 'bodyweight_squat', 'worlds_greatest', 'dead_bug'].map((id) => threeRounds(makePrep(WARMUPS, id))),
+      warmups: ['bike', 'row', 'run', 'ski', 'jump_rope'].map((id) => threeRounds(makePrep(WARMUPS, id))),
       activeId: null,
       pad: null,
       date: new Date().toISOString().slice(0, 10),
