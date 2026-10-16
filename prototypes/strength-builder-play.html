@@ -1911,6 +1911,18 @@ button {
   .lib-block h3 { font-size: 16px; }
   .open-card h3 { font-size: 26px; }
   .tap-card { width: 100%; text-align: left; background: none; }
+  .tm-start { width: 92px; height: 92px; border-radius: 50%; border: 4px solid #16ec06; background: radial-gradient(circle at 50% 45%, #145c14, #062406); color: #16ec06; font-weight: 700; font-size: 13px; display: grid; place-items: center; line-height: 1.1; flex: none; }
+  .tm-start span { display: block; font-size: 22px; }
+  .play-timed { display: flex; align-items: center; gap: 12px; }
+  .play-clock { width: 92px; height: 92px; position: relative; flex: none; }
+  .play-clock .tm-ring { width: 92px; height: 92px; display: block; }
+  .play-clock strong { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 600; }
+  .play-timed-work { display: grid; place-items: center; min-height: 240px; }
+  .play-timed-work .tm-start, .play-timed-work .play-clock { width: 176px; height: 176px; }
+  .play-timed-work .tm-ring { width: 176px; height: 176px; }
+  .play-timed-work .tm-start { font-size: 16px; }
+  .play-timed-work .tm-start span { font-size: 36px; }
+  .play-timed-work .play-clock strong { font-size: 42px; }
   @media (max-width: 520px) {
     html, body { height: 100%; }
     body { padding: 0; height: 100dvh; max-height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
@@ -1984,7 +1996,8 @@ button {
       date: new Date().toISOString().slice(0, 10),
       posted: '',
       confirm: '',
-      confirmAnchor: ''
+      confirmAnchor: '',
+      clock: null
     };
   }
   let state = load();
@@ -1995,12 +2008,43 @@ button {
         saved.warmups = saved.warmups || [];
         saved.cooldowns = saved.cooldowns || [];
         saved.blocks = saved.blocks || [];
+        saved.clock = null;
         return saved;
       }
     } catch (e) {}
     return fresh();
   }
-  function save() { sessionStorage.setItem(KEY, JSON.stringify(state)); }
+  function save() {
+    const clock = state.clock;
+    state.clock = null;
+    sessionStorage.setItem(KEY, JSON.stringify(state));
+    state.clock = clock;
+  }
+  function isWarmup(b) { return !!(b && state.warmups.some((row) => row.id === b.id)); }
+  function isTimedMetric(metric) { return metric === 'seconds' || metric === 'time_mmss'; }
+  function durationMs(text) {
+    const s = String(text || '').trim();
+    const clock = s.match(/^(\d+):([0-5]\d)$/);
+    if (clock) return (Number(clock[1]) * 60 + Number(clock[2])) * 1000;
+    const n = parseInt(s, 10);
+    return Number.isFinite(n) && n > 0 ? n * 1000 : 0;
+  }
+  function formatClock(ms) {
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(total / 60) + ':' + String(total % 60).padStart(2, '0');
+  }
+  function clockLeft() { return state.clock ? Math.max(0, state.clock.endsAt - Date.now()) : 0; }
+  function ringHtml(id, index) {
+    const left = clockLeft();
+    const c = 2 * Math.PI * 46;
+    const off = c * (1 - (state.clock.totalMs ? left / state.clock.totalMs : 0));
+    return '<div class="play-clock" data-clock="' + esc(id) + '-' + index + '"><svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle class="tm-arc" cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 50 50)"/></svg><strong>' + esc(formatClock(left)) + '</strong></div>';
+  }
+  function startControl(id, index) {
+    const running = state.clock && state.clock.blockId === id && state.clock.setIndex === index && clockLeft() > 0;
+    if (running) return ringHtml(id, index);
+    return '<button type="button" class="tm-start" aria-label="Start" onclick="Play.startClock(\'' + id + '\',' + index + ')"><span>▶</span>Start</button>';
+  }
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -2186,7 +2230,9 @@ button {
     if (s.amrap && field === 'text') return '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>';
     if (s.amrap) return '<div class="lib-cell"></div>';
     const raw = field === 'extra' ? (s.extra || '') : (s.text || '0');
-    return '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
+    const button = '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
+    if (field === 'text' && isWarmup(b) && isTimedMetric(metric) && !s.amrap) return '<div class="play-timed">' + button + startControl(b.id, i) + '</div>';
+    return button;
   }
   function setRows(b) {
     const two = !!columnMetric(b, 'extra');
@@ -2273,9 +2319,12 @@ button {
     const plan = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].text || '0');
     const actual = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].actual || plan);
     const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === step.setIndex;
+    const timedWarm = step.section === 'Warm-up' && isTimedMetric(b.metric) && !step.amrap;
     const value = step.amrap
       ? '<div class="lib-cell">AMRAP</div><p class="lib-empty" style="text-align:left;padding:8px 0 0">As many reps as you can.</p>'
-      : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
+      : timedWarm
+        ? '<div class="play-timed-work">' + startControl(b.id, step.setIndex) + '</div>'
+        : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
     const last = state.workout.index >= steps.length - 1;
     const action = last
       ? '<button type="button" class="btn oled-cta" onclick="Play.finishWorkout()">Done</button>'
@@ -2657,10 +2706,34 @@ button {
     finishWorkout() {
       state.screen = 'finish';
       state.pad = null;
+      state.clock = null;
       render(true);
+    },
+    startClock(id, index) {
+      const b = block(id);
+      const set = b && b.sets[index];
+      const total = set ? durationMs(set.text) : 0;
+      if (!b || !isWarmup(b) || !isTimedMetric(b.metric) || !total) return;
+      state.pad = null;
+      state.clock = { blockId: id, setIndex: index, totalMs: total, endsAt: Date.now() + total };
+      render();
     }
   };
   window.Play = Play;
+  setInterval(() => {
+    if (!state.clock) return;
+    const left = clockLeft();
+    const node = document.querySelector('[data-clock="' + state.clock.blockId + '-' + state.clock.setIndex + '"]');
+    if (left <= 0) { state.clock = null; render(); return; }
+    if (!node) return;
+    const strong = node.querySelector('strong');
+    const arc = node.querySelector('.tm-arc');
+    if (strong) strong.textContent = formatClock(left);
+    if (arc && state.clock.totalMs) {
+      const c = 2 * Math.PI * 46;
+      arc.setAttribute('stroke-dashoffset', String(c * (1 - left / state.clock.totalMs)));
+    }
+  }, 200);
   document.addEventListener('keydown', (event) => {
     if (!state.pad) return;
     const tag = document.activeElement && document.activeElement.tagName;
