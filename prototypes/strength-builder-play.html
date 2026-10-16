@@ -1940,7 +1940,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. A warm-up is already in. Build the lifts, then the cool-down. Start workout walks every set.</p>
+<p class="play-note">One file. Save it, then open it in a browser. The warm-up is three rounds. After the third round, Next goes to the lifts.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -1986,6 +1986,11 @@ button {
   ];
   const KEY = 'strength-builder-play';
 
+  function threeRounds(block) {
+    const text = block.sets[0] ? block.sets[0].text : '0';
+    block.sets = [0, 1, 2].map(() => ({ text, amrap: false }));
+    return block;
+  }
   function fresh() {
     return {
       screen: 'warm',
@@ -1994,7 +1999,7 @@ button {
       query: '',
       selected: [],
       superset: [],
-      warmups: ['bike', 'row', 'band_pull_apart', 'bodyweight_squat', 'worlds_greatest', 'dead_bug'].map((id) => makePrep(WARMUPS, id)),
+      warmups: ['bike', 'row', 'band_pull_apart', 'bodyweight_squat', 'worlds_greatest', 'dead_bug'].map((id) => threeRounds(makePrep(WARMUPS, id))),
       blocks: [],
       cooldowns: [],
       activeId: null,
