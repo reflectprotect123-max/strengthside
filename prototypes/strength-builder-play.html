@@ -2020,7 +2020,6 @@ button {
     sessionStorage.setItem(KEY, JSON.stringify(state));
     state.clock = clock;
   }
-  function isWarmup(b) { return !!(b && state.warmups.some((row) => row.id === b.id)); }
   function isTimedMetric(metric) { return metric === 'seconds' || metric === 'time_mmss'; }
   function durationMs(text) {
     const s = String(text || '').trim();
@@ -2034,16 +2033,16 @@ button {
     return Math.floor(total / 60) + ':' + String(total % 60).padStart(2, '0');
   }
   function clockLeft() { return state.clock ? Math.max(0, state.clock.endsAt - Date.now()) : 0; }
-  function ringHtml(id, index) {
+  function ringHtml(id, index, field) {
     const left = clockLeft();
     const c = 2 * Math.PI * 46;
     const off = c * (1 - (state.clock.totalMs ? left / state.clock.totalMs : 0));
-    return '<div class="play-clock" data-clock="' + esc(id) + '-' + index + '"><svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle class="tm-arc" cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 50 50)"/></svg><strong>' + esc(formatClock(left)) + '</strong></div>';
+    return '<div class="play-clock" data-clock="' + esc(id) + '-' + index + '-' + field + '"><svg class="tm-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="5"/><circle class="tm-arc" cx="50" cy="50" r="46" fill="none" stroke="#16ec06" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 50 50)"/></svg><strong>' + esc(formatClock(left)) + '</strong></div>';
   }
-  function startControl(id, index) {
-    const running = state.clock && state.clock.blockId === id && state.clock.setIndex === index && clockLeft() > 0;
-    if (running) return ringHtml(id, index);
-    return '<button type="button" class="tm-start" aria-label="Start" onclick="Play.startClock(\'' + id + '\',' + index + ')"><span>▶</span>Start</button>';
+  function startControl(id, index, field) {
+    const running = state.clock && state.clock.blockId === id && state.clock.setIndex === index && state.clock.field === field && clockLeft() > 0;
+    if (running) return ringHtml(id, index, field);
+    return '<button type="button" class="tm-start" aria-label="Start" onclick="Play.startClock(\'' + id + '\',' + index + ',\'' + field + '\')"><span>▶</span>Start</button>';
   }
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2231,7 +2230,7 @@ button {
     if (s.amrap) return '<div class="lib-cell"></div>';
     const raw = field === 'extra' ? (s.extra || '') : (s.text || '0');
     const button = '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
-    if (field === 'text' && isWarmup(b) && isTimedMetric(metric) && !s.amrap) return '<div class="play-timed">' + button + startControl(b.id, i) + '</div>';
+    if (isTimedMetric(metric) && !s.amrap) return '<div class="play-timed">' + button + startControl(b.id, i, field) + '</div>';
     return button;
   }
   function setRows(b) {
@@ -2319,11 +2318,11 @@ button {
     const plan = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].text || '0');
     const actual = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].actual || plan);
     const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === step.setIndex;
-    const timedWarm = step.section === 'Warm-up' && isTimedMetric(b.metric) && !step.amrap;
+    const timedWarm = isTimedMetric(b.metric) && !step.amrap;
     const value = step.amrap
       ? '<div class="lib-cell">AMRAP</div><p class="lib-empty" style="text-align:left;padding:8px 0 0">As many reps as you can.</p>'
       : timedWarm
-        ? '<div class="play-timed-work">' + startControl(b.id, step.setIndex) + '</div>'
+        ? '<div class="play-timed-work">' + startControl(b.id, step.setIndex, 'text') + '</div>'
         : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
     const last = state.workout.index >= steps.length - 1;
     const action = last
@@ -2709,13 +2708,15 @@ button {
       state.clock = null;
       render(true);
     },
-    startClock(id, index) {
+    startClock(id, index, field) {
       const b = block(id);
       const set = b && b.sets[index];
-      const total = set ? durationMs(set.text) : 0;
-      if (!b || !isWarmup(b) || !isTimedMetric(b.metric) || !total) return;
+      const which = field === 'extra' ? 'extra' : 'text';
+      const metric = b ? columnMetric(b, which) : '';
+      const total = set ? durationMs(which === 'extra' ? set.extra : set.text) : 0;
+      if (!b || !isTimedMetric(metric) || !total) return;
       state.pad = null;
-      state.clock = { blockId: id, setIndex: index, totalMs: total, endsAt: Date.now() + total };
+      state.clock = { blockId: id, setIndex: index, field: which, totalMs: total, endsAt: Date.now() + total };
       render();
     }
   };
@@ -2723,7 +2724,7 @@ button {
   setInterval(() => {
     if (!state.clock) return;
     const left = clockLeft();
-    const node = document.querySelector('[data-clock="' + state.clock.blockId + '-' + state.clock.setIndex + '"]');
+    const node = document.querySelector('[data-clock="' + state.clock.blockId + '-' + state.clock.setIndex + '-' + state.clock.field + '"]');
     if (left <= 0) { state.clock = null; render(); return; }
     if (!node) return;
     const strong = node.querySelector('strong');
