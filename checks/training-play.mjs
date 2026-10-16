@@ -70,6 +70,9 @@ const play = boot();
 play.Play.restart();
 let page = play.view.innerHTML;
 must(page.includes('>Session Template<'), 'editor did not open');
+for (const name of ['Linear Weight Progression', 'Watts', 'Calories', 'Inches', 'Velocity (m/s)', 'Other']) {
+  must(!page.includes('>' + name + '<'), name + ' is still a metric');
+}
 must(page.includes('>Back Squat<') && page.includes('>Bench Press<'), 'seeded lifts are missing');
 must(page.includes('>A<') && page.includes('>B<') && page.includes('>C1<') && page.includes('>C2<'), 'letters are ' + page.match(/lib-letter">([^<]+)/g));
 must(page.includes('− Superset'), 'accessory superset marker is missing');
