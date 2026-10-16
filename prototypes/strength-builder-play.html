@@ -1940,28 +1940,13 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. The warm-up is three rounds. After the third round, Next goes to the lifts.</p>
+<p class="play-note">One file. Save it, then open it in a browser. This is the warm-up: three rounds, then it starts again.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
 </div>
 <script>
 (function () {
-  const CATALOG = [
-    ['back_squat', 'Back Squat'],
-    ['bench_press', 'Bench Press'],
-    ['lat_pull_downs', 'Lat Pull Downs'],
-    ['front_squat', 'Front Squat'],
-    ['romanian_deadlift', 'Romanian Deadlift'],
-    ['goblet_box_squat', 'Goblet Box Squat'],
-    ['reverse_hypers', 'Reverse Hypers'],
-    ['farmer_carry', 'Farmer Carry']
-  ];
-  const PRESET = {
-    back_squat: { metric: 'reps', sets: ['10', '8', '6'], tempo: ['2', '0', 'X', '1'] },
-    bench_press: { metric: 'range', sets: ['6-8', '6-8', '6-8'], tempo: ['3', '3', 'X', '1'] },
-    lat_pull_downs: { metric: 'reps', sets: ['10', '10', '10'], tempo: ['', '', '', ''] }
-  };
   const WARMUPS = [
     ['bike', 'Bike', 'seconds', ['180']],
     ['row', 'Row', 'meters', ['500']],
@@ -1973,16 +1958,6 @@ button {
     ['worlds_greatest', 'World\'s Greatest Stretch', 'reps', ['5', '5']],
     ['dead_bug', 'Dead Bug', 'reps', ['8', '8']],
     ['inchworm', 'Inchworm', 'reps', ['6']]
-  ];
-  const COOLDOWNS = [
-    ['walk', 'Walk', 'meters', ['400']],
-    ['easy_bike', 'Easy Bike', 'seconds', ['180']],
-    ['couch_stretch', 'Couch Stretch', 'seconds', ['60', '60']],
-    ['pigeon', 'Pigeon', 'seconds', ['60', '60']],
-    ['hamstring_stretch', 'Hamstring Stretch', 'seconds', ['45', '45']],
-    ['breathing', 'Breathing', 'seconds', ['60']],
-    ['foam_roll', 'Foam Roll', 'seconds', ['60']],
-    ['childs_pose', 'Child\'s Pose', 'seconds', ['60']]
   ];
   const KEY = 'strength-builder-play';
 
@@ -2005,11 +1980,8 @@ button {
       selected: [],
       superset: [],
       warmups: ['bike', 'row', 'band_pull_apart', 'bodyweight_squat', 'worlds_greatest', 'dead_bug'].map((id) => threeRounds(makePrep(WARMUPS, id))),
-      blocks: [],
-      cooldowns: [],
       activeId: null,
       pad: null,
-      workout: null,
       date: new Date().toISOString().slice(0, 10),
       posted: '',
       confirm: '',
@@ -2023,10 +1995,8 @@ button {
   function load() {
     try {
       const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
-      if (saved && saved.screen) {
+      if (saved && (saved.screen === 'warm' || saved.screen === 'warmEdit' || saved.screen === 'notes')) {
         saved.warmups = saved.warmups || [];
-        saved.cooldowns = saved.cooldowns || [];
-        saved.blocks = saved.blocks || [];
         saved.clock = null;
         saved.timer = null;
         saved.setAt = saved.setAt || 0;
@@ -2097,7 +2067,7 @@ button {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
   function block(id) {
-    return state.blocks.find((b) => b.id === id) || state.warmups.find((b) => b.id === id) || state.cooldowns.find((b) => b.id === id);
+    return state.warmups.find((b) => b.id === id);
   }
   function lettersFor(blocks) {
     const used = {};
@@ -2112,8 +2082,6 @@ button {
   }
   function letters() {
     lettersFor(state.warmups);
-    lettersFor(state.blocks);
-    lettersFor(state.cooldowns);
   }
   const METRICS = [
     ['reps', 'Reps'], ['range', 'Rep Range'],
@@ -2175,29 +2143,28 @@ button {
     </div>`;
   }
 
-  function prepCatalog(which) { return which === 'cool' ? COOLDOWNS : WARMUPS; }
-  function prepItems(which) { return which === 'cool' ? state.cooldowns : state.warmups; }
-  function prepListHtml(which) {
-    const cool = which === 'cool';
-    const items = prepItems(which);
+  function prepCatalog() { return WARMUPS; }
+  function prepItems() { return state.warmups; }
+  function prepListHtml() {
+    const items = prepItems();
     const q = state.query.trim().toLowerCase();
-    const rows = prepCatalog(which).filter((row) => row[1].toLowerCase().includes(q)).map((row) => {
+    const rows = prepCatalog().filter((row) => row[1].toLowerCase().includes(q)).map((row) => {
       const on = state.selected.includes(row[0]);
       const have = items.some((b) => b.catalogId === row[0]);
       return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="Play.togglePick('${row[0]}')"><b>${esc(row[1])}</b><span class="lib-unit">${esc(metricName(row[2]))}</span><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
     }).join('') || '<div class="lib-empty">No results.</div>';
     const n = state.selected.length;
     const label = items.length ? 'Next' : 'Skip';
-    const action = items.length ? 'Play.startPrep(\'' + which + '\')' : (cool ? 'Play.calendar()' : 'Play.goPick()');
+    const action = items.length ? 'Play.startPrep()' : 'Play.goWarm()';
     return `<div class="shell-screen shell-screen--library">
       <div class="lib-head-row">
-        <button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.backCool()' : 'Play.goNotes()'}">←</button>
-        <h1>${cool ? 'Cool-down' : 'Warm-up'}</h1>
+        <button type="button" class="lib-back" aria-label="Back" onclick="Play.goNotes()">←</button>
+        <h1>Warm-up</h1>
         <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addSelected()">Add${n ? ' (' + n + ')' : ''}</button>
       </div>
       ${chosenPrepHtml(items)}
       ${n === 1 ? '<p class="lib-empty">Add keeps this on the list.</p>' : ''}
-      <div class="lib-search"><input value="${esc(state.query)}" placeholder="${cool ? 'Search cool-downs' : 'Search warm-ups'}" aria-label="${cool ? 'Search cool-downs' : 'Search warm-ups'}" oninput="Play.search(this.value)"></div>
+      <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search warm-ups" aria-label="Search warm-ups" oninput="Play.search(this.value)"></div>
       <div id="libResults">${rows}</div>
       ${nextBar(label, action, n !== 0)}
       ${nav()}
@@ -2211,73 +2178,6 @@ button {
       return '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top">' + open + '<button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>';
     }).join('');
   }
-  function prepCard(b) {
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b, state.screen === 'warmEdit' ? (state.setAt || 0) : null) + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
-  }
-  function prepEditorHtml(which) {
-    letters();
-    const cool = which === 'cool';
-    const items = prepItems(which);
-    const at = Math.max(0, items.findIndex((b) => b.id === state.activeId));
-    const b = items[at];
-    if (!b) return '';
-    const roundSteps = cool ? [] : warmSteps().filter((s) => s.setIndex === (state.setAt || 0));
-    const roundAt = cool ? at : Math.max(0, roundSteps.findIndex((s) => s.blockId === b.id));
-    const heading = cool ? (at + 1) + ' of ' + items.length : 'Round ' + ((state.setAt || 0) + 1);
-    const place = cool ? '' : '<p class="play-step">' + (roundAt + 1) + ' of ' + roundSteps.length + '</p>';
-    const last = at >= items.length - 1;
-    const action = !cool
-      ? '<button type="button" class="btn oled-cta" onclick="Play.advanceWarm()">Next</button>'
-      : !last
-        ? '<button type="button" class="btn oled-cta" onclick="Play.nextPrep()">Next</button>'
-        : '<button type="button" class="btn oled-cta" onclick="Play.calendar()">Next</button>';
-    return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.backWarm()'}">←</button><h1>${heading}</h1></div>
-      ${place}
-      ${prepCard(b)}
-      <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
-    </div>`;
-  }
-
-  function pickHtml() {
-    const q = state.query.trim().toLowerCase();
-    const rows = CATALOG.filter(([, title]) => title.toLowerCase().includes(q)).map(([id, title]) => {
-      const on = state.selected.includes(id);
-      const have = state.blocks.some((b) => b.catalogId === id);
-      const metric = (PRESET[id] || { metric: 'reps' }).metric;
-      return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="Play.togglePick('${id}')"><b>${esc(title)}</b><span class="lib-unit">${esc(metricName(metric))}</span><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
-    }).join('') || '<div class="lib-empty">No results.</div>';
-    const n = state.selected.length;
-    return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row">
-        <button type="button" class="lib-back" aria-label="Back" onclick="Play.backPick()">←</button>
-        <h1>Exercises</h1>
-        <button type="button" class="lib-text-btn" ${n < 2 ? 'disabled' : ''} onclick="Play.addSuperset()">Superset</button>
-        <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="Play.addSelected()">Add${n ? ' (' + n + ')' : ''}</button>
-      </div>
-      ${chosenHtml()}
-      ${n === 1 ? '<p class="lib-empty">Add keeps this on the list.</p>' : ''}
-      ${n >= 2 ? '<p class="lib-empty">Superset groups these ' + n + '.</p>' : ''}
-      <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
-      <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
-      <div id="libResults">${rows}</div>
-      ${nextBar(state.blocks.length ? 'Next' : 'Add a lift', 'Play.startLifts()', n !== 0 || !state.blocks.length)}
-      ${nav()}
-    </div>`;
-  }
-
-  function chosenHtml() {
-    letters();
-    if (!state.blocks.length) return '';
-    let body = '';
-    state.blocks.forEach((b, i) => {
-      const prev = state.blocks[i - 1];
-      if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
-      body += '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3></div><button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>';
-    });
-    return body;
-  }
-
   function setCell(b, s, i, field) {
     const metric = columnMetric(b, field);
     if (!metric) return '';
@@ -2302,35 +2202,31 @@ button {
     const steps = warmSteps();
     const id = state.timer ? state.timer.blockId : state.activeId;
     const setIndex = state.timer ? state.timer.setIndex : (state.setAt || 0);
-    const at = steps.findIndex((s) => s.blockId === id && s.setIndex === setIndex);
-    return { steps, at };
+    return { steps, at: steps.findIndex((s) => s.blockId === id && s.setIndex === setIndex) };
   }
-  function openCard(b) {
-    if (b.prep) return prepCard(b);
-    const tempo = b.tempo || ['', '', '', ''];
-    const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
-    const two = !!columnMetric(b, 'extra');
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select><select aria-label="Second metric for ' + esc(b.title) + '" onchange="Play.metric2(\'' + b.id + '\', this.value)">' + metricOptions(b.metric2 || 'none', true) + '</select></div></div><div class="lib-grid set-grid' + (two ? ' has-two' : '') + '"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + (two ? '<div class="lib-grid-h">' + esc(metricName(b.metric2)) + '</div>' : '') + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
+  function prepCard(b) {
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b, state.screen === 'warmEdit' ? (state.setAt || 0) : null) + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
   }
-  function editorHtml() {
+  function prepEditorHtml() {
     letters();
-    const at = Math.max(0, state.blocks.findIndex((b) => b.id === state.activeId));
-    const b = state.blocks[at];
+    const items = prepItems();
+    const at = Math.max(0, items.findIndex((b) => b.id === state.activeId));
+    const b = items[at];
     if (!b) return '';
-    const mates = b.groupId ? state.blocks.filter((x) => x.groupId === b.groupId) : [];
-    const mate = mates.length > 1 ? '<p class="play-mate">Superset ' + mates.map((x) => esc(x.letter)).join(' · ') + '</p>' : '';
-    const last = at >= state.blocks.length - 1;
-    const action = last
-      ? '<button type="button" class="btn oled-cta" onclick="Play.goCool()">Next</button>'
-      : '<button type="button" class="btn oled-cta" onclick="Play.nextLift()">Next</button>';
-    const post = '';
+    const roundSteps = warmSteps().filter((s) => s.setIndex === (state.setAt || 0));
+    const roundAt = Math.max(0, roundSteps.findIndex((s) => s.blockId === b.id));
+    const heading = 'Round ' + ((state.setAt || 0) + 1);
+    const place = '<p class="play-step">' + (roundAt + 1) + ' of ' + roundSteps.length + '</p>';
+    const action = '<button type="button" class="btn oled-cta" onclick="Play.advanceWarm()">Next</button>';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goPick()">←</button><h1>${at + 1} of ${state.blocks.length}</h1>${post}</div>
-      ${mate}
-      ${openCard(b)}
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backWarm()">←</button><h1>${heading}</h1></div>
+      ${place}
+      ${prepCard(b)}
       <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
     </div>`;
   }
+
+
   function padHtml() {
     if (!state.pad) return '';
     const b = block(state.pad.blockId);
@@ -2344,81 +2240,6 @@ button {
     const padName = metricName(metric) + ' keypad';
     return '<div class="photo-pad" role="dialog" aria-label="' + padName + '"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">' + unit + '</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || '') + '</p></div>';
   }
-  function workoutSteps() {
-    const steps = [];
-    const push = (section, blocks) => blocks.forEach((b) => b.sets.forEach((s, i) => steps.push({ section, blockId: b.id, setIndex: i, amrap: !!s.amrap })));
-    push('Warm-up', state.warmups);
-    push('Lift', state.blocks);
-    push('Cool-down', state.cooldowns);
-    return steps;
-  }
-  function sessionLines(items) {
-    letters();
-    let body = '';
-    items.forEach((b, i) => {
-      const prev = items[i - 1];
-      if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
-      const tempo = tempoText(b);
-      body += '<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b) + (tempo ? ' · ' + tempo : '')) + '</p></div></div></article>';
-    });
-    return body;
-  }
-  function calendarHtml() {
-    const ready = workoutSteps().length > 0;
-    const section = (title, items) => items.length ? '<p class="play-step">' + title + '</p>' + sessionLines(items) : '';
-    return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backCalendar()">←</button><h1>${esc(state.title || 'Workout')}</h1></div>
-      ${section('Warm-up', state.warmups)}
-      ${section('Lifts', state.blocks)}
-      ${section('Cool-down', state.cooldowns)}
-      <div style="padding:8px 16px 0"><button type="button" class="lib-primary" ${ready ? '' : 'disabled'} onclick="Play.startWorkout()">Start workout</button></div>
-      <div class="lib-field"><label for="sessionPostDate">Session date</label><input id="sessionPostDate" type="date" value="${esc(state.date)}" onchange="Play.field('date', this.value)"></div>
-      <div style="padding:0 16px"><button type="button" class="lib-text-btn" onclick="Play.confirmDate()">Post to calendar</button></div>
-      <p class="lib-empty">${esc(state.posted || '')}</p>
-      ${nav()}
-    </div>`;
-  }
-  function workoutHtml() {
-    const steps = workoutSteps();
-    const step = steps[state.workout?.index || 0];
-    if (!step) return calendarHtml();
-    const b = block(step.blockId);
-    const unit = b.metric === 'seconds' ? 'seconds' : b.metric === 'meters' ? 'meters' : 'reps';
-    const plan = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].text || '0');
-    const actual = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].actual || plan);
-    const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === step.setIndex;
-    const value = step.amrap
-      ? '<div class="lib-cell">AMRAP</div><p class="lib-empty" style="text-align:left;padding:8px 0 0">As many reps as you can.</p>'
-      : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
-    const last = state.workout.index >= steps.length - 1;
-    const action = last
-      ? '<button type="button" class="btn oled-cta" onclick="Play.finishWorkout()">Done</button>'
-      : '<button type="button" class="btn oled-cta" onclick="Play.nextWorkout()">Next</button>';
-    return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backWorkout()">←</button><h1>${state.workout.index + 1} of ${steps.length}</h1></div>
-      <p class="play-step">${esc(step.section)}</p>
-      <article class="lib-block open-card lib-ex"><div class="lib-ex-top"><span class="lib-letter">${esc(b.letter)}</span><h3>${esc(b.title)}</h3></div><div class="meta">Set ${step.setIndex + 1} of ${b.sets.length}${step.amrap ? '' : ' · plan ' + esc(plan)}</div><div class="lib-grid-h">${esc(step.amrap ? 'Reps' : metricName(b.metric === 'range' ? 'reps' : b.metric))}</div>${value}</article>
-      <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
-    </div>`;
-  }
-  function loggedLine(b) {
-    const bits = b.sets.map((s) => s.amrap ? 'AMRAP' : (s.actual || s.text || '0'));
-    const unit = b.metric === 'seconds' ? ' sec' : b.metric === 'meters' ? ' m' : '';
-    return bits.join(' / ') + unit;
-  }
-  function finishHtml() {
-    const section = (title, items) => items.length ? '<p class="play-step">' + title + '</p>' + items.map((b) => '<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(loggedLine(b)) + '</p></div></div></article>').join('') : '';
-    return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><span class="lib-back"></span><h1>Done</h1></div>
-      <p class="lib-empty" style="text-align:left">${esc(state.title)}</p>
-      ${section('Warm-up', state.warmups)}
-      ${section('Lifts', state.blocks)}
-      ${section('Cool-down', state.cooldowns)}
-      <div style="padding:8px 16px 0"><button type="button" class="lib-primary" onclick="Play.calendar()">Back to workout</button></div>
-      ${nav()}
-    </div>`;
-  }
-
   function split(buffer) {
     const text = String(buffer || '');
     const dash = text.indexOf('-');
@@ -2448,9 +2269,9 @@ button {
     const view = document.getElementById('view');
     const y = view.scrollTop;
     const previous = render.screen;
-    const editing = state.screen === 'edit' || state.screen === 'warmEdit' || state.screen === 'coolEdit' || state.screen === 'workout';
+    const editing = state.screen === 'warmEdit';
     phone.classList.toggle('has-pad', editing && !!state.pad);
-    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'warm' ? prepListHtml('warm') : state.screen === 'warmEdit' ? prepEditorHtml('warm') : state.screen === 'pick' ? pickHtml() : state.screen === 'cool' ? prepListHtml('cool') : state.screen === 'coolEdit' ? prepEditorHtml('cool') : state.screen === 'calendar' ? calendarHtml() : state.screen === 'workout' ? workoutHtml() : state.screen === 'finish' ? finishHtml() : editorHtml();
+    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'warmEdit' ? prepEditorHtml() : prepListHtml();
     view.innerHTML = '<div class="shell">' + html + timerHtml() + '</div>';
     if (scrollToOpen && editing) view.scrollTop = 0;
     else if (scrollToOpen && state.confirmAnchor) view.querySelector('[data-added="' + state.confirmAnchor + '"]')?.scrollIntoView({ block: 'nearest' });
@@ -2475,64 +2296,23 @@ button {
     };
   }
 
-  function makeBlock(catalogId, groupId) {
-    const title = CATALOG.find((c) => c[0] === catalogId)[1];
-    const preset = PRESET[catalogId] || { metric: 'reps', sets: ['8', '8', '8'], tempo: ['', '', '', ''] };
-    return {
-      id: catalogId + '-' + Math.random().toString(36).slice(2, 7),
-      catalogId, title, groupId: groupId || null,
-      metric: preset.metric,
-      metric2: 'none',
-      sets: preset.sets.map((text) => ({ text, amrap: false })),
-      tempo: preset.tempo.slice(),
-      notes: '',
-      notice: ''
-    };
-  }
-
   const Play = {
     restart() { state = fresh(); render(); },
     field(key, value) { state[key] = value; save(); },
     goNotes() { state.screen = 'notes'; state.pad = null; state.selected = []; state.query = ''; render(); },
-    goWarm() { state.screen = 'warm'; state.pad = null; state.selected = []; state.query = ''; render(); },
-    goPick() { state.screen = 'pick'; state.pad = null; state.selected = []; state.query = ''; render(); },
-    goCool() { state.screen = 'cool'; state.pad = null; state.selected = []; state.query = ''; render(); },
-    backPick() { state.pad = null; state.screen = state.blocks.length ? 'edit' : 'warm'; render(true); },
-    backCool() {
-      state.pad = null;
-      state.selected = [];
-      state.query = '';
-      if (state.blocks.length) {
-        state.activeId = state.blocks[state.blocks.length - 1].id;
-        state.screen = 'edit';
-      } else state.screen = 'pick';
-      render(true);
-    },
-    backCalendar() {
-      state.pad = null;
-      if (state.cooldowns.length) {
-        state.activeId = state.activeId && state.cooldowns.some((b) => b.id === state.activeId) ? state.activeId : state.cooldowns[state.cooldowns.length - 1].id;
-        state.screen = 'coolEdit';
-      } else state.screen = 'cool';
-      render(true);
-    },
+    goWarm() { state.screen = 'warm'; state.pad = null; state.clock = null; state.timer = null; state.selected = []; state.query = ''; render(); },
     search(value) {
       state.query = value;
       save();
       const box = document.getElementById('libResults');
       if (!box) return render();
       const hold = document.activeElement;
-      const html = state.screen === 'warm' ? prepListHtml('warm') : state.screen === 'cool' ? prepListHtml('cool') : pickHtml();
-      document.getElementById('view').innerHTML = '<div class="shell">' + html + '</div>';
+      document.getElementById('view').innerHTML = '<div class="shell">' + prepListHtml() + '</div>';
       const input = document.querySelector('.lib-search input');
       if (input) { input.focus(); input.setSelectionRange(value.length, value.length); }
       else hold?.focus?.();
     },
-    laneItems() {
-      if (state.screen === 'warm' || state.screen === 'warmEdit') return state.warmups;
-      if (state.screen === 'cool' || state.screen === 'coolEdit') return state.cooldowns;
-      return state.blocks;
-    },
+    laneItems() { return state.warmups; },
     togglePick(id) {
       if (Play.laneItems().some((b) => b.catalogId === id)) return;
       const at = state.selected.indexOf(id);
@@ -2544,61 +2324,30 @@ button {
       if (!state.selected.length) return;
       Play.commitSelected(false);
     },
-    addSuperset() {
-      if (state.selected.length < 2) return;
-      Play.commitSelected(true);
-    },
-    commitSelected(asSuperset) {
-      if (state.screen === 'warm' || state.screen === 'cool') {
-        const which = state.screen === 'cool' ? 'cool' : 'warm';
-        const items = prepItems(which);
-        const added = [];
-        state.selected.forEach((id) => {
-          if (items.some((b) => b.catalogId === id)) return;
-          const made = makePrep(prepCatalog(which), id);
-          if (which === 'warm') fitRounds(made, warmRoundCount());
-          items.push(made);
-          added.push(made);
-        });
-        state.selected = [];
-        state.query = '';
-        letters();
-        state.confirm = '';
-        state.confirmAnchor = added[0] ? added[0].id : '';
-        render(true);
-        return;
-      }
-      const group = asSuperset ? 'ss-' + Date.now() : null;
+    commitSelected() {
+      const items = prepItems();
       const added = [];
       state.selected.forEach((id) => {
-        if (state.blocks.some((b) => b.catalogId === id)) return;
-        const made = makeBlock(id, group);
-        state.blocks.push(made);
+        if (items.some((b) => b.catalogId === id)) return;
+        const made = fitRounds(makePrep(prepCatalog(), id), warmRoundCount());
+        items.push(made);
         added.push(made);
       });
       state.selected = [];
-      state.superset = [];
       state.query = '';
       letters();
       state.confirm = '';
       state.confirmAnchor = added[0] ? added[0].id : '';
-      state.screen = 'pick';
       render(true);
     },
-    startPrep(which) {
-      const items = prepItems(which);
+    startPrep() {
+      const items = prepItems();
       if (state.selected.length || !items.length) return;
       state.confirmAnchor = '';
       state.pad = null;
-      if (which !== 'cool') {
-        const steps = warmSteps();
-        if (!steps.length) return;
-        Play.openWarmStep(steps[0], true);
-        return;
-      }
-      state.activeId = items[0].id;
-      state.screen = 'coolEdit';
-      render(true);
+      const steps = warmSteps();
+      if (!steps.length) return;
+      Play.openWarmStep(steps[0], true);
     },
     openWarmStep(step, autoStart) {
       state.activeId = step.blockId;
@@ -2628,7 +2377,7 @@ button {
       state.clock = null;
       state.pad = null;
       state.timer = null;
-      if (!next) { Play.goPick(); return; }
+      if (!next) { Play.goWarm(); return; }
       Play.openWarmStep(next, true);
     },
     backWarm() {
@@ -2639,38 +2388,6 @@ button {
       state.timer = null;
       if (!prev) { Play.goWarm(); return; }
       Play.openWarmStep(prev, false);
-    },
-    nextPrep() {
-      const warm = state.warmups.some((b) => b.id === state.activeId);
-      const items = warm ? state.warmups : state.cooldowns;
-      const at = items.findIndex((b) => b.id === state.activeId);
-      const next = items[at + 1];
-      if (!next) {
-        if (warm) Play.goPick();
-        return;
-      }
-      state.activeId = next.id;
-      state.pad = null;
-      render(true);
-    },
-    startLifts() {
-      if (state.selected.length || !state.blocks.length) return;
-      state.confirm = '';
-      state.confirmAnchor = '';
-      Play.openBlock(state.blocks[0].id);
-    },
-    nextLift() {
-      const at = state.blocks.findIndex((b) => b.id === state.activeId);
-      const next = state.blocks[at + 1];
-      if (!next) return;
-      Play.openBlock(next.id);
-    },
-    openEditor() { state.screen = 'edit'; render(true); },
-    openBlock(id) {
-      state.screen = 'edit';
-      state.activeId = id;
-      state.pad = null;
-      render(true);
     },
     openPad(id, index, field) {
       const b = block(id);
@@ -2735,105 +2452,32 @@ button {
       if (state.pad && state.pad.blockId === id && state.pad.field === 'extra' && b.metric2 === 'none') state.pad = null;
       render();
     },
-    tempo(id, index, value) {
-      const b = block(id);
-      b.tempo[index] = String(value || '').slice(0, 1);
-      save();
-    },
     notes(id, value) { block(id).notes = value; save(); },
     nudge(id, dir) {
-      const b = block(id);
-      if (state.warmups.some((item) => item.id === id)) {
-        const count = warmRoundCount();
-        const next = dir > 0 ? Math.min(12, count + 1) : Math.max(1, count - 1);
-        if (next !== count) state.warmups.forEach((item) => fitRounds(item, next));
-        if (state.setAt >= next) state.setAt = next - 1;
-        render();
-        return;
-      }
-      const amrap = b.sets.filter((s) => s.amrap);
-      const work = b.sets.filter((s) => !s.amrap);
-      if (dir < 0 && work.length > 1) work.pop();
-      if (dir > 0 && work.length < 12) work.push({ text: work.at(-1)?.text || '8', amrap: false });
-      b.sets = work.concat(amrap.slice(0, 1));
-      if (state.pad && state.pad.blockId === id && state.pad.setIndex >= b.sets.length) state.pad = null;
-      render();
-    },
-    amrap(id) {
-      const b = block(id);
-      if (b.sets.at(-1)?.amrap) b.sets.pop();
-      else b.sets.push({ text: '', amrap: true });
-      if (state.pad && state.pad.blockId === id && b.sets[state.pad.setIndex]?.amrap) state.pad = null;
+      const count = warmRoundCount();
+      const next = dir > 0 ? Math.min(12, count + 1) : Math.max(1, count - 1);
+      if (next !== count) state.warmups.forEach((item) => fitRounds(item, next));
+      if (state.setAt >= next) state.setAt = next - 1;
       render();
     },
     removeBlock(id) {
-      const key = state.warmups.some((b) => b.id === id) ? 'warmups' : state.cooldowns.some((b) => b.id === id) ? 'cooldowns' : 'blocks';
-      const at = state[key].findIndex((b) => b.id === id);
+      const at = state.warmups.findIndex((b) => b.id === id);
+      if (at < 0) return;
       const wasActive = state.activeId === id;
-      state[key] = state[key].filter((b) => b.id !== id);
+      state.warmups = state.warmups.filter((b) => b.id !== id);
       if (state.pad && state.pad.blockId === id) state.pad = null;
-      if (!state[key].length) {
+      if (state.timer && state.timer.blockId === id) { state.timer = null; state.clock = null; }
+      if (!state.warmups.length) {
         state.activeId = null;
-        state.pad = null;
-        if (key === 'warmups' && state.screen === 'warmEdit') state.screen = 'warm';
-        if (key === 'cooldowns' && (state.screen === 'coolEdit' || state.screen === 'calendar')) state.screen = 'cool';
-        if (key === 'blocks' && (state.screen === 'edit' || state.screen === 'calendar')) state.screen = 'pick';
+        state.screen = 'warm';
         render();
         return;
       }
       if (wasActive) {
-        state.activeId = (state[key][at] || state[key][at - 1] || state[key][0]).id;
+        state.activeId = (state.warmups[at] || state.warmups[at - 1] || state.warmups[0]).id;
         state.pad = null;
       }
       render();
-    },
-    reorder() {
-      const at = state.blocks.findIndex((b) => b.id === state.activeId);
-      if (at <= 0) return;
-      const [item] = state.blocks.splice(at, 1);
-      state.blocks.splice(at - 1, 0, item);
-      render(true);
-    },
-    calendar() { state.screen = 'calendar'; state.pad = null; render(); },
-    confirmDate() {
-      state.posted = 'Posted ' + state.title + ' on ' + state.date + '.';
-      state.screen = 'calendar';
-      render();
-    },
-    startWorkout() {
-      if (!workoutSteps().length) return;
-      [state.warmups, state.blocks, state.cooldowns].forEach((list) => list.forEach((b) => b.sets.forEach((s) => {
-        s.actual = s.amrap ? '' : (b.metric === 'range' ? String(s.text || '0').split('-')[0] : (s.text || '0'));
-      })));
-      state.workout = { index: 0 };
-      state.screen = 'workout';
-      state.pad = null;
-      render(true);
-    },
-    openWorkoutPad() {
-      const step = workoutSteps()[state.workout?.index || 0];
-      if (!step || step.amrap) return;
-      Play.openPad(step.blockId, step.setIndex);
-    },
-    nextWorkout() {
-      const steps = workoutSteps();
-      if (!state.workout || state.workout.index + 1 >= steps.length) return Play.finishWorkout();
-      state.workout.index += 1;
-      state.pad = null;
-      render(true);
-    },
-    backWorkout() {
-      state.pad = null;
-      if (!state.workout || state.workout.index <= 0) { state.screen = 'calendar'; render(true); return; }
-      state.workout.index -= 1;
-      render(true);
-    },
-    finishWorkout() {
-      state.screen = 'finish';
-      state.pad = null;
-      state.clock = null;
-      state.timer = null;
-      render(true);
     },
     startListed(id) {
       const b = block(id);
@@ -2844,38 +2488,7 @@ button {
       Play.beginTimer(id, 0, 'text');
     },
     closeTimer() { state.timer = null; state.clock = null; render(); },
-    nextAfterTimer() {
-      const timer = state.timer;
-      if (!timer) return;
-      const lanes = [
-        ['warmups', 'warmEdit', () => Play.goPick()],
-        ['cooldowns', 'coolEdit', () => Play.calendar()],
-        ['blocks', 'edit', () => Play.goCool()]
-      ];
-      if (state.warmups.some((b) => b.id === timer.blockId)) { Play.advanceWarm(); return; }
-      const lane = lanes.find((entry) => state[entry[0]].some((b) => b.id === timer.blockId));
-      const items = lane ? state[lane[0]] : [];
-      const blockAt = items.findIndex((b) => b.id === timer.blockId);
-      const current = items[blockAt];
-      const another = current && current.sets[timer.setIndex + 1] && isTimedMetric(current.metric);
-      state.clock = null;
-      state.pad = null;
-      if (another) {
-        state.timer = { blockId: current.id, setIndex: timer.setIndex + 1, field: 'text' };
-        Play.beginTimer(current.id, timer.setIndex + 1, 'text');
-        return;
-      }
-      const next = items[blockAt + 1];
-      state.timer = null;
-      if (!next) {
-        if (lane) lane[2]();
-        else Play.closeTimer();
-        return;
-      }
-      state.activeId = next.id;
-      state.screen = lane[1];
-      render(true);
-    },
+    nextAfterTimer() { if (state.timer) Play.advanceWarm(); },
     beginTimer(id, index, field) {
       const which = field === 'extra' ? 'extra' : 'text';
       const b = block(id);
