@@ -563,7 +563,6 @@
           <p class="log-note" id="effortHelp-${id}">${flow.draft.miss ? 'Enter the reps you actually completed.' : chosen ? EFFORT_COPY[chosen] : 'Rate the actual effort after completing your set.'}</p>
         </div>
         <button type="button" class="log-set-incomplete" aria-pressed="${!!flow.draft.miss}" onclick="Logger.setIncomplete('${id}')">Did Not Complete</button>
-        ${rows[flow.index]?.purpose === 'ramp' ? `<button type="button" class="log-set-skip" onclick="Logger.skipRamp('${id}')">Skip ramp</button>` : ''}
         <p class="log-set-error" role="status">${esc(flow.error || '')}</p>
         ${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`}`}`}
       </section>
@@ -799,17 +798,6 @@
       updateSetFlow(memberId, f => ({ ...f, rest: false, editing: false }));
       const t = timerState();
       if (t.mode === 'rest' && t.display === 'docked') persistTimer(HybridTimer.stop(t));
-    },
-    skipRamp(memberId) {
-      const s = JSON.parse(JSON.stringify(session()));
-      const page = HybridSession.currentPage(s);
-      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const f = setFlow(s, lift), rows = s.logs[memberId].sets;
-      if (rows[f.index]?.purpose !== 'ramp' || rows[f.index].logged) return;
-      rows[f.index].skipped = true;
-      const index = rows.findIndex(r=>!r.logged && !r.skipped), row = rows[index];
-      s.loggerSetFlow = {...(s.loggerSetFlow||{}),[memberId]:{index,rest:false,editing:false,draft:{reps:row?.reps??'',kg:row?.kg??'',effort:null,miss:false}}};
-      persist(s);
     },
     saveSet(memberId) {
       const s = session();
