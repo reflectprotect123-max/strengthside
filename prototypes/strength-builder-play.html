@@ -1986,10 +1986,15 @@ button {
   ];
   const KEY = 'strength-builder-play';
 
-  function threeRounds(block) {
+  function fitRounds(block, rounds) {
     const text = block.sets[0] ? block.sets[0].text : '0';
-    block.sets = [0, 1, 2].map(() => ({ text, amrap: false }));
+    const count = Math.max(1, rounds);
+    block.sets = Array.from({ length: count }, (_, i) => block.sets[i] ? { text: block.sets[i].text, amrap: !!block.sets[i].amrap } : { text, amrap: false });
     return block;
+  }
+  function threeRounds(block) { return fitRounds(block, 3); }
+  function warmRoundCount() {
+    return state.warmups.reduce((n, b) => Math.max(n, b.sets.length), 0) || 3;
   }
   function fresh() {
     return {
@@ -2551,6 +2556,7 @@ button {
         state.selected.forEach((id) => {
           if (items.some((b) => b.catalogId === id)) return;
           const made = makePrep(prepCatalog(which), id);
+          if (which === 'warm') fitRounds(made, warmRoundCount());
           items.push(made);
           added.push(made);
         });
@@ -2737,6 +2743,14 @@ button {
     notes(id, value) { block(id).notes = value; save(); },
     nudge(id, dir) {
       const b = block(id);
+      if (state.warmups.some((item) => item.id === id)) {
+        const count = warmRoundCount();
+        const next = dir > 0 ? Math.min(12, count + 1) : Math.max(1, count - 1);
+        if (next !== count) state.warmups.forEach((item) => fitRounds(item, next));
+        if (state.setAt >= next) state.setAt = next - 1;
+        render();
+        return;
+      }
       const amrap = b.sets.filter((s) => s.amrap);
       const work = b.sets.filter((s) => !s.amrap);
       if (dir < 0 && work.length > 1) work.pop();
