@@ -1897,6 +1897,7 @@ button {
   .phone .lib-block-top { align-items: center; }
   .phone .lib-grid.set-grid { grid-template-columns: 36px 1fr; }
   .lib-unit { color: #8e8e93; font-size: 13px; font-weight: 500; flex: none; }
+  .play-actual { font-size: 32px; }
   .play-next { padding: 0 16px 20px; }
   .play-confirm { text-align: left; padding: 4px 16px 8px; color: #fff; scroll-margin-top: 72px; }
   .play-step { margin: 4px 16px 8px; color: #8e8e93; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
@@ -1919,7 +1920,7 @@ button {
 </style>
 </head>
 <body>
-<p class="play-note">One file. Save it, then open it in a browser. Warm-up, then the lifts, then cool-down. Prep tracks reps, seconds, or meters.</p>
+<p class="play-note">One file. Save it, then open it in a browser. Build the warm-up, the lifts, and the cool-down. Start workout walks every set.</p>
 <button type="button" class="play-restart" onclick="Play.restart()">Restart</button>
 <div class="phone" id="phone">
   <div class="viewport" id="view"></div>
@@ -1978,6 +1979,7 @@ button {
       cooldowns: [],
       activeId: null,
       pad: null,
+      workout: null,
       date: new Date().toISOString().slice(0, 10),
       posted: '',
       confirm: '',
@@ -2130,7 +2132,8 @@ button {
     const rows = CATALOG.filter(([, title]) => title.toLowerCase().includes(q)).map(([id, title]) => {
       const on = state.selected.includes(id);
       const have = state.blocks.some((b) => b.catalogId === id);
-      return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="Play.togglePick('${id}')"><b>${esc(title)}</b><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
+      const metric = (PRESET[id] || { metric: 'reps' }).metric;
+      return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="Play.togglePick('${id}')"><b>${esc(title)}</b><span class="lib-unit">${esc(metricName(metric))}</span><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
     }).join('') || '<div class="lib-empty">No results.</div>';
     const n = state.selected.length;
     return `<div class="shell-screen shell-screen--library">
@@ -2208,13 +2211,78 @@ button {
     const padName = b.metric === 'seconds' ? 'Seconds keypad' : b.metric === 'meters' ? 'Meters keypad' : 'Reps keypad';
     return '<div class="photo-pad" role="dialog" aria-label="' + padName + '"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">' + unit + '</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || '') + '</p></div>';
   }
+  function workoutSteps() {
+    const steps = [];
+    const push = (section, blocks) => blocks.forEach((b) => b.sets.forEach((s, i) => steps.push({ section, blockId: b.id, setIndex: i, amrap: !!s.amrap })));
+    push('Warm-up', state.warmups);
+    push('Lift', state.blocks);
+    push('Cool-down', state.cooldowns);
+    return steps;
+  }
+  function sessionLines(items) {
+    letters();
+    let body = '';
+    items.forEach((b, i) => {
+      const prev = items[i - 1];
+      if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
+      const tempo = tempoText(b);
+      body += '<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b) + (tempo ? ' · ' + tempo : '')) + '</p></div></div></article>';
+    });
+    return body;
+  }
   function calendarHtml() {
+    const ready = workoutSteps().length > 0;
+    const section = (title, items) => items.length ? '<p class="play-step">' + title + '</p>' + sessionLines(items) : '';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backCalendar()">←</button><h1>Post to calendar</h1></div>
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backCalendar()">←</button><h1>${esc(state.title || 'Workout')}</h1></div>
+      ${section('Warm-up', state.warmups)}
+      ${section('Lifts', state.blocks)}
+      ${section('Cool-down', state.cooldowns)}
+      <div style="padding:8px 16px 0"><button type="button" class="lib-primary" ${ready ? '' : 'disabled'} onclick="Play.startWorkout()">Start workout</button></div>
       <div class="lib-field"><label for="sessionPostDate">Session date</label><input id="sessionPostDate" type="date" value="${esc(state.date)}" onchange="Play.field('date', this.value)"></div>
-      <p class="lib-empty" style="text-align:left;padding:0 16px 12px">Lands on your Training tab only.</p>
-      <div style="padding:0 16px"><button type="button" class="lib-primary" onclick="Play.confirmDate()">Post to calendar</button></div>
-      <p class="lib-empty">${esc(state.title)}</p>
+      <div style="padding:0 16px"><button type="button" class="lib-text-btn" onclick="Play.confirmDate()">Post to calendar</button></div>
+      <p class="lib-empty">${esc(state.posted || '')}</p>
+      ${nav()}
+    </div>`;
+  }
+  function workoutHtml() {
+    const steps = workoutSteps();
+    const step = steps[state.workout?.index || 0];
+    if (!step) return calendarHtml();
+    const b = block(step.blockId);
+    const unit = b.metric === 'seconds' ? 'seconds' : b.metric === 'meters' ? 'meters' : 'reps';
+    const plan = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].text || '0');
+    const actual = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].actual || plan);
+    const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === step.setIndex;
+    const value = step.amrap
+      ? '<div class="lib-cell">AMRAP</div><p class="lib-empty" style="text-align:left;padding:8px 0 0">As many reps as you can.</p>'
+      : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
+    const last = state.workout.index >= steps.length - 1;
+    const action = last
+      ? '<button type="button" class="btn oled-cta" onclick="Play.finishWorkout()">Done</button>'
+      : '<button type="button" class="btn oled-cta" onclick="Play.nextWorkout()">Next</button>';
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backWorkout()">←</button><h1>${state.workout.index + 1} of ${steps.length}</h1></div>
+      <p class="play-step">${esc(step.section)}</p>
+      <article class="lib-block open-card lib-ex"><div class="lib-ex-top"><span class="lib-letter">${esc(b.letter)}</span><h3>${esc(b.title)}</h3></div><div class="meta">Set ${step.setIndex + 1} of ${b.sets.length}${step.amrap ? '' : ' · plan ' + esc(plan)}</div><div class="lib-grid-h">${esc(step.amrap ? 'Reps' : metricName(b.metric === 'range' ? 'reps' : b.metric))}</div>${value}</article>
+      <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
+    </div>`;
+  }
+  function loggedLine(b) {
+    const bits = b.sets.map((s) => s.amrap ? 'AMRAP' : (s.actual || s.text || '0'));
+    const unit = b.metric === 'seconds' ? ' sec' : b.metric === 'meters' ? ' m' : '';
+    return bits.join(' / ') + unit;
+  }
+  function finishHtml() {
+    const section = (title, items) => items.length ? '<p class="play-step">' + title + '</p>' + items.map((b) => '<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(loggedLine(b)) + '</p></div></div></article>').join('') : '';
+    return `<div class="shell-screen shell-screen--library">
+      <div class="lib-head-row"><span class="lib-back"></span><h1>Done</h1></div>
+      <p class="lib-empty" style="text-align:left">${esc(state.title)}</p>
+      ${section('Warm-up', state.warmups)}
+      ${section('Lifts', state.blocks)}
+      ${section('Cool-down', state.cooldowns)}
+      <div style="padding:8px 16px 0"><button type="button" class="lib-primary" onclick="Play.calendar()">Back to workout</button></div>
+      ${nav()}
     </div>`;
   }
 
@@ -2228,8 +2296,10 @@ button {
     const set = b && b.sets[state.pad.setIndex];
     if (!set || set.amrap) return;
     const parts = split(state.pad.buffer);
-    if (b.metric !== 'range') {
-      set.text = (parts.left || '0').replace(/\D/g, '') || '0';
+    if (state.screen === 'workout' || b.metric !== 'range') {
+      const text = (parts.left || '0').replace(/\D/g, '') || '0';
+      if (state.screen === 'workout') set.actual = text;
+      else set.text = text;
       return;
     }
     if (!parts.dash) set.text = parts.left || '0';
@@ -2243,9 +2313,9 @@ button {
     const view = document.getElementById('view');
     const y = view.scrollTop;
     const previous = render.screen;
-    const editing = state.screen === 'edit' || state.screen === 'warmEdit' || state.screen === 'coolEdit';
+    const editing = state.screen === 'edit' || state.screen === 'warmEdit' || state.screen === 'coolEdit' || state.screen === 'workout';
     phone.classList.toggle('has-pad', editing && !!state.pad);
-    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'warm' ? prepListHtml('warm') : state.screen === 'warmEdit' ? prepEditorHtml('warm') : state.screen === 'pick' ? pickHtml() : state.screen === 'cool' ? prepListHtml('cool') : state.screen === 'coolEdit' ? prepEditorHtml('cool') : state.screen === 'calendar' ? calendarHtml() : editorHtml();
+    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'warm' ? prepListHtml('warm') : state.screen === 'warmEdit' ? prepEditorHtml('warm') : state.screen === 'pick' ? pickHtml() : state.screen === 'cool' ? prepListHtml('cool') : state.screen === 'coolEdit' ? prepEditorHtml('cool') : state.screen === 'calendar' ? calendarHtml() : state.screen === 'workout' ? workoutHtml() : state.screen === 'finish' ? finishHtml() : editorHtml();
     view.innerHTML = '<div class="shell">' + html + '</div>';
     if (scrollToOpen && editing) view.scrollTop = 0;
     else if (scrollToOpen && state.confirmAnchor) view.querySelector('[data-added="' + state.confirmAnchor + '"]')?.scrollIntoView({ block: 'nearest' });
@@ -2424,7 +2494,8 @@ button {
       const set = b.sets[index];
       state.activeId = id;
       if (!set || set.amrap) { state.pad = null; render(scroll); return; }
-      state.pad = { blockId: id, setIndex: index, buffer: set.text || '', side: 'left', fresh: true, error: '' };
+      const source = state.screen === 'workout' ? (set.actual || set.text || '') : (set.text || '');
+      state.pad = { blockId: id, setIndex: index, buffer: state.screen === 'workout' ? String(source).split('-')[0] : source, side: 'left', fresh: true, error: '' };
       render(scroll);
     },
     closePad() { state.pad = null; render(); },
@@ -2435,7 +2506,7 @@ button {
       const side = state.pad.side === 'right' && parts.dash ? 'right' : 'left';
       state.pad.error = '';
       if (key === '>' || key === '–' || key === '-') {
-        if (b.metric !== 'range') { state.pad.error = b.prep ? 'One number.' : 'Range needs Rep Range.'; render(); return; }
+        if (state.screen === 'workout' || b.metric !== 'range') { state.pad.error = state.screen === 'workout' || b.prep ? 'One number.' : 'Range needs Rep Range.'; render(); return; }
         parts.dash = true; state.pad.side = 'right'; state.pad.fresh = true;
       } else if (key === '<') { state.pad.side = 'left'; state.pad.fresh = true; }
       else if (key === '⌫') {
@@ -2521,7 +2592,40 @@ button {
     calendar() { state.screen = 'calendar'; state.pad = null; render(); },
     confirmDate() {
       state.posted = 'Posted ' + state.title + ' on ' + state.date + '.';
-      state.screen = 'edit';
+      state.screen = 'calendar';
+      render();
+    },
+    startWorkout() {
+      if (!workoutSteps().length) return;
+      [state.warmups, state.blocks, state.cooldowns].forEach((list) => list.forEach((b) => b.sets.forEach((s) => {
+        s.actual = s.amrap ? '' : (b.metric === 'range' ? String(s.text || '0').split('-')[0] : (s.text || '0'));
+      })));
+      state.workout = { index: 0 };
+      state.screen = 'workout';
+      state.pad = null;
+      render(true);
+    },
+    openWorkoutPad() {
+      const step = workoutSteps()[state.workout?.index || 0];
+      if (!step || step.amrap) return;
+      Play.openPad(step.blockId, step.setIndex);
+    },
+    nextWorkout() {
+      const steps = workoutSteps();
+      if (!state.workout || state.workout.index + 1 >= steps.length) return Play.finishWorkout();
+      state.workout.index += 1;
+      state.pad = null;
+      render(true);
+    },
+    backWorkout() {
+      state.pad = null;
+      if (!state.workout || state.workout.index <= 0) { state.screen = 'calendar'; render(true); return; }
+      state.workout.index -= 1;
+      render(true);
+    },
+    finishWorkout() {
+      state.screen = 'finish';
+      state.pad = null;
       render(true);
     }
   };
