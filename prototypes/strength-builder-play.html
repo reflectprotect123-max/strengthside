@@ -2005,7 +2005,8 @@ button {
       confirm: '',
       confirmAnchor: '',
       clock: null,
-      timer: null
+      timer: null,
+      setAt: 0
     };
   }
   let state = load();
@@ -2018,6 +2019,7 @@ button {
         saved.blocks = saved.blocks || [];
         saved.clock = null;
         saved.timer = null;
+        saved.setAt = saved.setAt || 0;
         return saved;
       }
     } catch (e) {}
@@ -2200,7 +2202,7 @@ button {
     }).join('');
   }
   function prepCard(b) {
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b) + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b, state.screen === 'warmEdit' ? (state.setAt || 0) : null) + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
   }
   function prepEditorHtml(which) {
     letters();
@@ -2209,14 +2211,19 @@ button {
     const at = Math.max(0, items.findIndex((b) => b.id === state.activeId));
     const b = items[at];
     if (!b) return '';
+    const roundSteps = cool ? [] : warmSteps().filter((s) => s.setIndex === (state.setAt || 0));
+    const roundAt = cool ? at : Math.max(0, roundSteps.findIndex((s) => s.blockId === b.id));
+    const heading = cool ? (at + 1) + ' of ' + items.length : 'Round ' + ((state.setAt || 0) + 1);
+    const place = cool ? '' : '<p class="play-step">' + (roundAt + 1) + ' of ' + roundSteps.length + '</p>';
     const last = at >= items.length - 1;
-    const action = !last
-      ? '<button type="button" class="btn oled-cta" onclick="Play.nextPrep()">Next</button>'
-      : cool
-        ? '<button type="button" class="btn oled-cta" onclick="Play.calendar()">Next</button>'
-        : '<button type="button" class="btn oled-cta" onclick="Play.goPick()">Next</button>';
+    const action = !cool
+      ? '<button type="button" class="btn oled-cta" onclick="Play.advanceWarm()">Next</button>'
+      : !last
+        ? '<button type="button" class="btn oled-cta" onclick="Play.nextPrep()">Next</button>'
+        : '<button type="button" class="btn oled-cta" onclick="Play.calendar()">Next</button>';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.goWarm()'}">←</button><h1>${at + 1} of ${items.length}</h1></div>
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="${cool ? 'Play.goCool()' : 'Play.goWarm()'}">←</button><h1>${heading}</h1></div>
+      ${place}
       ${prepCard(b)}
       <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
     </div>`;
@@ -2271,9 +2278,22 @@ button {
     const raw = field === 'extra' ? (s.extra || '') : (s.text || '0');
     return '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
   }
-  function setRows(b) {
+  function setRows(b, only) {
     const two = !!columnMetric(b, 'extra');
-    return b.sets.map((s, i) => '<span>' + (i + 1) + '</span>' + setCell(b, s, i, 'text') + (two ? setCell(b, s, i, 'extra') : '')).join('');
+    return b.sets.map((s, i) => ({ s, i })).filter((row) => only == null || row.i === only).map(({ s, i }) => '<span>' + (i + 1) + '</span>' + setCell(b, s, i, 'text') + (two ? setCell(b, s, i, 'extra') : '')).join('');
+  }
+  function warmSteps() {
+    const rounds = state.warmups.reduce((n, b) => Math.max(n, b.sets.length), 0);
+    const steps = [];
+    for (let r = 0; r < rounds; r++) state.warmups.forEach((b) => { if (b.sets[r]) steps.push({ blockId: b.id, setIndex: r }); });
+    return steps;
+  }
+  function warmAt() {
+    const steps = warmSteps();
+    const id = state.timer ? state.timer.blockId : state.activeId;
+    const setIndex = state.timer ? state.timer.setIndex : (state.setAt || 0);
+    const at = steps.findIndex((s) => s.blockId === id && s.setIndex === setIndex);
+    return { steps, at };
   }
   function openCard(b) {
     if (b.prep) return prepCard(b);
@@ -2558,10 +2578,40 @@ button {
       const items = prepItems(which);
       if (state.selected.length || !items.length) return;
       state.confirmAnchor = '';
-      state.activeId = items[0].id;
-      state.screen = which === 'cool' ? 'coolEdit' : 'warmEdit';
       state.pad = null;
+      if (which !== 'cool') {
+        const steps = warmSteps();
+        if (!steps.length) return;
+        Play.openWarmStep(steps[0], false);
+        return;
+      }
+      state.activeId = items[0].id;
+      state.screen = 'coolEdit';
       render(true);
+    },
+    openWarmStep(step, autoStart) {
+      state.activeId = step.blockId;
+      state.setAt = step.setIndex;
+      state.screen = 'warmEdit';
+      state.pad = null;
+      state.clock = null;
+      state.timer = null;
+      const b = block(step.blockId);
+      if (autoStart && b && isTimedMetric(b.metric)) {
+        state.timer = { blockId: step.blockId, setIndex: step.setIndex, field: 'text' };
+        Play.beginTimer(step.blockId, step.setIndex, 'text');
+        return;
+      }
+      render(true);
+    },
+    advanceWarm() {
+      const { steps, at } = warmAt();
+      const next = steps[at + 1];
+      state.clock = null;
+      state.pad = null;
+      state.timer = null;
+      if (!next) { Play.goPick(); return; }
+      Play.openWarmStep(next, true);
     },
     nextPrep() {
       const warm = state.warmups.some((b) => b.id === state.activeId);
@@ -2753,6 +2803,8 @@ button {
     startListed(id) {
       const b = block(id);
       if (!b || !isTimedMetric(b.metric)) return;
+      state.activeId = id;
+      state.setAt = 0;
       state.timer = { blockId: id, setIndex: 0, field: 'text' };
       Play.beginTimer(id, 0, 'text');
     },
@@ -2765,6 +2817,7 @@ button {
         ['cooldowns', 'coolEdit', () => Play.calendar()],
         ['blocks', 'edit', () => Play.goCool()]
       ];
+      if (state.warmups.some((b) => b.id === timer.blockId)) { Play.advanceWarm(); return; }
       const lane = lanes.find((entry) => state[entry[0]].some((b) => b.id === timer.blockId));
       const items = lane ? state[lane[0]] : [];
       const blockAt = items.findIndex((b) => b.id === timer.blockId);
