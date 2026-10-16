@@ -26,6 +26,10 @@ The play files stay the locked references. The behavior moves into `apps/athlete
 
 Start Session uses the logger path already on this branch. Warm-up blocks use `role: 'warmup'`. Cool-down blocks use `role: 'cooldown'`. The logger plays warm-up rounds, then the lifts, then cool-down rounds. Timed prep starts its countdown. The hold counts 3. Prep does not ask for effort. A main lift opens on Ramp 1 of 2. There is no skip control. The working sets come after the two ramps.
 
+## APK
+
+The athlete app is what the APK loads. After the Library and logger work, stage `apps/athlete` into the Capacitor shell and build a local debug APK with `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh`. Package `com.hybrid.strength`. That APK is for install and review. It is not a Play Store or Capgo release.
+
 ## Out of scope
 
-Do not publish the APK. Do not change the warm-up lock or the tempo lock. Do not add metres, watts, calories, linear weight progression, inches, velocity, or other to the cool-down.
+Do not run Capgo or publish a release. Do not change the warm-up lock or the tempo lock. Do not add metres, watts, calories, linear weight progression, inches, velocity, or other to the cool-down.

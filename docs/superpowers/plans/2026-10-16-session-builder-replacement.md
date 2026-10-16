@@ -17,7 +17,7 @@
 - Cool-down tracks only `seconds` and `reps`.
 - Builder metric list is Reps, Rep Range, Weight (lb), Weight (kg), Weight (%), Time (mm:ss), Seconds, Miles, Yards, Meters, and Feet. No target weight field.
 - Main-lift ramps stay two sets, labeled Ramp, with no skip control.
-- Do not run Capgo, deploy, or merge.
+- The last task builds a local debug APK from `apps/athlete` with `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh`. Package `com.hybrid.strength`. Do not run Capgo or publish a release.
 - Edit `apps/shared/training-core.js` only if a contract change is required, then run `node scripts/sync-training-core.mjs`. This plan does not require that.
 
 ---
@@ -331,3 +331,37 @@ Expected: PASS
 git add checks/browser/session.spec.mjs apps/athlete/library-ui.js
 git commit -m "Walk one session from warm-up through Ramp."
 ```
+
+### Task 7: Build the local debug APK
+
+**Files:**
+- Modify: none of the product source unless `scripts/stage-athlete.mjs` reports a missing runtime file
+- Test: the APK zip listing
+
+**Interfaces:**
+- Consumes: the athlete app after Tasks 1–6
+- Produces: a debug APK under `apps/mobile/capacitor/android/app/build/outputs/apk/debug/` and a copy under `/opt/cursor/artifacts/` when that script copies it
+
+- [ ] **Step 1: Stage the athlete app into the shell**
+
+Run: `bash scripts/sync-athlete-app.sh`
+
+Expected: `apps/mobile/capacitor/www` contains `library-ui.js`, `logger.js`, and `session.js` from this branch.
+
+- [ ] **Step 2: Build the debug APK**
+
+Run: `bash apps/mobile/capacitor/scripts/build-dogfood-apk.sh`
+
+Expected: a debug APK for `com.hybrid.strength`. If the Android SDK or JDK is missing, stop and record that. Do not download signing keys and do not run Capgo.
+
+- [ ] **Step 3: Confirm the new builder is inside the APK**
+
+```bash
+unzip -l path/to/the-debug.apk | rg "library-ui.js|logger.js"
+```
+
+Expected: both files are packaged. `rg "Skip ramp" apps/mobile/capacitor/www/logger.js` finds nothing.
+
+- [ ] **Step 4: Commit only if a source fix was required**
+
+Do not commit the generated `www` assets or the APK. If Step 2 required a source fix, commit that fix with the test that covers it.
