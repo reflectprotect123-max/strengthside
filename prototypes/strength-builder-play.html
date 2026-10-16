@@ -1910,7 +1910,7 @@ button {
   .sum { margin: 2px 0 0; color: #8e8e93; font-size: 13px; font-weight: 500; }
   .lib-block h3 { font-size: 16px; }
   .open-card h3 { font-size: 26px; }
-  .tap-card { width: 100%; text-align: left; background: none; }
+  .tap-card { display: flex; align-items: center; gap: 10px; flex: 1; width: 100%; text-align: left; background: none; padding: 0; }
   .tm-full { position: absolute; inset: 0; z-index: 30; background: #000; display: flex; flex-direction: column; padding: 8px 16px 16px; }
   .tm-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .tm-head h2 { margin: 0; font-size: 22px; font-weight: 600; }
@@ -2191,7 +2191,10 @@ button {
   function chosenPrepHtml(items) {
     letters();
     if (!items.length) return '';
-    return items.map((b) => '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b)) + '</p></div><button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>').join('');
+    return items.map((b) => {
+      const open = isTimedMetric(b.metric) ? '<button type="button" class="tap-card" onclick="Play.startListed(\'' + b.id + '\')"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1;text-align:left"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b)) + '</p></div></button>' : '<span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b)) + '</p></div>';
+      return '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top">' + open + '<button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>';
+    }).join('');
   }
   function prepCard(b) {
     return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><label class="lib-notes"><textarea placeholder="Add notes or instructions here" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b) + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
@@ -2351,12 +2354,9 @@ button {
     const plan = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].text || '0');
     const actual = step.amrap ? 'AMRAP' : (b.sets[step.setIndex].actual || plan);
     const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === step.setIndex;
-    const timedWarm = isTimedMetric(b.metric) && !step.amrap;
     const value = step.amrap
       ? '<div class="lib-cell">AMRAP</div><p class="lib-empty" style="text-align:left;padding:8px 0 0">As many reps as you can.</p>'
-      : timedWarm
-        ? timerBody(b.id, step.setIndex, 'text')
-        : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
+      : '<button type="button" class="lib-cell play-actual' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (step.setIndex + 1) + ' ' + unit + '" onclick="Play.openWorkoutPad()">' + esc(actual) + '</button>';
     const last = state.workout.index >= steps.length - 1;
     const action = last
       ? '<button type="button" class="btn oled-cta" onclick="Play.finishWorkout()">Done</button>'
@@ -2599,10 +2599,8 @@ button {
       state.activeId = id;
       if (!set || (set.amrap && which === 'text')) { state.pad = null; render(); return; }
       if (isTimedMetric(columnMetric(b, which))) {
-        state.pad = null;
-        state.clock = null;
         state.timer = { blockId: id, setIndex: index, field: which };
-        render();
+        Play.beginTimer(id, index, which);
         return;
       }
       const source = which === 'extra' ? (set.extra || '') : (state.screen === 'workout' ? (set.actual || set.text || '') : (set.text || ''));
@@ -2748,6 +2746,12 @@ button {
       state.clock = null;
       state.timer = null;
       render(true);
+    },
+    startListed(id) {
+      const b = block(id);
+      if (!b || !isTimedMetric(b.metric)) return;
+      state.timer = { blockId: id, setIndex: 0, field: 'text' };
+      Play.beginTimer(id, 0, 'text');
     },
     closeTimer() { state.timer = null; state.clock = null; render(); },
     beginTimer(id, index, field) {
