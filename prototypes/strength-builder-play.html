@@ -2064,7 +2064,8 @@ button {
     const set = b && b.sets[index];
     if (!b || !set) return '';
     const which = field === 'extra' ? 'extra' : 'text';
-    const running = state.clock && state.clock.blockId === id && state.clock.setIndex === index && state.clock.field === which && clockLeft() > 0;
+    const same = state.clock && state.clock.blockId === id && state.clock.setIndex === index && state.clock.field === which;
+    const running = same && (state.clock.done || clockLeft() > 0);
     if (running) return ringHtml(id, index, which);
     const total = durationMs(which === 'extra' ? set.extra : set.text) || 60000;
     const m = Math.floor(total / 60000);
@@ -2076,7 +2077,9 @@ button {
     if (!state.timer) return '';
     const b = block(state.timer.blockId);
     if (!b) return '';
-    return '<div class="tm-full" role="dialog" aria-label="Timer"><div class="tm-head"><button type="button" class="lib-back" aria-label="Back" onclick="Play.closeTimer()">←</button><h2>' + esc(b.title) + '</h2></div>' + timerBody(state.timer.blockId, state.timer.setIndex, state.timer.field) + '</div>';
+    const done = state.clock && state.clock.done && state.clock.blockId === state.timer.blockId && state.clock.setIndex === state.timer.setIndex;
+    const next = done ? '<div class="play-dock"><div class="play-next"><button type="button" class="btn oled-cta" onclick="Play.nextAfterTimer()">Next</button></div></div>' : '';
+    return '<div class="tm-full" role="dialog" aria-label="Timer"><div class="tm-head"><button type="button" class="lib-back" aria-label="Back" onclick="Play.closeTimer()">←</button><h2>' + esc(b.title) + '</h2></div>' + timerBody(state.timer.blockId, state.timer.setIndex, state.timer.field) + next + '</div>';
   }
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2754,6 +2757,37 @@ button {
       Play.beginTimer(id, 0, 'text');
     },
     closeTimer() { state.timer = null; state.clock = null; render(); },
+    nextAfterTimer() {
+      const timer = state.timer;
+      if (!timer) return;
+      const lanes = [
+        ['warmups', 'warmEdit', () => Play.goPick()],
+        ['cooldowns', 'coolEdit', () => Play.calendar()],
+        ['blocks', 'edit', () => Play.goCool()]
+      ];
+      const lane = lanes.find((entry) => state[entry[0]].some((b) => b.id === timer.blockId));
+      const items = lane ? state[lane[0]] : [];
+      const blockAt = items.findIndex((b) => b.id === timer.blockId);
+      const current = items[blockAt];
+      const another = current && current.sets[timer.setIndex + 1] && isTimedMetric(current.metric);
+      state.clock = null;
+      state.pad = null;
+      if (another) {
+        state.timer = { blockId: current.id, setIndex: timer.setIndex + 1, field: 'text' };
+        Play.beginTimer(current.id, timer.setIndex + 1, 'text');
+        return;
+      }
+      const next = items[blockAt + 1];
+      state.timer = null;
+      if (!next) {
+        if (lane) lane[2]();
+        else Play.closeTimer();
+        return;
+      }
+      state.activeId = next.id;
+      state.screen = lane[1];
+      render(true);
+    },
     beginTimer(id, index, field) {
       const which = field === 'extra' ? 'extra' : 'text';
       const b = block(id);
@@ -2761,7 +2795,7 @@ button {
       const total = set ? durationMs(which === 'extra' ? set.extra : set.text) : 0;
       if (!b || !isTimedMetric(columnMetric(b, which)) || !total) return;
       state.pad = null;
-      state.clock = { blockId: id, setIndex: index, field: which, totalMs: total, endsAt: Date.now() + total };
+      state.clock = { blockId: id, setIndex: index, field: which, totalMs: total, endsAt: Date.now() + total, done: false };
       render();
     },
     nudgeTime(id, index, field, dir) {
@@ -2784,7 +2818,8 @@ button {
     if (!state.clock) return;
     const left = clockLeft();
     const node = document.querySelector('[data-clock="' + state.clock.blockId + '-' + state.clock.setIndex + '-' + state.clock.field + '"]');
-    if (left <= 0) { state.clock = null; render(); return; }
+    if (state.clock.done) return;
+    if (left <= 0) { state.clock.done = true; render(); return; }
     if (!node) return;
     const strong = node.querySelector('strong');
     const arc = node.querySelector('.tm-arc');
