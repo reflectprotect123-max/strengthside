@@ -169,6 +169,11 @@
     if (!cols.length) cols = ['reps'];
     const tracksReps = cols.some((c) => c === 'reps' || c === 'reps_range');
     const prescribed = value != null && String(value).trim() ? String(value).trim() : '';
+    const prepRole = role === 'warmup' || role === 'cooldown' ? role : null;
+    if (prepRole === 'cooldown') {
+      const allowed = cols.filter((c) => c === 'reps' || c === 'seconds');
+      cols = allowed.length ? allowed : ['seconds'];
+    }
     t.blocks.push({
       id: nid('blk'),
       kind: 'lift',
@@ -176,8 +181,8 @@
       setCount: Math.max(1, Number(setCount) || 3),
       repTarget: tracksReps && prescribed ? prescribed : (cols.includes('reps_range') ? '8-12' : '8'),
       prescribed: !tracksReps && prescribed ? prescribed : '',
-      role: role === 'warmup' ? 'warmup' : null,
-      countIn: role === 'warmup' ? Math.max(0, Number(countIn) || 0) : 0,
+      role: prepRole,
+      countIn: prepRole ? Math.max(0, Number(countIn) || 0) : 0,
       columns: cols,
       notes: Array.isArray(notes) ? notes : [],
       exerciseId,
@@ -333,6 +338,7 @@
 
   function sectionFor(block) {
     if (block.role === 'warmup') return 'Warm-Up';
+    if (block.role === 'cooldown') return 'Cool-Down';
     if (block.kind === 'circuit') {
       if (/recover|cool/i.test(block.title || '')) return 'Recovery';
       return 'Warm-Up';

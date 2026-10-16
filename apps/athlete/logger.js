@@ -720,7 +720,7 @@
     if (!s || s.phase !== 'block') return;
     const page = HybridSession.currentPage(s);
     const cols = page && page.columns || [];
-    if (!page || page.section !== 'Warm-Up' || !cols.includes('seconds')) return;
+    if (!page || (page.section !== 'Warm-Up' && page.section !== 'Cool-Down') || !cols.includes('seconds')) return;
     const total = Number(page.prescribed) * 1000;
     if (!total) return;
     const timer = timerState();

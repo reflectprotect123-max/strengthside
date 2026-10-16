@@ -31,7 +31,7 @@
       if (page.prescribed && (page.columns || []).includes('meters')) cells.meters = String(page.prescribed);
       rows.push({
         targetId:target?.id||null,
-        purpose:page.section === 'Warm-Up' ? 'warmup' : (target?.purpose||'working'),
+        purpose:page.section === 'Warm-Up' || page.section === 'Cool-Down' ? 'warmup' : (target?.purpose||'working'),
         workingIndex:targets.slice(0,i).filter(t=>t.purpose!=='warmup').length,
         reps: target?.purpose==='amrap'||page.logMode === 'max' ? null : target?.reps?.min??page.targetReps,
         kg: null,
@@ -139,7 +139,7 @@
       columns: cols,
       prescribed: block.prescribed || '',
       countIn: Number(block.countIn) || 0,
-      askEffort: block.section !== 'Warm-Up',
+      askEffort: block.section !== 'Warm-Up' && block.section !== 'Cool-Down',
     };
   }
 
@@ -147,13 +147,15 @@
     const out = [];
     let i = 0;
     while (i < members.length) {
-      if (members[i].section !== 'Warm-Up' || members[i].logMode === 'complete') {
+      const section = members[i].section;
+      const roundSection = section === 'Warm-Up' || section === 'Cool-Down';
+      if (!roundSection || members[i].logMode === 'complete') {
         out.push(members[i]);
         i += 1;
         continue;
       }
       let j = i;
-      while (j < members.length && members[j].section === 'Warm-Up' && members[j].logMode !== 'complete') j += 1;
+      while (j < members.length && members[j].section === section && members[j].logMode !== 'complete') j += 1;
       const group = members.slice(i, j);
       const rounds = group.reduce((n, member) => Math.max(n, member.setCount || 1), 1);
       for (let r = 0; r < rounds; r++) {

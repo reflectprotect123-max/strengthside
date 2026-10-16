@@ -260,3 +260,25 @@ test('a warm-up circuit keeps its time, distance, and reps beside the working li
   assert.equal(squatPage.logMode, 'kg');
   assert.equal(squatPage.askEffort, true);
 });
+
+test('a cool-down plays in rounds and only keeps seconds or reps', () => {
+  let st = Lib.createTemplate(Lib.emptyState(), { title: 'Lower Strength' });
+  const tid = st.templates[0].id;
+  st = Lib.addExercise(st, tid, { title: 'Easy Bike', columns: ['seconds'], setCount: 3, value: '120', role: 'cooldown' });
+  st = Lib.addExercise(st, tid, { title: 'Cat-Cow', columns: ['reps'], setCount: 3, value: '8', role: 'cooldown' });
+  const lifts = Lib.compile(st.templates[0]).blocks.filter((b) => b.kind === 'lift');
+  assert.equal(lifts[0].prescription, '3 x 120 sec');
+  assert.equal(lifts[0].section, 'Cool-Down');
+  assert.deepEqual(lifts[0].columns, ['seconds']);
+  assert.equal(lifts[1].prescription, '3 x 8');
+  assert.deepEqual(lifts[1].columns, ['reps']);
+  const names = HybridSession.pagesFromPlan(Lib.compile(st.templates[0])).map((p) => p.title);
+  assert.deepEqual(names.slice(0, 4), ['Easy Bike', 'Cat-Cow', 'Easy Bike', 'Cat-Cow']);
+  const session = HybridSession.startSession({ date: '2026-10-16', plan: Lib.compile(st.templates[0]), letter: 'A' });
+  const bike = session.pages[0];
+  assert.equal(bike.section, 'Cool-Down');
+  assert.equal(bike.askEffort, false);
+  assert.equal(session.logs[bike.id].sets[0].cells.seconds, '120');
+  assert.equal(session.logs[bike.id].sets[0].purpose, 'warmup');
+  assert.equal(globalThis.TrainingCore.validateRow(session.logs[bike.id].sets[0], bike).ok, true);
+});
