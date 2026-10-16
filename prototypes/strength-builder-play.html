@@ -1896,6 +1896,7 @@ button {
   .phone .lib-ss { border: 0; border-radius: 0; background: none; padding: 2px 0; pointer-events: none; }
   .phone .lib-block-top { align-items: center; }
   .phone .lib-grid.set-grid { grid-template-columns: 36px 1fr; }
+  .phone .lib-grid.set-grid.has-two { grid-template-columns: 36px 1fr 1fr; }
   .lib-unit { color: #8e8e93; font-size: 13px; font-weight: 500; flex: none; }
   .play-actual { font-size: 32px; }
   .play-next { padding: 0 16px 20px; }
@@ -2022,11 +2023,25 @@ button {
     lettersFor(state.blocks);
     lettersFor(state.cooldowns);
   }
+  const METRICS = [
+    ['reps', 'Reps'], ['range', 'Rep Range'],
+    ['weight_lb', 'Weight (lb)'], ['weight_kg', 'Weight (kg)'],
+    ['weight_pct', 'Weight (%)'], ['lwp', 'Linear Weight Progression'],
+    ['time_mmss', 'Time (mm:ss)'], ['seconds', 'Seconds'],
+    ['miles', 'Miles'], ['yards', 'Yards'], ['meters', 'Meters'],
+    ['feet', 'Feet'], ['watts', 'Watts'], ['calories', 'Calories'],
+    ['inches', 'Inches'], ['velocity', 'Velocity (m/s)'], ['other', 'Other']
+  ];
   function metricName(metric) {
-    if (metric === 'seconds') return 'Seconds';
-    if (metric === 'meters') return 'Meters';
-    if (metric === 'range') return 'Rep Range';
-    return 'Reps';
+    const hit = METRICS.find((row) => row[0] === metric);
+    return hit ? hit[1] : 'Reps';
+  }
+  function metricOptions(selected, allowNone) {
+    const rows = (allowNone ? [['none', 'None']] : []).concat(METRICS);
+    return rows.map(([key, label]) => '<option value="' + key + '"' + (selected === key ? ' selected' : '') + '>' + esc(label) + '</option>').join('');
+  }
+  function columnMetric(b, field) {
+    return field === 'extra' ? (b.metric2 && b.metric2 !== 'none' ? b.metric2 : '') : b.metric;
   }
   function rx(b) {
     const work = b.sets.filter((s) => !s.amrap).map((s) => s.text || '0');
@@ -2102,7 +2117,7 @@ button {
     return items.map((b) => '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3><p class="sum">' + esc(rx(b)) + '</p></div><button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>').join('');
   }
   function prepCard(b) {
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b) + '</div><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="seconds"' + (b.metric === 'seconds' ? ' selected' : '') + '>Seconds</option><option value="meters"' + (b.metric === 'meters' ? ' selected' : '') + '>Meters</option></select></div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + setRows(b) + '</div><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><select aria-label="Track for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select></div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div></article>';
   }
   function prepEditorHtml(which) {
     letters();
@@ -2163,19 +2178,25 @@ button {
     return body;
   }
 
+  function setCell(b, s, i, field) {
+    const metric = columnMetric(b, field);
+    if (!metric) return '';
+    const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === i && (state.pad.field || 'text') === field;
+    const unit = metricName(metric);
+    if (s.amrap && field === 'text') return '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>';
+    if (s.amrap) return '<div class="lib-cell"></div>';
+    const raw = field === 'extra' ? (s.extra || '') : (s.text || '0');
+    return '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
+  }
   function setRows(b) {
-    return b.sets.map((s, i) => {
-      const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === i;
-      const unit = b.metric === 'seconds' ? 'seconds' : b.metric === 'meters' ? 'meters' : 'reps';
-      const rep = s.amrap ? '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>' : '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + unit + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ')">' + esc(s.text || '0') + '</button>';
-      return '<span>' + (i + 1) + '</span>' + rep;
-    }).join('');
+    const two = !!columnMetric(b, 'extra');
+    return b.sets.map((s, i) => '<span>' + (i + 1) + '</span>' + setCell(b, s, i, 'text') + (two ? setCell(b, s, i, 'extra') : '')).join('');
   }
   function openCard(b) {
     if (b.prep) return prepCard(b);
     const tempo = b.tempo || ['', '', '', ''];
     const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + (b.metric === 'range' ? 'Rep Range' : 'Reps') + '</div>' + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="range"' + (b.metric === 'range' ? ' selected' : '') + '>Rep Range</option></select><select aria-label="Second metric" disabled><option>Weight (kg)</option></select></div></div><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid' + (columnMetric(b, 'extra') ? ' has-two' : '') + '"><span></span><div class="lib-grid-h">' + esc(metricName(b.metric)) + '</div>' + (columnMetric(b, 'extra') ? '<div class="lib-grid-h">' + esc(metricName(b.metric2)) + '</div>' : '') + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)">' + metricOptions(b.metric, false) + '</select><select aria-label="Second metric for ' + esc(b.title) + '" onchange="Play.metric2(\'' + b.id + '\', this.value)">' + metricOptions(b.metric2 || 'none', true) + '</select></div></div><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
   }
   function editorHtml() {
     letters();
@@ -2204,8 +2225,9 @@ button {
     const mark = (text, on) => on ? '<span class="photo-caret">' + esc(text || '') + '</span>' : esc(text);
     const val = !parts.dash ? mark(parts.left || '0', true) : mark(parts.left, state.pad.side !== 'right') + '-' + mark(parts.right, state.pad.side === 'right');
     const key = (label, col, row, extra) => '<button type="button" class="photo-key' + (extra || '') + '" style="grid-column:' + col + ';grid-row:' + row + '" onclick="Play.key(\'' + label + '\')">' + (label === '⌫' ? '⌫' : label) + '</button>';
-    const unit = b.metric === 'seconds' ? 'SEC' : b.metric === 'meters' ? 'M' : 'REPS';
-    const padName = b.metric === 'seconds' ? 'Seconds keypad' : b.metric === 'meters' ? 'Meters keypad' : 'Reps keypad';
+    const metric = columnMetric(b, state.pad.field) || b.metric;
+    const unit = metric === 'seconds' || metric === 'time_mmss' ? 'SEC' : metric === 'meters' ? 'M' : metric === 'weight_kg' ? 'KG' : metric === 'weight_lb' ? 'LB' : metric === 'weight_pct' ? '%' : (metric === 'reps' || metric === 'range') ? 'REPS' : 'VALUE';
+    const padName = metricName(metric) + ' keypad';
     return '<div class="photo-pad" role="dialog" aria-label="' + padName + '"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">' + unit + '</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || '') + '</p></div>';
   }
   function workoutSteps() {
@@ -2293,10 +2315,12 @@ button {
     const set = b && b.sets[state.pad.setIndex];
     if (!set || set.amrap) return;
     const parts = split(state.pad.buffer);
-    if (state.screen === 'workout' || b.metric !== 'range') {
+    const field = state.pad.field === 'extra' ? 'extra' : 'text';
+    const metric = columnMetric(b, field) || b.metric;
+    if (state.screen === 'workout' || metric !== 'range') {
       const text = (parts.left || '0').replace(/\D/g, '') || '0';
       if (state.screen === 'workout') set.actual = text;
-      else set.text = text;
+      else set[field] = text;
       return;
     }
     if (!parts.dash) set.text = parts.left || '0';
@@ -2344,6 +2368,7 @@ button {
       id: catalogId + '-' + Math.random().toString(36).slice(2, 7),
       catalogId, title, groupId: groupId || null,
       metric: preset.metric,
+      metric2: 'none',
       sets: preset.sets.map((text) => ({ text, amrap: false })),
       tempo: preset.tempo.slice(),
       notes: '',
@@ -2486,14 +2511,15 @@ button {
       state.pad = null;
       render(true);
     },
-    openPad(id, index, scroll) {
+    openPad(id, index, field) {
       const b = block(id);
       const set = b.sets[index];
+      const which = field === 'extra' ? 'extra' : 'text';
       state.activeId = id;
-      if (!set || set.amrap) { state.pad = null; render(scroll); return; }
-      const source = state.screen === 'workout' ? (set.actual || set.text || '') : (set.text || '');
-      state.pad = { blockId: id, setIndex: index, buffer: state.screen === 'workout' ? String(source).split('-')[0] : source, side: 'left', fresh: true, error: '' };
-      render(scroll);
+      if (!set || (set.amrap && which === 'text')) { state.pad = null; render(); return; }
+      const source = which === 'extra' ? (set.extra || '') : (state.screen === 'workout' ? (set.actual || set.text || '') : (set.text || ''));
+      state.pad = { blockId: id, setIndex: index, field: which, buffer: state.screen === 'workout' ? String(source).split('-')[0] : source, side: 'left', fresh: true, error: '' };
+      render();
     },
     closePad() { state.pad = null; render(); },
     key(key) {
@@ -2502,8 +2528,9 @@ button {
       const parts = split(state.pad.buffer);
       const side = state.pad.side === 'right' && parts.dash ? 'right' : 'left';
       state.pad.error = '';
+      const metric = columnMetric(b, state.pad.field) || b.metric;
       if (key === '>' || key === '–' || key === '-') {
-        if (state.screen === 'workout' || b.metric !== 'range') { state.pad.error = state.screen === 'workout' || b.prep ? 'One number.' : 'Range needs Rep Range.'; render(); return; }
+        if (state.screen === 'workout' || metric !== 'range') { state.pad.error = state.screen === 'workout' || b.prep ? 'One number.' : 'Range needs Rep Range.'; render(); return; }
         parts.dash = true; state.pad.side = 'right'; state.pad.fresh = true;
       } else if (key === '<') { state.pad.side = 'left'; state.pad.fresh = true; }
       else if (key === '⌫') {
@@ -2522,17 +2549,24 @@ button {
     },
     metric(id, metric) {
       const b = block(id);
-      if (b.metric === 'range' && metric === 'reps') {
+      if (b.metric === 'range' && metric !== 'range') {
         b.sets.forEach((s) => { if (!s.amrap && String(s.text).includes('-')) s.text = String(s.text).split('-')[0] || '0'; });
         b.notice = 'Range became the lower number.';
       } else b.notice = '';
       b.metric = metric;
-      if (state.pad && state.pad.blockId === id) {
+      if (state.pad && state.pad.blockId === id && state.pad.field !== 'extra') {
         const set = b.sets[state.pad.setIndex];
         state.pad.buffer = set && !set.amrap ? set.text : '';
         state.pad.side = 'left';
         if (metric !== 'range') state.pad.buffer = String(state.pad.buffer).split('-')[0];
       }
+      render();
+    },
+    metric2(id, metric) {
+      const b = block(id);
+      b.metric2 = metric || 'none';
+      if (b.metric2 !== 'none') b.sets.forEach((s) => { if (!s.amrap && s.extra == null) s.extra = ''; });
+      if (state.pad && state.pad.blockId === id && state.pad.field === 'extra' && b.metric2 === 'none') state.pad = null;
       render();
     },
     tempo(id, index, value) {
