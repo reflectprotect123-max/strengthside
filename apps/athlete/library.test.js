@@ -20,6 +20,16 @@ require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
 const Lib = globalThis.HybridLibrary;
 
+test('a new template seeds the locked warm-up and an empty cool-down', () => {
+  const st = Lib.createTemplate(Lib.emptyState(), { title: 'Lower Strength' });
+  const blocks = st.templates[0].blocks;
+  assert.deepEqual(blocks.map((b) => b.title), ['Bike', 'Row', 'Run', 'Ski', 'Jump Rope']);
+  assert.ok(blocks.every((b) => b.role === 'warmup' && b.setCount === 3));
+  assert.equal(blocks[0].prescribed, '180');
+  assert.equal(blocks[4].prescribed, '60');
+  assert.equal(blocks.find((b) => b.role === 'cooldown'), undefined);
+});
+
 test('track lock includes reps kg meters and for completion', () => {
   const keys = Lib.TRACK.map((t) => t.key);
   assert.ok(keys.includes('reps'));

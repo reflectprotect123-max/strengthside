@@ -116,6 +116,17 @@
       instructions: String(instructions || ''),
       blocks: [],
     });
+    [
+      ['Bike', '180'],
+      ['Row', '180'],
+      ['Run', '180'],
+      ['Ski', '180'],
+      ['Jump Rope', '60'],
+    ].forEach(([title, value]) => {
+      Object.assign(st, addExercise(st, st.templates[0].id, {
+        title, columns: ['seconds'], setCount: 3, value, role: 'warmup',
+      }));
+    });
     return st;
   }
 
