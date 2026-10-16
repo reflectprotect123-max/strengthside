@@ -1860,7 +1860,7 @@ button {
   html, body { background: #050505; }
   body { min-height: 100dvh; display: grid; justify-items: center; align-content: start; padding: 28px 16px 48px; }
   .play-note { color: #8e8e93; font-size: 13px; margin: 0 0 12px; max-width: 390px; }
-  .play-restart { color: #1ba3ff; font-weight: 600; margin: 0 0 14px; min-height: 36px; }
+  .play-restart { color: #1ba3ff; font-weight: 600; margin: 0 0 14px; min-height: 44px; padding: 0 8px; }
   .phone {
     width: min(100%, 390px);
     height: min(844px, calc(100dvh - 96px));
@@ -1887,6 +1887,15 @@ button {
   .phone .photo-pad-grid { gap: 10px 8px; }
   .phone.has-pad .shell-screen--library { padding-bottom: 430px; }
   .phone .open-card .lib-notes textarea { min-height: 44px; }
+  .phone .lib-back { min-width: 44px; }
+  .phone .lib-text-btn, .phone .lib-danger, .phone .lib-remove { min-width: 44px; min-height: 44px; }
+  .phone .lib-remove { color: #ff6b6b; font-weight: 600; flex: none; padding: 0 8px; }
+  .phone .lib-search { align-items: stretch; }
+  .phone .lib-search input { min-height: 44px; }
+  .phone .lib-tabs button { min-height: 44px; }
+  .phone .lib-ss { border: 0; border-radius: 0; background: none; padding: 2px 0; pointer-events: none; }
+  .phone .lib-block-top { align-items: center; }
+  .phone .lib-grid.set-grid { grid-template-columns: 36px 1fr; }
   .play-next { padding: 0 16px 20px; }
   .play-confirm { text-align: left; padding: 4px 16px 8px; color: #fff; scroll-margin-top: 72px; }
   .play-step { margin: 4px 16px 8px; color: #8e8e93; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
@@ -1903,7 +1912,7 @@ button {
     html, body { height: 100%; }
     body { padding: 0; height: 100dvh; max-height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
     .play-note { display: none; }
-    .play-restart { margin: 0; min-height: 36px; flex: none; }
+    .play-restart { margin: 0; min-height: 44px; flex: none; }
     .phone { width: 100%; flex: 1 1 auto; min-height: 0; height: auto; border: 0; border-radius: 0; }
   }
 </style>
@@ -2038,7 +2047,7 @@ button {
       <div class="lib-search"><input value="${esc(state.query)}" placeholder="Search exercises and circuits" aria-label="Search exercises" oninput="Play.search(this.value)"></div>
       <div class="lib-tabs"><button type="button" class="on">Exercises</button><button type="button" disabled>Circuits</button></div>
       <div id="libResults">${rows}</div>
-      ${nextBar('Next', 'Play.startLifts()', n !== 0 || !state.blocks.length)}
+      ${nextBar(state.blocks.length ? 'Next' : 'Add a lift', 'Play.startLifts()', n !== 0 || !state.blocks.length)}
       ${nav()}
     </div>`;
   }
@@ -2046,28 +2055,26 @@ button {
   function chosenHtml() {
     letters();
     if (!state.blocks.length) return '';
-    let body = state.confirm ? '<p class="lib-empty play-confirm" role="status">' + esc(state.confirm) + '</p>' : '';
+    let body = '';
     state.blocks.forEach((b, i) => {
       const prev = state.blocks[i - 1];
       if (prev && b.groupId && prev.groupId === b.groupId) body += '<div class="lib-ss">− Superset</div>';
-      body += '<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3></div></div></article>';
+      body += '<article class="lib-block" data-added="' + esc(b.id) + '"><div class="lib-block-top"><span class="lib-letter">' + esc(b.letter) + '</span><div style="flex:1"><h3>' + esc(b.title) + '</h3></div><button type="button" class="lib-remove" aria-label="Remove ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Remove</button></div></article>';
     });
     return body;
   }
 
   function setRows(b) {
-    const h1 = b.metric === 'range' ? 'Rep Range' : 'Reps';
     return b.sets.map((s, i) => {
       const on = state.pad && state.pad.blockId === b.id && state.pad.setIndex === i;
       const rep = s.amrap ? '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>' : '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' reps" onclick="Play.openPad(\'' + b.id + '\',' + i + ')">' + esc(s.text || '0') + '</button>';
-      const weight = s.amrap ? '<div class="lib-cell">Set 1 weight</div>' : '<div class="lib-cell"></div>';
-      return '<span>' + (i + 1) + '</span>' + rep + weight;
+      return '<span>' + (i + 1) + '</span>' + rep;
     }).join('');
   }
   function openCard(b) {
     const tempo = b.tempo || ['', '', '', ''];
     const cell = (index, label) => '<label class="lib-grid-h">' + label + '<input class="lib-cell" maxlength="1" aria-label="' + label + ' for ' + esc(b.title) + '" value="' + esc(tempo[index]) + '" oninput="Play.tempo(\'' + b.id + '\',' + index + ', this.value)"></label>';
-    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid"><span></span><div class="lib-grid-h">' + (b.metric === 'range' ? 'Rep Range' : 'Reps') + '</div><div class="lib-grid-h">Weight (kg)</div>' + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="range"' + (b.metric === 'range' ? ' selected' : '') + '>Rep Range</option></select><select aria-label="Second metric" disabled><option>Weight (kg)</option></select></div></div><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
+    return '<article class="lib-block open-card lib-ex" data-block="' + esc(b.id) + '"><div class="lib-ex-top"><span class="lib-letter">' + esc(b.letter) + '</span><h3>' + esc(b.title) + '</h3><button type="button" class="lib-danger" aria-label="Delete ' + esc(b.title) + '" onclick="Play.removeBlock(\'' + b.id + '\')">Delete</button></div><div class="meta">' + esc(rx(b)) + '</div><div class="lib-grid set-grid"><span></span><div class="lib-grid-h">' + (b.metric === 'range' ? 'Rep Range' : 'Reps') + '</div>' + setRows(b) + '</div><p role="status">' + esc(b.notice || '') + '</p><label class="lib-notes"><textarea placeholder="Notes" oninput="Play.notes(\'' + b.id + '\', this.value)">' + esc(b.notes) + '</textarea></label><div class="lib-field lib-metrics"><label>What do you want to track?</label><div class="lib-cols"><select aria-label="First metric for ' + esc(b.title) + '" onchange="Play.metric(\'' + b.id + '\', this.value)"><option value="reps"' + (b.metric === 'reps' ? ' selected' : '') + '>Reps</option><option value="range"' + (b.metric === 'range' ? ' selected' : '') + '>Rep Range</option></select><select aria-label="Second metric" disabled><option>Weight (kg)</option></select></div></div><div class="lib-grid tempo-grid" style="margin-top:14px">' + cell(0, 'Lower') + cell(1, 'Pause') + cell(2, 'Lift') + cell(3, 'Pause') + '</div><div class="lib-stepper"><button type="button" class="lib-step" aria-label="Remove a set" onclick="Play.nudge(\'' + b.id + '\',-1)">−</button><span>Set</span><button type="button" class="lib-step" aria-label="Add a set" onclick="Play.nudge(\'' + b.id + '\',1)">+</button></div><button type="button" class="lib-text-btn" onclick="Play.amrap(\'' + b.id + '\')">' + (b.sets.at(-1)?.amrap ? 'Remove AMRAP' : 'Add final AMRAP') + '</button></article>';
   }
   function editorHtml() {
     letters();
@@ -2078,10 +2085,11 @@ button {
     const mate = mates.length > 1 ? '<p class="play-mate">Superset ' + mates.map((x) => esc(x.letter)).join(' · ') + '</p>' : '';
     const last = at >= state.blocks.length - 1;
     const action = last
-      ? '<button type="button" class="btn oled-cta" onclick="Play.calendar()">Post to calendar</button>'
+      ? '<button type="button" class="btn oled-cta" disabled>Done</button>'
       : '<button type="button" class="btn oled-cta" onclick="Play.nextLift()">Next</button>';
+    const post = last ? '<button type="button" class="lib-text-btn" aria-label="Post to calendar" onclick="Play.calendar()">Post</button>' : '';
     return `<div class="shell-screen shell-screen--library">
-      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goPick()">←</button><h1>${at + 1} of ${state.blocks.length}</h1></div>
+      <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.goPick()">←</button><h1>${at + 1} of ${state.blocks.length}</h1>${post}</div>
       ${mate}
       ${openCard(b)}
       <div class="play-dock"><div class="play-next">${action}</div>${padHtml()}</div>
@@ -2136,7 +2144,7 @@ button {
     const html = state.screen === 'notes' ? notesHtml() : state.screen === 'pick' ? pickHtml() : state.screen === 'calendar' ? calendarHtml() : editorHtml();
     view.innerHTML = '<div class="shell">' + html + '</div>';
     if (scrollToOpen && state.screen === 'edit') view.scrollTop = 0;
-    else if (scrollToOpen) view.querySelector('.play-confirm')?.scrollIntoView({ block: 'nearest' });
+    else if (scrollToOpen && state.confirmAnchor) view.querySelector('[data-added="' + state.confirmAnchor + '"]')?.scrollIntoView({ block: 'nearest' });
     else if (state.screen !== previous) view.scrollTop = 0;
     else view.scrollTop = y;
     render.screen = state.screen;
@@ -2201,8 +2209,7 @@ button {
       state.superset = [];
       state.query = '';
       letters();
-      const names = added.map((b) => b.letter + ' ' + b.title).join(', ');
-      state.confirm = added.length ? (asSuperset ? 'Added superset: ' + names : 'Added: ' + names) : '';
+      state.confirm = '';
       state.confirmAnchor = added[0] ? added[0].id : '';
       state.screen = 'pick';
       render(true);
@@ -2223,9 +2230,8 @@ button {
     openBlock(id) {
       state.screen = 'edit';
       state.activeId = id;
-      const b = block(id);
-      const index = Math.max(0, b.sets.findIndex((s) => !s.amrap));
-      Play.openPad(id, index < 0 ? 0 : index, true);
+      state.pad = null;
+      render(true);
     },
     openPad(id, index, scroll) {
       const b = block(id);
@@ -2299,11 +2305,22 @@ button {
       render();
     },
     removeBlock(id) {
+      const at = state.blocks.findIndex((b) => b.id === id);
+      const wasActive = state.activeId === id;
       state.blocks = state.blocks.filter((b) => b.id !== id);
       if (state.pad && state.pad.blockId === id) state.pad = null;
-      state.activeId = state.blocks[0]?.id || null;
-      if (state.activeId) Play.openBlock(state.activeId);
-      else render();
+      if (!state.blocks.length) {
+        state.activeId = null;
+        state.pad = null;
+        if (state.screen === 'edit' || state.screen === 'calendar') state.screen = 'pick';
+        render();
+        return;
+      }
+      if (wasActive) {
+        state.activeId = (state.blocks[at] || state.blocks[at - 1] || state.blocks[0]).id;
+        state.pad = null;
+      }
+      render();
     },
     reorder() {
       const at = state.blocks.findIndex((b) => b.id === state.activeId);
