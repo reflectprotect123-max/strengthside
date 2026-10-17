@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+description: The warm-up play prototype is frozen
+---
+
+# Warm-up play is locked
+
+`prototypes/strength-builder-play.html` is the frozen warm-up circuit.
+
+Do not redesign, delete, or replace it unless the user explicitly reopens the lock. Timed cardio starts on tap, the isometric hold counts 3 then runs, lifts and stretches use reps, and the carry uses metres. Rounds stay a circuit.
+
+`docs/warmup-play-lock.md` is the contract. `pnpm run check:warmup-play-lock` must stay green. A reopened change updates both in the same commit.

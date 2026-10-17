@@ -151,3 +151,16 @@ test('rest customize plus steps five seconds', () => {
   t = HybridTimer.nudgeRest(t, 1);
   assert.equal(HybridTimer.snapshot(t, 0).config.restMs, 65000);
 });
+
+test('a plain countdown shows 3 then the prescribed time', () => {
+  let t = HybridTimer.create();
+  t.mode = 'countdown';
+  t.config = { totalMs: 30000, countInMs: 3000, plainCount: true };
+  t.view = 'setup';
+  t = HybridTimer.start(t, 0);
+  assert.equal(HybridTimer.snapshot(t, 0).countInLabel, '3');
+  assert.equal(HybridTimer.snapshot(t, 2500).countInLabel, '1');
+  const running = HybridTimer.snapshot(t, 3000);
+  assert.equal(running.view, 'running');
+  assert.equal(running.clock.startsWith('0:30'), true);
+});

@@ -25,13 +25,17 @@
     const targets=Array.isArray(page.setTargets)?page.setTargets:[];
     for (let i = 0; i < page.setCount; i++) {
       const target=targets[i];
+      const cells = {};
+      if (page.prescribed && (page.columns || []).includes('seconds')) cells.seconds = String(page.prescribed);
+      if (page.prescribed && (page.columns || []).includes('time_mmss')) cells.time_mmss = String(page.prescribed);
+      if (page.prescribed && (page.columns || []).includes('meters')) cells.meters = String(page.prescribed);
       rows.push({
         targetId:target?.id||null,
-        purpose:target?.purpose||'working',
+        purpose:page.section === 'Warm-Up' || page.section === 'Cool-Down' ? 'warmup' : (target?.purpose||'working'),
         workingIndex:targets.slice(0,i).filter(t=>t.purpose!=='warmup').length,
         reps: target?.purpose==='amrap'||page.logMode === 'max' ? null : target?.reps?.min??page.targetReps,
         kg: null,
-        cells: {},
+        cells,
         logged: false,
         miss: false,
       });
@@ -133,7 +137,42 @@
       exerciseType: block.exerciseType || null,
       rampCount: block.rampCount,
       columns: cols,
+      prescribed: block.prescribed || '',
+      countIn: Number(block.countIn) || 0,
+      askEffort: block.section !== 'Warm-Up' && block.section !== 'Cool-Down',
     };
+  }
+
+  function expandWarmupRounds(members) {
+    const out = [];
+    let i = 0;
+    while (i < members.length) {
+      const section = members[i].section;
+      const roundSection = section === 'Warm-Up' || section === 'Cool-Down';
+      if (!roundSection || members[i].logMode === 'complete') {
+        out.push(members[i]);
+        i += 1;
+        continue;
+      }
+      let j = i;
+      while (j < members.length && members[j].section === section && members[j].logMode !== 'complete') j += 1;
+      const group = members.slice(i, j);
+      const rounds = group.reduce((n, member) => Math.max(n, member.setCount || 1), 1);
+      for (let r = 0; r < rounds; r++) {
+        for (const member of group) {
+          if (r >= (member.setCount || 1)) continue;
+          const one = JSON.parse(JSON.stringify(member));
+          one.setCount = 1;
+          one.round = r + 1;
+          one.rounds = rounds;
+          one.id = member.id + '-r' + (r + 1);
+          if (Array.isArray(one.setTargets)) one.setTargets = one.setTargets[r] ? [one.setTargets[r]] : null;
+          out.push(one);
+        }
+      }
+      i = j;
+    }
+    return out;
   }
 
   function pagesFromPlan(plan) {
@@ -142,7 +181,10 @@
       if (!block || !['lift', 'warmup', 'recovery'].includes(block.kind)) continue;
       members.push(pageFromBlock(block));
     }
+    const ordered = expandWarmupRounds(members);
     const pages = [];
+    members.length = 0;
+    ordered.forEach((member) => members.push(member));
     for (let i = 0; i < members.length; i++) {
       const a = members[i];
       const pa = letterParts(a.letter);

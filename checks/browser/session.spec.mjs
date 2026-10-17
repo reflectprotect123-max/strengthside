@@ -2,8 +2,11 @@ async function actualNumber(page,label,value){await page.getByLabel(label,{exact
 import {test,expect} from 'playwright/test';
 async function enterSetReps(page,n,value){await page.getByRole('button',{name:`Set ${n} reps`,exact:true}).click();const pad=page.getByRole('dialog',{name:'Reps keypad'});for(const key of value)await pad.getByRole('button',{name:key==='-'?'–':key,exact:true}).click();await pad.getByRole('button',{name:'Close keypad',exact:true}).click();}
 async function builder(page){await page.goto('/');await page.getByRole('heading',{name:'Today',exact:true}).waitFor();await page.getByRole('button',{name:'Add',exact:true}).click();await page.getByRole('button',{name:'Create session',exact:true}).click();}
+async function openExercisePicker(page){await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();}
+async function passWarmups(page){for(let guard=0;guard<20;guard++){const section=await page.evaluate(()=>{const s=window.S?.session;if(!s||s.phase!=='block')return '';return s.pages?.[s.blockIndex]?.section||'';});if(section&&section!=='Warm-Up')return;const total=await page.evaluate(()=>Number(window.S?.timer?.config?.totalMs)||0);if(total>0&&await page.locator('#logTimerFull').count())await page.clock.fastForward(total+500);await page.getByRole('button',{name:'Next →',exact:true}).click();}throw new Error('warm-up did not finish');}
+async function beginSession(page){await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.clock.fastForward(2000);await page.getByRole('button',{name:'Got It',exact:true}).click();await passWarmups(page);}
 test('custom exercise and custom circuit creation',async({page})=>{
- await builder(page);await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Create New Exercise'}).click();
+ await builder(page);await openExercisePicker(page);await page.getByRole('button',{name:'Create New Exercise'}).click();
  await expect(page.getByRole('heading',{name:'New Exercise',exact:true})).toBeVisible({timeout:5000});
  await page.locator('#libNewTitle').fill('Test Curl');await page.locator('#libNewC2').selectOption('weight_kg');await page.getByRole('button',{name:'Create',exact:true}).click();
  await expect(page.locator('.lib-block')).toContainText('Test Curl');
@@ -11,12 +14,14 @@ test('custom exercise and custom circuit creation',async({page})=>{
 });
 
 test('build, schedule, play full session, reopen history and check next session',async({page},testInfo)=>{
+ test.setTimeout(180000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await builder(page);
  await page.evaluate(()=>StrengthMemory.bind('browser-athlete'));
+ await page.getByRole('button',{name:'Next',exact:true}).click();
  const title=page.locator('.lib-field').filter({has:page.locator('label',{hasText:/^Title$/})}).locator('input');
  await title.fill('Full CLI strength session');await title.press('Tab');
- await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();
+ await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();
  await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();
  await page.getByRole('button',{name:'Create New Exercise'}).click();await page.locator('#libNewTitle').fill('Dumbbell Curl');await page.locator('#libNewC2').selectOption('weight_kg');await page.getByRole('button',{name:'Create',exact:true}).click();
  await page.getByRole('button',{name:'Next',exact:true}).click();
@@ -27,15 +32,16 @@ test('build, schedule, play full session, reopen history and check next session'
  await page.getByRole('button',{name:'Remove a set',exact:true}).click();
  for(const n of [1,2])await page.getByRole('button',{name:`Set ${n} reps`,exact:true}).click().then(async()=>{const pad=page.getByRole('dialog',{name:'Reps keypad'});await pad.getByRole('button',{name:'5',exact:true}).click();await pad.getByRole('button',{name:'Close keypad',exact:true}).click();});
  await expect(page.locator('.lib-block').last()).toContainText('2 x 5');
- for(let i=0;i<4;i++)await page.getByRole('button',{name:'Next',exact:true}).click();
- await page.getByRole('button',{name:'Post to calendar',exact:true}).click();const day=await page.getByLabel('Session date').inputValue();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
- await page.reload();await expect(page.locator('.trn-block--lift')).toHaveCount(2);await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.getByRole('button',{name:'Got It',exact:true}).click();
- await expect(page.getByText('Warm-up 1 of 2',{exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Next',exact:true}).click();
+ await page.getByRole('button',{name:'Next',exact:true}).click();
+ const day=await page.getByLabel('Session date').inputValue();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
+ await page.reload();await expect(page.locator('.trn-block--lift')).toHaveCount(7);await expect(page.locator('.trn-block--lift').filter({hasText:'Back Squat'})).toBeVisible();await expect(page.locator('.trn-block--lift').filter({hasText:'Dumbbell Curl'})).toBeVisible();await beginSession(page);
+ await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
  async function log(kg,reps,effort){await actualNumber(page,'Weight (kg)',String(kg));await actualNumber(page,'Reps completed',String(reps));const slider=page.getByRole('slider',{name:'Actual set effort'});await slider.press('Home');for(let i=0;i<effort;i++)await slider.press('ArrowRight');await page.getByRole('button',{name:'Log set',exact:true}).click();}
  for(const kg of [10,20]){await log(kg,6,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();}
  await expect(page.getByText('Set 1 of 3',{exact:true})).toBeVisible();
  async function rest(label){await page.getByRole('button',{name:'Select Timer',exact:true}).click();await page.locator('[onclick="Logger.timerChoose(\'rest\')"]').click();await page.getByRole('button',{name:label,exact:true}).click();await page.locator('.tm-start').click();await page.locator('.log-back-x').click();}
- await rest('2:00');await page.clock.install();
+ await rest('2:00');
  for(let i=0;i<3;i++){await log(40,8,2);expect(await page.evaluate(()=>S.timer.config.restMs)).toBe(120000);expect(await page.evaluate(()=>S.timer.view)).toMatch(/countIn|running/);if(i<2){await page.clock.fastForward(125000);await page.getByRole('button',{name:'Start next set',exact:true}).click();await expect(page.getByLabel('Weight (kg)')).toHaveValue('40');}}
  await page.getByRole('button',{name:'Next →',exact:true}).click();await expect(page.locator('#logger').getByRole('heading',{name:'Dumbbell Curl',exact:true})).toBeVisible();await expect(page.getByText('Set 1 of 2',{exact:true})).toBeVisible();
  expect(await page.evaluate(()=>Object.keys(S.session.restChoices||{}).length)).toBe(1);await rest('0:45');
@@ -45,14 +51,36 @@ test('build, schedule, play full session, reopen history and check next session'
  expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set').length)).toBe(7);
  await page.screenshot({path:testInfo.outputPath('full-session-summary.png'),fullPage:true});await testInfo.attach('Completed session summary',{path:testInfo.outputPath('full-session-summary.png'),contentType:'image/png'});
  await page.clock.resume();await page.getByRole('button',{name:'Close',exact:true}).click();await page.locator('[data-tab=me]').click();await page.getByRole('button',{name:'Training history',exact:true}).click();await expect(page.locator('.history-session')).toContainText('5 sets · 34 reps');await page.reload();await expect(page.locator('.history-session')).toContainText('Full CLI strength session');
- await page.locator('[data-tab=library]').click();await page.getByRole('button',{name:'Add to calendar',exact:true}).click();const tomorrow=await page.evaluate(d=>{const date=new Date(d+'T12:00:00');date.setDate(date.getDate()+1);return date.toISOString().slice(0,10);},day);await page.getByLabel('Session date').fill(tomorrow);await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.locator('.trn-block--lift').first().click();
- expect(await page.evaluate(()=>S.session.pages[0].workingKg)).toBe(42.5);expect(errors).toEqual([]);await expect(page.getByText('Warm-up 1 of 2',{exact:true})).toBeVisible();await expect(page.getByLabel('Weight (kg)')).toHaveValue('empty bar');expect(await page.evaluate(()=>{const squat=S.session.pages[0];return S.session.logs[squat.id].sets.filter(r=>r.purpose==='ramp').map(r=>r.kg);})).toEqual([0,20]);expect(errors).toEqual([]);
+ await page.locator('[data-tab=library]').click();await page.getByRole('button',{name:'Add to calendar',exact:true}).click();const tomorrow=await page.evaluate(d=>{const date=new Date(d+'T12:00:00');date.setDate(date.getDate()+1);return date.toISOString().slice(0,10);},day);await page.getByLabel('Session date').fill(tomorrow);await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.locator('.trn-block--lift').filter({hasText:'Back Squat'}).click();
+ expect(await page.evaluate(()=>S.session.pages.find(p=>p.title==='Back Squat').workingKg)).toBe(42.5);expect(errors).toEqual([]);await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();await expect(page.getByLabel('Weight (kg)')).toHaveValue('empty bar');expect(await page.evaluate(()=>{const squat=S.session.pages.find(p=>p.title==='Back Squat');return S.session.logs[squat.id].sets.filter(r=>r.purpose==='ramp').map(r=>r.kg);})).toEqual([0,20]);expect(errors).toEqual([]);
  await page.screenshot({path:testInfo.outputPath('next-session-load.png'),fullPage:true});
 });
 
+test('warm-up lifts cool-down before Ramp with no skip button',async({page})=>{
+ test.setTimeout(180000);
+ await builder(page);
+ await expect(page.getByRole('heading',{name:'Bike',exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Next',exact:true})).toBeVisible();
+ await openExercisePicker(page);
+ await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();
+ await page.getByRole('button',{name:'Next',exact:true}).click();
+ await expect(page.getByText('No tempo',{exact:true}).first()).toBeVisible();
+ await page.getByRole('button',{name:'Next',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Cool-down',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Next',exact:true}).click();
+ await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
+ await page.clock.install();
+ await page.getByRole('button',{name:'Start Session',exact:true}).click();
+ await page.clock.fastForward(2000);
+ await page.getByRole('button',{name:'Got It',exact:true}).click();
+ await expect(page.locator('#logger')).toContainText('Bike');
+ await passWarmups(page);
+ await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:/skip ramp/i})).toHaveCount(0);
+});
 
 test('builder keypad matches the outline logger pad and keeps a typed range',async({page},testInfo)=>{
- await builder(page);await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();
+ await builder(page);await openExercisePicker(page);await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();
  await page.getByRole('button',{name:'Set 1 reps',exact:true}).click();const pad=page.getByRole('dialog',{name:'Reps keypad'});
  await expect(pad.getByRole('button',{name:'Save',exact:true})).toHaveCount(0);await expect(pad.getByRole('button',{name:'–',exact:true})).toBeVisible();await expect(pad.getByRole('button',{name:'.',exact:true})).toHaveCount(0);
  await page.screenshot({path:testInfo.outputPath('builder-range-keypad.png'),fullPage:true});
@@ -63,7 +91,8 @@ test('builder keypad matches the outline logger pad and keeps a typed range',asy
 });
 
 test('logger numeric keypad uses whole reps and decimal weights',async({page})=>{
- await builder(page);await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Create New Exercise'}).click();await page.locator('#libNewTitle').fill('Band Row');await page.locator('#libNewC2').selectOption('weight_lb');await page.getByRole('button',{name:'Create',exact:true}).click();for(let i=0;i<4;i++)await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.getByRole('button',{name:'Got It',exact:true}).click();
+ test.setTimeout(180000);
+ await builder(page);await openExercisePicker(page);await page.getByRole('button',{name:'Create New Exercise'}).click();await page.locator('#libNewTitle').fill('Band Row');await page.locator('#libNewC2').selectOption('weight_lb');await page.getByRole('button',{name:'Create',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await beginSession(page);
  await page.locator('button.log-cell[onclick$="\'reps\')"]').first().click();await expect(page.locator('.log-pad').getByRole('button',{name:'.',exact:true})).toHaveCount(0);await expect(page.locator('.log-pad').getByRole('button',{name:'–',exact:true})).toHaveCount(0);await page.locator('.log-pad-head > button').click();
  await page.locator('button.log-cell[onclick$="\'weight_lb\')"]').first().click();await expect(page.locator('.log-pad').getByRole('button',{name:'.',exact:true})).toBeVisible();
 });
