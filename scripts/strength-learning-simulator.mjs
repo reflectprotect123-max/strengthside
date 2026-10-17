@@ -81,7 +81,10 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
       const changing=rows[i].reps!==page.setTargets.find(t=>t.id===next.targetId)?.reps?.min;
       const minimum=C.normalized(profile.min,page).externalKg;
       const escape=Math.abs(source-minimum)<1e-8&&decision.kg===E.next(kg,page);
-      const rung=E.next(planned??kg,page);
+      // An unseeded next set is represented by zero until the logger fills it.
+      // Zero is not a real rack setting, so compare the decision with the load
+      // the athlete just used instead of treating 0→2.5 kg as the next rung.
+      const rung=E.next(Number.isFinite(planned)&&planned>0?planned:kg,page);
       if(!escape&&(out>source*(changing?1.1:1.05)+1e-8||rung!=null&&decision.kg>rung+1e-8))metrics.excessiveJumps++;
      }
     }

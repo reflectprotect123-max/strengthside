@@ -44,6 +44,13 @@ test('an athlete-adjusted second warm-up carries into work and finished history 
  for(const key of ['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'])assert.equal(r.metrics[key],0,key);
 });
 
+test('jump audit treats an unseeded zero next row as a placeholder',()=>{
+ for(const policy of ['default','online']){
+  const r=runScenario({seed:8201473,athlete:0,policy,scenario:'athlete-calibrated',sessions:1});
+  assert.equal(r.metrics.excessiveJumps,0,policy);
+ }
+});
+
 test('resuming source-scoped checkpoints returns the same paired evaluation',async()=>{
  const {mkdtempSync,rmSync,readdirSync,readFileSync,writeFileSync}=await import('node:fs');
  const {tmpdir}=await import('node:os');const {join}=await import('node:path');
