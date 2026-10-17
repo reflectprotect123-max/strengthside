@@ -1,6 +1,6 @@
 {
   "name": "@hybrid/coach-desktop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "THE Hybrid System coach — Windows desktop shell with GitHub-release OTA",
   "main": "src/main.cjs",
