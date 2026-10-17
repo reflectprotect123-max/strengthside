@@ -107,7 +107,7 @@
       const all=variants?[...variants].sort((a,b)=>compare(a[0],b[0])).map(pair=>pair[1]):entry.variants;
       const owned=all.filter(record=>text(ownerId)&&ownerMatches(record,ownerId));
       if(!owned.length)continue;
-      const scoped=owned.filter(record=>record.kind==='set'&&keyOf(record)===contextKey);
+      const scoped=owned.filter(record=>typeof contextKey==='string'&&contextKey.length>0&&record.kind==='set'&&keyOf(record)===contextKey);
       if(all.length>1){
         // A context with unresolved conflicting actuals uses the default curve until resolved.
         if(scoped.length){conflicted=true;ledger.push({id,localRevision:entry.revision,conflicts:scoped});diagnostic(scoped[0],'conflicting_revision');}

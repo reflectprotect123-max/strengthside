@@ -164,3 +164,11 @@ test('backing off a later comparable load vetoes Easy-first seeding without fitt
  }
  const h=B.history(records,page);assert.equal(h.latest.nextKg,40);assert.equal(h.latest.loadReduced,true);assert.equal(h.accepted,0);
 });
+
+test('missing canonical exercise identity cannot share another unidentified lift history',()=>{
+ const unknown={...page,exerciseId:null},records={old:record(unknown,row(0,8,'easy',80))};
+ const current={...unknown,title:'Different unidentified press'};
+ const h=B.history(records,current);assert.equal(h.latest,null);assert.equal(h.rolling,null);
+ const seeded=B.seed({id:'next',pages:[current],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
+ assert.notEqual(seeded.pages[0].workingKg,81);
+});

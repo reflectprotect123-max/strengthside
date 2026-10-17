@@ -199,3 +199,11 @@ test('large unrelated histories validate only the requested exercise while retai
  const gated=ctx.StrengthReplay.replay([...rows,other],{ownerId:'a',contextKey});
  assert.equal(gated.accepted,99);assert.ok(gated.diagnostics.some(d=>d.id===rows[0].id&&d.reason==='incomplete_or_inconsistent_session'));
 });
+
+test('an absent context never groups unrelated facts with missing exercise identity',()=>{
+ const r=record('unknown',1,80);r.payload.page.exerciseId=null;
+ for(const contextKey of [null,undefined,'']){
+  const state=R.replay([r],{ownerId:'a',contextKey});
+  assert.equal(state.latestFirst,null);assert.equal(state.startingScale,null);assert.equal(state.ledger.length,0);
+ }
+});

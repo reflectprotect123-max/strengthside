@@ -30,3 +30,10 @@ test('Next cannot bypass a running prep countdown, but advances after zero',()=>
 test('painting a closed logger does not start a hidden prep timer',()=>{
  const {ctx}=boot();ctx.S.loggerOpen=false;ctx.Logger.paint();assert.equal(ctx.S.timer.mode,null);
 });
+
+test('failed countdown persistence leaves the previous timer intact and reports the storage failure',()=>{
+ const {ctx,element}=boot();const previous=ctx.S.timer;
+ ctx.save=()=>{throw new Error('quota');};
+ assert.doesNotThrow(()=>ctx.Logger.paint());assert.equal(ctx.S.timer,previous);
+ assert.equal(ctx.S.session.warmupClock,undefined);assert.match(element.innerHTML,/Could not save/);
+});
