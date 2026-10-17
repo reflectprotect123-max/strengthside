@@ -86,7 +86,7 @@ if (html.includes('id="athleteShell"') || html.includes('athlete-shell') || html
   throw new Error('coach.html must not include an athlete login or athlete shell');
 }
 
-const sandbox = { console, module: { exports: {} }, globalThis: {} };
+const sandbox = { console, module: { exports: {} }, globalThis: {}, URLSearchParams };
 sandbox.globalThis = sandbox;
 vm.runInNewContext(src, sandbox);
 const L = sandbox.module.exports || sandbox.CoachLoop;
@@ -189,6 +189,7 @@ const whoopWindow = {
 };
 vm.runInNewContext(whoopBridge, {
   window: whoopWindow,
+  URLSearchParams,
   fetch: async () => ({ ok: true, json: async () => ({ whoop: {
     connected: true,
     lastSyncAt: '2026-08-26T12:00:00Z',
