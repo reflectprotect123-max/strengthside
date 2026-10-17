@@ -1,13 +1,15 @@
 /** Synthetic engineering evaluation of actual app boundaries; no clinical accuracy claim. */
 import vm from 'node:vm';
 import {Worker,isMainThread,parentPort,workerData} from 'node:worker_threads';
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,renameSync} from 'node:fs';
+import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 const fixture=JSON.parse(readFileSync(new URL('../checks/fixtures/strength-learning-cases.json',import.meta.url)));
 export const registered={training:fixture.trainingSeeds,evaluation:fixture.evaluationSeeds};
 const sources=['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-brain','strength-memory','session'].map(n=>[n,readFileSync(new URL('../apps/athlete/'+n+'.js',import.meta.url),'utf8')]);
 const digest=x=>createHash('sha256').update(x).digest('hex');
+const analysisSha256=digest(readFileSync(fileURLToPath(import.meta.url)));
 function rng(seed){let x=seed>>>0;return()=>((x=(Math.imul(1664525,x)+1013904223)>>>0)/4294967296);}
 const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
 export function runtime(seed=1,mode='default'){
@@ -115,7 +117,7 @@ export function summarizeReport(report){
  const keys=['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'];
  const violations=results.reduce((n,r)=>n+keys.reduce((s,k)=>s+r.candidate[k]+r.baseline[k],0),0);
  const pass=violations===0&&overall.targetHitDifference.mean>=0&&overall.targetHitDifference.low>-.01&&overall.missRateDifference.high<=.005&&Object.values(groups).every(g=>g.targetHitDifference.low>-.03&&g.missRateDifference.high<=.01);
- return {...report,overall,groups,violations,bootstrapUnit:'seed + athlete, with all repeated scenarios kept together',analysisSha256:digest(readFileSync(fileURLToPath(import.meta.url))),gate:{pass,shippingMode:'default',candidateMode:'shadow-only pending staging and outcome gates'}};
+ return {...report,overall,groups,violations,bootstrapUnit:'seed + athlete, with all repeated scenarios kept together',analysisSha256,gate:{pass,shippingMode:'default',candidateMode:'shadow-only pending staging and outcome gates'}};
 }
 export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-start','alternating-tempo-10-8-6','noisy-feedback','coarse-equipment','short-rest','recovery-drift','athlete-calibrated','athlete-calibrated-noisy']}={}){
  const tasks=[];
@@ -130,9 +132,24 @@ export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-s
  return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'fresh independent evaluation through actual session/seed/capture/next/replay; cold and explicitly athlete-calibrated arms; paired athlete-cluster 10000-resample bootstrap',limitations:['Scores all ordinary working sets including the first; the old prototype excluded the first.','Athlete-calibrated arms provide an informed second warm-up weight once; they do not demonstrate automatic capacity discovery. Report these arms separately from cold starts.','Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
 }
 if(!isMainThread){
- const results=[];
+ const results=[],cacheDir=process.env.STRENGTH_EVAL_CHECKPOINT_DIR;
+ const signature=digest(JSON.stringify({node:process.version,analysisSha256,fixture,sources,batch:workerData.batch}));
+ const cacheFile=cacheDir&&workerData.batch.length?join(cacheDir,`worker-${workerData.batch[0].index}.json`):null;
+ let saved=[];
+ if(cacheFile){
+  mkdirSync(cacheDir,{recursive:true});
+  try{
+   const data=JSON.parse(readFileSync(cacheFile,'utf8'));
+   if(data.signature===signature&&Array.isArray(data.results)&&data.checksum===digest(JSON.stringify(data.results)))saved=data.results;
+  }catch{/* Missing/interrupted checkpoints simply recompute; never accept incomplete evidence. */}
+ }
  for(const {index,sessions,...input} of workerData.batch){
-  results.push({index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics});
+  const cached=saved.find(row=>row.index===index);
+  results.push(cached||{index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics});
+  if(cacheFile&&!cached){
+   const contents=JSON.stringify({signature,results,checksum:digest(JSON.stringify(results))});
+   writeFileSync(cacheFile+'.tmp',contents,{mode:0o600});renameSync(cacheFile+'.tmp',cacheFile);
+  }
   if(results.length%6===0)process.stderr.write(`Simulation worker: ${results.length}/${workerData.batch.length} pairs complete\n`);
   // Let completed native-restore promises settle between independent VM runs.
   await new Promise(resolve=>setImmediate(resolve));
