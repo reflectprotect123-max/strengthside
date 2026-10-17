@@ -1,5 +1,8 @@
 # Exercise catalogues
 
+[Download both catalogues as a ZIP](https://github.com/reflectprotect123-max/strengthside/releases/download/exercise-catalogues/exercise-catalogues-main-and-banded.zip).
+Open the CSV files in Excel or Google Sheets, or use the JSON files for import.
+
 The usable library is split into **Main** and **Banded** catalogues. Unclear and
 non-exercise entries have been deleted from both usable catalogues and their alias
 maps. Exercise IDs and aliases for retained entries are unchanged.
@@ -35,3 +38,7 @@ Existing training records and load conventions have not been altered.
 
 This is catalogue data for the future dashboard. The athlete app, Supabase and
 Capgo have not been changed by this cleanup.
+
+To rebuild the verified download, run `python3 scripts/export-exercise-catalogues.py`.
+The manual **Downloadable exercise catalogue ZIP** workflow publishes it to the
+`exercise-catalogues` release. Archive files are excluded.
