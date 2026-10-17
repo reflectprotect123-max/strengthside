@@ -1,0 +1,68 @@
+{
+  "project": "orysjncrksmdfabpuftd",
+  "completed_at": "2026-10-17T21:26:01.104965+00:00",
+  "counts": [
+    {
+      "catalogue": "banded",
+      "exercises": 153,
+      "aliases": 171,
+      "custom_exercises": 31
+    },
+    {
+      "catalogue": "main",
+      "exercises": 1674,
+      "aliases": 1874,
+      "custom_exercises": 346
+    }
+  ],
+  "exact_round_trip": true,
+  "repeat_import_no_op": true,
+  "authenticated_read_test": true,
+  "permissions": [
+    {
+      "role": "anon",
+      "table_name": "exercise_catalogue",
+      "can_read": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "role": "anon",
+      "table_name": "exercise_catalogue_sources",
+      "can_read": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "role": "authenticated",
+      "table_name": "exercise_catalogue",
+      "can_read": true,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "role": "authenticated",
+      "table_name": "exercise_catalogue_sources",
+      "can_read": true,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    }
+  ],
+  "rls": [
+    {
+      "relname": "exercise_catalogue_sources",
+      "relrowsecurity": true
+    },
+    {
+      "relname": "exercise_catalogue",
+      "relrowsecurity": true
+    }
+  ],
+  "existing_table_counts_unchanged": true,
+  "schema_sha256": "124e03429dd1382084b7594802384ebd335cf78c57ed26db3e9bb70535f6cce3",
+  "seed_sha256": "1a481442a58f16e8cc0cc5874c2f68ad4479711c60dbf082d2b2b6ba35bfa977"
+}

@@ -74,10 +74,11 @@ it:
 Both repositories write migrations against **one** Postgres. This is the rule that
 keeps that from becoming a disaster:
 
-- **This repo owns exactly thirteen tables**: `metric`, `equipment`, `exercise`,
+- **This repo owns fifteen tables**: `metric`, `equipment`, `exercise`,
   `strength_block_item`, `prescribed_set`, `prescribed_target`, `assigned_session`,
   `performed_set`, `performed_measurement`, `working_max_event`, `pr_event`,
-  `coaching_note`, `strength_brain_records` — plus their RLS and the `embed-coaching-note` function.
+  `coaching_note`, `strength_brain_records`, `exercise_catalogue_sources`,
+  `exercise_catalogue` — plus their RLS and the `embed-coaching-note` function.
 - **The hybrid stub owns the rest of the shared ledger** (auth helpers, nutrition
   domain history, legacy coach/ARC relationship SQL including
   `coaches_athlete_anywhere`). Those objects stay in Postgres as **frozen legacy** —

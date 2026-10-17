@@ -1,5 +1,44 @@
 # Exercise movement categories
 
+## Supabase catalogue
+
+Migration `20261018090000_exercise_catalogue.sql` stores the cleaned catalogue in
+`public.exercise_catalogue` and the original taxonomy, file SHA-256 and expected
+counts in `public.exercise_catalogue_sources`. Main and Banded remain separate
+values of `catalogue`. Canonical IDs, aliases, tags and classification provenance
+are preserved exactly. Both tables are readable by signed-in users; client writes
+and anonymous access are denied. Trusted service/backend imports own writes.
+
+Generate the repeatable seed with:
+
+```sh
+python scripts/import-exercise-catalogues.py --output /tmp/exercise-catalogue-seed.sql
+```
+
+Apply the migration once, then execute the generated SQL using a trusted database
+connection or Supabase SQL editor. The seed runs in one transaction, checks exact
+content, and accepts an identical repeat as a no-op. A conflicting source hash,
+record or unexpected destination identity rolls the whole seed back; it never
+silently updates/deletes existing records. An intentional new catalogue version
+requires a reviewed update rather than bypassing this guard.
+
+Search examples (authenticated Supabase client):
+
+```sql
+select canonical_exercise_id, canonical_title, aliases, tags, movement_category
+from public.exercise_catalogue
+where catalogue = 'main'
+  and (canonical_title ilike '%back squat%'
+    or exists(select 1 from unnest(aliases) as alias where alias ilike '%back squat%'))
+order by canonical_title;
+```
+
+These text IDs are search-library identities, not the UUID keys in `public.exercise`.
+No workout rows, athlete snapshots, working maxes or e1RMs are changed or inferred.
+Category/alias similarity never authorizes sharing strength estimates. This import
+does not change app UI or automatically switch an existing picker to Supabase.
+The separate FBB warmup/cooldown reference pack is not merged into these catalogues.
+
 This movement/search layer produces two usable catalogues: **Main (1,674 entries,
 346 custom)** and **Banded (153 entries, 31 custom)**. All 33 unclear/non-exercise
 entries are deleted from usable exports and their aliases. Retained entries keep
