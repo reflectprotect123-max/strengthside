@@ -1,0 +1,2668 @@
+{
+  "schema_version": 1,
+  "exercises": [
+    {
+      "canonical_exercise_id": "exercise_9eb64af89e0e1311",
+      "canonical_title": "3 Way Shoulder Shocker",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Shoulder accessory or named shoulder series; no more specific component movement is assumed.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e4a9e15021cf3224",
+      "canonical_title": "4 Way Shoulders",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Shoulder accessory or named shoulder series; no more specific component movement is assumed.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_9f8723f9184cff3a",
+      "canonical_title": "400 M Repeats",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "conditioning",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Running or general interval work, not a strength movement.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_fdb0f2c0f85c3074",
+      "canonical_title": "5 10 5 Drill",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "agility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named lateral/change-of-direction drill.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_94e4b3c8b0846f26",
+      "canonical_title": "A March",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_70e90073e7297a10",
+      "canonical_title": "A Switch Elevated Box",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e57c9847b3ceee4b",
+      "canonical_title": "A Switch – Drop (Box)",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_93338c6349c40a3a",
+      "canonical_title": "Acceleration Banded Range Finder",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_9ba7708202c800c8",
+      "canonical_title": "Alternating Glute Bridge Floor Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hip_extension",
+        "horizontal_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_63b64f593ba57d51",
+      "canonical_title": "Altitude Split Squat Landing",
+      "movement_category": "power",
+      "movement_subcategory": "landing",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landing/deceleration drill; preserve the landing task rather than ordinary squat progression.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_61da32700dea14ca",
+      "canonical_title": "Around The World",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f747996b3e86d304",
+      "canonical_title": "Assisted Cossack",
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Assisted lateral squat variation.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_ebccb643eb1c2ca2",
+      "canonical_title": "Band Assisted Cmj Split",
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Countermovement, skipping or pogo drill; hip-switch wording does not imply mobility.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_22e6f6581d2751f5",
+      "canonical_title": "Band Resisted Side Plank Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_af1fff94990f02e1",
+      "canonical_title": "Band Rotation",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_a5f26d81a4512c13",
+      "canonical_title": "Band Row + Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row plus press; press angle is unspecified, so no push-direction secondary category is inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_297237abee5328a9",
+      "canonical_title": "Band Row + Reverse Lunge",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "lunge_step"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_440cf6a4524e3ce0",
+      "canonical_title": "Band Speed Press",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_b6a29bc67fab7c7a",
+      "canonical_title": "Banded Alphabet",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_23b5a0c25e4c04b3",
+      "canonical_title": "Banded Hip Flexor Pull",
+      "movement_category": "isolation",
+      "movement_subcategory": "hip_flexion",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named resisted hip-flexion accessory; not a medicine-ball throw.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_2489be7b90efff8e",
+      "canonical_title": "Banded Lat Distraction E/Side",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1a6c5650c03dff36",
+      "canonical_title": "Banded Plank Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8a04e1f4573c31a5",
+      "canonical_title": "Banded Press",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_873b53b40045707d",
+      "canonical_title": "Banded Speed Press",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c4c23f363a1d9269",
+      "canonical_title": "Banded Sprinter Hold",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_7daf5591337cce46",
+      "canonical_title": "Banded Tall Side Plank Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_51fba3939f353679",
+      "canonical_title": "Bar Muscle Up",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "vertical_pull",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Muscle-up combines a vertical pull and dip/support transition.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_309e73ea679cbaf5",
+      "canonical_title": "Barbell Ffe Zercher Iso Hold",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_58771f2d5c31277d",
+      "canonical_title": "Barbell Lat Pullover W/Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "isolation",
+        "horizontal_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_46e1d2db72becf8c",
+      "canonical_title": "Barbell Z Pin Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Z-position press from pins is an overhead press, not a bench pin press.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_2731ce11180f8652",
+      "canonical_title": "Bear Crawl Kettlebell Lateral Pull Through",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Supported crawl-position drag resists trunk rotation; not a standing hip hinge.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8195c0ee2bf0a196",
+      "canonical_title": "Bendh",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e3d65c708b077a4b",
+      "canonical_title": "Bent Knee Copenhagen Iso Hold",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_2ffe36ecc73f77e5",
+      "canonical_title": "Bent Over Cable Rotation",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4c6d73bb2273ab8a",
+      "canonical_title": "Biceps Curl To Shoulder Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "isolation",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_00935347da473bc2",
+      "canonical_title": "Bird Dog Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_595948338d703c7b",
+      "canonical_title": "Box Drop Landing",
+      "movement_category": "power",
+      "movement_subcategory": "landing",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landing/deceleration drill; preserve the landing task rather than ordinary squat progression.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_a87165bf8c93aab4",
+      "canonical_title": "Box Get Overs With Floor Touch",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "conditioning",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Whole-body box traversal conditioning; jumping versus stepping is not specified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_331f333b33b995f5",
+      "canonical_title": "Box Pike Handstand Shoulder Tap",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_42e9ce9f3ef21cfb",
+      "canonical_title": "Cable Rotation",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_cc92b75c0f4d82c8",
+      "canonical_title": "Cable Swing/Throw/Slap",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Multiple possible actions are listed without technique; confirm the intended movement.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c78bedd7aec532e9",
+      "canonical_title": "Close Chain Straight Arm Shoulder Rotation",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_109d635db3f53270",
+      "canonical_title": "Close Grip Hammer Press",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4d11b0a58561c368",
+      "canonical_title": "Copenhagens Long Lever",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_83b680d1ba8d383e",
+      "canonical_title": "Crawl Position To Acceleration",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_eb71a5198a66206d",
+      "canonical_title": "Dead Hang",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_d52019b17572f165",
+      "canonical_title": "Deficit Single Leg Side Plank Dip",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_6dc8531c049504ff",
+      "canonical_title": "Devil Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hinge",
+        "horizontal_push",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Burpee/push-up-to-overhead dumbbell combination, not an ordinary overhead press.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_efa9910eb1dda83e",
+      "canonical_title": "Dip Belt Calf Raise",
+      "movement_category": "isolation",
+      "movement_subcategory": "ankle_plantarflexion",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Dip belt is the load attachment; movement is a calf raise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_88c40bf4118a6013",
+      "canonical_title": "Dirty 30S",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_653bf621fc6564cb",
+      "canonical_title": "Dive Bomber",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named dive-bomber push-up variation.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_0342d24f2c54ea56",
+      "canonical_title": "Double Kettlebell Clean And Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_560e50ef24ed0b0d",
+      "canonical_title": "Double Kettlebell Clean And Push Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_9c544528badd23e1",
+      "canonical_title": "Double Kettlebell Front Rack Walk",
+      "movement_category": "carry",
+      "movement_subcategory": "loaded_carry",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Moving in front rack with external load.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_860c61411ed0531b",
+      "canonical_title": "Drop Squat",
+      "movement_category": "power",
+      "movement_subcategory": "landing",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landing/deceleration drill; preserve the landing task rather than ordinary squat progression.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8aff400a29fa3aa3",
+      "canonical_title": "Dumbbell Bird Dog Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f59a57b992a89a3d",
+      "canonical_title": "Dumbbell Clean Into Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_788fa7e5f9f3bff4",
+      "canonical_title": "Dumbbell Flat Bench",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_267f9b7b9b65ca8c",
+      "canonical_title": "Dumbbell Incline Bench Sp",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4c55ef330ba601b5",
+      "canonical_title": "Dumbbell Incline Rear Delt Swing",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Rear-delt swing accessory, not a hip-driven kettlebell swing.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4fe043ebf54bcd18",
+      "canonical_title": "Dumbbell Low Incline Bench",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_b8b08e9fd7db9d43",
+      "canonical_title": "Dumbbell Renegade Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f9a49729da4ba266",
+      "canonical_title": "Dumbbell Renegade Row With Push-Up",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_push",
+        "horizontal_pull",
+        "core"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_b54cb63dd5212dbb",
+      "canonical_title": "Dumbbell Thruster",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_b640bd8a45fb0154",
+      "canonical_title": "Dumbbell Thruster 15Rm (Within 4 Sets)",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_979df63501379ffe",
+      "canonical_title": "Farmers Press",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1e3ae562c3372a53",
+      "canonical_title": "Flat Dumbbell Press 8Rm",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_cf27f74525fb57de",
+      "canonical_title": "Flat Dumbbell Press @60% Of Last Weeks 8Rm *2 Minute Rest Periods",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_2f2f343f4dabcaae",
+      "canonical_title": "Foam Roller Snow Angels",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e3b7978b49bd5413",
+      "canonical_title": "Foam Roller Walk Out",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Known supported anti-extension/anti-rotation drill; not a standing cable pull-through.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1be57c3194f3227e",
+      "canonical_title": "Forearm Supported Wrist Curl",
+      "movement_category": "isolation",
+      "movement_subcategory": "grip_forearm",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Wrist flexion is a forearm accessory, not an elbow curl.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1c904c8b90fd3107",
+      "canonical_title": "Ghd Bosch Hold + Plate Press",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "GHD torso hold with a plate press: trunk-support task; press direction is unspecified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8bba4959833775a9",
+      "canonical_title": "Glute Bridge Dumbbell Bench Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hip_extension",
+        "horizontal_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_6f74cfdbb7b3c870",
+      "canonical_title": "Glute Bridge Dumbbell Floor Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hip_extension",
+        "horizontal_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_74bd203ff296ce73",
+      "canonical_title": "Glute Bridge Hold With Hip Abduction",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hip_extension",
+        "isolation"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Bridge support combined with hip abduction; preserve both tasks.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_6de5e761a5a1cbe0",
+      "canonical_title": "Gorilla Sits",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_6e8a482ad33b6a62",
+      "canonical_title": "H Rolls",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e20ff6049f7e404b",
+      "canonical_title": "Half Kneeling External Rotation To Overhead Press With Dumbbell",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "isolation",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_3307e12092055d9f",
+      "canonical_title": "Half Kneeling Landmine Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "angled_press",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landmine is an angled press; grouped with overhead push for navigation, not identical mechanics.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_896a06b069177bb3",
+      "canonical_title": "Hamstring March",
+      "movement_category": "hip_extension",
+      "movement_subcategory": "bridge_thrust",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Hamstring bridge/march family; historical typo remains an alias.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_98cfffc116c7894d",
+      "canonical_title": "Handstand Wall Walk",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Handstand wall-walk support/pressing skill, not an ordinary walking or stretching drill.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_99be9e80a49e6a1d",
+      "canonical_title": "Hanging Medicine Ball Knee Raise",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_cb3dcac75c3bda0e",
+      "canonical_title": "High Hang Pull",
+      "movement_category": "power",
+      "movement_subcategory": "olympic_lift",
+      "secondary_categories": [],
+      "tags": [
+        "family:weightlifting_pull"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Weightlifting pull family; an isometric pull is not a normal deadlift set.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_ec61b9d606d86edb",
+      "canonical_title": "High Incline Dumbbell Press",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4dc3dd6c9ecdeca2",
+      "canonical_title": "High Incline Dumbbell Press Neutral Grip",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e497f525105a9a04",
+      "canonical_title": "High Incline Dumbbell Press Pronated",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_883237f8c92437ca",
+      "canonical_title": "Hip Extension + Glute Ham Raise (2 Second Pause Between The Hip Extension And Glute Ham Raises) Weighted",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hinge",
+        "isolation"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_a75c0f483ec03369",
+      "canonical_title": "Incline Rotator Drop Catch",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Shoulder accessory or named shoulder series; no more specific component movement is assumed.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_79078bb59c3e7c21",
+      "canonical_title": "Kettlebell Arm Bar",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e3f32d7159d5b0db",
+      "canonical_title": "Kettlebell Around The World",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_74559cc7537e60e9",
+      "canonical_title": "Kettlebell Bent Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised overhead press variation; grip, body lean or rotation does not turn it into a bench press.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_7b67c6990c91766d",
+      "canonical_title": "Kettlebell Clean + Squat + Push Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_9b386c8ac1d3ed78",
+      "canonical_title": "Kettlebell Clean And Push Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_730d23475139a56b",
+      "canonical_title": "Kettlebell Complex Clean + Lunge + Alternating Press + High Pull",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "lunge_step",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_a97ef6c26d15d7c4",
+      "canonical_title": "Kettlebell Complex Clean + Press + Press + Carry",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "vertical_push",
+        "carry"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c94d1aea3507507d",
+      "canonical_title": "Kettlebell Complex Clean + Squat Into Rotational Press + Windmill",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "squat",
+        "vertical_push",
+        "core"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_87d87ccb8d8297ab",
+      "canonical_title": "Kettlebell Complex Gorilla Row + Snatch + Alternating Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "power",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_38939b8270381c6c",
+      "canonical_title": "Kettlebell Complex Of Row + Clean + Squat + Push Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "power",
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_45bd4718a30ee746",
+      "canonical_title": "Kettlebell Complex Of Row + Swing + Clean + Squat + Push Press + March (Or Carry)",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "hinge",
+        "power",
+        "squat",
+        "vertical_push",
+        "carry"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_896c3b5697079f52",
+      "canonical_title": "Kettlebell Complex Row + Clean + Thruster + Tall Kneeling Press + Tall Kneeling To Standing",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "power",
+        "squat",
+        "vertical_push",
+        "lunge_step"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_3fb4f87a0fa2c2c5",
+      "canonical_title": "Kettlebell Complex Single Arm Swing + Clean + Squat Clean + Squat Clean Thruster",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hinge",
+        "power",
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f1d467f5d276f223",
+      "canonical_title": "Kettlebell Drag Through",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Known supported anti-extension/anti-rotation drill; not a standing cable pull-through.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_2ab717088348e8b6",
+      "canonical_title": "Kettlebell Flow Alternating Row + Alternating Swing + Alternating Clean + Reverse Lunge + Single Arm Squat + Snatch",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "hinge",
+        "power",
+        "lunge_step",
+        "squat"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_0226804594c13dfc",
+      "canonical_title": "Kettlebell Glute Bridge Floor Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hip_extension",
+        "horizontal_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_26140b0e7fa38a5e",
+      "canonical_title": "Kettlebell Halo",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8693a512e870a159",
+      "canonical_title": "Kettlebell Hip Flex Raise",
+      "movement_category": "isolation",
+      "movement_subcategory": "hip_flexion",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named resisted hip-flexion accessory; not a medicine-ball throw.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8d0ae971dfbfafb5",
+      "canonical_title": "Kettlebell Hold Feet Elevated Glute Bridge Psoas March",
+      "movement_category": "hip_extension",
+      "movement_subcategory": "bridge_thrust",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Supported bridge task; neither a moving carry nor foam-rolling mobility.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_ce9d0b7474d73700",
+      "canonical_title": "Kettlebell Press Wind Mill",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "core",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_7ddcfa5310042376",
+      "canonical_title": "Kettlebell Push-Up To Renegade Row",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_push",
+        "horizontal_pull",
+        "core"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_b850935450a4d314",
+      "canonical_title": "Kettlebell Rotational Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised overhead press variation; grip, body lean or rotation does not turn it into a bench press.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f5b52a0daf2da4c0",
+      "canonical_title": "Kettlebell Squat Clean Thruster",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_cf7f5c5fe6658482",
+      "canonical_title": "Kettlebell Swing To Broad Jump",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hinge",
+        "power"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_5d7ab0d27911422c",
+      "canonical_title": "Kettlebell Swing Upright Row",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hinge",
+        "isolation"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_9e376c1c2aaced41",
+      "canonical_title": "Kettlebell Thruster",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_cef4e8bcea48ebcd",
+      "canonical_title": "Kipping Swing",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Gymnastics hanging kip/swing drill, not a loaded hip swing.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4b8ab90e8d9dfe0e",
+      "canonical_title": "Knee Supported Foam Roller Windmill",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Supported foam-roller thoracic windmill mobility drill; not the loaded standing windmill.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c22248b64fb0317d",
+      "canonical_title": "Landmine Kneeling Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "angled_press",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landmine is an angled press; grouped with overhead push for navigation, not identical mechanics.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_0fa55335fe248243",
+      "canonical_title": "Landmine Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "angled_press",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landmine is an angled press; grouped with overhead push for navigation, not identical mechanics.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_0b61e352eb4ffdf1",
+      "canonical_title": "Landmine Rotating Press From Ground",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "angled_press",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landmine is an angled press; grouped with overhead push for navigation, not identical mechanics.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_07bf85cf40f24954",
+      "canonical_title": "Landmine Rotation",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_90f7b357394cf7fd",
+      "canonical_title": "Landmine Rotation From Squat",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "core"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_daf0c645cd103db8",
+      "canonical_title": "Landmine Rotation To Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "core",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e5c853840da62fb0",
+      "canonical_title": "Landmine Thruster",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_215bf2a4381e245e",
+      "canonical_title": "Lateral High Knees",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_85234cf842da7e23",
+      "canonical_title": "Lateral Slides",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "agility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named lateral/change-of-direction drill.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_3c69a62bae5aaef7",
+      "canonical_title": "Lateral Squat With T Spine Flow",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "mobility"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit lower-body plus thoracic-mobility sequence; preserve the combined task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_0c8c314bc09b673b",
+      "canonical_title": "Low Bar Muscle Ups",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "vertical_pull",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Muscle-up combines a vertical pull and dip/support transition.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_85da5b411d1d3cce",
+      "canonical_title": "Lower Body Focus Full Body",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Source instructions contain a complete warm-up and multi-exercise workout, not one movement.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_37ebe01305dbe4b6",
+      "canonical_title": "Lunge With T Spine",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "mobility",
+        "lunge_step"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit lower-body plus thoracic-mobility sequence; preserve the combined task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c1e6db4193e3f58d",
+      "canonical_title": "Manmaker",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_push",
+        "horizontal_pull",
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named dumbbell sequence combining push-up, row and squat/press; exact sequence remains in its original prescription.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_98f636658b58145b",
+      "canonical_title": "Medial Delt Massacre 3.0",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Shoulder accessory or named shoulder series; no more specific component movement is assumed.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_d4d0c128b62ff0fd",
+      "canonical_title": "Medicine Ball Knee Lifts",
+      "movement_category": "isolation",
+      "movement_subcategory": "hip_flexion",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named resisted hip-flexion accessory; not a medicine-ball throw.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_09b54bafe0152aac",
+      "canonical_title": "Medicine Ball Twist",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_31501d878853975d",
+      "canonical_title": "Mid Thigh Iso Pull",
+      "movement_category": "power",
+      "movement_subcategory": "olympic_lift",
+      "secondary_categories": [],
+      "tags": [
+        "family:weightlifting_pull"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Weightlifting pull family; an isometric pull is not a normal deadlift set.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_873a47ba1e00ba43",
+      "canonical_title": "Mixed Method",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_bd9b30bb44e57cc5",
+      "canonical_title": "Mobilitywod Banded Lower Body Unlock",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named MobilityWOD routine; classified at mobility level only, components are unspecified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c6be732c39e06660",
+      "canonical_title": "Mobilitywod Fire Up The Upper Back",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named MobilityWOD routine; classified at mobility level only, components are unspecified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_d0ba1f8722560e9e",
+      "canonical_title": "Mobilitywod Game Changer",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named MobilityWOD routine; classified at mobility level only, components are unspecified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_3310d7cbde28f6a0",
+      "canonical_title": "Mobilitywod Knee Pain Fix",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named MobilityWOD routine; classified at mobility level only, components are unspecified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_97d73744f7505ef3",
+      "canonical_title": "Mobilitywod Low Back Relief",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named MobilityWOD routine; classified at mobility level only, components are unspecified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_5380e802d77a203a",
+      "canonical_title": "Mobilitywod Unlock Your Ankles",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named MobilityWOD routine; classified at mobility level only, components are unspecified.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_9c9c296453be294e",
+      "canonical_title": "Moderate Tempo Work",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f12502049dd65aae",
+      "canonical_title": "Old School Audinwood Core Circuit (Core)",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Explicitly named core circuit; no component list inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_41a49f786d133c21",
+      "canonical_title": "Option 1",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_209ef9fc4dfe2166",
+      "canonical_title": "Option 2",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4efc95b7d2883805",
+      "canonical_title": "Passive Hang",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_21bc931f0c2292cf",
+      "canonical_title": "Pdl Barbell Protocol",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c05cb9adb8d1e865",
+      "canonical_title": "Pdl Plyometrics Protocol",
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named plyometrics routine; no individual component movements inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_12a0df8c5bc0bf1f",
+      "canonical_title": "Pdl Shoulder Protocol",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8725553b9495b0fc",
+      "canonical_title": "Pick Your Poison Intervals",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "conditioning",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Running or general interval work, not a strength movement.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_781ceeb4eee3e411",
+      "canonical_title": "Plank Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_582795dc451774f3",
+      "canonical_title": "Plank To Reverse Shuttle",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "core",
+        "locomotion_conditioning"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_47c7dbb0d22f342f",
+      "canonical_title": "Plate Wrist Curl (Grip)",
+      "movement_category": "isolation",
+      "movement_subcategory": "grip_forearm",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Wrist flexion is a forearm accessory, not an elbow curl.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_fe53775cf17d3c1d",
+      "canonical_title": "Pogo Hip Switch",
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Countermovement, skipping or pogo drill; hip-switch wording does not imply mobility.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_6a44eddc28dfd75d",
+      "canonical_title": "Power Clean And Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_fa34a42cef25b4e5",
+      "canonical_title": "Power Skips",
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Countermovement, skipping or pogo drill; hip-switch wording does not imply mobility.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_5fb46acf00b87b01",
+      "canonical_title": "Prone Incline Drop Catch",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_ae55c39af81a619e",
+      "canonical_title": "Prvn60 1/05/24",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Dated programme entry rather than a named exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c3fd8c007b468984",
+      "canonical_title": "Prvn60 2/05/24",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Dated programme entry rather than a named exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8e268f0b5bbb89b3",
+      "canonical_title": "Prvn60 29/04/24",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Dated programme entry rather than a named exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c6b4fa2af3e250b3",
+      "canonical_title": "Prvn60 3/05/24",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Dated programme entry rather than a named exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_a6a3e75277db62f6",
+      "canonical_title": "Prvn60 30/04/24",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Dated programme entry rather than a named exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_09d2746b32367d9e",
+      "canonical_title": "Prvn60 4/05/24",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Dated programme entry rather than a named exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_b02bb495f8080a30",
+      "canonical_title": "Pull-Up Bar Dead Hang",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Stationary hang using a pull-up bar; no pulling repetitions implied.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_41d354b4f5996b67",
+      "canonical_title": "Pull-Up Or Inverted Row",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "vertical_pull",
+        "horizontal_pull"
+      ],
+      "tags": [
+        "context:alternatives"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Explicit alternatives, not simultaneous movements; a dashboard must preserve the choice.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e26fcc883a5b7785",
+      "canonical_title": "Push-Up + Renegade Row",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_push",
+        "horizontal_pull",
+        "core"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_9cffb0f1023417f7",
+      "canonical_title": "Pvc Back Rack Rotation",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1f7b5fb69a802254",
+      "canonical_title": "Ql Extension",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1a23b5005b8d127d",
+      "canonical_title": "Quad Side To Side Ql Reach",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_575eaba9390f36d9",
+      "canonical_title": "Rear Delt Band Pull",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Shoulder accessory or named shoulder series; no more specific component movement is assumed.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_6dab9dd92a4f6d30",
+      "canonical_title": "Reverse Hyper Leg Curl",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hinge",
+        "isolation"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_30870bdfeb41b882",
+      "canonical_title": "Reverse Hyperextension",
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Reverse hyperextension accessory, distinct from a leg curl.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1326a699a150aecc",
+      "canonical_title": "Reverse V Ups On Rower (Seat)",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c71fb274b1f030d1",
+      "canonical_title": "Rope Sledpulls",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Could mean hand-over-hand sled rows or locomotion while dragging a rope; confirm technique.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_ec5662e38d7483f0",
+      "canonical_title": "Rotating Pike Twist To Cobra Flow",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4bfa5e819e637fe1",
+      "canonical_title": "Row To Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row plus press; press angle is unspecified, so no push-direction secondary category is inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8b6fd162f81b869a",
+      "canonical_title": "Ruck March",
+      "movement_category": "carry",
+      "movement_subcategory": "ruck",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Locomotion with a backpack load, preserved separately from an ordinary walk.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1b64ffcca6820666",
+      "canonical_title": "Rucking",
+      "movement_category": "carry",
+      "movement_subcategory": "ruck",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Locomotion with a backpack load, preserved separately from an ordinary walk.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_72f4f3221b018a30",
+      "canonical_title": "SSB (Or Barbell) Back Loaded Walking Lunge/Good Morning",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "lunge_step",
+        "hinge"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_5c2a5fdef4fec8ef",
+      "canonical_title": "Seated Overhead Dumbbell Extension",
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Seated overhead dumbbell extension is the triceps-extension accessory.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_cf39c4794a192f0d",
+      "canonical_title": "Shin Box Reach And Row",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "mobility",
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_d0a3ef90c9ccccda",
+      "canonical_title": "Shoulder Taps",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e1c2a3923d28eec1",
+      "canonical_title": "Side Plank Row",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_0dfda05685e0282f",
+      "canonical_title": "Side To Side Landmine Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "angled_press",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landmine is an angled press; grouped with overhead push for navigation, not identical mechanics.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f3f697c265ec60cb",
+      "canonical_title": "Single Arm Kettlebell Clean + Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "power",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4e6aecf2c693f94d",
+      "canonical_title": "Single Arm Kettlebell Thruster",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8082c0b4d6476674",
+      "canonical_title": "Single Arm Overhead Box Opener",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_77ec0957ead51062",
+      "canonical_title": "Single Leg End Range Iso Push",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Name does not establish the complete movement or direction. Confirm using instructions/video; do not auto-substitute.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_53516a6b9af7466f",
+      "canonical_title": "Single Leg Hamstring Bridge On Foam Roller",
+      "movement_category": "hip_extension",
+      "movement_subcategory": "bridge_thrust",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Supported bridge task; neither a moving carry nor foam-rolling mobility.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_3da47bdca554444d",
+      "canonical_title": "Single Leg Kettlebell Romanian Deadlift + Row",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "hinge",
+        "horizontal_pull"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_c62c74b98aca22d7",
+      "canonical_title": "Slight Decline Dumbbell Bench Neutral",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1f692cf89271931c",
+      "canonical_title": "Slight Incline Dumbbell Neutral Bench",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_24b79eb81d87c80e",
+      "canonical_title": "Slight Incline Pronated Dumbbell Bench",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Flat/incline/decline bench-press family; do not default an unqualified press token to overhead.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_5d67277a7911d190",
+      "canonical_title": "Snatch Grip Behind The Neck Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised overhead press variation; grip, body lean or rotation does not turn it into a bench press.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_46ab67fde155b2a3",
+      "canonical_title": "Spiderman W/ Oh Reach",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_a6c66b5f068e9c71",
+      "canonical_title": "Split Stance Landmine Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "angled_press",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Landmine is an angled press; grouped with overhead push for navigation, not identical mechanics.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_58342c2b3d20b83e",
+      "canonical_title": "Squat To Stand",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named squat-to-stand mobility drill; not an ordinary loaded squat.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_b4599f099027cd03",
+      "canonical_title": "Standing Abductor Banded Pull-Apart",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "Abductor and pull-apart wording do not identify the joint/action consistently; confirm technique.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8763d6dddc926254",
+      "canonical_title": "Standing Curl + Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "isolation",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_84c198fe5aa06439",
+      "canonical_title": "Standing High To Low Banded Rotation",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_fd80e186b5376d80",
+      "canonical_title": "Standing Landmine Rotation",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_0f21783bd56854f7",
+      "canonical_title": "Step-Up + Press",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "lunge_step",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_38a5ab45bd8c23db",
+      "canonical_title": "Superman Hold",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_a28f94967b6debf8",
+      "canonical_title": "Supine Bridge With Reach",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_d610a9214607fceb",
+      "canonical_title": "Supine Lower Back Rotation E/Side",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_7f7dcb28fb0f8b3a",
+      "canonical_title": "Swimmer Kicks",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_1bbc8bc04475c67d",
+      "canonical_title": "T Bar Row/Kelso Shrug",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "isolation"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_269dcb3a6eaac62a",
+      "canonical_title": "TRX Standing Torso Rotation",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_260d93ff08d75644",
+      "canonical_title": "Tall Kneeling Kettlebell Halo",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_f034b4dce8b90bed",
+      "canonical_title": "Tall Kneeling Kettlebell Seesaw Press",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised overhead press variation; grip, body lean or rotation does not turn it into a bench press.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_73f4aad17cfef7f8",
+      "canonical_title": "Thruster",
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "squat",
+        "vertical_push"
+      ],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_8f3febdbb3754241",
+      "canonical_title": "Treadmill Work",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "conditioning",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Running or general interval work, not a strength movement.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_edbb9673b98dc257",
+      "canonical_title": "Triceps Push-Up",
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Compound push-up variation, not an elbow-only extension.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_45fec2720b8e0300",
+      "canonical_title": "Tuck Ups In Dip Support",
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_7ce9785b8b96f23b",
+      "canonical_title": "Turkish Get-Up",
+      "movement_category": "core",
+      "movement_subcategory": "get_up",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Multi-stage get-up/support task, not a sit-up or ordinary press.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_caca4da49edf2a02",
+      "canonical_title": "Velocity Tracking App (Android)",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Software tutorial, not an exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_6240b949b881dce1",
+      "canonical_title": "Velocity Tracking App Demo",
+      "movement_category": "reference",
+      "movement_subcategory": "non_exercise",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "non_exercise",
+      "reason": "Software tutorial, not an exercise.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_2d672efb39843d04",
+      "canonical_title": "Wall Assisted Hip Internal Rotation Airplanes",
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_3835dec9140d513e",
+      "canonical_title": "Wall Supported Triple Switches",
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_4adf87b95f30f045",
+      "canonical_title": "Wall Walk",
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Handstand wall-walk support/pressing skill, not an ordinary walking or stretching drill.",
+      "rule_id": "reviewed_exception"
+    }
+  ]
+}

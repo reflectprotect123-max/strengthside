@@ -1,5 +1,10 @@
 # TrainHeroic catalogue references
 
+Movement categories are now available for the full 1,860-entry library and the
+382-entry custom subset. Start with [movement categories and usage](MOVEMENT-CATEGORIES.md)
+and [the custom-library category CSV](custom_library_movement_categories.csv).
+The original cleaned-name reference files below remain unchanged.
+
 These files are the locally cleaned exercise-name references discussed with the user on 13 October 2026. They support catalogue review and alias matching, not automatic import of athlete performance.
 
 | File | Contents |
