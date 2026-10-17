@@ -989,7 +989,7 @@
       go('calendar', { tid, fromEditor: !!fromEditor, date: typeof root.today === 'function' ? root.today() : '' });
     },
     calendarBack() {
-      if (ui().flow === 'wizard') return go('overview');
+      if (ui().flow === 'wizard') return go('cooldown');
       if (ui().fromEditor) go('edit');
       else LibraryView.goList();
     },

@@ -462,3 +462,29 @@ test('cool-down track change keeps the start number on seconds or reps', () => {
   assert.deepEqual(cat.columns, ['reps']);
   assert.equal(cat.repTarget, '8');
 });
+
+test('wizard Next opens the calendar and Back returns to cool-down', () => {
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  globalThis.LibraryView.create();
+  const tid = globalThis.S.libUi.tid;
+  globalThis.S.library = globalThis.HybridLibrary.addExercise(globalThis.S.library, tid, {
+    title: 'Back Squat', setCount: 3, columns: ['reps']
+  });
+  globalThis.S.libUi.screen = 'cooldown';
+  globalThis.S.libUi.flow = 'wizard';
+  globalThis.LibraryView.wizardNext();
+  assert.equal(globalThis.S.libUi.screen, 'calendar');
+  assert.equal(globalThis.S.libUi.flow, 'wizard');
+  globalThis.LibraryView.calendarBack();
+  assert.equal(globalThis.S.libUi.screen, 'cooldown');
+  assert.match(globalThis.LibraryView.html(), /Cool-down/);
+  assert.doesNotMatch(globalThis.LibraryView.html(), /Session date/);
+
+  globalThis.S.libUi.flow = null;
+  globalThis.LibraryView.calendar(tid, true);
+  globalThis.LibraryView.calendarBack();
+  assert.equal(globalThis.S.libUi.screen, 'edit');
+  globalThis.LibraryView.calendar(tid, false);
+  globalThis.LibraryView.calendarBack();
+  assert.equal(globalThis.S.libUi.screen, 'list');
+});
