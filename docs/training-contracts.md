@@ -1,6 +1,6 @@
 # Current strength app ownership
 
-The athlete runtime is `apps/athlete`. Android and Capgo ship its validated staging output in `apps/mobile/capacitor/www`; they do not maintain another athlete UI. The coach entrypoint is `apps/coach/coach.html`; `index.html` redirects there. The older Hybrid athlete HTML is retained only in `archive/legacy-athlete` for historical regression fixtures. The unused strength-sync adapter stub is archived there too.
+The athlete runtime is `apps/athlete`. Android and Capgo ship its validated staging output in `apps/mobile/capacitor/www`; they do not maintain another athlete UI. The desktop Coach UI and installer are owned by `reflectprotect123-max/the-adaptivebrain-` (`apps/coach`, `apps/desktop`). The older Hybrid athlete HTML is retained only in `archive/legacy-athlete` for historical regression fixtures. The unused strength-sync adapter stub is archived there too.
 
 ## Shared contracts
 
@@ -14,7 +14,7 @@ WHOOP for the athlete uses Supabase `whoop-connect`, `whoop-callback`, `whoop-sy
 
 ## Releases and verification
 
-Edit `apps/athlete/release.json`, then run `node scripts/generate-strength-release.mjs`. This generates release.js, Android version metadata and the service-worker asset list. `scripts/stage-athlete.mjs` copies runtime files and validates all local index JS/CSS references. The desktop coach bundles its UI from `apps/coach/`; the Android APK bundles the athlete UI. Test files and checks are excluded from release staging.
+Edit `apps/athlete/release.json`, then run `node scripts/generate-strength-release.mjs`. This generates release.js, Android version metadata and the service-worker asset list. `scripts/stage-athlete.mjs` copies runtime files and validates all local index JS/CSS references. The Android APK bundles the athlete UI; Coach packaging and releases run only in the Adaptive Brain repository. Test files and checks are excluded from release staging.
 
 Run `pnpm run verify` and `pnpm run check:browser`. For a locally installed Chromium, set `PLAYWRIGHT_CHROMIUM_PATH` to its executable; otherwise run `pnpm exec playwright install chromium`. Browser tests exercise the current athlete source at phone size in Australia/Sydney time, including scheduling, full training, editing/reload, timer reuse/reset, progression, every numeric metric, completed circuits, deletion and update preservation. The updater transport test is simulated in Chromium; it does not instrument Android or use live athlete WHOOP credentials.
 
