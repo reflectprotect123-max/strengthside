@@ -1,29 +1,44 @@
 # Exercise movement categories
 
-This is a non-destructive movement/search layer over the cleaned TrainHeroic name
-library. It covers all **1,860 original canonical identities**, including the
-**382 custom-library entries**, and preserves all **2,078 original name aliases**.
-Original CSVs, exercise IDs, titles, source counts and historical references are
-unchanged. These are classifications from names and available source instructions,
-not video-verified technique or a clinically validated exercise ontology.
+This movement/search layer produces two usable catalogues: **Main (1,674 entries,
+346 custom)** and **Banded (153 entries, 31 custom)**. All 33 unclear/non-exercise
+entries are deleted from usable exports and their aliases. Retained entries keep
+their original IDs and aliases. Classifications reflect names and available source
+instructions, not video-verified technique.
 
 ## Files to use
 
 | File | Use |
 | --- | --- |
-| `custom_library_movement_categories.csv` | Spreadsheet-ready categories for the 382 custom entries; start here |
-| `exercise_movement_categories.csv` | Categories for every one of the 1,860 identities |
-| `exercise_movement_library.json` | Same entries plus taxonomy; importable into a future dashboard |
-| `movement-taxonomy.json` | Stable category IDs, labels, definitions and allowed subcategories |
-| `movement-overrides.json` | 223 reviewed exceptions, combinations and clarification decisions, keyed to original ID and guarded title |
-| `movement_review_queue.csv` | 24 unclear identities and 9 programme/software entries; excludes ordinary classified entries |
-| `movement_category_summary.json` | Counts and input SHA256 hashes; generated, not manually maintained |
+| `custom_library_movement_categories.csv` | 346 Main custom entries |
+| `banded_custom_library_movement_categories.csv` | 31 Banded custom entries |
+| `exercise_movement_categories.csv` | All 1,674 Main entries |
+| `banded_exercise_movement_categories.csv` | All 153 Banded entries |
+| `exercise_movement_library.json` | Main entries plus active taxonomy |
+| `banded_exercise_movement_library.json` | Banded entries plus active taxonomy |
+| `canonical_exercise_library.csv`, `custom_library_canonical.csv`, `exercise_alias_map.csv` | Main canonical records and aliases |
+| `banded_canonical_exercise_library.csv`, `banded_custom_library_canonical.csv`, `banded_exercise_alias_map.csv` | Banded canonical records and aliases |
+| `movement-taxonomy.json` | Classification definitions; active JSON omits removed utility categories |
+| `movement-overrides.json` | 223 ID-guarded classification/retirement decisions used by the generator, not an import catalogue |
+| `movement_category_summary.json` | Current counts and archived-input hashes |
 
-There are **1,827 classified entries**, **24 requiring clarification**, and **9
-non-exercise entries**. For the custom subset: **377 classified**, **4 requiring
-clarification**, and **1 complete workout kept as a reference entry**. Classification
-does not resolve the separate 117 alias/equipment review pairs in the name-cleanup
-report; those identities and their pending decisions remain separate.
+## Deletion and separation
+
+Deletion is applied first: 24 unclear and 9 non-exercise identities are excluded
+from both catalogues, all custom subsets, and their alias maps. The original
+sources and removal audit are retained only in `archive/`, for historical lookup
+and reproducible generation. There is no active clarification queue.
+
+Next, titles and aliases naming band, bands, banded or Theraband route an exercise
+to Banded. Assisted/resisted bands, reverse bands, optional bands and explicit
+band-or-machine alternatives all count. Banded records are moved, not duplicated.
+Movement categories remain intact inside each catalogue. No implicit band use is
+invented for names that do not identify it.
+
+The archive reconciliation is exact: **1,674 Main + 153 Banded + 33 removed =
+1,860 original identities**. Custom reconciliation is **346 + 31 + 5 = 382**.
+The 117 historical alias/equipment review pairs are not new exercises and are not
+silently merged by this routing change; their report is now archived.
 
 ## Category choices
 
@@ -76,13 +91,11 @@ equipment tags may describe alternatives in the original name.
 there is enough textual evidence for this navigation group. `reviewed_override`
 means the generic rules required a deliberate exception, not that an athlete or
 coach has confirmed a video. No guessed probability/confidence percentage is used.
-Unknown names get `needs_review` with a reason rather than a forced classification.
+Unknown names get `needs_review` with a reason and are removed from usable exports.
 
-The four unclear custom entries are **Bendh**, **Farmers Press**, **Standing
-Abductor Banded Pull-Apart**, and **Seated Power Clean**. Confirm the actual movement using instructions or a
-video before treating these as ordinary selectable exercises. The full workout
-**Lower Body Focus Full Body** is kept as a reference; its source instructions
-contain multiple exercises and a warm-up.
+The removed custom identities are Bendh, Farmers Press, Standing Abductor Banded
+Pull-Apart, Seated Power Clean, and the complete workout Lower Body Focus Full
+Body. They remain only in the archival audit and classification inputs.
 
 ## Use in a dashboard
 
@@ -91,8 +104,9 @@ contain multiple exercises and a warm-up.
 2. Search `canonical_title` and `aliases`. Filter category against the primary or
    secondary categories; optionally use equipment and variation tags. A category
    is for navigation, not proof that two variants are interchangeable.
-3. Exclude `needs_review` and `non_exercise` from automatic suggestions. Make
-   routines a deliberate option, rather than silently treating them as one lift.
+3. Import the chosen Main or Banded catalogue explicitly. Do not load `archive/`
+   or treat classification overrides as exercise records. Removed entries are
+   absent from both usable catalogues. Keep routines a deliberate option.
 4. Keep metrics and prescriptions independent. Categories do **not** determine
    reps, time, distance, tempo, load units, per-side convention, RPE/RIR, weight
    increments, e1RM eligibility, history pooling or progression. A weighted dip
@@ -114,9 +128,12 @@ python3 -m unittest discover -s scripts -p test_exercise_categories.py -v
 ```
 
 Change the taxonomy/rules or `movement-overrides.json`, then regenerate the exports.
+Schema version 2 JSON adds a `catalogue` field (`main` or `banded`); neither file
+is the old full-source catalogue. The archived inputs are never rewritten.
 Overrides must reference an existing ID and its exact canonical title. Checks
 reject orphan aliases, stale overrides, custom/source mismatches, invalid categories
 and stale generated files. Tests cover independent examples of movement mechanics,
 keyword traps, combinations, tag separation, deterministic regeneration and
-preservation of the complete identity/alias sets. The dedicated GitHub workflow
+preservation of retained identities/aliases, disjoint band routing, deletion
+precedence, and complete reconciliation against the archived source. The dedicated GitHub workflow
 runs these checks whenever this dataset or its generator changes.

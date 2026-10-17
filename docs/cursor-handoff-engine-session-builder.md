@@ -348,7 +348,13 @@ User confirmations:
 
 The name cleanup consolidated 2,078 distinct source names into 1,860 canonical identities across all history/custom sources. **218 redundant names** remain aliases. The custom catalogue became **382 entries from 397 source names**. Near names with real variation/equipment differences remain distinct. History rows/weights were not merged or deleted.
 
-Reference files in [data/trainheroic-library](data/trainheroic-library/README.md):
+Current catalogues: Main has 1,674 entries (346 custom), Banded has 153 (31 custom).
+The 24 unclear and 9 non-exercise entries are removed from usable exports and
+alias maps. Use the [current catalogue guide](data/trainheroic-library/README.md).
+All explicit band references, including assisted/resisted/optional bands, live
+only in the Banded catalogue. This metadata does not change app IDs or learning.
+
+Original reference files now live in [archive](data/trainheroic-library/archive/README.md):
 
 - `custom_library_canonical.csv`: the 382 cleaned custom entries, a starting point rather than an approved core catalogue.
 - `canonical_exercise_library.csv`: all 1,860 identities, including history-only names, combinations and prep entries.
