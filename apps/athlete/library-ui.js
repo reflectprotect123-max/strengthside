@@ -230,7 +230,7 @@
     return `
       <div class="shell-screen shell-screen--library">
         <div class="lib-head-row">
-          <button type="button" class="lib-back" onclick="${back}">←</button>
+          <button type="button" class="lib-back" aria-label="Back" onclick="${back}">←</button>
           <h1>Session Template</h1>
           <button type="button" class="lib-text-btn" onclick="LibraryView.reorder()">Reorder</button>
         </div>
