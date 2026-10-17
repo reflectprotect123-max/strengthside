@@ -30,6 +30,63 @@ globalThis.S.library = globalThis.HybridLibrary.emptyState();
 globalThis.S.library = globalThis.HybridLibrary.createTemplate(globalThis.S.library, { title: 'Upper Day' });
 require(join(dir, 'library-ui.js'));
 
+test('create opens the warm-up circuit instead of the note wizard', () => {
+  const prior = globalThis.S.library;
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  globalThis.LibraryView.create();
+  assert.equal(globalThis.S.libUi.screen, 'warmup');
+  const html = globalThis.LibraryView.html();
+  assert.match(html, /Warm-up/);
+  assert.match(html, /Bike/);
+  assert.match(html, /3:00|180/);
+  assert.doesNotMatch(html, /Session instructions/);
+  globalThis.S.library = prior;
+});
+
+test('wizard back from warm-up and the exercise picker respects the new entry flow', () => {
+  const prior = globalThis.S.library;
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  LibraryView.create();
+  assert.equal(S.libUi.screen, 'warmup');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'list');
+  assert.equal(S.libUi.flow, null);
+
+  LibraryView.create();
+  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'edit');
+  LibraryView.picker('exercises');
+  assert.equal(S.libUi.screen, 'exercises');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'edit');
+  assert.equal(S.libUi.flow, 'wizard');
+  assert.match(LibraryView.html(), /Session instructions/);
+  assert.doesNotMatch(LibraryView.html(), />Instructions</);
+
+  globalThis.S.library = prior;
+});
+
+test('wizard edit shows Next on the lift cards and keeps tempo off warm-up blocks', () => {
+  const prior = globalThis.S.library;
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  LibraryView.create();
+  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'edit');
+  const tid = S.libUi.tid;
+  globalThis.S.library = globalThis.HybridLibrary.addExercise(globalThis.S.library, tid, {
+    title: 'Back Squat', setCount: 3, columns: ['reps']
+  });
+  const html = LibraryView.html();
+  assert.match(html, />Next</);
+  assert.doesNotMatch(html, /Post to calendar/);
+  const squatAt = html.indexOf('<h3>Back Squat</h3>');
+  assert.match(html.slice(squatAt), /No tempo/);
+  const bikeAt = html.indexOf('<h3>Bike</h3>');
+  const bike = html.slice(html.lastIndexOf('<article', bikeAt), html.indexOf('</article>', bikeAt));
+  assert.doesNotMatch(bike, /No tempo/);
+  globalThis.S.library = prior;
+});
+
 test('search does not full-render the shell (keeps the input focused)', () => {
   paints = 0;
   results.innerHTML = '';
@@ -129,15 +186,22 @@ test('inline builder restores metric selectors and reflects non-rep metrics with
   assert.match(html,/>Weight \(kg\)</);
 });
 
-test('creating a session walks instructions, warm-up, the exercise picker, reps, tempo, cool-down, then the session', () => {
+test('creating a session walks warm-up, the exercise picker, reps, tempo, cool-down, then the session', () => {
+  const savedTempos = new Map();
+  globalThis.localStorage = {
+    getItem(key) { return savedTempos.has(key) ? savedTempos.get(key) : null; },
+    setItem(key, value) { savedTempos.set(key, String(value)); },
+  };
   LibraryView.create();
   assert.equal(S.libUi.flow, 'wizard');
-  assert.match(LibraryView.html(), /Session instructions/);
+  assert.equal(S.libUi.screen, 'warmup');
+  assert.match(LibraryView.html(), />Warm-up</);
+  assert.match(LibraryView.html(), /Bike/);
   assert.match(LibraryView.html(), />Next</);
   LibraryView.wizardNext();
-  assert.match(LibraryView.html(), />Warm-up</);
-  LibraryView.setRoleText('warmup', 'Foam roll hamstrings');
-  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'edit');
+  assert.match(LibraryView.html(), /Session instructions/);
+  LibraryView.picker('exercises');
   assert.match(LibraryView.html(), /Superset/);
   assert.match(LibraryView.html(), /Create New Exercise/);
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
@@ -153,29 +217,64 @@ test('creating a session walks instructions, warm-up, the exercise picker, reps,
   LibraryView.wizardNext();
   assert.match(LibraryView.html(), /What do you want to track\?/);
   assert.match(LibraryView.html(), /Back Squat/);
+  assert.match(LibraryView.html(), /No tempo/);
+  assert.match(LibraryView.html(), /Add tempo/);
+  assert.doesNotMatch(LibraryView.html(), /Same tempo for every set/);
+  const squatId = HybridLibrary.template(S.library, S.libUi.tid).blocks.find((b) => b.title === 'Back Squat').id;
+  LibraryView.beginTempo(squatId);
+  const adding = LibraryView.html();
+  assert.match(adding, /Lower/);
+  assert.match(adding, /way down/);
+  assert.match(adding, /Pause/);
+  assert.match(adding, /bottom/);
+  assert.match(adding, /Lift/);
+  assert.match(adding, /X means fast/);
+  assert.match(adding, />top</);
+  LibraryView.draftTempo(0, '3');
+  LibraryView.draftTempo(1, '1');
+  LibraryView.draftTempo(2, 'x');
+  LibraryView.draftTempo(3, '0');
+  LibraryView.saveTempo(squatId);
+  assert.equal(HybridLibrary.template(S.library, S.libUi.tid).blocks.find((b) => b.title === 'Back Squat').tempo, '31X0');
+  assert.deepEqual(JSON.parse(globalThis.localStorage.getItem('strength-training-tempos')), ['31X0']);
   LibraryView.wizardNext();
   assert.match(LibraryView.html(), /Bench Press/);
   assert.match(LibraryView.html(), /Lat Pull Downs/);
   LibraryView.wizardNext();
-  assert.match(LibraryView.html(), /Same tempo for every set/);
-  LibraryView.setTempoPart(0, '3');
-  LibraryView.setTempoPart(1, '1');
-  LibraryView.setTempoPart(2, 'X');
-  LibraryView.setTempoPart(3, '0');
-  LibraryView.wizardNext();
-  LibraryView.wizardNext();
   assert.match(LibraryView.html(), /Cool-down/);
-  LibraryView.setRoleText('cooldown', 'Easy walk');
+  assert.equal(S.libUi.screen, 'cooldown');
+  assert.equal(S.libUi.flow, 'wizard');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'edit');
+  assert.equal(S.libUi.flow, 'wizard');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'warmup');
   LibraryView.wizardNext();
+  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'cooldown');
+  const cool = LibraryView.html();
+  assert.match(cool, /Easy Bike/);
+  assert.match(cool, /Reps/);
+  assert.match(cool, /Seconds/);
+  assert.doesNotMatch(cool, /Coach notes for Start Session|Mark As Completed/);
+  LibraryView.togglePrepPick('easy_bike');
+  LibraryView.addPrepPicked('cooldown');
+  const added = HybridLibrary.template(S.library, S.libUi.tid).blocks.find((b) => b.title === 'Easy Bike');
+  assert.equal(added.role, 'cooldown');
+  assert.deepEqual(added.columns, ['seconds']);
+  assert.equal(added.prescribed, '180');
+  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'calendar');
   const html = LibraryView.html();
   assert.match(html, /Post to calendar/);
-  assert.match(html, /31X0/);
-  assert.match(html, /Warm-up/);
-  assert.match(html, /Cool-down/);
   assert.doesNotMatch(html, /Create session/);
   const plan = HybridLibrary.compile(HybridLibrary.template(S.library, S.libUi.tid));
   assert.equal(plan.blocks.find((b) => b.title === 'Back Squat').prescription.endsWith('31X0'), true);
   assert.equal(plan.blocks.find((b) => b.title === 'Bench Press').tempo, undefined);
+  assert.equal(plan.blocks.find((b) => b.title === 'Bike').section, 'Warm-Up');
+  assert.equal(plan.blocks.find((b) => b.kind === 'section' && b.label === 'WARM-UP').label, 'WARM-UP');
+  assert.equal(plan.blocks.find((b) => b.title === 'Easy Bike').section, 'Cool-Down');
+  assert.equal(plan.blocks.find((b) => b.kind === 'section' && b.label === 'COOL-DOWN').label, 'COOL-DOWN');
 });
 
 test('leaving or posting the wizard returns later edits to the normal editor', () => {
@@ -197,12 +296,13 @@ test('leaving or posting the wizard returns later edits to the normal editor', (
 test('next on reps with every lift deleted moves to cool-down', () => {
   LibraryView.create();
   const tid = S.libUi.tid;
+  LibraryView.wizardNext();
+  LibraryView.picker('exercises');
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
-  S.libUi.tab = 'exercises';
   LibraryView.togglePick(squat.id);
   LibraryView.addPicked(false);
   LibraryView.wizardNext();
-  const bid = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  const bid = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role).id;
   LibraryView.removeBlock(bid);
   assert.doesNotThrow(() => LibraryView.wizardNext());
   assert.equal(S.libUi.screen, 'cooldown');
@@ -211,21 +311,23 @@ test('next on reps with every lift deleted moves to cool-down', () => {
 test('changing wizard lifts closes the reps keypad before it can write', () => {
   LibraryView.create();
   const tid = S.libUi.tid;
+  LibraryView.wizardNext();
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
   const bench = S.library.catalog.exercises.find((e) => e.title === 'Bench Press');
   S.libUi.tab = 'exercises';
+  LibraryView.picker('exercises');
   LibraryView.togglePick(squat.id);
   LibraryView.addPicked(false);
   LibraryView.togglePick(bench.id);
   LibraryView.addPicked(false);
   LibraryView.wizardNext();
-  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role).id;
   LibraryView.openNumberPad('set:0', first);
   assert.match(LibraryView.html(), /Reps keypad/);
   LibraryView.wizardNext();
   assert.doesNotMatch(LibraryView.html(), /Reps keypad/);
   LibraryView.numberKey('6');
-  const lifts = HybridLibrary.template(S.library, tid).blocks.filter((b) => b.kind === 'lift');
+  const lifts = HybridLibrary.template(S.library, tid).blocks.filter((b) => b.kind === 'lift' && !b.role);
   assert.equal(lifts[0].repTarget, '8');
   assert.equal(lifts[1].repTarget, '8');
 });
@@ -233,21 +335,156 @@ test('changing wizard lifts closes the reps keypad before it can write', () => {
 test('deleting the open block drops its keypad and selection', () => {
   LibraryView.create();
   const tid = S.libUi.tid;
+  LibraryView.wizardNext();
   const squat = S.library.catalog.exercises.find((e) => e.title === 'Back Squat');
   const bench = S.library.catalog.exercises.find((e) => e.title === 'Bench Press');
   S.libUi.tab = 'exercises';
+  LibraryView.picker('exercises');
   LibraryView.togglePick(squat.id);
   LibraryView.addPicked(false);
   LibraryView.togglePick(bench.id);
   LibraryView.addPicked(false);
   LibraryView.wizardNext();
-  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift').id;
+  const first = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role).id;
   LibraryView.openNumberPad('set:0', first);
   LibraryView.removeBlock(first);
   assert.equal(S.libUi.bid, null);
   assert.doesNotMatch(LibraryView.html(), /Reps keypad/);
   LibraryView.numberKey('4');
-  const left = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift');
+  const left = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role);
   assert.equal(left.title, 'Bench Press');
   assert.equal(left.repTarget, '8');
+});
+
+test('the lift card uses the tempo dropdown and Next leaves for cool-down', () => {
+  const tid = globalThis.S.library.templates[0].id;
+  globalThis.S.library = globalThis.HybridLibrary.addExercise(globalThis.S.library, tid, {
+    title: 'Back Squat', setCount: 3, columns: ['reps']
+  });
+  globalThis.S.libUi.screen = 'edit';
+  globalThis.S.libUi.tid = tid;
+  let html = globalThis.LibraryView.html();
+  assert.match(html, /No tempo/);
+  assert.match(html, /Add tempo/);
+  assert.doesNotMatch(html, /Same tempo for every set/);
+  assert.match(html, /Reps/);
+  assert.match(html, /Meters/);
+  assert.doesNotMatch(html, /Watts|Calories|Linear Weight Progression|Inches|Velocity|Other/);
+  globalThis.LibraryView.wizardNext();
+  assert.equal(globalThis.S.libUi.screen, 'cooldown');
+});
+
+test('cool-down is a circuit and only offers seconds and reps', () => {
+  globalThis.S.libUi.screen = 'cooldown';
+  const html = globalThis.LibraryView.html();
+  assert.match(html, /Cool-down/);
+  assert.doesNotMatch(html, /Coach notes for Start Session|Mark As Completed/);
+  assert.match(html, /Reps/);
+  assert.match(html, /Seconds/);
+  assert.doesNotMatch(html, /Meters|Watts|Calories/);
+});
+
+test('cool-down add list stores the locked start and the track select is reps or seconds', () => {
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  globalThis.LibraryView.create();
+  const tid = globalThis.S.libUi.tid;
+  globalThis.S.libUi.screen = 'cooldown';
+  const html = globalThis.LibraryView.html();
+  for (const name of ['Easy Bike', 'Breathing', 'Couch Stretch', 'Hamstring Stretch', 'Cat-Cow', 'Thread the Needle', 'Figure Four']) {
+    assert.match(html, new RegExp(name));
+  }
+  assert.match(html, /Child(?:&#39;|')s Pose/);
+  assert.doesNotMatch(html, /<h3>Bike<\/h3>/);
+  globalThis.S.libUi.selected = ['easy_bike', 'cat_cow', 'hamstring_stretch', 'thread_needle', 'figure_four'];
+  globalThis.LibraryView.addPrepPicked('cooldown');
+  const blocks = globalThis.HybridLibrary.template(globalThis.S.library, tid).blocks.filter((b) => b.role === 'cooldown');
+  const byTitle = Object.fromEntries(blocks.map((b) => [b.title, b]));
+  assert.deepEqual(byTitle['Easy Bike'].columns, ['seconds']);
+  assert.equal(byTitle['Easy Bike'].prescribed, '180');
+  assert.equal(byTitle['Easy Bike'].setCount, 3);
+  assert.deepEqual(byTitle['Cat-Cow'].columns, ['reps']);
+  assert.equal(byTitle['Cat-Cow'].repTarget, '8');
+  assert.equal(byTitle['Hamstring Stretch'].prescribed, '45');
+  assert.equal(byTitle['Thread the Needle'].repTarget, '6');
+  assert.equal(byTitle['Figure Four'].repTarget, '8');
+  const added = globalThis.LibraryView.html();
+  assert.match(added, /<h3>Easy Bike<\/h3>/);
+  assert.match(added, /<h3>Cat-Cow<\/h3>/);
+  assert.doesNotMatch(added, /<h3>Bike<\/h3>/);
+  assert.doesNotMatch(added, /<h3>Back Squat<\/h3>/);
+  const selectAt = added.indexOf('Track for Easy Bike');
+  const select = added.slice(selectAt, added.indexOf('</select>', selectAt) + 9);
+  assert.match(select, /<option value="reps"/);
+  assert.match(select, /<option value="seconds"/);
+  assert.match(select, />Reps</);
+  assert.match(select, />Seconds</);
+  assert.doesNotMatch(select, /Meters|Watts|Calories|Weight|None|Miles|Yards|Feet/);
+  const options = select.match(/<option /g) || [];
+  assert.equal(options.length, 2);
+});
+
+test('cool-down next opens the calendar only when the template has a lift', () => {
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  globalThis.LibraryView.create();
+  const tid = globalThis.S.libUi.tid;
+  globalThis.S.libUi.screen = 'cooldown';
+  globalThis.S.libUi.flow = 'wizard';
+  globalThis.LibraryView.wizardNext();
+  assert.equal(globalThis.S.libUi.screen, 'cooldown');
+  globalThis.S.library = globalThis.HybridLibrary.addExercise(globalThis.S.library, tid, {
+    title: 'Back Squat', setCount: 3, columns: ['reps']
+  });
+  globalThis.LibraryView.wizardNext();
+  assert.equal(globalThis.S.libUi.screen, 'calendar');
+});
+
+test('cool-down track change keeps the start number on seconds or reps', () => {
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  globalThis.LibraryView.create();
+  const tid = globalThis.S.libUi.tid;
+  globalThis.S.libUi.screen = 'cooldown';
+  globalThis.S.libUi.selected = ['easy_bike', 'cat_cow'];
+  globalThis.LibraryView.addPrepPicked('cooldown');
+  const blocks = () => globalThis.HybridLibrary.template(globalThis.S.library, tid).blocks;
+  const bikeId = blocks().find((b) => b.title === 'Easy Bike').id;
+  globalThis.LibraryView.setCols('reps', 'none', bikeId);
+  let bike = blocks().find((b) => b.id === bikeId);
+  assert.deepEqual(bike.columns, ['reps']);
+  assert.equal(bike.repTarget, '180');
+  assert.equal(bike.prescribed, '');
+  globalThis.LibraryView.setCols('seconds', 'none', bikeId);
+  bike = blocks().find((b) => b.id === bikeId);
+  assert.deepEqual(bike.columns, ['seconds']);
+  assert.equal(bike.prescribed, '180');
+  const catId = blocks().find((b) => b.title === 'Cat-Cow').id;
+  globalThis.LibraryView.setCols('meters', 'weight_kg', catId);
+  const cat = blocks().find((b) => b.id === catId);
+  assert.deepEqual(cat.columns, ['reps']);
+  assert.equal(cat.repTarget, '8');
+});
+
+test('wizard Next opens the calendar and Back returns to cool-down', () => {
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  globalThis.LibraryView.create();
+  const tid = globalThis.S.libUi.tid;
+  globalThis.S.library = globalThis.HybridLibrary.addExercise(globalThis.S.library, tid, {
+    title: 'Back Squat', setCount: 3, columns: ['reps']
+  });
+  globalThis.S.libUi.screen = 'cooldown';
+  globalThis.S.libUi.flow = 'wizard';
+  globalThis.LibraryView.wizardNext();
+  assert.equal(globalThis.S.libUi.screen, 'calendar');
+  assert.equal(globalThis.S.libUi.flow, 'wizard');
+  globalThis.LibraryView.calendarBack();
+  assert.equal(globalThis.S.libUi.screen, 'cooldown');
+  assert.match(globalThis.LibraryView.html(), /Cool-down/);
+  assert.doesNotMatch(globalThis.LibraryView.html(), /Session date/);
+
+  globalThis.S.libUi.flow = null;
+  globalThis.LibraryView.calendar(tid, true);
+  globalThis.LibraryView.calendarBack();
+  assert.equal(globalThis.S.libUi.screen, 'edit');
+  globalThis.LibraryView.calendar(tid, false);
+  globalThis.LibraryView.calendarBack();
+  assert.equal(globalThis.S.libUi.screen, 'list');
 });

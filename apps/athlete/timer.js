@@ -47,14 +47,14 @@
   function countInTotal(cfg, reduced) {
     const sec = Math.round((cfg.countInMs || 0) / 1000);
     if (sec <= 0) return 0;
-    if (reduced) return sec * DIGIT_MS;
+    if (reduced || cfg.plainCount) return sec * DIGIT_MS;
     return READY_MS + sec * DIGIT_MS + GO_MS;
   }
 
   function countInLabelAt(cfg, elapsed, reduced) {
     const sec = Math.round((cfg.countInMs || 0) / 1000);
     if (sec <= 0) return null;
-    if (reduced) {
+    if (reduced || cfg.plainCount) {
       if (elapsed < sec * DIGIT_MS) {
         return String(sec - Math.floor(elapsed / DIGIT_MS));
       }
@@ -149,8 +149,8 @@
       remainingMs = null;
       clock = formatClock(elapsed, true);
       duration = Math.max(elapsed, 1);
-    } else if (mode === 'amrap') {
-      duration = t.config.totalMs || 600000;
+    } else if (mode === 'amrap' || mode === 'countdown') {
+      duration = t.config.totalMs || (mode === 'countdown' ? 30000 : 600000);
       remainingMs = Math.max(0, duration - elapsed);
       clock = formatClock(remainingMs, true);
       done = remainingMs <= 0;

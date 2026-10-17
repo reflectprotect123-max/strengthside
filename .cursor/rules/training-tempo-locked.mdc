@@ -1,0 +1,12 @@
+---
+alwaysApply: true
+description: The training tempo dropdown is frozen
+---
+
+# Training tempo is locked
+
+The tempo dropdown in `prototypes/strength-training-play.html` is frozen.
+
+Do not redesign it unless the user explicitly reopens the lock. No tempo comes first. Add opens four labeled boxes. A saved tempo stays in the list, and a lift can keep no tempo.
+
+`docs/training-tempo-lock.md` is the contract. `pnpm run check:training-play` must stay green. A reopened change updates both in the same commit.

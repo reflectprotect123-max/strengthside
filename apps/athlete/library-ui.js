@@ -25,12 +25,61 @@
     if (typeof root.render === 'function') root.render();
   }
 
+  const WARMUP_CATALOG = [
+    ['bike', 'Bike', 'seconds', '180'],
+    ['row', 'Row', 'seconds', '180'],
+    ['run', 'Run', 'seconds', '180'],
+    ['ski', 'Ski', 'seconds', '180'],
+    ['jump_rope', 'Jump Rope', 'seconds', '60'],
+    ['push_downs', 'Push Downs', 'reps', '10'],
+    ['hip_switch', '90/90 Hip Switch', 'reps', '8'],
+    ['band_pull_apart', 'Band Pull-Apart', 'reps', '15'],
+    ['arm_circle', 'Arm Circle', 'reps', '10'],
+    ['bodyweight_squat', 'Bodyweight Squat', 'reps', '10'],
+    ['glute_bridge', 'Glute Bridge', 'reps', '10'],
+    ['worlds_greatest', "World's Greatest Stretch", 'reps', '5'],
+    ['dead_bug', 'Dead Bug', 'reps', '8'],
+    ['inchworm', 'Inchworm', 'reps', '6'],
+    ['isometric_hold', 'Isometric Hold', 'seconds', '30', 3],
+    ['farmers_carry', 'Farmers Carry', 'meters', '20'],
+  ];
+
+  const COOLDOWN_CATALOG = [
+    ['easy_bike', 'Easy Bike', 'seconds', '180'],
+    ['breathing', 'Breathing', 'seconds', '60'],
+    ['couch_stretch', 'Couch Stretch', 'seconds', '60'],
+    ['hamstring_stretch', 'Hamstring Stretch', 'seconds', '45'],
+    ['childs_pose', "Child's Pose", 'seconds', '60'],
+    ['cat_cow', 'Cat-Cow', 'reps', '8'],
+    ['thread_needle', 'Thread the Needle', 'reps', '6'],
+    ['figure_four', 'Figure Four', 'reps', '8'],
+  ];
+
+  function prepCatalog(role) {
+    if (role === 'warmup') return WARMUP_CATALOG;
+    if (role === 'cooldown') return COOLDOWN_CATALOG;
+    return [];
+  }
+
+  function prepRoundCount(t) {
+    const items = (t?.blocks || []).filter((b) => b.role === 'warmup');
+    return items.reduce((n, b) => Math.max(n, Number(b.setCount) || 0), 0) || 3;
+  }
+
+  function prepMetricLabel(key) {
+    if (key === 'seconds') return 'Seconds';
+    if (key === 'meters') return 'Meters';
+    return 'Reps';
+  }
+
   function refreshResults() {
     const doc = typeof document !== 'undefined' ? document : root.document;
     const el = doc && doc.getElementById && doc.getElementById('libResults');
     if (!el) return;
     const screen = ui().screen;
     if (screen === 'picker' || screen === 'exercises' || screen === 'newEx' || screen === 'newCirc') el.innerHTML = pickerRowsHtml();
+    else if (screen === 'warmup') el.innerHTML = prepCatalogRowsHtml('warmup');
+    else if (screen === 'cooldown') el.innerHTML = prepCatalogRowsHtml('cooldown');
     else if (screen === 'list') el.innerHTML = listCardsHtml();
   }
 
@@ -41,8 +90,10 @@
 
   function go(screen, extra) {
     numberPad = null;
-    const next = { ...ui(), screen, ...(extra || {}) };
-    if (screen === 'list' || screen === 'edit') next.flow = null;
+    const patch = extra || {};
+    const next = { ...ui(), screen, ...patch };
+    if (screen === 'list') next.flow = null;
+    else if (screen === 'edit' && !('flow' in patch)) next.flow = null;
     root.S.libUi = next;
     save();
   }
@@ -55,6 +106,62 @@
         return `<option value="${esc(k)}" ${k === selected ? 'selected' : ''}>${esc(label)}</option>`;
       })
       .join('');
+  }
+
+  const LIFT_METRICS = [
+    ['reps', 'Reps'], ['reps_range', 'Rep Range'],
+    ['weight_lb', 'Weight (lb)'], ['weight_kg', 'Weight (kg)'],
+    ['weight_pct', 'Weight (%)'],
+    ['time_mmss', 'Time (mm:ss)'], ['seconds', 'Seconds'],
+    ['miles', 'Miles'], ['yards', 'Yards'], ['meters', 'Meters'],
+    ['feet', 'Feet'],
+  ];
+  const TEMPO_KEY = 'strength-training-tempos';
+
+  function liftTrackOptions(selected, allowNone) {
+    const rows = (allowNone ? [['none', 'None']] : []).concat(LIFT_METRICS);
+    return rows.map(([key, label]) => `<option value="${esc(key)}"${key === selected ? ' selected' : ''}>${esc(label)}</option>`).join('');
+  }
+
+  function tempoStorage() {
+    try {
+      if (typeof localStorage === 'undefined' || !localStorage) return null;
+      return localStorage;
+    } catch (e) { return null; }
+  }
+
+  function savedTempos() {
+    try {
+      const store = tempoStorage();
+      const list = JSON.parse((store && store.getItem(TEMPO_KEY)) || '[]');
+      return Array.isArray(list) ? list.filter((item) => typeof item === 'string' && /^[0-9X]{4}$/.test(item)) : [];
+    } catch (e) { return []; }
+  }
+
+  function rememberTempo(text) {
+    const list = savedTempos();
+    if (!text || list.includes(text)) return;
+    list.push(text);
+    try {
+      const store = tempoStorage();
+      if (store) store.setItem(TEMPO_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function tempoControl(b) {
+    const current = root.HybridLibrary.tempoText(b.tempo);
+    const open = ui().tempoMenu === b.id;
+    const adding = open && ui().tempoAdd;
+    const options = `<button type="button" class="tempo-opt${current ? '' : ' on'}" onclick="LibraryView.pickTempo('${esc(b.id)}','')">No tempo</button>`
+      + savedTempos().map((text) => `<button type="button" class="tempo-opt${text === current ? ' on' : ''}" onclick="LibraryView.pickTempo('${esc(b.id)}','${esc(text)}')">${esc(text)}</button>`).join('');
+    let add = '';
+    if (adding) {
+      const draft = ui().tempoDraft || ['', '', '', ''];
+      const box = (index, name, hint, label) => `<label class="lib-grid-h">${esc(name)}<input class="lib-cell" maxlength="1" aria-label="${esc(label)} for ${esc(b.title)}" value="${esc(draft[index] || '')}" oninput="LibraryView.draftTempo(${index}, this.value)"><span>${esc(hint)}</span></label>`;
+      add = `<div class="tempo-add"><div class="lib-grid tempo-grid">${box(0, 'Lower', 'way down', 'Lower')}${box(1, 'Pause', 'bottom', 'Bottom pause')}${box(2, 'Lift', 'X means fast', 'Lift')}${box(3, 'Pause', 'top', 'Top pause')}</div><p role="status">${esc(ui().tempoError || '')}</p><button type="button" class="lib-primary" onclick="LibraryView.saveTempo('${esc(b.id)}')">Save</button></div>`;
+    }
+    const menu = `<div class="tempo-menu"${open ? '' : ' hidden'}>${options}<button type="button" class="tempo-opt" onclick="LibraryView.beginTempo('${esc(b.id)}')">Add tempo</button>${add}</div>`;
+    return `<div class="tempo-pick"><button type="button" class="tempo-btn" aria-label="Tempo for ${esc(b.title)}" onclick="LibraryView.toggleTempo('${esc(b.id)}')">${esc(current || 'No tempo')}</button>${menu}</div>`;
   }
 
   function listCardsHtml() {
@@ -99,6 +206,7 @@
     const t = root.HybridLibrary.template(st, ui().tid);
     if (!t) return listHtml();
     const blocks = root.HybridLibrary.lettered(t);
+    const back = wizard() ? 'LibraryView.wizardBack()' : 'LibraryView.goList()';
     let body = '';
     blocks.forEach((b, i) => {
       const prev = blocks[i - 1];
@@ -106,7 +214,7 @@
         body += `<div class="lib-ss">− Superset</div>`;
       }
       const meta = b.kind === 'circuit' ? 'For Completion' : root.HybridLibrary.rxFor(b);
-      body += b.kind === 'lift' ? exerciseCardHtml(b) : `<article class="lib-block">
+      const summary = `<article class="lib-block">
         <div class="lib-block-top">
           <span class="lib-letter">${esc(b.letter)}</span>
           <div style="flex:1">
@@ -117,11 +225,12 @@
           <button type="button" class="lib-danger" onclick="LibraryView.removeBlock('${esc(b.id)}')">Delete</button>
         </div>
       </article>`;
+      body += b.kind === 'lift' && !b.role ? exerciseCardHtml(b) : summary;
     });
     return `
       <div class="shell-screen shell-screen--library">
         <div class="lib-head-row">
-          <button type="button" class="lib-back" onclick="LibraryView.goList()">←</button>
+          <button type="button" class="lib-back" aria-label="Back" onclick="${back}">←</button>
           <h1>Session Template</h1>
           <button type="button" class="lib-text-btn" onclick="LibraryView.reorder()">Reorder</button>
         </div>
@@ -134,9 +243,9 @@
           <textarea placeholder="Coach notes for Start Session" onchange="LibraryView.patchTpl({instructions:this.value})">${esc(t.instructions)}</textarea>
         </div>
         ${body}
-        <div style="padding:16px">
-          <button type="button" class="lib-primary" onclick="LibraryView.calendar('${esc(t.id)}',true)">Post to calendar</button>
-        </div>
+        ${wizard()
+          ? `<div class="lib-wizard-next"><button type="button" class="btn oled-cta" onmousedown="event.preventDefault()" onclick="LibraryView.wizardNext()">Next</button></div>`
+          : `<div style="padding:16px"><button type="button" class="lib-primary" onclick="LibraryView.calendar('${esc(t.id)}',true)">Post to calendar</button></div>`}
         <div class="lib-row-btns">
           <button type="button" onclick="LibraryView.picker('exercises')">+ Add Exercise</button>
           <button type="button" onclick="LibraryView.picker('circuits')">+ Add Circuit</button>
@@ -195,8 +304,8 @@
       <div class="lib-field lib-metrics">
         <label>What do you want to track?</label>
         <div class="lib-cols">
-          <select id="${esc(metric1Id)}" aria-label="First metric for ${esc(b.title)}" onchange="LibraryView.setCols(this.value,document.getElementById('${esc(metric2Id)}').value,'${esc(b.id)}')">${trackOptions(c1)}</select>
-          <select id="${esc(metric2Id)}" aria-label="Second metric for ${esc(b.title)}" onchange="LibraryView.setCols(document.getElementById('${esc(metric1Id)}').value,this.value,'${esc(b.id)}')">${trackOptions(c2)}</select>
+          <select id="${esc(metric1Id)}" aria-label="First metric for ${esc(b.title)}" onchange="LibraryView.setCols(this.value,document.getElementById('${esc(metric2Id)}').value,'${esc(b.id)}')">${liftTrackOptions(c1, false)}</select>
+          <select id="${esc(metric2Id)}" aria-label="Second metric for ${esc(b.title)}" onchange="LibraryView.setCols(document.getElementById('${esc(metric1Id)}').value,this.value,'${esc(b.id)}')">${liftTrackOptions(c2, true)}</select>
         </div>
       </div>
       <div class="lib-grid">
@@ -204,6 +313,7 @@
         ${rows}
       </div>
       <p role="status">${esc(ui().repError || ui().targetError || '')}</p>
+      ${tempoControl(b)}
       <div class="lib-stepper">
         <button type="button" class="lib-step" aria-label="Remove a set" onclick="LibraryView.nudgeSets(-1,'${esc(b.id)}')">−</button>
         <span>Set</span>
@@ -388,7 +498,7 @@
   }
 
   function liftGroups(t) {
-    const lifts = (t ? root.HybridLibrary.lettered(t) : []).filter((b) => b.kind === 'lift');
+    const lifts = (t ? root.HybridLibrary.lettered(t) : []).filter((b) => b.kind === 'lift' && !b.role);
     const groups = [];
     for (let i = 0; i < lifts.length; i++) {
       const group = [lifts[i]];
@@ -420,11 +530,6 @@
       </div>`;
   }
 
-  function roleText(role) {
-    const block = (currentTemplate()?.blocks || []).find((b) => b.role === role);
-    return block ? block.instructions || '' : '';
-  }
-
   function instructionsHtml() {
     const t = currentTemplate();
     return wizardChrome('Instructions', `
@@ -438,34 +543,60 @@
       </div>`);
   }
 
-  function textStepHtml(title, role) {
-    return wizardChrome(title, `
-      <div class="lib-field">
-        <label>Instructions</label>
-        <textarea oninput="LibraryView.setRoleText('${role}', this.value)">${esc(roleText(role))}</textarea>
-      </div>`);
+  function prepCatalogRowsHtml(role) {
+    const items = (currentTemplate()?.blocks || []).filter((b) => b.role === role);
+    const q = String(ui().q || '').trim().toLowerCase();
+    const selected = new Set(ui().selected || []);
+    const rows = prepCatalog(role)
+      .filter((row) => row[1].toLowerCase().includes(q))
+      .map((row) => {
+        const have = items.some((b) => b.title === row[1]);
+        const on = selected.has(row[0]);
+        return `<button type="button" class="lib-pick-row" ${have ? 'disabled' : ''} onclick="LibraryView.togglePrepPick('${esc(row[0])}')"><b>${esc(row[1])}</b><span class="lib-unit">${esc(prepMetricLabel(row[2]))}</span><span class="lib-radio${on ? ' on' : ''}"></span></button>`;
+      })
+      .join('');
+    return rows || '<div class="lib-empty">No results.</div>';
+  }
+
+  function prepTrackOptions(selected) {
+    const key = selected === 'reps' ? 'reps' : 'seconds';
+    return [['reps', 'Reps'], ['seconds', 'Seconds']]
+      .map(([k, label]) => `<option value="${esc(k)}"${k === key ? ' selected' : ''}>${esc(label)}</option>`)
+      .join('');
+  }
+
+  function prepTrackSelect(block) {
+    const current = (block.columns || []).find((k) => k === 'reps' || k === 'seconds') || 'seconds';
+    return `<select aria-label="Track for ${esc(block.title)}" onchange="LibraryView.setCols(this.value,'none','${esc(block.id)}')">${prepTrackOptions(current)}</select>`;
+  }
+
+  function prepCircuitHtml(role) {
+    const title = role === 'cooldown' ? 'Cool-down' : 'Warm-up';
+    const items = root.HybridLibrary.lettered(currentTemplate() || { blocks: [] }).filter((b) => b.role === role);
+    const listed = items.map((b) => {
+      const track = role === 'cooldown' ? prepTrackSelect(b) : '';
+      return `<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">${esc(b.letter)}</span><div style="flex:1"><h3>${esc(b.title)}</h3><p class="sum">${esc(root.HybridLibrary.rxFor(b))}</p></div></div>${track}</article>`;
+    }).join('');
+    const n = (ui().selected || []).length;
+    const searchLabel = role === 'cooldown' ? 'Search cool-downs' : 'Search warm-ups';
+    return `
+      <div class="shell-screen shell-screen--library">
+        <div class="lib-head-row">
+          <button type="button" class="lib-back" aria-label="Back" onclick="LibraryView.wizardBack()">←</button>
+          <h1>${esc(title)}</h1>
+          <button type="button" class="lib-text-btn" ${n < 1 ? 'disabled' : ''} onclick="LibraryView.addPrepPicked('${role}')">Add${n ? ` (${n})` : ''}</button>
+        </div>
+        ${listed}
+        <div class="lib-search"><input value="${esc(ui().q || '')}" placeholder="${esc(searchLabel)}" aria-label="${esc(searchLabel)}" oninput="LibraryView.search(this.value)"></div>
+        <div id="libResults">${prepCatalogRowsHtml(role)}</div>
+        <div class="lib-wizard-next"><button type="button" class="btn oled-cta" onmousedown="event.preventDefault()" onclick="LibraryView.wizardNext()">Next</button></div>
+      </div>`;
   }
 
   function repsStepHtml() {
     const groups = liftGroups(currentTemplate());
     const group = groups[ui().liftIndex || 0] || [];
     return wizardChrome('Reps and sets', group.map((b) => exerciseCardHtml(b)).join('')) + numberPadHtml();
-  }
-
-  function tempoStepHtml() {
-    const groups = liftGroups(currentTemplate());
-    const group = groups[ui().liftIndex || 0] || [];
-    const cards = group.map((b) => {
-      const tempo = `${String(b.tempo || '')}    `.slice(0, 4);
-      const names = ['Tempo lower', 'Tempo first pause', 'Tempo lift', 'Tempo last pause'];
-      const cell = (index, label) => `<label class="lib-grid-h">${esc(label)}<input class="lib-cell" maxlength="1" inputmode="text" aria-label="${esc(names[index])} for ${esc(b.title)}" value="${esc(tempo[index] === ' ' ? '' : tempo[index] || '')}" oninput="LibraryView.setTempoPart(${index}, this.value, '${esc(b.id)}')"></label>`;
-      return `<article class="lib-block lib-ex">
-        <div class="lib-ex-top"><span class="lib-letter">${esc(b.letter)}</span><h3>${esc(b.title)}</h3></div>
-        <div class="meta">Same tempo for every set</div>
-        <div class="lib-grid tempo-grid">${cell(0, 'Lower')}${cell(1, 'Pause')}${cell(2, 'Lift')}${cell(3, 'Pause')}</div>
-      </article>`;
-    }).join('');
-    return wizardChrome('Tempo', cards);
   }
 
   function overviewHtml() {
@@ -496,10 +627,9 @@
   function html() {
     const s = ui().screen;
     if (s === 'instructions') return instructionsHtml();
-    if (s === 'warmup') return textStepHtml('Warm-up', 'warmup');
-    if (s === 'cooldown') return textStepHtml('Cool-down', 'cooldown');
+    if (s === 'warmup') return prepCircuitHtml('warmup');
+    if (s === 'cooldown') return prepCircuitHtml('cooldown');
     if (s === 'reps') return repsStepHtml();
-    if (s === 'tempo') return tempoStepHtml();
     if (s === 'overview') return overviewHtml();
     if (s === 'edit' || s === 'editBlock') return editorHtml() + numberPadHtml();
     if (s === 'exercises' || s === 'picker' || s === 'newEx' || s === 'newCirc') return pickerHtml();
@@ -517,9 +647,9 @@
     create() {
       const next = root.HybridLibrary.createTemplate(lib(), {});
       root.S.library = next;
-      go('instructions', { tid: next.templates[0].id, flow: 'wizard', liftIndex: 0, bid: null, selected: [] });
+      go('warmup', { tid: next.templates[0].id, flow: 'wizard', liftIndex: 0, bid: null, selected: [], q: '' });
     },
-    open(tid) { go('edit', { tid, bid: null, q: '' }); },
+    open(tid) { go('edit', { tid, bid: null, q: '', flow: null }); },
     patchTpl(patch) {
       root.S.library = root.HybridLibrary.patchTemplate(lib(), ui().tid, patch);
       if (typeof root.save === 'function') root.save();
@@ -536,6 +666,42 @@
       else cur.add(id);
       root.S.libUi.selected = [...cur];
       save();
+    },
+    togglePrepPick(id) {
+      const role = ui().screen === 'warmup' ? 'warmup' : 'cooldown';
+      const row = prepCatalog(role).find((c) => c[0] === id);
+      if (!row) return;
+      const items = (currentTemplate()?.blocks || []).filter((b) => b.role === role);
+      if (items.some((b) => b.title === row[1])) return;
+      const cur = new Set(ui().selected || []);
+      if (cur.has(id)) cur.delete(id);
+      else cur.add(id);
+      root.S.libUi.selected = [...cur];
+      save();
+    },
+    addPrepPicked(role) {
+      const ids = ui().selected || [];
+      if (!ids.length) return;
+      const t = currentTemplate();
+      if (!t) return;
+      const rounds = prepRoundCount(t);
+      let st = lib();
+      for (const id of ids) {
+        const row = prepCatalog(role).find((c) => c[0] === id);
+        if (!row) continue;
+        if ((st.templates.find((x) => x.id === ui().tid)?.blocks || []).some((b) => b.role === role && b.title === row[1])) continue;
+        const opts = {
+          title: row[1],
+          columns: [row[2]],
+          setCount: rounds,
+          value: row[3],
+          role,
+        };
+        if (row[4]) opts.countIn = row[4];
+        st = root.HybridLibrary.addExercise(st, ui().tid, opts);
+      }
+      root.S.library = st;
+      go(role, { selected: [], q: ui().q || '' });
     },
     addPicked(asSuperset) {
       const u = ui();
@@ -577,11 +743,6 @@
       root.S.library = st;
       go(ui().flow === 'wizard' ? 'exercises' : 'edit', { tid: ui().tid, bid: null, selected: [] });
     },
-    setRoleText(role, text) {
-      const title = role === 'cooldown' ? 'Cool-down' : 'Warm-up';
-      root.S.library = root.HybridLibrary.placeTextBlock(lib(), ui().tid, { role, title, instructions: text });
-      if (typeof root.save === 'function') root.save();
-    },
     setTempoPart(index, value, bid) {
       if (bid) root.S.libUi.bid = bid;
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find((x) => x.id === ui().bid);
@@ -599,7 +760,8 @@
       const groups = liftGroups(currentTemplate());
       const index = ui().liftIndex || 0;
       if (s === 'instructions') return go('warmup');
-      if (s === 'warmup') return go('exercises', { tab: ui().tab || 'exercises', q: '', selected: [] });
+      if (s === 'warmup') return go('edit', { bid: null, selected: [], q: '', flow: 'wizard' });
+      if (s === 'edit') return go('cooldown', { bid: null });
       if (s === 'exercises' || s === 'picker') {
         if (!groups.length) return go('cooldown', { liftIndex: 0 });
         return go('reps', { liftIndex: 0, bid: groups[0][0].id });
@@ -607,36 +769,81 @@
       if (s === 'reps') {
         if (!groups.length) return go('cooldown', { liftIndex: 0, bid: null });
         if (index + 1 < groups.length) return go('reps', { liftIndex: index + 1, bid: groups[index + 1][0].id });
-        return go('tempo', { liftIndex: 0, bid: groups[0][0].id });
+        return go('cooldown', { liftIndex: 0, bid: null });
       }
-      if (s === 'tempo') {
-        if (!groups.length) return go('cooldown', { liftIndex: 0, bid: null });
-        if (index + 1 < groups.length) return go('tempo', { liftIndex: index + 1, bid: groups[index + 1][0].id });
-        return go('cooldown', { liftIndex: 0 });
+      if (s === 'cooldown') {
+        const lifts = (currentTemplate()?.blocks || []).filter((b) => b.kind === 'lift' && !b.role);
+        if (!lifts.length) return;
+        return LibraryView.calendar(ui().tid, true);
       }
-      if (s === 'cooldown') return go('overview');
     },
     wizardBack() {
       const s = ui().screen;
       const groups = liftGroups(currentTemplate());
       const index = ui().liftIndex || 0;
       if (s === 'instructions') return LibraryView.goList();
-      if (s === 'warmup') return go('instructions');
-      if (s === 'exercises' || s === 'picker') return go('warmup');
+      if (s === 'warmup') return LibraryView.goList();
+      if (s === 'edit') return go('warmup');
+      if (s === 'exercises' || s === 'picker') {
+        if (ui().flow === 'wizard') return go('edit', { bid: null, selected: [], q: '', flow: 'wizard' });
+        return go('warmup');
+      }
       if (s === 'reps') {
         if (index > 0 && groups[index - 1]) return go('reps', { liftIndex: index - 1, bid: groups[index - 1][0].id });
         return go('exercises', { selected: [], bid: null });
       }
-      if (s === 'tempo') {
-        if (index > 0 && groups[index - 1]) return go('tempo', { liftIndex: index - 1, bid: groups[index - 1][0].id });
-        if (!groups.length) return go('exercises', { selected: [], bid: null });
-        return go('reps', { liftIndex: groups.length - 1, bid: groups.at(-1)[0].id });
-      }
-      if (s === 'cooldown') {
-        if (!groups.length) return go('exercises', { selected: [] });
-        return go('tempo', { liftIndex: groups.length - 1, bid: groups.at(-1)[0].id });
-      }
+      if (s === 'cooldown') return go('edit', { bid: null, selected: [], q: '', flow: 'wizard' });
       if (s === 'overview') return go('cooldown');
+    },
+    toggleTempo(bid) {
+      root.S.libUi.tempoMenu = ui().tempoMenu === bid ? null : bid;
+      root.S.libUi.tempoAdd = false;
+      root.S.libUi.tempoError = '';
+      numberPad = null;
+      save();
+    },
+    beginTempo(bid) {
+      const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find((x) => x.id === bid);
+      const tempo = root.HybridLibrary.tempoText(b && b.tempo);
+      root.S.libUi.tempoMenu = bid;
+      root.S.libUi.tempoAdd = true;
+      root.S.libUi.tempoError = '';
+      root.S.libUi.tempoDraft = tempo ? tempo.split('') : ['', '', '', ''];
+      save();
+    },
+    draftTempo(index, value) {
+      const draft = (ui().tempoDraft || ['', '', '', '']).slice();
+      if (index < 0 || index > 3) return;
+      draft[index] = String(value || '').slice(0, 1).toUpperCase();
+      root.S.libUi.tempoDraft = draft;
+      save();
+    },
+    pickTempo(bid, text) {
+      const raw = String(text || '');
+      const tempo = raw === '' ? '' : (/^[0-9X]{4}$/i.test(raw) ? raw.toUpperCase() : null);
+      if (tempo === null) return;
+      root.S.libUi.tempoMenu = null;
+      root.S.libUi.tempoAdd = false;
+      root.S.libUi.tempoError = '';
+      root.S.libUi.bid = bid;
+      setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, bid, { tempo }));
+    },
+    saveTempo(bid) {
+      const draft = (ui().tempoDraft || []).map((part) => String(part || '').toUpperCase());
+      if (!bid || draft.length !== 4 || draft.some((part) => !/^[0-9X]$/.test(part))) {
+        root.S.libUi.tempoMenu = bid;
+        root.S.libUi.tempoAdd = true;
+        root.S.libUi.tempoError = 'Use a number or X in each box.';
+        save();
+        return;
+      }
+      const tempo = draft.join('');
+      rememberTempo(tempo);
+      root.S.libUi.tempoMenu = null;
+      root.S.libUi.tempoAdd = false;
+      root.S.libUi.tempoError = '';
+      root.S.libUi.bid = bid;
+      setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, bid, { tempo }));
     },
     editBlock(bid) { numberPad = null; root.S.libUi.bid = bid; root.S.libUi.repError = null; root.S.libUi.targetError=null; save(); },
     closeSheet() { numberPad = null; root.S.libUi.bid = null; save(); },
@@ -727,8 +934,13 @@
     setCols(c1, c2, bid) {
       if (bid) root.S.libUi.bid = bid;
       const cols = [c1, c2].filter((k) => k && k !== 'none');
-      const columns = cols.length ? cols : ['reps'];
+      let columns = cols.length ? cols : ['reps'];
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
+      if (b?.role === 'cooldown') {
+        const allowed = columns.filter((k) => k === 'reps' || k === 'seconds');
+        const current = (b.columns || []).find((k) => k === 'reps' || k === 'seconds') || 'seconds';
+        columns = allowed.length ? [allowed[0]] : [current];
+      }
       const parsed = root.HybridLibrary.parseRepTarget(b?.repTarget);
       const patch = {columns};
       const hasReps = columns.some(isRepMetric);
@@ -737,6 +949,14 @@
         patch.setTargets = undefined;
       }
       if (parsed && !columns.includes('reps_range')) patch.repTarget = String(parsed.min);
+      if (b?.role === 'cooldown') {
+        const wasSeconds = (b.columns || []).includes('seconds');
+        const start = wasSeconds ? String(b.prescribed || '').trim() : (parsed ? String(parsed.min) : '');
+        if (wasSeconds && columns[0] === 'reps' && /^\d+$/.test(start)) {
+          patch.repTarget = start;
+          patch.prescribed = '';
+        } else if (!wasSeconds && columns[0] === 'seconds' && /^\d+$/.test(start)) patch.prescribed = start;
+      }
       if(hasReps&&Array.isArray(b?.setTargets)&&!columns.includes('reps_range'))patch.setTargets=b.setTargets.map(t=>t.purpose==='amrap'?t:{...t,reps:{min:t.reps.min,max:t.reps.min}});
       numberPad = null; root.S.libUi.repError = null;
       setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch));
@@ -769,7 +989,7 @@
       go('calendar', { tid, fromEditor: !!fromEditor, date: typeof root.today === 'function' ? root.today() : '' });
     },
     calendarBack() {
-      if (ui().flow === 'wizard') return go('overview');
+      if (ui().flow === 'wizard') return go('cooldown');
       if (ui().fromEditor) go('edit');
       else LibraryView.goList();
     },
