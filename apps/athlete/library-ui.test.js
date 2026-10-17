@@ -166,6 +166,11 @@ test('inline builder restores metric selectors and reflects non-rep metrics with
 });
 
 test('creating a session walks warm-up, the exercise picker, reps, tempo, cool-down, then the session', () => {
+  const savedTempos = new Map();
+  globalThis.localStorage = {
+    getItem(key) { return savedTempos.has(key) ? savedTempos.get(key) : null; },
+    setItem(key, value) { savedTempos.set(key, String(value)); },
+  };
   LibraryView.create();
   assert.equal(S.libUi.flow, 'wizard');
   assert.equal(S.libUi.screen, 'warmup');
@@ -191,18 +196,41 @@ test('creating a session walks warm-up, the exercise picker, reps, tempo, cool-d
   LibraryView.wizardNext();
   assert.match(LibraryView.html(), /What do you want to track\?/);
   assert.match(LibraryView.html(), /Back Squat/);
+  assert.match(LibraryView.html(), /No tempo/);
+  assert.match(LibraryView.html(), /Add tempo/);
+  assert.doesNotMatch(LibraryView.html(), /Same tempo for every set/);
+  const squatId = HybridLibrary.template(S.library, S.libUi.tid).blocks.find((b) => b.title === 'Back Squat').id;
+  LibraryView.beginTempo(squatId);
+  const adding = LibraryView.html();
+  assert.match(adding, /Lower/);
+  assert.match(adding, /way down/);
+  assert.match(adding, /Pause/);
+  assert.match(adding, /bottom/);
+  assert.match(adding, /Lift/);
+  assert.match(adding, /X means fast/);
+  assert.match(adding, />top</);
+  LibraryView.draftTempo(0, '3');
+  LibraryView.draftTempo(1, '1');
+  LibraryView.draftTempo(2, 'x');
+  LibraryView.draftTempo(3, '0');
+  LibraryView.saveTempo(squatId);
+  assert.equal(HybridLibrary.template(S.library, S.libUi.tid).blocks.find((b) => b.title === 'Back Squat').tempo, '31X0');
+  assert.deepEqual(JSON.parse(globalThis.localStorage.getItem('strength-training-tempos')), ['31X0']);
   LibraryView.wizardNext();
   assert.match(LibraryView.html(), /Bench Press/);
   assert.match(LibraryView.html(), /Lat Pull Downs/);
   LibraryView.wizardNext();
-  assert.match(LibraryView.html(), /Same tempo for every set/);
-  LibraryView.setTempoPart(0, '3');
-  LibraryView.setTempoPart(1, '1');
-  LibraryView.setTempoPart(2, 'X');
-  LibraryView.setTempoPart(3, '0');
-  LibraryView.wizardNext();
-  LibraryView.wizardNext();
   assert.match(LibraryView.html(), /Cool-down/);
+  assert.equal(S.libUi.screen, 'cooldown');
+  assert.equal(S.libUi.flow, 'wizard');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'edit');
+  assert.equal(S.libUi.flow, 'wizard');
+  LibraryView.wizardBack();
+  assert.equal(S.libUi.screen, 'warmup');
+  LibraryView.wizardNext();
+  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'cooldown');
   LibraryView.setRoleText('cooldown', 'Easy walk');
   LibraryView.wizardNext();
   const html = LibraryView.html();
@@ -293,4 +321,22 @@ test('deleting the open block drops its keypad and selection', () => {
   const left = HybridLibrary.template(S.library, tid).blocks.find((b) => b.kind === 'lift' && !b.role);
   assert.equal(left.title, 'Bench Press');
   assert.equal(left.repTarget, '8');
+});
+
+test('the lift card uses the tempo dropdown and Next leaves for cool-down', () => {
+  const tid = globalThis.S.library.templates[0].id;
+  globalThis.S.library = globalThis.HybridLibrary.addExercise(globalThis.S.library, tid, {
+    title: 'Back Squat', setCount: 3, columns: ['reps']
+  });
+  globalThis.S.libUi.screen = 'edit';
+  globalThis.S.libUi.tid = tid;
+  let html = globalThis.LibraryView.html();
+  assert.match(html, /No tempo/);
+  assert.match(html, /Add tempo/);
+  assert.doesNotMatch(html, /Same tempo for every set/);
+  assert.match(html, /Reps/);
+  assert.match(html, /Meters/);
+  assert.doesNotMatch(html, /Watts|Calories|Linear Weight Progression|Inches|Velocity|Other/);
+  globalThis.LibraryView.wizardNext();
+  assert.equal(globalThis.S.libUi.screen, 'cooldown');
 });
