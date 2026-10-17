@@ -15,12 +15,12 @@ not video-verified technique or a clinically validated exercise ontology.
 | `exercise_movement_categories.csv` | Categories for every one of the 1,860 identities |
 | `exercise_movement_library.json` | Same entries plus taxonomy; importable into a future dashboard |
 | `movement-taxonomy.json` | Stable category IDs, labels, definitions and allowed subcategories |
-| `movement-overrides.json` | 220 reviewed exceptions, combinations and clarification decisions, keyed to original ID and guarded title |
-| `movement_review_queue.csv` | 22 unclear identities and 9 programme/software entries; excludes ordinary classified entries |
+| `movement-overrides.json` | 223 reviewed exceptions, combinations and clarification decisions, keyed to original ID and guarded title |
+| `movement_review_queue.csv` | 24 unclear identities and 9 programme/software entries; excludes ordinary classified entries |
 | `movement_category_summary.json` | Counts and input SHA256 hashes; generated, not manually maintained |
 
-There are **1,829 classified entries**, **22 requiring clarification**, and **9
-non-exercise entries**. For the custom subset: **378 classified**, **3 requiring
+There are **1,827 classified entries**, **24 requiring clarification**, and **9
+non-exercise entries**. For the custom subset: **377 classified**, **4 requiring
 clarification**, and **1 complete workout kept as a reference entry**. Classification
 does not resolve the separate 117 alias/equipment review pairs in the name-cleanup
 report; those identities and their pending decisions remain separate.
@@ -43,6 +43,8 @@ and Needs clarification are separate utility groups.
 - Upright rows, face pulls, pull-aparts and pullovers are shoulder accessories,
   rather than lat-focused vertical pulls. A sled row is a row; a sled drag is
   locomotion. Sled face pulls currently share the sled-row family for search.
+- A seated dumbbell power clean is a shoulder accessory; the less specific seated
+  clean names need clarification. They are not silently grouped with Olympic lifts.
 - A thruster is Mixed, searchable under Squat and Vertical push. A muscle-up is
   Mixed with a vertical pull and push. Clean-and-jerk remains an Olympic lift.
   Mixed entries are not split into newly invented exercises.
@@ -76,8 +78,8 @@ means the generic rules required a deliberate exception, not that an athlete or
 coach has confirmed a video. No guessed probability/confidence percentage is used.
 Unknown names get `needs_review` with a reason rather than a forced classification.
 
-The three unclear custom entries are **Bendh**, **Farmers Press**, and **Standing
-Abductor Banded Pull-Apart**. Confirm the actual movement using instructions or a
+The four unclear custom entries are **Bendh**, **Farmers Press**, **Standing
+Abductor Banded Pull-Apart**, and **Seated Power Clean**. Confirm the actual movement using instructions or a
 video before treating these as ordinary selectable exercises. The full workout
 **Lower Body Focus Full Body** is kept as a reference; its source instructions
 contain multiple exercises and a warm-up.

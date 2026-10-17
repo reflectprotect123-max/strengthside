@@ -2188,6 +2188,28 @@
       "rule_id": "reviewed_exception"
     },
     {
+      "canonical_exercise_id": "exercise_cc3a5c23560b9563",
+      "canonical_title": "Seated Clean",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "May be the seated dumbbell shoulder accessory rather than an Olympic clean; confirm implement and technique.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_75a7e8abe8f7035e",
+      "canonical_title": "Seated Dumbbell Power Clean",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "classified_from_name",
+      "reason": "Seated dumbbell power-clean shoulder accessory; do not treat as a standing Olympic clean.",
+      "rule_id": "reviewed_exception"
+    },
+    {
       "canonical_exercise_id": "exercise_5c2a5fdef4fec8ef",
       "canonical_title": "Seated Overhead Dumbbell Extension",
       "movement_category": "isolation",
@@ -2196,6 +2218,17 @@
       "tags": [],
       "review_status": "classified_from_name",
       "reason": "Seated overhead dumbbell extension is the triceps-extension accessory.",
+      "rule_id": "reviewed_exception"
+    },
+    {
+      "canonical_exercise_id": "exercise_e7c8a5a6f8a2296f",
+      "canonical_title": "Seated Power Clean",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
+      "secondary_categories": [],
+      "tags": [],
+      "review_status": "needs_review",
+      "reason": "May be the seated dumbbell shoulder accessory rather than an Olympic clean; confirm implement and technique.",
       "rule_id": "reviewed_exception"
     },
     {

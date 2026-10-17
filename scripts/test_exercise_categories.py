@@ -31,13 +31,13 @@ class MovementLibraryTests(unittest.TestCase):
             'vertical_pull': ['Weighted Chin-Up', 'Weighted Pull-Up', 'Lat Pulldown', 'Rope Climb'],
             'core': ['Side Plank', 'Deficit Single Leg Side Plank Dip', 'Tuck Ups In Dip Support', 'Hanging Medicine Ball Knee Raise', 'Reverse V Ups On Rower (Seat)', 'Bear Crawl Kettlebell Lateral Pull Through', 'Kipping Swing'],
             'carry': ['Dumbbell Farmers Walk', 'Double Kettlebell Front Rack Walk', 'Rucking', 'Suitcase Carry'],
-            'isolation': ['Dumbbell Upright Row', 'Dumbbell Incline Rear Delt Swing', 'Dip Belt Calf Raise', 'Forearm Supported Wrist Curl', 'Standing Bar Triceps Extension', 'Straight Arm Lat Pulldown', 'Banded Hip Flexor Pull', 'Nordic Curl'],
+            'isolation': ['Dumbbell Upright Row', 'Dumbbell Incline Rear Delt Swing', 'Dip Belt Calf Raise', 'Forearm Supported Wrist Curl', 'Standing Bar Triceps Extension', 'Straight Arm Lat Pulldown', 'Banded Hip Flexor Pull', 'Nordic Curl', 'Seated Dumbbell Power Clean'],
             'power': ['Clean And Jerk', 'Snatch Pull', 'Sumo Deadlift High Pull', 'Box Jump', 'Box Drop Landing', 'Altitude Split Squat Landing', 'Medicine Ball Chest Pass'],
             'mobility': ['Squat To Stand', 'Pull-Up Bar Dead Hang', 'Knee Supported Foam Roller Windmill', 'Banded Lat Distraction E/Side'],
             'locomotion_conditioning': ['400 M Repeats', 'A March', 'Box Get Overs With Floor Touch', 'Rowing', 'Sled Drag', 'Double Under'],
             'preparation_recovery': ['Box Breathing', 'Rest', 'Full Body Warm Up'],
             'reference': ['Velocity Tracking App Demo', 'Lower Body Focus Full Body', 'Prvn60 1/05/24'],
-            'needs_review': ['Bendh', 'Farmers Press', 'Option 1', 'Around The World', 'Rope Sledpulls'],
+            'needs_review': ['Bendh', 'Farmers Press', 'Option 1', 'Around The World', 'Rope Sledpulls', 'Seated Clean', 'Seated Power Clean'],
         }
         for category, titles in expected.items():
             for title in titles:

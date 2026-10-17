@@ -24898,16 +24898,16 @@
       "aliases": [
         "Seated Cleans"
       ],
-      "movement_category": "power",
-      "movement_subcategory": "olympic_lift",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
       "secondary_categories": [],
       "tags": [
         "variation:seated"
       ],
-      "review_status": "classified_from_name",
-      "reason": "",
-      "rule_id": "clean_snatch",
-      "basis": "name_rule"
+      "review_status": "needs_review",
+      "reason": "May be the seated dumbbell shoulder accessory rather than an Olympic clean; confirm implement and technique.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
     },
     {
       "canonical_exercise_id": "exercise_28ae64893369ee6c",
@@ -24973,17 +24973,17 @@
       "aliases": [
         "Seated DB Power Clean"
       ],
-      "movement_category": "power",
-      "movement_subcategory": "olympic_lift",
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
       "secondary_categories": [],
       "tags": [
         "equipment:dumbbell",
         "variation:seated"
       ],
       "review_status": "classified_from_name",
-      "reason": "",
-      "rule_id": "clean_snatch",
-      "basis": "name_rule"
+      "reason": "Seated dumbbell power-clean shoulder accessory; do not treat as a standing Olympic clean.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
     },
     {
       "canonical_exercise_id": "exercise_ea7eda424ff5b7b3",
@@ -25243,16 +25243,16 @@
       "aliases": [
         "Seated Power Clean"
       ],
-      "movement_category": "power",
-      "movement_subcategory": "olympic_lift",
+      "movement_category": "needs_review",
+      "movement_subcategory": "unspecified",
       "secondary_categories": [],
       "tags": [
         "variation:seated"
       ],
-      "review_status": "classified_from_name",
-      "reason": "",
-      "rule_id": "clean_snatch",
-      "basis": "name_rule"
+      "review_status": "needs_review",
+      "reason": "May be the seated dumbbell shoulder accessory rather than an Olympic clean; confirm implement and technique.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
     },
     {
       "canonical_exercise_id": "exercise_71c61086a7b3a048",

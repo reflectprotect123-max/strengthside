@@ -276,7 +276,7 @@ exercise_646e2e7d6e4cb2ee,Seated Dumbbell Good Morning,True,"[""Seated DB good m
 exercise_ed443858b861acff,Seated Hamstring Curl,True,"[""Seated Hamstring Curl""]",isolation,knee_flexion,[],"[""variation:seated""]",classified_from_name,,hamstring_curl,name_rule
 exercise_163da041594610d0,Seated Incline Dumbbell Curl,True,"[""Seated Incline DB Curls"", ""Seated Incline Db Curl""]",isolation,elbow_flexion,[],"[""equipment:dumbbell"", ""variation:incline"", ""variation:seated""]",classified_from_name,,biceps,name_rule
 exercise_99d18e56b9955f05,Seated Leg Curl,True,"[""Seated Leg Curl"", ""Seated Leg Curls"", ""seated leg curl""]",isolation,knee_flexion,[],"[""variation:seated""]",classified_from_name,,hamstring_curl,name_rule
-exercise_e7c8a5a6f8a2296f,Seated Power Clean,True,"[""Seated Power Clean""]",power,olympic_lift,[],"[""variation:seated""]",classified_from_name,,clean_snatch,name_rule
+exercise_e7c8a5a6f8a2296f,Seated Power Clean,True,"[""Seated Power Clean""]",needs_review,unspecified,[],"[""variation:seated""]",needs_review,May be the seated dumbbell shoulder accessory rather than an Olympic clean; confirm implement and technique.,reviewed_exception,reviewed_override
 exercise_a872e51a3d1dfc02,Segmented Power Clean,True,"[""segmented power clean""]",power,olympic_lift,[],[],classified_from_name,,clean_snatch,name_rule
 exercise_952f5a009ba66cdc,Serratus Crunch,True,"[""Serratus Crunch"", ""serratus crunch""]",core,trunk_control,[],[],classified_from_name,,core,name_rule
 exercise_11788ba29e81a54e,Side Plank Hip Tap,True,"[""Side Plank Hip Tap""]",core,trunk_control,[],[],classified_from_name,,core,name_rule
