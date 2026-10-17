@@ -19,7 +19,7 @@ require(join(dirname(fileURLToPath(import.meta.url)), 'library.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'strength-brain.js'));
 require(join(dirname(fileURLToPath(import.meta.url)), 'session.js'));
 const Lib = globalThis.HybridLibrary;
-const SEED_WARMUP_BLOCKS = 5;
+const SEED_WARMUP_BLOCKS = 0;
 
 function letterFor(tpl, title) {
   return Lib.lettered(tpl).find((b) => b.title === title).letter;
@@ -29,14 +29,27 @@ function liftByTitle(plan, title) {
   return plan.blocks.find((b) => b.kind === 'lift' && b.title === title);
 }
 
-test('a new template seeds the locked warm-up and an empty cool-down', () => {
+test('a new template starts with an empty warm-up and drops a previously seeded circuit', () => {
   const st = Lib.createTemplate(Lib.emptyState(), { title: 'Lower Strength' });
-  const blocks = st.templates[0].blocks;
-  assert.deepEqual(blocks.map((b) => b.title), ['Bike', 'Row', 'Run', 'Ski', 'Jump Rope']);
-  assert.ok(blocks.every((b) => b.role === 'warmup' && b.setCount === 3));
-  assert.equal(blocks[0].prescribed, '180');
-  assert.equal(blocks[4].prescribed, '60');
-  assert.equal(blocks.find((b) => b.role === 'cooldown'), undefined);
+  assert.deepEqual(st.templates[0].blocks, []);
+  const old = Lib.emptyState();
+  old.templates.push({
+    id: 'old',
+    title: 'Saved',
+    blocks: [
+      { id: 'b1', kind: 'lift', title: 'Bike', role: 'warmup', columns: ['seconds'], setCount: 3, prescribed: '180' },
+      { id: 'b2', kind: 'lift', title: 'Row', role: 'warmup', columns: ['seconds'], setCount: 3, prescribed: '180' },
+      { id: 'b3', kind: 'lift', title: 'Run', role: 'warmup', columns: ['seconds'], setCount: 3, prescribed: '180' },
+      { id: 'b4', kind: 'lift', title: 'Ski', role: 'warmup', columns: ['seconds'], setCount: 3, prescribed: '180' },
+      { id: 'b5', kind: 'lift', title: 'Jump Rope', role: 'warmup', columns: ['seconds'], setCount: 3, prescribed: '60' },
+      { id: 'b6', kind: 'lift', title: 'Back Squat', columns: ['reps'], setCount: 3 },
+      { id: 'b7', kind: 'lift', title: 'Push Downs', role: 'warmup', columns: ['reps'], setCount: 3, repTarget: '10' },
+    ],
+  });
+  const cleared = Lib.ensure(old);
+  assert.deepEqual(cleared.templates[0].blocks.map((b) => b.title), ['Back Squat', 'Push Downs']);
+  const again = Lib.addExercise(cleared, 'old', { title: 'Bike', columns: ['seconds'], setCount: 3, value: '180', role: 'warmup' });
+  assert.ok(again.templates[0].blocks.some((b) => b.title === 'Bike' && b.role === 'warmup'));
 });
 
 test('track lock includes reps kg meters and for completion', () => {
@@ -65,7 +78,7 @@ test('create session template starts empty then letters A warmup B1 B2 B3 C', ()
   const tpl = st.templates[0];
   assert.deepEqual(
     ['Bench Press Warm-Up', 'Bench Press', 'Lat Pull Downs', 'Back Squat', 'Bendh'].map((title) => letterFor(tpl, title)),
-    ['F', 'G1', 'G2', 'G3', 'H'],
+    ['A', 'B1', 'B2', 'B3', 'C'],
   );
 });
 
@@ -271,7 +284,7 @@ test('a warm-up circuit keeps its time, distance, and reps beside the working li
   const names = HybridSession.pagesFromPlan(plan).map((p) => p.title);
   const customWarmupRound = ['Bike', 'Isometric Hold', 'Push Downs', 'Farmers Carry'];
   assert.deepEqual(names.slice(SEED_WARMUP_BLOCKS, SEED_WARMUP_BLOCKS + customWarmupRound.length), customWarmupRound);
-  assert.deepEqual(names.slice(14, 14 + customWarmupRound.length), customWarmupRound);
+  assert.deepEqual(names.slice(customWarmupRound.length, customWarmupRound.length * 2), customWarmupRound);
   const session = HybridSession.startSession({ date: '2026-10-16', plan, letter: 'A' });
   const bike = session.pages[0];
   const hold = session.pages.find((p) => p.title === 'Isometric Hold');
@@ -314,6 +327,7 @@ test('a cool-down plays in rounds and only keeps seconds or reps', () => {
 test('start session order is warm-up rounds, lifts, cool-down rounds', () => {
   let st = Lib.createTemplate(Lib.emptyState(), { title: 'Lower Strength' });
   const tid = st.templates[0].id;
+  st = Lib.addExercise(st, tid, { title: 'Bike', columns: ['seconds'], setCount: 3, value: '180', role: 'warmup' });
   st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 3, columns: ['reps'], value: '5' });
   st = Lib.patchBlock(st, tid, st.templates[0].blocks.at(-1).id, { tempo: '20X1' });
   st = Lib.addExercise(st, tid, { title: 'Easy Bike', columns: ['seconds'], setCount: 3, value: '180', role: 'cooldown' });

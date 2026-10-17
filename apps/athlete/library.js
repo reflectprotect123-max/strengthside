@@ -81,7 +81,7 @@
   function ensure(state) {
     if (!state || typeof state !== 'object') return emptyState();
     const next = {
-      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: (t.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
+      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, clearedSeededWarmup: true, blocks: (t.clearedSeededWarmup ? (t.blocks || []) : (t.blocks || []).filter((b) => !(b.role === 'warmup' && SEEDED_WARMUP.has(b.title)))).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
         const reps = parseRepTarget(b.repTarget);
         // Preserve ranges saved before Reps and Rep Range had separate entry rules.
         return canonicalBlock(reps && reps.min !== reps.max && (b.columns || []).includes('reps') && !(b.columns || []).includes('meters')
@@ -108,6 +108,8 @@
     return (state.templates || []).find((t) => t.id === tid) || null;
   }
 
+  const SEEDED_WARMUP = new Set(['Bike', 'Row', 'Run', 'Ski', 'Jump Rope']);
+
   function createTemplate(state, { title, instructions } = {}) {
     const st = clone(ensure(state));
     st.templates.unshift({
@@ -115,17 +117,7 @@
       title: String(title || 'Session Template').trim() || 'Session Template',
       instructions: String(instructions || ''),
       blocks: [],
-    });
-    [
-      ['Bike', '180'],
-      ['Row', '180'],
-      ['Run', '180'],
-      ['Ski', '180'],
-      ['Jump Rope', '60'],
-    ].forEach(([title, value]) => {
-      Object.assign(st, addExercise(st, st.templates[0].id, {
-        title, columns: ['seconds'], setCount: 3, value, role: 'warmup',
-      }));
+      clearedSeededWarmup: true,
     });
     return st;
   }
