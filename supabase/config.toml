@@ -34,3 +34,7 @@ additional_redirect_urls = ["com.hybrid.athlete://auth", "capacitor://localhost"
 
 [functions]
 enabled = true
+
+[functions.brain-coach]
+# This route verifies ES256 user tokens through auth.getUser in its handler.
+verify_jwt = false

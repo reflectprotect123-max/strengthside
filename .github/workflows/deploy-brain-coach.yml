@@ -1,0 +1,40 @@
+name: Deploy Supabase brain coach
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.78.1
+
+      - name: Require Supabase and OpenRouter secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          set -euo pipefail
+          : "${SUPABASE_ACCESS_TOKEN:?Add the SUPABASE_ACCESS_TOKEN GitHub Actions secret}"
+          : "${OPENROUTER_API_KEY:?Add the OPENROUTER_API_KEY GitHub Actions secret}"
+
+      - name: Set provider secret and deploy coach endpoint
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
+        run: |
+          set -euo pipefail
+          args=("OPENROUTER_API_KEY=$OPENROUTER_API_KEY")
+          if [[ -n "${OPENROUTER_MODEL:-}" ]]; then
+            args+=("OPENROUTER_MODEL=$OPENROUTER_MODEL")
+          fi
+          supabase secrets set --project-ref orysjncrksmdfabpuftd "${args[@]}"
+          supabase functions deploy brain-coach --project-ref orysjncrksmdfabpuftd --use-api

@@ -1,5 +1,8 @@
 # LLM integration plan
 
+> Historical plan. As of 17 October 2026, `brain-coach` runs as an authenticated
+> Supabase Edge Function; see `docs/releases/2026-10-17-netlify-retirement.md`.
+
 **Date:** 30 August 2026  
 **Status:** Phases 1–3 shipped  
 **Constraint:** LLM interprets context → **engines own all numbers** (kg, reps, watts, rounds).

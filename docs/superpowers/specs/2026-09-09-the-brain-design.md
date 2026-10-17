@@ -1,5 +1,11 @@
 # The Brain — spine architecture (2026-09-09)
 
+> Superseded architecture note: this design predates the 17 October 2026
+> Netlify retirement. Current athlete and Coach integrations use Supabase Edge
+> Functions; Coach UI ships inside the desktop installer. See
+> `docs/releases/2026-10-17-netlify-retirement.md` for current wiring and
+> required secrets.
+
 ## Product
 
 One app: **Hybrid Athlete** — central hub, connectors, AI coach chat.
@@ -39,3 +45,9 @@ One app: **Hybrid Athlete** — central hub, connectors, AI coach chat.
 - Import old localStorage
 - Totem / MCP in app
 - LLM writing prescriptions
+# Superseded architecture note
+
+This design predates the 17 October 2026 Netlify retirement. Current athlete
+and Coach integrations use Supabase Edge Functions; Coach UI ships inside the
+desktop installer. See `docs/releases/2026-10-17-netlify-retirement.md` for the
+current wiring and required secrets.

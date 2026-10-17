@@ -991,6 +991,8 @@ async function askCoach() {
       method: 'POST',
       headers: {
         authorization: 'Bearer ' + (await Whoop.token()),
+        apikey: window.STRENGTH_CONFIG?.supabaseAnon || '',
+        'x-hybrid-product': 'strength',
         'content-type': 'application/json',
       },
       body: JSON.stringify({

@@ -1,6 +1,6 @@
 /**
  * Auto-update for the packaged Windows shell via GitHub Releases (electron-updater).
- * Coach UI still updates via Netlify on every load — this only updates the .exe wrapper.
+ * The coach UI is bundled with the shell; both update together.
  */
 const { app, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
@@ -18,7 +18,7 @@ function initUpdater(getMainWindow) {
           type: 'info',
           title: 'App updates',
           message: 'Shell auto-update runs in the installed Windows app only.',
-          detail: 'Coach UI still refreshes from Netlify (Ctrl+R).',
+          detail: 'The coach screen is bundled with this app. Install a newer app build to update it.',
           buttons: ['OK'],
         }),
     };

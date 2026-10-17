@@ -1,8 +1,0 @@
-{
-  "name": "brain-owner-site",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@netlify/blobs": "7.4.0"
-  }
-}

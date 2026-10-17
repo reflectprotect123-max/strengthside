@@ -1,5 +1,4 @@
-# Build THE Hybrid Coach Windows installer (.exe) and publish for shell OTA.
-# Coach UI still updates via Netlify on load; this ships shell (.exe) updates.
+# Build THE Hybrid Coach Windows installer (.exe) and publish the bundled UI.
 name: Build coach desktop
 
 on:
@@ -31,7 +30,7 @@ jobs:
       - name: Install workspace deps
         run: pnpm install --frozen-lockfile
 
-      - name: Coach desktop smoke (config + live URL)
+      - name: Coach desktop smoke (bundled UI)
         run: pnpm run check:coach-desktop
 
       - name: Build Windows NSIS installer
@@ -51,7 +50,7 @@ jobs:
           EXE_NAME="THE-Hybrid-Coach-Setup-${VERSION}.exe"
           NOTES="Windows desktop shell for THE Hybrid **Coach** app.
 
-          Loads live coach UI from Netlify — UI updates on every deploy.
+          Bundles the Coach UI and updates it with this desktop release.
           Shell auto-updates from this release (Coach → Check for app updates).
 
           **Version:** \`${VERSION}\`

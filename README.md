@@ -65,7 +65,7 @@ The older map below is historical layout, not the current builder.
 | **Edit UI** | `apps/athlete/` (`index.html`, `app.js`, `home.css`) |
 | **Sync / build** | `bash scripts/sync-athlete-app.sh` |
 | **Play locally** | open `apps/athlete/index.html` or `python3 -m http.server --directory apps/athlete` |
-| **Deploy** | `apps/athlete/` → Netlify (`thehybridsystem.netlify.app`) |
+| **APK build** | GitHub Actions builds the Android artifact on `main` pushes; Capgo is released only by an explicit ship workflow. |
 | **Android** | `apps/mobile/capacitor/` wraps `apps/athlete/` |
 
 ## Coach workspace (separate surface)

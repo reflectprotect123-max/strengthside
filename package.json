@@ -15,7 +15,7 @@
     "check:boot-syntax": "node apps/athlete/checks/athlete-app.smoke.mjs",
     "check:no-recall": "node apps/athlete/checks/no-recall.smoke.mjs",
     "check:whoop-ownership": "node apps/athlete/checks/whoop-ownership.smoke.mjs",
-    "check:openrouter-ownership": "node apps/athlete/checks/openrouter-ownership.smoke.mjs",
+    "check:openrouter-ownership": "node apps/athlete/checks/openrouter-ownership.smoke.mjs && node --test supabase/functions/brain-coach/index.test.mjs",
     "check:whoop-deeplink": "node apps/athlete/checks/whoop-deeplink.smoke.mjs",
     "check:whoop-history": "node --test supabase/functions/whoop-sync/history.test.mjs supabase/functions/whoop-sync/observations.test.mjs supabase/functions/_shared/integrations.test.mjs",
     "check:whoop-live": "node apps/athlete/checks/whoop-live.smoke.mjs",
@@ -37,10 +37,8 @@
     "check:log-columns": "node apps/coach/log-columns.smoke.mjs",
     "check:migrations": "node checks/migrations-apply.mjs",
     "rematerialize:capgo": "bash scripts/rematerialize-capgo-from-vault.sh",
-    "rematerialize:openrouter": "bash scripts/rematerialize-openrouter-from-vault.sh",
-    "set:openrouter-netlify": "bash scripts/rematerialize-openrouter-from-vault.sh && node scripts/set-openrouter-netlify.mjs --deploy-coach",
     "ship:capgo": "bash apps/mobile/capacitor/scripts/ship-capgo.sh",
-    "verify": "pnpm run check:warmup-play-lock && pnpm run check:training-play && pnpm run check:cooldown-play && pnpm run check:ownership-halves && pnpm run check:shared-contracts && pnpm run check:strength-brain && pnpm run check:strength-memory-sql && pnpm run check:strength-learning-db && pnpm run check:strength-simulator && pnpm run check:strength-learning-simulator && pnpm run check:strength-learning-performance && pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:athlete-app && pnpm run check:browser && pnpm run check:no-recall && pnpm run check:whoop-ownership && pnpm run check:openrouter-ownership && pnpm run check:whoop-deeplink && pnpm run check:whoop-home && pnpm run check:whoop-history && pnpm run check:coach-ai && pnpm run check:log-columns && pnpm run check:exercise-search && pnpm run check:coach-loop && pnpm run check:coach-clone && pnpm run check:coach-session-builder && pnpm run check:coach-library && pnpm run check:coach-nutrition && pnpm run check:coach-program-grid && pnpm run check:coach-bridge && pnpm run check:coach-calendars && pnpm run check:coach-v1-e2e && pnpm run check:coach-cloud && pnpm run check:coach-portal-athlete && pnpm run check:coach-block-types && pnpm run check:coach-audit-fixes",
+    "verify": "pnpm run check:warmup-play-lock && pnpm run check:training-play && pnpm run check:cooldown-play && pnpm run check:ownership-halves && pnpm run check:shared-contracts && pnpm run check:strength-brain && pnpm run check:strength-memory-sql && pnpm run check:strength-learning-db && pnpm run check:strength-simulator && pnpm run check:strength-learning-simulator && pnpm run check:strength-learning-performance && pnpm run typecheck && pnpm run test && pnpm run check:migrations && pnpm run build && pnpm run check:athlete-app && pnpm run check:browser && pnpm run check:no-recall && pnpm run check:whoop-ownership && pnpm run check:openrouter-ownership && pnpm run check:whoop-deeplink && pnpm run check:whoop-home && pnpm run check:whoop-history && pnpm run check:coach-ai && pnpm run check:coach-whoop && pnpm run check:log-columns && pnpm run check:exercise-search && pnpm run check:coach-loop && pnpm run check:coach-clone && pnpm run check:coach-session-builder && pnpm run check:coach-library && pnpm run check:coach-nutrition && pnpm run check:coach-program-grid && pnpm run check:coach-bridge && pnpm run check:coach-calendars && pnpm run check:coach-v1-e2e && pnpm run check:coach-cloud && pnpm run check:coach-portal-athlete && pnpm run check:coach-block-types && pnpm run check:coach-audit-fixes",
     "verify:strength": "pnpm run check:warmup-play-lock && pnpm run check:training-play && pnpm run check:cooldown-play && pnpm run check:ownership-halves && pnpm run check:shared-contracts && pnpm run check:strength-brain && pnpm run check:strength-memory-sql && pnpm run check:strength-learning-db && pnpm run check:strength-simulator && pnpm run check:strength-learning-simulator && pnpm run check:strength-learning-performance && pnpm run check:athlete-app && pnpm run check:browser && pnpm run check:no-recall && pnpm run check:whoop-ownership && pnpm run check:whoop-deeplink && pnpm run check:whoop-home",
     "verify:engine": "node scripts/check-engine-half.mjs",
     "check:warmup-play-lock": "node checks/warmup-play-lock.mjs",
@@ -55,7 +53,8 @@
     "check:browser": "playwright test -c checks/browser/playwright.config.mjs",
     "check:strength-learning-db": "node --test scripts/check-strength-learning-db.test.mjs && node scripts/check-strength-learning-db.mjs",
     "check:strength-learning-performance": "node scripts/check-strength-learning-performance.mjs",
-    "check:strength-learning-simulator": "node --test scripts/strength-learning-simulator.test.mjs && node scripts/strength-learning-simulator.mjs --check-report"
+    "check:strength-learning-simulator": "node --test scripts/strength-learning-simulator.test.mjs && node scripts/strength-learning-simulator.mjs --check-report",
+    "check:coach-whoop": "node apps/coach/whoop-supabase.smoke.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

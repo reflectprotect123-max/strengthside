@@ -1,7 +1,5 @@
 /**
- * THE Hybrid Coach — thin Electron shell.
- * Loads the live coach workspace from Netlify so UI updates ship via deploy
- * (same OTA model as browser) without rebuilding this installer.
+ * THE Hybrid Coach — Electron shell with the coach workspace bundled locally.
  *
  * Packaged builds also auto-update the shell via GitHub Releases (electron-updater).
  *
@@ -9,9 +7,17 @@
  */
 const { app, BrowserWindow, shell, Menu } = require('electron');
 const { initUpdater } = require('./updater.cjs');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
-const DEFAULT_COACH_URL = 'https://thehybridsystem.netlify.app/coach.html';
-const COACH_URL = (process.env.HYBRID_COACH_URL || DEFAULT_COACH_URL).trim();
+function resolveCoachUrl() {
+  if (process.env.HYBRID_COACH_URL) return process.env.HYBRID_COACH_URL.trim();
+  const coachFile = app.isPackaged
+    ? path.join(process.resourcesPath, 'coach', 'coach.html')
+    : path.resolve(__dirname, '../../coach/coach.html');
+  return pathToFileURL(coachFile).href;
+}
+const COACH_URL = resolveCoachUrl();
 
 /** @type {import('electron').BrowserWindow | null} */
 let mainWindow = null;

@@ -1,35 +1,26 @@
-/**
- * OpenRouter ownership — athlete deploy is PROXY-ONLY for brain-coach.
- */
+/** OpenRouter coach lives behind the authenticated Supabase Edge function. */
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BRAIN_OWNER_HOST } from '../../../scripts/brain-owner-site.mjs';
 
-const dir = dirname(fileURLToPath(import.meta.url));
-const fnDir = join(dir, '..', 'netlify/functions');
-
+const repo = join(dirname(fileURLToPath(import.meta.url)), '../../..');
+const functionFile = join(repo, 'supabase/functions/brain-coach/index.mjs');
+const configFile = join(repo, 'supabase/config.toml');
 const failures = [];
-function must(cond, msg) {
-  if (!cond) failures.push(msg);
-}
+const must = (condition, message) => { if (!condition) failures.push(message); };
 
-const coach = join(fnDir, 'brain-coach.mjs');
-must(existsSync(coach), 'missing brain-coach.mjs');
-const coachSrc = readFileSync(coach, 'utf8');
-must(coachSrc.includes('proxyHybrid'), 'brain-coach must proxy to Brain owner site');
-must(!coachSrc.includes('OPENROUTER_API_KEY'), 'brain-coach must not read OPENROUTER on athlete site');
-
-const proxy = readFileSync(join(fnDir, '_hybrid-proxy.mjs'), 'utf8');
-must(proxy.includes(BRAIN_OWNER_HOST), '_hybrid-proxy must forward to Brain owner site');
-
-const ownerCoach = join(dir, '..', '..', '..', 'scripts/brain-owner-coach/netlify/functions/brain-coach.mjs');
-must(existsSync(ownerCoach), 'missing scripts/brain-owner-coach/netlify/functions/brain-coach.mjs');
-must(readFileSync(ownerCoach, 'utf8').includes('OPENROUTER_API_KEY'), 'Brain owner brain-coach must use OPENROUTER_API_KEY');
+must(existsSync(functionFile), 'missing Supabase brain-coach Edge function');
+const source = readFileSync(functionFile, 'utf8');
+must(source.includes("https://openrouter.ai/api/v1/chat/completions"), 'coach must call OpenRouter server-side');
+must(source.includes("env('OPENROUTER_API_KEY')"), 'coach API key must come from Supabase function secrets');
+must(!source.includes('process.env'), 'Edge function must not depend on Node process env');
+const config = readFileSync(configFile, 'utf8');
+must(source.includes("import('../_shared/auth.ts')"), 'coach must verify the Supabase user identity in the handler');
+must(/\[functions\.brain-coach\][\s\S]*?verify_jwt\s*=\s*false/.test(config), 'ES256 verification must be handled by the function, not the gateway');
 
 if (failures.length) {
   console.error('openrouter-ownership.smoke: FAIL');
-  for (const f of failures) console.error(' -', f);
+  for (const failure of failures) console.error(' -', failure);
   process.exit(1);
 }
 console.log('openrouter-ownership.smoke: ok');
