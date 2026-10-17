@@ -363,9 +363,7 @@ function trainingHomeHtml() {
           ${count ? `<span class="home-pill">${count} session${count === 1 ? '' : 's'}</span>` : ''}
         </div>
         ${publishedListHtml()}
-        <div class="home-cta">
-          <button type="button" class="btn oled-cta create-session-btn" onclick="fabAction('session')">Create session</button>
-        </div>
+
       </section>
     </div>`;
 }
@@ -596,7 +594,7 @@ function openLibraryForDay() {
   S.library = window.HybridLibrary ? HybridLibrary.ensure(S.library) : S.library;
   const tid = S.library && S.library.assignments && S.library.assignments[S.selectedDate];
   if (tid && window.LibraryView) LibraryView.open(tid);
-  else if (window.LibraryView) LibraryView.create();
+  else if (window.LibraryView) LibraryView.goList();
   else render();
 }
 
@@ -871,14 +869,10 @@ function closeFab() {
 function syncFab() {
   const layer = document.getElementById('fabLayer');
   if (!layer) return;
-  const wizardScreens = new Set(['instructions', 'warmup', 'exercises', 'picker', 'newEx', 'newCirc', 'reps', 'tempo', 'cooldown', 'overview', 'calendar']);
-  const building = S.tab === 'library' && S.libUi && S.libUi.flow === 'wizard' && wizardScreens.has(S.libUi.screen);
-  const show = !S.loggerOpen && !building;
+  const show = !S.loggerOpen;
   layer.classList.toggle('hidden', !show);
   layer.classList.toggle('open', !!S.fabOpen);
   layer.classList.toggle('fab-layer--training', S.tab === 'training');
-  const createBtn = document.getElementById('fabCreateSession');
-  if (createBtn) createBtn.classList.toggle('hidden', S.tab === 'training');
 }
 
 function fabAction(kind) {
@@ -892,12 +886,6 @@ function fabAction(kind) {
       save();
       render();
     }
-    return;
-  }
-  if (kind === 'session') {
-    S.tab = 'library';
-    if (window.LibraryView) LibraryView.create();
-    else render();
     return;
   }
   if (kind === 'coach') {

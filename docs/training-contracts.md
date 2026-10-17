@@ -1,3 +1,5 @@
+> Athlete authoring is retired: `library-ui.js` is now a saved-workout reader and `library.js` retains compilation/reading only. The complete original builder is in the `workout-builder-export` release. See `docs/releases/workout-builder-removal.md`. Older builder descriptions below are historical.
+
 # Current strength app ownership
 
 The athlete runtime is `apps/athlete`. Android and Capgo ship its validated staging output in `apps/mobile/capacitor/www`; they do not maintain another athlete UI. The desktop Coach UI and installer are owned by `reflectprotect123-max/the-adaptivebrain-` (`apps/coach`, `apps/desktop`). The older Hybrid athlete HTML is retained only in `archive/legacy-athlete` for historical regression fixtures. The unused strength-sync adapter stub is archived there too.
