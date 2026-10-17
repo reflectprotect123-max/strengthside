@@ -66,6 +66,27 @@ test('wizard back from warm-up and the exercise picker respects the new entry fl
   globalThis.S.library = prior;
 });
 
+test('wizard edit shows Next on the lift cards and keeps tempo off warm-up blocks', () => {
+  const prior = globalThis.S.library;
+  globalThis.S.library = globalThis.HybridLibrary.emptyState();
+  LibraryView.create();
+  LibraryView.wizardNext();
+  assert.equal(S.libUi.screen, 'edit');
+  const tid = S.libUi.tid;
+  globalThis.S.library = globalThis.HybridLibrary.addExercise(globalThis.S.library, tid, {
+    title: 'Back Squat', setCount: 3, columns: ['reps']
+  });
+  const html = LibraryView.html();
+  assert.match(html, />Next</);
+  assert.doesNotMatch(html, /Post to calendar/);
+  const squatAt = html.indexOf('<h3>Back Squat</h3>');
+  assert.match(html.slice(squatAt), /No tempo/);
+  const bikeAt = html.indexOf('<h3>Bike</h3>');
+  const bike = html.slice(html.lastIndexOf('<article', bikeAt), html.indexOf('</article>', bikeAt));
+  assert.doesNotMatch(bike, /No tempo/);
+  globalThis.S.library = prior;
+});
+
 test('search does not full-render the shell (keeps the input focused)', () => {
   paints = 0;
   results.innerHTML = '';

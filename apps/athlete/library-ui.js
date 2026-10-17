@@ -200,7 +200,7 @@
         body += `<div class="lib-ss">− Superset</div>`;
       }
       const meta = b.kind === 'circuit' ? 'For Completion' : root.HybridLibrary.rxFor(b);
-      body += b.kind === 'lift' ? exerciseCardHtml(b) : `<article class="lib-block">
+      const summary = `<article class="lib-block">
         <div class="lib-block-top">
           <span class="lib-letter">${esc(b.letter)}</span>
           <div style="flex:1">
@@ -211,6 +211,7 @@
           <button type="button" class="lib-danger" onclick="LibraryView.removeBlock('${esc(b.id)}')">Delete</button>
         </div>
       </article>`;
+      body += b.kind === 'lift' && !b.role ? exerciseCardHtml(b) : summary;
     });
     return `
       <div class="shell-screen shell-screen--library">
@@ -228,9 +229,9 @@
           <textarea placeholder="Coach notes for Start Session" onchange="LibraryView.patchTpl({instructions:this.value})">${esc(t.instructions)}</textarea>
         </div>
         ${body}
-        <div style="padding:16px">
-          <button type="button" class="lib-primary" onclick="LibraryView.calendar('${esc(t.id)}',true)">Post to calendar</button>
-        </div>
+        ${wizard()
+          ? `<div class="lib-wizard-next"><button type="button" class="btn oled-cta" onmousedown="event.preventDefault()" onclick="LibraryView.wizardNext()">Next</button></div>`
+          : `<div style="padding:16px"><button type="button" class="lib-primary" onclick="LibraryView.calendar('${esc(t.id)}',true)">Post to calendar</button></div>`}
         <div class="lib-row-btns">
           <button type="button" onclick="LibraryView.picker('exercises')">+ Add Exercise</button>
           <button type="button" onclick="LibraryView.picker('circuits')">+ Add Circuit</button>
