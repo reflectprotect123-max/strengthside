@@ -310,3 +310,18 @@ test('a cool-down plays in rounds and only keeps seconds or reps', () => {
   assert.equal(session.logs[bike.id].sets[0].purpose, 'warmup');
   assert.equal(globalThis.TrainingCore.validateRow(session.logs[bike.id].sets[0], bike).ok, true);
 });
+
+test('start session order is warm-up rounds, lifts, cool-down rounds', () => {
+  let st = Lib.createTemplate(Lib.emptyState(), { title: 'Lower Strength' });
+  const tid = st.templates[0].id;
+  st = Lib.addExercise(st, tid, { title: 'Back Squat', setCount: 3, columns: ['reps'], value: '5' });
+  st = Lib.patchBlock(st, tid, st.templates[0].blocks.at(-1).id, { tempo: '20X1' });
+  st = Lib.addExercise(st, tid, { title: 'Easy Bike', columns: ['seconds'], setCount: 3, value: '180', role: 'cooldown' });
+  const names = HybridSession.pagesFromPlan(Lib.compile(st.templates[0])).map((p) => p.section + ':' + p.title);
+  assert.equal(names[0], 'Warm-Up:Bike');
+  assert.ok(names.includes('Strength/Power:Back Squat'));
+  assert.ok(names.includes('Cool-Down:Easy Bike'));
+  assert.ok(names.indexOf('Warm-Up:Bike') < names.indexOf('Strength/Power:Back Squat'));
+  assert.ok(names.indexOf('Strength/Power:Back Squat') < names.indexOf('Cool-Down:Easy Bike'));
+  assert.equal(names.at(-1), 'undefined:Done Training');
+});
