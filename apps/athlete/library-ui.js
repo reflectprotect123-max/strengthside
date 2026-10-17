@@ -44,8 +44,21 @@
     ['farmers_carry', 'Farmers Carry', 'meters', '20'],
   ];
 
+  const COOLDOWN_CATALOG = [
+    ['easy_bike', 'Easy Bike', 'seconds', '180'],
+    ['breathing', 'Breathing', 'seconds', '60'],
+    ['couch_stretch', 'Couch Stretch', 'seconds', '60'],
+    ['hamstring_stretch', 'Hamstring Stretch', 'seconds', '45'],
+    ['childs_pose', "Child's Pose", 'seconds', '60'],
+    ['cat_cow', 'Cat-Cow', 'reps', '8'],
+    ['thread_needle', 'Thread the Needle', 'reps', '6'],
+    ['figure_four', 'Figure Four', 'reps', '8'],
+  ];
+
   function prepCatalog(role) {
-    return role === 'warmup' ? WARMUP_CATALOG : [];
+    if (role === 'warmup') return WARMUP_CATALOG;
+    if (role === 'cooldown') return COOLDOWN_CATALOG;
+    return [];
   }
 
   function prepRoundCount(t) {
@@ -66,6 +79,7 @@
     const screen = ui().screen;
     if (screen === 'picker' || screen === 'exercises' || screen === 'newEx' || screen === 'newCirc') el.innerHTML = pickerRowsHtml();
     else if (screen === 'warmup') el.innerHTML = prepCatalogRowsHtml('warmup');
+    else if (screen === 'cooldown') el.innerHTML = prepCatalogRowsHtml('cooldown');
     else if (screen === 'list') el.innerHTML = listCardsHtml();
   }
 
@@ -516,11 +530,6 @@
       </div>`;
   }
 
-  function roleText(role) {
-    const block = (currentTemplate()?.blocks || []).find((b) => b.role === role);
-    return block ? block.instructions || '' : '';
-  }
-
   function instructionsHtml() {
     const t = currentTemplate();
     return wizardChrome('Instructions', `
@@ -531,14 +540,6 @@
       <div class="lib-field">
         <label>Session instructions</label>
         <textarea placeholder="Coach notes for Start Session" oninput="LibraryView.patchTpl({instructions:this.value})">${esc(t?.instructions || '')}</textarea>
-      </div>`);
-  }
-
-  function textStepHtml(title, role) {
-    return wizardChrome(title, `
-      <div class="lib-field">
-        <label>Instructions</label>
-        <textarea oninput="LibraryView.setRoleText('${role}', this.value)">${esc(roleText(role))}</textarea>
       </div>`);
   }
 
@@ -557,10 +558,25 @@
     return rows || '<div class="lib-empty">No results.</div>';
   }
 
+  function prepTrackOptions(selected) {
+    const key = selected === 'reps' ? 'reps' : 'seconds';
+    return [['reps', 'Reps'], ['seconds', 'Seconds']]
+      .map(([k, label]) => `<option value="${esc(k)}"${k === key ? ' selected' : ''}>${esc(label)}</option>`)
+      .join('');
+  }
+
+  function prepTrackSelect(block) {
+    const current = (block.columns || []).find((k) => k === 'reps' || k === 'seconds') || 'seconds';
+    return `<select aria-label="Track for ${esc(block.title)}" onchange="LibraryView.setCols(this.value,'none','${esc(block.id)}')">${prepTrackOptions(current)}</select>`;
+  }
+
   function prepCircuitHtml(role) {
     const title = role === 'cooldown' ? 'Cool-down' : 'Warm-up';
     const items = root.HybridLibrary.lettered(currentTemplate() || { blocks: [] }).filter((b) => b.role === role);
-    const listed = items.map((b) => `<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">${esc(b.letter)}</span><div style="flex:1"><h3>${esc(b.title)}</h3><p class="sum">${esc(root.HybridLibrary.rxFor(b))}</p></div></div></article>`).join('');
+    const listed = items.map((b) => {
+      const track = role === 'cooldown' ? prepTrackSelect(b) : '';
+      return `<article class="lib-block"><div class="lib-block-top"><span class="lib-letter">${esc(b.letter)}</span><div style="flex:1"><h3>${esc(b.title)}</h3><p class="sum">${esc(root.HybridLibrary.rxFor(b))}</p></div></div>${track}</article>`;
+    }).join('');
     const n = (ui().selected || []).length;
     const searchLabel = role === 'cooldown' ? 'Search cool-downs' : 'Search warm-ups';
     return `
@@ -612,7 +628,7 @@
     const s = ui().screen;
     if (s === 'instructions') return instructionsHtml();
     if (s === 'warmup') return prepCircuitHtml('warmup');
-    if (s === 'cooldown') return textStepHtml('Cool-down', 'cooldown');
+    if (s === 'cooldown') return prepCircuitHtml('cooldown');
     if (s === 'reps') return repsStepHtml();
     if (s === 'overview') return overviewHtml();
     if (s === 'edit' || s === 'editBlock') return editorHtml() + numberPadHtml();
@@ -727,11 +743,6 @@
       root.S.library = st;
       go(ui().flow === 'wizard' ? 'exercises' : 'edit', { tid: ui().tid, bid: null, selected: [] });
     },
-    setRoleText(role, text) {
-      const title = role === 'cooldown' ? 'Cool-down' : 'Warm-up';
-      root.S.library = root.HybridLibrary.placeTextBlock(lib(), ui().tid, { role, title, instructions: text });
-      if (typeof root.save === 'function') root.save();
-    },
     setTempoPart(index, value, bid) {
       if (bid) root.S.libUi.bid = bid;
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find((x) => x.id === ui().bid);
@@ -760,7 +771,11 @@
         if (index + 1 < groups.length) return go('reps', { liftIndex: index + 1, bid: groups[index + 1][0].id });
         return go('cooldown', { liftIndex: 0, bid: null });
       }
-      if (s === 'cooldown') return go('overview');
+      if (s === 'cooldown') {
+        const lifts = (currentTemplate()?.blocks || []).filter((b) => b.kind === 'lift' && !b.role);
+        if (!lifts.length) return;
+        return LibraryView.calendar(ui().tid, true);
+      }
     },
     wizardBack() {
       const s = ui().screen;
@@ -919,8 +934,13 @@
     setCols(c1, c2, bid) {
       if (bid) root.S.libUi.bid = bid;
       const cols = [c1, c2].filter((k) => k && k !== 'none');
-      const columns = cols.length ? cols : ['reps'];
+      let columns = cols.length ? cols : ['reps'];
       const b = root.HybridLibrary.template(lib(), ui().tid)?.blocks.find(b => b.id === ui().bid);
+      if (b?.role === 'cooldown') {
+        const allowed = columns.filter((k) => k === 'reps' || k === 'seconds');
+        const current = (b.columns || []).find((k) => k === 'reps' || k === 'seconds') || 'seconds';
+        columns = allowed.length ? [allowed[0]] : [current];
+      }
       const parsed = root.HybridLibrary.parseRepTarget(b?.repTarget);
       const patch = {columns};
       const hasReps = columns.some(isRepMetric);
@@ -929,6 +949,14 @@
         patch.setTargets = undefined;
       }
       if (parsed && !columns.includes('reps_range')) patch.repTarget = String(parsed.min);
+      if (b?.role === 'cooldown') {
+        const wasSeconds = (b.columns || []).includes('seconds');
+        const start = wasSeconds ? String(b.prescribed || '').trim() : (parsed ? String(parsed.min) : '');
+        if (wasSeconds && columns[0] === 'reps' && /^\d+$/.test(start)) {
+          patch.repTarget = start;
+          patch.prescribed = '';
+        } else if (!wasSeconds && columns[0] === 'seconds' && /^\d+$/.test(start)) patch.prescribed = start;
+      }
       if(hasReps&&Array.isArray(b?.setTargets)&&!columns.includes('reps_range'))patch.setTargets=b.setTargets.map(t=>t.purpose==='amrap'?t:{...t,reps:{min:t.reps.min,max:t.reps.min}});
       numberPad = null; root.S.libUi.repError = null;
       setLib(root.HybridLibrary.patchBlock(lib(), ui().tid, ui().bid, patch));
