@@ -24,7 +24,8 @@ until finished. X is accepted only in the concentric tempo box.
   controls, including per-set targets, metrics, slider, rest, offline logging and
   the new prep regressions.
 - Shared contracts: **109 passed**.
-- Focused brain/memory/offline/rollout/prep/simulator suite: **64 passed**.
+- Focused brain/memory/offline/rollout/prep/simulator suite: **65 passed** across
+  the recovered run and the new simulator counter regression.
 - Athlete suite: **120 passed**, plus application/recovery/Capgo configuration
   smoke checks. Other verification components passed individually.
 - Real local PostgreSQL memory/learning tests passed. All **8 migrations**
@@ -36,13 +37,29 @@ until finished. X is accepted only in the concentric tempo box.
 
 ## Registered simulation
 
-The final follow-up evaluation is pending. It uses 18 independent synthetic
-athletes, 144 paired scenario runs and 32 sessions per scenario. Six scenarios
-test cold acquisition; two separately test an athlete entering an informed
-second-ramp load once. Those external-input scenarios cannot demonstrate
-automatic discovery of an athlete's capacity. Seeds and margins are unchanged
-from the registered follow-up protocol; no policy tuning is permitted against
-these outcomes.
+The completed follow-up has **18 independent synthetic athletes**, 144 paired
+scenario runs and 32 sessions per scenario: 13,824 ordinary sets per policy.
+The invariant count is **zero**. A first jump audit counted zero-valued, unseeded
+next-set placeholders as actual rack loads. This was an audit error, not an app
+decision. After fixing the audit rule, the two affected athlete-calibrated
+groups were rerun. Their hit, miss, error, model-update and session-feedback
+metrics all match the original run; the six unaffected groups retain the
+completed original run. The registered evaluation seeds and model settings
+remain unchanged. See the adjacent results and source-hash validation.
+
+The personalized curve **did not pass the statistical gate**. Across all groups,
+the default hit rate was 13.60%; online was 13.59%. The paired difference was
+−0.0145 percentage points (95% CI −0.0796 to +0.0289), with equal miss rates.
+The small negative point estimate fails the strict no-regression rule even
+though its confidence interval includes zero. The shipping policy stays default.
+
+Cold-start scenarios had **zero fitted athletes in 108 scenario pairs**. With an
+informed athlete-entered ramp load, the model eventually fitted 20 of 36 cases;
+the first update averaged session 19 in the quieter arm and session 23 in the
+noisy arm. Sixteen of these 36 cases still did not fit by session 32. An
+athlete-entered useful weight helps the model learn, but this synthetic run
+does not show immediate or automatic capacity discovery. Prospective athlete
+results are still needed.
 
 ## Android artifact
 
@@ -77,3 +94,6 @@ warm-up still totals 39 minutes across three rounds, and the live prep builder
 lacks duration/round/remove controls. Locked routine defaults and reference
 prototypes were preserved. Code integration is separate from enabling the
 experimental learner or publishing an athlete update.
+The simulator's false positive jump guard is corrected in the harness; the
+training runtime itself did not need a progression-policy change for this audit
+fix.

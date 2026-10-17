@@ -46,12 +46,16 @@ The experimental personalized curve stays disabled. An Easy-only empty-bar
 history does not identify capacity. An informed athlete-entered second ramp
 load is explicitly external input, not automatic discovery. The registered
 paired evaluation reports those scenarios separately and does not certify
-prospective athlete outcomes or authorize a release.
+prospective athlete outcomes or authorize a release. The personalized curve
+failed the strict statistical gate by a small negative point estimate; its
+confidence interval includes zero. Default mode remains the safe shipping path.
 
 ## Verification
 
 The recovered checkout passed 43 Playwright tests, 109 shared contract tests,
-64 focused brain/memory/offline/rollout/prep/simulator tests, the athlete suite,
-real PostgreSQL memory/learning checks and all eight migrations in PostgreSQL 16
-with pgvector. Final simulation and artifact evidence are recorded in the
-calibration follow-up release note once completed.
+65 focused brain/memory/offline/rollout/prep/simulator tests, the 120-test
+athlete suite, real PostgreSQL memory/learning checks, all eight migrations in
+PostgreSQL 16 with pgvector, and verified the final report's runtime and fixture
+hashes. The APK was signature-checked and its packaged assets were matched to the
+source. Final simulation results and artifact evidence are in the calibration
+follow-up release note.
