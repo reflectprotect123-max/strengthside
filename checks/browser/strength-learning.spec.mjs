@@ -1,13 +1,13 @@
+import {loadAssignedWorkout,setAssignedReps,patchAssignedBlock,addAssignedAmrap,scheduleExistingWorkout} from './assigned-workout.mjs';
 import {test,expect} from 'playwright/test';
 
 async function actualNumber(page,label,value){await page.getByLabel(label,{exact:true}).click();const pad=page.locator('.log-pad');for(const key of String(value))await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();}
-async function builder(page){await page.goto('/');await page.getByRole('heading',{name:'Today',exact:true}).waitFor();await page.getByRole('button',{name:'Add',exact:true}).click();await page.getByRole('button',{name:'Create session',exact:true}).click();}
-async function setReps(page,label,value){await page.getByRole('button',{name:label,exact:true}).click();const pad=page.getByRole('dialog',{name:'Reps keypad'});for(const key of String(value))await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Close keypad',exact:true}).click();}
+async function setReps(page,label,value){await setAssignedReps(page,Number(label.match(/Set (\d+)/)[1])-1,value);}
 async function log(page,kg,reps,effort=2){await actualNumber(page,'Weight (kg)',kg);await actualNumber(page,'Reps completed',reps);const slider=page.getByRole('slider',{name:'Actual set effort'});await slider.press('Home');for(let i=0;i<effort;i++)await slider.press('ArrowRight');await page.getByRole('button',{name:/^(Log set|Save changes)$/,exact:true}).click();}
 async function passWarmups(page){for(let guard=0;guard<20;guard++){const section=await page.evaluate(()=>{const s=window.S?.session;if(!s||s.phase!=='block')return '';return s.pages?.[s.blockIndex]?.section||'';});if(section&&section!=='Warm-Up')return;const total=await page.evaluate(()=>Number(window.S?.timer?.config?.totalMs)||0);if(total>0&&await page.locator('#logTimerFull').count())await page.clock.fastForward(total+500);await page.getByRole('button',{name:'Next →',exact:true}).click();}throw new Error('warm-up did not finish');}
 async function beginSession(page){await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.clock.fastForward(2000);await page.getByRole('button',{name:'Got It',exact:true}).click();await passWarmups(page);}
-async function addSquat(page){await builder(page);await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'+ Add Exercise',exact:true}).click();await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();}
-async function scheduleAndStart(page){await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();await beginSession(page);}
+async function addSquat(page){await loadAssignedWorkout(page);}
+async function scheduleAndStart(page){await beginSession(page);}
 async function completeWarmups(page){for(const kg of [10,20]){await log(page,kg,5,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();}}
 
 
@@ -82,7 +82,7 @@ for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'bac
 });
 
 test('prep timer survives reload and Next waits for zero',async({page})=>{
- await addSquat(page);await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
+ await addSquat(page);
  await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.clock.fastForward(2000);await page.getByRole('button',{name:'Got It',exact:true}).click();
  await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeDisabled();
  const start=await page.evaluate(()=>S.timer.startedAt);await page.clock.fastForward(10000);await page.reload();
@@ -91,8 +91,8 @@ test('prep timer survives reload and Next waits for zero',async({page})=>{
  await page.clock.fastForward(181000);await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeEnabled();
  await page.getByRole('button',{name:'Next →',exact:true}).click();await expect(page.locator('#logTimerFull h2')).toHaveText('Row');
 });
-test('deselecting weight in the builder keeps the logger reps-only',async({page})=>{
- await addSquat(page);await page.getByLabel('Second metric for Back Squat',{exact:true}).selectOption('none');
+test('an assigned reps-only workout keeps the logger reps-only',async({page})=>{
+ await addSquat(page);await patchAssignedBlock(page,{columns:['reps']});
  await scheduleAndStart(page);
  await expect(page.getByLabel('Weight (kg)',{exact:true})).toHaveCount(0);
  await expect(page.getByText('Ramp 1 of 2',{exact:true})).toHaveCount(0);

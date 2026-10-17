@@ -1,3 +1,5 @@
+> Current app change: the workout builder has been exported into a complete ZIP and removed from the athlete runtime. The Library now reads saved workouts; the calendar and logger remain. See [the removal and export record](docs/releases/workout-builder-removal.md). The builder implementation described below is historical.
+
 # Session builder — shipped 17 October 2026
 
 The athlete Library builder is the warm-up circuit, the lift cards, then the cool-down circuit. Start Session plays that order in the logger. This is on `main` (pull request 262, merge `0c65cc7c`) and on the live app as Capgo bundle **1.3.11** for `com.hybrid.strength`, channel `strength-live`. The current bundle is **1.3.12**, including the calibration follow-up.

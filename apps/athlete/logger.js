@@ -622,9 +622,6 @@
       <div class="log-hub">
         <img src="assets/hpp-logo.jpg" alt="Hybrid Power Project">
         <button type="button" class="log-primary" onclick="Logger.doneTraining()">Done Training</button>
-        <p class="log-or">OR</p>
-        <p>Want to add more?</p>
-        <button type="button" class="log-link" onclick="Logger.addExercise()">Add Exercise</button>
       </div>`;
   }
 
@@ -944,10 +941,6 @@
       persist(s);
     },
     doneTraining() { pad = null; persist(HybridSession.openFeel(session())); },
-    addExercise() {
-      close();
-      if (typeof root.openLibraryForDay === 'function') root.openLibraryForDay();
-    },
     feelIntensity(n) { persist(HybridSession.setFeel(session(), { intensity: n })); },
     feelMins(d) {
       const cur = (session().feel && session().feel.durationMin) || 1;
