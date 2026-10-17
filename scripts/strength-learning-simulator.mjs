@@ -133,6 +133,7 @@ if(!isMainThread){
  const results=[];
  for(const {index,sessions,...input} of workerData.batch){
   results.push({index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics});
+  if(results.length%6===0)process.stderr.write(`Simulation worker: ${results.length}/${workerData.batch.length} pairs complete\n`);
   // Let completed native-restore promises settle between independent VM runs.
   await new Promise(resolve=>setImmediate(resolve));
  }

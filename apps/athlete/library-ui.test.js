@@ -488,3 +488,17 @@ test('wizard Next opens the calendar and Back returns to cool-down', () => {
   globalThis.LibraryView.calendarBack();
   assert.equal(globalThis.S.libUi.screen, 'list');
 });
+
+test('tempo accepts X only in the Lift phase so saved prescriptions match the brain context',()=>{
+ LibraryView.create();const tid=S.libUi.tid;
+ S.library=HybridLibrary.addExercise(S.library,tid,{title:'Back Squat',columns:['reps','weight_kg']});
+ const bid=HybridLibrary.template(S.library,tid).blocks.at(-1).id;
+ LibraryView.pickTempo(bid,'20X1');
+ for(const text of ['X0X1','2XX1','20XX']){
+  S.libUi.tempoDraft=[...text];LibraryView.saveTempo(bid);
+  assert.equal(HybridLibrary.template(S.library,tid).blocks.find(b=>b.id===bid).tempo,'20X1');
+  assert.ok(S.libUi.tempoError);
+ }
+ S.libUi.tempoDraft=[...'33X1'];LibraryView.saveTempo(bid);
+ assert.equal(HybridLibrary.template(S.library,tid).blocks.find(b=>b.id===bid).tempo,'33X1');
+});

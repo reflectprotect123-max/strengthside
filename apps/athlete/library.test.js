@@ -266,7 +266,7 @@ test('a warm-up circuit keeps its time, distance, and reps beside the working li
   assert.equal(lifts[addedWarmupStart + 2].prescription, '3 x 10');
   assert.equal(lifts[addedWarmupStart + 3].prescription, '3 x 20 m');
   assert.equal(lifts[addedWarmupStart + 4].prescription, '10 / 8 / 6 / AMRAP · 20X1');
-  assert.ok(lifts[addedWarmupStart + 4].columns.includes('weight_kg'));
+  assert.deepEqual(lifts[addedWarmupStart + 4].columns, ['reps']);
   assert.equal(lifts[addedWarmupStart + 5].prescription, '3 x 6-8 · 33X1');
   const names = HybridSession.pagesFromPlan(plan).map((p) => p.title);
   const customWarmupRound = ['Bike', 'Isometric Hold', 'Push Downs', 'Farmers Carry'];
@@ -283,7 +283,7 @@ test('a warm-up circuit keeps its time, distance, and reps beside the working li
   assert.equal(session.logs[hold.id].sets[0].cells.seconds, '30');
   assert.equal(globalThis.TrainingCore.validateRow(session.logs[bike.id].sets[0], bike).ok, true);
   const squatPage = session.pages.find((p) => p.title === 'Back Squat');
-  assert.equal(squatPage.logMode, 'kg');
+  assert.equal(squatPage.logMode, 'reps');
   assert.equal(squatPage.askEffort, true);
 });
 
@@ -324,4 +324,26 @@ test('start session order is warm-up rounds, lifts, cool-down rounds', () => {
   assert.ok(names.indexOf('Warm-Up:Bike') < names.indexOf('Strength/Power:Back Squat'));
   assert.ok(names.indexOf('Strength/Power:Back Squat') < names.indexOf('Cool-Down:Easy Bike'));
   assert.equal(names.at(-1), 'undefined:Done Training');
+});
+
+test('compile respects explicitly selected metrics on a main lift',()=>{
+ let st=Lib.createTemplate(Lib.emptyState(),{title:'Selected metrics'}),tid=st.templates[0].id;
+ st=Lib.addExercise(st,tid,{title:'Back Squat',columns:['reps'],setCount:3});
+ const block=st.templates[0].blocks.at(-1);
+ assert.deepEqual(liftByTitle(Lib.compile(st.templates[0]),'Back Squat').columns,['reps']);
+ st=Lib.patchBlock(st,tid,block.id,{columns:['reps','weight_lb']});
+ assert.deepEqual(liftByTitle(Lib.compile(st.templates[0]),'Back Squat').columns,['reps','weight_lb']);
+});
+
+test('adding a lift after revisiting cool-down still plays warm-up then all lifts then cool-down',()=>{
+ let st=Lib.createTemplate(Lib.emptyState(),{title:'Edited session'}),tid=st.templates[0].id;
+ st=Lib.addExercise(st,tid,{title:'Back Squat',columns:['reps','weight_kg']});
+ st=Lib.addExercise(st,tid,{title:'Breathing',columns:['seconds'],value:'60',role:'cooldown'});
+ st=Lib.addExercise(st,tid,{title:'Bench Press',columns:['reps','weight_kg']});
+ st=Lib.addExercise(st,tid,{title:'Arm Circle',columns:['reps'],value:'10',role:'warmup'});
+ const original=JSON.stringify(st),plan=Lib.compile(st.templates[0]);
+ const lifts=plan.blocks.filter(b=>b.kind==='lift');
+ assert.deepEqual(lifts.slice(-4).map(b=>b.title),['Arm Circle','Back Squat','Bench Press','Breathing']);
+ assert.equal(lifts.at(-1).section,'Cool-Down');assert.equal(JSON.stringify(st),original);
+ assert.deepEqual(Lib.lettered(st.templates[0]).slice(-4).map(b=>b.title),lifts.slice(-4).map(b=>b.title));
 });

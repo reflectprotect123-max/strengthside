@@ -125,3 +125,11 @@ test('reducing load on comparable work cannot earn a heavier session even when a
  const p=page([5,8,10]),rows=p.setTargets.map((t,i)=>row(t.id,[5,8,10][i],40-i*3,'average'));
  assert.equal(B.review(p,rows).earned,true,'more reps may legitimately use lighter weights');
 });
+
+test('weighted prep and cool-down pages never enter the working-load model',()=>{
+ for(const section of ['Warm-Up','Cool-Down']){
+  const p={...page([5]),section};
+  assert.equal(B.supported(p),false);
+  assert.equal(B.estimate(row('a:set:0',5,40,'average'),p),null);
+ }
+});

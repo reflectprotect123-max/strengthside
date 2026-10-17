@@ -10,6 +10,7 @@
   function normalized(kg,page) {return root.StrengthLoad?.fromPage({page,value:kg,provenance:'explicit'})??null;}
   function display(physical,page){const n=normalized(0,page);return n?root.StrengthLoad.displayKg({...n,externalKg:physical},n.convention,n.barKg):null;}
   function supported(page) {
+    if(['Warm-Up','Cool-Down'].includes(page?.section)||['warmup','cooldown'].includes(page?.role))return false;
     const columns=page?.columns||[];
     if(!Array.isArray(columns))return false;
     const n=normalized(0,page);

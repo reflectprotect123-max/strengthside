@@ -107,6 +107,7 @@
   }
   function moveExercise(direction) {
     const s = session();
+    if(direction>0&&prepClockPending(s))return;
     const next = direction > 0 ? HybridSession.nextPage(s) : HybridSession.prevPage(s);
     if (next.blockIndex !== s.blockIndex) {
       // Clear both timer history and the choice for the newly entered exercise.
@@ -245,7 +246,7 @@
       <div class="log-bar">
         <button type="button" class="log-bar-btn" onclick="Logger.prev()" ${atStart || hideSides ? 'disabled' : ''}>← Back</button>
         ${timerDockHtml()}
-        <button type="button" class="log-bar-btn" onclick="Logger.next()" ${atEnd || hideSides ? 'disabled style="opacity:.35"' : ''}>Next →</button>
+        <button type="button" class="log-bar-btn" onclick="Logger.next()" ${atEnd || hideSides || prepClockPending(s) ? 'disabled style="opacity:.35"' : ''}>Next →</button>
       </div>`;
   }
 
@@ -714,17 +715,26 @@
     return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
   }
 
+  function prepClockPending(s) {
+    if(!s||s.phase!=='block')return false;
+    const page=HybridSession.currentPage(s),timer=timerState();
+    if(!page||!['Warm-Up','Cool-Down'].includes(page.section)||s.warmupClock!==page.id||timer.mode!=='countdown')return false;
+    const snap=HybridTimer.snapshot(timer,Date.now());
+    return ['running','countIn'].includes(snap.view)&&!snap.done;
+  }
+
   function armWarmupClock() {
     const s = session();
-    if (!s || s.phase !== 'block') return;
+    if (!s || !root.S.loggerOpen || s.phase !== 'block') return;
     const page = HybridSession.currentPage(s);
     const cols = page && page.columns || [];
     if (!page || (page.section !== 'Warm-Up' && page.section !== 'Cool-Down') || !cols.includes('seconds')) return;
     const total = Number(page.prescribed) * 1000;
-    if (!total) return;
+    if (!Number.isFinite(total) || total<=0) return;
     const timer = timerState();
     if (timer.view === 'running' || timer.view === 'countIn') return;
     if (s.warmupClock === page.id) return;
+    const previousClock=s.warmupClock;
     s.warmupClock = page.id;
     let next = HybridTimer.create();
     next.mode = 'countdown';
@@ -732,6 +742,11 @@
     next.view = 'setup';
     next = HybridTimer.start(next, Date.now());
     root.S.timer = next;
+    try{if(typeof root.save==='function')root.save();}
+    catch{
+      root.S.timer=timer;s.warmupClock=previousClock;
+      toast='Could not save. Free some storage and try again.';
+    }
   }
 
   function paint() {
