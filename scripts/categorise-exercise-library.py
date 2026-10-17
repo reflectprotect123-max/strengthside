@@ -16,7 +16,7 @@ import unicodedata
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / 'docs/data/trainheroic-library'
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # First match wins; specific mechanics must precede broad words such as press/row.
 # Secondary patterns are declared only for recognised combinations, not every word.
@@ -161,10 +161,16 @@ def json_bytes(value):
     return (json.dumps(value, indent=2, ensure_ascii=False) + '\n').encode()
 
 
+def is_banded(entry):
+    """Include assisted/resisted/optional bands and band alternatives, not just 'banded'."""
+    titles = [entry['canonical_title'], *entry['aliases']]
+    return any(re.search(r'\b(?:bands?|banded|theraband)\b', normalise(title)) for title in titles)
+
+
 def generate(data=DATA):
-    source = load_csv(data / 'canonical_exercise_library.csv')
-    custom = load_csv(data / 'custom_library_canonical.csv')
-    aliases = load_csv(data / 'exercise_alias_map.csv')
+    source = load_csv(data / 'archive/canonical_exercise_library.csv')
+    custom = load_csv(data / 'archive/custom_library_canonical.csv')
+    aliases = load_csv(data / 'archive/exercise_alias_map.csv')
     taxonomy = json.loads((data / 'movement-taxonomy.json').read_text())
     decisions = json.loads((data / 'movement-overrides.json').read_text())['exercises']
     known = {r['canonical_exercise_id']: r for r in source}
@@ -196,25 +202,39 @@ def generate(data=DATA):
                         'in_custom_library': row['canonical_exercise_id'] in custom_ids,
                         'aliases': json.loads(row['aliases']), **meta})
     fields = list(entries[0])
-    counts = Counter(x['movement_category'] for x in entries)
-    custom_counts = Counter(x['movement_category'] for x in entries if x['in_custom_library'])
     unresolved = [x for x in entries if x['review_status'] in {'needs_review', 'non_exercise'}]
+    usable = [x for x in entries if x['review_status'] == 'classified_from_name']
+    main = [x for x in usable if not is_banded(x)]
+    banded = [x for x in usable if is_banded(x)]
+    # Deletion takes precedence: unclear band names never enter the band catalogue.
+    ids = [{x['canonical_exercise_id'] for x in group} for group in (main, banded, unresolved)]
+    assert not (ids[0] & ids[1] or ids[0] & ids[2] or ids[1] & ids[2]), 'Overlapping catalogues'
+    assert set.union(*ids) == known.keys(), 'Catalogue split lost an identity'
     fingerprints = {name: hashlib.sha256((data / name).read_bytes()).hexdigest() for name in (
-        'canonical_exercise_library.csv', 'custom_library_canonical.csv', 'exercise_alias_map.csv',
+        'archive/canonical_exercise_library.csv', 'archive/custom_library_canonical.csv', 'archive/exercise_alias_map.csv',
         'movement-taxonomy.json', 'movement-overrides.json')}
-    summary = {'schema_version': SCHEMA_VERSION, 'exercise_count': len(entries), 'custom_count': len(custom),
-               'alias_count': len(aliases), 'category_counts': dict(sorted(counts.items())),
-               'custom_category_counts': dict(sorted(custom_counts.items())),
-               'review_status_counts': dict(sorted(Counter(x['review_status'] for x in entries).items())),
-               'custom_review_status_counts': dict(sorted(Counter(x['review_status'] for x in entries if x['in_custom_library']).items())),
-               'reviewed_override_count': len(decisions), 'source_sha256': fingerprints}
+    summary = {'schema_version': SCHEMA_VERSION, 'archived_source_count': len(entries),
+               'removed_count': len(unresolved),
+               'removed_by_status': dict(sorted(Counter(x['review_status'] for x in unresolved).items())),
+               'catalogues': {}, 'reviewed_override_count': len(decisions), 'source_sha256': fingerprints}
+    active_taxonomy = {**taxonomy, 'categories': [x for x in taxonomy['categories'] if x['id'] not in {'needs_review', 'reference'}]}
     outputs = {
-        'exercise_movement_categories.csv': csv_bytes(entries, fields),
-        'custom_library_movement_categories.csv': csv_bytes([x for x in entries if x['in_custom_library']], fields),
-        'movement_review_queue.csv': csv_bytes(unresolved, fields),
-        'exercise_movement_library.json': json_bytes({'schema_version': SCHEMA_VERSION, 'taxonomy': taxonomy, 'exercises': entries}),
-        'movement_category_summary.json': json_bytes(summary),
+        'archive/removed_exercises.csv': csv_bytes(unresolved, fields),
     }
+    for name, prefix, group, group_ids in [('main', '', main, ids[0]), ('banded', 'banded_', banded, ids[1])]:
+        group_custom = [x for x in group if x['in_custom_library']]
+        group_source = [x for x in source if x['canonical_exercise_id'] in group_ids]
+        group_aliases = [x for x in aliases if x['canonical_exercise_id'] in group_ids]
+        outputs[prefix + 'exercise_movement_categories.csv'] = csv_bytes(group, fields)
+        outputs[prefix + 'custom_library_movement_categories.csv'] = csv_bytes(group_custom, fields)
+        outputs[prefix + 'canonical_exercise_library.csv'] = csv_bytes(group_source, list(source[0]))
+        outputs[prefix + 'custom_library_canonical.csv'] = csv_bytes([x for x in group_source if x['canonical_exercise_id'] in custom_ids], list(source[0]))
+        outputs[prefix + 'exercise_alias_map.csv'] = csv_bytes(group_aliases, list(aliases[0]))
+        outputs[prefix + 'exercise_movement_library.json'] = json_bytes({'schema_version': SCHEMA_VERSION, 'catalogue': name, 'taxonomy': active_taxonomy, 'exercises': group})
+        summary['catalogues'][name] = {'exercise_count': len(group), 'custom_count': len(group_custom),
+                                     'alias_count': len(group_aliases),
+                                     'category_counts': dict(sorted(Counter(x['movement_category'] for x in group).items()))}
+    outputs['movement_category_summary.json'] = json_bytes(summary)
     return outputs, summary
 
 
@@ -230,6 +250,7 @@ def main():
             if not path.exists() or path.read_bytes() != content:
                 stale.append(name)
         else:
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(content)
     if stale:
         raise SystemExit('Stale movement exports: ' + ', '.join(stale))

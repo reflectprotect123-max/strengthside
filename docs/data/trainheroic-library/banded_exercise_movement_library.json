@@ -1,0 +1,3031 @@
+{
+  "schema_version": 2,
+  "catalogue": "banded",
+  "taxonomy": {
+    "schema_version": 1,
+    "purpose": "Navigation and search metadata only; never a prescription or permission to share strength estimates.",
+    "categories": [
+      {
+        "id": "squat",
+        "label": "Squat",
+        "description": "Knee-dominant bilateral or single-leg squat/leg press. Split squats live under Lunge / step.",
+        "subcategories": [
+          "squat"
+        ]
+      },
+      {
+        "id": "hinge",
+        "label": "Hinge",
+        "description": "Deadlift, RDL, good morning, swing and back-extension patterns.",
+        "subcategories": [
+          "hip_hinge",
+          "swing"
+        ]
+      },
+      {
+        "id": "hip_extension",
+        "label": "Bridge / hip thrust",
+        "description": "Supported bridge and hip-thrust hip extension, distinct from a standing hinge.",
+        "subcategories": [
+          "bridge_thrust"
+        ]
+      },
+      {
+        "id": "lunge_step",
+        "label": "Lunge / step",
+        "description": "Split squat, lunge, step-up and controlled step-down.",
+        "subcategories": [
+          "lunge_step"
+        ]
+      },
+      {
+        "id": "horizontal_push",
+        "label": "Horizontal push",
+        "description": "Bench/floor press and push-up. Inclines stay here; handstand/pike push-ups do not.",
+        "subcategories": [
+          "press_push_up"
+        ]
+      },
+      {
+        "id": "vertical_push",
+        "label": "Vertical / angled push and dip",
+        "description": "Overhead or landmine press and dips. Dips are a practical push grouping, not an overhead movement.",
+        "subcategories": [
+          "overhead_press_dip",
+          "angled_press",
+          "dip"
+        ]
+      },
+      {
+        "id": "horizontal_pull",
+        "label": "Horizontal pull",
+        "description": "Rows including bodyweight, cable and sled rows.",
+        "subcategories": [
+          "row"
+        ]
+      },
+      {
+        "id": "vertical_pull",
+        "label": "Vertical pull",
+        "description": "Pull-up/chin-up, lat pulldown and rope climb. Upright rows and pullovers are shoulder accessories.",
+        "subcategories": [
+          "pull_up_pulldown"
+        ]
+      },
+      {
+        "id": "core",
+        "label": "Core / trunk control",
+        "description": "Trunk flexion, rotation/resistance, bracing, crawling and get-up patterns.",
+        "subcategories": [
+          "trunk_control",
+          "crawl",
+          "get_up"
+        ]
+      },
+      {
+        "id": "carry",
+        "label": "Carry / loaded march",
+        "description": "Moving with load, including rucking. A stationary grip hold is not a carry.",
+        "subcategories": [
+          "loaded_carry",
+          "ruck"
+        ]
+      },
+      {
+        "id": "isolation",
+        "label": "Isolation / accessory",
+        "description": "Joint-focused arm, shoulder/scapular, hip, knee, ankle, neck and grip accessories.",
+        "subcategories": [
+          "elbow_flexion",
+          "elbow_extension",
+          "knee_flexion",
+          "knee_extension",
+          "hip_abduction_adduction",
+          "hip_flexion",
+          "ankle_plantarflexion",
+          "ankle_dorsiflexion",
+          "shoulder_accessory",
+          "shoulder_extension",
+          "grip_forearm",
+          "neck"
+        ]
+      },
+      {
+        "id": "power",
+        "label": "Jump / throw / Olympic lift",
+        "description": "Jumps/bounds/landings, throws/slams and Olympic lifts/pulls. Explosive push-ups retain their push category and get a plyometric tag.",
+        "subcategories": [
+          "jump_bound",
+          "throw_slam",
+          "olympic_lift",
+          "landing"
+        ]
+      },
+      {
+        "id": "locomotion_conditioning",
+        "label": "Locomotion / conditioning",
+        "description": "Run, cycle, erg, rope skipping, sled locomotion, agility and general conditioning. Does not define intensity or a workout.",
+        "subcategories": [
+          "conditioning",
+          "skipping",
+          "burpee",
+          "agility",
+          "running_drill"
+        ]
+      },
+      {
+        "id": "mobility",
+        "label": "Mobility",
+        "description": "Named stretches, joint-control and mobility drills. Loaded exercises with similar names are reviewed separately.",
+        "subcategories": [
+          "mobility"
+        ]
+      },
+      {
+        "id": "preparation_recovery",
+        "label": "Preparation / recovery",
+        "description": "General warm-up, breathing, cooldown and rest; not a specific strength movement.",
+        "subcategories": [
+          "general_preparation"
+        ]
+      },
+      {
+        "id": "mixed",
+        "label": "Mixed movements",
+        "description": "Identifiable combinations spanning movement patterns. Secondary categories aid search without splitting the original identity.",
+        "subcategories": [
+          "combination"
+        ]
+      }
+    ]
+  },
+  "exercises": [
+    {
+      "canonical_exercise_id": "exercise_00cffb5cedd54cd8",
+      "canonical_title": "1 1/4 Banded Glute Hip Thrust",
+      "in_custom_library": false,
+      "aliases": [
+        "1 1/4 Banded Glute Hip Thrusts"
+      ],
+      "movement_category": "hip_extension",
+      "movement_subcategory": "bridge_thrust",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:hip_thrust"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_extension",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_e3bb7e0c82dc0999",
+      "canonical_title": "1.5 Stance Romanian Deadlift With Band",
+      "in_custom_library": true,
+      "aliases": [
+        "1.5 Stance RDL with Band",
+        "1.5 stance RDL with band"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:romanian_deadlift",
+        "variation:b_stance"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_d4b472e371362cbe",
+      "canonical_title": "20 Per Arm Seated Single Arm Banded Low Row",
+      "in_custom_library": false,
+      "aliases": [
+        "20 Per Arm Seated Single Arm Banded Low Rows"
+      ],
+      "movement_category": "horizontal_pull",
+      "movement_subcategory": "row",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:seated",
+        "variation:single_arm"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_734f3abd5496b807",
+      "canonical_title": "3 Way Band Pull-Apart",
+      "in_custom_library": false,
+      "aliases": [
+        "3 Way Band Pull-Apart"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_3f100d40f5a65fd4",
+      "canonical_title": "3D Banded Pull-Apart",
+      "in_custom_library": true,
+      "aliases": [
+        "3D Banded Pull-aparts",
+        "3D banded pull aparts"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_93338c6349c40a3a",
+      "canonical_title": "Acceleration Banded Range Finder",
+      "in_custom_library": false,
+      "aliases": [
+        "Acceleration - Banded Range Finder"
+      ],
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_ebccb643eb1c2ca2",
+      "canonical_title": "Band Assisted Cmj Split",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Assisted - CMJ Split"
+      ],
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Countermovement, skipping or pogo drill; hip-switch wording does not imply mobility.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_320a6b89b593e776",
+      "canonical_title": "Band Assisted Jump (Plyos)",
+      "in_custom_library": false,
+      "aliases": [
+        "Band-Assisted Jumps (PLYOS)"
+      ],
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted",
+        "variation:plyometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "jump",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_d1920fe9a3aa7be3",
+      "canonical_title": "Band Assisted Nordic Curl",
+      "in_custom_library": true,
+      "aliases": [
+        "band assisted nordic curl"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_545b5586ede07fd6",
+      "canonical_title": "Band Assisted Plyo Push-Up",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Assisted Plyo Push-ups"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted",
+        "variation:plyometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "plyo_push_up",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_9ad4e69fe5f30436",
+      "canonical_title": "Band Assisted Pogo Jump",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Assisted - Pogo Jumps"
+      ],
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted",
+        "variation:plyometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "jump",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_706c588bbd681f9e",
+      "canonical_title": "Band Assisted Push-Up",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Assisted Push Up"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_abd62aa9cdfb41c3",
+      "canonical_title": "Band Assisted Split Jump",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Assisted Split Jump"
+      ],
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted",
+        "variation:plyometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "jump",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_3fd6569cf787fdfb",
+      "canonical_title": "Band Assisted Split Squat Jump",
+      "in_custom_library": true,
+      "aliases": [
+        "band assisted split squat jump"
+      ],
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted",
+        "variation:plyometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "jump",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_dbfb5ba5ee2737ed",
+      "canonical_title": "Band Assisted Strict Dip",
+      "in_custom_library": true,
+      "aliases": [
+        "band assisted strict dips"
+      ],
+      "movement_category": "vertical_push",
+      "movement_subcategory": "dip",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:assisted"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "dip",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_f7b5cf03e3be44a3",
+      "canonical_title": "Band Glute Pull Through",
+      "in_custom_library": true,
+      "aliases": [
+        "Band Glute Pull Thru"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_98acbe8eac6c2b9e",
+      "canonical_title": "Band Overhead Triceps Extension",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Overhead Triceps Extension"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_96c3483491ea96ae",
+      "canonical_title": "Band Plyo Push-Up",
+      "in_custom_library": true,
+      "aliases": [
+        "band - Plyo Push-Up"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:plyometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "plyo_push_up",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_397d808b17a17857",
+      "canonical_title": "Band Pull-Apart",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Pull-Apart"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_3fe6361fb7feaa8b",
+      "canonical_title": "Band Pull-Apart Sp",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Pull Apart - SP"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_753c3156c5c1fc0d",
+      "canonical_title": "Band Resisted Body Row",
+      "in_custom_library": false,
+      "aliases": [
+        "band resisted body row"
+      ],
+      "movement_category": "horizontal_pull",
+      "movement_subcategory": "row",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_cb0f4af85257366b",
+      "canonical_title": "Band Resisted Kettlebell Swing",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Resisted KB Swings"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "swing",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:kettlebell"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_swing",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_22e6f6581d2751f5",
+      "canonical_title": "Band Resisted Side Plank Row",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Resisted Side Plank Row"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_af1fff94990f02e1",
+      "canonical_title": "Band Rotation",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Rotations"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:rotational"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_a5f26d81a4512c13",
+      "canonical_title": "Band Row + Press",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Row + Press"
+      ],
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Row plus press; press angle is unspecified, so no push-direction secondary category is inferred.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_297237abee5328a9",
+      "canonical_title": "Band Row + Reverse Lunge",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Row + Reverse Lunge"
+      ],
+      "movement_category": "mixed",
+      "movement_subcategory": "combination",
+      "secondary_categories": [
+        "horizontal_pull",
+        "lunge_step"
+      ],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Explicit combination spans distinct movement patterns; preserve the authored exercise as one identity.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_8d6a41af43bbc98d",
+      "canonical_title": "Band Triceps Pushdown",
+      "in_custom_library": false,
+      "aliases": [
+        "Band Tricep Push Down"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_eb1eef060887f563",
+      "canonical_title": "Banded Ankle Distraction Mobilization",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Ankle Distraction Mobilization"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_a0ea541cf3ffd712",
+      "canonical_title": "Banded Biceps Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Bicep Curl"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "biceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_7f4c15f20138ea39",
+      "canonical_title": "Banded Broad Jump",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Broad Jump"
+      ],
+      "movement_category": "power",
+      "movement_subcategory": "jump_bound",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:plyometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "jump",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_3045f40362f604cc",
+      "canonical_title": "Banded Bully Stretch",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Bully Stretch"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_34c8257fefd67fbd",
+      "canonical_title": "Banded Chest To Bar",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Chest To Bar"
+      ],
+      "movement_category": "vertical_pull",
+      "movement_subcategory": "pull_up_pulldown",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "vertical_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_8a17e561155fc790",
+      "canonical_title": "Banded Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "biceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_f98a3815b9c9a746",
+      "canonical_title": "Banded Dumbbell Grip Row",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Dumbbell Grip Row"
+      ],
+      "movement_category": "horizontal_pull",
+      "movement_subcategory": "row",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:dumbbell"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_f460c21024e963c2",
+      "canonical_title": "Banded Face Pull",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Face Pulls",
+        "Banded Face pull"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_4b07f494b9aa3df1",
+      "canonical_title": "Banded Face Pull Aparts",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Facepull-aparts"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_6620fed810a317cc",
+      "canonical_title": "Banded Face Pull Iso Hold",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Face Pull Iso-hold"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:isometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_d5152dd8bb464e40",
+      "canonical_title": "Banded Front Rack Stretch E/Side",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Front Rack Stretch E/Side"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_5fe701adb287dd95",
+      "canonical_title": "Banded Glute Bridge",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Glute Bridge"
+      ],
+      "movement_category": "hip_extension",
+      "movement_subcategory": "bridge_thrust",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_extension",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_af0ff1a4ac76925d",
+      "canonical_title": "Banded Good Morning",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Good Mornings"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_7c4ffcfc4d819727",
+      "canonical_title": "Banded Half Kneeling Pallof Press",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Half Kneeling Pallof Press"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:kneeling"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_a476cfbaeeb9e330",
+      "canonical_title": "Banded Hammer Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Hammer Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "biceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_e706cebdc7441a5e",
+      "canonical_title": "Banded Hamstring Curl",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Hamstring Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_23b5a0c25e4c04b3",
+      "canonical_title": "Banded Hip Flexor Pull",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Hip Flexor Pull",
+        "Banded Hip Flexor Pulls",
+        "Banded Hip flexor pulls",
+        "Banded Hip flexroe pulls",
+        "Banded Hip flexror pulls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "hip_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named resisted hip-flexion accessory; not a medicine-ball throw.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_2cb7b83f5324103d",
+      "canonical_title": "Banded Incline Pigeon Rotation",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Incline Pigeon Rotation"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:incline",
+        "variation:rotational"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_304162cac8e37540",
+      "canonical_title": "Banded Kettlebell Swing",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Kettlebell Swing"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "swing",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:kettlebell"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_swing",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_2489be7b90efff8e",
+      "canonical_title": "Banded Lat Distraction E/Side",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Lat Distraction E/Side"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Recognised mobility/joint-control or unloaded preparation pattern; no strength estimate inferred.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_a5654a909283d3ad",
+      "canonical_title": "Banded Lat Pulldown",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Lat Pulldown",
+        "Banded Lat Pulldowns"
+      ],
+      "movement_category": "vertical_pull",
+      "movement_subcategory": "pull_up_pulldown",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "vertical_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_b8b5ba47233cac7a",
+      "canonical_title": "Banded Lat Squeeze",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Lat Squeeze"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "pullover",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_2601bf665e5554c0",
+      "canonical_title": "Banded Lat Stretch",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Lat Stretch"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_c28d06f48e71326c",
+      "canonical_title": "Banded Lateral Raise",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Lateral Raises"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_b885407ed30a5703",
+      "canonical_title": "Banded Leg Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Leg Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_adf0e70ff99920e2",
+      "canonical_title": "Banded Leg Extension",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Leg Extension"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "leg_extension",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_de577f571e0c2cf7",
+      "canonical_title": "Banded Low To High Chop",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Low To High Chop"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_37710e6a7c5464d2",
+      "canonical_title": "Banded Oh Triceps Extension",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded OH Tricep Extension"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_4577ab3ca791db40",
+      "canonical_title": "Banded Overhead Squat",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Overhead Squats"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_61a7ccdb030e4c50",
+      "canonical_title": "Banded Overhead Triceps",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Overhead Triceps"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_cddd6cfc7951ef1c",
+      "canonical_title": "Banded Overhead Triceps Extension",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Overhead Tricep Extension"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_d999f5034de55ca6",
+      "canonical_title": "Banded Pallof Press",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Pallof Press"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_a15a3bf7f0c1fea0",
+      "canonical_title": "Banded Pendlay Row",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Pendlay Row"
+      ],
+      "movement_category": "horizontal_pull",
+      "movement_subcategory": "row",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_33a6e9cb0998cbe1",
+      "canonical_title": "Banded Plank Abs",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Plank Abs"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_1a6c5650c03dff36",
+      "canonical_title": "Banded Plank Row",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Plank Row"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_143594887fcebe2c",
+      "canonical_title": "Banded Pull Through",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Pull-Through"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_9c5c2d62b1daf6ad",
+      "canonical_title": "Banded Pull-Apart",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Pull Aparts",
+        "Banded Pull-apart"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_bee1b8aa0c2feb0a",
+      "canonical_title": "Banded Pulldown",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Pulldowns"
+      ],
+      "movement_category": "vertical_pull",
+      "movement_subcategory": "pull_up_pulldown",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "vertical_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_833e9ea2d7f4e756",
+      "canonical_title": "Banded Pushdown",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Push Downs",
+        "Banded Pushdowns"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_40bbb764c5c1a44d",
+      "canonical_title": "Banded Quad Stretch",
+      "in_custom_library": false,
+      "aliases": [
+        "banded quad Stretch"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_266bdaddb40f5e63",
+      "canonical_title": "Banded Reverse Fly",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Reverse Fly"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_31b213efae24ed68",
+      "canonical_title": "Banded Russian Kettlebell Swing (70/53 + Max Band)",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Russian KB Swings (70/53 + Max Band)"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "swing",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:kettlebell"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_swing",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_0bd46ba27e69f2d9",
+      "canonical_title": "Banded Speed Bench Press",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Speed Bench Press"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:bench_press"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_488a6c1e0df64231",
+      "canonical_title": "Banded Speed Row",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Speed Row"
+      ],
+      "movement_category": "horizontal_pull",
+      "movement_subcategory": "row",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_c4c23f363a1d9269",
+      "canonical_title": "Banded Sprinter Hold",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Sprinter Hold"
+      ],
+      "movement_category": "locomotion_conditioning",
+      "movement_subcategory": "running_drill",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:isometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Sprint preparation or running-mechanics drill; not a loaded carry.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_8ca51897953f447d",
+      "canonical_title": "Banded T Spine From Split Squat",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded T-Spine from Split Squat"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_7daf5591337cce46",
+      "canonical_title": "Banded Tall Side Plank Row",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Tall Side Plank Row"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [
+        "horizontal_pull"
+      ],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Row performed in an unstable/plank support position; retain trunk emphasis and a row secondary.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_53fbe8588448c341",
+      "canonical_title": "Banded Trap Bar Deadlift",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Trap Bar Deadlifts"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:trap_bar"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_59a8e046c486900c",
+      "canonical_title": "Banded Triceps",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Triceps"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_2475025329aee5dc",
+      "canonical_title": "Banded Triceps Extension",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Tricep Extension"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_f41bbe93638856df",
+      "canonical_title": "Banded Triceps Pulldown",
+      "in_custom_library": true,
+      "aliases": [
+        "Banded Tricep Pulldown"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_3172ba3c41c115eb",
+      "canonical_title": "Banded Triceps Pushdown",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Tricep Pushdown"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_7f890463a4a54127",
+      "canonical_title": "Banded Triceps Stretch",
+      "in_custom_library": false,
+      "aliases": [
+        "Banded Tricep Stretch"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_5861443e557f1f8a",
+      "canonical_title": "Banded YTW",
+      "in_custom_library": true,
+      "aliases": [
+        "banded Y T W",
+        "banded YTW"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_e262a5da71f87bec",
+      "canonical_title": "Close Grip Bench Press Dead Press (2\" Above Chest) Against Max Band Tension Only",
+      "in_custom_library": false,
+      "aliases": [
+        "Close Grip Bench Press Dead Press (2\" Above Chest) Against Max Band Tension Only"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:bench_press",
+        "variation:close_grip"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_6fb6e3ad127068a6",
+      "canonical_title": "Close Grip Bench Press With Reverse Mini Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Close Grip Bench Press with Reverse MINI Bands"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:bench_press",
+        "variation:close_grip"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_ac6ae49b1fd7ccba",
+      "canonical_title": "Conventional Deadlift Against A Band",
+      "in_custom_library": false,
+      "aliases": [
+        "Conventional Deadlift Against A Band"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_c22cec2c787c0c86",
+      "canonical_title": "Conventional Rack Deadlift Bands Optional",
+      "in_custom_library": false,
+      "aliases": [
+        "Conventional Rack Deadlift - bands optional"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_ce0a21960e884a8c",
+      "canonical_title": "Dead Bug Banded Upper Body",
+      "in_custom_library": false,
+      "aliases": [
+        "Deadbug Banded Upper Body"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_6618bc170ef1ba91",
+      "canonical_title": "Dead Bug With Mini Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Dead Bug with Mini Bands"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_a4a1186ea34b4af5",
+      "canonical_title": "Double Band Pushdown",
+      "in_custom_library": false,
+      "aliases": [
+        "Double Band Pushdowns"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_42dba2fa2fd1a217",
+      "canonical_title": "Double Leg Banded Hamstring Curl",
+      "in_custom_library": true,
+      "aliases": [
+        "Double Leg Banded Hamstring Curls",
+        "double leg banded hamstring curl"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_59121deb5cfec29e",
+      "canonical_title": "Double Leg Banded Leg Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Double Leg Banded Leg Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_839e3308ed8ef5b2",
+      "canonical_title": "Feet Elevated Hip Thrust + Band",
+      "in_custom_library": true,
+      "aliases": [
+        "FEET ELEVATED HIP THRUST + BAND",
+        "Feet Elevated Hip Thrust + Band",
+        "feet  Elevated Hip Thrust + band"
+      ],
+      "movement_category": "hip_extension",
+      "movement_subcategory": "bridge_thrust",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:hip_thrust"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_extension",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_6fb3f6db6827283b",
+      "canonical_title": "Football Bar Pin Press Against Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Football Bar Pin Press against bands"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:football_bar"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_6a0613d6256d7a9a",
+      "canonical_title": "Front Box Squat Against Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Front Box Squat against bands"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:box"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_308a86e46ff0ca33",
+      "canonical_title": "Ghd Sit Up Against Band",
+      "in_custom_library": false,
+      "aliases": [
+        "GHD Sit-up Against Band"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:ghd"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_a61c54d209c34696",
+      "canonical_title": "Ghd Sit Ups (To Parallel And Up) Against Max Band",
+      "in_custom_library": false,
+      "aliases": [
+        "GHD Sit Ups (to parallel and up) Against Max Band"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:ghd"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_b39710a8ec1c708c",
+      "canonical_title": "Ghr Against Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "GHR against bands"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_b62702a8b3177478",
+      "canonical_title": "Glute Ham Raise With Band",
+      "in_custom_library": false,
+      "aliases": [
+        "Glute Ham Raise with band"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_e950a1bab5dacb36",
+      "canonical_title": "Goblet Squat Band Over Knees",
+      "in_custom_library": false,
+      "aliases": [
+        "Goblet Squat Band Over Knees"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_48f902645d76724e",
+      "canonical_title": "Hack Squat Reverse Banded",
+      "in_custom_library": false,
+      "aliases": [
+        "Hack Squat - Reverse Banded"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_f46c4b87ee1df819",
+      "canonical_title": "Half Kneeling Banded High To Low Chop",
+      "in_custom_library": true,
+      "aliases": [
+        "Half-Kneeling Banded High To Low Chop",
+        "half kneeling banded high to low chop"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:kneeling"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_0196cdf1473c7b6a",
+      "canonical_title": "Heavy Banded (Or Cable) Standing Static Hold In Ab/Crunch Position 3 Sets 1 Minute Middle 30 Seconds Per Side (Obliques)",
+      "in_custom_library": false,
+      "aliases": [
+        "Heavy Banded (or cable) Standing Static Hold in Ab/Crunch Position - 3 Sets: 1 Minute Middle, 30 Seconds Per Side (Obliques)"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:cable",
+        "variation:isometric"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_91473ef879df30c9",
+      "canonical_title": "Incline Dumbbell Tate Press (Pause Each Rep On Chest) + Mini Or Monster Mini Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Incline DB Tate Presses (pause each rep on chest) + Mini or Monster Mini Bands"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:dumbbell",
+        "variation:incline",
+        "variation:paused"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_4fa211292d7d618d",
+      "canonical_title": "Kneeling Squat (Against Band)",
+      "in_custom_library": false,
+      "aliases": [
+        "Kneeling Squat (against band)"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:kneeling"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_74058196cf583db6",
+      "canonical_title": "Lateral Band Side Step",
+      "in_custom_library": false,
+      "aliases": [
+        "Lateral Band Side Steps"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "hip_abduction_adduction",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_ab_adduction",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_ead1a4d5f7153030",
+      "canonical_title": "Lying (Face Up) Banded Reverse Flys",
+      "in_custom_library": false,
+      "aliases": [
+        "lying (face up) banded reverse flys"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_cd1eb9e303b014a4",
+      "canonical_title": "Mid Band Anti Rotation",
+      "in_custom_library": false,
+      "aliases": [
+        "Mid Band Anti-Rotation"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:rotational"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_bd9b30bb44e57cc5",
+      "canonical_title": "Mobilitywod Banded Lower Body Unlock",
+      "in_custom_library": false,
+      "aliases": [
+        "MOBILITYWOD - Banded Lower Body Unlock"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "context:routine",
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named MobilityWOD routine; classified at mobility level only, components are unspecified.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_442f2e22ae05743d",
+      "canonical_title": "Monster Band Kick Back",
+      "in_custom_library": true,
+      "aliases": [
+        "Monster band kick back"
+      ],
+      "movement_category": "hip_extension",
+      "movement_subcategory": "bridge_thrust",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_extension",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_1b4a6a10ad1fdfc6",
+      "canonical_title": "Overhead Banded Triceps",
+      "in_custom_library": false,
+      "aliases": [
+        "Overhead Banded Triceps"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_6d948c571516b02c",
+      "canonical_title": "Pallof Press (Band Or Cable)",
+      "in_custom_library": false,
+      "aliases": [
+        "Pallof Press (Band or Cable)"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:cable"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_ca9fe8746135a5fb",
+      "canonical_title": "Plank Against Max Band 3X2 Minutes",
+      "in_custom_library": false,
+      "aliases": [
+        "Plank, Against Max Band - 3x2 Minutes"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_1704e60189031636",
+      "canonical_title": "Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands"
+      ],
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "vertical_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_daef8e2564372553",
+      "canonical_title": "Push Press Against Singled Micro Mini Or Mini Bands *Under 225 Max Micro Mini Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Push Press Against Singled Micro Mini or Mini Bands *Under 225 Max: Micro Mini Bands"
+      ],
+      "movement_category": "vertical_push",
+      "movement_subcategory": "overhead_press_dip",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "vertical_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_575eaba9390f36d9",
+      "canonical_title": "Rear Delt Band Pull",
+      "in_custom_library": false,
+      "aliases": [
+        "Rear Delt Band Pull"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Shoulder accessory or named shoulder series; no more specific component movement is assumed.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_3eb725a5f88a1f62",
+      "canonical_title": "Reverse Band Football Bar Floor Press",
+      "in_custom_library": false,
+      "aliases": [
+        "Reverse Band FB Bar Floor Press"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:football_bar"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_75e610abe94bdb9a",
+      "canonical_title": "Reverse Band Front Squat",
+      "in_custom_library": false,
+      "aliases": [
+        "Reverse Band Front Squat"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:front_squat"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_33826a8de02c4fae",
+      "canonical_title": "Reverse Band Sumo Stance Rack Deadlift",
+      "in_custom_library": false,
+      "aliases": [
+        "Reverse Band Sumo Stance Rack Deadlift"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_75427a17e98ef75e",
+      "canonical_title": "Reverse Doubled Mini Band Conventional Deadlift",
+      "in_custom_library": false,
+      "aliases": [
+        "Reverse Doubled Mini Band CONVENTIONAL Deadlift"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_460d9b3a939522f1",
+      "canonical_title": "Reverse Pec Dec (Or Standing Banded Reverse Flys)",
+      "in_custom_library": false,
+      "aliases": [
+        "Reverse Pec Dec (or Standing Banded Reverse Flys)"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:machine"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_fd0ab8545ba656a5",
+      "canonical_title": "Ring Push-Up Against Max Band",
+      "in_custom_library": false,
+      "aliases": [
+        "Ring Push Ups Against Max Band"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:rings"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_84be5f94e4b5bb53",
+      "canonical_title": "Rope (Cable Attachment) Or Kneeling Heavy Band Crunch",
+      "in_custom_library": false,
+      "aliases": [
+        "Rope (cable attachment) or Kneeling Heavy Band Crunches"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:cable",
+        "variation:kneeling"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_82c7a4ca1dd43c3d",
+      "canonical_title": "Seated Band Abduction",
+      "in_custom_library": false,
+      "aliases": [
+        "Seated Band Abduction"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "hip_abduction_adduction",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:seated"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_ab_adduction",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_9c7c649f6d6ee220",
+      "canonical_title": "Seated Banded Leg Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Seated Banded Leg Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:seated"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_de6877206095b701",
+      "canonical_title": "Seated Banded Low Row *Seated Pvc Suspended Inside 2 Bands Choked From In Front",
+      "in_custom_library": false,
+      "aliases": [
+        "Seated Banded Low Rows  *Seated. PVC Suspended Inside 2 Bands Choked From in Front"
+      ],
+      "movement_category": "horizontal_pull",
+      "movement_subcategory": "row",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:seated"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_b9f506e316e7b648",
+      "canonical_title": "Seated Overhead Band Triceps Extension",
+      "in_custom_library": false,
+      "aliases": [
+        "Seated Overhead Band Tricep Extensions"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:seated"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_fd3d1b33740ff0e3",
+      "canonical_title": "Single Arm Banded Pushdown",
+      "in_custom_library": true,
+      "aliases": [
+        "Single Arm Banded Pushdowns",
+        "single arm banded push down"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:single_arm"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_f0549adcabd5dcaf",
+      "canonical_title": "Single Arm Dumbbell Row + Band From The Front 3X10 Per Arm",
+      "in_custom_library": false,
+      "aliases": [
+        "One Arm DB Row + Band from the Front - 3x10 Per Arm"
+      ],
+      "movement_category": "horizontal_pull",
+      "movement_subcategory": "row",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:dumbbell",
+        "variation:single_arm"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_0c7dc58e4841d0b9",
+      "canonical_title": "Single Leg Banded Hamstring Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Single Leg Banded Hamstring Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:single_leg"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_53a119e91fd29e0f",
+      "canonical_title": "Single Leg Banded Leg Curl",
+      "in_custom_library": false,
+      "aliases": [
+        "Single Leg Banded Leg Curls"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "knee_flexion",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:single_leg"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hamstring_curl",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_7795ec35b17c01bd",
+      "canonical_title": "Sl Banded Good Morning",
+      "in_custom_library": false,
+      "aliases": [
+        "SL Banded Good Mornings"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:single_leg"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_55ac42db42735d70",
+      "canonical_title": "Smr Glutes Hamstrings It Band Adductors",
+      "in_custom_library": false,
+      "aliases": [
+        "SMR Glutes, Hamstrings, IT Band, Adductors"
+      ],
+      "movement_category": "mobility",
+      "movement_subcategory": "mobility",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "mobility",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_5a990448f82c2c3b",
+      "canonical_title": "Speed Banded Lat Pulldown",
+      "in_custom_library": true,
+      "aliases": [
+        "Speed Banded  Lat Pull Down",
+        "Speed Banded Lat Pulldowns"
+      ],
+      "movement_category": "vertical_pull",
+      "movement_subcategory": "pull_up_pulldown",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "vertical_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_e23939d45b6f5d86",
+      "canonical_title": "Speed Bench Press Against Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Speed Bench Press against bands"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:bench_press"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_8928a2bca18f308c",
+      "canonical_title": "Speed Bench Press Against Bands To Pins",
+      "in_custom_library": false,
+      "aliases": [
+        "Speed Bench Press against bands to pins"
+      ],
+      "movement_category": "horizontal_push",
+      "movement_subcategory": "press_push_up",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:bench_press"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "horizontal_push",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_b588ce49457a6ad8",
+      "canonical_title": "Speed Pull Conventional Deadlift @50% Against 30% Band Tension",
+      "in_custom_library": false,
+      "aliases": [
+        "Speed Pulls: Conventional Deadlift @50% against 30% Band Tension"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_ef4a5d1b41cdbe41",
+      "canonical_title": "Speed Pull Conventional Deadlift @55% Against 30% Band Tension",
+      "in_custom_library": false,
+      "aliases": [
+        "Speed Pulls: Conventional Deadlift @55% Against 30% Band Tension"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_833a4c4b299c6c98",
+      "canonical_title": "Speed Pull Deadlift Against Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Speed Pull Deadlift against bands"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_ade13387abfa4c74",
+      "canonical_title": "Speed Pull Sumo Deadlift @55% Against 30% Band Tension",
+      "in_custom_library": false,
+      "aliases": [
+        "Speed Pulls: Sumo Deadlift @55% Against 30% Band Tension"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_1b60fa12890a316d",
+      "canonical_title": "Speed Trap Bar Deadlift Vs Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Speed Trap Bar Deadlifts vs. Bands"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:trap_bar"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_2a9fb44b5ae9ef89",
+      "canonical_title": "Standing Banded Abs",
+      "in_custom_library": false,
+      "aliases": [
+        "Standing Banded Abs"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_c9a7521b1e139105",
+      "canonical_title": "Standing Banded Er/Ir",
+      "in_custom_library": false,
+      "aliases": [
+        "Standing Banded ER/IR"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "shoulder_accessory",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "shoulder_isolation",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_86d66e661c8c1a16",
+      "canonical_title": "Standing Heavy Band Crunch",
+      "in_custom_library": false,
+      "aliases": [
+        "Standing, Heavy Band Crunches"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "core",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_84c198fe5aa06439",
+      "canonical_title": "Standing High To Low Banded Rotation",
+      "in_custom_library": false,
+      "aliases": [
+        "standing high to low banded rotation"
+      ],
+      "movement_category": "core",
+      "movement_subcategory": "trunk_control",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "variation:rotational"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "Named trunk/hip-control task or support position; equipment and dip/rower wording do not change its primary task.",
+      "rule_id": "reviewed_exception",
+      "basis": "reviewed_override"
+    },
+    {
+      "canonical_exercise_id": "exercise_a9519f6a7e9a6e42",
+      "canonical_title": "Straight Bar Box Squat W/ Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Straight Bar Box Squat w/ Bands"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:barbell",
+        "variation:box"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_de4e08e9cec7b6c9",
+      "canonical_title": "Strict Ring Pull-Up Against Max Band From The Bottom",
+      "in_custom_library": false,
+      "aliases": [
+        "Strict Ring Pull Ups Against Max band from the Bottom"
+      ],
+      "movement_category": "vertical_pull",
+      "movement_subcategory": "pull_up_pulldown",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:rings",
+        "family:pull_up"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "vertical_pull",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_d2dbe40b8f4fffd9",
+      "canonical_title": "Supported Single Leg Romanian Deadlift With Band",
+      "in_custom_library": false,
+      "aliases": [
+        "Supported Single Leg RDLs with band"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "family:romanian_deadlift",
+        "variation:single_leg"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_ced58bba888b9adb",
+      "canonical_title": "Theraband Monster Walks",
+      "in_custom_library": false,
+      "aliases": [
+        "Theraband Monster Walks"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "hip_abduction_adduction",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hip_ab_adduction",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_9a9a3a8ca09dc066",
+      "canonical_title": "Touch And Go Trap Bar Deadlift Against A Band",
+      "in_custom_library": false,
+      "aliases": [
+        "Touch N Go Trap Bar Deadlift against a band"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:trap_bar"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_fe8171eef3b81374",
+      "canonical_title": "Trap Bar Deadlift Against A Band",
+      "in_custom_library": true,
+      "aliases": [
+        "TRAP BAR DEADLIFT AGAINST A BAND",
+        "Trap Bar Deadlift against a band"
+      ],
+      "movement_category": "hinge",
+      "movement_subcategory": "hip_hinge",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:trap_bar"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "hinge",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_c942b3e1777d8494",
+      "canonical_title": "Unilateral Banded Triceps Pushowns",
+      "in_custom_library": false,
+      "aliases": [
+        "Unilateral Banded Triceps Pushowns"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_34730d52c7c2f392",
+      "canonical_title": "V Handle Banded Triceps Pushdown",
+      "in_custom_library": false,
+      "aliases": [
+        "V-Handle Banded Tricep Pushdown"
+      ],
+      "movement_category": "isolation",
+      "movement_subcategory": "elbow_extension",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "triceps",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_8573abc418d16c56",
+      "canonical_title": "Wide Stance Box Squat With Straight Bar @50% Against 25% Band Tension",
+      "in_custom_library": false,
+      "aliases": [
+        "Wide Stance Box Squat with Straight Bar @50% Against 25% Band Tension"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:barbell",
+        "variation:box"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    },
+    {
+      "canonical_exercise_id": "exercise_d3783ac5f664f20a",
+      "canonical_title": "Wide Stance SSB Box Squat With Bands",
+      "in_custom_library": false,
+      "aliases": [
+        "Wide Stance SSB Box Squat with bands"
+      ],
+      "movement_category": "squat",
+      "movement_subcategory": "squat",
+      "secondary_categories": [],
+      "tags": [
+        "equipment:band",
+        "equipment:safety_bar",
+        "variation:box"
+      ],
+      "review_status": "classified_from_name",
+      "reason": "",
+      "rule_id": "squat",
+      "basis": "name_rule"
+    }
+  ]
+}

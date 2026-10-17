@@ -1,23 +1,37 @@
-# TrainHeroic catalogue references
+# Exercise catalogues
 
-Movement categories are now available for the full 1,860-entry library and the
-382-entry custom subset. Start with [movement categories and usage](MOVEMENT-CATEGORIES.md)
-and [the custom-library category CSV](custom_library_movement_categories.csv).
-The original cleaned-name reference files below remain unchanged.
+The usable library is split into **Main** and **Banded** catalogues. Unclear and
+non-exercise entries have been deleted from both usable catalogues and their alias
+maps. Exercise IDs and aliases for retained entries are unchanged.
 
-These files are the locally cleaned exercise-name references discussed with the user on 13 October 2026. They support catalogue review and alias matching, not automatic import of athlete performance.
+| Catalogue | All entries | Custom-library entries | Category CSV | JSON |
+| --- | ---: | ---: | --- | --- |
+| Main | 1,674 | 346 | [Main categories](exercise_movement_categories.csv) | [Main JSON](exercise_movement_library.json) |
+| Banded | 153 | 31 | [Banded categories](banded_exercise_movement_categories.csv) | [Banded JSON](banded_exercise_movement_library.json) |
 
-| File | Contents |
-| --- | --- |
-| `custom_library_canonical.csv` | 382 canonical custom-library entries from 397 distinct source names |
-| `canonical_exercise_library.csv` | 1,860 identities from 2,078 names across custom library and history |
-| `exercise_alias_map.csv` | Each of the 2,078 original titles mapped to one local canonical ID |
-| `merged_name_groups.csv` | 177 groups consolidating 218 redundant names |
-| `similar_names_review.csv` | 217 related pairs: 117 alias/equipment review pairs, 100 separate variations |
-| `exercise_name_cleanup_summary.json` | Cleanup counts and preservation checks |
+For just the custom exercises, use [main custom categories](custom_library_movement_categories.csv)
+and [banded custom categories](banded_custom_library_movement_categories.csv).
 
-RDL/Romanian Deadlift, DB/Dumbbell abbreviations, clear spelling errors and singular/plural variants were normalised. Meaningful equipment, stance, support, pause and movement differences remain distinct. Near spelling is not proof of interchangeability.
+Each catalogue also has its own canonical/source-format CSV and alias map. Files
+with `banded_` are the band catalogue; unprefixed catalogue files are Main.
+See [movement categories and regeneration](MOVEMENT-CATEGORIES.md).
 
-The complete cleaned dataset preserves 35,164 source occurrences, 28,840 grouped exercise rows and 11,425 exported set positions. Those performance CSVs, raw messages and the original ZIP are **not included here**. Do not claim these catalogue files contain actual effort, verified completed work or a full replayable training timeline.
+## Band routing
 
-User-confirmed conventions are documented in the [current handoff](../../cursor-handoff-engine-session-builder.md). Catalogue IDs are local reference IDs: map to existing app IDs rather than replacing historical references. The pending Grok core-library proposal still needs review; these 382 custom entries are not all approved for prominent display or automatic import.
+Anything explicitly naming band, bands, banded or Theraband in its canonical title
+or aliases belongs only to Banded. This includes assisted, resisted, reverse-band,
+optional-band and band-or-machine alternatives. An exercise with alternatives
+keeps its original identity; it is not duplicated across catalogues. Unclear names
+are removed before routing, including unclear banded names.
+
+## Archived source references
+
+The original 1,860-entry cleaned import, 382-entry custom subset and 2,078-name
+alias map live only under [archive](archive/README.md), alongside historical
+name-cleanup reports. The archive also records the **33 removed entries**: 24
+unclear and 9 non-exercise entries. These records support historical ID lookup and
+reproducible exports; they are not a selectable catalogue or a pending review queue.
+Existing training records and load conventions have not been altered.
+
+This is catalogue data for the future dashboard. The athlete app, Supabase and
+Capgo have not been changed by this cleanup.

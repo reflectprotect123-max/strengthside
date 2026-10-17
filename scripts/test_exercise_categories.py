@@ -1,6 +1,8 @@
 """Independent movement expectations + identity/alias preservation and export checks."""
 import copy
 import importlib.util
+import csv
+import io
 import json
 from pathlib import Path
 import shutil
@@ -16,7 +18,14 @@ class MovementLibraryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.outputs, cls.summary = LIB.generate()
-        cls.entries = json.loads(cls.outputs['exercise_movement_library.json'])['exercises']
+        cls.main = json.loads(cls.outputs['exercise_movement_library.json'])['exercises']
+        cls.banded = json.loads(cls.outputs['banded_exercise_movement_library.json'])['exercises']
+        cls.removed = list(csv.DictReader(io.StringIO(cls.outputs['archive/removed_exercises.csv'].decode())))
+        for row in cls.removed:
+            for key in ('aliases', 'tags', 'secondary_categories'):
+                row[key] = json.loads(row[key])
+            row['in_custom_library'] = row['in_custom_library'] == 'True'
+        cls.entries = cls.main + cls.banded + cls.removed
         cls.by_title = {e['canonical_title']: e for e in cls.entries}
 
     def test_known_mechanics_and_keyword_traps(self):
@@ -61,7 +70,7 @@ class MovementLibraryTests(unittest.TestCase):
         self.assertIn('context:alternatives', self.by_title['Pull-Up Or Inverted Row']['tags'])
 
     def test_identity_aliases_and_custom_subset_are_preserved(self):
-        source = LIB.load_csv(LIB.DATA / 'canonical_exercise_library.csv')
+        source = LIB.load_csv(LIB.DATA / 'archive/canonical_exercise_library.csv')
         original = {e['canonical_exercise_id']: e for e in source}
         current = {e['canonical_exercise_id']: e for e in self.entries}
         self.assertEqual(original.keys(), current.keys())
@@ -69,10 +78,10 @@ class MovementLibraryTests(unittest.TestCase):
         for key, row in original.items():
             self.assertEqual(current[key]['canonical_title'], row['canonical_title'])
             self.assertEqual(current[key]['aliases'], json.loads(row['aliases']))
-        aliases = LIB.load_csv(LIB.DATA / 'exercise_alias_map.csv')
+        aliases = LIB.load_csv(LIB.DATA / 'archive/exercise_alias_map.csv')
         self.assertEqual({(e['original_exercise_title'], e['canonical_exercise_id']) for e in aliases},
                          {(alias, e['canonical_exercise_id']) for e in self.entries for alias in e['aliases']})
-        custom = LIB.load_csv(LIB.DATA / 'custom_library_canonical.csv')
+        custom = LIB.load_csv(LIB.DATA / 'archive/custom_library_canonical.csv')
         self.assertEqual({e['canonical_exercise_id'] for e in custom},
                          {e['canonical_exercise_id'] for e in self.entries if e['in_custom_library']})
         self.assertEqual(len(self.entries), 1860)
@@ -101,17 +110,56 @@ class MovementLibraryTests(unittest.TestCase):
                 self.assertTrue(row['reason'], row['canonical_title'])
                 self.assertIn(row['movement_category'], {'reference', 'needs_review'})
             self.assertEqual(row['tags'], sorted(set(row['tags'])))
-        queue = self.outputs['movement_review_queue.csv'].decode()
+        queue = self.outputs['archive/removed_exercises.csv'].decode()
         self.assertIn('Bendh', queue)
         self.assertIn('Velocity Tracking App Demo', queue)
         self.assertNotIn(',Back Squat,', queue)
 
+    def test_bands_are_separate_including_assistance_alternatives_and_optional_bands(self):
+        main = {e['canonical_title'] for e in self.main}
+        bands = {e['canonical_title'] for e in self.banded}
+        removed = {e['canonical_title'] for e in self.removed}
+        for title in ['Band Assisted Strict Dip', 'Reverse Band Front Squat',
+                      'Conventional Rack Deadlift Bands Optional', 'Speed Bench Press Against Bands',
+                      'Theraband Monster Walks', 'Band Row + Reverse Lunge',
+                      'Reverse Pec Dec (Or Standing Banded Reverse Flys)']:
+            self.assertIn(title, bands)
+            self.assertNotIn(title, main)
+        for title in ['Dumbbell Bench Press', 'Kettlebell Swing', 'Bamboo Bar Bench Press']:
+            self.assertIn(title, main)
+            self.assertNotIn(title, bands)
+        for title in ['Banded Alphabet', 'Standing Abductor Banded Pull-Apart', 'Bendh']:
+            self.assertIn(title, removed)
+            self.assertNotIn(title, bands | main)
+        self.assertTrue(LIB.is_banded({'canonical_title': 'Example movement', 'aliases': ['With a resistance band']}))
+        self.assertFalse(LIB.is_banded({'canonical_title': 'Bamboo bar', 'aliases': []}))
+        self.assertFalse(main & bands or main & removed or bands & removed)
+        self.assertEqual(len(self.main), 1674)
+        self.assertEqual(len(self.banded), 153)
+        self.assertEqual(len(self.removed), 33)
+
+    def test_every_active_export_has_matching_aliases_and_no_retired_entries(self):
+        for prefix, entries in [('', self.main), ('banded_', self.banded)]:
+            ids = {e['canonical_exercise_id'] for e in entries}
+            custom_ids = {e['canonical_exercise_id'] for e in entries if e['in_custom_library']}
+            for suffix, expected in [('canonical_exercise_library.csv', ids), ('exercise_alias_map.csv', ids),
+                                     ('custom_library_canonical.csv', custom_ids),
+                                     ('custom_library_movement_categories.csv', custom_ids),
+                                     ('exercise_movement_categories.csv', ids)]:
+                rows = list(csv.DictReader(io.StringIO(self.outputs[prefix + suffix].decode())))
+                self.assertEqual({r['canonical_exercise_id'] for r in rows}, expected)
+            self.assertTrue(all(e['review_status'] == 'classified_from_name' for e in entries))
+            active = json.loads(self.outputs[prefix + 'exercise_movement_library.json'])
+            self.assertEqual(active['schema_version'], 2)
+            self.assertFalse({'needs_review', 'reference'} & {x['id'] for x in active['taxonomy']['categories']})
+        self.assertNotIn('movement_review_queue.csv', self.outputs)
+
     def test_exports_are_reproducible_and_do_not_write_inputs(self):
-        before = {p.name: p.read_bytes() for p in LIB.DATA.iterdir() if p.is_file()}
+        before = {str(p.relative_to(LIB.DATA)): p.read_bytes() for p in LIB.DATA.rglob('*') if p.is_file()}
         again, summary = LIB.generate()
         self.assertEqual(again, self.outputs)
         self.assertEqual(summary, self.summary)
-        self.assertEqual(before, {p.name: p.read_bytes() for p in LIB.DATA.iterdir() if p.is_file()})
+        self.assertEqual(before, {str(p.relative_to(LIB.DATA)): p.read_bytes() for p in LIB.DATA.rglob('*') if p.is_file()})
         for name, content in self.outputs.items():
             self.assertEqual((LIB.DATA / name).read_bytes(), content, name)
 
@@ -119,6 +167,7 @@ class MovementLibraryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             data = Path(temp)
             for name in self.summary['source_sha256']:
+                (data / name).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(LIB.DATA / name, data / name)
             path = data / 'movement-overrides.json'
             original = json.loads(path.read_text())
@@ -128,7 +177,7 @@ class MovementLibraryTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, 'Stale override'):
                 LIB.generate(data)
             path.write_text(json.dumps(original))
-            aliases = data / 'exercise_alias_map.csv'
+            aliases = data / 'archive/exercise_alias_map.csv'
             aliases.write_text(aliases.read_text().replace('exercise_6ec38a5f580f95a0', 'exercise_missing'))
             with self.assertRaises(KeyError):
                 LIB.generate(data)

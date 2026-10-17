@@ -2,7 +2,6 @@ canonical_exercise_id,canonical_title,aliases,source_names_count,grouped_history
 exercise_6ec38a5f580f95a0,1 1/2 Bench Press,"[""1- 1/2 bench press""]",1,12,True,[],False
 exercise_4816b1ee7185247d,1 1/2 Front Squat,"[""1 1/2 Front Squat""]",1,11,False,[],False
 exercise_56d672a0b48c2544,1 1/4 Back Squat,"[""1 1/4 Back Squat""]",1,2,True,[],False
-exercise_00cffb5cedd54cd8,1 1/4 Banded Glute Hip Thrust,"[""1 1/4 Banded Glute Hip Thrusts""]",1,4,False,[],False
 exercise_521b677580082969,1 1/4 Bench Press,"[""1 -1/4 Bench Press""]",1,0,True,[],False
 exercise_da4b5e97ad87b269,1 1/4 Biceps Curl,"[""1 1/4 Bicep Curl""]",1,2,True,[],False
 exercise_8d5b0b34795c9b93,1 1/4 Cyclist Front Squat,"[""1  1/4 cyclist front squat""]",1,1,True,[],False
@@ -19,7 +18,6 @@ exercise_d531931d512827be,1 Pigeon Pose Tyw,"[""1. Pigeon Pose TYW""]",1,2,False
 exercise_3126b2b1552e2d8a,1 Step Box Jump,"[""1 Step Box Jump""]",1,1,False,[],False
 exercise_f6c9eb6dcf8cb161,1 Up / 1 Down Carry,"[""1 up / 1 Down Carry""]",1,1,False,[],False
 exercise_3433445bd853c033,1.5 Mile Run,"[""1.5 Mile Run""]",1,1,False,[],False
-exercise_e3bb7e0c82dc0999,1.5 Stance Romanian Deadlift With Band,"[""1.5 Stance RDL with Band"", ""1.5 stance RDL with band""]",2,9,True,[],False
 exercise_1322959ff5da3139,1/1/4 Sumo Stance Goblet Squat,"[""1/ 1/4 sumo stance goblet squat""]",1,0,True,[],False
 exercise_06eece97c9695167,1/2 Kneeling Arnold Press,"[""1/2 kneeling arnold press""]",1,0,True,[],False
 exercise_f76314bda58dbdef,10K Run,"[""10k Run""]",1,1,False,[],False
@@ -29,13 +27,10 @@ exercise_bd6542babe266537,2 Point Dumbbell Row,"[""2 Point DB Row""]",1,12,False
 exercise_4cc0871c49f0baa4,2 Step Lateral Shuffle,"[""2-Step Lateral Shuffle""]",1,4,False,[],False
 exercise_da9f0c4dc86a1462,"2"" Deficit Deadlift","[""2\"" Deficit Deadlift""]",1,1,False,[],False
 exercise_20eb01594cd12a34,20 Minutes Of Aerobic Activity,"[""20 Minutes of Aerobic Activity""]",1,1,False,[],False
-exercise_d4b472e371362cbe,20 Per Arm Seated Single Arm Banded Low Row,"[""20 Per Arm Seated Single Arm Banded Low Rows""]",1,1,False,[],False
 exercise_b20e557b78978979,3 5 Breathing,"[""3:5 Breathing""]",1,1,False,[],False
 exercise_9b619e5527b918ed,3 Position Clean,"[""3-Position Clean""]",1,6,False,[],False
-exercise_734f3abd5496b807,3 Way Band Pull-Apart,"[""3 Way Band Pull-Apart""]",1,1,False,[],False
 exercise_9eb64af89e0e1311,3 Way Shoulder Shocker,"[""3-way Shoulder Shocker""]",1,12,False,[],False
 exercise_74d4733f1d38b4ae,30 Degree Incline Dumbbell Bench Press,"[""30 Degree Incline DB Bench Press""]",1,5,False,[],False
-exercise_3f100d40f5a65fd4,3D Banded Pull-Apart,"[""3D Banded Pull-aparts"", ""3D banded pull aparts""]",2,14,True,[],False
 exercise_6aacdccdc20cd26b,3D Lunge,"[""3D Lunge""]",1,2,False,[],False
 exercise_f46427530a576f00,3D Pull-Apart,"[""3D Pull-aparts""]",1,3,False,[],False
 exercise_e4a9e15021cf3224,4 Way Shoulders,"[""4 Way Shoulders""]",1,1,False,[],False
@@ -55,7 +50,6 @@ exercise_70e90073e7297a10,A Switch Elevated Box,"[""A Switch - Elevated Box""]",
 exercise_e57c9847b3ceee4b,A Switch – Drop (Box),"[""A Switch – Drop (Box)""]",1,2,False,[],False
 exercise_126dd8b85c813123,Ab Wheel,"[""Ab Wheel""]",1,63,False,[],False
 exercise_34138951f70a920d,Ab Wheel Iso Hold,"[""Ab Wheel Iso Hold""]",1,11,False,[],False
-exercise_93338c6349c40a3a,Acceleration Banded Range Finder,"[""Acceleration - Banded Range Finder""]",1,2,False,[],False
 exercise_1f5a3d2e77ae009d,Adductor Machine,"[""Adductor Machine""]",1,1,False,[],False
 exercise_fbf73f93588e0d25,Adductor Rock Back With Thoracic Rotation,"[""Adductor rock back with thoracic rotation""]",1,2,False,[],False
 exercise_15c325dcffd6ad93,Adductor T Spine,"[""Adductor T-Spine""]",1,1,False,[],False
@@ -96,7 +90,6 @@ exercise_3ad79ee9ae8b56bf,Anderson Overhead Squat,"[""Anderson Overhead Squat""]
 exercise_f1b2287dfe7ad2d0,Anderson Squat,"[""Anderson Squat""]",1,6,False,[],False
 exercise_55a407f251dba93a,Angles Pull-Up,"[""Angles Pull-ups""]",1,24,False,[],False
 exercise_448e5873eb25dd5b,Anterior Loaded Barbell Reverse Lunge,"[""Anterior Loaded BB Reverse Lunge""]",1,1,False,[],False
-exercise_61da32700dea14ca,Around The World,"[""Around the World""]",1,1,False,[],False
 exercise_e910a1c0b80dda78,Arrow Row,"[""Arrow Row""]",1,2,False,[],False
 exercise_fb290c021dce6f28,Assault Bike,"[""Assault Bike""]",1,115,False,[],False
 exercise_f747996b3e86d304,Assisted Cossack,"[""Assisted Cossack""]",1,1,False,[],False
@@ -126,85 +119,6 @@ exercise_ff87da49d1c7bbe7,Backwards Sled Iso Row,"[""Backwards Sled Iso Row""]",
 exercise_8b91ee327b428e45,Ball Slam,"[""Ball Slams""]",1,12,False,[],False
 exercise_9cea033e367232f1,Bamboo Bar Bench Press,"[""Bamboo Bar Bench Press""]",1,22,False,[],False
 exercise_2355f8fc98697156,Bamboo Bar Bradford Press,"[""Bamboo Bar Bradford Press""]",1,14,False,[],False
-exercise_ebccb643eb1c2ca2,Band Assisted Cmj Split,"[""Band Assisted - CMJ Split""]",1,2,False,[],False
-exercise_320a6b89b593e776,Band Assisted Jump (Plyos),"[""Band-Assisted Jumps (PLYOS)""]",1,3,False,[],False
-exercise_d1920fe9a3aa7be3,Band Assisted Nordic Curl,"[""band assisted nordic curl""]",1,2,True,[],False
-exercise_545b5586ede07fd6,Band Assisted Plyo Push-Up,"[""Band Assisted Plyo Push-ups""]",1,83,False,[],False
-exercise_9ad4e69fe5f30436,Band Assisted Pogo Jump,"[""Band Assisted - Pogo Jumps""]",1,2,False,[],False
-exercise_706c588bbd681f9e,Band Assisted Push-Up,"[""Band Assisted Push Up""]",1,4,False,[],False
-exercise_abd62aa9cdfb41c3,Band Assisted Split Jump,"[""Band Assisted Split Jump""]",1,3,False,[],False
-exercise_3fd6569cf787fdfb,Band Assisted Split Squat Jump,"[""band assisted split squat jump""]",1,1,True,[],False
-exercise_dbfb5ba5ee2737ed,Band Assisted Strict Dip,"[""band assisted strict dips""]",1,0,True,[],False
-exercise_f7b5cf03e3be44a3,Band Glute Pull Through,"[""Band Glute Pull Thru""]",1,12,True,[],False
-exercise_98acbe8eac6c2b9e,Band Overhead Triceps Extension,"[""Band Overhead Triceps Extension""]",1,3,False,[],False
-exercise_96c3483491ea96ae,Band Plyo Push-Up,"[""band - Plyo Push-Up""]",1,9,True,[],False
-exercise_397d808b17a17857,Band Pull-Apart,"[""Band Pull-Apart""]",1,12,False,[],False
-exercise_3fe6361fb7feaa8b,Band Pull-Apart Sp,"[""Band Pull Apart - SP""]",1,1,False,[],False
-exercise_753c3156c5c1fc0d,Band Resisted Body Row,"[""band resisted body row""]",1,1,False,[],False
-exercise_cb0f4af85257366b,Band Resisted Kettlebell Swing,"[""Band Resisted KB Swings""]",1,11,False,[],False
-exercise_22e6f6581d2751f5,Band Resisted Side Plank Row,"[""Band Resisted Side Plank Row""]",1,7,False,[],False
-exercise_af1fff94990f02e1,Band Rotation,"[""Band Rotations""]",1,4,False,[],False
-exercise_a5f26d81a4512c13,Band Row + Press,"[""Band Row + Press""]",1,5,False,[],False
-exercise_297237abee5328a9,Band Row + Reverse Lunge,"[""Band Row + Reverse Lunge""]",1,13,False,[],False
-exercise_440cf6a4524e3ce0,Band Speed Press,"[""Band Speed Press""]",1,1,False,[],False
-exercise_8d6a41af43bbc98d,Band Triceps Pushdown,"[""Band Tricep Push Down""]",1,2,False,[],False
-exercise_b6a29bc67fab7c7a,Banded Alphabet,"[""Banded Alphabet""]",1,8,False,[],False
-exercise_eb1eef060887f563,Banded Ankle Distraction Mobilization,"[""Banded Ankle Distraction Mobilization""]",1,2,False,[],False
-exercise_a0ea541cf3ffd712,Banded Biceps Curl,"[""Banded Bicep Curl""]",1,3,False,[],False
-exercise_7f4c15f20138ea39,Banded Broad Jump,"[""Banded Broad Jump""]",1,2,False,[],False
-exercise_3045f40362f604cc,Banded Bully Stretch,"[""Banded Bully Stretch""]",1,1,False,[],False
-exercise_34c8257fefd67fbd,Banded Chest To Bar,"[""Banded Chest To Bar""]",1,1,True,[],False
-exercise_8a17e561155fc790,Banded Curl,"[""Banded Curls""]",1,17,False,[],False
-exercise_f98a3815b9c9a746,Banded Dumbbell Grip Row,"[""Banded Dumbbell Grip Row""]",1,1,False,[],False
-exercise_f460c21024e963c2,Banded Face Pull,"[""Banded Face Pulls"", ""Banded Face pull""]",2,4,True,[],False
-exercise_4b07f494b9aa3df1,Banded Face Pull Aparts,"[""Banded Facepull-aparts""]",1,55,False,[],False
-exercise_6620fed810a317cc,Banded Face Pull Iso Hold,"[""Banded Face Pull Iso-hold""]",1,1,False,[],False
-exercise_d5152dd8bb464e40,Banded Front Rack Stretch E/Side,"[""Banded Front Rack Stretch E/Side""]",1,1,False,[],False
-exercise_5fe701adb287dd95,Banded Glute Bridge,"[""Banded Glute Bridge""]",1,1,False,[],False
-exercise_af0ff1a4ac76925d,Banded Good Morning,"[""Banded Good Mornings""]",1,2,False,[],False
-exercise_7c4ffcfc4d819727,Banded Half Kneeling Pallof Press,"[""Banded Half Kneeling Pallof Press""]",1,2,True,[],False
-exercise_a476cfbaeeb9e330,Banded Hammer Curl,"[""Banded Hammer Curls""]",1,8,False,[],False
-exercise_e706cebdc7441a5e,Banded Hamstring Curl,"[""Banded Hamstring Curls""]",1,14,True,[],False
-exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,"[""Banded Hip Flexor Pull"", ""Banded Hip Flexor Pulls"", ""Banded Hip flexor pulls"", ""Banded Hip flexroe pulls"", ""Banded Hip flexror pulls""]",5,42,True,[],False
-exercise_2cb7b83f5324103d,Banded Incline Pigeon Rotation,"[""Banded Incline Pigeon Rotation""]",1,1,False,[],False
-exercise_304162cac8e37540,Banded Kettlebell Swing,"[""Banded Kettlebell Swing""]",1,1,True,[],False
-exercise_2489be7b90efff8e,Banded Lat Distraction E/Side,"[""Banded Lat Distraction E/Side""]",1,1,False,[],False
-exercise_a5654a909283d3ad,Banded Lat Pulldown,"[""Banded Lat Pulldown"", ""Banded Lat Pulldowns""]",2,2,True,[],False
-exercise_b8b5ba47233cac7a,Banded Lat Squeeze,"[""Banded Lat Squeeze""]",1,1,False,[],False
-exercise_2601bf665e5554c0,Banded Lat Stretch,"[""Banded Lat Stretch""]",1,4,False,[],False
-exercise_c28d06f48e71326c,Banded Lateral Raise,"[""Banded Lateral Raises""]",1,1,False,[],False
-exercise_b885407ed30a5703,Banded Leg Curl,"[""Banded Leg Curls""]",1,2,False,[],False
-exercise_adf0e70ff99920e2,Banded Leg Extension,"[""Banded Leg Extension""]",1,1,True,[],False
-exercise_de577f571e0c2cf7,Banded Low To High Chop,"[""Banded Low To High Chop""]",1,2,True,[],False
-exercise_37710e6a7c5464d2,Banded Oh Triceps Extension,"[""Banded OH Tricep Extension""]",1,2,True,[],False
-exercise_4577ab3ca791db40,Banded Overhead Squat,"[""Banded Overhead Squats""]",1,1,False,[],False
-exercise_61a7ccdb030e4c50,Banded Overhead Triceps,"[""Banded Overhead Triceps""]",1,25,False,[],False
-exercise_cddd6cfc7951ef1c,Banded Overhead Triceps Extension,"[""Banded Overhead Tricep Extension""]",1,1,False,[],False
-exercise_d999f5034de55ca6,Banded Pallof Press,"[""Banded Pallof Press""]",1,3,True,[],False
-exercise_a15a3bf7f0c1fea0,Banded Pendlay Row,"[""Banded Pendlay Row""]",1,1,False,[],False
-exercise_33a6e9cb0998cbe1,Banded Plank Abs,"[""Banded Plank Abs""]",1,28,False,[],False
-exercise_1a6c5650c03dff36,Banded Plank Row,"[""Banded Plank Row""]",1,8,False,[],False
-exercise_8a04e1f4573c31a5,Banded Press,"[""Banded Press""]",1,1,False,[],False
-exercise_143594887fcebe2c,Banded Pull Through,"[""Banded Pull-Through""]",1,27,False,[],False
-exercise_9c5c2d62b1daf6ad,Banded Pull-Apart,"[""Banded Pull Aparts"", ""Banded Pull-apart""]",2,39,False,[],False
-exercise_bee1b8aa0c2feb0a,Banded Pulldown,"[""Banded Pulldowns""]",1,30,False,[],False
-exercise_833e9ea2d7f4e756,Banded Pushdown,"[""Banded Push Downs"", ""Banded Pushdowns""]",2,76,True,[],False
-exercise_40bbb764c5c1a44d,Banded Quad Stretch,"[""banded quad Stretch""]",1,2,False,[],False
-exercise_266bdaddb40f5e63,Banded Reverse Fly,"[""Banded Reverse Fly""]",1,16,False,[],False
-exercise_31b213efae24ed68,Banded Russian Kettlebell Swing (70/53 + Max Band),"[""Banded Russian KB Swings (70/53 + Max Band)""]",1,1,False,[],False
-exercise_0bd46ba27e69f2d9,Banded Speed Bench Press,"[""Banded Speed Bench Press""]",1,6,True,[],False
-exercise_873b53b40045707d,Banded Speed Press,"[""Banded Speed Press""]",1,1,False,[],False
-exercise_488a6c1e0df64231,Banded Speed Row,"[""Banded Speed Row""]",1,1,False,[],False
-exercise_c4c23f363a1d9269,Banded Sprinter Hold,"[""Banded Sprinter Hold""]",1,2,False,[],False
-exercise_8ca51897953f447d,Banded T Spine From Split Squat,"[""Banded T-Spine from Split Squat""]",1,1,False,[],False
-exercise_7daf5591337cce46,Banded Tall Side Plank Row,"[""Banded Tall Side Plank Row""]",1,2,True,[],False
-exercise_53fbe8588448c341,Banded Trap Bar Deadlift,"[""Banded Trap Bar Deadlifts""]",1,2,True,[],False
-exercise_59a8e046c486900c,Banded Triceps,"[""Banded Triceps""]",1,2,False,[],False
-exercise_2475025329aee5dc,Banded Triceps Extension,"[""Banded Tricep Extension""]",1,1,False,[],False
-exercise_f41bbe93638856df,Banded Triceps Pulldown,"[""Banded Tricep Pulldown""]",1,7,True,[],False
-exercise_3172ba3c41c115eb,Banded Triceps Pushdown,"[""Banded Tricep Pushdown""]",1,8,False,[],False
-exercise_7f890463a4a54127,Banded Triceps Stretch,"[""Banded Tricep Stretch""]",1,2,False,[],False
-exercise_5861443e557f1f8a,Banded YTW,"[""banded Y T W"", ""banded YTW""]",2,2,True,[],False
 exercise_47d07dbc6dcea621,Bar Dip,"[""Bar Dips""]",1,43,False,[],False
 exercise_51fba3939f353679,Bar Muscle Up,"[""Bar Muscle Up""]",1,1,False,[],False
 exercise_4b3ba048a26b1e9a,Barbell Ab Rollout,"[""Barbell Ab Roll Out"", ""Barbell Ab Rollout"", ""Barbell Roll Outs"", ""Barbell Rollout""]",4,87,False,[],False
@@ -219,7 +133,6 @@ exercise_6afa43870429d1fe,Barbell Curl,"[""Barbell Curls"", ""barbell curl""]",2
 exercise_3b42ea33fa3563c4,Barbell Deadlift,"[""Barbell Deadlift""]",1,13,False,[],False
 exercise_83a99009fa9d7af3,Barbell Deadlift (With Explanation),"[""Barbell Deadlifts (with Explanation)""]",1,3,False,[],False
 exercise_34a2ba7f5e75f3dc,Barbell Drop Lunge,"[""barbell drop lunge""]",1,4,True,[],False
-exercise_309e73ea679cbaf5,Barbell Ffe Zercher Iso Hold,"[""Barbell FFE Zercher ISO Hold""]",1,1,False,[],False
 exercise_a791e3da806c118b,Barbell Flexion Row,"[""Barbell Flexion Row""]",1,2,False,[],False
 exercise_33de7b1b9132b819,Barbell Floor Press,"[""BB Floor Press"", ""Barbell Floor Press""]",2,4,False,[],False
 exercise_8c712ced1aee9661,Barbell Glute Hip Thrust,"[""Barbell Glute Hip Thrust""]",1,110,False,[],False
@@ -273,7 +186,6 @@ exercise_d9e288abc6b796a4,Bench Press Warm Up,"[""Bench Press Warm-up""]",1,165,
 exercise_e53c3110edcebe9f,Bench Press With Chains,"[""Bench Press with chains""]",1,8,False,[],False
 exercise_4b7ce148e38f2d93,Bench Support Landmine Meadow Row,"[""Bench Support Landmine Meadow Row""]",1,1,True,[],False
 exercise_445f012d78e4344f,Bench Supported Ys Ts As,"[""Bench Supported Y's, T's, A's""]",1,2,False,[],False
-exercise_8195c0ee2bf0a196,Bendh,"[""Bendh""]",1,0,True,[],False
 exercise_7e4cb15360960be4,Bent Hollow Hold,"[""Bent Hollow Hold""]",1,1,True,[],False
 exercise_e3d65c708b077a4b,Bent Knee Copenhagen Iso Hold,"[""Bent-Knee Copenhagen ISO-Hold""]",1,12,False,[],False
 exercise_2ffe36ecc73f77e5,Bent Over Cable Rotation,"[""Bent Over Cable Rotation""]",1,5,False,[],False
@@ -341,7 +253,6 @@ exercise_d2c90e7e394699d9,Cable Rope Triceps Extension,"[""Cable Rope Triceps Ex
 exercise_42e9ce9f3ef21cfb,Cable Rotation,"[""Cable Rotations""]",1,4,False,[],False
 exercise_499b0b2e0df5457e,Cable Row Machine Close Grip,"[""Cable Row Machine Close grip""]",1,33,False,[],False
 exercise_63239541fb14e77a,Cable Single Arm Lat Pulldown,"[""Cable Single Arm Lat Pull Down""]",1,3,False,[],False
-exercise_cc92b75c0f4d82c8,Cable Swing/Throw/Slap,"[""Cable Swing/Throw/Slap""]",1,1,False,[],False
 exercise_09db8e515ca5c01b,Cable Triceps Extension,"[""Cable tricep extension""]",1,2,False,[],False
 exercise_55c5dd6edcc46c43,Cable Triceps Pushdown,"[""cable tricep pushdown""]",1,5,True,[],False
 exercise_44d131c8a35178d6,Cable Vertical Pulldown,"[""Cable Vertical Pull Down""]",1,1,False,[],False
@@ -381,9 +292,7 @@ exercise_ddfadd2597d2bfed,Clean Pull,"[""Clean Pull""]",1,6,False,[],False
 exercise_c78bedd7aec532e9,Close Chain Straight Arm Shoulder Rotation,"[""Close Chain Straight Arm Shoulder Rotations""]",1,1,False,[],False
 exercise_e9d94784aafd8741,Close Grip Bench Press,"[""Close Grip Bench Press""]",1,147,False,[],False
 exercise_0d64db86275184ee,Close Grip Bench Press (Football Bar),"[""Close Grip Bench Press (Football Bar)""]",1,1,False,[],False
-exercise_e262a5da71f87bec,"Close Grip Bench Press Dead Press (2"" Above Chest) Against Max Band Tension Only","[""Close Grip Bench Press Dead Press (2\"" Above Chest) Against Max Band Tension Only""]",1,1,False,[],False
 exercise_a38944a53f095d10,Close Grip Bench Press With Chains,"[""Close Grip Bench Press with chains""]",1,6,False,[],False
-exercise_6fb6e3ad127068a6,Close Grip Bench Press With Reverse Mini Bands,"[""Close Grip Bench Press with Reverse MINI Bands""]",1,1,False,[],False
 exercise_d7d524a6db8eee34,Close Grip Board Press,"[""Close Grip Board Press""]",1,25,False,[],False
 exercise_228c2eb7b60fb3c8,Close Grip Chest To Bar Chin-Up,"[""Close Grip Chest To Bar Chin-up""]",1,17,False,[],False
 exercise_d9d2d66182004f83,Close Grip Chin-Up,"[""Close Grip Chin-up""]",1,53,False,[],False
@@ -405,9 +314,7 @@ exercise_aacc1501f1136b53,Conditioning Warm Up,"[""Conditioning Warm Up""]",1,83
 exercise_3a0b57dfcbb3701e,Consecutive Broad Jump,"[""Consecutive Broad Jump""]",1,1,False,[],False
 exercise_d8f5b25d79cd7525,Contralateral Loading Dumbbell Box Step-Up,"[""Contralateral Loading  DB box step up""]",1,0,True,[],False
 exercise_eaf28dadbb21b700,Conventional Deadlift,"[""conventional deadlift""]",1,0,True,[],False
-exercise_ac6ae49b1fd7ccba,Conventional Deadlift Against A Band,"[""Conventional Deadlift Against A Band""]",1,23,False,[],False
 exercise_adae7f43b91f118a,Conventional Deadlift Against Pins (Set At Below Knee Cap) Static Hold For 3 Seconds Per Rep Against Pins @40% Of Dl 1Rm,"[""Conventional deadlift against pins (set at below knee cap) - static hold for 3 seconds per rep against pins @40% of DL 1RM""]",1,1,False,[],False
-exercise_c22cec2c787c0c86,Conventional Rack Deadlift Bands Optional,"[""Conventional Rack Deadlift - bands optional""]",1,3,False,[],False
 exercise_3b6ab4311bfb9b04,Cool Down Run,"[""Cool Down Run""]",1,3,False,[],False
 exercise_dae167b65539d6a2,Copehagen Side Plank,"[""Copehagen Side Plank""]",1,75,False,[],False
 exercise_70d2a3bf23644f38,Copenhagen Plank,"[""Copenhagen Plank""]",1,2,False,[],False
@@ -431,8 +338,6 @@ exercise_cbe3bf7526684108,Cyclist Front Squat,"[""cyclist front squat""]",1,0,Tr
 exercise_9b1e19d57d944fe0,Cyclist Squat,"[""Cyclist Squat""]",1,16,True,[],False
 exercise_7fd57a705b3b43a8,Cyclist Squat Back Rack,"[""cyclist squat - back rack""]",1,1,True,[],False
 exercise_5870523a3d3a118f,Dead Bug,"[""Dead Bug"", ""Deadbug""]",2,2,False,[],False
-exercise_ce0a21960e884a8c,Dead Bug Banded Upper Body,"[""Deadbug Banded Upper Body""]",1,2,False,[],False
-exercise_6618bc170ef1ba91,Dead Bug With Mini Bands,"[""Dead Bug with Mini Bands""]",1,4,False,[],False
 exercise_eb71a5198a66206d,Dead Hang,"[""Dead Hang""]",1,1,False,[],False
 exercise_68d3a767938dc47e,Dead Stop Deadlift,"[""Dead Stop Deadlifts.""]",1,9,True,[],False
 exercise_56e865bda68e056f,Dead Stop Dumbbell Alternating Floor Press,"[""Dead Stop DB Alternating Floor Press""]",1,3,False,[],False
@@ -478,11 +383,9 @@ exercise_b6813f3af2d45fbf,Dip,"[""Dips""]",1,5,False,[],False
 exercise_92c2623d0d5bfce6,Dip Bar Triceps,"[""Dip Bar - Tricep""]",1,2,False,[],False
 exercise_efa9910eb1dda83e,Dip Belt Calf Raise,"[""Dip Belt Calf Raises""]",1,1,False,[],False
 exercise_4e6c44445ac0f240,Dip Lockout,"[""Dip Lockout"", ""Dip lockout""]",2,11,True,[],False
-exercise_88c40bf4118a6013,Dirty 30S,"[""Dirty 30s""]",1,8,False,[],False
 exercise_653bf621fc6564cb,Dive Bomber,"[""Dive Bomber""]",1,2,False,[],False
 exercise_cb1e9f43fe84af34,Dive Bomber Push-Up,"[""Dive Bomber Push Up""]",1,4,False,[],False
 exercise_e2b5f51ae165db31,Donkey Calf Raise,"[""Donkey Calf Raise"", ""donkey calf raises""]",2,8,True,[],False
-exercise_a4a1186ea34b4af5,Double Band Pushdown,"[""Double Band Pushdowns""]",1,14,False,[],False
 exercise_ac9926d1c91f529a,Double Dead Bug,"[""Double Deadbug""]",1,4,False,[],False
 exercise_66cf5d657b563f18,Double Dumbbell Hang Snatch,"[""Double DB Hang Snatch""]",1,1,False,[],False
 exercise_0342d24f2c54ea56,Double Kettlebell Clean And Press,"[""Double KB Clean & Press"", ""Double KB Clean and Press""]",2,54,False,[],False
@@ -497,8 +400,6 @@ exercise_674ac9ef63d7649c,Double Kettlebell Push Press,"[""Double KB Push Press"
 exercise_27aaf48fd30c306e,Double Kettlebell Snatch,"[""Double KB Snatch""]",1,29,False,[],False
 exercise_faacc7c37a935098,Double Kettlebell Squat,"[""Double KB Squat""]",1,15,False,[],False
 exercise_76a0e590a914fb66,Double Kettlebell Sumo Romanian Deadlift,"[""Double KB Sumo RDLs""]",1,8,False,[],False
-exercise_42dba2fa2fd1a217,Double Leg Banded Hamstring Curl,"[""Double Leg Banded Hamstring Curls"", ""double leg banded hamstring curl""]",2,46,True,[],False
-exercise_59121deb5cfec29e,Double Leg Banded Leg Curl,"[""Double Leg Banded Leg Curls""]",1,13,False,[],False
 exercise_c518726e534bcaab,Double Under,"[""Double Under"", ""Double Unders""]",2,107,False,[],False
 exercise_71c002b973cf2f29,Dragon Flag,"[""Dragon Flag"", ""Dragon Flags""]",2,49,False,[],False
 exercise_e015143fea7c64a4,Dragon Fly,"[""dragon fly""]",1,0,True,[],False
@@ -653,12 +554,10 @@ exercise_cb5858524fa74946,Fallout,"[""Fallout""]",1,1,False,[],False
 exercise_452394aede69d44e,Fan Bike,"[""Fan Bike"", ""FanBike""]",2,85,True,"[""12-15 min Bike\n\nAt minutes 3, 6, 9, 12, and 15, get off the bike and perform:\n\n• Alternating Single Arm Dumbbell Power Clean 6 reps (3 reps/side)\n• Dumbbell Filly Carry 20m/side""]",False
 exercise_b80028b27f183c59,Fan Bike Intervals,"[""fan bike intervals""]",1,5,True,[],False
 exercise_25706a027ac565e5,Farmer Carry,"[""Farmer Carry"", ""Farmers Carry"", ""Farmers carry"", ""farmers carry""]",4,130,True,[],False
-exercise_979df63501379ffe,Farmers Press,"[""farmers press""]",1,1,True,[],False
 exercise_943c91dab311ab36,Fat Bar Behind The Neck Shoulder Press,"[""Fat Bar Behind the Neck Shoulder Press""]",1,1,False,[],False
 exercise_8345a14944fa336c,Fat Bar Curl,"[""Fat Bar Curls""]",1,19,False,[],False
 exercise_1375e573adbc6523,Fat Bar Push Press,"[""Fat Bar Push Press""]",1,4,False,[],False
 exercise_1a1247681366ce52,Feet Elevated Chin-Up,"[""FEET ELEVATED CHIN-UPS"", ""Feet Elevated Chin-ups""]",2,48,True,[],False
-exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,"[""FEET ELEVATED HIP THRUST + BAND"", ""Feet Elevated Hip Thrust + Band"", ""feet  Elevated Hip Thrust + band""]",3,58,True,[],False
 exercise_700e29a7c51c541f,Feet Elevated Inverted Row,"[""Feet Elevated Inverted Row""]",1,3,False,[],False
 exercise_08cd32d762996b75,Feet Elevated Pull-Up,"[""Feet Elevated Pull-ups""]",1,33,False,[],False
 exercise_7ff1135f51b453d4,Feet Elevated Ring Pull-Up,"[""Feet Elevated Ring Pull-ups""]",1,6,False,[],False
@@ -691,7 +590,6 @@ exercise_790eeed0ea2da05a,Foam Rolling Thoracic Spine,"[""Foam Rolling thoracic 
 exercise_6ed438f39aa5b1b9,Focused Lat Pull-Up,"[""Focused Lat Pull Up""]",1,1,False,[],False
 exercise_69afbb524f5506c4,Football Bar Bench Press,"[""Football Bar Bench Press"", ""Football bar bench press""]",2,26,True,[],False
 exercise_a553c2d0db865358,Football Bar Floor Press,"[""Football  Bar Floor Press"", ""Football Bar Floor Press""]",2,18,True,[],False
-exercise_6fb3f6db6827283b,Football Bar Pin Press Against Bands,"[""Football Bar Pin Press against bands""]",1,2,False,[],False
 exercise_1be57c3194f3227e,Forearm Supported Wrist Curl,"[""Forearm Supported Wrist Curl""]",1,3,False,[],False
 exercise_b0707c7a95db21bd,Forward + Reverse Lunge,"[""Forward + Reverse Lunges""]",1,9,False,[],False
 exercise_c6c7f70ed1dd1af4,Forward Bounds,"[""Forward Bounds""]",1,1,False,[],False
@@ -702,7 +600,6 @@ exercise_2c0415dabf40236b,French Press,"[""french press""]",1,5,True,[],False
 exercise_fcf482f912db7d72,Frog Pumps,"[""frog pumps""]",1,0,True,[],False
 exercise_6bfb727c8bc7eaf0,Frog Stretch,"[""Frog Stretch""]",1,1,False,[],False
 exercise_4030ae5158df935c,Front Box Squat,"[""Front Box Squat"", ""Front box squat""]",2,81,True,[],False
-exercise_6a0613d6256d7a9a,Front Box Squat Against Bands,"[""Front Box Squat against bands""]",1,16,False,[],False
 exercise_01ebe47d3e6365bc,Front Box Squat With Chains,"[""Front Box Squat with Chains""]",1,15,False,[],False
 exercise_1aa0e17caad3928c,Front Foot Elevated Dumbbell Revere Lunge,"[""Front foot elevated DB Revere lunge""]",1,0,True,[],False
 exercise_d29469aea5c61ed8,Front Foot Elevated Kettlebell Reverse Lunge,"[""Front Foot Elevated KB Reverse Lunges""]",1,22,False,[],False
@@ -738,11 +635,8 @@ exercise_8e3663b8a187e852,Ghd Or Decline Back Loaded Barbell Sit Ups 8Rm,"[""GHD
 exercise_24d2350f8be29bf4,Ghd Reverse Sit Up,"[""GHD Reverse Sit-up""]",1,14,False,[],False
 exercise_77e1488d10e4a61a,Ghd Side Plank Pallof Press,"[""GHD Side Plank Pallof Press""]",1,9,False,[],False
 exercise_5ff2c32218b08867,Ghd Sit Up,"[""GHD Sit-Up""]",1,20,False,[],False
-exercise_308a86e46ff0ca33,Ghd Sit Up Against Band,"[""GHD Sit-up Against Band""]",1,4,False,[],False
-exercise_a61c54d209c34696,Ghd Sit Ups (To Parallel And Up) Against Max Band,"[""GHD Sit Ups (to parallel and up) Against Max Band""]",1,1,False,[],False
 exercise_46127139d926482d,Ghd Snatch Grip Barbell Back Extension,"[""GHD Snatch Grip Barbell Back Extensions""]",1,1,False,[],False
 exercise_1710c88e028023bf,Ghd SSB Back Loaded Back Extension,"[""GHD SSB Back Loaded Back Extensions""]",1,1,False,[],False
-exercise_b39710a8ec1c708c,Ghr Against Bands,"[""GHR against bands""]",1,4,False,[],False
 exercise_c94de413bbc56658,Glute Bridge,"[""Glute Bridge""]",1,10,False,[],False
 exercise_8bba4959833775a9,Glute Bridge Dumbbell Bench Press,"[""Glute Bridge Dumbbell Bench Press""]",1,0,True,[],False
 exercise_6f74cfdbb7b3c870,Glute Bridge Dumbbell Floor Press,"[""Glute Bridge DB Floor Press""]",1,8,False,[],False
@@ -751,7 +645,6 @@ exercise_74bd203ff296ce73,Glute Bridge Hold With Hip Abduction,"[""Glute Bridge 
 exercise_f56bd74abc2a0d28,Glute Bridge March,"[""Glute Bridge March""]",1,0,True,[],False
 exercise_17406e7e110637f2,Glute Drive Machine,"[""Glute Drive Machine""]",1,1,True,[],False
 exercise_881e8fbc2a744188,Glute Ham Raise,"[""Glute Ham Raise"", ""Glute Ham Raises"", ""Glute-Ham Raise""]",3,77,False,[],False
-exercise_b62702a8b3177478,Glute Ham Raise With Band,"[""Glute Ham Raise with band""]",1,2,False,[],False
 exercise_508c2801a46cc19d,Glute Hip Thrust,"[""Glute Hip Thrusts""]",1,3,False,[],False
 exercise_8062b102c1620893,Glute March,"[""Glute March""]",1,25,False,[],False
 exercise_4f2a6e1b93440ae8,Glute Supermans,"[""Glute Supermans""]",1,1,False,[],False
@@ -768,7 +661,6 @@ exercise_766238991861f74b,Goblet Rfess,"[""Goblet RFESS""]",1,28,False,[],False
 exercise_79016c22d33cb661,Goblet Split Squat,"[""Goblet Split Squat""]",1,4,False,[],False
 exercise_03a22e9f23d89cee,Goblet Sq Sp,"[""Goblet SQ - SP""]",1,1,False,[],False
 exercise_ede77da13c8fe14c,Goblet Squat,"[""Goblet Squat"", ""Goblet Squats""]",2,41,False,[],False
-exercise_e950a1bab5dacb36,Goblet Squat Band Over Knees,"[""Goblet Squat Band Over Knees""]",1,12,False,[],False
 exercise_b69cf5f0d24fa305,Goblet Squat W/ Prying,"[""Goblet Squats w/ Prying""]",1,12,False,[],False
 exercise_f092d952162ae7b9,Goblet Tall Kneeling To Standing,"[""goblet Tall Kneeling To Standing""]",1,0,True,[],False
 exercise_cdf71dea7d7741a2,Good Morning,"[""Good Morning""]",1,7,False,[],False
@@ -777,12 +669,9 @@ exercise_6de5e761a5a1cbe0,Gorilla Sits,"[""Gorilla Sits""]",1,1,False,[],False
 exercise_c2e8858b7c2927fa,Gpp,"[""GPP""]",1,6,True,[],False
 exercise_e87c871103267a00,Grip Roller,"[""Grip Roller""]",1,1,False,[],False
 exercise_3f065480810b8d41,Groin Squeeze,"[""Groin Squeeze""]",1,1,False,[],False
-exercise_6e8a482ad33b6a62,H Rolls,"[""H-Rolls""]",1,1,False,[],False
-exercise_48f902645d76724e,Hack Squat Reverse Banded,"[""Hack Squat - Reverse Banded""]",1,1,False,[],False
 exercise_a3fe27139116fda1,Half Front Split Stretch E/Side,"[""Half Front Split Stretch E/Side""]",1,1,False,[],False
 exercise_42e3f16004966184,Half Kneel Chop,"[""Half Kneel Chop""]",1,5,False,[],False
 exercise_953a70b39ebcf25b,Half Kneeling Arnold Shoulder Press,"[""Half-Kneeling arnold  Shoulder Press""]",1,0,True,[],False
-exercise_f46c4b87ee1df819,Half Kneeling Banded High To Low Chop,"[""Half-Kneeling Banded High To Low Chop"", ""half kneeling banded high to low chop""]",2,51,True,[],False
 exercise_d693809714e7c010,Half Kneeling Bottoms Up Kettlebell Press,"[""Half-Kneeling Bottoms Up KB Press""]",1,2,False,[],False
 exercise_a7678e18483aca06,Half Kneeling Cable Face Pull,"[""Half-kneeling Cable Facepulls""]",1,4,False,[],False
 exercise_834a1273d5ddea14,Half Kneeling Cable Pallof Press,"[""Half kneeling Cable pallof press"", ""Half-Kneeling Cable Pallof Press""]",2,13,True,[],False
@@ -830,7 +719,6 @@ exercise_99be9e80a49e6a1d,Hanging Medicine Ball Knee Raise,"[""Hanging Medball K
 exercise_e606d5de9792941f,Hanging Straight Leg Raise,"[""Hanging Straight Leg Raises""]",1,2,False,[],False
 exercise_6e2e105d3cf614c1,Head Supported Pronated Row,"[""head supported pronated row""]",1,9,True,[],False
 exercise_14ba0df822024ee8,Head Supported Row Pronated,"[""Head Supported Rows - Pronated""]",1,7,False,[],False
-exercise_0196cdf1473c7b6a,Heavy Banded (Or Cable) Standing Static Hold In Ab/Crunch Position 3 Sets 1 Minute Middle 30 Seconds Per Side (Obliques),"[""Heavy Banded (or cable) Standing Static Hold in Ab/Crunch Position - 3 Sets: 1 Minute Middle, 30 Seconds Per Side (Obliques)""]",1,1,False,[],False
 exercise_ab830d0bceb305f7,Heavy Reverse Hyper,"[""HEAVY Reverse Hypers""]",1,1,False,[],False
 exercise_af0aa9847be7e649,Heel Taps,"[""Heel Taps""]",1,1,False,[],False
 exercise_82ac0c7cf5455615,Heels Elevated Goblet Squat,"[""Heels Elevated Goblet Squat"", ""Heels Elvated Goblet Squats""]",2,42,True,[],False
@@ -891,7 +779,6 @@ exercise_37cb56947be86800,Incline Dumbbell Prone Reverse Fly,"[""incline db pron
 exercise_c96178e22cebab5c,Incline Dumbbell Row,"[""Incline DB Row""]",1,16,False,[],False
 exercise_80b0c56cad6286c5,Incline Dumbbell Skull Crusher,"[""Incline DB Skull Crushers"", ""incline DB skull crusher""]",2,10,True,[],False
 exercise_1a21ac9109bb01a9,Incline Dumbbell Tate Press,"[""Incline DB Tate Press""]",1,2,False,[],False
-exercise_91473ef879df30c9,Incline Dumbbell Tate Press (Pause Each Rep On Chest) + Mini Or Monster Mini Bands,"[""Incline DB Tate Presses (pause each rep on chest) + Mini or Monster Mini Bands""]",1,1,False,[],False
 exercise_f3a65fd90109e2ad,Incline Face Down Reverse Dumbbell Flys,"[""Incline face down reverse DB Flys""]",1,1,False,[],False
 exercise_0d13c565d38911de,Incline Hammer Curl,"[""Incline Hammer Curls""]",1,3,False,[],False
 exercise_6b1ba838336224d1,Incline Kettlebell Bench Press,"[""Incline KB Bench Press""]",1,1,False,[],False
@@ -925,7 +812,6 @@ exercise_c8f68794e4b920aa,Kettle Bell Squays,"[""Kettle bell  Squays""]",1,1,Tru
 exercise_78b2482924de84dc,Kettlebell Alternating Gorilla Row,"[""KB Alt Gorilla Rows""]",1,18,False,[],False
 exercise_79078bb59c3e7c21,Kettlebell Arm Bar,"[""KB ARM BAR"", ""KB Arm Bar""]",2,6,True,[],False
 exercise_8c505940ffcbb802,Kettlebell Arm Bar With Thoracic Rotation,"[""kb arm bar with thoracic rotation""]",1,2,False,[],False
-exercise_e3f32d7159d5b0db,Kettlebell Around The World,"[""KB Around The World""]",1,7,False,[],False
 exercise_74559cc7537e60e9,Kettlebell Bent Press,"[""KB Bent Press""]",1,35,False,[],False
 exercise_6ac591ac7441ac74,Kettlebell Bottoms Up Waiters Carry,"[""kb bottoms up waiters carry""]",1,2,False,[],False
 exercise_1862e4ea36f68e62,Kettlebell Clean,"[""KB Cleans""]",1,91,False,[],False
@@ -984,7 +870,6 @@ exercise_4b8ab90e8d9dfe0e,Knee Supported Foam Roller Windmill,"[""Knee Supported
 exercise_93f42d4b92d6cb50,Knee Terminal Extension Tke,"[""Knee Terminal Extensions - TKE""]",1,6,True,[],False
 exercise_9a1e7864bbf8801b,Kneeling Dumbbell Diagonal Chop,"[""Kneeling Dumbbell Diagonal Chop""]",1,1,False,[],False
 exercise_21457e1c837dbd74,Kneeling Medicine Ball Throw,"[""Kneeling Med-Ball Throw""]",1,1,False,[],False
-exercise_4fa211292d7d618d,Kneeling Squat (Against Band),"[""Kneeling Squat (against band)""]",1,1,False,[],False
 exercise_88e078b1d629463c,Kneeling T Spine With Shoulder Opener,"[""Kneeling T-Spine with Shoulder Opener""]",1,1,False,[],False
 exercise_bd21c12de442fc14,Knees Over Toes Split Squat With Floating Heel,"[""Knees Over Toes Split Squats With Floating Heel""]",1,1,False,[],False
 exercise_1eb263674ec620b8,Knees To Elbows,"[""Knees to Elbows""]",1,10,False,[],False
@@ -1023,7 +908,6 @@ exercise_af818461eca86573,Lat Pulldown Pronated,"[""Lat Pulldowns Pronated""]",1
 exercise_a270bb1d71138739,Lat Pulldown Pronated Grip,"[""Lat Pulldown - pronated grip""]",1,0,True,[],False
 exercise_80148a2ef03c2e0f,Lat Pulldown Supinated Grip,"[""Lat Pulldown - supinated grip""]",1,7,True,[],False
 exercise_7b1b94f1c095f6fe,Lat Sweep,"[""Lat Sweep""]",1,2,False,[],False
-exercise_74058196cf583db6,Lateral Band Side Step,"[""Lateral Band Side Steps""]",1,2,False,[],False
 exercise_1f520386094c2641,Lateral Bound,"[""Lateral Bound""]",1,1,False,[],False
 exercise_fadc7f62c034f438,Lateral Bound To Box Jump,"[""Lateral Bound to Box jump""]",1,2,False,[],False
 exercise_3f3b6dd3d117a3dc,Lateral Box Step-Up,"[""Lateral Box Step-ups""]",1,1,False,[],False
@@ -1061,7 +945,6 @@ exercise_07d9f3d18cc07a42,Low Incline Bench Press,"[""Low-Incline Bench Press""]
 exercise_cfb633a20f187689,Low Incline Dumbbell Flye,"[""Low Incline Db Flye""]",1,1,True,[],False
 exercise_219bebf9d757e707,Low Incline Dumbbell Triceps Kickbacks,"[""Low Incline DB Tricep Kickbacks""]",1,6,False,[],False
 exercise_ce657a96edbcbf0a,Low Pogo Jump,"[""Low Pogo Jumps""]",1,2,False,[],False
-exercise_85da5b411d1d3cce,Lower Body Focus Full Body,"[""Lower Body Focus Full Body""]",1,0,True,"[""Warm up\n90 seconds of bike @ Moderate pace\n20 second passive hang \n10 peterson Step up\n20 shin boxs\n10 tib raises\n3 box jumps \n\nLOWER\nFront squat+glute ham raise\n3x3-5\n3x6-8\nBarbell RDL+KOT split squat 10%bw\n3x6-8\n3x8-10\nFootball bar floor Press+tricep dip\n3x8""]",False
 exercise_e3aff966175630ac,Lu Raise,"[""Lu Raise""]",1,15,False,[],False
 exercise_b451d79c0bd82fb5,Lunge,"[""Lunge"", ""Lunges""]",2,20,False,[],False
 exercise_0731eb71ffebe1e0,Lunge Jump,"[""Lunge Jumps""]",1,2,False,[],False
@@ -1072,7 +955,6 @@ exercise_1e4ead63c37f6e83,Lunge Walk,"[""Lunge Walk""]",1,1,False,[],False
 exercise_5c83355ebad62488,Lunge Walking + Rhythm,"[""Lunges - Walking + Rhythm""]",1,2,False,[],False
 exercise_0e046373566ac9a3,Lunge With Rotation,"[""Lunge with rotation""]",1,1,False,[],False
 exercise_37ebe01305dbe4b6,Lunge With T Spine,"[""Lunge with T-Spine""]",1,1,False,[],False
-exercise_ead1a4d5f7153030,Lying (Face Up) Banded Reverse Flys,"[""lying (face up) banded reverse flys""]",1,1,False,[],False
 exercise_09acd33c46d1d834,Lying Hamstring Curl,"[""Lying Hamstring Curl""]",1,6,True,[],False
 exercise_7dee0d6687e1273f,Lying Leg Curl,"[""Lying Leg Curl""]",1,19,False,[],False
 exercise_41c2fb9e9d4cd09f,Lying Leg Raise On Bench,"[""Lying Leg Raise On Bench""]",1,1,False,[],False
@@ -1104,20 +986,15 @@ exercise_09b54bafe0152aac,Medicine Ball Twist,"[""Med Ball Twists""]",1,1,False,
 exercise_8799a3900c8d7b76,Medium Grip Bench Press,"[""Medium Grip Bench Press""]",1,1,False,[],False
 exercise_0867bde0a1837a64,Medium Grip Floor Press,"[""Medium Grip Floor Press""]",1,1,False,[],False
 exercise_c6265435d2f60d07,Metcon,"[""metcon""]",1,5,True,[],False
-exercise_cd1eb9e303b014a4,Mid Band Anti Rotation,"[""Mid Band Anti-Rotation""]",1,7,False,[],False
 exercise_31501d878853975d,Mid Thigh Iso Pull,"[""Mid Thigh Iso Pull""]",1,2,False,[],False
 exercise_ea44bd03da6a31cf,Military Press,"[""Military Press""]",1,0,True,[],False
 exercise_a3e1d55936958b2d,Mixed Grip Pull-Up,"[""Mixed Grip Pull-Up""]",1,5,False,[],False
-exercise_873a47ba1e00ba43,Mixed Method,"[""Mixed Method""]",1,1,False,[],False
-exercise_bd9b30bb44e57cc5,Mobilitywod Banded Lower Body Unlock,"[""MOBILITYWOD - Banded Lower Body Unlock""]",1,3,False,[],False
 exercise_c6be732c39e06660,Mobilitywod Fire Up The Upper Back,"[""MobilityWod - Fire Up the Upper Back""]",1,3,False,[],False
 exercise_d0ba1f8722560e9e,Mobilitywod Game Changer,"[""MOBILITYWOD - GAME CHANGER""]",1,3,False,[],False
 exercise_3310d7cbde28f6a0,Mobilitywod Knee Pain Fix,"[""MOBILITYWOD - Knee Pain Fix""]",1,3,False,[],False
 exercise_97d73744f7505ef3,Mobilitywod Low Back Relief,"[""MOBILITYWOD - Low Back Relief""]",1,3,False,[],False
 exercise_5380e802d77a203a,Mobilitywod Unlock Your Ankles,"[""MOBILITYWOD - Unlock Your Ankles""]",1,3,False,[],False
-exercise_9c9c296453be294e,Moderate Tempo Work,"[""Moderate Tempo Work""]",1,1,False,[],False
 exercise_cf6f05f00e795194,Modified Scorpion Stretch,"[""Modified Scorpion Stretch""]",1,12,False,[],False
-exercise_442f2e22ae05743d,Monster Band Kick Back,"[""Monster band kick back""]",1,0,True,[],False
 exercise_67617d4ef852584e,Monster Walks,"[""Monster Walks""]",1,1,False,[],False
 exercise_c4863ffc4d2923d4,Mountain Climbers,"[""Mountain Climbers""]",1,7,False,[],False
 exercise_59693b3e75fbb8e9,Multi Direction Ab Wheel,"[""Multi-Direction Ab Wheel""]",1,3,False,[],False
@@ -1147,13 +1024,10 @@ exercise_f4e88b26f5d04eb4,Offset Kettlebell Squat,"[""Offset Kettlebell Squat""]
 exercise_a4fa393df1728316,Oh Kettlebell Carry,"[""OH KB Carry""]",1,2,False,[],False
 exercise_7db9f90a43849a06,Oh Kettlebell Sit Ups,"[""OH KB Sit-ups""]",1,20,False,[],False
 exercise_f12502049dd65aae,Old School Audinwood Core Circuit (Core),"[""Old School Audinwood Core Circuit (CORE)""]",1,3,False,[],False
-exercise_41a49f786d133c21,Option 1,"[""Option 1""]",1,2,False,[],False
-exercise_209ef9fc4dfe2166,Option 2,"[""Option 2""]",1,2,False,[],False
 exercise_06803b0889e1bd97,Overcoming Calf Raiser March,"[""Overcoming - Calf Raiser March""]",1,2,False,[],False
 exercise_5e32593975efa8ba,Overcoming Iso Barbell Calf Raise,"[""Overcoming ISO BB Calf Raise""]",1,1,False,[],False
 exercise_add4554b05390430,Overcoming Isometric Single Leg Calf Raise Hold,"[""Overcoming Isometric Single Leg Calf Raise Hold""]",1,3,False,[],False
 exercise_bc44ecd81fb12aba,Overhead + Front Rack Carry,"[""Overhead + Front Rack Carry""]",1,15,False,[],False
-exercise_1b4a6a10ad1fdfc6,Overhead Banded Triceps,"[""Overhead Banded Triceps""]",1,5,False,[],False
 exercise_adac52da1807e4ce,Overhead Carry/Front Rack Carry,"[""Overhead Carry/front Rack Carry""]",1,0,True,[],False
 exercise_dcfcacd3e9d1bf50,Overhead Dumbbell Carry,"[""Overhead DB Carry""]",1,23,False,[],False
 exercise_70762c25bcda5d71,Overhead March,"[""Overhead March""]",1,4,False,[],False
@@ -1162,7 +1036,6 @@ exercise_e8b1a3bed452ce40,Overhead Press Warm Up,"[""Overhead Press Warm-up""]",
 exercise_cdfee85e2c3d783c,Overhead Squat,"[""Overhead Squat""]",1,14,False,[],False
 exercise_86314e077618ef27,Overhead Triceps Rope Extension,"[""Overhead Tricep Rope Extension""]",1,1,False,[],False
 exercise_d8d60416c347ef76,Overhead Walking Lunge,"[""Overhead Walking Lunge""]",1,1,False,[],False
-exercise_6d948c571516b02c,Pallof Press (Band Or Cable),"[""Pallof Press (Band or Cable)""]",1,19,False,[],False
 exercise_f6d63653fe157561,Parallette L Sit Hold,"[""Parallette L-Sit Hold""]",1,10,False,[],False
 exercise_f5dae15f5085ef7e,Parallette L Sit Holds Feet Above 3 45Lb Bumper Plates 2 Minutes Total Time,"[""Parallette L-Sit Holds - Feet Above 3 45lb. Bumper Plates, 2 Minutes Total Time""]",1,1,False,[],False
 exercise_0cce5c1e0d5bb772,Parallette Push-Up,"[""Parallette Push Up""]",1,5,True,[],False
@@ -1173,10 +1046,8 @@ exercise_c5ef999fa3dd5b94,Pause Back Squat,"[""Pause Back Squat""]",1,3,False,[]
 exercise_6d73a5d7b339eb15,Pause Bench Press,"[""Paused Bench Press""]",1,5,False,[],False
 exercise_eec8d7c3e2c2c8d6,Pause Front Squat,"[""Paused Front Squat""]",1,8,False,[],False
 exercise_363f9e595456de50,Pause Front Squat Against 25% Hanging Chains,"[""Paused Front Squat Against 25% Hanging Chains""]",1,1,False,[],False
-exercise_21bc931f0c2292cf,Pdl Barbell Protocol,"[""PDL Barbell Protocol""]",1,1,False,[],False
 exercise_acb18746c41876ed,Pdl Mobility Protocol,"[""PDL Mobility Protocol""]",1,4,False,[],False
 exercise_c05cb9adb8d1e865,Pdl Plyometrics Protocol,"[""PDL Plyometrics Protocol""]",1,1,False,[],False
-exercise_12a0df8c5bc0bf1f,Pdl Shoulder Protocol,"[""PDL Shoulder Protocol""]",1,1,False,[],False
 exercise_3bc3d2ac57b9dc61,Pec Deck,"[""Pec Deck""]",1,1,False,[],False
 exercise_fce2ead4704e52ee,Pec Fly,"[""Pec Fly""]",1,1,False,[],False
 exercise_a318fab5a1c4d163,Pec Stretch Against Wall,"[""pec stretch against wall""]",1,2,False,[],False
@@ -1190,7 +1061,6 @@ exercise_792fd11b647357ad,Pike Handstand Push-Up,"[""pike handstand push up""]",
 exercise_9a508d714c315ea3,Pike Leg Lift Over,"[""Pike Leg Lift Over""]",1,1,True,[],False
 exercise_5cd91ba18c75289a,Pike Push-Up,"[""Pike Pushup""]",1,12,False,[],False
 exercise_c80bf876dd9ec503,Plank,"[""Plank""]",1,9,False,[],False
-exercise_ca9fe8746135a5fb,Plank Against Max Band 3X2 Minutes,"[""Plank, Against Max Band - 3x2 Minutes""]",1,1,False,[],False
 exercise_ba2cca7edeb8686a,Plank Jack Push-Up,"[""Plank Jack Push-Up""]",1,2,False,[],False
 exercise_ab6ce182f2442e63,Plank Pull Through,"[""Plank Pull-Through""]",1,31,False,[],False
 exercise_781ceeb4eee3e411,Plank Row,"[""Plank Row""]",1,5,False,[],False
@@ -1235,18 +1105,11 @@ exercise_879146f81310c009,Pronated Strict Pull-Up,"[""pronated strict pull up""]
 exercise_067b116d1dee9c7e,Prone (2 Up 1 Down) Hamstring Curl Machine,"[""Prone (2 Up, 1 Down) Hamstring Curl - Machine""]",1,2,False,[],False
 exercise_5cc172a781853bd4,Prone Dumbbell Iso Alternating Posterior Flyes,"[""Prone DB ISO-Alternating Posterior Flyes""]",1,3,False,[],False
 exercise_c653b65f7d6ddc93,Prone Dumbbell Posterior Flyes,"[""Prone DB Posterior Flyes""]",1,3,False,[],False
-exercise_5fb46acf00b87b01,Prone Incline Drop Catch,"[""prone incline drop catch""]",1,2,False,[],False
 exercise_b18ceb642c3ea44b,Prone Lateral Raise Triset,"[""Prone Lateral Raise Triset""]",1,4,False,[],False
 exercise_6e35acf96c37bab9,Prone Machine Hamstring Curl,"[""Prone Machine Hamstring Curl""]",1,17,False,[],False
 exercise_87f70a71c12295d5,Prone Rear Lateral Raise Pronated Grip,"[""Prone Rear Lateral Raises - Pronated Grip"", ""prone rear lateral raises - pronated grip""]",2,43,True,[],False
 exercise_59cc743c353386d1,Prone Scarecrow Press,"[""Prone Scarecrow Press""]",1,3,False,[],False
 exercise_9d010ed94f7da787,Prone Trap Raise,"[""Prone Trap Raises""]",1,9,False,[],False
-exercise_ae55c39af81a619e,Prvn60 1/05/24,"[""PRVN60 1/05/24""]",1,1,False,[],False
-exercise_c3fd8c007b468984,Prvn60 2/05/24,"[""PRVN60 2/05/24""]",1,1,False,[],False
-exercise_8e268f0b5bbb89b3,Prvn60 29/04/24,"[""PRVN60 29/04/24""]",1,1,False,[],False
-exercise_c6b4fa2af3e250b3,Prvn60 3/05/24,"[""PRVN60 3/05/24""]",1,1,False,[],False
-exercise_a6a3e75277db62f6,Prvn60 30/04/24,"[""PRVN60 30/04/24""]",1,1,False,[],False
-exercise_09d2746b32367d9e,Prvn60 4/05/24,"[""PRVN60 4/05/24""]",1,1,False,[],False
 exercise_8ae4be4b14fd3479,Pull Through,"[""Pull Through""]",1,2,False,[],False
 exercise_cbcd1dde3d8b0ecc,Pull-Up,"[""Pull-Up"", ""Pull-Ups"", ""Pull-ups""]",3,75,False,[],False
 exercise_b02bb495f8080a30,Pull-Up Bar Dead Hang,"[""Pull-Up Bar Dead Hang""]",1,1,False,[],False
@@ -1259,8 +1122,6 @@ exercise_49a4f758449dd7e0,Push Back Push-Up,"[""Push Back Push Up""]",1,1,False,
 exercise_7b7319da646951ee,Push Jerk,"[""Push Jerk""]",1,15,False,[],False
 exercise_c645f0f4028c01fa,Push Jerk Barbell,"[""Push Jerk - BB""]",1,2,False,[],False
 exercise_92a34e89076c048e,Push Press,"[""Push Press""]",1,64,False,[],False
-exercise_1704e60189031636,Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands,"[""Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands""]",1,1,False,[],False
-exercise_daef8e2564372553,Push Press Against Singled Micro Mini Or Mini Bands *Under 225 Max Micro Mini Bands,"[""Push Press Against Singled Micro Mini or Mini Bands *Under 225 Max: Micro Mini Bands""]",1,1,False,[],False
 exercise_21c53de948dfd33d,Push Press Barbell,"[""Push Press - BB""]",1,2,False,[],False
 exercise_3d01b2aad3491eb6,Push-Up,"[""Push Ups"", ""Push up"", ""Push-Up"", ""Push-ups""]",4,42,False,[],False
 exercise_e26fcc883a5b7785,Push-Up + Renegade Row,"[""Push-up + Renegade Rows""]",1,10,False,[],False
@@ -1280,7 +1141,6 @@ exercise_9111896a7c5b5511,Rack Neck Extension,"[""Rack Neck Extension""]",1,2,Fa
 exercise_509202a255f64ef7,Rack Skullcrusher,"[""Rack Skullcrusher""]",1,6,False,[],False
 exercise_0320b99634ea15d0,Reaching Dead Bug,"[""Reaching Dead Bug"", ""Reaching Deadbug""]",2,74,True,[],False
 exercise_17b5eb237bc01d5f,Reactive Medicine Ball Chest Pass Into Floor,"[""Reactive Med Ball Chest Pass into Floor""]",1,1,False,[],False
-exercise_575eaba9390f36d9,Rear Delt Band Pull,"[""Rear Delt Band Pull""]",1,1,False,[],False
 exercise_2164c4702d765c78,Rear Delt Flyes,"[""Rear Delt Flyes""]",1,16,False,[],False
 exercise_f7881b16504907a6,Rear Foot Elevated Romanian Deadlift,"[""rear foot elevated RDL""]",1,1,True,[],False
 exercise_59dee84c290e645d,Rear Foot Elevated Split Jump,"[""Rear Foot Elevated Split Jump""]",1,1,False,[],False
@@ -1289,15 +1149,11 @@ exercise_4b245f9799dcfad8,Rear Rack Walking Lunge,"[""Rear Rack Walking Lunge""]
 exercise_5913881ba7d9571d,Rebound Jump,"[""Rebound Jumps""]",1,1,False,[],False
 exercise_2e09d5210db84177,Rest,"[""Rest""]",1,1,False,[],False
 exercise_88e6a6ee47e2474b,Rest Pause Incline Dumbbell Bench (With Explanation),"[""Rest Pause Incline DB Bench (with Explanation)""]",1,3,False,[],False
-exercise_3eb725a5f88a1f62,Reverse Band Football Bar Floor Press,"[""Reverse Band FB Bar Floor Press""]",1,5,False,[],False
-exercise_75e610abe94bdb9a,Reverse Band Front Squat,"[""Reverse Band Front Squat""]",1,6,False,[],False
-exercise_33826a8de02c4fae,Reverse Band Sumo Stance Rack Deadlift,"[""Reverse Band Sumo Stance Rack Deadlift""]",1,8,False,[],False
 exercise_75840568cf30ae7a,Reverse Barbell Curl,"[""Reverse Barbell Curl""]",1,6,True,[],False
 exercise_6999a416526e3a4e,Reverse Cable Fly,"[""Reverse Cable Fly""]",1,15,False,[],False
 exercise_f8b83a6887ac3048,Reverse Crunch,"[""Reverse Crunch"", ""Reverse Crunches""]",2,8,True,[],False
 exercise_0ecca46443ec0cf7,Reverse Crunch + Dead Bug,"[""Reverse Crunch + Deadbug""]",1,9,False,[],False
 exercise_185b430a85546fd9,Reverse Curl,"[""Reverse Curls""]",1,7,False,[],False
-exercise_75427a17e98ef75e,Reverse Doubled Mini Band Conventional Deadlift,"[""Reverse Doubled Mini Band CONVENTIONAL Deadlift""]",1,1,False,[],False
 exercise_580917a1c41b25c8,Reverse Flys,"[""Reverse Flys""]",1,7,False,[],False
 exercise_fb96142b09ecc3ef,Reverse Hyper,"[""Reverse Hyper"", ""Reverse Hypers""]",2,82,True,[],False
 exercise_58e07ab89a327115,Reverse Hyper @70% Of Your 1Rm Deadlift,"[""Reverse Hypers @70% of your 1RM Deadlift""]",1,1,False,[],False
@@ -1307,7 +1163,6 @@ exercise_a1388d64284972e1,Reverse Lunge,"[""Reverse Lunge"", ""Reverse Lunges""]
 exercise_cd6253f5f091eec1,Reverse Lunge From Pins,"[""Reverse lunge from pins""]",1,3,False,[],False
 exercise_ac0b5550630c3040,Reverse Lunge Rotation,"[""Reverse Lunge - Rotation""]",1,1,False,[],False
 exercise_f1df196046b3094d,Reverse Medicine Ball Throw,"[""Reverse Medball Throw""]",1,1,False,[],False
-exercise_460d9b3a939522f1,Reverse Pec Dec (Or Standing Banded Reverse Flys),"[""Reverse Pec Dec (or Standing Banded Reverse Flys)""]",1,1,False,[],False
 exercise_1326a699a150aecc,Reverse V Ups On Rower (Seat),"[""Reverse V-Ups on Rower (Seat)""]",1,1,False,[],False
 exercise_e29c3ce6320d64f0,Reverse Zottman Curl,"[""Reverse Zottman Curls""]",1,3,False,[],False
 exercise_06dfa05ef338a0c4,Rfess Foot Strike,"[""RFESS - Foot Strike""]",1,2,False,[],False
@@ -1316,7 +1171,6 @@ exercise_420951cc62ee6556,Ring Face Pull,"[""Ring Facepulls""]",1,51,False,[],Fa
 exercise_05e6e1a6a54ad5c2,Ring Plank,"[""Ring Plank""]",1,1,True,[],False
 exercise_e76e650d6678bc42,Ring Pull-Up,"[""Ring Pull Up""]",1,4,False,[],False
 exercise_8f60cd18b0a579bb,Ring Push-Up,"[""Ring Push-ups""]",1,35,False,[],False
-exercise_fd0ab8545ba656a5,Ring Push-Up Against Max Band,"[""Ring Push Ups Against Max Band""]",1,1,False,[],False
 exercise_2cf3724b68b39fa0,Ring Reverse Fly,"[""Ring Reverse Fly""]",1,1,True,[],False
 exercise_aa24291dc64a59de,Ring Row,"[""Ring Rows""]",1,24,False,[],False
 exercise_75bb9fe11de474e8,Ring Row Isometric Hold,"[""Ring Row isometric hold.""]",1,0,True,[],False
@@ -1328,13 +1182,11 @@ exercise_47247493b41663e9,Rolling Triceps Extension,"[""Rolling Tricep extension
 exercise_bfaf7f13723533bb,Roman Chair Leg Raise,"[""Roman Chair Leg Raises""]",1,8,False,[],False
 exercise_fe30370dca93f326,Roman Chair Side Bend,"[""Roman Chair Side Bend""]",1,2,False,[],False
 exercise_5f238ccaee1b13a4,Romanian Deadlift,"[""RDL"", ""Romanian Deadlift"", ""Romanian Deadlift (RDL)""]",3,166,True,[],False
-exercise_84be5f94e4b5bb53,Rope (Cable Attachment) Or Kneeling Heavy Band Crunch,"[""Rope (cable attachment) or Kneeling Heavy Band Crunches""]",1,1,False,[],False
 exercise_1e7f4bde907d5aaa,Rope Climb,"[""Rope Climb""]",1,1,False,[],False
 exercise_e2b1064a918919ce,Rope Hammer Curl,"[""Rope Hammer Curls""]",1,2,False,[],False
 exercise_d698ae653bf36cd4,Rope Inverted Row,"[""Rope Inverted Row""]",1,4,False,[],False
 exercise_1ee3bc37c58ec8eb,Rope Pull-Up,"[""Rope Pull-ups""]",1,27,False,[],False
 exercise_5e6c1da7a3e14d86,Rope Pushdown,"[""Rope Pushdowns""]",1,21,False,[],False
-exercise_c71fb274b1f030d1,Rope Sledpulls,"[""Rope Sledpulls""]",1,4,False,[],False
 exercise_874c1a2d106a03b4,Rope Triceps,"[""Rope Triceps""]",1,11,False,[],False
 exercise_7fccee825b601bf5,Rotated Shin Box Iso With Tennis Ball,"[""Rotated Shin Box ISO with Tennis Ball""]",1,2,False,[],False
 exercise_ec5662e38d7483f0,Rotating Pike Twist To Cobra Flow,"[""Rotating Pike Twist to Cobra Flow""]",1,1,False,[],False
@@ -1368,15 +1220,11 @@ exercise_747bd1b5e74c635e,Scap Push-Up,"[""Scap Push-Up"", ""Scap Push-ups""]",2
 exercise_1fb082e2dd4ef23a,Scorpion Stretch,"[""Scorpion Stretch""]",1,6,False,[],False
 exercise_7cad03576de0f1e8,Seal Row,"[""Seal Rows""]",1,0,True,[],False
 exercise_7a49038ac8684d33,Seated Arnold Dumbbell Press,"[""Seated Arnold DB Press""]",1,2,False,[],False
-exercise_82c7a4ca1dd43c3d,Seated Band Abduction,"[""Seated Band Abduction""]",1,1,False,[],False
-exercise_9c7c649f6d6ee220,Seated Banded Leg Curl,"[""Seated Banded Leg Curls""]",1,1,False,[],False
-exercise_de6877206095b701,Seated Banded Low Row *Seated Pvc Suspended Inside 2 Bands Choked From In Front,"[""Seated Banded Low Rows  *Seated. PVC Suspended Inside 2 Bands Choked From in Front""]",1,1,False,[],False
 exercise_3280aadd3b4ded06,Seated Barbell Press,"[""seated barbell press""]",1,8,True,[],False
 exercise_87b8442876ed60a6,Seated Bent Over Rear Delt Raise,"[""Seated Bent Over Rear Delt Raise""]",1,2,False,[],False
 exercise_7c09f1bd64ea031b,Seated Box Jump,"[""Seated Box Jump""]",1,4,False,[],False
 exercise_42e47dbc0deb2573,Seated Cable Row,"[""Seated Cable Row""]",1,25,False,[],False
 exercise_87084109398df2fe,Seated Calf Raise Machine,"[""Seated Calf Raise - Machine""]",1,2,False,[],False
-exercise_cc3a5c23560b9563,Seated Clean,"[""Seated Cleans""]",1,28,False,[],False
 exercise_28ae64893369ee6c,Seated Dumbbell Arnold Press,"[""Seated DB Arnold Press""]",1,6,False,[],False
 exercise_ee09daf866a9f8e9,Seated Dumbbell Curl,"[""Seated DB Curl""]",1,4,False,[],False
 exercise_646e2e7d6e4cb2ee,Seated Dumbbell Good Morning,"[""Seated DB good morning""]",1,7,True,[],False
@@ -1392,9 +1240,7 @@ exercise_ed443858b861acff,Seated Hamstring Curl,"[""Seated Hamstring Curl""]",1,
 exercise_163da041594610d0,Seated Incline Dumbbell Curl,"[""Seated Incline DB Curls"", ""Seated Incline Db Curl""]",2,84,True,[],False
 exercise_99d18e56b9955f05,Seated Leg Curl,"[""Seated Leg Curl"", ""Seated Leg Curls"", ""seated leg curl""]",3,15,True,[],False
 exercise_d543867c70c2d704,Seated Military Press,"[""Seated Military Press""]",1,8,False,[],False
-exercise_b9f506e316e7b648,Seated Overhead Band Triceps Extension,"[""Seated Overhead Band Tricep Extensions""]",1,1,False,[],False
 exercise_5c2a5fdef4fec8ef,Seated Overhead Dumbbell Extension,"[""Seated Overhead DB Extension""]",1,1,False,[],False
-exercise_e7c8a5a6f8a2296f,Seated Power Clean,"[""Seated Power Clean""]",1,4,True,[],False
 exercise_71c61086a7b3a048,Seated Saddle Pose,"[""Seated Saddle Pose""]",1,1,False,[],False
 exercise_b21926006e11847f,Seated SSB Good Morning,"[""Seated SSB Good Mornings""]",1,1,False,[],False
 exercise_eebaf32de06181c0,Seated Straddle Pose,"[""Seated Straddle Pose""]",1,1,False,[],False
@@ -1428,7 +1274,6 @@ exercise_c7ca0c4848a08d91,Side Plank W/ Hip Abduction,"[""Side Plank w/ Hip Abdu
 exercise_453690b6123c1f6f,Side Step Kettlebell Swing,"[""Side Step KB Swings""]",1,18,False,[],False
 exercise_0dfda05685e0282f,Side To Side Landmine Press,"[""Side To Side Landmine Press""]",1,2,False,[],False
 exercise_3ff5a4c81aae5288,Side To Side Medicine Ball Slam,"[""Side-to-Side Med Ball Slams""]",1,3,False,[],False
-exercise_fd3d1b33740ff0e3,Single Arm Banded Pushdown,"[""Single Arm Banded Pushdowns"", ""single arm banded push down""]",2,14,True,[],False
 exercise_ae3213e71e4fe95d,Single Arm Deadlift,"[""One Arm Deadlift""]",1,1,True,[],False
 exercise_1f4804f42d6a950e,Single Arm Dumbbell Bench Press,"[""One-Arm DB Bench Press""]",1,9,False,[],False
 exercise_04ee72bf13670634,Single Arm Dumbbell Neutral Grip Bench Press,"[""Single Arm DB Neutral Grip Bench Press"", ""Single Arm DB neutral Grip Bench press""]",2,25,True,[],False
@@ -1436,7 +1281,6 @@ exercise_437be5b4ea4a8cf1,Single Arm Dumbbell Overhead Carry,"[""single arm DB O
 exercise_f2eff26f45f3926b,Single Arm Dumbbell Overhead Triceps Extension,"[""single arm DB Overhead Tricep Extension""]",1,1,True,[],False
 exercise_3b0a9276f756f23c,Single Arm Dumbbell Push Press,"[""1 Arm DB Push Press"", ""Single Arm DB Push Press""]",2,25,False,[],False
 exercise_554dd0123e6f9d45,Single Arm Dumbbell Row,"[""1-Arm DB Row"", ""1-arm DB Row"", ""Single Arm Dumbbell Row""]",3,97,False,[],False
-exercise_f0549adcabd5dcaf,Single Arm Dumbbell Row + Band From The Front 3X10 Per Arm,"[""One Arm DB Row + Band from the Front - 3x10 Per Arm""]",1,1,False,[],False
 exercise_e14d856ed6d50053,Single Arm Dumbbell Snatch,"[""Single Arm Dumbbell Snatches""]",1,1,False,[],False
 exercise_0f43018a7426e5a4,Single Arm Dumbbell Upright Row,"[""Single Arm Dumbbell Upright Row""]",1,3,False,[],False
 exercise_6fe982afad597f84,Single Arm Farmer Carry,"[""Single Arm Farmer Carry""]",1,53,False,[],False
@@ -1462,8 +1306,6 @@ exercise_fe0b43d821749bd8,Single Arm Supported Dumbbell Row/W Rotation,"[""1 arm
 exercise_37d3aef73510c774,Single Dumbbell Goblet Squat,"[""Single Dumbbell Goblet Squats""]",1,1,False,[],False
 exercise_bb16a154cb547a50,Single Hinge To Hip Flexor Flow From Elevated Surface,"[""Single Hinge to Hip Flexor Flow from Elevated Surface""]",1,1,False,[],False
 exercise_42e525a42c01498f,Single Leg Assisted Pendulum Squat,"[""Single Leg Assisted Pendulum Squat""]",1,15,False,[],False
-exercise_0c7dc58e4841d0b9,Single Leg Banded Hamstring Curl,"[""Single Leg Banded Hamstring Curls""]",1,11,False,[],False
-exercise_53a119e91fd29e0f,Single Leg Banded Leg Curl,"[""Single Leg Banded Leg Curls""]",1,23,False,[],False
 exercise_669a377f39280fa5,Single Leg Barbell Hip Thrust,"[""Single-Leg Barbell Hip Thrusts""]",1,3,False,[],False
 exercise_6a1db6d8c0d0dd39,Single Leg Barbell Romanian Deadlift,"[""Single Leg Barbell RDL""]",1,9,False,[],False
 exercise_89c056afe46b179a,Single Leg Bounds,"[""Single Leg Bounds""]",1,7,False,[],False
@@ -1472,7 +1314,6 @@ exercise_15ca2da273851fd3,Single Leg Cable Hip Abduction,"[""Single leg cable hi
 exercise_5df918ea48814ac7,Single Leg Depth Jump,"[""Single Leg Depth Jump""]",1,7,False,[],False
 exercise_4a8bb736e0c994fc,Single Leg Donkey Kicks,"[""Single Leg Donkey Kicks""]",1,0,True,[],False
 exercise_b770c9bc132d5fa7,Single Leg Dumbbell Deficit Calf Raise,"[""Single Leg Dumbbell Deficit Calf Raises""]",1,0,True,[],False
-exercise_77ec0957ead51062,Single Leg End Range Iso Push,"[""Single Leg End-Range ISO Push""]",1,2,False,[],False
 exercise_4e8fedb5e7914354,Single Leg Forward Fold E/Side,"[""Single Leg Forward Fold E/Side""]",1,3,False,[],False
 exercise_4d036d08810224f2,Single Leg Glute Bridge,"[""Single Leg Glute Bridge"", ""Single Leg Glute Bridges""]",2,208,False,[],False
 exercise_37b90359c77ac242,Single Leg Glute Hip Thrust,"[""Single Leg Glute hip Thrusts""]",1,5,False,[],False
@@ -1508,7 +1349,6 @@ exercise_dba83a4a9e1d9534,Skater Hop Sp,"[""Skater Hop - SP""]",1,1,False,[],Fal
 exercise_44811247103de3c6,Ski Erg,"[""Ski Erg"", ""SkiErg""]",2,211,True,[],False
 exercise_42e93b9bb77d8a73,Skip,"[""Skip""]",1,6,False,[],False
 exercise_4d02dec74400504c,Skull Crusher,"[""Skull Crusher"", ""Skull Crushers""]",2,21,False,[],False
-exercise_7795ec35b17c01bd,Sl Banded Good Morning,"[""SL Banded Good Mornings""]",1,1,False,[],False
 exercise_6c58ed572e16fcae,Sl Bound To Broad Jump,"[""SL Bound to Broad Jump""]",1,2,False,[],False
 exercise_de246a848ff6ec06,Sl Hurdle Jump,"[""SL Hurdle Jumps""]",1,1,False,[],False
 exercise_a4f30ce711836bf3,Sl Romanian Deadlift Plate Switch To Overhead,"[""SL RDL - Plate Switch to Overhead""]",1,2,False,[],False
@@ -1540,7 +1380,6 @@ exercise_ee723752e5de69e6,Small Box Rebound Jump,"[""Small Box - Rebound Jumps""
 exercise_283743b43fcda698,Smith Jm Press,"[""Smith JM Press""]",1,1,False,[],False
 exercise_c18503641301a8cc,Smith Machine Calf Raise,"[""smith machine calf raise""]",1,2,True,[],False
 exercise_b227785f1210185c,Smith Machine Shrugs,"[""Smith Machine Shrugs""]",1,1,False,[],False
-exercise_55ac42db42735d70,Smr Glutes Hamstrings It Band Adductors,"[""SMR Glutes, Hamstrings, IT Band, Adductors""]",1,12,False,[],False
 exercise_e2573f492189bb08,Smr Pecs Lats Triceps,"[""SMR Pecs, Lats, Triceps""]",1,12,False,[],False
 exercise_23c504571a809899,Snake Sprints,"[""Snake. - Sprints""]",1,2,False,[],False
 exercise_6cd512a819ae26ee,Snatch,"[""Snatch""]",1,3,False,[],False
@@ -1559,21 +1398,13 @@ exercise_bdc06ff739912304,Snatch Pull,"[""Snatch Pull""]",1,8,False,[],False
 exercise_b6a025385cc968b4,Snatch Pull + Snatch,"[""Snatch Pull + Snatch""]",1,1,False,[],False
 exercise_6e4d09ebc7736605,Sorensen Hold,"[""Sorensen Hold""]",1,1,False,[],False
 exercise_17686e2abf79b302,Spanish Squat Isometric Hold With Kettlebell In Goblet Position,"[""Spanish Squat isometric hold with Kettlebell in Goblet position""]",1,2,False,[],False
-exercise_5a990448f82c2c3b,Speed Banded Lat Pulldown,"[""Speed Banded  Lat Pull Down"", ""Speed Banded Lat Pulldowns""]",2,8,True,[],False
 exercise_221a114fd552e209,Speed Bench,"[""Speed Bench""]",1,1,False,[],False
 exercise_4bd4bb485f9de050,Speed Bench Press,"[""speed bench press""]",1,0,True,[],False
-exercise_e23939d45b6f5d86,Speed Bench Press Against Bands,"[""Speed Bench Press against bands""]",1,64,False,[],False
-exercise_8928a2bca18f308c,Speed Bench Press Against Bands To Pins,"[""Speed Bench Press against bands to pins""]",1,6,False,[],False
 exercise_b2fe0cbcff76640f,Speed Bench Press With Chains,"[""Speed Bench Press with chains""]",1,27,False,[],False
 exercise_6df202cd88672d91,Speed Conventional Deadlift,"[""speed convential deadlift""]",1,0,True,[],False
 exercise_d358d185d7ce55a0,Speed Curl,"[""Speed Curls""]",1,1,False,[],False
 exercise_8873f1cef1e5a27f,Speed Lat Pulldown,"[""Speed Lat Pulldown""]",1,1,False,[],False
-exercise_b588ce49457a6ad8,Speed Pull Conventional Deadlift @50% Against 30% Band Tension,"[""Speed Pulls: Conventional Deadlift @50% against 30% Band Tension""]",1,1,False,[],False
-exercise_ef4a5d1b41cdbe41,Speed Pull Conventional Deadlift @55% Against 30% Band Tension,"[""Speed Pulls: Conventional Deadlift @55% Against 30% Band Tension""]",1,1,False,[],False
-exercise_833a4c4b299c6c98,Speed Pull Deadlift Against Bands,"[""Speed Pull Deadlift against bands""]",1,6,False,[],False
-exercise_ade13387abfa4c74,Speed Pull Sumo Deadlift @55% Against 30% Band Tension,"[""Speed Pulls: Sumo Deadlift @55% Against 30% Band Tension""]",1,1,False,[],False
 exercise_78f7d182b45382df,Speed Push Press,"[""Speed Push Press""]",1,7,False,[],False
-exercise_1b60fa12890a316d,Speed Trap Bar Deadlift Vs Bands,"[""Speed Trap Bar Deadlifts vs. Bands""]",1,1,False,[],False
 exercise_7703ff097122dd1e,Speed Trap Bar High Pull,"[""Speed Trap Bar High Pull""]",1,11,False,[],False
 exercise_5fe78b38d196e023,Spider Curl,"[""Spider Curl"", ""Spider Curls""]",2,12,True,[],False
 exercise_6d2d6e7e331d4bfc,Spiderman Push-Up,"[""Spiderman Push Up""]",1,1,False,[],False
@@ -1609,10 +1440,7 @@ exercise_e79ab6d2c051274f,Stability Ball Hamstring Curl,"[""Stability Ball Hamst
 exercise_f78a6ff4d8be0d90,Staggered Medicine Ball Wall Throw,"[""Staggered Medicine Ball Wall Throw""]",1,1,False,[],False
 exercise_d70df700a85f7d3f,Staggered Stance Kettlebell Swing,"[""Staggered Stance Kettlebell Swings"", ""staggered stance KB swing""]",2,15,True,[],False
 exercise_0eeea780b063634b,Stairs,"[""Stairs""]",1,4,False,[],False
-exercise_b4599f099027cd03,Standing Abductor Banded Pull-Apart,"[""Standing Abductor Banded Pull Aparts""]",1,2,True,[],False
 exercise_26ed34337fa38dac,Standing Arnold Press,"[""Standing Arnold Press""]",1,6,False,[],False
-exercise_2a9fb44b5ae9ef89,Standing Banded Abs,"[""Standing Banded Abs""]",1,8,False,[],False
-exercise_c9a7521b1e139105,Standing Banded Er/Ir,"[""Standing Banded ER/IR""]",1,2,False,[],False
 exercise_be4b9d532e5a12b3,Standing Bar Triceps Extension,"[""Standing Bar Tricep Extensions""]",1,1,True,[],False
 exercise_0802600230a87628,Standing Biceps Curl Cable Machine,"[""Standing Bicep Curl - Cable Machine""]",1,2,False,[],False
 exercise_a1d2a1b7536b6c98,Standing Bradford Press,"[""Standing Bradford Press""]",1,12,False,[],False
@@ -1624,8 +1452,6 @@ exercise_8763d6dddc926254,Standing Curl + Press,"[""Standing Curl + Press""]",1,
 exercise_314475345452ba1c,Standing Dumbbell Calf Raise,"[""Standing DB Calf Raise""]",1,7,False,[],False
 exercise_3908f0452ba2fbab,Standing Dumbbell Press,"[""Standing DB Press""]",1,14,False,[],False
 exercise_25545fe13e1da085,Standing Dumbbell Reverse Curl,"[""Standing DB Reverse Curl""]",1,1,False,[],False
-exercise_86d66e661c8c1a16,Standing Heavy Band Crunch,"[""Standing, Heavy Band Crunches""]",1,1,False,[],False
-exercise_84c198fe5aa06439,Standing High To Low Banded Rotation,"[""standing high to low banded rotation""]",1,1,False,[],False
 exercise_fd80e186b5376d80,Standing Landmine Rotation,"[""standing landmine rotations""]",1,1,False,[],False
 exercise_fd74cd6dc8133a21,Standing Overhead Dumbbell Triceps Extension,"[""Standing Overhead DB Tricep Extension""]",1,9,False,[],False
 exercise_73e44247a4880994,Standing Overhead Triceps Extension – Cable Machine,"[""Standing Overhead Tricep Extension – Cable Machine""]",1,2,False,[],False
@@ -1644,7 +1470,6 @@ exercise_fe7510f2357f5571,Stop And Go Farmers Walks,"[""Stop-and-Go Farmers Walk
 exercise_3868d5a18c53d8a4,Straight Arm Lat Pulldown,"[""Straight-Arm Lat Pull Downs""]",1,3,False,[],False
 exercise_514ce3a541aaa1a9,Straight Arm Pulldown,"[""Straight Arm Pulldown""]",1,32,False,[],False
 exercise_a5d1b999f6a4e45f,Straight Bar Box Squat,"[""Straight Bar Box Squat""]",1,2,False,[],False
-exercise_a9519f6a7e9a6e42,Straight Bar Box Squat W/ Bands,"[""Straight Bar Box Squat w/ Bands""]",1,1,False,[],False
 exercise_9d3654cc53ada9df,Straight Leg Bound,"[""Straight Leg Bound""]",1,3,False,[],False
 exercise_9f6eb994ef760531,Straight Leg Deadlift,"[""Straight Leg Deadlift""]",1,2,False,[],False
 exercise_dd43e238587b6e72,Straight Leg Raise,"[""Straight Leg Raises""]",1,9,False,[],False
@@ -1660,7 +1485,6 @@ exercise_4851fb3937b1c299,Strict Lower Hanging Leg Lifts,"[""Strict Lower Hangin
 exercise_37e411426c3c6c3a,Strict Press,"[""Strict Press"", ""Strict press""]",2,144,True,[],False
 exercise_6e656af0baeb5b27,Strict Pull-Up Weighted,"[""Strict Pull Ups, Weighted""]",1,1,False,[],False
 exercise_da733efb303a20d1,Strict Ring Dip,"[""Strict Ring Dips""]",1,92,False,[],False
-exercise_de4e08e9cec7b6c9,Strict Ring Pull-Up Against Max Band From The Bottom,"[""Strict Ring Pull Ups Against Max band from the Bottom""]",1,1,False,[],False
 exercise_d619ae3eb5103efe,Strict Static Dip,"[""Strict Static Dips""]",1,4,False,[],False
 exercise_5f6c9e828919da51,Suitcase Carry,"[""Suitcase Carry""]",1,11,False,[],False
 exercise_b0dbf50e1fc08c20,Suitcase Carry March,"[""Suitcase Carry Marching"", ""suitcase carry march""]",2,2,True,[],False
@@ -1693,7 +1517,6 @@ exercise_42312767d0f28741,Supported Single Arm Row,"[""Supported 1-Arm Rows""]",
 exercise_ab6a26e66abf28e5,Supported Single Arm Row With Rotation,"[""Supported 1-Arm Row with rotation""]",1,16,False,[],False
 exercise_694187af078eb352,Supported Single Leg Kettlebell Romanian Deadlift,"[""Supported Single Leg KB RDLs""]",1,4,False,[],False
 exercise_6f62763662c8bd7f,Supported Single Leg Romanian Deadlift,"[""Supported Single Leg RDLs""]",1,16,False,[],False
-exercise_d2dbe40b8f4fffd9,Supported Single Leg Romanian Deadlift With Band,"[""Supported Single Leg RDLs with band""]",1,2,False,[],False
 exercise_7f7dcb28fb0f8b3a,Swimmer Kicks,"[""Swimmer Kicks""]",1,0,True,[],False
 exercise_2e127dd6bd336438,Symmetrical Stance Dumbbell Row Neutral Grip,"[""Symmertical Stance DB row - neutral grip"", ""Symmetrical Stance DB Row - neutral grip""]",2,12,True,[],False
 exercise_119ad8c84159c4e5,Symmetrical Stance Dumbbell Row Pronated Grip,"[""Symmetrical Stance DB Row - pronated grip""]",1,60,False,[],False
@@ -1727,7 +1550,6 @@ exercise_cc6a9afbfc366ce1,Tempo Run,"[""Tempo Run"", ""Tempo Runs""]",2,5,False,
 exercise_780f87b87c3118e4,Terminal Knee Extension,"[""Terminal Knee Extensions""]",1,14,False,[],False
 exercise_0e6bf2ae37e32447,Test Vertical Jump,"[""Test Vertical Jump""]",1,1,False,[],False
 exercise_62c451a02d8dd38b,The Warm Up,"[""THE warm up""]",1,0,True,[],False
-exercise_ced58bba888b9adb,Theraband Monster Walks,"[""Theraband Monster Walks""]",1,1,False,[],False
 exercise_7eb1c0b312281e6b,Thoracic Spine Foam Rolling,"[""Thoracic Spine Foam Rolling""]",1,1,False,[],False
 exercise_b5cbd55435f3225c,Thread The Needle,"[""Thread the Needle""]",1,1,False,[],False
 exercise_80df131c1655c7f7,Thread The Needle Stretch E/Side,"[""Thread The Needle Stretch E/Side""]",1,1,False,[],False
@@ -1739,11 +1561,9 @@ exercise_71154cc10ee9eddb,Toes To Bar,"[""Toes to Bar""]",1,5,False,[],False
 exercise_7880048d8f593051,Top Bench Cable Curl,"[""Top Bench Cable Curls""]",1,1,False,[],False
 exercise_d19d6565555436b2,Top Down Snatch 4 Part,"[""Top Down Snatch - 4 Part""]",1,2,True,[],False
 exercise_5c7cec367b0c8f0b,Touch And Go Trap Bar Deadlift,"[""Touch & go trap bar deadlifts."", ""Touch N Go Trap Bar Deadlift""]",2,6,True,[],False
-exercise_9a9a3a8ca09dc066,Touch And Go Trap Bar Deadlift Against A Band,"[""Touch N Go Trap Bar Deadlift against a band""]",1,25,False,[],False
 exercise_cba920b92921f85e,Trap Bar Carry,"[""trap bar carry""]",1,14,False,[],False
 exercise_61714910ccc74ac3,Trap Bar Carry Sp,"[""Trap Bar Carry - SP""]",1,1,False,[],False
 exercise_65d05a54efe0e720,Trap Bar Deadlift,"[""Trap Bar Deadlift"", ""Trap Bar Deadlifts"", ""Trapbar Deadlift""]",3,76,False,[],False
-exercise_fe8171eef3b81374,Trap Bar Deadlift Against A Band,"[""TRAP BAR DEADLIFT AGAINST A BAND"", ""Trap Bar Deadlift against a band""]",2,20,True,[],False
 exercise_7efa1059c078de4b,Trap Bar Deadlift Warm Up,"[""Trap Bar Deadlift Warm-up""]",1,30,False,[],False
 exercise_5678884e90d92a94,Trap Bar Dl,"[""Trap Bar DL""]",1,1,False,[],False
 exercise_10d3184161d3873b,Trap Bar Farmer Carry,"[""Trap Bar Farmer Carry""]",1,26,False,[],False
@@ -1782,15 +1602,11 @@ exercise_3c18e0f37ca32c4c,Turkish Weight Plate Sit Up,"[""turkish weight plate s
 exercise_73aff0acb308fbef,Twisted Cross Stretch E/Side,"[""Twisted Cross Stretch E/Side""]",1,2,False,[],False
 exercise_8a4bcdd42f82ad8c,Two Arm Kettlebell Clean,"[""Two Arm KB Clean""]",1,1,False,[],False
 exercise_4cfdfa7b177d453b,Underhand Bent Over Barbell Row,"[""Underhand Bent Over Barbell Rows""]",1,1,False,[],False
-exercise_c942b3e1777d8494,Unilateral Banded Triceps Pushowns,"[""Unilateral Banded Triceps Pushowns""]",1,1,False,[],False
 exercise_0fac768f8c90351e,Unilateral Chest Press,"[""Unilateral Chest Press""]",1,2,False,[],False
 exercise_37b25134af796f71,Unilateral Leg Press,"[""Unilateral Leg Press""]",1,1,False,[],False
 exercise_f6eebbe58763aae1,V Bar Pushdown,"[""V bar pushdown""]",1,1,True,[],False
-exercise_34730d52c7c2f392,V Handle Banded Triceps Pushdown,"[""V-Handle Banded Tricep Pushdown""]",1,1,False,[],False
 exercise_52063a526bf3ee50,V Handle Landmine Row,"[""V-Handle Landmine Row""]",1,1,False,[],False
 exercise_9a3d3817f4c8d22b,V Ups,"[""V-Ups""]",1,81,False,[],False
-exercise_caca4da49edf2a02,Velocity Tracking App (Android),"[""velocity tracking app (android)""]",1,6,False,[],False
-exercise_6240b949b881dce1,Velocity Tracking App Demo,"[""Velocity tracking app demo""]",1,6,False,[],False
 exercise_7a6c4fac6c5cd720,Walk,"[""Walk""]",1,6,False,[],False
 exercise_37ff20583960759d,Walking,"[""Walking""]",1,3,False,[],False
 exercise_322eb1a71a5884d1,Walking Bodyweight Lunge,"[""Walking BW Lunges""]",1,32,False,[],False
@@ -1835,8 +1651,6 @@ exercise_617b584c26b15ab3,Wide Grip Pull-Up + Narrow Grip Pull-Up + Chin-Up Clus
 exercise_8f32c41cab3d9349,Wide Grip Standing Barbell Curl,"[""Wide Grip Standing Barbell Curl""]",1,1,False,[],False
 exercise_7ebd87d0733177da,Wide Stance Box Squat,"[""Wide Stance Box Squat""]",1,3,True,[],False
 exercise_03d3c4c30c25e8f0,Wide Stance Box Squat For Speed,"[""Wide Stance Box Squat For Speed""]",1,8,False,[],False
-exercise_8573abc418d16c56,Wide Stance Box Squat With Straight Bar @50% Against 25% Band Tension,"[""Wide Stance Box Squat with Straight Bar @50% Against 25% Band Tension""]",1,1,False,[],False
-exercise_d3783ac5f664f20a,Wide Stance SSB Box Squat With Bands,"[""Wide Stance SSB Box Squat with bands""]",1,17,False,[],False
 exercise_9b2d026e8240f98f,Wood Chop,"[""Wood Chop""]",1,1,False,[],False
 exercise_89e8e6c4b2908c0e,Worlds Greatest Stretch,"[""Worlds Greatest Stretch"", ""World’s Greatest Stretch""]",2,813,False,[],False
 exercise_6ad163d38308bda7,Worlds Greatest Stretch E/Side,"[""Worlds Greatest Stretch E/Side""]",1,2,False,[],False
