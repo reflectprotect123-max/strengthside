@@ -37,8 +37,8 @@ test('create opens the warm-up circuit instead of the note wizard', () => {
   assert.equal(globalThis.S.libUi.screen, 'warmup');
   const html = globalThis.LibraryView.html();
   assert.match(html, /Warm-up/);
-  assert.match(html, /Bike/);
-  assert.match(html, /3:00|180/);
+  assert.doesNotMatch(html, /<h3>Bike<\/h3>/);
+  assert.doesNotMatch(html, /<h3>Jump Rope<\/h3>/);
   assert.doesNotMatch(html, /Session instructions/);
   globalThis.S.library = prior;
 });
@@ -81,9 +81,7 @@ test('wizard edit shows Next on the lift cards and keeps tempo off warm-up block
   assert.doesNotMatch(html, /Post to calendar/);
   const squatAt = html.indexOf('<h3>Back Squat</h3>');
   assert.match(html.slice(squatAt), /No tempo/);
-  const bikeAt = html.indexOf('<h3>Bike</h3>');
-  const bike = html.slice(html.lastIndexOf('<article', bikeAt), html.indexOf('</article>', bikeAt));
-  assert.doesNotMatch(bike, /No tempo/);
+  assert.doesNotMatch(html, /<h3>Bike<\/h3>/);
   globalThis.S.library = prior;
 });
 
@@ -196,7 +194,7 @@ test('creating a session walks warm-up, the exercise picker, reps, tempo, cool-d
   assert.equal(S.libUi.flow, 'wizard');
   assert.equal(S.libUi.screen, 'warmup');
   assert.match(LibraryView.html(), />Warm-up</);
-  assert.match(LibraryView.html(), /Bike/);
+  assert.doesNotMatch(LibraryView.html(), /<h3>Bike<\/h3>/);
   assert.match(LibraryView.html(), />Next</);
   LibraryView.wizardNext();
   assert.equal(S.libUi.screen, 'edit');
@@ -271,8 +269,7 @@ test('creating a session walks warm-up, the exercise picker, reps, tempo, cool-d
   const plan = HybridLibrary.compile(HybridLibrary.template(S.library, S.libUi.tid));
   assert.equal(plan.blocks.find((b) => b.title === 'Back Squat').prescription.endsWith('31X0'), true);
   assert.equal(plan.blocks.find((b) => b.title === 'Bench Press').tempo, undefined);
-  assert.equal(plan.blocks.find((b) => b.title === 'Bike').section, 'Warm-Up');
-  assert.equal(plan.blocks.find((b) => b.kind === 'section' && b.label === 'WARM-UP').label, 'WARM-UP');
+  assert.equal(plan.blocks.find((b) => b.title === 'Bike'), undefined);
   assert.equal(plan.blocks.find((b) => b.title === 'Easy Bike').section, 'Cool-Down');
   assert.equal(plan.blocks.find((b) => b.kind === 'section' && b.label === 'COOL-DOWN').label, 'COOL-DOWN');
 });

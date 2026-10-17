@@ -13,7 +13,7 @@ Contracts and the release path: [docs/training-contracts.md](docs/training-contr
 
 ## What we built
 
-A new session opens on the warm-up. Bike, Row, Run, and Ski start at 3:00. Jump Rope starts at 1:00. There are three rounds. The isometric hold counts 3, then runs. Lifts and stretches take reps. The carry takes metres. Timed warm-up pages start their countdown. They do not ask for effort.
+A new session opens on an empty warm-up. Bike, Row, Run, Ski, and Jump Rope are in the add list, and they are not placed on the session until you add them. A session saved with that old automatic set loses those five movements the next time it loads. Anything else you added in the warm-up stays. There are three rounds once movements are there. The isometric hold counts 3, then runs. Lifts and stretches take reps. The carry takes metres. Timed warm-up pages start their countdown. They do not ask for effort.
 
 Next opens the lift cards. The coach can set shared or per-set reps, including 5/3/1 and 10/8/6, plus a rep range and an explicit final AMRAP. The AMRAP uses the actual first working-set load. Supersets stay. Every suggested load stays editable in the logger. The builder does not ask for a target weight.
 

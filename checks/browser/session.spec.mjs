@@ -35,7 +35,7 @@ test('build, schedule, play full session, reopen history and check next session'
  await page.getByRole('button',{name:'Next',exact:true}).click();
  await page.getByRole('button',{name:'Next',exact:true}).click();
  const day=await page.getByLabel('Session date').inputValue();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
- await page.reload();await expect(page.locator('.trn-block--lift')).toHaveCount(7);await expect(page.locator('.trn-block--lift').filter({hasText:'Back Squat'})).toBeVisible();await expect(page.locator('.trn-block--lift').filter({hasText:'Dumbbell Curl'})).toBeVisible();await beginSession(page);
+ await page.reload();await expect(page.locator('.trn-block--lift')).toHaveCount(2);await expect(page.locator('.trn-block--lift').filter({hasText:'Back Squat'})).toBeVisible();await expect(page.locator('.trn-block--lift').filter({hasText:'Dumbbell Curl'})).toBeVisible();await beginSession(page);
  await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
  async function log(kg,reps,effort){await actualNumber(page,'Weight (kg)',String(kg));await actualNumber(page,'Reps completed',String(reps));const slider=page.getByRole('slider',{name:'Actual set effort'});await slider.press('Home');for(let i=0;i<effort;i++)await slider.press('ArrowRight');await page.getByRole('button',{name:'Log set',exact:true}).click();}
  for(const kg of [10,20]){await log(kg,6,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();}
@@ -59,7 +59,8 @@ test('build, schedule, play full session, reopen history and check next session'
 test('warm-up lifts cool-down before Ramp with no skip button',async({page})=>{
  test.setTimeout(180000);
  await builder(page);
- await expect(page.getByRole('heading',{name:'Bike',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Warm-up',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Bike',exact:true})).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Next',exact:true})).toBeVisible();
  await openExercisePicker(page);
  await page.getByRole('button',{name:'Back Squat',exact:true}).click();await page.getByRole('button',{name:'Add (1)',exact:true}).click();
@@ -73,7 +74,7 @@ test('warm-up lifts cool-down before Ramp with no skip button',async({page})=>{
  await page.getByRole('button',{name:'Start Session',exact:true}).click();
  await page.clock.fastForward(2000);
  await page.getByRole('button',{name:'Got It',exact:true}).click();
- await expect(page.locator('#logger')).toContainText('Bike');
+ await expect(page.locator('#logger')).toContainText('Back Squat');
  await passWarmups(page);
  await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:/skip ramp/i})).toHaveCount(0);
