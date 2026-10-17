@@ -19,3 +19,16 @@ noninferiority margins and 10,000-resample athlete-cluster bootstrap. Report
 cold versus calibrated outcomes separately. Do not tune parameters against these
 outcomes. Equal poor outcomes cannot justify activation. This experiment does
 not close physical device, hosted sync, or prospective athlete validation gates.
+
+The optional `STRENGTH_EVAL_CHECKPOINT_DIR` stores complete paired results
+atomically, scoped to the Node version, exact runtime sources, fixture, analysis
+source and task batch. A mismatched signature or damaged checksum recomputes the
+batch. Run only one evaluator per checkpoint directory. For this follow-up:
+
+```sh
+STRENGTH_EVAL_CHECKPOINT_DIR=/workspace/.cache/strength-eval-ffa9cac8 node scripts/strength-learning-simulator.mjs
+node scripts/strength-learning-simulator.mjs --check-report
+```
+
+Do not change runtime or analysis sources during evaluation, inspect partial
+outcomes to tune the policy, or treat an interrupted run as completed evidence.
