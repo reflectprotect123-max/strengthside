@@ -1,15 +1,11 @@
 /**
- * Live WHOOP: Netlify handlers are gone. Shared Edge is the only connect path.
+ * Live WHOOP: the shared Supabase Edge function is the connect path.
  */
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 
 const EDGE = 'https://orysjncrksmdfabpuftd.supabase.co/functions/v1/whoop-connect';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeXNqbmNya3NtZGZhYnB1ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0MTE4NzksImV4cCI6MjA5OTk4Nzg3OX0.GTMBfFtH5O6SikzHo75sXGIZoEhmuJ7TvXiACd7T078';
-const DEAD = [
-  'https://thehybridsystem.netlify.app/.netlify/functions/whoop-connect',
-  'https://thehybridengine1.netlify.app/.netlify/functions/whoop-connect',
-];
 
 const failures = [];
 function must(cond, msg) {
@@ -65,11 +61,6 @@ if (process.env.WHOOP_LIVE_SMOKE === '0') {
   process.exit(0);
 }
 
-for (const url of DEAD) {
-  const res = await fetch(url, { redirect: 'manual', cache: 'no-store' });
-  must(res.status === 404, `${url} should be 404 (moved to Edge), got ${res.status}`);
-}
-
 const res = await fetch(`${EDGE}?client=native&product=strength`, {
   headers: { apikey: ANON, 'x-hybrid-product': 'strength' },
   cache: 'no-store',
@@ -86,4 +77,4 @@ if (failures.length) {
   failures.forEach((f) => console.error(' -', f));
   process.exit(1);
 }
-console.log('whoop-live.smoke: ok — Edge is live, Netlify WHOOP is gone');
+console.log('whoop-live.smoke: ok — Supabase Edge is live');

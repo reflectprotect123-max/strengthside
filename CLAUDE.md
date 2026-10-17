@@ -1,6 +1,6 @@
 ## Current runtime reference
 
-For current strength implementation and ownership, read `docs/training-contracts.md`. Historical engine removal notes below remain background; StrengthBrain now implements deterministic strength progression. Athlete WHOOP uses Supabase; the Netlify owner still serves legacy consumers and coach text.
+For current strength implementation and ownership, read `docs/training-contracts.md`. Historical engine removal notes below remain background; StrengthBrain now implements deterministic strength progression. Athlete and Coach account routes use Supabase Edge Functions. Netlify hosting and deployment workflows are retired.
 
 # Claude Code operating contract — TheStrengthEngine
 
@@ -16,7 +16,7 @@ three-module spec is approved and an implementation plan exists.
 It was split out of **`reflectprotect123-max/the-brain`** (formerly `THE-HYBRID-ENGINE1`) on 19 August 2026
 and still points at the **same Supabase project**.
 
-**The Brain repo** (`the-brain`, Netlify owner site `thehybridengine1.netlify.app`) holds WHOOP/Concept2 OAuth, OpenRouter coach, and shared-Supabase schema migrations this tree does not own. See `docs/brain-repo-rename.md`.
+**The Brain repo** (`the-brain`, formerly `THE-HYBRID-ENGINE1`) shares the Supabase project. OAuth and coach endpoints used by this app are Supabase Edge Functions.
 
 Read `handoff.md` before making changes — it records where this tree came from, what
 is built, and what is not.
@@ -95,9 +95,9 @@ keeps that from becoming a disaster:
 ## WHOOP ownership — shared Supabase lane
 
 WHOOP OAuth, encrypted provider tokens, dated history, status and disconnect live
-in the existing Supabase project `orysjncrksmdfabpuftd`. Athlete clients call
-`/functions/v1/` directly with their Supabase session. Do not restore the retired
-Netlify token/return implementation.
+in the existing Supabase project `orysjncrksmdfabpuftd`. Athlete and Coach clients
+call `/functions/v1/` directly with their Supabase session. Do not restore a
+hosted proxy for these routes.
 
 Strength and the conditioning APK use the existing `product=strength` WHOOP owner
 lane (`s:<authenticated user id>`). This shares a provider connection and dated
@@ -128,7 +128,7 @@ checked `sync_strength_brain_records` RPC; other accounts cannot read the record
 **The product athletes use is the Hybrid HTML app in this repo.** Nothing else is the app.
 
 - **`packages/brain/`** — The Brain: pure hub logic only (`@hybrid/brain`). Not HTML, not an app.
-- **`apps/athlete/`** — Athlete UI + Netlify deploy root (home screen and branches).
+- **`apps/athlete/`** — Athlete UI bundled into the Android shell.
 - Edit **`apps/athlete/`** (`index.html`, `app.js`, `home.css`), then
   `bash scripts/sync-athlete-app.sh` (builds brain/adaptive bundles). Play locally from
   `apps/athlete/index.html`.

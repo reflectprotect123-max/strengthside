@@ -209,7 +209,7 @@ Reference instructions only. The installer does not turn these into working plug
 > **AUTHORITATIVE CHECKPOINT — 9 September 2026 (Brain spine reset).**
 > Chat history before this file is disposable. Start here.
 >
-> **Architecture:** `packages/brain/` = The Brain (pure logic). `apps/athlete/` = athlete UI + Netlify deploy root.
+> **Architecture:** `packages/brain/` = The Brain (pure logic). `apps/athlete/` = athlete UI bundled into Android.
 > Old monolithic `prototype/hybrid-app/` is **deleted** — not archived.
 >
 > Engineering rules + twelve-table Supabase contract: `CLAUDE.md`
@@ -224,13 +224,13 @@ Reference instructions only. The installer does not turn these into working plug
 | **The Brain** | `@hybrid/brain` in `packages/brain/` — readiness, today’s call, coach context. **Not HTML.** |
 | **Athlete UI** | `apps/athlete/` — edit `index.html`, `app.js`, `home.css` |
 | **Build** | `bash scripts/sync-athlete-app.sh` → bundles brain + adaptive into `apps/athlete/` |
-| **Coach chat** | In-app sheet → `brain-coach` proxy on athlete Netlify → OpenRouter on Brain owner site |
+| **Coach chat** | In-app sheet → authenticated Supabase Edge Function `brain-coach` → OpenRouter |
 | **Branch** | Feature work ships on `cursor/*-0ae6`; `main` is the dogfood base |
 | **Storage** | **`THE-brain-v1`** only — no import from old `THE-builder-clean-v*` |
 | **Capgo** | **`dogfood` + `live`** — bump version on each OTA ship |
-| **Ship** | Capgo OTA + dogfood APK only — **Netlify is retired** |
+| **Ship** | GitHub APK artifacts + explicit Capgo OTA release |
 | **One login** | Supabase auth + WHOOP (`u:{userId}`) + plan sync domains `strength_side` / `engine_side` |
-| **Brain owner** | **`the-brain`** repo (`reflectprotect123-max/the-brain`) — Netlify `thehybridengine1.netlify.app` + shared Supabase stub |
+| **Brain owner** | **`the-brain`** repo (`reflectprotect123-max/the-brain`) — shared Supabase project |
 
 **Ship ritual:** edit `apps/athlete/` → `bash scripts/sync-athlete-app.sh` → `pnpm run check:athlete-app` → Capgo upload (`CAPGO_BUNDLE_VERSION=<ver> bash apps/mobile/capacitor/scripts/ship-capgo.sh`) → bump this handoff + `docs/RELEASE_NOTES.md`.
 
@@ -242,7 +242,7 @@ Reference instructions only. The installer does not turn these into working plug
 
 ## 0.5 Secrets vault (agent recovery)
 
-> **Private repo only.** Prefer Netlify UI for values never pasted in chat.
+> **Private repo only.** Store provider credentials in GitHub Actions or Supabase secrets. Never commit or paste values in chat.
 >
 > **New agent boot:** Capgo token lives in this vault table. Rematerialize gitignored `.capgo` with
 > `bash scripts/rematerialize-capgo-from-vault.sh` (env `start` + ship scripts do this automatically).
@@ -260,21 +260,19 @@ Reference instructions only. The installer does not turn these into working plug
 | Point live | from `apps/mobile/capacitor`: `npx @capgo/cli@latest channel set live com.hybrid.athlete --apikey "$CAPGO_TOKEN" --bundle <ver>` |
 | CI | Actions → **Capgo ship** workflow (needs repo secret `CAPGO_TOKEN`) |
 
-### OpenRouter (Brain owner site)
+### OpenRouter (Supabase Edge)
 
-| Key | Value |
-| --- | --- |
-| Key (base64) | `c2stb3ItdjEtNWZkZmIzZGVmNjIwZGViN2Q0YzdhZmI1YmI1NzczNDhlZGM2ZWM1YWE1ZTFjMjE2ZTY2YThlOTQwMjk3ZjA3OAo=` → rematerialize to gitignored `.openrouter` |
-| Model | `openrouter/free` (Netlify env `OPENROUTER_MODEL` on **Brain owner site**) |
-| Owner site | **thehybridengine1** (Netlify slug; see `docs/brain-repo-rename.md`) — real `brain-coach` + `OPENROUTER_API_KEY` |
-| Athlete site | **thehybridsystem** — `brain-coach.mjs` is **proxy-only** (same lane as WHOOP) |
-| Rematerialize | `bash scripts/rematerialize-openrouter-from-vault.sh` |
-| Push to Netlify | `NETLIFY_AUTH_TOKEN=… node scripts/set-openrouter-netlify.mjs --deploy-coach` |
-| CI | `.github/workflows/set-openrouter-netlify.yml` on `main` |
+`supabase/functions/brain-coach/` calls OpenRouter. Store `OPENROUTER_API_KEY`
+as a GitHub Actions secret and `SUPABASE_ACCESS_TOKEN` as the project deployment
+secret. `OPENROUTER_MODEL` is an optional GitHub Actions variable (default:
+`openrouter/free`). Run **Deploy Supabase brain coach** after both secrets exist.
 
-### Supabase · WHOOP · Netlify
+### Supabase · WHOOP · Coach
 
-Athlete site: **thehybridsystem**. WHOOP + OpenRouter ownership stay on **The Brain repo** Netlify site (`thehybridengine1.netlify.app`); athlete site proxies.
+Athlete and Coach WHOOP requests use the shared Supabase Edge Functions. The
+coach endpoint uses the same authenticated user session and reads its provider
+key from Supabase function secrets. Netlify-hosted proxies and deploy jobs are
+retired.
 
 ### Coach
 
@@ -309,7 +307,7 @@ Parked. No publish/pull. Demo credentials and desktop shell are frozen until coa
 | Old packages | No `strength-engine`, `engine`, `shared-core`, `nutrition-engine`, `nutrition-core` — those stay deleted. **`packages/adaptive` is the exception and is live.** |
 | Athlete S&C wiring | adapters, Big Mac, one-set logger, cond autoreg, recovery trio, coordinator, strength AI/cloud sync |
 | Nutrition | UI, sync, food catalog, label scan |
-| Netlify decide | `big-mac-decide`, `ai-strength-progression`, `ai-coach-intent` |
+| Retired server engines | `big-mac-decide`, `ai-strength-progression`, `ai-coach-intent` |
 | Coach S&C | source + stubs; static park page only |
 | Identifiers | Proxy stubs removed; no `StrengthAdapter` / `EngineAdapter` / `BigMacBridge` / `CoachSync` / `Autopilot` globals in live source |
 
@@ -359,7 +357,7 @@ node apps/mobile/prototype/hybrid-app/autopilot-policy.smoke.mjs   # name-ban + 
 | --- | --- |
 | `main` | Blank slate via PR **#161**; Whoop dials OTA at **1.0.60** / blank-v179 |
 | Capgo | still **1.0.74** (no OTA this ship) |
-| Dogfood APK | rest timer + coach on **+** only (no Chat tab); native coach hits athlete Netlify; cache **the-brain-v9** |
+| Dogfood APK | rest timer + coach on **+** only (no Chat tab); coach API uses Supabase Edge; cache **the-brain-v9** |
 | Engine vs Strength log | Strength **tracks the locked column catalog** in `docs/superpowers/specs/2026-09-11-strength-track-lock.md` (Sets + picker columns + For Completion). Watts/metres on a lift is a Strength column, not The Engine. Engine (later) = splits + Concept2/RPM; the same timer chrome is the **duration** clock for the piece. Do not mix those loggers. |
 | Cache | `the-brain-v9` |
 | Strength cut | Hybrid Strength removed; `strengthCutV1` nuclear migrate; verify gates `cut-strength-*` smokes |

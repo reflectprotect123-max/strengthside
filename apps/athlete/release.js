@@ -1,2 +1,2 @@
 /* Generated from release.json. */
-window.StrengthRelease = {"version":"1.3.11","androidVersionCode":140,"build":"strength-brain-v1.3.11"};
+window.StrengthRelease = {"version":"1.3.12","androidVersionCode":141,"build":"strength-brain-v1.3.12"};

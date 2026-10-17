@@ -1,8 +1,0 @@
-# Athlete runtime. WHOOP uses Supabase; retained Netlify proxies serve legacy consumers and coach text.
-[build]
-  base = "."
-  publish = "."
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"

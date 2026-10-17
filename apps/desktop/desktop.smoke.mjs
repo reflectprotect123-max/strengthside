@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * Coach desktop shell smoke — validates config without launching Electron.
- * Proves the live coach URL responds; does not modify coach/athlete code.
+ * Coach desktop shell smoke — validates bundled coach assets without Electron.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,6 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(path.join(here, 'package.json'), 'utf8'));
 const mainPath = path.join(here, pkg.main);
 const updaterPath = path.join(here, 'src/updater.cjs');
+const coachPath = path.resolve(here, '../coach/coach.html');
 
 function must(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -26,28 +26,27 @@ must(
   String(pkg.build?.publish?.url || '').includes('coach-desktop-latest'),
   'publish.url must point at coach-desktop-latest release feed',
 );
+must(pkg.build?.extraResources?.some((row) => row.from === '../coach' && row.to === 'coach'), 'coach UI must be bundled with the desktop app');
 
 const mainSrc = fs.readFileSync(mainPath, 'utf8');
 const updaterSrc = fs.readFileSync(updaterPath, 'utf8');
-must(mainSrc.includes('thehybridsystem.netlify.app/coach.html'), 'default coach URL missing');
+const coachHtml = fs.readFileSync(coachPath, 'utf8');
+must(mainSrc.includes("path.join(process.resourcesPath, 'coach', 'coach.html')"), 'packaged coach path missing');
+must(mainSrc.includes("path.resolve(__dirname, '../../coach/coach.html')"), 'development coach path missing');
 must(mainSrc.includes('contextIsolation: true'), 'contextIsolation must stay enabled');
 must(mainSrc.includes('nodeIntegration: false'), 'nodeIntegration must stay disabled');
 must(mainSrc.includes('./updater.cjs'), 'main must wire shell OTA updater');
 must(mainSrc.includes('Check for app updates'), 'menu must expose shell update check');
-must(!mainSrc.includes('preview-site'), 'desktop must not bundle local preview-site');
 must(updaterSrc.includes('autoUpdater'), 'updater must use electron-updater');
 must(updaterSrc.includes('coach-desktop-latest'), 'updater feed must use coach-desktop-latest release');
 must(updaterSrc.includes('app.isPackaged'), 'updater must skip in dev unpackaged runs');
-
-const coachUrl = 'https://thehybridsystem.netlify.app/coach.html';
-const res = await fetch(coachUrl, { method: 'GET', redirect: 'follow' });
-must(res.ok, 'live coach.html must respond 200, got ' + res.status);
-const html = await res.text();
-must(html.includes('coach-loop.js'), 'coach.html must load coach-loop.js');
-must(html.includes('coach-views.js'), 'coach.html must load coach-views.js');
+must(coachHtml.includes('coach-loop.js'), 'bundled coach.html must load coach-loop.js');
+must(coachHtml.includes('coach-views.js'), 'bundled coach.html must load coach-views.js');
+must(!mainSrc.includes('netlify'), 'desktop main process must not depend on Netlify');
+must(!updaterSrc.includes('netlify'), 'desktop updater must not depend on Netlify');
 
 console.log('coach-desktop.smoke: ok', {
-  coachUrl,
+  bundledCoach: path.relative(here, coachPath),
   appId: pkg.build.appId,
   version: pkg.version,
   shellOta: pkg.build.publish.provider,
