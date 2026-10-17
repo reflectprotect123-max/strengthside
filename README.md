@@ -2,6 +2,11 @@
 
 The athlete Library builder is the warm-up circuit, the lift cards, then the cool-down circuit. Start Session plays that order in the logger. This is on `main` (pull request 262, merge `0c65cc7c`) and on the live app as Capgo bundle **1.3.11** for `com.hybrid.strength`, channel `strength-live`. The previous live bundle was 1.3.10.
 
+Later calibration, metric-selection and prep-timer fixes are recorded in the
+[calibration follow-up](docs/releases/strength-calibration-followup.md). Those
+candidate changes have not been published through Capgo; the 1.3.11 ship record
+above describes Cursor's earlier builder baseline.
+
 Close the installed app and open it again to pick up 1.3.11. The update downloads in the background and waits for the next launch, so an open workout is left alone.
 
 Contracts and the release path: [docs/training-contracts.md](docs/training-contracts.md). Design: [docs/superpowers/specs/2026-10-16-session-builder-replacement-design.md](docs/superpowers/specs/2026-10-16-session-builder-replacement-design.md).

@@ -78,7 +78,18 @@
   }
   function replay(records,{ownerId,contextKey,excludeSessionId}={}) {
     const L=root.StrengthLearning,contextCache=new WeakMap();
-    const keyOf=record=>{if(!contextCache.has(record))contextCache.set(record,context(record));return contextCache.get(record);};
+    let scope=null;
+    try{const tuple=JSON.parse(contextKey);if(Array.isArray(tuple)&&tuple.length===5&&tuple.slice(0,3).every(text))scope=tuple;}catch{}
+    const keyOf=record=>{
+      if(!contextCache.has(record)){
+        const p=record.payload,page=p?.page;
+        // Identity can reject unrelated exercises cheaply. Matching identities
+        // still pass the complete physical-envelope validation before use.
+        const unrelated=scope&&(p?.ownerId!==scope[0]||page?.exerciseId!==scope[1]||page?.equipmentId!==scope[2]);
+        contextCache.set(record,unrelated?null:context(record));
+      }
+      return contextCache.get(record);
+    };
     const diagnostics=[],byId=new Map();
     const diagnostic=(record,reason)=>diagnostics.push({id:record.id,sessionId:record.sessionId??null,reason});
     // Resolve revisions before eligibility, so deletion/reopen/context edits cannot resurrect old evidence.
@@ -88,7 +99,7 @@
       if(!old||record.localRevision>old.revision)byId.set(record.id,{revision:record.localRevision,variants:[record]});
       else if(record.localRevision===old.revision)old.variants.push(record);
     }
-    const ledger=[],latest=[];let conflicted=false;
+    const ledger=[],latest=[],relevantSessions=new Set();let conflicted=false;
     for(const [id,entry] of [...byId].sort((a,b)=>compare(a[0],b[0]))) {
       // Most IDs have one latest fact. Canonicalize only conflicts and the scoped
       // output ledger; cloning every unrelated payload blocks large histories.
@@ -96,19 +107,22 @@
       const all=variants?[...variants].sort((a,b)=>compare(a[0],b[0])).map(pair=>pair[1]):entry.variants;
       const owned=all.filter(record=>text(ownerId)&&ownerMatches(record,ownerId));
       if(!owned.length)continue;
-      const scoped=owned.filter(record=>record.kind==='set'&&keyOf(record)===contextKey);
+      const scoped=owned.filter(record=>typeof contextKey==='string'&&contextKey.length>0&&record.kind==='set'&&keyOf(record)===contextKey);
       if(all.length>1){
         // A context with unresolved conflicting actuals uses the default curve until resolved.
         if(scoped.length){conflicted=true;ledger.push({id,localRevision:entry.revision,conflicts:scoped});diagnostic(scoped[0],'conflicting_revision');}
         continue;
       }
       const selected=scoped.length?fact(all[0]):all[0];
-      if(scoped.length)ledger.push(selected);
+      if(scoped.length){ledger.push(selected);relevantSessions.add(selected.sessionId);}
       latest.push(selected);
     }
-    latest.sort(order);
+    // Keep every owned set in relevant sessions, including other exercises and
+    // tombstones: their completion/time facts still gate the entire session.
+    const sessionRecords=latest.filter(record=>record.kind==='set'&&relevantSessions.has(record.sessionId));
+    sessionRecords.sort(order);
     const sessions=new Map();
-    for(const record of latest) {
+    for(const record of sessionRecords) {
       if(record.kind!=='set')continue;
       if(!text(record.sessionId)||typeof record.deleted!=='boolean'){if(keyOf(record)===contextKey)diagnostic(record,'invalid_record');continue;}
       const bucket=sessions.get(record.sessionId)||[];bucket.push(record);sessions.set(record.sessionId,bucket);

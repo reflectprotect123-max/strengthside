@@ -60,3 +60,41 @@ test('Android-size touch effort and a double tap cannot log the next set acciden
  const facts=await page.evaluate(()=>{const rows=S.session.logs[S.session.pages.find(p=>p.title==='Back Squat').id].sets;return {logged:rows.filter(r=>r.logged).length,effort:rows[0].effort,sets:Object.values(StrengthMemory.records()).filter(r=>r.kind==='set').length};});
  expect(facts).toEqual({logged:1,effort:'hard',sets:1});expect(errors).toEqual([]);
 });
+
+for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'backed-off load'}])test(`warm-up calibrates work and later ${last.label} vetoes an Easy-first increase`,async({page})=>{
+ await addSquat(page);await page.evaluate(()=>StrengthMemory.bind('browser-athlete'));
+ for(let i=0;i<3;i++)await setReps(page,`Set ${i+1} reps`,5);
+ await scheduleAndStart(page);await completeWarmups(page);
+ await expect(page.getByLabel('Weight (kg)',{exact:true})).toHaveValue('20');
+ await log(page,40,5,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();
+ await log(page,40,5,2);await page.getByRole('button',{name:'Start next set',exact:true}).click();
+ await log(page,last.kg,5,last.effort);
+ await page.getByRole('button',{name:'Next →',exact:true}).click();await page.getByRole('button',{name:'Done Training',exact:true}).click();
+ await page.getByRole('button',{name:'3',exact:true}).click();await page.getByRole('button',{name:'Finish Session',exact:true}).click();
+ await expect(page.locator('.log-sum')).toBeVisible();
+ await page.reload();
+ const result=await page.evaluate(()=>{
+  const records=StrengthMemory.records(),fact=Object.values(records).find(r=>r.kind==='set'&&r.payload.row.purpose==='working');
+  const h=StrengthBrain.history(records,fact.payload.page);
+  return {next:h.latest.nextKg,accepted:h.accepted,rows:Object.values(records).filter(r=>r.kind==='set').length};
+ });
+ expect(result).toEqual({next:40,accepted:0,rows:5});
+});
+
+test('prep timer survives reload and Next waits for zero',async({page})=>{
+ await addSquat(page);await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Post to calendar',exact:true}).click();
+ await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.clock.fastForward(2000);await page.getByRole('button',{name:'Got It',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeDisabled();
+ const start=await page.evaluate(()=>S.timer.startedAt);await page.clock.fastForward(10000);await page.reload();
+ expect(await page.evaluate(()=>S.timer.startedAt)).toBe(start);
+ await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeDisabled();
+ await page.clock.fastForward(181000);await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeEnabled();
+ await page.getByRole('button',{name:'Next →',exact:true}).click();await expect(page.locator('#logTimerFull h2')).toHaveText('Row');
+});
+test('deselecting weight in the builder keeps the logger reps-only',async({page})=>{
+ await addSquat(page);await page.getByLabel('Second metric for Back Squat',{exact:true}).selectOption('none');
+ await scheduleAndStart(page);
+ await expect(page.getByLabel('Weight (kg)',{exact:true})).toHaveCount(0);
+ await expect(page.getByText('Ramp 1 of 2',{exact:true})).toHaveCount(0);
+ await expect(page.getByLabel('Reps completed',{exact:true})).toBeVisible();
+});

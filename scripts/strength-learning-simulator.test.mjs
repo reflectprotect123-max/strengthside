@@ -34,3 +34,39 @@ test('paired policies receive identical external day and feedback schedules',()=
  const baseline=runScenario({...input,policy:'default'}),online=runScenario({...input,policy:'online'});
  assert.equal(baseline.metrics.exogenousFingerprint,online.metrics.exogenousFingerprint);
 });
+
+test('an athlete-adjusted second warm-up carries into work and finished history without extra sets',()=>{
+ const r=runScenario({seed:912731,policy:'default',scenario:'athlete-calibrated',sessions:4});
+ const first=r.decisions.filter(d=>d.session===0),ramps=first.filter(d=>d.purpose==='ramp');
+ assert.equal(ramps.length,2);assert.ok(ramps[1].displayKg>ramps[0].displayKg);
+ assert.ok(first.find(d=>d.purpose==='working').displayKg>=ramps[1].displayKg);
+ assert.ok(r.decisions.find(d=>d.session===1&&d.purpose==='working').displayKg>0);
+ for(const key of ['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'])assert.equal(r.metrics[key],0,key);
+});
+
+test('jump audit treats an unseeded zero next row as a placeholder',()=>{
+ for(const policy of ['default','online']){
+  const r=runScenario({seed:8201473,athlete:0,policy,scenario:'athlete-calibrated',sessions:1});
+  assert.equal(r.metrics.excessiveJumps,0,policy);
+ }
+});
+
+test('resuming source-scoped checkpoints returns the same paired evaluation',async()=>{
+ const {mkdtempSync,rmSync,readdirSync,readFileSync,writeFileSync}=await import('node:fs');
+ const {tmpdir}=await import('node:os');const {join}=await import('node:path');
+ const {evaluate}=await import('./strength-learning-simulator.mjs');
+ const dir=mkdtempSync(join(tmpdir(),'strength-eval-resume-')),previous=process.env.STRENGTH_EVAL_CHECKPOINT_DIR;
+ try{
+  process.env.STRENGTH_EVAL_CHECKPOINT_DIR=dir;
+  const input={athletesPerSeed:1,sessions:2,scenarios:['cold-start']};
+  const first=await evaluate(input);assert.equal(readdirSync(dir).filter(n=>n.endsWith('.json')).length,3);
+  assert.deepEqual(await evaluate(input),first);
+  const file=join(dir,readdirSync(dir).find(n=>n.endsWith('.json')));
+  const corrupt=JSON.parse(readFileSync(file,'utf8'));corrupt.results[0].baseline.hits=999;
+  writeFileSync(file,JSON.stringify(corrupt));assert.deepEqual(await evaluate(input),first);
+  const changed=await evaluate({...input,sessions:3});assert.equal(changed.sessions,3);assert.notDeepEqual(changed.results,first.results);
+ }finally{
+  if(previous==null)delete process.env.STRENGTH_EVAL_CHECKPOINT_DIR;else process.env.STRENGTH_EVAL_CHECKPOINT_DIR=previous;
+  rmSync(dir,{recursive:true,force:true});
+ }
+});

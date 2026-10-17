@@ -39,7 +39,7 @@
     if(cached?.has(cacheKey))return cached.get(cacheKey);
     const fallback={version:'online-v1',k:root.StrengthLearning?.initial().k??.0333/1.0333,rows:[],accepted:0,updates:0,startingScale:null,evidenceFingerprint:'unavailable',conflicted:false,ledger:[],diagnostics:[],evidence:[],latestFirst:null};
     let r=fallback;
-    try{if(root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
+    try{if(contextKey&&root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
     const evidence=r.evidence.map(e=>({...e,sessionId:e.observation.sessionId,
       sourceSignature:'source-v3:'+JSON.stringify([e.observation.id,e.observation.revision,e.observation.weight,e.observation.reps,e.observation.rir,e.observation.miss]),
       sourceSetIds:[e.observation.id]}));
@@ -47,8 +47,16 @@
     if(r.latestFirst&&!r.conflicted){
       const e=r.latestFirst,rows=r.ledger.filter(x=>x.sessionId===e.observation.sessionId&&!x.deleted&&x.payload?.row).map(x=>x.payload.row).sort((a,b)=>a.ordinal-b.ordinal);
       const result=Core.review(e.page,rows);let nextKg=e.row.kg;
+      // Later work cannot fit the fresh curve, but a struggle must veto an
+      // increase earned solely from the first set feeling Easy.
+      const targets=T.normalize(e.page);
+      const laterStruggle=rows.some(row=>{
+        const target=targets.find(t=>t.id===row.targetId);
+        return target?.purpose==='working'&&row.logged&&!row.deleted&&!row.skipped&&
+          (row.miss||['hard','max_effort'].includes(row.effort)||Number(row.reps)<target.reps.min);
+      });
       if(result.earned)nextKg=E.next(e.row.kg,e.page)??e.row.kg;
-      else if(!e.observation.miss&&['very_easy','easy'].includes(e.effort))nextKg=E.next(e.row.kg,e.page)??e.row.kg;
+      else if(!laterStruggle&&!result.loadReduced&&!e.observation.miss&&['very_easy','easy'].includes(e.effort))nextKg=E.next(e.row.kg,e.page)??e.row.kg;
       else if(e.observation.miss||['hard','max_effort'].includes(e.effort)){
         const first=T.normalize(e.page).find(t=>t.purpose==='working');
         nextKg=Core.suggest({page:e.page,row:e.row,nextRow:{targetId:first?.id},index:0,state:{learning:r,rows}}).kg;

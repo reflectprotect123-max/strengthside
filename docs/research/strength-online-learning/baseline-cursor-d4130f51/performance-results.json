@@ -1,0 +1,19 @@
+{
+  "host": {
+    "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "node": "v24.19.0",
+    "platform": "linux",
+    "hardware": "shared cloud host, not an Android device"
+  },
+  "records": 10000,
+  "contexts": 100,
+  "scopedObservations": 100,
+  "replayCalls": 1,
+  "snapshotMs": 244.650806,
+  "coldReplayMs": 291.9921619999999,
+  "cachedLookupP95Ms": 0.011477000000013504,
+  "nextSetP95Ms": 0.1202899999998408,
+  "operationGate": "PASS",
+  "referenceLatencyGate": "FAIL",
+  "deviceLatencyGate": "UNRUN - physical staging device unavailable"
+}

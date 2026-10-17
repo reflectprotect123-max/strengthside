@@ -292,7 +292,8 @@
   }
 
   function lettered(tpl) {
-    const blocks = (tpl.blocks || []).map((b) => ({ ...b }));
+    const rank = b => b.role === 'warmup' ? 0 : b.role === 'cooldown' ? 2 : 1;
+    const blocks = (tpl.blocks || []).map((b) => ({ ...b })).sort((a,b) => rank(a)-rank(b));
     let code = 65;
     let i = 0;
     while (i < blocks.length) {
@@ -380,7 +381,6 @@
       } else {
         let columns = (b.columns || ['reps']).slice();
         const hasReps=columns.some(c=>c==='reps'||c==='reps_range');
-        if (b.exerciseType === 'main' && hasReps && !columns.some((c) => c === 'weight_kg' || c === 'weight_lb' || c === 'weight_pct' || c === 'lwp')) columns.push('weight_kg');
         const targetInput={...b,columns,repTarget:b.repTarget||(columns.includes('reps_range')?'8-12':'8')};
         const setTargets=hasReps?root.StrengthTargets.normalize(targetInput):null;
         const rx = rxFor(Array.isArray(b.setTargets)?{...b,setTargets}:b);

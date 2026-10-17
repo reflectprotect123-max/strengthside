@@ -1,18 +1,18 @@
 # Production-path synthetic evaluation
 
-cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap. Evaluation seeds were registered before implementation and were not tuned.
+Fresh independent evaluation through actual session/seed/capture/next/replay; cold and explicitly athlete-calibrated arms; paired athlete-cluster 10,000-resample bootstrap. Evaluation seeds were registered before implementation and were not tuned. The full 144-pair run was completed once; the two calibrated scenario groups were rerun to correct an audit-only zero-placeholder jump check. All recorded training metrics and per-session feedback fingerprints matched the first run. No model or policy parameter changed.
 
-Independent paired athletes: 18; repeated scenario pairs: 108; ordinary sets per policy: 10368. Software invariant violations: 0.
+Independent paired athletes: 18; repeated scenario pairs: 144; ordinary sets per policy: 13824. Software invariant violations: 0.
 
 |Metric|Default|Online|Paired difference (95% CI)|
 |---|---|---|---|
-|Target hit|0.03993055555555555|0.03993055555555555|{"mean":0,"low":0,"high":0}|
-|Miss|0.0008680555555555555|0.0008680555555555555|{"mean":0,"low":0,"high":0}|
+|Target hit|0.13599537037037035|0.13585069444444448|{"mean":-0.0001446759259259262,"low":-0.0007957175925925921,"high":0.0002893518518518508}|
+|Miss|0.0005063657407407407|0.0005063657407407407|{"mean":0,"low":0,"high":0}|
 
-Numerical noninferiority margins: **PASS**, because both policies produced equal scored outcomes. **Personalization benefit is unresolved.** Only one of 108 scenario pairs fitted a curve, first updating at session 31; the other 107 never fitted. Across this zero-history protocol, target hit was only **3.99%** for both policies and miss rate was **0.087%**. Low misses here largely reflect underloading, not accurate prescription.
+Statistical gate: **FAIL**. Shipping policy stays default. No release is authorized by these simulations.
 
-This exposes an initial-load acquisition limitation when simulated athletes accept every suggestion without adjusting weight. Meaningful athlete-entered starting/ramp loads need a separate evaluation; no hidden teacher load was supplied here. The old established-history 66.62% score is not a comparable protocol. Shipping policy stays default. No release is authorized by these simulations.
-
+- Scores all ordinary working sets including the first; the old prototype excluded the first.
+- Athlete-calibrated arms provide an informed second warm-up weight once; they do not demonstrate automatic capacity discovery. Report these arms separately from cold starts.
 - Synthetic truth only; no native R/Dart execution.
 - The 66.62% established-history prototype uses a different protocol and is not numerically comparable.
 - No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.

@@ -132,3 +132,43 @@ test('a zero-rep miss or Max Effort still reduces the next seed after the prescr
   assert.ok(seeded.pages[0].workingKg<40);
  }
 });
+
+test('later ordinary Hard or failed sets veto an Easy-first automatic increase',()=>{
+ for(const last of [row(2,6,'hard',42),{...row(2,4,'average',42),miss:true},row(2,6,'max_effort',42)]){
+  const records={first:record(page,row(0,6,'easy',40))};
+  const r=record(page,last,{id:'last'});r.payload.row={...last};records.last=r;
+  const h=B.history(records,page);
+  assert.equal(h.latest.nextKg,40,'an Easy first set must not overrule later struggle');
+  const seeded=B.seed({id:'next',pages:[page],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
+  assert.equal(seeded.pages[0].workingKg,40);
+  assert.equal(h.accepted,0,'later work must not become shape-fitting evidence');
+ }
+});
+
+test('a first-set-last AMRAP at failure does not veto ordinary-work progression',()=>{
+ const amrap={id:'A:set:3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:true};
+ const p={...page,setCount:4,setTargets:[...targets,amrap]};
+ const records={};
+ for(let i=0;i<3;i++){
+  const actual=row(i,8,'easy',40),r=record(p,actual,{id:'work-'+i});r.payload.row={...actual};records[r.id]=r;
+ }
+ const actual={...row(3,3,'max_effort',40),targetId:amrap.id,purpose:'amrap',miss:true};
+ const r=record(p,actual,{id:'amrap'});r.payload.row=actual;records[r.id]=r;
+ const h=B.history(records,p);assert.equal(h.latest.nextKg,41);assert.equal(h.accepted,0);
+});
+
+test('backing off a later comparable load vetoes Easy-first seeding without fitting later work',()=>{
+ const records={first:record(page,row(0,8,'easy',40))};
+ for(let i=1;i<3;i++){
+  const actual=row(i,8,'easy',35-i),r=record(page,actual,{id:'later-'+i});r.payload.row=actual;records[r.id]=r;
+ }
+ const h=B.history(records,page);assert.equal(h.latest.nextKg,40);assert.equal(h.latest.loadReduced,true);assert.equal(h.accepted,0);
+});
+
+test('missing canonical exercise identity cannot share another unidentified lift history',()=>{
+ const unknown={...page,exerciseId:null},records={old:record(unknown,row(0,8,'easy',80))};
+ const current={...unknown,title:'Different unidentified press'};
+ const h=B.history(records,current);assert.equal(h.latest,null);assert.equal(h.rolling,null);
+ const seeded=B.seed({id:'next',pages:[current],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
+ assert.notEqual(seeded.pages[0].workingKg,81);
+});

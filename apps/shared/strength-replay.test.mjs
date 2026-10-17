@@ -183,3 +183,27 @@ test('bodyweight equipment cannot fit from an incorrectly declared single-load e
  const contextKey=JSON.stringify(['a','squat','bodyweight','single','2-0-X-1']);
  assert.equal(R.replay([r],{ownerId:'a',contextKey}).accepted,0);
 });
+
+test('large unrelated histories validate only the requested exercise while retaining shared-session gates',()=>{
+ const ctx=loadStrength(['strength-load','strength-context','strength-learning','strength-replay']);
+ const rows=Array.from({length:10000},(_,i)=>{
+  const r=record(`large-${i}`,1,50);r.payload.page.exerciseId=`exercise-${i%100}`;return r;
+ });
+ const contextKey=JSON.stringify(['a','exercise-0','barbell','barbell_total','2-0-X-1']);
+ let validations=0;const normalize=ctx.StrengthContext.normalizeLoad;
+ ctx.StrengthContext.normalizeLoad=(...args)=>{validations++;return normalize(...args);};
+ const state=ctx.StrengthReplay.replay(rows,{ownerId:'a',contextKey});
+ assert.equal(state.accepted,100);assert.ok(validations<=600,`unrelated load validation count ${validations}`);
+ const other=record('open-other-exercise',1,50);other.payload.page.exerciseId='other';
+ other.sessionId=rows[0].sessionId;other.payload.completed=false;
+ const gated=ctx.StrengthReplay.replay([...rows,other],{ownerId:'a',contextKey});
+ assert.equal(gated.accepted,99);assert.ok(gated.diagnostics.some(d=>d.id===rows[0].id&&d.reason==='incomplete_or_inconsistent_session'));
+});
+
+test('an absent context never groups unrelated facts with missing exercise identity',()=>{
+ const r=record('unknown',1,80);r.payload.page.exerciseId=null;
+ for(const contextKey of [null,undefined,'']){
+  const state=R.replay([r],{ownerId:'a',contextKey});
+  assert.equal(state.latestFirst,null);assert.equal(state.startingScale,null);assert.equal(state.ledger.length,0);
+ }
+});

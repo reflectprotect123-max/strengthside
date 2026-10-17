@@ -134,7 +134,7 @@
     try {
       const store = tempoStorage();
       const list = JSON.parse((store && store.getItem(TEMPO_KEY)) || '[]');
-      return Array.isArray(list) ? list.filter((item) => typeof item === 'string' && /^[0-9X]{4}$/.test(item)) : [];
+      return Array.isArray(list) ? list.filter((item) => typeof item === 'string' && /^\d\d[\dX]\d$/.test(item)) : [];
     } catch (e) { return []; }
   }
 
@@ -820,7 +820,7 @@
     },
     pickTempo(bid, text) {
       const raw = String(text || '');
-      const tempo = raw === '' ? '' : (/^[0-9X]{4}$/i.test(raw) ? raw.toUpperCase() : null);
+      const tempo = raw === '' ? '' : (/^\d\d[\dX]\d$/i.test(raw) ? raw.toUpperCase() : null);
       if (tempo === null) return;
       root.S.libUi.tempoMenu = null;
       root.S.libUi.tempoAdd = false;
@@ -830,10 +830,10 @@
     },
     saveTempo(bid) {
       const draft = (ui().tempoDraft || []).map((part) => String(part || '').toUpperCase());
-      if (!bid || draft.length !== 4 || draft.some((part) => !/^[0-9X]$/.test(part))) {
+      if (!bid || draft.length !== 4 || draft.some((part,index) => !(index===2 ? /^[0-9X]$/ : /^\d$/).test(part))) {
         root.S.libUi.tempoMenu = bid;
         root.S.libUi.tempoAdd = true;
-        root.S.libUi.tempoError = 'Use a number or X in each box.';
+        root.S.libUi.tempoError = 'Use numbers for Lower and pauses; Lift can be a number or X.';
         save();
         return;
       }

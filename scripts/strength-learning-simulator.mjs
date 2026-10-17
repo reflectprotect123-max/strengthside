@@ -1,13 +1,15 @@
 /** Synthetic engineering evaluation of actual app boundaries; no clinical accuracy claim. */
 import vm from 'node:vm';
 import {Worker,isMainThread,parentPort,workerData} from 'node:worker_threads';
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,renameSync} from 'node:fs';
+import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 const fixture=JSON.parse(readFileSync(new URL('../checks/fixtures/strength-learning-cases.json',import.meta.url)));
 export const registered={training:fixture.trainingSeeds,evaluation:fixture.evaluationSeeds};
 const sources=['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-brain','strength-memory','session'].map(n=>[n,readFileSync(new URL('../apps/athlete/'+n+'.js',import.meta.url),'utf8')]);
 const digest=x=>createHash('sha256').update(x).digest('hex');
+const analysisSha256=digest(readFileSync(fileURLToPath(import.meta.url)));
 function rng(seed){let x=seed>>>0;return()=>((x=(Math.imul(1664525,x)+1013904223)>>>0)/4294967296);}
 const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
 export function runtime(seed=1,mode='default'){
@@ -23,7 +25,7 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
  const trueK=.015+random()*.045,base=config.dumbbell?18+random()*35:65+random()*110;
  const truthSchedule=[],decisions=[],metrics={sets:0,hits:0,misses:0,error:0,invalid:0,equipmentViolations:0,excessiveJumps:0,actualMutations:0,wrongReferences:0,accepted:0,updates:0,firstUpdate:null};
  for(let session=0;session<sessions;session++){
-  const nums=config.highReps?[20,25,20]:config.range?[6,6,6]:session%2?[5,3,1]:[10,8,6];
+  const nums=config.highReps?[20,25,20]:config.range?[6,6,6]:config.variedReps?[[5,3,1],[8,6,4],[10,8,6]][session%3]:session%2?[5,3,1]:[10,8,6];
   const tempo=config.alternateTempo?(session%2?'33X1':'20X1'):'20X1';
   const targets=nums.map((n,i)=>({id:`A:set:${i}`,purpose:'working',reps:{min:n,max:config.range?8:n},loadRule:{kind:'adaptive'},toFailure:false}));
   targets.push({id:'A:set:3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:false});
@@ -37,6 +39,13 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
   truthSchedule.push([day,feedbackNoise]);
   for(let i=0;i<rows.length;i++){
    let row=rows[i],kg=row.kg;
+   // Explicit athlete action through the existing load input, NOT an engine
+   // estimate. Only the second ramp of the first session is adjusted. This
+   // separate arm measures response to an informed input, not cold acquisition.
+   if(config.athleteCalibration&&session===0&&row.purpose==='ramp'&&i===1){
+    const desiredPhysical=base*.72;
+    kg=E.floor(C.display(desiredPhysical,page),page);
+   }
    if(config.manual&&session===1&&row.purpose==='working'&&row.workingIndex===0)kg=config.manual;
    if(row.purpose==='amrap'){
     const ref=rows.find(r=>r.purpose==='working');if(kg!==(!ref.miss?ref.kg:null))metrics.wrongReferences++;
@@ -72,7 +81,10 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
       const changing=rows[i].reps!==page.setTargets.find(t=>t.id===next.targetId)?.reps?.min;
       const minimum=C.normalized(profile.min,page).externalKg;
       const escape=Math.abs(source-minimum)<1e-8&&decision.kg===E.next(kg,page);
-      const rung=E.next(planned??kg,page);
+      // An unseeded next set is represented by zero until the logger fills it.
+      // Zero is not a real rack setting, so compare the decision with the load
+      // the athlete just used instead of treating 0→2.5 kg as the next rung.
+      const rung=E.next(Number.isFinite(planned)&&planned>0?planned:kg,page);
       if(!escape&&(out>source*(changing?1.1:1.05)+1e-8||rung!=null&&decision.kg>rung+1e-8))metrics.excessiveJumps++;
      }
     }
@@ -108,9 +120,9 @@ export function summarizeReport(report){
  const keys=['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'];
  const violations=results.reduce((n,r)=>n+keys.reduce((s,k)=>s+r.candidate[k]+r.baseline[k],0),0);
  const pass=violations===0&&overall.targetHitDifference.mean>=0&&overall.targetHitDifference.low>-.01&&overall.missRateDifference.high<=.005&&Object.values(groups).every(g=>g.targetHitDifference.low>-.03&&g.missRateDifference.high<=.01);
- return {...report,overall,groups,violations,bootstrapUnit:'seed + athlete, with all repeated scenarios kept together',analysisSha256:digest(readFileSync(fileURLToPath(import.meta.url))),gate:{pass,shippingMode:'default',candidateMode:'shadow-only pending staging and outcome gates'}};
+ return {...report,overall,groups,violations,bootstrapUnit:'seed + athlete, with all repeated scenarios kept together',analysisSha256,gate:{pass,shippingMode:'default',candidateMode:'shadow-only pending staging and outcome gates'}};
 }
-export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-start','alternating-tempo-10-8-6','noisy-feedback','coarse-equipment','short-rest','recovery-drift']}={}){
+export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-start','alternating-tempo-10-8-6','noisy-feedback','coarse-equipment','short-rest','recovery-drift','athlete-calibrated','athlete-calibrated-noisy']}={}){
  const tasks=[];
  for(const scenario of scenarios)for(const seed of registered.evaluation)for(let athlete=0;athlete<athletesPerSeed;athlete++){
   tasks.push({seed,scenario,athlete,sessions,index:tasks.length});
@@ -120,12 +132,28 @@ export async function evaluate({athletesPerSeed=6,sessions=32,scenarios=['cold-s
   const w=new Worker(new URL(import.meta.url),{workerData:{batch}});let received=false;
   w.once('message',rows=>{received=true;resolve(rows);});w.once('error',reject);w.once('exit',code=>{if(code!==0||!received)reject(Error('Simulation worker failed: '+code));});
  })))).flat().sort((a,b)=>a.index-b.index).map(({index,...r})=>r);
- return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'cold acquisition through actual session/seed/capture/next/replay; paired athlete-cluster 10000-resample bootstrap',limitations:['Scores all ordinary working sets including the first; the old prototype excluded the first.','Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
+ return summarizeReport({schemaVersion:1,fixtureSha256:digest(JSON.stringify(fixture)),sourceSha256:Object.fromEntries(sources.map(([n,s])=>[n,digest(s)])),registered,sealedEvaluation:true,athletesPerSeed,sessions,protocol:'fresh independent evaluation through actual session/seed/capture/next/replay; cold and explicitly athlete-calibrated arms; paired athlete-cluster 10000-resample bootstrap',limitations:['Scores all ordinary working sets including the first; the old prototype excluded the first.','Athlete-calibrated arms provide an informed second warm-up weight once; they do not demonstrate automatic capacity discovery. Report these arms separately from cold starts.','Synthetic truth only; no native R/Dart execution.','The 66.62% established-history prototype uses a different protocol and is not numerically comparable.','No real prospective effort outcomes supplied; no clinical or real-athlete superiority claim.','Rest effects are hidden simulator fatigue only; no rest weight correction is enabled.'],results});
 }
 if(!isMainThread){
- const results=[];
+ const results=[],cacheDir=process.env.STRENGTH_EVAL_CHECKPOINT_DIR;
+ const signature=digest(JSON.stringify({node:process.version,analysisSha256,fixture,sources,batch:workerData.batch}));
+ const cacheFile=cacheDir&&workerData.batch.length?join(cacheDir,`worker-${workerData.batch[0].index}.json`):null;
+ let saved=[];
+ if(cacheFile){
+  mkdirSync(cacheDir,{recursive:true});
+  try{
+   const data=JSON.parse(readFileSync(cacheFile,'utf8'));
+   if(data.signature===signature&&Array.isArray(data.results)&&data.checksum===digest(JSON.stringify(data.results)))saved=data.results;
+  }catch{/* Missing/interrupted checkpoints simply recompute; never accept incomplete evidence. */}
+ }
  for(const {index,sessions,...input} of workerData.batch){
-  results.push({index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics});
+  const cached=saved.find(row=>row.index===index);
+  results.push(cached||{index,...input,baseline:runScenario({...input,sessions,policy:'default'}).metrics,candidate:runScenario({...input,sessions,policy:'online'}).metrics});
+  if(cacheFile&&!cached){
+   const contents=JSON.stringify({signature,results,checksum:digest(JSON.stringify(results))});
+   writeFileSync(cacheFile+'.tmp',contents,{mode:0o600});renameSync(cacheFile+'.tmp',cacheFile);
+  }
+  if(results.length%6===0)process.stderr.write(`Simulation worker: ${results.length}/${workerData.batch.length} pairs complete\n`);
   // Let completed native-restore promises settle between independent VM runs.
   await new Promise(resolve=>setImmediate(resolve));
  }
