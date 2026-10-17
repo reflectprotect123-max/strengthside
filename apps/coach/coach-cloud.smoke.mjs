@@ -24,7 +24,7 @@ const html = readFileSync(join(dir, 'coach.html'), 'utf8');
 if (!html.includes('coach-cloud.js')) throw new Error('coach.html missing coach-cloud.js');
 if (!html.includes('Push cloud now')) throw new Error('coach.html missing Push cloud now');
 if (!html.includes('bindMyCloudIdToAthlete')) throw new Error('coach.html missing cloud link');
-if (!html.includes('Open athlete app')) throw new Error('coach.html missing athlete app link');
+if (!html.includes('Download Strength APK')) throw new Error('coach.html missing Strength APK link');
 if (html.includes('rx-delivery-strip')) throw new Error('coach.html must not show persistent delivery strip banner');
 
 const indexHtml = readFileSync(join(dir, '../../archive/legacy-athlete/index.html'), 'utf8');
