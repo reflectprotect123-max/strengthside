@@ -31,7 +31,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Coach desktop smoke (bundled UI)
-        run: pnpm run check:coach-desktop
+        run: pnpm --filter @hybrid/coach-desktop run check
 
       - name: Build Windows NSIS installer
         working-directory: apps/desktop
