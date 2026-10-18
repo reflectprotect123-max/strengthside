@@ -2,7 +2,7 @@ import {test,expect} from 'playwright/test';
 import {readFileSync} from 'node:fs';
 const fixture=JSON.parse(readFileSync(new URL('../fixtures/coach-published.json',import.meta.url))).row;
 async function server(page){
-  let rows=[structuredClone(fixture)];const pulls=[];
+  let rows=[structuredClone(fixture)];const pulls=[],receipts=[];
   const user={id:fixture.athlete_id,email:'athlete@example.test',aud:'authenticated',role:'authenticated'};
   await page.addInitScript(({user,date})=>{
     const token=btoa(JSON.stringify({alg:'HS256',typ:'JWT'}))+'.'+btoa(JSON.stringify({sub:user.id,aud:'authenticated',exp:4102444800}))+'.test-signature';
@@ -17,12 +17,13 @@ async function server(page){
       body=rows.slice(lo,lo+500);
     }else if(url.pathname.endsWith('/athlete_domain_snapshots'))body=null;
     else if(url.pathname.endsWith('/sync_strength_brain_records'))body={ok:true};
+    else if(url.pathname.endsWith('/complete_coach_assignment')){receipts.push(req.postDataJSON());body={ok:true};}
     else if(url.pathname.endsWith('/upsert_athlete_domain_snapshot'))body=true;
     else if(url.pathname.endsWith('/user'))body=user;
     else if(url.pathname.includes('/functions/v1/'))body={ok:true,connected:false};
     await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(body)});
   });
-  return {pulls,remove:()=>{rows=[];}};
+  return {pulls,receipts,remove:()=>{rows=[];}};
 }
 async function number(page,label,value){
   await page.getByLabel(label,{exact:true}).click();const pad=page.locator('.log-pad');
@@ -52,6 +53,8 @@ test('Coach published payload is fetched with athlete auth, appears in Training 
   await page.getByRole('button',{name:'Next →',exact:true}).click();await page.getByRole('button',{name:'Done Training',exact:true}).click();
   await page.getByRole('button',{name:'3',exact:true}).click();await page.getByRole('button',{name:'Finish Session',exact:true}).click();
   await expect(page.locator('.log-sum')).toBeVisible();
+  await expect.poll(()=>api.receipts.length,{timeout:10000}).toBeGreaterThan(0);
+  expect(api.receipts[0].p_assignment_id).toBe(fixture.id);
   await page.reload();await page.waitForFunction(()=>CoachAssignments.getStatus().ok);
   expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set'&&r.payload.completed).length)).toBe(4);
   expect(errors).toEqual([]);

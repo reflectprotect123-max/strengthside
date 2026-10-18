@@ -25,6 +25,8 @@
       if(!columns)throw new Error('Unknown Coach metric');
     }
     if(columns.some(c=>!root.TrainingCore.metric(c)))throw new Error('Unknown Coach metric');
+    // Legacy Coach editor stripped an unprescribed kg target while retaining Metric: Weight.
+    if(ex.metric==='Weight'&&columns.some(c=>['reps','reps_range'].includes(c))&&!columns.some(c=>['weight_kg','weight_lb','weight_pct','lwp'].includes(c)))columns.push('weight_kg');
     const repCol=cols.find(c=>['reps','reps_range'].includes(c.kind));
     let targets=ex.setTargets?clone(ex.setTargets):null;
     if(!targets&&columns.some(c=>['reps','reps_range'].includes(c))) {
@@ -45,13 +47,15 @@
     }
     const title=String(ex.title||ex.name||'').trim();
     if(!title)throw new Error('Coach exercise needs a name');
-    const notes=[ex.coachNote,b.coachNote,b.instructions].filter(Boolean).map(String);
+    const notes=[ex.coachNote,b.notes,b.coachNote,b.instructions].flat().filter(Boolean).map(String);
+    if(/^(yes|each|per side)$/i.test(ex.perSide||''))notes.push('Complete the prescription on each side.');
     if(ex.load)notes.push(`Coach load: ${ex.load}`);
     // Keep authored values as prescription metadata, never fabricated completed actuals.
     const prescribed=cols.filter(c=>!['reps','reps_range'].includes(c.kind)).map(c=>columnValues(c,n).join(' / ')).join(' · ');
     const block={id,kind:'lift',title,exerciseId:ex.exerciseId||null,columns:[...new Set(columns)],setCount:n,
       repTarget:ex.repTarget??ex.reps,setTargets:targets,tempo:ex.tempo||b.tempo||null,role,notes,
-      prescribed:ex.prescribed||prescribed||(!targets?String(ex.reps||''):''),groupId:b.groupId||null};
+      prescribed:ex.prescribed||prescribed||(!targets?String(ex.reps||''):''),groupId:b.groupId||null,
+      coachAssignmentId:id.split(':')[1],coachExerciseId:ex.id||null,coachBlockId:b.id||null};
     for(const key of META)if(ex[key]!=null)block[key]=clone(ex[key]);
     return block;
   }
@@ -65,7 +69,7 @@
     session.blocks.forEach((b,i)=>{
       if(root.StrengthOnly.isConditioning(b))return;
       const id=`coach:${row.id}:${b.id||i}`;
-      if(b.kind==='lift'||b.kind==='circuit') {blocks.push({...clone(b),id});return;}
+      if(b.kind==='lift'||b.kind==='circuit') {blocks.push({...clone(b),id,coachAssignmentId:row.id,coachExerciseId:b.id});return;}
       if(Array.isArray(b.exercises)&&b.exercises.length) {
         b.exercises.forEach((ex,j)=>blocks.push(exercise(ex,b,`${id}:${ex.id||j}`)));
       } else if(b.instructions||b.coachNote) {

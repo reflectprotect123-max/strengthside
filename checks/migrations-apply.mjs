@@ -55,7 +55,7 @@ const dir = mkdtempSync(join('/tmp', 'strengthpg-'));
 execSync(`chmod 777 ${dir}${AS_ROOT ? ` && chown -R ${OWNER} ${dir}` : ''}`);
 
 const sqlFiles = readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort();
-for (const src of [...sqlFiles.map((f) => join(ROOT, 'supabase/migrations', f)), join(ROOT, 'checks/sql/strength-prelude.sql')]) {
+for (const src of [...sqlFiles.map((f) => join(ROOT, 'supabase/migrations', f)), join(ROOT, 'checks/sql/strength-prelude.sql'),join(ROOT,'checks/sql/coach-assignment-results-test.sql')]) {
   const dest = join(dir, src.split('/').pop());
   copyFileSync(src, dest);
   execSync(`chmod 644 ${dest}${AS_ROOT ? ` && chown ${OWNER} ${dest}` : ''}`);
@@ -146,6 +146,8 @@ try {
       }
     }
   }
+
+  check('Coach result receipts require owned durable evidence and preserve frozen prescriptions',()=>psql(`-q -f ${join(dir,'coach-assignment-results-test.sql')}`));
 
   console.log('\nOwned tables and their RLS:\n');
 

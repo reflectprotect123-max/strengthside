@@ -108,3 +108,14 @@ test('Supabase transport scopes published rows to owner and paginates determinis
   assert.equal((await c.CoachAssignments.sync()).ok,true);assert.equal(calls,2);
   assert.deepEqual(queries[0].filters,[['athlete_id',fixture.athlete_id],['state','published']]);assert.equal(queries[0].order,'id');assert.deepEqual(queries[1].range,[500,999]);
 });
+
+test('UI-produced weight prescription retains blank kg, block notes, tempo, per-side and assignment provenance',()=>{
+ const c=runtime(),row=copy(fixture),b=row.resolved_snapshot.htmlSession.blocks[0],ex=b.exercises[0];
+ b.notes='Controlled movement';Object.assign(ex,{metric:'Weight',perSide:'Yes',logColumns:[{kind:'reps',values:['10','8','6','AMRAP']}]});
+ const state=c.CoachAssignments.apply(c.S,[row],fixture.athlete_id).state;
+ const plan=c.HybridLibrary.planForDate(state.library,fixture.scheduled_date),p=plan.blocks.find(b=>b.kind==='lift');
+ assert.deepEqual(copy(p.columns),['reps','weight_kg']);assert.equal(p.coachAssignmentId,row.id);assert.equal(p.coachExerciseId,ex.id);
+ assert.ok(p.notes.includes('Controlled movement'));assert.ok(p.notes.some(n=>n.includes('each side')));
+ assert.equal(p.tempo,'20X1');assert.deepEqual(copy(plan.coachAssignedIds),[row.id]);
+ ex.metric='Reps';const reps=c.CoachAssignments.convert(row).blocks[0];assert.deepEqual(copy(reps.columns),['reps']);
+});

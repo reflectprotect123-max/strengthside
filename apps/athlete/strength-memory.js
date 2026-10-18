@@ -11,7 +11,7 @@
     if(!value||typeof value!=='object'||Array.isArray(value))return empty();
     const dict=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
     return {version:VERSION,ownerId:typeof value.ownerId==='string'?value.ownerId:null,
-      records:dict(value.records),pending:dict(value.pending),revisions:dict(value.revisions),conflicts:dict(value.conflicts)};
+      records:dict(value.records),pending:dict(value.pending),revisions:dict(value.revisions),conflicts:dict(value.conflicts),receipts:dict(value.receipts)};
   }
   const raw=root.localStorage.getItem(KEY);
   try{const parsed=raw?JSON.parse(raw):null;memory=hydrate(parsed);if(parsed&&parsed.version!==VERSION)recoveryRaw=raw;}
@@ -94,7 +94,7 @@
         const expected=candidate&&root.StrengthLoad?.fromPage({page,value:row.kg,provenance:candidate.provenance});
         const normalizedLoad=expected&&JSON.stringify(candidate)===JSON.stringify(expected)?candidate:null;
         put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:3,ownerId:memory.ownerId,
-          normalizedLoad,completed,authoredTargets:targets,page:clone(page),row:snapshot,sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
+          normalizedLoad,completed,sessionCompletedAt:page.coachAssignmentId?session.completedAt||null:null,coachAssignmentId:page.coachAssignmentId||null,authoredTargets:targets,page:clone(page),row:snapshot,sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
       });
     }
     // Lifecycle is a session fact: deleted rows also receive finish/reopen snapshots.
@@ -106,7 +106,7 @@
       if(!rows.some(r=>r.logged)&&!session.brainEstimateIds[page.id])continue;
       const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
       const result=root.StrengthBrain.review(page,rows),state=replay(exerciseKey,page),own=state.evidence.find(e=>e.sessionId===session.id);
-      put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,completed,
+      put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,completed,coachAssignmentId:page.coachAssignmentId||null,sessionCompletedAt:page.coachAssignmentId?session.completedAt||null:null,
         sourceSetIds:own?.sourceSetIds||[],sourceSignature:own?.sourceSignature||null,prescriptionSignature:prescriptionSignature(page),
         freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date}});
     }
@@ -133,8 +133,30 @@
       async pull(uid){
         const out=[];for(let offset=0;;offset+=500){const {data,error}=await sb.from('strength_brain_records').select('*').eq('athlete_id',uid).order('record_id').range(offset,offset+499);if(error)throw error;out.push(...data);if(data.length<500)break;}return out;
       },
+      async complete(assignmentId,sessionId){const {data,error}=await sb.rpc('complete_coach_assignment',{p_assignment_id:assignmentId,p_session_id:sessionId});if(error)throw error;return data;},
       async push(batch){const {data,error}=await sb.rpc('sync_strength_brain_records',{p_records:batch});if(error)throw error;return data;}
     };
+  }
+  async function syncReceipts(io,current) {
+    if(!io.complete)return;
+    const groups=new Map();
+    for(const r of Object.values(memory.records)) {
+      const a=r.payload?.coachAssignmentId;
+      if(!a||!r.payload?.completed||r.deleted)continue;
+      const key=a+':'+r.sessionId;
+      if(!groups.has(key))groups.set(key,{assignment:a,session:r.sessionId,records:[]});
+      groups.get(key).records.push(r);
+    }
+    for(const [key,g] of groups) {
+      if(!current())return;
+      const fingerprint=signature(g.records.map(r=>[r.id,r.localRevision]).sort());
+      if(memory.receipts?.[key]===fingerprint)continue;
+      const result=await io.complete(g.assignment,g.session);
+      if(!current())return;
+      if(!result?.ok)throw new Error(result?.reason||'Coach result receipt failed');
+      (memory.receipts||(memory.receipts={}))[key]=fingerprint;
+      persist();
+    }
   }
   async function sync(io=ioDefault()) {
     if(busy)return {ok:false,reason:'busy'};
@@ -180,9 +202,12 @@
         }
         persist();
       }
+      if(Object.keys(memory.pending).length){schedule(0);return {ok:true,queued:true};}
+      await syncReceipts(io,current);
+      if(!current())return {ok:false,reason:'account_changed'};
       retry=0;status.lastError='';status.lastSyncAt=new Date().toISOString();return {ok:true};
     }catch(e){status.lastError=e.message||'Sync failed';return {ok:false,reason:status.lastError};}
-    finally{busy=false;if(Object.keys(memory.pending).length&&status.lastError&&!/conflict|Concurrent/.test(status.lastError))schedule(Math.min(60000,5000*2**Math.min(retry++,4)));}
+    finally{busy=false;if(status.lastError&&!/conflict|Concurrent/.test(status.lastError))schedule(Math.min(60000,5000*2**Math.min(retry++,4)));}
   }
   function schedule(ms=1500) {if(timer)root.clearTimeout(timer);timer=root.setTimeout(()=>{timer=null;sync().catch(()=>{});},ms);}
   function removeSession(sessionId) {

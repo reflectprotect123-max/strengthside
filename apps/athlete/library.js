@@ -222,6 +222,9 @@
           columns,
           setCount: setTargets?.length||b.setCount,
           exerciseId: b.exerciseId,
+          coachAssignmentId: b.coachAssignmentId,
+          coachExerciseId: b.coachExerciseId,
+          coachBlockId: b.coachBlockId,
           equipmentId: b.equipmentId,
           equipmentStepKg: b.equipmentStepKg,
           availableLoads: b.availableLoads,
@@ -238,6 +241,7 @@
       id: tpl.id,
       title: tpl.title || 'Session Template',
       instructions: tpl.instructions || '',
+      coachAssignedIds: tpl.coachAssignedIds || [],
       blocks,
       dots: {},
     };
