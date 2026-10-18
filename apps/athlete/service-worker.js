@@ -1,4 +1,4 @@
-const CACHE = 'strength-brain-1.3.14';
+const CACHE = 'strength-brain-1.3.15';
 const ASSETS = ["./","./app.js","./assets/hpp-logo.jpg","./capgo-updates.js","./coach-assignments.js","./connectors/whoop.js","./engine/hallway.js","./engine/index.html","./engine/native-plugins.js","./home.css","./hybrid-integrations.js","./hybrid-sc.js","./index.html","./library-ui.js","./library.css","./library.js","./logger.css","./logger.js","./native-bridge.js","./plan-sync.js","./progress-chart.js","./release.js","./session.js","./strength-brain-core.js","./strength-brain.js","./strength-config.js","./strength-context.js","./strength-equipment.js","./strength-home.css","./strength-home.js","./strength-learning.js","./strength-load.js","./strength-memory.js","./strength-only.js","./strength-policy.js","./strength-replay.js","./strength-rts.js","./strength-targets.js","./timer.js","./training-core.js","./vendor/supabase.min.js","./whoop-common.js"];
 
 self.addEventListener('install', (event) => {
