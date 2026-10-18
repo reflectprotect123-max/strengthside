@@ -97,7 +97,7 @@
     if (!next.catalog.exercises.length && !next.catalog.circuits.length) next.catalog = seedCatalog();
     const byId=new Map(next.catalog.exercises.map(x=>[x.id,x])),byTitle=new Map(next.catalog.exercises.map(x=>[String(x.title||'').trim().toLowerCase(),x]));
     for(const template of next.templates)for(const block of template.blocks||[])if(block.kind==='lift'){
-      const hit=byId.get(block.exerciseId)||byTitle.get(String(block.title||'').trim().toLowerCase());
+      const hit=block.exerciseId?byId.get(block.exerciseId):byTitle.get(String(block.title||'').trim().toLowerCase());
       if(hit){block.exerciseId=hit.id;for(const key of LOAD_METADATA)if(block[key]==null&&hit[key]!=null)block[key]=clone(hit[key]);}
       else Object.assign(block,{...inferredMetadata(block.title),...block});
     }
@@ -222,6 +222,9 @@
           columns,
           setCount: setTargets?.length||b.setCount,
           exerciseId: b.exerciseId,
+          coachAssignmentId: b.coachAssignmentId,
+          coachExerciseId: b.coachExerciseId,
+          coachBlockId: b.coachBlockId,
           equipmentId: b.equipmentId,
           equipmentStepKg: b.equipmentStepKg,
           availableLoads: b.availableLoads,
@@ -238,6 +241,7 @@
       id: tpl.id,
       title: tpl.title || 'Session Template',
       instructions: tpl.instructions || '',
+      coachAssignedIds: tpl.coachAssignedIds || [],
       blocks,
       dots: {},
     };

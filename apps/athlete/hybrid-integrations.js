@@ -7,6 +7,7 @@
 
   let foregroundBound = false;
   let bootSyncPromise = null;
+  let visibilityBound = false;
 
   function readShared(accountId) {
     try {
@@ -104,6 +105,7 @@
     bootSyncPromise = (async () => {
       await hydrateAuth();
       await syncPlan();
+      if (global.CoachAssignments) await global.CoachAssignments.sync();
       await syncWhoopFull();
     })().finally(() => {
       bootSyncPromise = null;
@@ -112,6 +114,12 @@
   }
 
   function bindForegroundSync() {
+    if (!visibilityBound && global.document) {
+      visibilityBound = true;
+      global.document.addEventListener('visibilitychange', () => {
+        if (global.document.visibilityState === 'visible') bootSync();
+      });
+    }
     if (foregroundBound) return;
     const cap = global.Capacitor && global.Capacitor.Plugins && global.Capacitor.Plugins.App;
     if (!cap || typeof cap.addListener !== 'function') return;

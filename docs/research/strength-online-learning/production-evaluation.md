@@ -1,6 +1,6 @@
 # Production-path synthetic evaluation
 
-Fresh independent evaluation through actual session/seed/capture/next/replay; cold and explicitly athlete-calibrated arms; paired athlete-cluster 10,000-resample bootstrap. Evaluation seeds were registered before implementation and were not tuned. The full 144-pair run was completed once; the two calibrated scenario groups were rerun to correct an audit-only zero-placeholder jump check. All recorded training metrics and per-session feedback fingerprints matched the first run. No model or policy parameter changed.
+fresh independent evaluation through actual session/seed/capture/next/replay; cold and explicitly athlete-calibrated arms; paired athlete-cluster 10000-resample bootstrap. Evaluation seeds were registered before implementation and were not tuned.
 
 Independent paired athletes: 18; repeated scenario pairs: 144; ordinary sets per policy: 13824. Software invariant violations: 0.
 
