@@ -158,3 +158,16 @@ test('an explicitly re-added calendar assignment advances beyond its deletion re
  const merged=P.mergePlan(restored,deleted,{template:{},session:{}});
  assert.equal(merged.plan.sessions.filter(s=>s.kind==='assignment').length,1);
 });
+
+test('edits made while a pull is in flight survive merging and are pushed',async()=>{
+ const uid='live-athlete',old={id:'session',date:'2026-10-18',blockIndex:0,logs:{A:{sets:[{kg:30,reps:5,logged:false}]}}};
+ globalThis.S=libState([],{sessions:{'2026-10-18':old}});globalThis.S.accountId=uid;globalThis.S.session=old;
+ const remote=P.pack(globalThis.S);let release,entered;const started=new Promise(r=>entered=r);let pushed;
+ const task=P.syncNow({io:{userId:async()=>uid,pull:()=>{entered();return new Promise(r=>release=r)},push:async(revision,plan)=>{pushed=plan;return {wrote:true,revision}}}});
+ await started;
+ const current=structuredClone(old);current.blockIndex=1;current.logs.A.sets[0].logged=true;
+ globalThis.S.sessions['2026-10-18']=current;globalThis.S.session=current;
+ release({revision:1,snapshot:remote});assert.equal((await task).ok,true);
+ assert.equal(globalThis.S.session.blockIndex,1);assert.equal(globalThis.S.session.logs.A.sets[0].logged,true);
+ assert.equal(pushed.sessions.find(s=>s.kind==='log').payload.blockIndex,1);
+});
