@@ -30,3 +30,9 @@ Traces retain the initial failed receipt and test-automation timing retries for 
 ## Limits
 
 Authentication and the HTTP adapter were test services. PostgreSQL migrations, RLS, freeze trigger and imported catalogues were real in a disposable database. The platform snapshot endpoint was simulated. This does not test live Supabase authentication/roster, Electron distribution or a physical Android APK. The new Supabase migration must be deployed before the updated clients are released. The previously identified independent Coach working-max calculator discrepancy was outside these seven workflow fixes.
+
+## Regression and learning validation
+
+The 42-test athlete browser suite passed, followed by the updated Coach receipt browser checks. Coach's 20 smoke checks and three browser tests passed, as did desktop validation, typecheck, unit checks and the build. The complete migration runner passed in disposable PostgreSQL 16 with pgvector, including the new owner/coach receipt tests.
+
+The registered production-path simulation was fully rerun: 144 paired cases, 13,824 ordinary working sets per policy (27,648 total), zero software invariant violations. Every per-case metric and every overall metric exactly matches the previous report. Only source hashes and the fresh-run analysis provenance changed. The existing candidate online-learning promotion gate remains false; the shipping policy remains default. These workflow fixes do not authorize promoting a new learning policy.

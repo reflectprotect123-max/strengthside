@@ -13,8 +13,8 @@
     "strength-replay": "3797268f7aff26d628e7b5728bc4aacd34b0ef170e1c2c16c32fa397b6a9d4df",
     "strength-brain-core": "48696f6a53d57f958e1122674bd64f7401a98262403a08051842dca5d42d643f",
     "strength-brain": "fdb0e9955e18b60524150c2e250ac8881886386e5d060f6af105217b0b281c93",
-    "strength-memory": "b6698bc9503a08047c8fe4220187abb44d8e176d66720066f08ab0f2e35d4074",
-    "session": "eb2dfcd793c00b724c9801810729b2152e291e60a8d1161d6b9f376d9c9fe8a6"
+    "strength-memory": "eb74afe28d99b8406a45053d75e42beef6fe5b01e51da215dddf2fc303c7ea13",
+    "session": "521f5c3e15fe6a3cc33f3b4404ab89ad1b376f6158e425d5c505710e21efc3cd"
   },
   "registered": {
     "training": [
@@ -6144,6 +6144,5 @@
     "pass": false,
     "shippingMode": "default",
     "candidateMode": "shadow-only pending staging and outcome gates"
-  },
-  "analysisCorrection": "Two calibrated scenarios were fully rerun because the previous invariant counter treated an unseeded zero next-set placeholder as a real load rung. Runtime and all training outcomes were unchanged; all other registered scenario pairs retain the complete initial run."
+  }
 }
