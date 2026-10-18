@@ -30,6 +30,7 @@ const defaultState = () => ({
 
 function bindStrengthAccount(uid) {
   const previous = S.accountId || window.StrengthMemory?.ownerId();
+  if (previous !== uid) window.CoachAssignments?.invalidate();
   if (previous && previous !== uid) {
     localStorage.setItem(STORAGE_KEY + ':account:' + previous, JSON.stringify(S));
     const archived = localStorage.getItem(STORAGE_KEY + ':account:' + uid);
@@ -41,6 +42,7 @@ function bindStrengthAccount(uid) {
 }
 
 function signOutStrengthAccount() {
+  window.CoachAssignments?.invalidate();
   if (window.StrengthMemory) StrengthMemory.bind(null).catch(()=>{});
   if (S.accountId) localStorage.setItem(STORAGE_KEY + ':account:' + S.accountId, JSON.stringify(S));
   S = defaultState();
@@ -839,6 +841,7 @@ function setTab(tab) {
   S.fabOpen = false;
   save();
   render();
+  if (['training', 'library'].includes(S.tab)) window.CoachAssignments?.sync();
 }
 
 function selectDate(iso) {
