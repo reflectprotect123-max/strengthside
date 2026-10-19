@@ -1,12 +1,12 @@
 {
-  "ref": "origin/codex/engine-web-cloudflare",
-  "commit": "1df7fd78555af0211f40ddc7c95ab36ca3bdfcf9",
+  "ref": "codex/engine-fitbit-hr-discovery",
+  "commit": "98a9c75e772c272a0d1a3883ce03eddfc31ac46e",
   "source": {
-    "apps/athlete/conditioning/index.html": "8858d1df923b2c1379a004c6b595bdbf0b8e6018",
+    "apps/athlete/conditioning/index.html": "beae6153fd9620a969a378250639809c477c1b09",
     "apps/athlete/conditioning/native-plugins.js": "8273fd6963f17a9f9ef85b2daccce9fb981b396c"
   },
   "output": {
-    "index.html": "1463900df22be38f7c804b9feda83471dec9645457632690f3009344931bc119",
+    "index.html": "081414d5cddee397e1301bb1467b40d1ff241d291b59c3616fb691d6b0348513",
     "native-plugins.js": "572eb53b6b237791eeb58c1b3f0cafd03d560328d3c5bebc17470595d90a9acd"
   }
 }

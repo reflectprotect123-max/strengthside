@@ -33,7 +33,7 @@
     "check:strength-memory-sql": "node scripts/check-strength-memory-sql.mjs",
     "check:strength-simulator": "node --test scripts/strength-simulator.test.mjs && node scripts/strength-simulator.mjs --report-dir docs/research && git diff --exit-code -- docs/research/strength-brain-v2-simulation.json docs/research/strength-brain-v2-simulation.md",
     "check:whoop-home": "node --test apps/athlete/strength-home.test.js apps/athlete/whoop-sync.test.js && node --test supabase/functions/whoop-connect/return.test.mjs",
-    "check:shared-contracts": "node scripts/sync-training-core.mjs --check && node scripts/generate-strength-release.mjs --check && node --test apps/shared/*.test.mjs scripts/stage-athlete.test.mjs scripts/import-engine-house.test.mjs",
+    "check:shared-contracts": "node scripts/sync-training-core.mjs --check && node scripts/generate-strength-release.mjs --check && node --test apps/shared/*.test.mjs scripts/stage-athlete.test.mjs scripts/import-engine-house.test.mjs scripts/engine-hr-transport.test.mjs",
     "check:browser": "playwright test -c checks/browser/playwright.config.mjs",
     "check:strength-learning-db": "node --test scripts/check-strength-learning-db.test.mjs && node scripts/check-strength-learning-db.mjs",
     "check:strength-learning-performance": "node scripts/check-strength-learning-performance.mjs",
