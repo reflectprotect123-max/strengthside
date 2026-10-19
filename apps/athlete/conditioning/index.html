@@ -9327,14 +9327,13 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 </script><script>/* Capgo transports app files. Save workout data before switching bundles. */
 (function(){
 const native=window.EngineNative, updater=native?.Capacitor.isNativePlatform()?native.CapacitorUpdater:null;
-let readyBundle=null, currentVersion='', message='Updates are available in the Android app.', checking=false, booted=false;
+let readyBundle=null, currentVersion='', message='Updates are available in the Android app.', checking=false, booted=false, applying=false;
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const redraw=()=>window.render?.();
-const activeWorkout=()=>['running','paused'].includes(window.S?.liveWorkout?.status);
 const newer=(version,current)=>{const a=version?.split('.').map(Number),b=current?.split('.').map(Number);if(a?.length!==3||b?.length!==3||[...a,...b].some(v=>!Number.isFinite(v)))return false;for(let i=0;i<3;i++){if(a[i]!==b[i])return a[i]>b[i];}return false;};
 async function accept(bundle){
   if(!bundle?.id||bundle.id==='builtin'||(currentVersion&&!newer(bundle.version,currentVersion)))return;
-  readyBundle=bundle;message='Update '+bundle.version+' is ready. Restart when your workout is finished.';redraw();
+  readyBundle=bundle;message='Update '+bundle.version+' is ready. Restart now; your workout will be saved.';redraw();
 }
 async function ready(){
   if(!updater||booted)return;
@@ -9367,17 +9366,19 @@ async function check(){
   finally{checking=false;redraw();}
 }
 async function apply(){
-  if(!updater||!readyBundle)return;
-  if(activeWorkout()){message='Finish your workout before restarting for an update.';redraw();return;}
+  if(!updater||!readyBundle||applying)return;
+  applying=true;
   try{
+    if(window.S?.liveWorkout?.status==='running')window.LiveWorkout.pause();
     // Flush the private-file copy as well as localStorage before destroying JS.
     await window.EngineApp.flushStorage();
     await updater.set({id:readyBundle.id});
-  }catch{message='The update could not be applied. Your current app is still available.';redraw();}
+  }catch{message='Could not save or apply the update. Your workout is kept; try again.';}
+  finally{applying=false;redraw();}
 }
 function html(){
   if(!updater)return '';
-  return '<section class="pg-card"><h2>App updates</h2><p>'+esc(currentVersion?'Version '+currentVersion:'The Hybrid Engine')+'</p><p role="status">'+esc(message)+'</p><button class="method-secondary" onclick="EngineUpdates.check()" '+(checking?'disabled':'')+'>Check for updates</button>'+(readyBundle?'<button class="method-load" onclick="EngineUpdates.apply()" '+(activeWorkout()?'disabled':'')+'>Restart now</button>':'')+'</section>';
+  return '<section class="pg-card"><h2>App updates</h2><p>'+esc(currentVersion?'Version '+currentVersion:'The Hybrid Engine')+'</p><p role="status">'+esc(message)+'</p><button class="method-secondary" onclick="EngineUpdates.check()" '+(checking?'disabled':'')+'>Check for updates</button>'+(readyBundle?'<button class="method-load" onclick="EngineUpdates.apply()" '+(applying?'disabled':'')+'>Restart now</button>':'')+'</section>';
 }
 window.EngineUpdates={ready,check,apply,html};
 })();
