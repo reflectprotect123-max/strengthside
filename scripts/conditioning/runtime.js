@@ -44,7 +44,7 @@ function makeDevice(info){
     if(isConnected)connected=device;
     else if(connected===device)connected=null;
     updateRecording();
-  });
+  },{android:N.Capacitor.getPlatform?.()==='android',onStatus:message=>LiveWorkout.connectionStatus(message)});
 }
 let serviceBusy=false;
 async function updateRecording(){if(!native||serviceBusy)return;const running=S.liveWorkout?.status==='running',desired=running&&!!connected?.gatt.connected;if(desired===foreground)return;serviceBusy=true;try{if(desired){await N.KeepAwake.keepAwake();await N.WorkoutService.start();foreground=true;}else{await N.WorkoutService.stop();await N.KeepAwake.allowSleep();foreground=false;}}catch(err){accountMessage='Native recording support: '+err.message;}finally{serviceBusy=false;}}

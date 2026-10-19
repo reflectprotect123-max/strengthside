@@ -8117,6 +8117,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
     segment(){mutate(()=>{accountingSample=null;w().mixedSegment=w().mixedSegment==='cardio'?'strength':'cardio';});},
     zones(){zoneDraft={...(S.settings.liveZones||{})};S.liveSheet='zones';render();},zoneInput(key,value){zoneDraft[key]=value===''?null:Number(value);},
     saveZones(){if(w()?.status!=='ready'){S.liveSheet=null;render();return;}const z=zoneDraft;if(![z.blue,z.green,z.red,z.max].every(n=>Number.isInteger(n)&&n>0&&n<=300)||!(z.blue<z.green&&z.green<z.red&&z.red<=z.max)||(z.resting!=null&&(!Number.isInteger(z.resting)||z.resting<=0||z.resting>=z.max))){document.getElementById('liveZoneError').textContent='Use ordered bpm boundaries: Blue < Green < Red ≤ maximum, with resting HR below maximum.';return;}tick();S.settings.liveZones={blue:z.blue,green:z.green,red:z.red,max:z.max,resting:z.resting??null,version:'manual-'+Date.now(),evidenceLabel:'STRENGTHSIDE-DESIGNED'};if(w()){w().activeZones=calculatedZones();w().zoneHistory=[...(w().zoneHistory||[]),{at:w().elapsed,...w().activeZones}];}S.liveSheet=null;save();render();},
+    connectionStatus(message){if(connecting){deviceMessage=message;paint();}},
     async connect(){
       if(connecting)return;connecting=true;
       if(!navigator.bluetooth){connecting=false;deviceMessage='Bluetooth requires Chrome or Edge on a supported computer or Android device. iPhone browsers do not support this connection.';render();return;}
