@@ -7895,7 +7895,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
   const clock=n=>{n=Math.max(0,Math.floor(n));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');};
   const colors={Blue:'var(--trn-blue)',Green:'var(--recovery-high)',Red:'var(--recovery-low)',Unknown:'var(--oled-muted)'};
   let accountingSample=null;
-  let device,characteristic,lastTick=Date.now(),lastSave=0,lastPacket=0,hr=null,deviceMessage='',audioSig='',outsideAt=0,insideState=null,zoneDraft={},connectedAt=0,lastRetry=0,retrying=false;
+  let device,characteristic,lastTick=Date.now(),lastSave=0,lastPacket=0,hr=null,deviceMessage='',audioSig='',outsideAt=0,insideState=null,zoneDraft={},connectedAt=0,lastRetry=0,retrying=false,connecting=false;
   const w=()=>S.liveWorkout;
   // Retire navigation state only; saved schedules, sessions and workout data remain intact.
   S.scheduledView=false;S.settingsSounds=false;S.loggerOpen=false;
@@ -8017,11 +8017,11 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
   function parsePacket(value){const v=value instanceof DataView?value:ArrayBuffer.isView(value)?new DataView(value.buffer,value.byteOffset,value.byteLength):new DataView(value);if(v.byteLength<2)throw Error('Incomplete heart-rate packet');const flags=v.getUint8(0);if((flags&4)&&!(flags&2))return null;if((flags&1)&&v.byteLength<3)throw Error('Incomplete 16-bit heart-rate packet');return flags&1?v.getUint16(1,true):v.getUint8(1);}
   // STRENGTHSIDE-DESIGNED: transport liveness is separate from measured HR.
   function sensorStatus(now=Date.now()){
-    if(!device?.gatt?.connected)return deviceMessage||'Turn on WHOOP Heart Rate Broadcast, then connect your monitor.';
+    if(!device?.gatt?.connected)return deviceMessage||'Enable heart-rate sharing, then connect your monitor.';
     const age=now-(lastPacket||connectedAt);
     if(deviceMessage)return deviceMessage;
     if(lastPacket&&age<=10000)return 'Live · '+hr+' bpm · '+Math.max(0,Math.floor(age/1000))+'s since reading';
-    return (lastPacket?'No fresh heart rate':'Waiting for heart rate')+' · '+Math.max(0,Math.floor(age/1000))+'s. Check WHOOP Heart Rate Broadcast or reconnect.';
+    return (lastPacket?'No fresh heart rate':'Waiting for heart rate')+' · '+Math.max(0,Math.floor(age/1000))+'s. Check heart-rate sharing or reconnect.';
   }
   async function checkSensorHealth(now=Date.now()){
     if(!device?.gatt?.connected)return;
@@ -8033,7 +8033,7 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
       await stream.stopNotifications?.();
       if(target!==device||!target.gatt.connected)return;
       await stream.startNotifications();
-    }catch{if(target===device)deviceMessage='Heart-rate stream stopped. Check WHOOP Heart Rate Broadcast and reconnect.';}
+    }catch{if(target===device)deviceMessage='Heart-rate stream stopped. Check heart-rate sharing and reconnect.';}
     finally{retrying=false;paint();}
   }
   function dial(){
@@ -8118,8 +8118,9 @@ window.askCoach = function(){document.getElementById('coachSheetStatus').textCon
     zones(){zoneDraft={...(S.settings.liveZones||{})};S.liveSheet='zones';render();},zoneInput(key,value){zoneDraft[key]=value===''?null:Number(value);},
     saveZones(){if(w()?.status!=='ready'){S.liveSheet=null;render();return;}const z=zoneDraft;if(![z.blue,z.green,z.red,z.max].every(n=>Number.isInteger(n)&&n>0&&n<=300)||!(z.blue<z.green&&z.green<z.red&&z.red<=z.max)||(z.resting!=null&&(!Number.isInteger(z.resting)||z.resting<=0||z.resting>=z.max))){document.getElementById('liveZoneError').textContent='Use ordered bpm boundaries: Blue < Green < Red ≤ maximum, with resting HR below maximum.';return;}tick();S.settings.liveZones={blue:z.blue,green:z.green,red:z.red,max:z.max,resting:z.resting??null,version:'manual-'+Date.now(),evidenceLabel:'STRENGTHSIDE-DESIGNED'};if(w()){w().activeZones=calculatedZones();w().zoneHistory=[...(w().zoneHistory||[]),{at:w().elapsed,...w().activeZones}];}S.liveSheet=null;save();render();},
     async connect(){
-      if(!navigator.bluetooth){deviceMessage='Bluetooth requires Chrome or Edge on a supported computer or Android device. iPhone browsers do not support this connection.';render();return;}
-      try{tick();accountingSample=null;if(device?.gatt?.connected)device.gatt.disconnect();hr=null;lastPacket=0;deviceMessage='Turn on Heart Rate Broadcast in WHOOP, then select the device.';render();device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});const monitor=device;device.addEventListener('gattserverdisconnected',()=>{if(device!==monitor)return;tick();accountingSample=null;hr=null;deviceMessage='HR monitor disconnected. The workout timer is still available.';paint();});const server=await device.gatt.connect();connectedAt=Date.now();lastRetry=connectedAt;const service=await server.getPrimaryService('heart_rate');characteristic=await service.getCharacteristic('heart_rate_measurement');characteristic.addEventListener('characteristicvaluechanged',e=>{if(device!==monitor||!monitor.gatt.connected)return;try{const bpm=parsePacket(e.target.value);if(bpm!==null)receive(bpm);else{tick();accountingSample=null;hr=null;deviceMessage='WHOOP is connected but reports no skin contact. Check its fit.';paint();}}catch{tick();accountingSample=null;hr=null;deviceMessage='Unreadable heart-rate packet. Reconnect your monitor.';paint();}});await characteristic.startNotifications();if(!lastPacket)deviceMessage='';render();}catch(e){deviceMessage=e.name==='NotFoundError'?'Device selection cancelled.':e.message;render();}
+      if(connecting)return;connecting=true;
+      if(!navigator.bluetooth){connecting=false;deviceMessage='Bluetooth requires Chrome or Edge on a supported computer or Android device. iPhone browsers do not support this connection.';render();return;}
+      try{tick();accountingSample=null;if(device?.gatt?.connected)await device.gatt.disconnect();hr=null;lastPacket=0;deviceMessage='Enable heart-rate sharing on your monitor, then select the device.';render();device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});const monitor=device;device.addEventListener('gattserverdisconnected',()=>{if(device!==monitor)return;tick();accountingSample=null;hr=null;deviceMessage='HR monitor disconnected. The workout timer is still available.';paint();});const server=await device.gatt.connect();connectedAt=Date.now();lastRetry=connectedAt;const service=await server.getPrimaryService('heart_rate');characteristic=await service.getCharacteristic('heart_rate_measurement');characteristic.addEventListener('characteristicvaluechanged',e=>{if(device!==monitor||!monitor.gatt.connected)return;try{const bpm=parsePacket(e.target.value);if(bpm!==null)receive(bpm);else{tick();accountingSample=null;hr=null;deviceMessage='The monitor is connected but reports no skin contact. Check its fit.';paint();}}catch{tick();accountingSample=null;hr=null;deviceMessage='Unreadable heart-rate packet. Reconnect your monitor.';paint();}});await characteristic.startNotifications();if(!lastPacket)deviceMessage='';render();}catch(e){if(device?.gatt?.connected)await device.gatt.disconnect();hr=null;accountingSample=null;deviceMessage=e.name==='NotFoundError'?'Device selection cancelled.':e.message;render();}finally{connecting=false;}
     },disconnect(){tick();accountingSample=null;device?.gatt?.disconnect();hr=null;deviceMessage='Disconnected.';render();},
     async share(){const x=w(),blob=new Blob([JSON.stringify(x,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='strengthside-workout.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);},
     canZoneAlerts(){return !!device?.gatt?.connected&&!!zones();},calculatedZones,receive,parsePacket,tick,zone,paint,checkSensorHealth,sensorStatus,zoneForm,configureZones
