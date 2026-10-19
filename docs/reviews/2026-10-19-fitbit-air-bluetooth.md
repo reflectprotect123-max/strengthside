@@ -22,8 +22,12 @@ accounting, packet parsing and WHOOP cloud sync are unchanged.
 A pasted proposal claims Fitbit Air always hides HR until OS bonding. No verified
 Android-specific source has established this requirement. The existing plugin
 supports isBonded/createBond, and handles CCCD writes and bond-state events.
-No forced bonding was added. If discovery still fails on the real band, record the
-service map and bond status, then test an explicit Android pairing recovery.
+A bounded Android Fitbit pairing recovery is now included when HR remains absent
+after fresh discovery. It checks isBonded, requests pairing once if needed, waits
+up to 30 seconds for the native result, confirms isBonded, and discovers again.
+Other brands/platforms and working monitors do not enter this pairing path.
+Refused/timed-out pairing disconnects and offers a retry. Existing bonds are not
+removed. If discovery still fails, record the service map and reported bond state.
 Pairing acceptance must be awaited before rediscovery; createBond is asynchronous.
 The pasted parser incorrectly uses characteristic.properties for the HR format
 flag; the real format flag is byte zero of the received HR measurement packet.
@@ -34,7 +38,7 @@ https://support.fitiv.com/hc/en-us/articles/50189547760148-Guide-Connecting-Your
 
 ## Source and import
 
-Source fix: codex/engine-fitbit-hr-discovery, c8f1d722. It changes the actual
+Source fix: codex/engine-fitbit-hr-discovery, 98a9c75e. It changes the actual
 conditioning/source.html and native runtime, then rebuilds Engine index.html.
 The Strength integration imports that commit. Explicit checked overrides preserve
 Sydney date, WHOOP history and chart changes already shipped in Strength main;
@@ -45,15 +49,15 @@ To reproduce, fetch the source branch then run:
     node scripts/import-engine-house.mjs origin/codex/engine-fitbit-hr-discovery
 
 The native plugin bundle is unchanged. No Android rebuild or new native API is
-needed for this change. No Capgo release is made by these changes.
+needed for this change. The prepared OTA version is 1.3.16; an upload is a separate release operation.
 
 ## Validation and remaining acceptance
 
-Source: seven transport unit cases plus native browser smoke, HR-gap accounting,
+Source: thirteen transport unit cases plus native browser smoke, HR-gap accounting,
 workout countdown, method flow and onboarding smoke passed with mocked Bluetooth.
 Integration: transport tests exercise the helper extracted from the actual
 imported page; browser tests cover stale discovery recovery, 8/16-bit packets,
-missing service, notification failure, late callback suppression and hallway
+missing service, notification failure, pairing success/refusal, late callback suppression and hallway
 navigation. Import hashes and athlete boot checks pass.
 
 Actual Fitbit Air / Android acceptance is still required: connect while worn,

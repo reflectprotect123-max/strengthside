@@ -2,9 +2,9 @@ import {test,expect} from 'playwright/test';
 
 async function openMonitor(page,mode){
  await page.route('**/engine/native-plugins.js',route=>route.fulfill({contentType:'text/javascript',body:`
- window.calls=[];window.discoveryCount=0;
+ window.calls=[];window.discoveryCount=0;window.bonded=false;
  const services=[{uuid:'180d',characteristics:[{uuid:'2a37',properties:{notify:true}}]}];
- window.EngineNative={Capacitor:{isNativePlatform:()=>true},Directory:{Data:'DATA'},
+ window.EngineNative={Capacitor:{isNativePlatform:()=>true,getPlatform:()=>'android'},Directory:{Data:'DATA'},
  Filesystem:{readFile:async()=>{throw Error('no backup')},writeFile:async()=>{}},
  KeepAwake:{keepAwake:async()=>{},allowSleep:async()=>{}},
  App:{addListener:async()=>{},minimizeApp:async()=>{}},
@@ -12,8 +12,8 @@ async function openMonitor(page,mode){
  CapacitorUpdater:{notifyAppReady:async()=>{},addListener:async()=>{}},
  BleClient:{initialize:async()=>{},isEnabled:async()=>true,
  requestLEScan:async(options,callback)=>{window.scanCallback=callback;},stopLEScan:async()=>{},
- connect:async()=>{},getServices:async()=>{
-  discoveryCount++;return ${JSON.stringify(mode)}==='absent'?[{uuid:'180f',characteristics:[]}]:
+ connect:async()=>{},isBonded:async()=>window.bonded,createBond:async()=>{calls.push('pair');if(${JSON.stringify(mode)}==='bond-declined')throw Error('Pairing declined');window.bonded=true;},getServices:async()=>{
+  discoveryCount++;if(${JSON.stringify(mode)}.startsWith('bond-'))return window.bonded&&${JSON.stringify(mode)}==='bond-success'?services:[];return ${JSON.stringify(mode)}==='absent'?[{uuid:'180f',characteristics:[]}]:
    ${JSON.stringify(mode)}==='stale'&&discoveryCount===1?[]:services;
  },discoverServices:async()=>calls.push('rediscover'),
  startNotifications:async(id,s,c,callback)=>{
@@ -51,5 +51,23 @@ for(const mode of ['absent','notify-failure'])test(`HR ${mode} closes the link a
  await expect(page.locator('.live-device').first()).toContainText(mode==='absent'?'180f':'Characteristic not found');
  await expect(page.getByRole('button',{name:'Connect HR Monitor',exact:true})).toBeVisible();
  expect(await page.evaluate(()=>calls.includes('disconnect'))).toBe(true);
- expect(await page.evaluate(()=>calls.filter(x=>x==='rediscover').length)).toBe(mode==='absent'?1:0);
+ expect(await page.evaluate(()=>calls.filter(x=>x==='rediscover').length)).toBe(mode==='absent'?2:0);
+});
+
+
+test('Android Fitbit recovery waits for pairing, then displays HR',async({page})=>{
+ await openMonitor(page,'bond-success');
+ await expect(page.getByRole('button',{name:'Fitbit Air · Disconnect',exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>calls.filter(x=>x==='pair').length)).toBe(1);
+ expect(await page.evaluate(()=>calls.filter(x=>x==='rediscover').length)).toBe(2);
+ await page.evaluate(()=>hrCallback(new DataView(Uint8Array.from([0,132]).buffer)));
+ await expect(page.locator('.live-hr')).toContainText('132');
+});
+
+test('declined Android pairing shows the reason and offers reconnect',async({page})=>{
+ await openMonitor(page,'bond-declined');
+ await expect(page.locator('.live-device').first()).toContainText('Pairing declined');
+ await expect(page.getByRole('button',{name:'Connect HR Monitor',exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>calls.filter(x=>x==='pair').length)).toBe(1);
+ expect(await page.evaluate(()=>calls.includes('disconnect'))).toBe(true);
 });

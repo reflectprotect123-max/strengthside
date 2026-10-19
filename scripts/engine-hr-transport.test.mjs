@@ -24,3 +24,39 @@ test('disconnect during discovery cannot mark an old connection active',async()=
  const pending=d.gatt.connect();await started;await d.gatt.disconnect();release(services);
  await assert.rejects(pending,/interrupted/);assert.equal(d.gatt.connected,false);
 });
+
+function bondSetup({bonded=false,rejectBond=false,expose=true}={}){
+ const calls=[];let refreshed=0;
+ const ble={connect:async()=>{},stopNotifications:async()=>{},disconnect:async()=>calls.push('disconnect'),
+ getServices:async()=>refreshed>=2&&expose?services:[],discoverServices:async()=>{refreshed++;calls.push('discover');},
+ isBonded:async()=>{calls.push('isBonded');return bonded;},createBond:async(id,options)=>{assert.equal(options.timeout,30000);calls.push('bond');if(rejectBond)throw Error('Pairing declined');bonded=true;}};
+ const device=context.EngineHrTransport.createDevice(ble,{deviceId:'air',name:'Fitbit Air'},()=>{},{android:true});
+ return {device,calls};
+}
+test('Android Fitbit missing HR awaits pairing and rediscovery before reporting connected',async()=>{
+ const x=bondSetup();await x.device.gatt.connect();assert.equal(x.device.gatt.connected,true);assert.deepEqual(x.calls,['discover','isBonded','bond','isBonded','discover']);
+});
+test('declined pairing closes connection without another pairing attempt',async()=>{
+ const x=bondSetup({rejectBond:true});await assert.rejects(x.device.gatt.connect(),/Pairing declined/);assert.equal(x.device.gatt.connected,false);assert.deepEqual(x.calls,['discover','isBonded','bond','disconnect']);
+});
+test('already bonded Fitbit is not re-paired and persistent missing service has bond diagnostics',async()=>{
+ const x=bondSetup({bonded:true,expose:false});await assert.rejects(x.device.gatt.connect(),/already paired/);assert.equal(x.calls.includes('bond'),false);assert.equal(x.calls.at(-1),'disconnect');
+});
+test('bonding alone does not count as a usable heart-rate connection',async()=>{
+ const x=bondSetup({expose:false});await assert.rejects(x.device.gatt.connect(),/paired, HR service still missing/);assert.equal(x.device.gatt.connected,false);assert.equal(x.calls.filter(c=>c==='bond').length,1);
+});
+
+test('working Android Fitbit and missing non-Android/non-Fitbit devices never force pairing',async()=>{
+ for(const [name,android,rows] of [['Fitbit Air',true,services],['WHOOP',true,[]],['Fitbit Air',false,[]]]){
+  let bonds=0;const ble={connect:async()=>{},getServices:async()=>rows,discoverServices:async()=>{},stopNotifications:async()=>{},disconnect:async()=>{},isBonded:async()=>false,createBond:async()=>bonds++};
+  const d=context.EngineHrTransport.createDevice(ble,{deviceId:'test',name},()=>{},{android});
+  if(rows.length)await d.gatt.connect();else await assert.rejects(d.gatt.connect());
+  assert.equal(bonds,0);
+ }
+});
+test('disconnect while awaiting pairing prevents rediscovery and connected state',async()=>{
+ let release,ready,bonded=false;const started=new Promise(r=>ready=r),paired=new Promise(r=>release=r);let discoveries=0;
+ const ble={connect:async()=>{},getServices:async()=>[],discoverServices:async()=>discoveries++,stopNotifications:async()=>{},disconnect:async()=>{},isBonded:async()=>bonded,createBond:async()=>{ready();await paired;bonded=true;}};
+ const d=context.EngineHrTransport.createDevice(ble,{deviceId:'air',name:'Fitbit Air'},()=>{},{android:true});
+ const pending=d.gatt.connect();await started;await d.gatt.disconnect();release();await assert.rejects(pending,/interrupted/);assert.equal(discoveries,1);assert.equal(d.gatt.connected,false);
+});
