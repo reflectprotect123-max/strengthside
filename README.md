@@ -1,4 +1,8 @@
-# Session builder — shipped 17 October 2026
+# The app that opens is the Engine
+
+Strength is parked in `park/strength-app/`. It is not deleted. The front door, `apps/athlete/index.html`, opens `apps/athlete/engine/index.html` and does not load the strength builder or logger.
+
+# Session builder — parked with the strength app
 
 The athlete Library builder is the warm-up circuit, the lift cards, then the cool-down circuit. Start Session plays that order in the logger. This is on `main` (pull request 262, merge `0c65cc7c`) and on the live app as Capgo bundle **1.3.11** for `com.hybrid.strength`, channel `strength-live`. The previous live bundle was 1.3.10.
 
