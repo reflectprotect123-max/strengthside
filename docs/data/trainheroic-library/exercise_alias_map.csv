@@ -2,7 +2,6 @@ original_exercise_title,canonical_exercise_id,canonical_title,mapping_basis,in_c
 1- 1/2 bench press,exercise_6ec38a5f580f95a0,1 1/2 Bench Press,format_normalization_only,True,12
 1 1/2 Front Squat,exercise_4816b1ee7185247d,1 1/2 Front Squat,format_normalization_only,False,11
 1 1/4 Back Squat,exercise_56d672a0b48c2544,1 1/4 Back Squat,format_normalization_only,True,2
-1 1/4 Banded Glute Hip Thrusts,exercise_00cffb5cedd54cd8,1 1/4 Banded Glute Hip Thrust,format_normalization_only,False,4
 1 -1/4 Bench Press,exercise_521b677580082969,1 1/4 Bench Press,format_normalization_only,True,0
 1 1/4 Bicep Curl,exercise_da4b5e97ad87b269,1 1/4 Biceps Curl,format_normalization_only,True,2
 1  1/4 cyclist front squat,exercise_8d5b0b34795c9b93,1 1/4 Cyclist Front Squat,format_normalization_only,True,1
@@ -20,8 +19,6 @@ original_exercise_title,canonical_exercise_id,canonical_title,mapping_basis,in_c
 1 Step Box Jump,exercise_3126b2b1552e2d8a,1 Step Box Jump,format_normalization_only,False,1
 1 up / 1 Down Carry,exercise_f6c9eb6dcf8cb161,1 Up / 1 Down Carry,format_normalization_only,False,1
 1.5 Mile Run,exercise_3433445bd853c033,1.5 Mile Run,format_normalization_only,False,1
-1.5 Stance RDL with Band,exercise_e3bb7e0c82dc0999,1.5 Stance Romanian Deadlift With Band,explicit_alias_or_spelling_normalization,False,8
-1.5 stance RDL with band,exercise_e3bb7e0c82dc0999,1.5 Stance Romanian Deadlift With Band,explicit_alias_or_spelling_normalization,True,1
 1/ 1/4 sumo stance goblet squat,exercise_1322959ff5da3139,1/1/4 Sumo Stance Goblet Squat,format_normalization_only,True,0
 1/2 kneeling arnold press,exercise_06eece97c9695167,1/2 Kneeling Arnold Press,format_normalization_only,True,0
 10k Run,exercise_f76314bda58dbdef,10K Run,format_normalization_only,False,1
@@ -31,14 +28,10 @@ original_exercise_title,canonical_exercise_id,canonical_title,mapping_basis,in_c
 2-Step Lateral Shuffle,exercise_4cc0871c49f0baa4,2 Step Lateral Shuffle,format_normalization_only,False,4
 "2"" Deficit Deadlift",exercise_da9f0c4dc86a1462,"2"" Deficit Deadlift",format_normalization_only,False,1
 20 Minutes of Aerobic Activity,exercise_20eb01594cd12a34,20 Minutes Of Aerobic Activity,format_normalization_only,False,1
-20 Per Arm Seated Single Arm Banded Low Rows,exercise_d4b472e371362cbe,20 Per Arm Seated Single Arm Banded Low Row,format_normalization_only,False,1
 3:5 Breathing,exercise_b20e557b78978979,3 5 Breathing,format_normalization_only,False,1
 3-Position Clean,exercise_9b619e5527b918ed,3 Position Clean,format_normalization_only,False,6
-3 Way Band Pull-Apart,exercise_734f3abd5496b807,3 Way Band Pull-Apart,format_normalization_only,False,1
 3-way Shoulder Shocker,exercise_9eb64af89e0e1311,3 Way Shoulder Shocker,format_normalization_only,False,12
 30 Degree Incline DB Bench Press,exercise_74d4733f1d38b4ae,30 Degree Incline Dumbbell Bench Press,format_normalization_only,False,5
-3D Banded Pull-aparts,exercise_3f100d40f5a65fd4,3D Banded Pull-Apart,explicit_alias_or_spelling_normalization,False,14
-3D banded pull aparts,exercise_3f100d40f5a65fd4,3D Banded Pull-Apart,explicit_alias_or_spelling_normalization,True,0
 3D Lunge,exercise_6aacdccdc20cd26b,3D Lunge,format_normalization_only,False,2
 3D Pull-aparts,exercise_f46427530a576f00,3D Pull-Apart,format_normalization_only,False,3
 4 Way Shoulders,exercise_e4a9e15021cf3224,4 Way Shoulders,format_normalization_only,False,1
@@ -59,7 +52,6 @@ A Switch - Elevated Box,exercise_70e90073e7297a10,A Switch Elevated Box,format_n
 A Switch – Drop (Box),exercise_e57c9847b3ceee4b,A Switch – Drop (Box),format_normalization_only,False,2
 Ab Wheel,exercise_126dd8b85c813123,Ab Wheel,format_normalization_only,False,63
 Ab Wheel Iso Hold,exercise_34138951f70a920d,Ab Wheel Iso Hold,format_normalization_only,False,11
-Acceleration - Banded Range Finder,exercise_93338c6349c40a3a,Acceleration Banded Range Finder,format_normalization_only,False,2
 Adductor Machine,exercise_1f5a3d2e77ae009d,Adductor Machine,format_normalization_only,False,1
 Adductor rock back with thoracic rotation,exercise_fbf73f93588e0d25,Adductor Rock Back With Thoracic Rotation,format_normalization_only,False,2
 Adductor T-Spine,exercise_15c325dcffd6ad93,Adductor T Spine,format_normalization_only,False,1
@@ -105,7 +97,6 @@ Anderson Overhead Squat,exercise_3ad79ee9ae8b56bf,Anderson Overhead Squat,format
 Anderson Squat,exercise_f1b2287dfe7ad2d0,Anderson Squat,format_normalization_only,False,6
 Angles Pull-ups,exercise_55a407f251dba93a,Angles Pull-Up,format_normalization_only,False,24
 Anterior Loaded BB Reverse Lunge,exercise_448e5873eb25dd5b,Anterior Loaded Barbell Reverse Lunge,format_normalization_only,False,1
-Around the World,exercise_61da32700dea14ca,Around The World,format_normalization_only,False,1
 Arrow Row,exercise_e910a1c0b80dda78,Arrow Row,format_normalization_only,False,2
 Assault Bike,exercise_fb290c021dce6f28,Assault Bike,format_normalization_only,False,115
 Assisted Cossack,exercise_f747996b3e86d304,Assisted Cossack,format_normalization_only,False,1
@@ -143,94 +134,6 @@ Backwards Sled Iso Row,exercise_ff87da49d1c7bbe7,Backwards Sled Iso Row,format_n
 Ball Slams,exercise_8b91ee327b428e45,Ball Slam,format_normalization_only,False,12
 Bamboo Bar Bench Press,exercise_9cea033e367232f1,Bamboo Bar Bench Press,format_normalization_only,False,22
 Bamboo Bar Bradford Press,exercise_2355f8fc98697156,Bamboo Bar Bradford Press,format_normalization_only,False,14
-Band Assisted - CMJ Split,exercise_ebccb643eb1c2ca2,Band Assisted Cmj Split,format_normalization_only,False,2
-Band-Assisted Jumps (PLYOS),exercise_320a6b89b593e776,Band Assisted Jump (Plyos),format_normalization_only,False,3
-band assisted nordic curl,exercise_d1920fe9a3aa7be3,Band Assisted Nordic Curl,format_normalization_only,True,2
-Band Assisted Plyo Push-ups,exercise_545b5586ede07fd6,Band Assisted Plyo Push-Up,format_normalization_only,False,83
-Band Assisted - Pogo Jumps,exercise_9ad4e69fe5f30436,Band Assisted Pogo Jump,format_normalization_only,False,2
-Band Assisted Push Up,exercise_706c588bbd681f9e,Band Assisted Push-Up,format_normalization_only,False,4
-Band Assisted Split Jump,exercise_abd62aa9cdfb41c3,Band Assisted Split Jump,format_normalization_only,False,3
-band assisted split squat jump,exercise_3fd6569cf787fdfb,Band Assisted Split Squat Jump,format_normalization_only,True,1
-band assisted strict dips,exercise_dbfb5ba5ee2737ed,Band Assisted Strict Dip,format_normalization_only,True,0
-Band Glute Pull Thru,exercise_f7b5cf03e3be44a3,Band Glute Pull Through,format_normalization_only,True,12
-Band Overhead Triceps Extension,exercise_98acbe8eac6c2b9e,Band Overhead Triceps Extension,format_normalization_only,False,3
-band - Plyo Push-Up,exercise_96c3483491ea96ae,Band Plyo Push-Up,format_normalization_only,True,9
-Band Pull-Apart,exercise_397d808b17a17857,Band Pull-Apart,format_normalization_only,False,12
-Band Pull Apart - SP,exercise_3fe6361fb7feaa8b,Band Pull-Apart Sp,format_normalization_only,False,1
-band resisted body row,exercise_753c3156c5c1fc0d,Band Resisted Body Row,format_normalization_only,False,1
-Band Resisted KB Swings,exercise_cb0f4af85257366b,Band Resisted Kettlebell Swing,format_normalization_only,False,11
-Band Resisted Side Plank Row,exercise_22e6f6581d2751f5,Band Resisted Side Plank Row,format_normalization_only,False,7
-Band Rotations,exercise_af1fff94990f02e1,Band Rotation,format_normalization_only,False,4
-Band Row + Press,exercise_a5f26d81a4512c13,Band Row + Press,format_normalization_only,False,5
-Band Row + Reverse Lunge,exercise_297237abee5328a9,Band Row + Reverse Lunge,format_normalization_only,False,13
-Band Speed Press,exercise_440cf6a4524e3ce0,Band Speed Press,format_normalization_only,False,1
-Band Tricep Push Down,exercise_8d6a41af43bbc98d,Band Triceps Pushdown,format_normalization_only,False,2
-Banded Alphabet,exercise_b6a29bc67fab7c7a,Banded Alphabet,format_normalization_only,False,8
-Banded Ankle Distraction Mobilization,exercise_eb1eef060887f563,Banded Ankle Distraction Mobilization,format_normalization_only,False,2
-Banded Bicep Curl,exercise_a0ea541cf3ffd712,Banded Biceps Curl,format_normalization_only,False,3
-Banded Broad Jump,exercise_7f4c15f20138ea39,Banded Broad Jump,format_normalization_only,False,2
-Banded Bully Stretch,exercise_3045f40362f604cc,Banded Bully Stretch,format_normalization_only,False,1
-Banded Chest To Bar,exercise_34c8257fefd67fbd,Banded Chest To Bar,format_normalization_only,True,1
-Banded Curls,exercise_8a17e561155fc790,Banded Curl,format_normalization_only,False,17
-Banded Dumbbell Grip Row,exercise_f98a3815b9c9a746,Banded Dumbbell Grip Row,format_normalization_only,False,1
-Banded Face Pulls,exercise_f460c21024e963c2,Banded Face Pull,explicit_alias_or_spelling_normalization,False,3
-Banded Face pull,exercise_f460c21024e963c2,Banded Face Pull,explicit_alias_or_spelling_normalization,True,1
-Banded Facepull-aparts,exercise_4b07f494b9aa3df1,Banded Face Pull Aparts,format_normalization_only,False,55
-Banded Face Pull Iso-hold,exercise_6620fed810a317cc,Banded Face Pull Iso Hold,format_normalization_only,False,1
-Banded Front Rack Stretch E/Side,exercise_d5152dd8bb464e40,Banded Front Rack Stretch E/Side,format_normalization_only,False,1
-Banded Glute Bridge,exercise_5fe701adb287dd95,Banded Glute Bridge,format_normalization_only,False,1
-Banded Good Mornings,exercise_af0ff1a4ac76925d,Banded Good Morning,format_normalization_only,False,2
-Banded Half Kneeling Pallof Press,exercise_7c4ffcfc4d819727,Banded Half Kneeling Pallof Press,format_normalization_only,True,2
-Banded Hammer Curls,exercise_a476cfbaeeb9e330,Banded Hammer Curl,format_normalization_only,False,8
-Banded Hamstring Curls,exercise_e706cebdc7441a5e,Banded Hamstring Curl,format_normalization_only,True,14
-Banded Hip Flexor Pull,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,False,1
-Banded Hip Flexor Pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,False,22
-Banded Hip flexor pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,True,16
-Banded Hip flexroe pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,True,3
-Banded Hip flexror pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,True,0
-Banded Incline Pigeon Rotation,exercise_2cb7b83f5324103d,Banded Incline Pigeon Rotation,format_normalization_only,False,1
-Banded Kettlebell Swing,exercise_304162cac8e37540,Banded Kettlebell Swing,format_normalization_only,True,1
-Banded Lat Distraction E/Side,exercise_2489be7b90efff8e,Banded Lat Distraction E/Side,format_normalization_only,False,1
-Banded Lat Pulldown,exercise_a5654a909283d3ad,Banded Lat Pulldown,explicit_alias_or_spelling_normalization,True,1
-Banded Lat Pulldowns,exercise_a5654a909283d3ad,Banded Lat Pulldown,explicit_alias_or_spelling_normalization,False,1
-Banded Lat Squeeze,exercise_b8b5ba47233cac7a,Banded Lat Squeeze,format_normalization_only,False,1
-Banded Lat Stretch,exercise_2601bf665e5554c0,Banded Lat Stretch,format_normalization_only,False,4
-Banded Lateral Raises,exercise_c28d06f48e71326c,Banded Lateral Raise,format_normalization_only,False,1
-Banded Leg Curls,exercise_b885407ed30a5703,Banded Leg Curl,format_normalization_only,False,2
-Banded Leg Extension,exercise_adf0e70ff99920e2,Banded Leg Extension,format_normalization_only,True,1
-Banded Low To High Chop,exercise_de577f571e0c2cf7,Banded Low To High Chop,format_normalization_only,True,2
-Banded OH Tricep Extension,exercise_37710e6a7c5464d2,Banded Oh Triceps Extension,format_normalization_only,True,2
-Banded Overhead Squats,exercise_4577ab3ca791db40,Banded Overhead Squat,format_normalization_only,False,1
-Banded Overhead Triceps,exercise_61a7ccdb030e4c50,Banded Overhead Triceps,format_normalization_only,False,25
-Banded Overhead Tricep Extension,exercise_cddd6cfc7951ef1c,Banded Overhead Triceps Extension,format_normalization_only,False,1
-Banded Pallof Press,exercise_d999f5034de55ca6,Banded Pallof Press,format_normalization_only,True,3
-Banded Pendlay Row,exercise_a15a3bf7f0c1fea0,Banded Pendlay Row,format_normalization_only,False,1
-Banded Plank Abs,exercise_33a6e9cb0998cbe1,Banded Plank Abs,format_normalization_only,False,28
-Banded Plank Row,exercise_1a6c5650c03dff36,Banded Plank Row,format_normalization_only,False,8
-Banded Press,exercise_8a04e1f4573c31a5,Banded Press,format_normalization_only,False,1
-Banded Pull-Through,exercise_143594887fcebe2c,Banded Pull Through,format_normalization_only,False,27
-Banded Pull Aparts,exercise_9c5c2d62b1daf6ad,Banded Pull-Apart,explicit_alias_or_spelling_normalization,False,5
-Banded Pull-apart,exercise_9c5c2d62b1daf6ad,Banded Pull-Apart,explicit_alias_or_spelling_normalization,False,34
-Banded Pulldowns,exercise_bee1b8aa0c2feb0a,Banded Pulldown,format_normalization_only,False,30
-Banded Push Downs,exercise_833e9ea2d7f4e756,Banded Pushdown,explicit_alias_or_spelling_normalization,True,15
-Banded Pushdowns,exercise_833e9ea2d7f4e756,Banded Pushdown,explicit_alias_or_spelling_normalization,False,61
-banded quad Stretch,exercise_40bbb764c5c1a44d,Banded Quad Stretch,format_normalization_only,False,2
-Banded Reverse Fly,exercise_266bdaddb40f5e63,Banded Reverse Fly,format_normalization_only,False,16
-Banded Russian KB Swings (70/53 + Max Band),exercise_31b213efae24ed68,Banded Russian Kettlebell Swing (70/53 + Max Band),format_normalization_only,False,1
-Banded Speed Bench Press,exercise_0bd46ba27e69f2d9,Banded Speed Bench Press,format_normalization_only,True,6
-Banded Speed Press,exercise_873b53b40045707d,Banded Speed Press,format_normalization_only,False,1
-Banded Speed Row,exercise_488a6c1e0df64231,Banded Speed Row,format_normalization_only,False,1
-Banded Sprinter Hold,exercise_c4c23f363a1d9269,Banded Sprinter Hold,format_normalization_only,False,2
-Banded T-Spine from Split Squat,exercise_8ca51897953f447d,Banded T Spine From Split Squat,format_normalization_only,False,1
-Banded Tall Side Plank Row,exercise_7daf5591337cce46,Banded Tall Side Plank Row,format_normalization_only,True,2
-Banded Trap Bar Deadlifts,exercise_53fbe8588448c341,Banded Trap Bar Deadlift,format_normalization_only,True,2
-Banded Triceps,exercise_59a8e046c486900c,Banded Triceps,format_normalization_only,False,2
-Banded Tricep Extension,exercise_2475025329aee5dc,Banded Triceps Extension,format_normalization_only,False,1
-Banded Tricep Pulldown,exercise_f41bbe93638856df,Banded Triceps Pulldown,format_normalization_only,True,7
-Banded Tricep Pushdown,exercise_3172ba3c41c115eb,Banded Triceps Pushdown,format_normalization_only,False,8
-Banded Tricep Stretch,exercise_7f890463a4a54127,Banded Triceps Stretch,format_normalization_only,False,2
-banded Y T W,exercise_5861443e557f1f8a,Banded YTW,explicit_alias_or_spelling_normalization,False,2
-banded YTW,exercise_5861443e557f1f8a,Banded YTW,explicit_alias_or_spelling_normalization,True,0
 Bar Dips,exercise_47d07dbc6dcea621,Bar Dip,format_normalization_only,False,43
 Bar Muscle Up,exercise_51fba3939f353679,Bar Muscle Up,format_normalization_only,False,1
 Barbell Ab Roll Out,exercise_4b3ba048a26b1e9a,Barbell Ab Rollout,explicit_alias_or_spelling_normalization,False,4
@@ -249,7 +152,6 @@ barbell curl,exercise_6afa43870429d1fe,Barbell Curl,explicit_alias_or_spelling_n
 Barbell Deadlift,exercise_3b42ea33fa3563c4,Barbell Deadlift,format_normalization_only,False,13
 Barbell Deadlifts (with Explanation),exercise_83a99009fa9d7af3,Barbell Deadlift (With Explanation),format_normalization_only,False,3
 barbell drop lunge,exercise_34a2ba7f5e75f3dc,Barbell Drop Lunge,format_normalization_only,True,4
-Barbell FFE Zercher ISO Hold,exercise_309e73ea679cbaf5,Barbell Ffe Zercher Iso Hold,format_normalization_only,False,1
 Barbell Flexion Row,exercise_a791e3da806c118b,Barbell Flexion Row,format_normalization_only,False,2
 BB Floor Press,exercise_33de7b1b9132b819,Barbell Floor Press,explicit_alias_or_spelling_normalization,False,1
 Barbell Floor Press,exercise_33de7b1b9132b819,Barbell Floor Press,explicit_alias_or_spelling_normalization,False,3
@@ -308,7 +210,6 @@ Bench Press Warm-up,exercise_d9e288abc6b796a4,Bench Press Warm Up,format_normali
 Bench Press with chains,exercise_e53c3110edcebe9f,Bench Press With Chains,format_normalization_only,False,8
 Bench Support Landmine Meadow Row,exercise_4b7ce148e38f2d93,Bench Support Landmine Meadow Row,format_normalization_only,True,1
 "Bench Supported Y's, T's, A's",exercise_445f012d78e4344f,Bench Supported Ys Ts As,format_normalization_only,False,2
-Bendh,exercise_8195c0ee2bf0a196,Bendh,format_normalization_only,True,0
 Bent Hollow Hold,exercise_7e4cb15360960be4,Bent Hollow Hold,format_normalization_only,True,1
 Bent-Knee Copenhagen ISO-Hold,exercise_e3d65c708b077a4b,Bent Knee Copenhagen Iso Hold,format_normalization_only,False,12
 Bent Over Cable Rotation,exercise_2ffe36ecc73f77e5,Bent Over Cable Rotation,format_normalization_only,False,5
@@ -384,7 +285,6 @@ Cable Rope Triceps Extensions,exercise_d2c90e7e394699d9,Cable Rope Triceps Exten
 Cable Rotations,exercise_42e9ce9f3ef21cfb,Cable Rotation,format_normalization_only,False,4
 Cable Row Machine Close grip,exercise_499b0b2e0df5457e,Cable Row Machine Close Grip,format_normalization_only,False,33
 Cable Single Arm Lat Pull Down,exercise_63239541fb14e77a,Cable Single Arm Lat Pulldown,format_normalization_only,False,3
-Cable Swing/Throw/Slap,exercise_cc92b75c0f4d82c8,Cable Swing/Throw/Slap,format_normalization_only,False,1
 Cable tricep extension,exercise_09db8e515ca5c01b,Cable Triceps Extension,format_normalization_only,False,2
 cable tricep pushdown,exercise_55c5dd6edcc46c43,Cable Triceps Pushdown,format_normalization_only,True,5
 Cable Vertical Pull Down,exercise_44d131c8a35178d6,Cable Vertical Pulldown,format_normalization_only,False,1
@@ -428,9 +328,7 @@ Clean Pull,exercise_ddfadd2597d2bfed,Clean Pull,format_normalization_only,False,
 Close Chain Straight Arm Shoulder Rotations,exercise_c78bedd7aec532e9,Close Chain Straight Arm Shoulder Rotation,format_normalization_only,False,1
 Close Grip Bench Press,exercise_e9d94784aafd8741,Close Grip Bench Press,format_normalization_only,False,147
 Close Grip Bench Press (Football Bar),exercise_0d64db86275184ee,Close Grip Bench Press (Football Bar),format_normalization_only,False,1
-"Close Grip Bench Press Dead Press (2"" Above Chest) Against Max Band Tension Only",exercise_e262a5da71f87bec,"Close Grip Bench Press Dead Press (2"" Above Chest) Against Max Band Tension Only",format_normalization_only,False,1
 Close Grip Bench Press with chains,exercise_a38944a53f095d10,Close Grip Bench Press With Chains,format_normalization_only,False,6
-Close Grip Bench Press with Reverse MINI Bands,exercise_6fb6e3ad127068a6,Close Grip Bench Press With Reverse Mini Bands,format_normalization_only,False,1
 Close Grip Board Press,exercise_d7d524a6db8eee34,Close Grip Board Press,format_normalization_only,False,25
 Close Grip Chest To Bar Chin-up,exercise_228c2eb7b60fb3c8,Close Grip Chest To Bar Chin-Up,format_normalization_only,False,17
 Close Grip Chin-up,exercise_d9d2d66182004f83,Close Grip Chin-Up,format_normalization_only,False,53
@@ -452,9 +350,7 @@ Conditioning Warm Up,exercise_aacc1501f1136b53,Conditioning Warm Up,format_norma
 Consecutive Broad Jump,exercise_3a0b57dfcbb3701e,Consecutive Broad Jump,format_normalization_only,False,1
 Contralateral Loading  DB box step up,exercise_d8f5b25d79cd7525,Contralateral Loading Dumbbell Box Step-Up,format_normalization_only,True,0
 conventional deadlift,exercise_eaf28dadbb21b700,Conventional Deadlift,format_normalization_only,True,0
-Conventional Deadlift Against A Band,exercise_ac6ae49b1fd7ccba,Conventional Deadlift Against A Band,format_normalization_only,False,23
 Conventional deadlift against pins (set at below knee cap) - static hold for 3 seconds per rep against pins @40% of DL 1RM,exercise_adae7f43b91f118a,Conventional Deadlift Against Pins (Set At Below Knee Cap) Static Hold For 3 Seconds Per Rep Against Pins @40% Of Dl 1Rm,format_normalization_only,False,1
-Conventional Rack Deadlift - bands optional,exercise_c22cec2c787c0c86,Conventional Rack Deadlift Bands Optional,format_normalization_only,False,3
 Cool Down Run,exercise_3b6ab4311bfb9b04,Cool Down Run,format_normalization_only,False,3
 Copehagen Side Plank,exercise_dae167b65539d6a2,Copehagen Side Plank,format_normalization_only,False,75
 Copenhagen Plank,exercise_70d2a3bf23644f38,Copenhagen Plank,format_normalization_only,False,2
@@ -482,8 +378,6 @@ Cyclist Squat,exercise_9b1e19d57d944fe0,Cyclist Squat,format_normalization_only,
 cyclist squat - back rack,exercise_7fd57a705b3b43a8,Cyclist Squat Back Rack,format_normalization_only,True,1
 Dead Bug,exercise_5870523a3d3a118f,Dead Bug,explicit_alias_or_spelling_normalization,False,1
 Deadbug,exercise_5870523a3d3a118f,Dead Bug,explicit_alias_or_spelling_normalization,False,1
-Deadbug Banded Upper Body,exercise_ce0a21960e884a8c,Dead Bug Banded Upper Body,format_normalization_only,False,2
-Dead Bug with Mini Bands,exercise_6618bc170ef1ba91,Dead Bug With Mini Bands,format_normalization_only,False,4
 Dead Hang,exercise_eb71a5198a66206d,Dead Hang,format_normalization_only,False,1
 Dead Stop Deadlifts.,exercise_68d3a767938dc47e,Dead Stop Deadlift,format_normalization_only,True,9
 Dead Stop DB Alternating Floor Press,exercise_56e865bda68e056f,Dead Stop Dumbbell Alternating Floor Press,format_normalization_only,False,3
@@ -532,12 +426,10 @@ Dip Bar - Tricep,exercise_92c2623d0d5bfce6,Dip Bar Triceps,format_normalization_
 Dip Belt Calf Raises,exercise_efa9910eb1dda83e,Dip Belt Calf Raise,format_normalization_only,False,1
 Dip Lockout,exercise_4e6c44445ac0f240,Dip Lockout,explicit_alias_or_spelling_normalization,False,11
 Dip lockout,exercise_4e6c44445ac0f240,Dip Lockout,explicit_alias_or_spelling_normalization,True,0
-Dirty 30s,exercise_88c40bf4118a6013,Dirty 30S,format_normalization_only,False,8
 Dive Bomber,exercise_653bf621fc6564cb,Dive Bomber,format_normalization_only,False,2
 Dive Bomber Push Up,exercise_cb1e9f43fe84af34,Dive Bomber Push-Up,format_normalization_only,False,4
 Donkey Calf Raise,exercise_e2b5f51ae165db31,Donkey Calf Raise,explicit_alias_or_spelling_normalization,False,3
 donkey calf raises,exercise_e2b5f51ae165db31,Donkey Calf Raise,explicit_alias_or_spelling_normalization,True,5
-Double Band Pushdowns,exercise_a4a1186ea34b4af5,Double Band Pushdown,format_normalization_only,False,14
 Double Deadbug,exercise_ac9926d1c91f529a,Double Dead Bug,format_normalization_only,False,4
 Double DB Hang Snatch,exercise_66cf5d657b563f18,Double Dumbbell Hang Snatch,format_normalization_only,False,1
 Double KB Clean & Press,exercise_0342d24f2c54ea56,Double Kettlebell Clean And Press,explicit_alias_or_spelling_normalization,False,53
@@ -553,9 +445,6 @@ Double KB Push Press,exercise_674ac9ef63d7649c,Double Kettlebell Push Press,form
 Double KB Snatch,exercise_27aaf48fd30c306e,Double Kettlebell Snatch,format_normalization_only,False,29
 Double KB Squat,exercise_faacc7c37a935098,Double Kettlebell Squat,format_normalization_only,False,15
 Double KB Sumo RDLs,exercise_76a0e590a914fb66,Double Kettlebell Sumo Romanian Deadlift,format_normalization_only,False,8
-Double Leg Banded Hamstring Curls,exercise_42dba2fa2fd1a217,Double Leg Banded Hamstring Curl,explicit_alias_or_spelling_normalization,False,40
-double leg banded hamstring curl,exercise_42dba2fa2fd1a217,Double Leg Banded Hamstring Curl,explicit_alias_or_spelling_normalization,True,6
-Double Leg Banded Leg Curls,exercise_59121deb5cfec29e,Double Leg Banded Leg Curl,format_normalization_only,False,13
 Double Under,exercise_c518726e534bcaab,Double Under,explicit_alias_or_spelling_normalization,False,3
 Double Unders,exercise_c518726e534bcaab,Double Under,explicit_alias_or_spelling_normalization,False,104
 Dragon Flag,exercise_71c002b973cf2f29,Dragon Flag,explicit_alias_or_spelling_normalization,False,36
@@ -738,15 +627,11 @@ Farmer Carry,exercise_25706a027ac565e5,Farmer Carry,explicit_alias_or_spelling_n
 Farmers Carry,exercise_25706a027ac565e5,Farmer Carry,explicit_alias_or_spelling_normalization,False,2
 Farmers carry,exercise_25706a027ac565e5,Farmer Carry,explicit_alias_or_spelling_normalization,False,48
 farmers carry,exercise_25706a027ac565e5,Farmer Carry,explicit_alias_or_spelling_normalization,True,0
-farmers press,exercise_979df63501379ffe,Farmers Press,format_normalization_only,True,1
 Fat Bar Behind the Neck Shoulder Press,exercise_943c91dab311ab36,Fat Bar Behind The Neck Shoulder Press,format_normalization_only,False,1
 Fat Bar Curls,exercise_8345a14944fa336c,Fat Bar Curl,format_normalization_only,False,19
 Fat Bar Push Press,exercise_1375e573adbc6523,Fat Bar Push Press,format_normalization_only,False,4
 FEET ELEVATED CHIN-UPS,exercise_1a1247681366ce52,Feet Elevated Chin-Up,explicit_alias_or_spelling_normalization,True,1
 Feet Elevated Chin-ups,exercise_1a1247681366ce52,Feet Elevated Chin-Up,explicit_alias_or_spelling_normalization,False,47
-FEET ELEVATED HIP THRUST + BAND,exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,explicit_alias_or_spelling_normalization,True,1
-Feet Elevated Hip Thrust + Band,exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,explicit_alias_or_spelling_normalization,False,51
-feet  Elevated Hip Thrust + band,exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,explicit_alias_or_spelling_normalization,True,6
 Feet Elevated Inverted Row,exercise_700e29a7c51c541f,Feet Elevated Inverted Row,format_normalization_only,False,3
 Feet Elevated Pull-ups,exercise_08cd32d762996b75,Feet Elevated Pull-Up,format_normalization_only,False,33
 Feet Elevated Ring Pull-ups,exercise_7ff1135f51b453d4,Feet Elevated Ring Pull-Up,format_normalization_only,False,6
@@ -781,7 +666,6 @@ Football Bar Bench Press,exercise_69afbb524f5506c4,Football Bar Bench Press,expl
 Football bar bench press,exercise_69afbb524f5506c4,Football Bar Bench Press,explicit_alias_or_spelling_normalization,True,3
 Football  Bar Floor Press,exercise_a553c2d0db865358,Football Bar Floor Press,explicit_alias_or_spelling_normalization,True,1
 Football Bar Floor Press,exercise_a553c2d0db865358,Football Bar Floor Press,explicit_alias_or_spelling_normalization,False,17
-Football Bar Pin Press against bands,exercise_6fb3f6db6827283b,Football Bar Pin Press Against Bands,format_normalization_only,False,2
 Forearm Supported Wrist Curl,exercise_1be57c3194f3227e,Forearm Supported Wrist Curl,format_normalization_only,False,3
 Forward + Reverse Lunges,exercise_b0707c7a95db21bd,Forward + Reverse Lunge,format_normalization_only,False,9
 Forward Bounds,exercise_c6c7f70ed1dd1af4,Forward Bounds,format_normalization_only,False,1
@@ -793,7 +677,6 @@ frog pumps,exercise_fcf482f912db7d72,Frog Pumps,format_normalization_only,True,0
 Frog Stretch,exercise_6bfb727c8bc7eaf0,Frog Stretch,format_normalization_only,False,1
 Front Box Squat,exercise_4030ae5158df935c,Front Box Squat,explicit_alias_or_spelling_normalization,True,79
 Front box squat,exercise_4030ae5158df935c,Front Box Squat,explicit_alias_or_spelling_normalization,False,2
-Front Box Squat against bands,exercise_6a0613d6256d7a9a,Front Box Squat Against Bands,format_normalization_only,False,16
 Front Box Squat with Chains,exercise_01ebe47d3e6365bc,Front Box Squat With Chains,format_normalization_only,False,15
 Front foot elevated DB Revere lunge,exercise_1aa0e17caad3928c,Front Foot Elevated Dumbbell Revere Lunge,format_normalization_only,True,0
 Front Foot Elevated KB Reverse Lunges,exercise_d29469aea5c61ed8,Front Foot Elevated Kettlebell Reverse Lunge,format_normalization_only,False,22
@@ -831,11 +714,8 @@ GHD or Decline Back Loaded Barbell Sit Ups - 8RM,exercise_8e3663b8a187e852,Ghd O
 GHD Reverse Sit-up,exercise_24d2350f8be29bf4,Ghd Reverse Sit Up,format_normalization_only,False,14
 GHD Side Plank Pallof Press,exercise_77e1488d10e4a61a,Ghd Side Plank Pallof Press,format_normalization_only,False,9
 GHD Sit-Up,exercise_5ff2c32218b08867,Ghd Sit Up,format_normalization_only,False,20
-GHD Sit-up Against Band,exercise_308a86e46ff0ca33,Ghd Sit Up Against Band,format_normalization_only,False,4
-GHD Sit Ups (to parallel and up) Against Max Band,exercise_a61c54d209c34696,Ghd Sit Ups (To Parallel And Up) Against Max Band,format_normalization_only,False,1
 GHD Snatch Grip Barbell Back Extensions,exercise_46127139d926482d,Ghd Snatch Grip Barbell Back Extension,format_normalization_only,False,1
 GHD SSB Back Loaded Back Extensions,exercise_1710c88e028023bf,Ghd SSB Back Loaded Back Extension,format_normalization_only,False,1
-GHR against bands,exercise_b39710a8ec1c708c,Ghr Against Bands,format_normalization_only,False,4
 Glute Bridge,exercise_c94de413bbc56658,Glute Bridge,format_normalization_only,False,10
 Glute Bridge Dumbbell Bench Press,exercise_8bba4959833775a9,Glute Bridge Dumbbell Bench Press,format_normalization_only,True,0
 Glute Bridge DB Floor Press,exercise_6f74cfdbb7b3c870,Glute Bridge Dumbbell Floor Press,format_normalization_only,False,8
@@ -846,7 +726,6 @@ Glute Drive Machine,exercise_17406e7e110637f2,Glute Drive Machine,format_normali
 Glute Ham Raise,exercise_881e8fbc2a744188,Glute Ham Raise,explicit_alias_or_spelling_normalization,False,63
 Glute Ham Raises,exercise_881e8fbc2a744188,Glute Ham Raise,explicit_alias_or_spelling_normalization,False,1
 Glute-Ham Raise,exercise_881e8fbc2a744188,Glute Ham Raise,explicit_alias_or_spelling_normalization,False,13
-Glute Ham Raise with band,exercise_b62702a8b3177478,Glute Ham Raise With Band,format_normalization_only,False,2
 Glute Hip Thrusts,exercise_508c2801a46cc19d,Glute Hip Thrust,format_normalization_only,False,3
 Glute March,exercise_8062b102c1620893,Glute March,format_normalization_only,False,25
 Glute Supermans,exercise_4f2a6e1b93440ae8,Glute Supermans,format_normalization_only,False,1
@@ -865,7 +744,6 @@ Goblet Split Squat,exercise_79016c22d33cb661,Goblet Split Squat,format_normaliza
 Goblet SQ - SP,exercise_03a22e9f23d89cee,Goblet Sq Sp,format_normalization_only,False,1
 Goblet Squat,exercise_ede77da13c8fe14c,Goblet Squat,explicit_alias_or_spelling_normalization,False,38
 Goblet Squats,exercise_ede77da13c8fe14c,Goblet Squat,explicit_alias_or_spelling_normalization,False,3
-Goblet Squat Band Over Knees,exercise_e950a1bab5dacb36,Goblet Squat Band Over Knees,format_normalization_only,False,12
 Goblet Squats w/ Prying,exercise_b69cf5f0d24fa305,Goblet Squat W/ Prying,format_normalization_only,False,12
 goblet Tall Kneeling To Standing,exercise_f092d952162ae7b9,Goblet Tall Kneeling To Standing,format_normalization_only,True,0
 Good Morning,exercise_cdf71dea7d7741a2,Good Morning,format_normalization_only,False,7
@@ -874,13 +752,9 @@ Gorilla Sits,exercise_6de5e761a5a1cbe0,Gorilla Sits,format_normalization_only,Fa
 GPP,exercise_c2e8858b7c2927fa,Gpp,format_normalization_only,True,6
 Grip Roller,exercise_e87c871103267a00,Grip Roller,format_normalization_only,False,1
 Groin Squeeze,exercise_3f065480810b8d41,Groin Squeeze,format_normalization_only,False,1
-H-Rolls,exercise_6e8a482ad33b6a62,H Rolls,format_normalization_only,False,1
-Hack Squat - Reverse Banded,exercise_48f902645d76724e,Hack Squat Reverse Banded,format_normalization_only,False,1
 Half Front Split Stretch E/Side,exercise_a3fe27139116fda1,Half Front Split Stretch E/Side,format_normalization_only,False,1
 Half Kneel Chop,exercise_42e3f16004966184,Half Kneel Chop,format_normalization_only,False,5
 Half-Kneeling arnold  Shoulder Press,exercise_953a70b39ebcf25b,Half Kneeling Arnold Shoulder Press,format_normalization_only,True,0
-Half-Kneeling Banded High To Low Chop,exercise_f46c4b87ee1df819,Half Kneeling Banded High To Low Chop,explicit_alias_or_spelling_normalization,False,49
-half kneeling banded high to low chop,exercise_f46c4b87ee1df819,Half Kneeling Banded High To Low Chop,explicit_alias_or_spelling_normalization,True,2
 Half-Kneeling Bottoms Up KB Press,exercise_d693809714e7c010,Half Kneeling Bottoms Up Kettlebell Press,format_normalization_only,False,2
 Half-kneeling Cable Facepulls,exercise_a7678e18483aca06,Half Kneeling Cable Face Pull,format_normalization_only,False,4
 Half kneeling Cable pallof press,exercise_834a1273d5ddea14,Half Kneeling Cable Pallof Press,explicit_alias_or_spelling_normalization,True,3
@@ -934,7 +808,6 @@ Hanging Medball Knee Raises,exercise_99be9e80a49e6a1d,Hanging Medicine Ball Knee
 Hanging Straight Leg Raises,exercise_e606d5de9792941f,Hanging Straight Leg Raise,format_normalization_only,False,2
 head supported pronated row,exercise_6e2e105d3cf614c1,Head Supported Pronated Row,format_normalization_only,True,9
 Head Supported Rows - Pronated,exercise_14ba0df822024ee8,Head Supported Row Pronated,format_normalization_only,False,7
-"Heavy Banded (or cable) Standing Static Hold in Ab/Crunch Position - 3 Sets: 1 Minute Middle, 30 Seconds Per Side (Obliques)",exercise_0196cdf1473c7b6a,Heavy Banded (Or Cable) Standing Static Hold In Ab/Crunch Position 3 Sets 1 Minute Middle 30 Seconds Per Side (Obliques),format_normalization_only,False,1
 HEAVY Reverse Hypers,exercise_ab830d0bceb305f7,Heavy Reverse Hyper,format_normalization_only,False,1
 Heel Taps,exercise_af0aa9847be7e649,Heel Taps,format_normalization_only,False,1
 Heels Elevated Goblet Squat,exercise_82ac0c7cf5455615,Heels Elevated Goblet Squat,explicit_alias_or_spelling_normalization,False,32
@@ -1005,7 +878,6 @@ Incline DB Row,exercise_c96178e22cebab5c,Incline Dumbbell Row,format_normalizati
 Incline DB Skull Crushers,exercise_80b0c56cad6286c5,Incline Dumbbell Skull Crusher,explicit_alias_or_spelling_normalization,False,7
 incline DB skull crusher,exercise_80b0c56cad6286c5,Incline Dumbbell Skull Crusher,explicit_alias_or_spelling_normalization,True,3
 Incline DB Tate Press,exercise_1a21ac9109bb01a9,Incline Dumbbell Tate Press,format_normalization_only,False,2
-Incline DB Tate Presses (pause each rep on chest) + Mini or Monster Mini Bands,exercise_91473ef879df30c9,Incline Dumbbell Tate Press (Pause Each Rep On Chest) + Mini Or Monster Mini Bands,format_normalization_only,False,1
 Incline face down reverse DB Flys,exercise_f3a65fd90109e2ad,Incline Face Down Reverse Dumbbell Flys,format_normalization_only,False,1
 Incline Hammer Curls,exercise_0d13c565d38911de,Incline Hammer Curl,format_normalization_only,False,3
 Incline KB Bench Press,exercise_6b1ba838336224d1,Incline Kettlebell Bench Press,format_normalization_only,False,1
@@ -1042,7 +914,6 @@ KB Alt Gorilla Rows,exercise_78b2482924de84dc,Kettlebell Alternating Gorilla Row
 KB ARM BAR,exercise_79078bb59c3e7c21,Kettlebell Arm Bar,explicit_alias_or_spelling_normalization,True,0
 KB Arm Bar,exercise_79078bb59c3e7c21,Kettlebell Arm Bar,explicit_alias_or_spelling_normalization,False,6
 kb arm bar with thoracic rotation,exercise_8c505940ffcbb802,Kettlebell Arm Bar With Thoracic Rotation,format_normalization_only,False,2
-KB Around The World,exercise_e3f32d7159d5b0db,Kettlebell Around The World,format_normalization_only,False,7
 KB Bent Press,exercise_74559cc7537e60e9,Kettlebell Bent Press,format_normalization_only,False,35
 kb bottoms up waiters carry,exercise_6ac591ac7441ac74,Kettlebell Bottoms Up Waiters Carry,format_normalization_only,False,2
 KB Cleans,exercise_1862e4ea36f68e62,Kettlebell Clean,format_normalization_only,False,91
@@ -1105,7 +976,6 @@ Knee Supported Foam Roller Windmill,exercise_4b8ab90e8d9dfe0e,Knee Supported Foa
 Knee Terminal Extensions - TKE,exercise_93f42d4b92d6cb50,Knee Terminal Extension Tke,format_normalization_only,True,6
 Kneeling Dumbbell Diagonal Chop,exercise_9a1e7864bbf8801b,Kneeling Dumbbell Diagonal Chop,format_normalization_only,False,1
 Kneeling Med-Ball Throw,exercise_21457e1c837dbd74,Kneeling Medicine Ball Throw,format_normalization_only,False,1
-Kneeling Squat (against band),exercise_4fa211292d7d618d,Kneeling Squat (Against Band),format_normalization_only,False,1
 Kneeling T-Spine with Shoulder Opener,exercise_88e078b1d629463c,Kneeling T Spine With Shoulder Opener,format_normalization_only,False,1
 Knees Over Toes Split Squats With Floating Heel,exercise_bd21c12de442fc14,Knees Over Toes Split Squat With Floating Heel,format_normalization_only,False,1
 Knees to Elbows,exercise_1eb263674ec620b8,Knees To Elbows,format_normalization_only,False,10
@@ -1148,7 +1018,6 @@ Lat Pulldowns Pronated,exercise_af818461eca86573,Lat Pulldown Pronated,format_no
 Lat Pulldown - pronated grip,exercise_a270bb1d71138739,Lat Pulldown Pronated Grip,format_normalization_only,True,0
 Lat Pulldown - supinated grip,exercise_80148a2ef03c2e0f,Lat Pulldown Supinated Grip,format_normalization_only,True,7
 Lat Sweep,exercise_7b1b94f1c095f6fe,Lat Sweep,format_normalization_only,False,2
-Lateral Band Side Steps,exercise_74058196cf583db6,Lateral Band Side Step,format_normalization_only,False,2
 Lateral Bound,exercise_1f520386094c2641,Lateral Bound,format_normalization_only,False,1
 Lateral Bound to Box jump,exercise_fadc7f62c034f438,Lateral Bound To Box Jump,format_normalization_only,False,2
 Lateral Box Step-ups,exercise_3f3b6dd3d117a3dc,Lateral Box Step-Up,format_normalization_only,False,1
@@ -1186,7 +1055,6 @@ Low-Incline Bench Press,exercise_07d9f3d18cc07a42,Low Incline Bench Press,format
 Low Incline Db Flye,exercise_cfb633a20f187689,Low Incline Dumbbell Flye,format_normalization_only,True,1
 Low Incline DB Tricep Kickbacks,exercise_219bebf9d757e707,Low Incline Dumbbell Triceps Kickbacks,format_normalization_only,False,6
 Low Pogo Jumps,exercise_ce657a96edbcbf0a,Low Pogo Jump,format_normalization_only,False,2
-Lower Body Focus Full Body,exercise_85da5b411d1d3cce,Lower Body Focus Full Body,format_normalization_only,True,0
 Lu Raise,exercise_e3aff966175630ac,Lu Raise,format_normalization_only,False,15
 Lunge,exercise_b451d79c0bd82fb5,Lunge,explicit_alias_or_spelling_normalization,False,8
 Lunges,exercise_b451d79c0bd82fb5,Lunge,explicit_alias_or_spelling_normalization,False,12
@@ -1198,7 +1066,6 @@ Lunge Walk,exercise_1e4ead63c37f6e83,Lunge Walk,format_normalization_only,False,
 Lunges - Walking + Rhythm,exercise_5c83355ebad62488,Lunge Walking + Rhythm,format_normalization_only,False,2
 Lunge with rotation,exercise_0e046373566ac9a3,Lunge With Rotation,format_normalization_only,False,1
 Lunge with T-Spine,exercise_37ebe01305dbe4b6,Lunge With T Spine,format_normalization_only,False,1
-lying (face up) banded reverse flys,exercise_ead1a4d5f7153030,Lying (Face Up) Banded Reverse Flys,format_normalization_only,False,1
 Lying Hamstring Curl,exercise_09acd33c46d1d834,Lying Hamstring Curl,format_normalization_only,True,6
 Lying Leg Curl,exercise_7dee0d6687e1273f,Lying Leg Curl,format_normalization_only,False,19
 Lying Leg Raise On Bench,exercise_41c2fb9e9d4cd09f,Lying Leg Raise On Bench,format_normalization_only,False,1
@@ -1231,20 +1098,15 @@ Med Ball Twists,exercise_09b54bafe0152aac,Medicine Ball Twist,format_normalizati
 Medium Grip Bench Press,exercise_8799a3900c8d7b76,Medium Grip Bench Press,format_normalization_only,False,1
 Medium Grip Floor Press,exercise_0867bde0a1837a64,Medium Grip Floor Press,format_normalization_only,False,1
 metcon,exercise_c6265435d2f60d07,Metcon,format_normalization_only,True,5
-Mid Band Anti-Rotation,exercise_cd1eb9e303b014a4,Mid Band Anti Rotation,format_normalization_only,False,7
 Mid Thigh Iso Pull,exercise_31501d878853975d,Mid Thigh Iso Pull,format_normalization_only,False,2
 Military Press,exercise_ea44bd03da6a31cf,Military Press,format_normalization_only,True,0
 Mixed Grip Pull-Up,exercise_a3e1d55936958b2d,Mixed Grip Pull-Up,format_normalization_only,False,5
-Mixed Method,exercise_873a47ba1e00ba43,Mixed Method,format_normalization_only,False,1
-MOBILITYWOD - Banded Lower Body Unlock,exercise_bd9b30bb44e57cc5,Mobilitywod Banded Lower Body Unlock,format_normalization_only,False,3
 MobilityWod - Fire Up the Upper Back,exercise_c6be732c39e06660,Mobilitywod Fire Up The Upper Back,format_normalization_only,False,3
 MOBILITYWOD - GAME CHANGER,exercise_d0ba1f8722560e9e,Mobilitywod Game Changer,format_normalization_only,False,3
 MOBILITYWOD - Knee Pain Fix,exercise_3310d7cbde28f6a0,Mobilitywod Knee Pain Fix,format_normalization_only,False,3
 MOBILITYWOD - Low Back Relief,exercise_97d73744f7505ef3,Mobilitywod Low Back Relief,format_normalization_only,False,3
 MOBILITYWOD - Unlock Your Ankles,exercise_5380e802d77a203a,Mobilitywod Unlock Your Ankles,format_normalization_only,False,3
-Moderate Tempo Work,exercise_9c9c296453be294e,Moderate Tempo Work,format_normalization_only,False,1
 Modified Scorpion Stretch,exercise_cf6f05f00e795194,Modified Scorpion Stretch,format_normalization_only,False,12
-Monster band kick back,exercise_442f2e22ae05743d,Monster Band Kick Back,format_normalization_only,True,0
 Monster Walks,exercise_67617d4ef852584e,Monster Walks,format_normalization_only,False,1
 Mountain Climbers,exercise_c4863ffc4d2923d4,Mountain Climbers,format_normalization_only,False,7
 Multi-Direction Ab Wheel,exercise_59693b3e75fbb8e9,Multi Direction Ab Wheel,format_normalization_only,False,3
@@ -1278,13 +1140,10 @@ Offset Kettlebell Squat,exercise_f4e88b26f5d04eb4,Offset Kettlebell Squat,format
 OH KB Carry,exercise_a4fa393df1728316,Oh Kettlebell Carry,format_normalization_only,False,2
 OH KB Sit-ups,exercise_7db9f90a43849a06,Oh Kettlebell Sit Ups,format_normalization_only,False,20
 Old School Audinwood Core Circuit (CORE),exercise_f12502049dd65aae,Old School Audinwood Core Circuit (Core),format_normalization_only,False,3
-Option 1,exercise_41a49f786d133c21,Option 1,format_normalization_only,False,2
-Option 2,exercise_209ef9fc4dfe2166,Option 2,format_normalization_only,False,2
 Overcoming - Calf Raiser March,exercise_06803b0889e1bd97,Overcoming Calf Raiser March,format_normalization_only,False,2
 Overcoming ISO BB Calf Raise,exercise_5e32593975efa8ba,Overcoming Iso Barbell Calf Raise,format_normalization_only,False,1
 Overcoming Isometric Single Leg Calf Raise Hold,exercise_add4554b05390430,Overcoming Isometric Single Leg Calf Raise Hold,format_normalization_only,False,3
 Overhead + Front Rack Carry,exercise_bc44ecd81fb12aba,Overhead + Front Rack Carry,format_normalization_only,False,15
-Overhead Banded Triceps,exercise_1b4a6a10ad1fdfc6,Overhead Banded Triceps,format_normalization_only,False,5
 Overhead Carry/front Rack Carry,exercise_adac52da1807e4ce,Overhead Carry/Front Rack Carry,format_normalization_only,True,0
 Overhead DB Carry,exercise_dcfcacd3e9d1bf50,Overhead Dumbbell Carry,format_normalization_only,False,23
 Overhead March,exercise_70762c25bcda5d71,Overhead March,format_normalization_only,False,4
@@ -1293,7 +1152,6 @@ Overhead Press Warm-up,exercise_e8b1a3bed452ce40,Overhead Press Warm Up,format_n
 Overhead Squat,exercise_cdfee85e2c3d783c,Overhead Squat,format_normalization_only,False,14
 Overhead Tricep Rope Extension,exercise_86314e077618ef27,Overhead Triceps Rope Extension,format_normalization_only,False,1
 Overhead Walking Lunge,exercise_d8d60416c347ef76,Overhead Walking Lunge,format_normalization_only,False,1
-Pallof Press (Band or Cable),exercise_6d948c571516b02c,Pallof Press (Band Or Cable),format_normalization_only,False,19
 Parallette L-Sit Hold,exercise_f6d63653fe157561,Parallette L Sit Hold,format_normalization_only,False,10
 "Parallette L-Sit Holds - Feet Above 3 45lb. Bumper Plates, 2 Minutes Total Time",exercise_f5dae15f5085ef7e,Parallette L Sit Holds Feet Above 3 45Lb Bumper Plates 2 Minutes Total Time,format_normalization_only,False,1
 Parallette Push Up,exercise_0cce5c1e0d5bb772,Parallette Push-Up,format_normalization_only,True,5
@@ -1304,10 +1162,8 @@ Pause Back Squat,exercise_c5ef999fa3dd5b94,Pause Back Squat,format_normalization
 Paused Bench Press,exercise_6d73a5d7b339eb15,Pause Bench Press,format_normalization_only,False,5
 Paused Front Squat,exercise_eec8d7c3e2c2c8d6,Pause Front Squat,format_normalization_only,False,8
 Paused Front Squat Against 25% Hanging Chains,exercise_363f9e595456de50,Pause Front Squat Against 25% Hanging Chains,format_normalization_only,False,1
-PDL Barbell Protocol,exercise_21bc931f0c2292cf,Pdl Barbell Protocol,format_normalization_only,False,1
 PDL Mobility Protocol,exercise_acb18746c41876ed,Pdl Mobility Protocol,format_normalization_only,False,4
 PDL Plyometrics Protocol,exercise_c05cb9adb8d1e865,Pdl Plyometrics Protocol,format_normalization_only,False,1
-PDL Shoulder Protocol,exercise_12a0df8c5bc0bf1f,Pdl Shoulder Protocol,format_normalization_only,False,1
 Pec Deck,exercise_3bc3d2ac57b9dc61,Pec Deck,format_normalization_only,False,1
 Pec Fly,exercise_fce2ead4704e52ee,Pec Fly,format_normalization_only,False,1
 pec stretch against wall,exercise_a318fab5a1c4d163,Pec Stretch Against Wall,format_normalization_only,False,2
@@ -1322,7 +1178,6 @@ pike handstand push up,exercise_792fd11b647357ad,Pike Handstand Push-Up,format_n
 Pike Leg Lift Over,exercise_9a508d714c315ea3,Pike Leg Lift Over,format_normalization_only,True,1
 Pike Pushup,exercise_5cd91ba18c75289a,Pike Push-Up,format_normalization_only,False,12
 Plank,exercise_c80bf876dd9ec503,Plank,format_normalization_only,False,9
-"Plank, Against Max Band - 3x2 Minutes",exercise_ca9fe8746135a5fb,Plank Against Max Band 3X2 Minutes,format_normalization_only,False,1
 Plank Jack Push-Up,exercise_ba2cca7edeb8686a,Plank Jack Push-Up,format_normalization_only,False,2
 Plank Pull-Through,exercise_ab6ce182f2442e63,Plank Pull Through,format_normalization_only,False,31
 Plank Row,exercise_781ceeb4eee3e411,Plank Row,format_normalization_only,False,5
@@ -1369,19 +1224,12 @@ pronated strict pull up,exercise_879146f81310c009,Pronated Strict Pull-Up,format
 "Prone (2 Up, 1 Down) Hamstring Curl - Machine",exercise_067b116d1dee9c7e,Prone (2 Up 1 Down) Hamstring Curl Machine,format_normalization_only,False,2
 Prone DB ISO-Alternating Posterior Flyes,exercise_5cc172a781853bd4,Prone Dumbbell Iso Alternating Posterior Flyes,format_normalization_only,False,3
 Prone DB Posterior Flyes,exercise_c653b65f7d6ddc93,Prone Dumbbell Posterior Flyes,format_normalization_only,False,3
-prone incline drop catch,exercise_5fb46acf00b87b01,Prone Incline Drop Catch,format_normalization_only,False,2
 Prone Lateral Raise Triset,exercise_b18ceb642c3ea44b,Prone Lateral Raise Triset,format_normalization_only,False,4
 Prone Machine Hamstring Curl,exercise_6e35acf96c37bab9,Prone Machine Hamstring Curl,format_normalization_only,False,17
 Prone Rear Lateral Raises - Pronated Grip,exercise_87f70a71c12295d5,Prone Rear Lateral Raise Pronated Grip,explicit_alias_or_spelling_normalization,False,42
 prone rear lateral raises - pronated grip,exercise_87f70a71c12295d5,Prone Rear Lateral Raise Pronated Grip,explicit_alias_or_spelling_normalization,True,1
 Prone Scarecrow Press,exercise_59cc743c353386d1,Prone Scarecrow Press,format_normalization_only,False,3
 Prone Trap Raises,exercise_9d010ed94f7da787,Prone Trap Raise,format_normalization_only,False,9
-PRVN60 1/05/24,exercise_ae55c39af81a619e,Prvn60 1/05/24,format_normalization_only,False,1
-PRVN60 2/05/24,exercise_c3fd8c007b468984,Prvn60 2/05/24,format_normalization_only,False,1
-PRVN60 29/04/24,exercise_8e268f0b5bbb89b3,Prvn60 29/04/24,format_normalization_only,False,1
-PRVN60 3/05/24,exercise_c6b4fa2af3e250b3,Prvn60 3/05/24,format_normalization_only,False,1
-PRVN60 30/04/24,exercise_a6a3e75277db62f6,Prvn60 30/04/24,format_normalization_only,False,1
-PRVN60 4/05/24,exercise_09d2746b32367d9e,Prvn60 4/05/24,format_normalization_only,False,1
 Pull Through,exercise_8ae4be4b14fd3479,Pull Through,format_normalization_only,False,2
 Pull-Up,exercise_cbcd1dde3d8b0ecc,Pull-Up,explicit_alias_or_spelling_normalization,False,71
 Pull-Ups,exercise_cbcd1dde3d8b0ecc,Pull-Up,explicit_alias_or_spelling_normalization,False,2
@@ -1397,8 +1245,6 @@ Push Back Push Up,exercise_49a4f758449dd7e0,Push Back Push-Up,format_normalizati
 Push Jerk,exercise_7b7319da646951ee,Push Jerk,format_normalization_only,False,15
 Push Jerk - BB,exercise_c645f0f4028c01fa,Push Jerk Barbell,format_normalization_only,False,2
 Push Press,exercise_92a34e89076c048e,Push Press,format_normalization_only,False,64
-Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands,exercise_1704e60189031636,Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands,format_normalization_only,False,1
-Push Press Against Singled Micro Mini or Mini Bands *Under 225 Max: Micro Mini Bands,exercise_daef8e2564372553,Push Press Against Singled Micro Mini Or Mini Bands *Under 225 Max Micro Mini Bands,format_normalization_only,False,1
 Push Press - BB,exercise_21c53de948dfd33d,Push Press Barbell,format_normalization_only,False,2
 Push Ups,exercise_3d01b2aad3491eb6,Push-Up,explicit_alias_or_spelling_normalization,False,1
 Push up,exercise_3d01b2aad3491eb6,Push-Up,explicit_alias_or_spelling_normalization,False,1
@@ -1422,7 +1268,6 @@ Rack Skullcrusher,exercise_509202a255f64ef7,Rack Skullcrusher,format_normalizati
 Reaching Dead Bug,exercise_0320b99634ea15d0,Reaching Dead Bug,explicit_alias_or_spelling_normalization,True,4
 Reaching Deadbug,exercise_0320b99634ea15d0,Reaching Dead Bug,explicit_alias_or_spelling_normalization,False,70
 Reactive Med Ball Chest Pass into Floor,exercise_17b5eb237bc01d5f,Reactive Medicine Ball Chest Pass Into Floor,format_normalization_only,False,1
-Rear Delt Band Pull,exercise_575eaba9390f36d9,Rear Delt Band Pull,format_normalization_only,False,1
 Rear Delt Flyes,exercise_2164c4702d765c78,Rear Delt Flyes,format_normalization_only,False,16
 rear foot elevated RDL,exercise_f7881b16504907a6,Rear Foot Elevated Romanian Deadlift,format_normalization_only,True,1
 Rear Foot Elevated Split Jump,exercise_59dee84c290e645d,Rear Foot Elevated Split Jump,format_normalization_only,False,1
@@ -1431,16 +1276,12 @@ Rear Rack Walking Lunge,exercise_4b245f9799dcfad8,Rear Rack Walking Lunge,format
 Rebound Jumps,exercise_5913881ba7d9571d,Rebound Jump,format_normalization_only,False,1
 Rest,exercise_2e09d5210db84177,Rest,format_normalization_only,False,1
 Rest Pause Incline DB Bench (with Explanation),exercise_88e6a6ee47e2474b,Rest Pause Incline Dumbbell Bench (With Explanation),format_normalization_only,False,3
-Reverse Band FB Bar Floor Press,exercise_3eb725a5f88a1f62,Reverse Band Football Bar Floor Press,format_normalization_only,False,5
-Reverse Band Front Squat,exercise_75e610abe94bdb9a,Reverse Band Front Squat,format_normalization_only,False,6
-Reverse Band Sumo Stance Rack Deadlift,exercise_33826a8de02c4fae,Reverse Band Sumo Stance Rack Deadlift,format_normalization_only,False,8
 Reverse Barbell Curl,exercise_75840568cf30ae7a,Reverse Barbell Curl,format_normalization_only,True,6
 Reverse Cable Fly,exercise_6999a416526e3a4e,Reverse Cable Fly,format_normalization_only,False,15
 Reverse Crunch,exercise_f8b83a6887ac3048,Reverse Crunch,explicit_alias_or_spelling_normalization,True,7
 Reverse Crunches,exercise_f8b83a6887ac3048,Reverse Crunch,explicit_alias_or_spelling_normalization,False,1
 Reverse Crunch + Deadbug,exercise_0ecca46443ec0cf7,Reverse Crunch + Dead Bug,format_normalization_only,False,9
 Reverse Curls,exercise_185b430a85546fd9,Reverse Curl,format_normalization_only,False,7
-Reverse Doubled Mini Band CONVENTIONAL Deadlift,exercise_75427a17e98ef75e,Reverse Doubled Mini Band Conventional Deadlift,format_normalization_only,False,1
 Reverse Flys,exercise_580917a1c41b25c8,Reverse Flys,format_normalization_only,False,7
 Reverse Hyper,exercise_fb96142b09ecc3ef,Reverse Hyper,explicit_alias_or_spelling_normalization,True,15
 Reverse Hypers,exercise_fb96142b09ecc3ef,Reverse Hyper,explicit_alias_or_spelling_normalization,True,67
@@ -1452,7 +1293,6 @@ Reverse Lunges,exercise_a1388d64284972e1,Reverse Lunge,explicit_alias_or_spellin
 Reverse lunge from pins,exercise_cd6253f5f091eec1,Reverse Lunge From Pins,format_normalization_only,False,3
 Reverse Lunge - Rotation,exercise_ac0b5550630c3040,Reverse Lunge Rotation,format_normalization_only,False,1
 Reverse Medball Throw,exercise_f1df196046b3094d,Reverse Medicine Ball Throw,format_normalization_only,False,1
-Reverse Pec Dec (or Standing Banded Reverse Flys),exercise_460d9b3a939522f1,Reverse Pec Dec (Or Standing Banded Reverse Flys),format_normalization_only,False,1
 Reverse V-Ups on Rower (Seat),exercise_1326a699a150aecc,Reverse V Ups On Rower (Seat),format_normalization_only,False,1
 Reverse Zottman Curls,exercise_e29c3ce6320d64f0,Reverse Zottman Curl,format_normalization_only,False,3
 RFESS - Foot Strike,exercise_06dfa05ef338a0c4,Rfess Foot Strike,format_normalization_only,False,2
@@ -1462,7 +1302,6 @@ Ring Facepulls,exercise_420951cc62ee6556,Ring Face Pull,format_normalization_onl
 Ring Plank,exercise_05e6e1a6a54ad5c2,Ring Plank,format_normalization_only,True,1
 Ring Pull Up,exercise_e76e650d6678bc42,Ring Pull-Up,format_normalization_only,False,4
 Ring Push-ups,exercise_8f60cd18b0a579bb,Ring Push-Up,format_normalization_only,False,35
-Ring Push Ups Against Max Band,exercise_fd0ab8545ba656a5,Ring Push-Up Against Max Band,format_normalization_only,False,1
 Ring Reverse Fly,exercise_2cf3724b68b39fa0,Ring Reverse Fly,format_normalization_only,True,1
 Ring Rows,exercise_aa24291dc64a59de,Ring Row,format_normalization_only,False,24
 Ring Row isometric hold.,exercise_75bb9fe11de474e8,Ring Row Isometric Hold,format_normalization_only,True,0
@@ -1476,13 +1315,11 @@ Roman Chair Side Bend,exercise_fe30370dca93f326,Roman Chair Side Bend,format_nor
 RDL,exercise_5f238ccaee1b13a4,Romanian Deadlift,explicit_alias_or_spelling_normalization,False,42
 Romanian Deadlift,exercise_5f238ccaee1b13a4,Romanian Deadlift,explicit_alias_or_spelling_normalization,True,121
 Romanian Deadlift (RDL),exercise_5f238ccaee1b13a4,Romanian Deadlift,explicit_alias_or_spelling_normalization,False,3
-Rope (cable attachment) or Kneeling Heavy Band Crunches,exercise_84be5f94e4b5bb53,Rope (Cable Attachment) Or Kneeling Heavy Band Crunch,format_normalization_only,False,1
 Rope Climb,exercise_1e7f4bde907d5aaa,Rope Climb,format_normalization_only,False,1
 Rope Hammer Curls,exercise_e2b1064a918919ce,Rope Hammer Curl,format_normalization_only,False,2
 Rope Inverted Row,exercise_d698ae653bf36cd4,Rope Inverted Row,format_normalization_only,False,4
 Rope Pull-ups,exercise_1ee3bc37c58ec8eb,Rope Pull-Up,format_normalization_only,False,27
 Rope Pushdowns,exercise_5e6c1da7a3e14d86,Rope Pushdown,format_normalization_only,False,21
-Rope Sledpulls,exercise_c71fb274b1f030d1,Rope Sledpulls,format_normalization_only,False,4
 Rope Triceps,exercise_874c1a2d106a03b4,Rope Triceps,format_normalization_only,False,11
 Rotated Shin Box ISO with Tennis Ball,exercise_7fccee825b601bf5,Rotated Shin Box Iso With Tennis Ball,format_normalization_only,False,2
 Rotating Pike Twist to Cobra Flow,exercise_ec5662e38d7483f0,Rotating Pike Twist To Cobra Flow,format_normalization_only,False,1
@@ -1521,15 +1358,11 @@ Scap Push-ups,exercise_747bd1b5e74c635e,Scap Push-Up,explicit_alias_or_spelling_
 Scorpion Stretch,exercise_1fb082e2dd4ef23a,Scorpion Stretch,format_normalization_only,False,6
 Seal Rows,exercise_7cad03576de0f1e8,Seal Row,format_normalization_only,True,0
 Seated Arnold DB Press,exercise_7a49038ac8684d33,Seated Arnold Dumbbell Press,format_normalization_only,False,2
-Seated Band Abduction,exercise_82c7a4ca1dd43c3d,Seated Band Abduction,format_normalization_only,False,1
-Seated Banded Leg Curls,exercise_9c7c649f6d6ee220,Seated Banded Leg Curl,format_normalization_only,False,1
-Seated Banded Low Rows  *Seated. PVC Suspended Inside 2 Bands Choked From in Front,exercise_de6877206095b701,Seated Banded Low Row *Seated Pvc Suspended Inside 2 Bands Choked From In Front,format_normalization_only,False,1
 seated barbell press,exercise_3280aadd3b4ded06,Seated Barbell Press,format_normalization_only,True,8
 Seated Bent Over Rear Delt Raise,exercise_87b8442876ed60a6,Seated Bent Over Rear Delt Raise,format_normalization_only,False,2
 Seated Box Jump,exercise_7c09f1bd64ea031b,Seated Box Jump,format_normalization_only,False,4
 Seated Cable Row,exercise_42e47dbc0deb2573,Seated Cable Row,format_normalization_only,False,25
 Seated Calf Raise - Machine,exercise_87084109398df2fe,Seated Calf Raise Machine,format_normalization_only,False,2
-Seated Cleans,exercise_cc3a5c23560b9563,Seated Clean,format_normalization_only,False,28
 Seated DB Arnold Press,exercise_28ae64893369ee6c,Seated Dumbbell Arnold Press,format_normalization_only,False,6
 Seated DB Curl,exercise_ee09daf866a9f8e9,Seated Dumbbell Curl,format_normalization_only,False,4
 Seated DB good morning,exercise_646e2e7d6e4cb2ee,Seated Dumbbell Good Morning,format_normalization_only,True,7
@@ -1549,9 +1382,7 @@ Seated Leg Curl,exercise_99d18e56b9955f05,Seated Leg Curl,explicit_alias_or_spel
 Seated Leg Curls,exercise_99d18e56b9955f05,Seated Leg Curl,explicit_alias_or_spelling_normalization,False,2
 seated leg curl,exercise_99d18e56b9955f05,Seated Leg Curl,explicit_alias_or_spelling_normalization,True,5
 Seated Military Press,exercise_d543867c70c2d704,Seated Military Press,format_normalization_only,False,8
-Seated Overhead Band Tricep Extensions,exercise_b9f506e316e7b648,Seated Overhead Band Triceps Extension,format_normalization_only,False,1
 Seated Overhead DB Extension,exercise_5c2a5fdef4fec8ef,Seated Overhead Dumbbell Extension,format_normalization_only,False,1
-Seated Power Clean,exercise_e7c8a5a6f8a2296f,Seated Power Clean,format_normalization_only,True,4
 Seated Saddle Pose,exercise_71c61086a7b3a048,Seated Saddle Pose,format_normalization_only,False,1
 Seated SSB Good Mornings,exercise_b21926006e11847f,Seated SSB Good Morning,format_normalization_only,False,1
 Seated Straddle Pose,exercise_eebaf32de06181c0,Seated Straddle Pose,format_normalization_only,False,1
@@ -1586,8 +1417,6 @@ Side Plank w/ Hip Abduction,exercise_c7ca0c4848a08d91,Side Plank W/ Hip Abductio
 Side Step KB Swings,exercise_453690b6123c1f6f,Side Step Kettlebell Swing,format_normalization_only,False,18
 Side To Side Landmine Press,exercise_0dfda05685e0282f,Side To Side Landmine Press,format_normalization_only,False,2
 Side-to-Side Med Ball Slams,exercise_3ff5a4c81aae5288,Side To Side Medicine Ball Slam,format_normalization_only,False,3
-Single Arm Banded Pushdowns,exercise_fd3d1b33740ff0e3,Single Arm Banded Pushdown,explicit_alias_or_spelling_normalization,False,14
-single arm banded push down,exercise_fd3d1b33740ff0e3,Single Arm Banded Pushdown,explicit_alias_or_spelling_normalization,True,0
 One Arm Deadlift,exercise_ae3213e71e4fe95d,Single Arm Deadlift,format_normalization_only,True,1
 One-Arm DB Bench Press,exercise_1f4804f42d6a950e,Single Arm Dumbbell Bench Press,format_normalization_only,False,9
 Single Arm DB Neutral Grip Bench Press,exercise_04ee72bf13670634,Single Arm Dumbbell Neutral Grip Bench Press,explicit_alias_or_spelling_normalization,False,24
@@ -1599,7 +1428,6 @@ Single Arm DB Push Press,exercise_3b0a9276f756f23c,Single Arm Dumbbell Push Pres
 1-Arm DB Row,exercise_554dd0123e6f9d45,Single Arm Dumbbell Row,explicit_alias_or_spelling_normalization,False,75
 1-arm DB Row,exercise_554dd0123e6f9d45,Single Arm Dumbbell Row,explicit_alias_or_spelling_normalization,False,3
 Single Arm Dumbbell Row,exercise_554dd0123e6f9d45,Single Arm Dumbbell Row,explicit_alias_or_spelling_normalization,False,19
-One Arm DB Row + Band from the Front - 3x10 Per Arm,exercise_f0549adcabd5dcaf,Single Arm Dumbbell Row + Band From The Front 3X10 Per Arm,format_normalization_only,False,1
 Single Arm Dumbbell Snatches,exercise_e14d856ed6d50053,Single Arm Dumbbell Snatch,format_normalization_only,False,1
 Single Arm Dumbbell Upright Row,exercise_0f43018a7426e5a4,Single Arm Dumbbell Upright Row,format_normalization_only,False,3
 Single Arm Farmer Carry,exercise_6fe982afad597f84,Single Arm Farmer Carry,format_normalization_only,False,53
@@ -1626,8 +1454,6 @@ single arm suitcase calf raise,exercise_bf1ee5d92d065b8f,Single Arm Suitcase Cal
 Single Dumbbell Goblet Squats,exercise_37d3aef73510c774,Single Dumbbell Goblet Squat,format_normalization_only,False,1
 Single Hinge to Hip Flexor Flow from Elevated Surface,exercise_bb16a154cb547a50,Single Hinge To Hip Flexor Flow From Elevated Surface,format_normalization_only,False,1
 Single Leg Assisted Pendulum Squat,exercise_42e525a42c01498f,Single Leg Assisted Pendulum Squat,format_normalization_only,False,15
-Single Leg Banded Hamstring Curls,exercise_0c7dc58e4841d0b9,Single Leg Banded Hamstring Curl,format_normalization_only,False,11
-Single Leg Banded Leg Curls,exercise_53a119e91fd29e0f,Single Leg Banded Leg Curl,format_normalization_only,False,23
 Single-Leg Barbell Hip Thrusts,exercise_669a377f39280fa5,Single Leg Barbell Hip Thrust,format_normalization_only,False,3
 Single Leg Barbell RDL,exercise_6a1db6d8c0d0dd39,Single Leg Barbell Romanian Deadlift,format_normalization_only,False,9
 Single Leg Bounds,exercise_89c056afe46b179a,Single Leg Bounds,format_normalization_only,False,7
@@ -1636,7 +1462,6 @@ Single leg cable hip abduction,exercise_15ca2da273851fd3,Single Leg Cable Hip Ab
 Single Leg Depth Jump,exercise_5df918ea48814ac7,Single Leg Depth Jump,format_normalization_only,False,7
 Single Leg Donkey Kicks,exercise_4a8bb736e0c994fc,Single Leg Donkey Kicks,format_normalization_only,True,0
 Single Leg Dumbbell Deficit Calf Raises,exercise_b770c9bc132d5fa7,Single Leg Dumbbell Deficit Calf Raise,format_normalization_only,True,0
-Single Leg End-Range ISO Push,exercise_77ec0957ead51062,Single Leg End Range Iso Push,format_normalization_only,False,2
 Single Leg Forward Fold E/Side,exercise_4e8fedb5e7914354,Single Leg Forward Fold E/Side,format_normalization_only,False,3
 Single Leg Glute Bridge,exercise_4d036d08810224f2,Single Leg Glute Bridge,explicit_alias_or_spelling_normalization,False,207
 Single Leg Glute Bridges,exercise_4d036d08810224f2,Single Leg Glute Bridge,explicit_alias_or_spelling_normalization,False,1
@@ -1679,7 +1504,6 @@ SkiErg,exercise_44811247103de3c6,Ski Erg,explicit_alias_or_spelling_normalizatio
 Skip,exercise_42e93b9bb77d8a73,Skip,format_normalization_only,False,6
 Skull Crusher,exercise_4d02dec74400504c,Skull Crusher,explicit_alias_or_spelling_normalization,False,9
 Skull Crushers,exercise_4d02dec74400504c,Skull Crusher,explicit_alias_or_spelling_normalization,False,12
-SL Banded Good Mornings,exercise_7795ec35b17c01bd,Sl Banded Good Morning,format_normalization_only,False,1
 SL Bound to Broad Jump,exercise_6c58ed572e16fcae,Sl Bound To Broad Jump,format_normalization_only,False,2
 SL Hurdle Jumps,exercise_de246a848ff6ec06,Sl Hurdle Jump,format_normalization_only,False,1
 SL RDL - Plate Switch to Overhead,exercise_a4f30ce711836bf3,Sl Romanian Deadlift Plate Switch To Overhead,format_normalization_only,False,2
@@ -1713,7 +1537,6 @@ Small Box - Rebound Jumps,exercise_ee723752e5de69e6,Small Box Rebound Jump,forma
 Smith JM Press,exercise_283743b43fcda698,Smith Jm Press,format_normalization_only,False,1
 smith machine calf raise,exercise_c18503641301a8cc,Smith Machine Calf Raise,format_normalization_only,True,2
 Smith Machine Shrugs,exercise_b227785f1210185c,Smith Machine Shrugs,format_normalization_only,False,1
-"SMR Glutes, Hamstrings, IT Band, Adductors",exercise_55ac42db42735d70,Smr Glutes Hamstrings It Band Adductors,format_normalization_only,False,12
 "SMR Pecs, Lats, Triceps",exercise_e2573f492189bb08,Smr Pecs Lats Triceps,format_normalization_only,False,12
 Snake. - Sprints,exercise_23c504571a809899,Snake Sprints,format_normalization_only,False,2
 Snatch,exercise_6cd512a819ae26ee,Snatch,format_normalization_only,False,3
@@ -1732,22 +1555,13 @@ Snatch Pull,exercise_bdc06ff739912304,Snatch Pull,format_normalization_only,Fals
 Snatch Pull + Snatch,exercise_b6a025385cc968b4,Snatch Pull + Snatch,format_normalization_only,False,1
 Sorensen Hold,exercise_6e4d09ebc7736605,Sorensen Hold,format_normalization_only,False,1
 Spanish Squat isometric hold with Kettlebell in Goblet position,exercise_17686e2abf79b302,Spanish Squat Isometric Hold With Kettlebell In Goblet Position,format_normalization_only,False,2
-Speed Banded  Lat Pull Down,exercise_5a990448f82c2c3b,Speed Banded Lat Pulldown,explicit_alias_or_spelling_normalization,True,0
-Speed Banded Lat Pulldowns,exercise_5a990448f82c2c3b,Speed Banded Lat Pulldown,explicit_alias_or_spelling_normalization,False,8
 Speed Bench,exercise_221a114fd552e209,Speed Bench,format_normalization_only,False,1
 speed bench press,exercise_4bd4bb485f9de050,Speed Bench Press,format_normalization_only,True,0
-Speed Bench Press against bands,exercise_e23939d45b6f5d86,Speed Bench Press Against Bands,format_normalization_only,False,64
-Speed Bench Press against bands to pins,exercise_8928a2bca18f308c,Speed Bench Press Against Bands To Pins,format_normalization_only,False,6
 Speed Bench Press with chains,exercise_b2fe0cbcff76640f,Speed Bench Press With Chains,format_normalization_only,False,27
 speed convential deadlift,exercise_6df202cd88672d91,Speed Conventional Deadlift,format_normalization_only,True,0
 Speed Curls,exercise_d358d185d7ce55a0,Speed Curl,format_normalization_only,False,1
 Speed Lat Pulldown,exercise_8873f1cef1e5a27f,Speed Lat Pulldown,format_normalization_only,False,1
-Speed Pulls: Conventional Deadlift @50% against 30% Band Tension,exercise_b588ce49457a6ad8,Speed Pull Conventional Deadlift @50% Against 30% Band Tension,format_normalization_only,False,1
-Speed Pulls: Conventional Deadlift @55% Against 30% Band Tension,exercise_ef4a5d1b41cdbe41,Speed Pull Conventional Deadlift @55% Against 30% Band Tension,format_normalization_only,False,1
-Speed Pull Deadlift against bands,exercise_833a4c4b299c6c98,Speed Pull Deadlift Against Bands,format_normalization_only,False,6
-Speed Pulls: Sumo Deadlift @55% Against 30% Band Tension,exercise_ade13387abfa4c74,Speed Pull Sumo Deadlift @55% Against 30% Band Tension,format_normalization_only,False,1
 Speed Push Press,exercise_78f7d182b45382df,Speed Push Press,format_normalization_only,False,7
-Speed Trap Bar Deadlifts vs. Bands,exercise_1b60fa12890a316d,Speed Trap Bar Deadlift Vs Bands,format_normalization_only,False,1
 Speed Trap Bar High Pull,exercise_7703ff097122dd1e,Speed Trap Bar High Pull,format_normalization_only,False,11
 Spider Curl,exercise_5fe78b38d196e023,Spider Curl,explicit_alias_or_spelling_normalization,True,9
 Spider Curls,exercise_5fe78b38d196e023,Spider Curl,explicit_alias_or_spelling_normalization,False,3
@@ -1788,10 +1602,7 @@ Staggered Medicine Ball Wall Throw,exercise_f78a6ff4d8be0d90,Staggered Medicine 
 Staggered Stance Kettlebell Swings,exercise_d70df700a85f7d3f,Staggered Stance Kettlebell Swing,explicit_alias_or_spelling_normalization,False,13
 staggered stance KB swing,exercise_d70df700a85f7d3f,Staggered Stance Kettlebell Swing,explicit_alias_or_spelling_normalization,True,2
 Stairs,exercise_0eeea780b063634b,Stairs,format_normalization_only,False,4
-Standing Abductor Banded Pull Aparts,exercise_b4599f099027cd03,Standing Abductor Banded Pull-Apart,format_normalization_only,True,2
 Standing Arnold Press,exercise_26ed34337fa38dac,Standing Arnold Press,format_normalization_only,False,6
-Standing Banded Abs,exercise_2a9fb44b5ae9ef89,Standing Banded Abs,format_normalization_only,False,8
-Standing Banded ER/IR,exercise_c9a7521b1e139105,Standing Banded Er/Ir,format_normalization_only,False,2
 Standing Bar Tricep Extensions,exercise_be4b9d532e5a12b3,Standing Bar Triceps Extension,format_normalization_only,True,1
 Standing Bicep Curl - Cable Machine,exercise_0802600230a87628,Standing Biceps Curl Cable Machine,format_normalization_only,False,2
 Standing Bradford Press,exercise_a1d2a1b7536b6c98,Standing Bradford Press,format_normalization_only,False,12
@@ -1804,8 +1615,6 @@ Standing Curl + Press,exercise_8763d6dddc926254,Standing Curl + Press,format_nor
 Standing DB Calf Raise,exercise_314475345452ba1c,Standing Dumbbell Calf Raise,format_normalization_only,False,7
 Standing DB Press,exercise_3908f0452ba2fbab,Standing Dumbbell Press,format_normalization_only,False,14
 Standing DB Reverse Curl,exercise_25545fe13e1da085,Standing Dumbbell Reverse Curl,format_normalization_only,False,1
-"Standing, Heavy Band Crunches",exercise_86d66e661c8c1a16,Standing Heavy Band Crunch,format_normalization_only,False,1
-standing high to low banded rotation,exercise_84c198fe5aa06439,Standing High To Low Banded Rotation,format_normalization_only,False,1
 standing landmine rotations,exercise_fd80e186b5376d80,Standing Landmine Rotation,format_normalization_only,False,1
 Standing Overhead DB Tricep Extension,exercise_fd74cd6dc8133a21,Standing Overhead Dumbbell Triceps Extension,format_normalization_only,False,9
 Standing Overhead Tricep Extension – Cable Machine,exercise_73e44247a4880994,Standing Overhead Triceps Extension – Cable Machine,format_normalization_only,False,2
@@ -1827,7 +1636,6 @@ Stop-and-Go Farmers Walks,exercise_fe7510f2357f5571,Stop And Go Farmers Walks,fo
 Straight-Arm Lat Pull Downs,exercise_3868d5a18c53d8a4,Straight Arm Lat Pulldown,format_normalization_only,False,3
 Straight Arm Pulldown,exercise_514ce3a541aaa1a9,Straight Arm Pulldown,format_normalization_only,False,32
 Straight Bar Box Squat,exercise_a5d1b999f6a4e45f,Straight Bar Box Squat,format_normalization_only,False,2
-Straight Bar Box Squat w/ Bands,exercise_a9519f6a7e9a6e42,Straight Bar Box Squat W/ Bands,format_normalization_only,False,1
 Straight Leg Bound,exercise_9d3654cc53ada9df,Straight Leg Bound,format_normalization_only,False,3
 Straight Leg Deadlift,exercise_9f6eb994ef760531,Straight Leg Deadlift,format_normalization_only,False,2
 Straight Leg Raises,exercise_dd43e238587b6e72,Straight Leg Raise,format_normalization_only,False,9
@@ -1845,7 +1653,6 @@ Strict Press,exercise_37e411426c3c6c3a,Strict Press,explicit_alias_or_spelling_n
 Strict press,exercise_37e411426c3c6c3a,Strict Press,explicit_alias_or_spelling_normalization,True,0
 "Strict Pull Ups, Weighted",exercise_6e656af0baeb5b27,Strict Pull-Up Weighted,format_normalization_only,False,1
 Strict Ring Dips,exercise_da733efb303a20d1,Strict Ring Dip,format_normalization_only,False,92
-Strict Ring Pull Ups Against Max band from the Bottom,exercise_de4e08e9cec7b6c9,Strict Ring Pull-Up Against Max Band From The Bottom,format_normalization_only,False,1
 Strict Static Dips,exercise_d619ae3eb5103efe,Strict Static Dip,format_normalization_only,False,4
 Suitcase Carry,exercise_5f6c9e828919da51,Suitcase Carry,format_normalization_only,False,11
 Suitcase Carry Marching,exercise_b0dbf50e1fc08c20,Suitcase Carry March,explicit_alias_or_spelling_normalization,False,1
@@ -1883,7 +1690,6 @@ Supported 1-Arm Rows,exercise_42312767d0f28741,Supported Single Arm Row,format_n
 Supported 1-Arm Row with rotation,exercise_ab6a26e66abf28e5,Supported Single Arm Row With Rotation,format_normalization_only,False,16
 Supported Single Leg KB RDLs,exercise_694187af078eb352,Supported Single Leg Kettlebell Romanian Deadlift,format_normalization_only,False,4
 Supported Single Leg RDLs,exercise_6f62763662c8bd7f,Supported Single Leg Romanian Deadlift,format_normalization_only,False,16
-Supported Single Leg RDLs with band,exercise_d2dbe40b8f4fffd9,Supported Single Leg Romanian Deadlift With Band,format_normalization_only,False,2
 Swimmer Kicks,exercise_7f7dcb28fb0f8b3a,Swimmer Kicks,format_normalization_only,True,0
 Symmertical Stance DB row - neutral grip,exercise_2e127dd6bd336438,Symmetrical Stance Dumbbell Row Neutral Grip,explicit_alias_or_spelling_normalization,True,1
 Symmetrical Stance DB Row - neutral grip,exercise_2e127dd6bd336438,Symmetrical Stance Dumbbell Row Neutral Grip,explicit_alias_or_spelling_normalization,False,11
@@ -1919,7 +1725,6 @@ Tempo Runs,exercise_cc6a9afbfc366ce1,Tempo Run,explicit_alias_or_spelling_normal
 Terminal Knee Extensions,exercise_780f87b87c3118e4,Terminal Knee Extension,format_normalization_only,False,14
 Test Vertical Jump,exercise_0e6bf2ae37e32447,Test Vertical Jump,format_normalization_only,False,1
 THE warm up,exercise_62c451a02d8dd38b,The Warm Up,format_normalization_only,True,0
-Theraband Monster Walks,exercise_ced58bba888b9adb,Theraband Monster Walks,format_normalization_only,False,1
 Thoracic Spine Foam Rolling,exercise_7eb1c0b312281e6b,Thoracic Spine Foam Rolling,format_normalization_only,False,1
 Thread the Needle,exercise_b5cbd55435f3225c,Thread The Needle,format_normalization_only,False,1
 Thread The Needle Stretch E/Side,exercise_80df131c1655c7f7,Thread The Needle Stretch E/Side,format_normalization_only,False,1
@@ -1932,14 +1737,11 @@ Top Bench Cable Curls,exercise_7880048d8f593051,Top Bench Cable Curl,format_norm
 Top Down Snatch - 4 Part,exercise_d19d6565555436b2,Top Down Snatch 4 Part,format_normalization_only,True,2
 Touch & go trap bar deadlifts.,exercise_5c7cec367b0c8f0b,Touch And Go Trap Bar Deadlift,explicit_alias_or_spelling_normalization,True,1
 Touch N Go Trap Bar Deadlift,exercise_5c7cec367b0c8f0b,Touch And Go Trap Bar Deadlift,explicit_alias_or_spelling_normalization,False,5
-Touch N Go Trap Bar Deadlift against a band,exercise_9a9a3a8ca09dc066,Touch And Go Trap Bar Deadlift Against A Band,format_normalization_only,False,25
 trap bar carry,exercise_cba920b92921f85e,Trap Bar Carry,format_normalization_only,False,14
 Trap Bar Carry - SP,exercise_61714910ccc74ac3,Trap Bar Carry Sp,format_normalization_only,False,1
 Trap Bar Deadlift,exercise_65d05a54efe0e720,Trap Bar Deadlift,explicit_alias_or_spelling_normalization,False,70
 Trap Bar Deadlifts,exercise_65d05a54efe0e720,Trap Bar Deadlift,explicit_alias_or_spelling_normalization,False,4
 Trapbar Deadlift,exercise_65d05a54efe0e720,Trap Bar Deadlift,explicit_alias_or_spelling_normalization,False,2
-TRAP BAR DEADLIFT AGAINST A BAND,exercise_fe8171eef3b81374,Trap Bar Deadlift Against A Band,explicit_alias_or_spelling_normalization,True,1
-Trap Bar Deadlift against a band,exercise_fe8171eef3b81374,Trap Bar Deadlift Against A Band,explicit_alias_or_spelling_normalization,False,19
 Trap Bar Deadlift Warm-up,exercise_7efa1059c078de4b,Trap Bar Deadlift Warm Up,format_normalization_only,False,30
 Trap Bar DL,exercise_5678884e90d92a94,Trap Bar Dl,format_normalization_only,False,1
 Trap Bar Farmer Carry,exercise_10d3184161d3873b,Trap Bar Farmer Carry,format_normalization_only,False,26
@@ -1985,15 +1787,11 @@ turkish weight plate sit up,exercise_3c18e0f37ca32c4c,Turkish Weight Plate Sit U
 Twisted Cross Stretch E/Side,exercise_73aff0acb308fbef,Twisted Cross Stretch E/Side,format_normalization_only,False,2
 Two Arm KB Clean,exercise_8a4bcdd42f82ad8c,Two Arm Kettlebell Clean,format_normalization_only,False,1
 Underhand Bent Over Barbell Rows,exercise_4cfdfa7b177d453b,Underhand Bent Over Barbell Row,format_normalization_only,False,1
-Unilateral Banded Triceps Pushowns,exercise_c942b3e1777d8494,Unilateral Banded Triceps Pushowns,format_normalization_only,False,1
 Unilateral Chest Press,exercise_0fac768f8c90351e,Unilateral Chest Press,format_normalization_only,False,2
 Unilateral Leg Press,exercise_37b25134af796f71,Unilateral Leg Press,format_normalization_only,False,1
 V bar pushdown,exercise_f6eebbe58763aae1,V Bar Pushdown,format_normalization_only,True,1
-V-Handle Banded Tricep Pushdown,exercise_34730d52c7c2f392,V Handle Banded Triceps Pushdown,format_normalization_only,False,1
 V-Handle Landmine Row,exercise_52063a526bf3ee50,V Handle Landmine Row,format_normalization_only,False,1
 V-Ups,exercise_9a3d3817f4c8d22b,V Ups,format_normalization_only,False,81
-velocity tracking app (android),exercise_caca4da49edf2a02,Velocity Tracking App (Android),format_normalization_only,False,6
-Velocity tracking app demo,exercise_6240b949b881dce1,Velocity Tracking App Demo,format_normalization_only,False,6
 Walk,exercise_7a6c4fac6c5cd720,Walk,format_normalization_only,False,6
 Walking,exercise_37ff20583960759d,Walking,format_normalization_only,False,3
 Walking BW Lunges,exercise_322eb1a71a5884d1,Walking Bodyweight Lunge,format_normalization_only,False,32
@@ -2044,8 +1842,6 @@ Wide Grip Pull-up + Narrow Grip Pull-up + Chin-up Clusters,exercise_617b584c26b1
 Wide Grip Standing Barbell Curl,exercise_8f32c41cab3d9349,Wide Grip Standing Barbell Curl,format_normalization_only,False,1
 Wide Stance Box Squat,exercise_7ebd87d0733177da,Wide Stance Box Squat,format_normalization_only,True,3
 Wide Stance Box Squat For Speed,exercise_03d3c4c30c25e8f0,Wide Stance Box Squat For Speed,format_normalization_only,False,8
-Wide Stance Box Squat with Straight Bar @50% Against 25% Band Tension,exercise_8573abc418d16c56,Wide Stance Box Squat With Straight Bar @50% Against 25% Band Tension,format_normalization_only,False,1
-Wide Stance SSB Box Squat with bands,exercise_d3783ac5f664f20a,Wide Stance SSB Box Squat With Bands,format_normalization_only,False,17
 Wood Chop,exercise_9b2d026e8240f98f,Wood Chop,format_normalization_only,False,1
 Worlds Greatest Stretch,exercise_89e8e6c4b2908c0e,Worlds Greatest Stretch,explicit_alias_or_spelling_normalization,False,205
 World’s Greatest Stretch,exercise_89e8e6c4b2908c0e,Worlds Greatest Stretch,explicit_alias_or_spelling_normalization,False,608

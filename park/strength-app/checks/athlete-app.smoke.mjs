@@ -39,8 +39,7 @@ must(js.includes('function trainingTabHtml'), 'training tab screen');
 {
   const trainingDay = js.slice(js.indexOf('function trainingBlocksHtml'), js.indexOf('function trainingTabHtml'));
   must(!trainingDay.includes('Create session') && !trainingDay.includes('Add Exercise'), 'training day logs a session; building stays in the library');
-  must(html.includes('id="fabCreateSession"'), 'create session stays on the add menu');
-  must(js.includes("getElementById('fabCreateSession')"), 'training hides create session');
+  must(!html.includes('fabCreateSession') && !js.includes('LibraryView.create('), 'athlete app must not expose session authoring');
 }
 must(js.includes('TRAINING_DEMO'), 'HPP training demo plan');
 must(css.includes('.shell-screen--training'), 'training screen styles');
@@ -52,7 +51,7 @@ must(html.includes('library.js'), 'library model script');
 must(html.includes('library-ui.js'), 'library view script');
 must(html.includes('plan-sync.js'), 'plan sync script');
 must(html.includes('library.css'), 'library stylesheet');
-must(readFileSync(join(root, 'library.css'), 'utf8').includes('margin: 8px 16px calc(var(--fab-size) + 24px)'), 'library Add Circuit row clears the FAB');
+must(!readFileSync(join(root, 'library-ui.js'), 'utf8').includes('wizardNext'), 'builder wizard must not ship in the athlete reader');
 must(js.includes('function openLibraryForDay'), 'library calendar door');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./library.js'), 'library.js in SW cache');
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./plan-sync.js'), 'plan-sync.js in SW cache');

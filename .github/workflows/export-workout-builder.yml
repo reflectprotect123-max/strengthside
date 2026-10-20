@@ -1,0 +1,30 @@
+name: Export full workout builder ZIP
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Export and verify the complete pre-removal builder
+        run: python3 scripts/export-workout-builder.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strength-workout-builder
+          path: dist/builder-export/*.zip
+      - name: Publish downloadable source backup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view workout-builder-export >/dev/null 2>&1; then
+            gh release upload workout-builder-export dist/builder-export/*.zip --clobber
+          else
+            gh release create workout-builder-export dist/builder-export/*.zip --latest=false --title "Full workout builder source backup" --notes "Complete, verified builder source from commit 5551ef5a, captured before removal from the athlete app. Includes a runnable browser preview, styles, contracts, tests and visual references. See README.md inside the ZIP."
+          fi

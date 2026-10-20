@@ -319,6 +319,7 @@
   }
 
   async function syncNow(opts) {
+    if(status.busy){schedulePush();return {ok:false,reason:'busy'};}
     const io = (opts && opts.io) || defaultIo();
     const onConflict = (opts && opts.onConflict) || function defaultConflict() {
       return 'local';
@@ -332,8 +333,14 @@
       }
       if (root.StrengthMemory) await root.StrengthMemory.bind(uid);
       let state = readState();
-      let local = pack(state);
       const remoteWrap = await io.pull();
+      // A network pull can finish after sets/cursor were saved. Merge the current
+      // state, never the snapshot captured before that request.
+      state = readState();
+      if(await io.userId()!==uid || (state.accountId && state.accountId!==uid)){
+        setStatus({busy:false,lastError:'account_changed'});return {ok:false,reason:'account_changed'};
+      }
+      let local = pack(state);
       let snapshotRev = (state.planSync && state.planSync.snapshotRev) || 0;
       let plan = local;
       let conflicts = [];
@@ -357,6 +364,9 @@
         return pushed;
       }
       state = readState();
+      if(await io.userId()!==uid || (state.accountId && state.accountId!==uid)){
+        setStatus({busy:false,lastError:'account_changed'});return {ok:false,reason:'account_changed'};
+      }
       state.planSync = state.planSync || {};
       state.planSync.snapshotRev = pushed.revision;
       state.planSync.acks = ackFrom(packed);

@@ -129,3 +129,24 @@ test('resuming a legacy session preserves raw actuals and marks their load seman
  const resumed=ctx.HybridSession.startSession({date:old.date,existing:old,plan:{blocks:[]}});
  const r=resumed.logs.A.sets[0];assert.equal(r.kg,40);assert.equal(r.context.loadAmbiguous,true);
 });
+
+test('Coach receipt waits for durable evidence, retries across restart and does not duplicate acknowledgements',async()=>{
+ const {M,store}=create(),s=session();s.pages[0].coachAssignmentId='assignment';M.capture(s);
+ let pushes=0,receipts=0;
+ const io={userId:async()=> 'athlete',pull:async()=>[],push:async()=>{pushes++;return {ok:true}},complete:async(a,id)=>{
+  assert.equal(a,'assignment');assert.equal(id,s.id);assert.ok(pushes);receipts++;if(receipts===1)throw Error('offline');return {ok:true};}};
+ assert.equal((await M.sync(io)).ok,false);assert.equal(M.getStatus().pending,0);
+ const restored=create(store).M;assert.equal((await restored.sync(io)).ok,true);
+ await restored.sync(io);assert.equal(receipts,2);
+ s.logs.A.sets[0].reps=7;restored.capture(s);await restored.sync(io);assert.equal(receipts,3);
+ await restored.bind('someone-else');await restored.sync({...io,userId:async()=> 'someone-else'});assert.equal(receipts,3);
+});
+
+test('finishing during an in-flight upload defers the receipt until final revisions are acknowledged',async()=>{
+ const {M}=create(),s=session();s.pages[0].coachAssignmentId='assignment';s.completedAt=null;M.capture(s);
+ let release,entered;const started=new Promise(r=>entered=r);let completions=0;
+ const io={userId:async()=> 'athlete',pull:async()=>[],push:()=>{entered();return new Promise(r=>release=r)},complete:async()=>{completions++;return {ok:true}}};
+ const running=M.sync(io);await started;s.completedAt='2026-10-18T10:00:00Z';M.capture(s);release({ok:true});
+ assert.equal((await running).queued,true);assert.equal(completions,0);assert.ok(M.getStatus().pending);
+ await M.sync({...io,push:async()=>({ok:true})});assert.equal(completions,1);assert.equal(M.getStatus().pending,0);
+});

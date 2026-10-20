@@ -1,0 +1,172 @@
+original_exercise_title,canonical_exercise_id,canonical_title,mapping_basis,in_custom_library,grouped_history_rows
+1 1/4 Banded Glute Hip Thrusts,exercise_00cffb5cedd54cd8,1 1/4 Banded Glute Hip Thrust,format_normalization_only,False,4
+1.5 Stance RDL with Band,exercise_e3bb7e0c82dc0999,1.5 Stance Romanian Deadlift With Band,explicit_alias_or_spelling_normalization,False,8
+1.5 stance RDL with band,exercise_e3bb7e0c82dc0999,1.5 Stance Romanian Deadlift With Band,explicit_alias_or_spelling_normalization,True,1
+20 Per Arm Seated Single Arm Banded Low Rows,exercise_d4b472e371362cbe,20 Per Arm Seated Single Arm Banded Low Row,format_normalization_only,False,1
+3 Way Band Pull-Apart,exercise_734f3abd5496b807,3 Way Band Pull-Apart,format_normalization_only,False,1
+3D Banded Pull-aparts,exercise_3f100d40f5a65fd4,3D Banded Pull-Apart,explicit_alias_or_spelling_normalization,False,14
+3D banded pull aparts,exercise_3f100d40f5a65fd4,3D Banded Pull-Apart,explicit_alias_or_spelling_normalization,True,0
+Acceleration - Banded Range Finder,exercise_93338c6349c40a3a,Acceleration Banded Range Finder,format_normalization_only,False,2
+Band Assisted - CMJ Split,exercise_ebccb643eb1c2ca2,Band Assisted Cmj Split,format_normalization_only,False,2
+Band-Assisted Jumps (PLYOS),exercise_320a6b89b593e776,Band Assisted Jump (Plyos),format_normalization_only,False,3
+band assisted nordic curl,exercise_d1920fe9a3aa7be3,Band Assisted Nordic Curl,format_normalization_only,True,2
+Band Assisted Plyo Push-ups,exercise_545b5586ede07fd6,Band Assisted Plyo Push-Up,format_normalization_only,False,83
+Band Assisted - Pogo Jumps,exercise_9ad4e69fe5f30436,Band Assisted Pogo Jump,format_normalization_only,False,2
+Band Assisted Push Up,exercise_706c588bbd681f9e,Band Assisted Push-Up,format_normalization_only,False,4
+Band Assisted Split Jump,exercise_abd62aa9cdfb41c3,Band Assisted Split Jump,format_normalization_only,False,3
+band assisted split squat jump,exercise_3fd6569cf787fdfb,Band Assisted Split Squat Jump,format_normalization_only,True,1
+band assisted strict dips,exercise_dbfb5ba5ee2737ed,Band Assisted Strict Dip,format_normalization_only,True,0
+Band Glute Pull Thru,exercise_f7b5cf03e3be44a3,Band Glute Pull Through,format_normalization_only,True,12
+Band Overhead Triceps Extension,exercise_98acbe8eac6c2b9e,Band Overhead Triceps Extension,format_normalization_only,False,3
+band - Plyo Push-Up,exercise_96c3483491ea96ae,Band Plyo Push-Up,format_normalization_only,True,9
+Band Pull-Apart,exercise_397d808b17a17857,Band Pull-Apart,format_normalization_only,False,12
+Band Pull Apart - SP,exercise_3fe6361fb7feaa8b,Band Pull-Apart Sp,format_normalization_only,False,1
+band resisted body row,exercise_753c3156c5c1fc0d,Band Resisted Body Row,format_normalization_only,False,1
+Band Resisted KB Swings,exercise_cb0f4af85257366b,Band Resisted Kettlebell Swing,format_normalization_only,False,11
+Band Resisted Side Plank Row,exercise_22e6f6581d2751f5,Band Resisted Side Plank Row,format_normalization_only,False,7
+Band Rotations,exercise_af1fff94990f02e1,Band Rotation,format_normalization_only,False,4
+Band Row + Press,exercise_a5f26d81a4512c13,Band Row + Press,format_normalization_only,False,5
+Band Row + Reverse Lunge,exercise_297237abee5328a9,Band Row + Reverse Lunge,format_normalization_only,False,13
+Band Tricep Push Down,exercise_8d6a41af43bbc98d,Band Triceps Pushdown,format_normalization_only,False,2
+Banded Ankle Distraction Mobilization,exercise_eb1eef060887f563,Banded Ankle Distraction Mobilization,format_normalization_only,False,2
+Banded Bicep Curl,exercise_a0ea541cf3ffd712,Banded Biceps Curl,format_normalization_only,False,3
+Banded Broad Jump,exercise_7f4c15f20138ea39,Banded Broad Jump,format_normalization_only,False,2
+Banded Bully Stretch,exercise_3045f40362f604cc,Banded Bully Stretch,format_normalization_only,False,1
+Banded Chest To Bar,exercise_34c8257fefd67fbd,Banded Chest To Bar,format_normalization_only,True,1
+Banded Curls,exercise_8a17e561155fc790,Banded Curl,format_normalization_only,False,17
+Banded Dumbbell Grip Row,exercise_f98a3815b9c9a746,Banded Dumbbell Grip Row,format_normalization_only,False,1
+Banded Face Pulls,exercise_f460c21024e963c2,Banded Face Pull,explicit_alias_or_spelling_normalization,False,3
+Banded Face pull,exercise_f460c21024e963c2,Banded Face Pull,explicit_alias_or_spelling_normalization,True,1
+Banded Facepull-aparts,exercise_4b07f494b9aa3df1,Banded Face Pull Aparts,format_normalization_only,False,55
+Banded Face Pull Iso-hold,exercise_6620fed810a317cc,Banded Face Pull Iso Hold,format_normalization_only,False,1
+Banded Front Rack Stretch E/Side,exercise_d5152dd8bb464e40,Banded Front Rack Stretch E/Side,format_normalization_only,False,1
+Banded Glute Bridge,exercise_5fe701adb287dd95,Banded Glute Bridge,format_normalization_only,False,1
+Banded Good Mornings,exercise_af0ff1a4ac76925d,Banded Good Morning,format_normalization_only,False,2
+Banded Half Kneeling Pallof Press,exercise_7c4ffcfc4d819727,Banded Half Kneeling Pallof Press,format_normalization_only,True,2
+Banded Hammer Curls,exercise_a476cfbaeeb9e330,Banded Hammer Curl,format_normalization_only,False,8
+Banded Hamstring Curls,exercise_e706cebdc7441a5e,Banded Hamstring Curl,format_normalization_only,True,14
+Banded Hip Flexor Pull,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,False,1
+Banded Hip Flexor Pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,False,22
+Banded Hip flexor pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,True,16
+Banded Hip flexroe pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,True,3
+Banded Hip flexror pulls,exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,explicit_alias_or_spelling_normalization,True,0
+Banded Incline Pigeon Rotation,exercise_2cb7b83f5324103d,Banded Incline Pigeon Rotation,format_normalization_only,False,1
+Banded Kettlebell Swing,exercise_304162cac8e37540,Banded Kettlebell Swing,format_normalization_only,True,1
+Banded Lat Distraction E/Side,exercise_2489be7b90efff8e,Banded Lat Distraction E/Side,format_normalization_only,False,1
+Banded Lat Pulldown,exercise_a5654a909283d3ad,Banded Lat Pulldown,explicit_alias_or_spelling_normalization,True,1
+Banded Lat Pulldowns,exercise_a5654a909283d3ad,Banded Lat Pulldown,explicit_alias_or_spelling_normalization,False,1
+Banded Lat Squeeze,exercise_b8b5ba47233cac7a,Banded Lat Squeeze,format_normalization_only,False,1
+Banded Lat Stretch,exercise_2601bf665e5554c0,Banded Lat Stretch,format_normalization_only,False,4
+Banded Lateral Raises,exercise_c28d06f48e71326c,Banded Lateral Raise,format_normalization_only,False,1
+Banded Leg Curls,exercise_b885407ed30a5703,Banded Leg Curl,format_normalization_only,False,2
+Banded Leg Extension,exercise_adf0e70ff99920e2,Banded Leg Extension,format_normalization_only,True,1
+Banded Low To High Chop,exercise_de577f571e0c2cf7,Banded Low To High Chop,format_normalization_only,True,2
+Banded OH Tricep Extension,exercise_37710e6a7c5464d2,Banded Oh Triceps Extension,format_normalization_only,True,2
+Banded Overhead Squats,exercise_4577ab3ca791db40,Banded Overhead Squat,format_normalization_only,False,1
+Banded Overhead Triceps,exercise_61a7ccdb030e4c50,Banded Overhead Triceps,format_normalization_only,False,25
+Banded Overhead Tricep Extension,exercise_cddd6cfc7951ef1c,Banded Overhead Triceps Extension,format_normalization_only,False,1
+Banded Pallof Press,exercise_d999f5034de55ca6,Banded Pallof Press,format_normalization_only,True,3
+Banded Pendlay Row,exercise_a15a3bf7f0c1fea0,Banded Pendlay Row,format_normalization_only,False,1
+Banded Plank Abs,exercise_33a6e9cb0998cbe1,Banded Plank Abs,format_normalization_only,False,28
+Banded Plank Row,exercise_1a6c5650c03dff36,Banded Plank Row,format_normalization_only,False,8
+Banded Pull-Through,exercise_143594887fcebe2c,Banded Pull Through,format_normalization_only,False,27
+Banded Pull Aparts,exercise_9c5c2d62b1daf6ad,Banded Pull-Apart,explicit_alias_or_spelling_normalization,False,5
+Banded Pull-apart,exercise_9c5c2d62b1daf6ad,Banded Pull-Apart,explicit_alias_or_spelling_normalization,False,34
+Banded Pulldowns,exercise_bee1b8aa0c2feb0a,Banded Pulldown,format_normalization_only,False,30
+Banded Push Downs,exercise_833e9ea2d7f4e756,Banded Pushdown,explicit_alias_or_spelling_normalization,True,15
+Banded Pushdowns,exercise_833e9ea2d7f4e756,Banded Pushdown,explicit_alias_or_spelling_normalization,False,61
+banded quad Stretch,exercise_40bbb764c5c1a44d,Banded Quad Stretch,format_normalization_only,False,2
+Banded Reverse Fly,exercise_266bdaddb40f5e63,Banded Reverse Fly,format_normalization_only,False,16
+Banded Russian KB Swings (70/53 + Max Band),exercise_31b213efae24ed68,Banded Russian Kettlebell Swing (70/53 + Max Band),format_normalization_only,False,1
+Banded Speed Bench Press,exercise_0bd46ba27e69f2d9,Banded Speed Bench Press,format_normalization_only,True,6
+Banded Speed Row,exercise_488a6c1e0df64231,Banded Speed Row,format_normalization_only,False,1
+Banded Sprinter Hold,exercise_c4c23f363a1d9269,Banded Sprinter Hold,format_normalization_only,False,2
+Banded T-Spine from Split Squat,exercise_8ca51897953f447d,Banded T Spine From Split Squat,format_normalization_only,False,1
+Banded Tall Side Plank Row,exercise_7daf5591337cce46,Banded Tall Side Plank Row,format_normalization_only,True,2
+Banded Trap Bar Deadlifts,exercise_53fbe8588448c341,Banded Trap Bar Deadlift,format_normalization_only,True,2
+Banded Triceps,exercise_59a8e046c486900c,Banded Triceps,format_normalization_only,False,2
+Banded Tricep Extension,exercise_2475025329aee5dc,Banded Triceps Extension,format_normalization_only,False,1
+Banded Tricep Pulldown,exercise_f41bbe93638856df,Banded Triceps Pulldown,format_normalization_only,True,7
+Banded Tricep Pushdown,exercise_3172ba3c41c115eb,Banded Triceps Pushdown,format_normalization_only,False,8
+Banded Tricep Stretch,exercise_7f890463a4a54127,Banded Triceps Stretch,format_normalization_only,False,2
+banded Y T W,exercise_5861443e557f1f8a,Banded YTW,explicit_alias_or_spelling_normalization,False,2
+banded YTW,exercise_5861443e557f1f8a,Banded YTW,explicit_alias_or_spelling_normalization,True,0
+"Close Grip Bench Press Dead Press (2"" Above Chest) Against Max Band Tension Only",exercise_e262a5da71f87bec,"Close Grip Bench Press Dead Press (2"" Above Chest) Against Max Band Tension Only",format_normalization_only,False,1
+Close Grip Bench Press with Reverse MINI Bands,exercise_6fb6e3ad127068a6,Close Grip Bench Press With Reverse Mini Bands,format_normalization_only,False,1
+Conventional Deadlift Against A Band,exercise_ac6ae49b1fd7ccba,Conventional Deadlift Against A Band,format_normalization_only,False,23
+Conventional Rack Deadlift - bands optional,exercise_c22cec2c787c0c86,Conventional Rack Deadlift Bands Optional,format_normalization_only,False,3
+Deadbug Banded Upper Body,exercise_ce0a21960e884a8c,Dead Bug Banded Upper Body,format_normalization_only,False,2
+Dead Bug with Mini Bands,exercise_6618bc170ef1ba91,Dead Bug With Mini Bands,format_normalization_only,False,4
+Double Band Pushdowns,exercise_a4a1186ea34b4af5,Double Band Pushdown,format_normalization_only,False,14
+Double Leg Banded Hamstring Curls,exercise_42dba2fa2fd1a217,Double Leg Banded Hamstring Curl,explicit_alias_or_spelling_normalization,False,40
+double leg banded hamstring curl,exercise_42dba2fa2fd1a217,Double Leg Banded Hamstring Curl,explicit_alias_or_spelling_normalization,True,6
+Double Leg Banded Leg Curls,exercise_59121deb5cfec29e,Double Leg Banded Leg Curl,format_normalization_only,False,13
+FEET ELEVATED HIP THRUST + BAND,exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,explicit_alias_or_spelling_normalization,True,1
+Feet Elevated Hip Thrust + Band,exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,explicit_alias_or_spelling_normalization,False,51
+feet  Elevated Hip Thrust + band,exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,explicit_alias_or_spelling_normalization,True,6
+Football Bar Pin Press against bands,exercise_6fb3f6db6827283b,Football Bar Pin Press Against Bands,format_normalization_only,False,2
+Front Box Squat against bands,exercise_6a0613d6256d7a9a,Front Box Squat Against Bands,format_normalization_only,False,16
+GHD Sit-up Against Band,exercise_308a86e46ff0ca33,Ghd Sit Up Against Band,format_normalization_only,False,4
+GHD Sit Ups (to parallel and up) Against Max Band,exercise_a61c54d209c34696,Ghd Sit Ups (To Parallel And Up) Against Max Band,format_normalization_only,False,1
+GHR against bands,exercise_b39710a8ec1c708c,Ghr Against Bands,format_normalization_only,False,4
+Glute Ham Raise with band,exercise_b62702a8b3177478,Glute Ham Raise With Band,format_normalization_only,False,2
+Goblet Squat Band Over Knees,exercise_e950a1bab5dacb36,Goblet Squat Band Over Knees,format_normalization_only,False,12
+Hack Squat - Reverse Banded,exercise_48f902645d76724e,Hack Squat Reverse Banded,format_normalization_only,False,1
+Half-Kneeling Banded High To Low Chop,exercise_f46c4b87ee1df819,Half Kneeling Banded High To Low Chop,explicit_alias_or_spelling_normalization,False,49
+half kneeling banded high to low chop,exercise_f46c4b87ee1df819,Half Kneeling Banded High To Low Chop,explicit_alias_or_spelling_normalization,True,2
+"Heavy Banded (or cable) Standing Static Hold in Ab/Crunch Position - 3 Sets: 1 Minute Middle, 30 Seconds Per Side (Obliques)",exercise_0196cdf1473c7b6a,Heavy Banded (Or Cable) Standing Static Hold In Ab/Crunch Position 3 Sets 1 Minute Middle 30 Seconds Per Side (Obliques),format_normalization_only,False,1
+Incline DB Tate Presses (pause each rep on chest) + Mini or Monster Mini Bands,exercise_91473ef879df30c9,Incline Dumbbell Tate Press (Pause Each Rep On Chest) + Mini Or Monster Mini Bands,format_normalization_only,False,1
+Kneeling Squat (against band),exercise_4fa211292d7d618d,Kneeling Squat (Against Band),format_normalization_only,False,1
+Lateral Band Side Steps,exercise_74058196cf583db6,Lateral Band Side Step,format_normalization_only,False,2
+lying (face up) banded reverse flys,exercise_ead1a4d5f7153030,Lying (Face Up) Banded Reverse Flys,format_normalization_only,False,1
+Mid Band Anti-Rotation,exercise_cd1eb9e303b014a4,Mid Band Anti Rotation,format_normalization_only,False,7
+MOBILITYWOD - Banded Lower Body Unlock,exercise_bd9b30bb44e57cc5,Mobilitywod Banded Lower Body Unlock,format_normalization_only,False,3
+Monster band kick back,exercise_442f2e22ae05743d,Monster Band Kick Back,format_normalization_only,True,0
+Overhead Banded Triceps,exercise_1b4a6a10ad1fdfc6,Overhead Banded Triceps,format_normalization_only,False,5
+Pallof Press (Band or Cable),exercise_6d948c571516b02c,Pallof Press (Band Or Cable),format_normalization_only,False,19
+"Plank, Against Max Band - 3x2 Minutes",exercise_ca9fe8746135a5fb,Plank Against Max Band 3X2 Minutes,format_normalization_only,False,1
+Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands,exercise_1704e60189031636,Push Press @50% Against Singled Micro Mini (Under 225 Max) Or Mini Bands,format_normalization_only,False,1
+Push Press Against Singled Micro Mini or Mini Bands *Under 225 Max: Micro Mini Bands,exercise_daef8e2564372553,Push Press Against Singled Micro Mini Or Mini Bands *Under 225 Max Micro Mini Bands,format_normalization_only,False,1
+Rear Delt Band Pull,exercise_575eaba9390f36d9,Rear Delt Band Pull,format_normalization_only,False,1
+Reverse Band FB Bar Floor Press,exercise_3eb725a5f88a1f62,Reverse Band Football Bar Floor Press,format_normalization_only,False,5
+Reverse Band Front Squat,exercise_75e610abe94bdb9a,Reverse Band Front Squat,format_normalization_only,False,6
+Reverse Band Sumo Stance Rack Deadlift,exercise_33826a8de02c4fae,Reverse Band Sumo Stance Rack Deadlift,format_normalization_only,False,8
+Reverse Doubled Mini Band CONVENTIONAL Deadlift,exercise_75427a17e98ef75e,Reverse Doubled Mini Band Conventional Deadlift,format_normalization_only,False,1
+Reverse Pec Dec (or Standing Banded Reverse Flys),exercise_460d9b3a939522f1,Reverse Pec Dec (Or Standing Banded Reverse Flys),format_normalization_only,False,1
+Ring Push Ups Against Max Band,exercise_fd0ab8545ba656a5,Ring Push-Up Against Max Band,format_normalization_only,False,1
+Rope (cable attachment) or Kneeling Heavy Band Crunches,exercise_84be5f94e4b5bb53,Rope (Cable Attachment) Or Kneeling Heavy Band Crunch,format_normalization_only,False,1
+Seated Band Abduction,exercise_82c7a4ca1dd43c3d,Seated Band Abduction,format_normalization_only,False,1
+Seated Banded Leg Curls,exercise_9c7c649f6d6ee220,Seated Banded Leg Curl,format_normalization_only,False,1
+Seated Banded Low Rows  *Seated. PVC Suspended Inside 2 Bands Choked From in Front,exercise_de6877206095b701,Seated Banded Low Row *Seated Pvc Suspended Inside 2 Bands Choked From In Front,format_normalization_only,False,1
+Seated Overhead Band Tricep Extensions,exercise_b9f506e316e7b648,Seated Overhead Band Triceps Extension,format_normalization_only,False,1
+Single Arm Banded Pushdowns,exercise_fd3d1b33740ff0e3,Single Arm Banded Pushdown,explicit_alias_or_spelling_normalization,False,14
+single arm banded push down,exercise_fd3d1b33740ff0e3,Single Arm Banded Pushdown,explicit_alias_or_spelling_normalization,True,0
+One Arm DB Row + Band from the Front - 3x10 Per Arm,exercise_f0549adcabd5dcaf,Single Arm Dumbbell Row + Band From The Front 3X10 Per Arm,format_normalization_only,False,1
+Single Leg Banded Hamstring Curls,exercise_0c7dc58e4841d0b9,Single Leg Banded Hamstring Curl,format_normalization_only,False,11
+Single Leg Banded Leg Curls,exercise_53a119e91fd29e0f,Single Leg Banded Leg Curl,format_normalization_only,False,23
+SL Banded Good Mornings,exercise_7795ec35b17c01bd,Sl Banded Good Morning,format_normalization_only,False,1
+"SMR Glutes, Hamstrings, IT Band, Adductors",exercise_55ac42db42735d70,Smr Glutes Hamstrings It Band Adductors,format_normalization_only,False,12
+Speed Banded  Lat Pull Down,exercise_5a990448f82c2c3b,Speed Banded Lat Pulldown,explicit_alias_or_spelling_normalization,True,0
+Speed Banded Lat Pulldowns,exercise_5a990448f82c2c3b,Speed Banded Lat Pulldown,explicit_alias_or_spelling_normalization,False,8
+Speed Bench Press against bands,exercise_e23939d45b6f5d86,Speed Bench Press Against Bands,format_normalization_only,False,64
+Speed Bench Press against bands to pins,exercise_8928a2bca18f308c,Speed Bench Press Against Bands To Pins,format_normalization_only,False,6
+Speed Pulls: Conventional Deadlift @50% against 30% Band Tension,exercise_b588ce49457a6ad8,Speed Pull Conventional Deadlift @50% Against 30% Band Tension,format_normalization_only,False,1
+Speed Pulls: Conventional Deadlift @55% Against 30% Band Tension,exercise_ef4a5d1b41cdbe41,Speed Pull Conventional Deadlift @55% Against 30% Band Tension,format_normalization_only,False,1
+Speed Pull Deadlift against bands,exercise_833a4c4b299c6c98,Speed Pull Deadlift Against Bands,format_normalization_only,False,6
+Speed Pulls: Sumo Deadlift @55% Against 30% Band Tension,exercise_ade13387abfa4c74,Speed Pull Sumo Deadlift @55% Against 30% Band Tension,format_normalization_only,False,1
+Speed Trap Bar Deadlifts vs. Bands,exercise_1b60fa12890a316d,Speed Trap Bar Deadlift Vs Bands,format_normalization_only,False,1
+Standing Banded Abs,exercise_2a9fb44b5ae9ef89,Standing Banded Abs,format_normalization_only,False,8
+Standing Banded ER/IR,exercise_c9a7521b1e139105,Standing Banded Er/Ir,format_normalization_only,False,2
+"Standing, Heavy Band Crunches",exercise_86d66e661c8c1a16,Standing Heavy Band Crunch,format_normalization_only,False,1
+standing high to low banded rotation,exercise_84c198fe5aa06439,Standing High To Low Banded Rotation,format_normalization_only,False,1
+Straight Bar Box Squat w/ Bands,exercise_a9519f6a7e9a6e42,Straight Bar Box Squat W/ Bands,format_normalization_only,False,1
+Strict Ring Pull Ups Against Max band from the Bottom,exercise_de4e08e9cec7b6c9,Strict Ring Pull-Up Against Max Band From The Bottom,format_normalization_only,False,1
+Supported Single Leg RDLs with band,exercise_d2dbe40b8f4fffd9,Supported Single Leg Romanian Deadlift With Band,format_normalization_only,False,2
+Theraband Monster Walks,exercise_ced58bba888b9adb,Theraband Monster Walks,format_normalization_only,False,1
+Touch N Go Trap Bar Deadlift against a band,exercise_9a9a3a8ca09dc066,Touch And Go Trap Bar Deadlift Against A Band,format_normalization_only,False,25
+TRAP BAR DEADLIFT AGAINST A BAND,exercise_fe8171eef3b81374,Trap Bar Deadlift Against A Band,explicit_alias_or_spelling_normalization,True,1
+Trap Bar Deadlift against a band,exercise_fe8171eef3b81374,Trap Bar Deadlift Against A Band,explicit_alias_or_spelling_normalization,False,19
+Unilateral Banded Triceps Pushowns,exercise_c942b3e1777d8494,Unilateral Banded Triceps Pushowns,format_normalization_only,False,1
+V-Handle Banded Tricep Pushdown,exercise_34730d52c7c2f392,V Handle Banded Triceps Pushdown,format_normalization_only,False,1
+Wide Stance Box Squat with Straight Bar @50% Against 25% Band Tension,exercise_8573abc418d16c56,Wide Stance Box Squat With Straight Bar @50% Against 25% Band Tension,format_normalization_only,False,1
+Wide Stance SSB Box Squat with bands,exercise_d3783ac5f664f20a,Wide Stance SSB Box Squat With Bands,format_normalization_only,False,17

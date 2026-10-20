@@ -7,10 +7,8 @@ exercise_8d5b0b34795c9b93,1 1/4 Cyclist Front Squat,"[""1  1/4 cyclist front squ
 exercise_3ff86b24d1b59019,1 1/4 Defict Push-Up,"[""1   1/4 Defict Push Up""]",1,0,True,[],False
 exercise_514d17cdc10bdaf7,1 1/4 Hip Thrust,"[""1 - 1 /4 Hip Thrust"", ""1 1/4 Hip Thrust""]",2,0,True,[],False
 exercise_300924591d2c10e7,1 1/4 Hip Thrust Machine,"[""1-1/4 Hip Thrust Machine""]",1,0,True,[],False
-exercise_e3bb7e0c82dc0999,1.5 Stance Romanian Deadlift With Band,"[""1.5 Stance RDL with Band"", ""1.5 stance RDL with band""]",2,9,True,[],False
 exercise_1322959ff5da3139,1/1/4 Sumo Stance Goblet Squat,"[""1/ 1/4 sumo stance goblet squat""]",1,0,True,[],False
 exercise_06eece97c9695167,1/2 Kneeling Arnold Press,"[""1/2 kneeling arnold press""]",1,0,True,[],False
-exercise_3f100d40f5a65fd4,3D Banded Pull-Apart,"[""3D Banded Pull-aparts"", ""3D banded pull aparts""]",2,14,True,[],False
 exercise_12c705d5b58d9047,Aerobic Conditioining,"[""aerobic conditioining""]",1,1,True,[],False
 exercise_f7378edff52ddc1e,Air Bike Sprint,"[""Air Bike Sprint""]",1,238,True,[],False
 exercise_dd65c0a5992226c2,Alternating Dumbbell Bench Press,"[""Alternating Dumbbell Bench Press"", ""alt db bench press""]",2,19,True,[],False
@@ -26,28 +24,6 @@ exercise_7e0f7fbfd8d6e0de,B-Stance Rotational Romanian Deadlift,"[""B-Stance Rot
 exercise_b3fdc0cb4761e152,Back Rack Poliquin Step-Up,"[""Back Rack Poliquin Step Up""]",1,1,True,[],False
 exercise_1ac603ef245264c6,Back Squat,"[""Back Squat""]",1,315,True,[],False
 exercise_9282354b30fa6711,Back Supported Seated Dumbbell Press,"[""Back supported Seated DB press""]",1,0,True,[],False
-exercise_d1920fe9a3aa7be3,Band Assisted Nordic Curl,"[""band assisted nordic curl""]",1,2,True,[],False
-exercise_3fd6569cf787fdfb,Band Assisted Split Squat Jump,"[""band assisted split squat jump""]",1,1,True,[],False
-exercise_dbfb5ba5ee2737ed,Band Assisted Strict Dip,"[""band assisted strict dips""]",1,0,True,[],False
-exercise_f7b5cf03e3be44a3,Band Glute Pull Through,"[""Band Glute Pull Thru""]",1,12,True,[],False
-exercise_96c3483491ea96ae,Band Plyo Push-Up,"[""band - Plyo Push-Up""]",1,9,True,[],False
-exercise_34c8257fefd67fbd,Banded Chest To Bar,"[""Banded Chest To Bar""]",1,1,True,[],False
-exercise_f460c21024e963c2,Banded Face Pull,"[""Banded Face Pulls"", ""Banded Face pull""]",2,4,True,[],False
-exercise_7c4ffcfc4d819727,Banded Half Kneeling Pallof Press,"[""Banded Half Kneeling Pallof Press""]",1,2,True,[],False
-exercise_e706cebdc7441a5e,Banded Hamstring Curl,"[""Banded Hamstring Curls""]",1,14,True,[],False
-exercise_23b5a0c25e4c04b3,Banded Hip Flexor Pull,"[""Banded Hip Flexor Pull"", ""Banded Hip Flexor Pulls"", ""Banded Hip flexor pulls"", ""Banded Hip flexroe pulls"", ""Banded Hip flexror pulls""]",5,42,True,[],False
-exercise_304162cac8e37540,Banded Kettlebell Swing,"[""Banded Kettlebell Swing""]",1,1,True,[],False
-exercise_a5654a909283d3ad,Banded Lat Pulldown,"[""Banded Lat Pulldown"", ""Banded Lat Pulldowns""]",2,2,True,[],False
-exercise_adf0e70ff99920e2,Banded Leg Extension,"[""Banded Leg Extension""]",1,1,True,[],False
-exercise_de577f571e0c2cf7,Banded Low To High Chop,"[""Banded Low To High Chop""]",1,2,True,[],False
-exercise_37710e6a7c5464d2,Banded Oh Triceps Extension,"[""Banded OH Tricep Extension""]",1,2,True,[],False
-exercise_d999f5034de55ca6,Banded Pallof Press,"[""Banded Pallof Press""]",1,3,True,[],False
-exercise_833e9ea2d7f4e756,Banded Pushdown,"[""Banded Push Downs"", ""Banded Pushdowns""]",2,76,True,[],False
-exercise_0bd46ba27e69f2d9,Banded Speed Bench Press,"[""Banded Speed Bench Press""]",1,6,True,[],False
-exercise_7daf5591337cce46,Banded Tall Side Plank Row,"[""Banded Tall Side Plank Row""]",1,2,True,[],False
-exercise_53fbe8588448c341,Banded Trap Bar Deadlift,"[""Banded Trap Bar Deadlifts""]",1,2,True,[],False
-exercise_f41bbe93638856df,Banded Triceps Pulldown,"[""Banded Tricep Pulldown""]",1,7,True,[],False
-exercise_5861443e557f1f8a,Banded YTW,"[""banded Y T W"", ""banded YTW""]",2,2,True,[],False
 exercise_6afa43870429d1fe,Barbell Curl,"[""Barbell Curls"", ""barbell curl""]",2,2,True,[],False
 exercise_34a2ba7f5e75f3dc,Barbell Drop Lunge,"[""barbell drop lunge""]",1,4,True,[],False
 exercise_8da4523e645ac1f1,Barbell Romanian Deadlift,"[""BB RDL"", ""barbell RDL""]",2,12,True,[],False
@@ -59,7 +35,6 @@ exercise_91d4cea1a3b5099a,Bench Assisted Dumbbell Romanian Deadlift,"[""Bench as
 exercise_cd65829835dee880,Bench Press,"[""Bench Press""]",1,284,True,[],False
 exercise_4f50b782a161f28c,Bench Press Fsl,"[""Bench Press - FSL""]",1,0,True,[],False
 exercise_4b7ce148e38f2d93,Bench Support Landmine Meadow Row,"[""Bench Support Landmine Meadow Row""]",1,1,True,[],False
-exercise_8195c0ee2bf0a196,Bendh,"[""Bendh""]",1,0,True,[],False
 exercise_7e4cb15360960be4,Bent Hollow Hold,"[""Bent Hollow Hold""]",1,1,True,[],False
 exercise_a18218d42d557d49,Bodyweight Supinated Grip Strict Pull-Up,"[""Bodyweight Supinated grip strict pull up""]",1,6,True,[],False
 exercise_6ba9234898ef38b8,Bounds,"[""Bounds""]",1,2,True,[],False
@@ -96,7 +71,6 @@ exercise_bcc2948ddbef1285,Defict Jumping Lunge,"[""Defict jumping lunge""]",1,1,
 exercise_a6de8d31bfae095d,Defict Suitcase Reverse Lunge,"[""Defict Suitcase Reverse Lunge""]",1,2,True,[],False
 exercise_4e6c44445ac0f240,Dip Lockout,"[""Dip Lockout"", ""Dip lockout""]",2,11,True,[],False
 exercise_e2b5f51ae165db31,Donkey Calf Raise,"[""Donkey Calf Raise"", ""donkey calf raises""]",2,8,True,[],False
-exercise_42dba2fa2fd1a217,Double Leg Banded Hamstring Curl,"[""Double Leg Banded Hamstring Curls"", ""double leg banded hamstring curl""]",2,46,True,[],False
 exercise_e015143fea7c64a4,Dragon Fly,"[""dragon fly""]",1,0,True,[],False
 exercise_62ee614345a64d00,Drop Back Reverse Lunge,"[""drop back reverse lunge""]",1,1,True,[],False
 exercise_6706509172c538b6,Drop Lunge,"[""Drop lunge""]",1,1,True,[],False
@@ -131,9 +105,7 @@ exercise_1153e5a93901a826,Echo Bike,"[""Echo Bike""]",1,1,True,[],False
 exercise_452394aede69d44e,Fan Bike,"[""Fan Bike"", ""FanBike""]",2,85,True,"[""12-15 min Bike\n\nAt minutes 3, 6, 9, 12, and 15, get off the bike and perform:\n\n• Alternating Single Arm Dumbbell Power Clean 6 reps (3 reps/side)\n• Dumbbell Filly Carry 20m/side""]",False
 exercise_b80028b27f183c59,Fan Bike Intervals,"[""fan bike intervals""]",1,5,True,[],False
 exercise_25706a027ac565e5,Farmer Carry,"[""Farmer Carry"", ""Farmers Carry"", ""Farmers carry"", ""farmers carry""]",4,130,True,[],False
-exercise_979df63501379ffe,Farmers Press,"[""farmers press""]",1,1,True,[],False
 exercise_1a1247681366ce52,Feet Elevated Chin-Up,"[""FEET ELEVATED CHIN-UPS"", ""Feet Elevated Chin-ups""]",2,48,True,[],False
-exercise_839e3308ed8ef5b2,Feet Elevated Hip Thrust + Band,"[""FEET ELEVATED HIP THRUST + BAND"", ""Feet Elevated Hip Thrust + Band"", ""feet  Elevated Hip Thrust + band""]",3,58,True,[],False
 exercise_410ff5cf7dc0a335,Filly Press,"[""Filly Press""]",1,13,True,[],False
 exercise_0ac76450a17bbeda,Fly Press,"[""FLY Press""]",1,2,True,[],False
 exercise_b20f420971421c89,Foam Roller Plank Rollout,"[""Foam roller Plank roll-out""]",1,4,True,[],False
@@ -158,7 +130,6 @@ exercise_a575ccc18591459e,Goblet Pulse Squat,"[""Goblet Pulse Squat""]",1,4,True
 exercise_f092d952162ae7b9,Goblet Tall Kneeling To Standing,"[""goblet Tall Kneeling To Standing""]",1,0,True,[],False
 exercise_c2e8858b7c2927fa,Gpp,"[""GPP""]",1,6,True,[],False
 exercise_953a70b39ebcf25b,Half Kneeling Arnold Shoulder Press,"[""Half-Kneeling arnold  Shoulder Press""]",1,0,True,[],False
-exercise_f46c4b87ee1df819,Half Kneeling Banded High To Low Chop,"[""Half-Kneeling Banded High To Low Chop"", ""half kneeling banded high to low chop""]",2,51,True,[],False
 exercise_834a1273d5ddea14,Half Kneeling Cable Pallof Press,"[""Half kneeling Cable pallof press"", ""Half-Kneeling Cable Pallof Press""]",2,13,True,[],False
 exercise_28da29ff58ede978,Half Kneeling Dumbbell Arnold Shoulder Press,"[""Half-Kneeling DB  arnold Shoulder Press""]",1,3,True,[],False
 exercise_f13c1966dc242fe7,Half Kneeling Kettlebell Windmill,"[""Half Kneeling KB Windmill"", ""Half-kneeling KB Windmill"", ""half kneeling kb windmill""]",3,22,True,[],False
@@ -220,14 +191,12 @@ exercise_80148a2ef03c2e0f,Lat Pulldown Supinated Grip,"[""Lat Pulldown - supinat
 exercise_af35995b9088e23e,Lean Away Lateral Raise,"[""Lean Away Lateral Raise""]",1,5,True,[],False
 exercise_195d338eefd95727,Low Incline 1 1/4 Dumbbell Bench Press,"[""Low Incline 1 1/4 Dumbbell Bench Press""]",1,8,True,[],False
 exercise_cfb633a20f187689,Low Incline Dumbbell Flye,"[""Low Incline Db Flye""]",1,1,True,[],False
-exercise_85da5b411d1d3cce,Lower Body Focus Full Body,"[""Lower Body Focus Full Body""]",1,0,True,"[""Warm up\n90 seconds of bike @ Moderate pace\n20 second passive hang \n10 peterson Step up\n20 shin boxs\n10 tib raises\n3 box jumps \n\nLOWER\nFront squat+glute ham raise\n3x3-5\n3x6-8\nBarbell RDL+KOT split squat 10%bw\n3x6-8\n3x8-10\nFootball bar floor Press+tricep dip\n3x8""]",False
 exercise_09acd33c46d1d834,Lying Hamstring Curl,"[""Lying Hamstring Curl""]",1,6,True,[],False
 exercise_bd838e60f3f857b8,Machine Assisted Bar Dip,"[""machine assisted  Bar Dips""]",1,0,True,[],False
 exercise_5b1b53f0a2805af8,Machine Assisted Pull-Up,"[""machine assisted pull up""]",1,0,True,[],False
 exercise_67cd09c7ab0fb4fe,Meadows Row Landmine,"[""Meadows Row - Landmine""]",1,2,True,[],False
 exercise_c6265435d2f60d07,Metcon,"[""metcon""]",1,5,True,[],False
 exercise_ea44bd03da6a31cf,Military Press,"[""Military Press""]",1,0,True,[],False
-exercise_442f2e22ae05743d,Monster Band Kick Back,"[""Monster band kick back""]",1,0,True,[],False
 exercise_72829726f7150098,Muscle Clean,"[""Muscle Clean""]",1,2,True,[],False
 exercise_6fbe82bb810a6af6,Narrow Grip Pull-Up,"[""Narrow Grip Pull-Ups"", ""Narrow Grip Pull-ups""]",2,33,True,[],False
 exercise_5791e6284b0e2275,Neutral Grip Dumbbell Bench Press,"[""Neutral Grip DB Bench Press"", ""Neutral Grip Dumbbell Bench Press""]",2,27,True,[],False
@@ -276,11 +245,9 @@ exercise_646e2e7d6e4cb2ee,Seated Dumbbell Good Morning,"[""Seated DB good mornin
 exercise_ed443858b861acff,Seated Hamstring Curl,"[""Seated Hamstring Curl""]",1,10,True,[],False
 exercise_163da041594610d0,Seated Incline Dumbbell Curl,"[""Seated Incline DB Curls"", ""Seated Incline Db Curl""]",2,84,True,[],False
 exercise_99d18e56b9955f05,Seated Leg Curl,"[""Seated Leg Curl"", ""Seated Leg Curls"", ""seated leg curl""]",3,15,True,[],False
-exercise_e7c8a5a6f8a2296f,Seated Power Clean,"[""Seated Power Clean""]",1,4,True,[],False
 exercise_a872e51a3d1dfc02,Segmented Power Clean,"[""segmented power clean""]",1,0,True,[],False
 exercise_952f5a009ba66cdc,Serratus Crunch,"[""Serratus Crunch"", ""serratus crunch""]",2,26,True,[],False
 exercise_11788ba29e81a54e,Side Plank Hip Tap,"[""Side Plank Hip Tap""]",1,0,True,[],False
-exercise_fd3d1b33740ff0e3,Single Arm Banded Pushdown,"[""Single Arm Banded Pushdowns"", ""single arm banded push down""]",2,14,True,[],False
 exercise_ae3213e71e4fe95d,Single Arm Deadlift,"[""One Arm Deadlift""]",1,1,True,[],False
 exercise_04ee72bf13670634,Single Arm Dumbbell Neutral Grip Bench Press,"[""Single Arm DB Neutral Grip Bench Press"", ""Single Arm DB neutral Grip Bench press""]",2,25,True,[],False
 exercise_437be5b4ea4a8cf1,Single Arm Dumbbell Overhead Carry,"[""single arm DB Overhead Carry""]",1,6,True,[],False
@@ -307,14 +274,12 @@ exercise_5d67277a7911d190,Snatch Grip Behind The Neck Press,"[""snatch grip behi
 exercise_014c08957393bf78,Snatch Grip High Pull,"[""snatch grip high pull""]",1,1,True,[],False
 exercise_db375e83e8df61ca,Snatch Grip Romanian Deadlift,"[""Snatch Grip RDL""]",1,54,True,[],False
 exercise_df6a29789c4ab225,Snatch Grip Shrug,"[""Snatch Grip Shrug""]",1,1,True,[],False
-exercise_5a990448f82c2c3b,Speed Banded Lat Pulldown,"[""Speed Banded  Lat Pull Down"", ""Speed Banded Lat Pulldowns""]",2,8,True,[],False
 exercise_4bd4bb485f9de050,Speed Bench Press,"[""speed bench press""]",1,0,True,[],False
 exercise_6df202cd88672d91,Speed Conventional Deadlift,"[""speed convential deadlift""]",1,0,True,[],False
 exercise_5fe78b38d196e023,Spider Curl,"[""Spider Curl"", ""Spider Curls""]",2,12,True,[],False
 exercise_5a6704fb136cfb32,Split Stance Dumbbell Press,"[""Split Stance DB Press"", ""Split stance DB press""]",2,20,True,[],False
 exercise_dbdf8bef13aeb502,Split Stance Landmine Romanian Deadlift,"[""Split Stance Landmine RDL""]",1,5,True,[],False
 exercise_d70df700a85f7d3f,Staggered Stance Kettlebell Swing,"[""Staggered Stance Kettlebell Swings"", ""staggered stance KB swing""]",2,15,True,[],False
-exercise_b4599f099027cd03,Standing Abductor Banded Pull-Apart,"[""Standing Abductor Banded Pull Aparts""]",1,2,True,[],False
 exercise_be4b9d532e5a12b3,Standing Bar Triceps Extension,"[""Standing Bar Tricep Extensions""]",1,1,True,[],False
 exercise_1d6675a774883bac,Standing Calf Machine Raise,"[""Standing Calf Machine Raise""]",1,3,True,[],False
 exercise_f0bedc5c7f1bf035,Standing Calf Raise,"[""Standing Calf Raises"", ""standing calf raise""]",2,3,True,[],False
@@ -351,7 +316,6 @@ exercise_62c451a02d8dd38b,The Warm Up,"[""THE warm up""]",1,0,True,[],False
 exercise_2b2697f64c966dbd,Tib Raise,"[""tib raises""]",1,1,True,[],False
 exercise_d19d6565555436b2,Top Down Snatch 4 Part,"[""Top Down Snatch - 4 Part""]",1,2,True,[],False
 exercise_5c7cec367b0c8f0b,Touch And Go Trap Bar Deadlift,"[""Touch & go trap bar deadlifts."", ""Touch N Go Trap Bar Deadlift""]",2,6,True,[],False
-exercise_fe8171eef3b81374,Trap Bar Deadlift Against A Band,"[""TRAP BAR DEADLIFT AGAINST A BAND"", ""Trap Bar Deadlift against a band""]",2,20,True,[],False
 exercise_e4e0225030d082c4,Trap Bar Romanian Deadlift,"[""Trap Bar RDL"", ""Trap bar RDL""]",2,34,True,[],False
 exercise_c3185b23509e82cc,Trap Bar Row,"[""Trap Bar Rows"", ""trap bar row""]",2,14,True,[],False
 exercise_2758709e7ef838f2,Triceps Bench Dip,"[""tricep bench dip""]",1,2,True,[],False

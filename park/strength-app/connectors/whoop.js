@@ -389,6 +389,8 @@
       // Signing in must preserve completed sets and pending offline writes.
       if (global.StrengthMemory) global.StrengthMemory.schedule(0);
       try { await syncAll(); } catch (_) { /* sync is optional immediately after sign-in */ }
+      if (global.PlanSync) await global.PlanSync.syncNow();
+      if (global.CoachAssignments) await global.CoachAssignments.sync();
       if (typeof global.setTab === 'function') global.setTab('home');
       else if (typeof global.render === 'function') global.render();
     } catch (err) {

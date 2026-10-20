@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { patchEngineHtml } from './import-engine-house.mjs';
+import { patchEngineHtml, applyIntegrationOverrides } from './import-engine-house.mjs';
 
 const engineDir = fileURLToPath(new URL('../apps/athlete/engine/', import.meta.url));
 const sample = "<script>const NATIVE_APP_ID = 'com.hybrid.athlete'; x.getLatest({channel:'engine-html'})</script></body>\n</html>";
@@ -29,4 +29,8 @@ test('committed Engine house matches its recorded import', () => {
     assert.equal(actual, sha, `${file} was edited by hand; re-run scripts/import-engine-house.mjs`);
   }
   assert.match(upstream.commit, /^[0-9a-f]{40}$/);
+});
+
+test('integration overrides fail safely when WHOOP/date/chart context moved', () => {
+  assert.throws(() => applyIntegrationOverrides('unrecognised upstream'), /override 0 matched 0/);
 });

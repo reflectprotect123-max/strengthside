@@ -4,12 +4,10 @@ Strength is parked in `park/strength-app/`. It is not deleted. The front door, `
 
 # Session builder — parked with the strength app
 
-The athlete Library builder is the warm-up circuit, the lift cards, then the cool-down circuit. Start Session plays that order in the logger. This is on `main` (pull request 262, merge `0c65cc7c`) and on the live app as Capgo bundle **1.3.11** for `com.hybrid.strength`, channel `strength-live`. The previous live bundle was 1.3.10.
+The athlete Library builder is the warm-up circuit, the lift cards, then the cool-down circuit. Start Session plays that order in the logger. This is on `main` (pull request 262, merge `0c65cc7c`) and on the live app as Capgo bundle **1.3.11** for `com.hybrid.strength`, channel `strength-live`. The current bundle is **1.3.12**, including the calibration follow-up.
 
 Later calibration, metric-selection and prep-timer fixes are recorded in the
-[calibration follow-up](docs/releases/strength-calibration-followup.md). Those
-candidate changes have not been published through Capgo; the 1.3.11 ship record
-above describes Cursor's earlier builder baseline.
+[calibration follow-up](docs/releases/strength-calibration-followup.md). The follow-up is included in the live 1.3.12 bundle.
 
 Close the installed app and open it again to pick up 1.3.11. The update downloads in the background and waits for the next launch, so an open workout is left alone.
 
@@ -72,19 +70,11 @@ The older map below is historical layout, not the current builder.
 | **APK build** | GitHub Actions builds the Android artifact on `main` pushes; Capgo is released only by an explicit ship workflow. |
 | **Android** | `apps/mobile/capacitor/` wraps `apps/athlete/` |
 
-## Coach workspace (separate surface)
+## Coach workspace
 
-The Hybrid athlete app (`index.html` / `THE-Hybrid-App.html`) is **not** this and is not edited. Athletes keep logging there. This page is coach-only: Home feed, roster, library, program/session builders, assign-to-team.
-
-```bash
-cd apps/coach
-python3 -m http.server 4173
-# http://localhost:4173/coach.html
-```
-
-Coach demo: `dan@thehybrid.local` / `demo`
-
-Seeded roster (visible on Coach Home, not a login here): team **hybrid S&C**, athlete Dan Veldman, program **Hybrid Strength Base**, one completed session (Dan Veldman, Week 1 Day 1). This is the last good coach suite from `848074a` (parent of the park-coach commit).
+The Coach UI, Windows installer, library tools, tests and release workflow moved to
+[the-adaptivebrain-](https://github.com/reflectprotect123-max/the-adaptivebrain-/tree/main/apps/coach).
+This repository owns the athlete app and its Android/Capgo release path.
 
 ## Brains (not a second app)
 
