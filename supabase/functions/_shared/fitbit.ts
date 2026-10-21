@@ -212,6 +212,51 @@ export function pointDate(value: any): string {
   return isoDate(Number(date.year), Number(date.month), Number(date.day));
 }
 
+const ATHLETE_TIME_ZONE = 'Australia/Sydney';
+
+export function sydneyCivilDate(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: ATHLETE_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value || '';
+  const date = `${get('year')}-${get('month')}-${get('day')}`;
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
+}
+
+function offsetMinutes(offset: unknown): number | null {
+  if (typeof offset !== 'string' || !offset.trim()) return null;
+  const zoned = /^([+-])(\d{2}):(\d{2})$/.exec(offset.trim());
+  if (zoned) return (Number(zoned[2]) * 60 + Number(zoned[3])) * (zoned[1] === '-' ? -1 : 1);
+  const seconds = /^(-?\d+)(?:\.\d+)?s$/.exec(offset.trim());
+  if (seconds) return Math.trunc(Number(seconds[1]) / 60);
+  return null;
+}
+
+export function civilDateFromInstant(instant: string, offset?: unknown): string {
+  const parsed = Date.parse(instant);
+  if (!Number.isFinite(parsed)) return '';
+  const minutes = offsetMinutes(offset);
+  if (minutes == null) return sydneyCivilDate(new Date(parsed));
+  return new Date(parsed + minutes * 60_000).toISOString().slice(0, 10);
+}
+
+export function intervalLocalDay(interval: any, edge: 'start' | 'end'): string {
+  if (!interval) return '';
+  const civil = pointDate(edge === 'end' ? (interval.civilEndTime || interval.civil_end_time) : (interval.civilStartTime || interval.civil_start_time));
+  if (civil) return civil;
+  const instant = edge === 'end' ? (interval.endTime || interval.end_time) : (interval.startTime || interval.start_time);
+  if (typeof instant !== 'string') return '';
+  const offset = edge === 'end' ? (interval.endUtcOffset || interval.end_utc_offset) : (interval.startUtcOffset || interval.start_utc_offset);
+  return civilDateFromInstant(instant, offset);
+}
+
+function activityDay(point: any, payload?: any): string {
+  const carriers = [point, point?.interval, payload, payload?.interval, point?.steps?.interval, payload?.steps?.interval];
+  for (const carrier of carriers) {
+    const date = intervalLocalDay(carrier, 'start');
+    if (date) return date;
+  }
+  return pointDate(point?.date) || pointDate(payload?.date);
+}
+
 function addDays(date: string, days: number) {
   const next = new Date(`${date}T12:00:00Z`);
   next.setUTCDate(next.getUTCDate() + days);
@@ -393,7 +438,7 @@ export function buildFitbitDays(input: {
   for (const point of input.sleep || []) {
     const body = payloadOf(point, 'sleep');
     if (!body || body.metadata?.nap === true || body.nap === true) continue;
-    const date = pointDate(body.interval?.civilEndTime) || pointDate(body.interval?.endTime);
+    const date = intervalLocalDay(body.interval, 'end') || intervalLocalDay(point.interval, 'end');
     const row = ensure(days, date);
     if (!row) continue;
     if (body.metadata?.mainSleep === false && row.sleepPerformance != null) continue;
@@ -414,19 +459,19 @@ export function buildFitbitDays(input: {
   }
   for (const point of input.zoneMinutes || []) {
     const payload = payloadOf(point, 'activeZoneMinutes') || point;
-    const date = pointDate(point.interval?.civilStartTime) || pointDate(point.civilStartTime) || pointDate(payload?.interval?.civilStartTime) || pointDate(payload?.date) || pointDate(point.date);
+    const date = activityDay(point, payload);
     const row = ensure(days, date);
     const minutes = zoneMinutesOf(point?.activeZoneMinutes != null ? point : { activeZoneMinutes: payload });
     if (row && minutes != null) row.activeZoneMinutes = (row.activeZoneMinutes || 0) + minutes;
   }
   for (const point of input.exercise || []) {
     const body = payloadOf(point, 'exercise');
-    const date = pointDate(body?.interval?.civilStartTime) || pointDate(body?.interval?.startTime);
+    const date = intervalLocalDay(body?.interval, 'start') || intervalLocalDay(point?.interval, 'start');
     const row = ensure(days, date);
     if (row) row.exerciseCount = (row.exerciseCount || 0) + 1;
   }
   for (const point of input.steps || []) {
-    const date = pointDate(point.interval?.civilStartTime) || pointDate(point.civilStartTime) || pointDate(point.date);
+    const date = activityDay(point, payloadOf(point, 'steps'));
     const row = ensure(days, date);
     const count = stepsOf(point);
     if (row && count != null && count >= 0) row.steps = Math.round(count);
@@ -502,8 +547,8 @@ async function readPoints(type: string, primary: () => Promise<any[]>, fallback?
   }
 }
 
-export async function fetchFitbitSnapshot(accessToken: string, { historyDays = 10 } = {}) {
-  const end = new Date().toISOString().slice(0, 10);
+export async function fetchFitbitSnapshot(accessToken: string, { historyDays = 10, now = new Date() } = {}) {
+  const end = sydneyCivilDate(now);
   // Heart-rate rollup accepts at most 14 civil days. A 90-day list window plus the exclusive end is 91 days, over the other rollup cap.
   const listDays = Math.max(1, Math.min(89, historyDays));
   const start = addDays(end, -listDays);
