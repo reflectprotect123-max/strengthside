@@ -1,40 +1,28 @@
 ---
-description: Engine half ownership inside the shared strengthside repo
-globs: packages/adaptive/**/*,apps/athlete/conditioning/**/*,apps/engine-web/**/*,scripts/conditioning/**/*
+description: Engine app ownership inside strengthside
+globs: apps/athlete/**/*,apps/mobile/**/*,scripts/stage-athlete.mjs,scripts/import-engine-house.mjs,scripts/engine-*.mjs
 alwaysApply: false
 ---
 
-# Engine half
+# Engine
 
-This repo holds two halves. This chat owns the **conditioning engine** only. Read `docs/ownership-halves.md` before editing.
+This checkout is the Engine app. The strength builder, strength brain, and the unwired evidence-platform brain were removed from the repo.
 
-- Branch: `cursor/engine-<short-task>` from the current engine line. A known remote is `origin/codex/engine-web-cloudflare`. Confirm that checkout contains an engine root before editing.
+- Branch: `cursor/engine-<short-task>` from the current engine line.
 - Lane check: `pnpm run verify:engine`.
-- Capgo channel for this half is `engine-html`. Cursor hands releases to Codex; it does not publish.
+- The app that opens is `apps/athlete/engine/index.html`. The adaptive behavior athletes already use lives in that page.
+- Capgo still ships `com.hybrid.strength` on `strength-live`. The version file is `apps/athlete/release.json`. Cursor does not publish unless asked.
 - Open a draft PR for Codex review. Cursor does not merge to `main`.
 
 ## Owned paths
 
-- `packages/adaptive/**` — Open / Next / Close conditioning math
-- `apps/athlete/conditioning/**` — engine HTML
-- `apps/engine-web/**` — hosted engine web
-- `scripts/conditioning/**` — engine build and zone configuration
+- `apps/athlete/engine/**` — conditioning app, including the inlined adaptive kernel
+- `apps/athlete/index.html` — front door
+- `apps/athlete/whoop-common.js` and `apps/athlete/progress-chart.js`
+- `apps/mobile/capacitor/**` — Android shell
+- `scripts/stage-athlete.mjs`, `scripts/import-engine-house.mjs`, `scripts/engine-*.mjs`
 
-## Strength half is out of bounds
+## Leave these alone unless the task is about them
 
-Do not edit these in an engine branch:
-
-- `apps/shared/strength-*.js`
-- `apps/shared/training-core.js`
-- `apps/athlete/strength-*.js`
-- `apps/athlete/library*.js`
-- `apps/athlete/logger.js`
-- `apps/athlete/session.js`
-- `apps/athlete/release.json`
-- `checks/browser/strength-brain-v2.spec.mjs`
-
-`origin/main` can be a strength-only tree. `pnpm run verify:engine` exits 1 there until an engine root is checked out. Switch branches. Do not copy engine files onto `main` to make the command pass.
-
-## Shared files
-
-Stop and report overlap before editing `supabase/`, `apps/athlete/hybrid-integrations.js`, `apps/athlete/plan-sync.js`, `apps/athlete/whoop-common.js`, or `apps/shared/whoop-common.js`. One half edits a shared file at a time.
+- `supabase/migrations/**` — shared ledger, including migrations that already shipped
+- `supabase/functions/whoop-*` and `supabase/functions/brain-coach` — the Engine calls these

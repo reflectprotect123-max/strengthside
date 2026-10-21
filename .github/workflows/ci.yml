@@ -31,16 +31,6 @@ jobs:
             exit 1
           fi
 
-  evidence-platform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - run: pip install -e evidence-platform pytest jsonschema pyyaml
-      - run: python -m pytest evidence-platform/tests/ -q
-      - run: python evidence-platform/validators/validate_platform.py
-
   browser:
     runs-on: ubuntu-latest
     steps:

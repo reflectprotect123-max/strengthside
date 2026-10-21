@@ -1,4 +1,4 @@
-name: Strength APK
+name: Engine APK
 on:
   workflow_dispatch:
   push:
@@ -22,11 +22,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Check bundled strength screens
+      - name: Check and stage the Engine
         run: |
-          node scripts/sync-training-core.mjs --check
-          node scripts/generate-strength-release.mjs --check
-          node apps/athlete/checks/athlete-app.smoke.mjs
+          node apps/athlete/checks/engine-door.smoke.mjs
           node scripts/stage-athlete.mjs apps/mobile/capacitor/www
       - name: Install and sync native updater
         working-directory: apps/mobile/capacitor

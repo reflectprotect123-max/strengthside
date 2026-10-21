@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repo = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const read = (file) => readFileSync(resolve(repo, file), 'utf8');
+const config = JSON.parse(read('apps/mobile/capacitor/capacitor.config.json'));
+const pkg = JSON.parse(read('apps/mobile/capacitor/package.json'));
+assert.equal(config.appId, 'com.hybrid.strength');
+assert.equal(config.webDir, 'www');
+assert.equal(config.plugins.CapacitorUpdater.defaultChannel, 'strength-live');
+assert.equal(config.plugins.CapacitorUpdater.autoUpdate, 'onlyDownload');
+assert.equal(pkg.dependencies['@capgo/capacitor-updater'], '8.52.1');
+assert.ok(read('apps/athlete/engine/index.html').includes('notifyAppReady'));
+assert.ok(read('apps/athlete/index.html').includes('engine/index.html'));
+assert.ok(!read('apps/athlete/index.html').includes('library-ui.js'));
+const ship = read('apps/mobile/capacitor/scripts/ship-capgo.sh');
+assert.ok(ship.includes("require('./apps/athlete/release.json').version"));
+assert.ok(ship.includes('node apps/athlete/checks/capgo-live-update.smoke.mjs'));
+assert.ok(!ship.includes('park/strength-app'));
+assert.match(JSON.parse(read('apps/athlete/release.json')).version, /^\d+\.\d+\.\d+$/);
+assert.ok(ship.includes('--min-update-version 1.3.0'));
+assert.ok(ship.includes('--path www --channel strength-live'));
+console.log('capgo-live-update: engine door, release file, channel and safe update configuration verified');
