@@ -226,6 +226,10 @@ function zoneMinutesOf(body: any) {
   const zone = body?.activeZoneMinutes;
   if (finiteNumber(zone) != null && (typeof zone === 'number' || typeof zone === 'string')) return finiteNumber(zone);
   if (!zone || typeof zone !== 'object') return null;
+  const zoneParts = ['sumInFatBurnHeartZone', 'sumInCardioHeartZone', 'sumInPeakHeartZone']
+    .map((key) => finiteNumber(zone[key]))
+    .filter((value): value is number => value != null);
+  if (zoneParts.length) return zoneParts.reduce((total, value) => total + value, 0);
   const sums = Object.entries(zone)
     .filter(([key]) => /minute/i.test(key) && /_sum$/i.test(key))
     .map(([, value]) => finiteNumber(value))
@@ -418,7 +422,7 @@ export function buildFitbitDays(input: {
     const body = payloadOf(point, 'heartRate') || point;
     const date = pointDate(body.sampleTime?.civilTime) || pointDate(body.date) || pointDate(point.date);
     const row = ensure(days, date);
-    const bpm = finiteNumber(body.beatsPerMinute) ?? finiteNumber(body.averageBeatsPerMinute);
+    const bpm = finiteNumber(body.beatsPerMinute) ?? finiteNumber(body.beatsPerMinuteAvg) ?? finiteNumber(body.averageBeatsPerMinute);
     if (row && bpm != null && row.heartRateBpm == null) row.heartRateBpm = bpm;
   }
   const rows = [...days.values()].filter((row) => row.hrv != null || row.rhr != null || row.sleepPerformance != null || row.activeZoneMinutes != null).sort((a, b) => a.date.localeCompare(b.date));

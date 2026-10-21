@@ -36,7 +36,7 @@ test('daily rollup zone minutes use the summed field', () => {
   const rows = fitbit.buildFitbitDays({
     zoneMinutes: [{
       interval: { civilStartTime: { year: 2026, month: 10, day: 21 } },
-      activeZoneMinutes: { activeZoneMinutes_sum: '30' },
+      activeZoneMinutes: { sumInFatBurnHeartZone: '10', sumInCardioHeartZone: '20' },
     }],
   });
   assert.equal(rows[0].activeZoneMinutes, 30);
