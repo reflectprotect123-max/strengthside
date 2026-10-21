@@ -37,3 +37,14 @@ test('Home keeps the newest value per metric and falls back to WHOOP when Fitbit
  assert.equal(whoopOnly.metrics.hrv.value,70.3);assert.equal(whoopOnly.metrics.hrv.source,'WHOOP account');
  assert.equal(whoopOnly.metrics.steps.value,9000);
 });
+test('sleep hours and steps stay on their own dates when the summary day is newer',()=>{
+ const H=home(),S={settings:{fitbit:{connected:true}},checkin:{},fitbitHistory:[]};
+ H.importHistory(S,{normalized:{date:'2026-10-22',hrvMs:34.15,restingHr:68,sleepHours:7.25,steps:22089,strain:3.4,sleepPerformance:94,metricDates:{sleepHours:'2026-10-20',steps:'2026-10-21',strain:'2026-10-21',sleepPerformance:'2026-10-20'}}},'2026-10-22','Fitbit');
+ assert.equal(S.checkin['2026-10-22'].hrv,34.15);
+ assert.equal(S.checkin['2026-10-22'].sleepHours,undefined);
+ assert.equal(S.checkin['2026-10-22'].steps,undefined);
+ assert.equal(S.checkin['2026-10-20'].sleepHours,7.25);
+ assert.equal(S.checkin['2026-10-20'].whoopSleepPerformance,94);
+ assert.equal(S.checkin['2026-10-21'].steps,22089);
+ assert.equal(S.checkin['2026-10-21'].whoopStrain,3.4);
+});

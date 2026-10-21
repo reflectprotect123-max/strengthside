@@ -3,10 +3,32 @@ import { json, methodGuard, preflight } from '../_shared/http.ts';
 import { loadToken, removeToken, saveToken, setReconnect, syncRecord } from '../_shared/oauth.ts';
 import { fetchFitbitSnapshot, fitbitErrorResponse, isFitbitReconnect, mergeFitbitToken, refreshFitbitToken, SCORE_VERSION, tokenNeedsRefresh } from '../_shared/fitbit.ts';
 
+async function tokenSavedByAnotherSync(owner: string, current: any) {
+  try {
+    const latest = await loadToken('fitbit', owner) as any;
+    return latest?.access_token && latest.access_token !== current?.access_token ? latest : null;
+  } catch {
+    return null;
+  }
+}
+
 async function refreshed(owner: string, current: any) {
-  const next = mergeFitbitToken(current, await refreshFitbitToken(current.refresh_token));
-  await saveToken('fitbit', owner, next);
-  return next;
+  const already = await tokenSavedByAnotherSync(owner, current);
+  if (already && !tokenNeedsRefresh(already)) return already;
+  try {
+    const next = mergeFitbitToken(current, await refreshFitbitToken(current.refresh_token));
+    await saveToken('fitbit', owner, next);
+    return next;
+  } catch (error) {
+    const saved = await tokenSavedByAnotherSync(owner, current);
+    if (saved && !tokenNeedsRefresh(saved)) return saved;
+    if (isFitbitReconnect(error)) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const later = await tokenSavedByAnotherSync(owner, current);
+      if (later && !tokenNeedsRefresh(later)) return later;
+    }
+    throw error;
+  }
 }
 
 async function markReconnect(owner: string) {
