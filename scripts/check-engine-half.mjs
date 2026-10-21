@@ -22,6 +22,7 @@ export function engineCommands(root) {
       command: process.execPath,
       args: ['--test',
         'apps/athlete/engine/hallway.test.js',
+        'apps/athlete/engine/onboarding-rules.test.js',
         'apps/athlete/progress-chart.test.js',
         'scripts/stage-athlete.test.mjs',
         'scripts/import-engine-house.test.mjs',

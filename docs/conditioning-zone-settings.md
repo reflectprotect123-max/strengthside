@@ -12,10 +12,16 @@ automatically. Edit fitness setup remains available; cancelling changes nothing.
 Completion and answers persist locally and through the existing account ledger.
 Heart-rate overrides/custom boundaries are folded under Heart-rate zones.
 
-An unknown max uses `round(208 − 0.7 × age)` for adults 18–100; a known maximum
-replaces that estimate. Source, age and equation version are retained. Fitness
-and goal are captured for future conditioning rules; they do not currently
-invent per-level zone offsets or enable automatic weekly progression.
+Onboarding v2 asks sex, then estimates maximum heart rate with Gulati 2010 for
+female (`206 − 0.88 × age`) and Tanaka 2001 for male (`208 − 0.7 × age`). A
+known maximum still replaces the estimate. Fitness chooses the full-recovery
+zone fractions: low 45/65/80, moderate 50/70/85, high 55/75/88. The goal writes
+the first Monday–Sunday minute targets. A resting heart rate of 70 or higher
+scales that first week by 0.9. These are StrengthSide rules, not recovered
+Morpheus formulas. Later weeks do not move themselves.
+
+If two heart-rate samples in a cardio or mixed workout go past an estimated
+maximum, Settings offers that peak. Nothing changes until the athlete accepts.
 
 **STRENGTHSIDE-DESIGNED:** estimate three baseline cardio zones with Karvonen:
 
@@ -27,8 +33,9 @@ invent per-level zone offsets or enable automatic weekly progression.
 | Green starts | 70% |
 | Red starts | 85% |
 
-Karvonen supplies the HR-reserve equation. The three chosen fractions are original
-StrengthSide defaults, not confirmed Morpheus boundaries or measured thresholds.
+Karvonen supplies the HR-reserve equation. Moderate fitness keeps the original
+50/70/85 fractions. Low and high fitness use the v2 fractions above. None of
+these are confirmed Morpheus boundaries or measured thresholds.
 The versioned configuration lives in `scripts/conditioning/zones.js`.
 
 Maximum HR is entered explicitly. Resting HR normally comes from the mean of
