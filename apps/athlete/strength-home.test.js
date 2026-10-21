@@ -23,3 +23,17 @@ test('independent sleep and strain dates are preserved instead of assigned to la
  assert.equal(S.checkin['2026-10-10'].whoopSleepPerformance,undefined);
  assert.equal(S.checkin['2026-10-09'].whoopSleepPerformance,75);assert.equal(S.checkin['2026-10-08'].whoopStrain,10);
 });
+test('Home keeps the newest value per metric and falls back to WHOOP when Fitbit is disconnected',()=>{
+ const H=home(),S={settings:{fitbit:{connected:true}},checkin:{},whoopHistory:[],fitbitHistory:[]};
+ H.importHistory(S,{dailyMetrics:[{date:'2026-10-21',recovery:76,hrv:70.3,rhr:66,sleep:7.1,steps:9000,sleepPerformance:73,strain:4.1}]},'2026-10-22');
+ H.importHistory(S,{dailyMetrics:[{date:'2026-10-22',hrv:34.15,rhr:68,sleep:7.8,steps:4200,sleepPerformance:94,strain:3.4}],syncedAt:'2026-10-22T08:00:00Z'},'2026-10-22','Fitbit');
+ const today=H.selection(H.records(S),'2026-10-22','2026-10-22');
+ assert.equal(today.metrics.hrv.value,34.15);assert.equal(today.metrics.hrv.source,'Fitbit');
+ assert.equal(today.metrics.recovery.value,76);assert.equal(today.metrics.recovery.source,'WHOOP account');
+ assert.equal(today.metrics.sleep.value,7.8);assert.equal(today.metrics.sleep.source,'Fitbit');
+ assert.equal(today.metrics.steps.value,4200);assert.equal(today.metrics.steps.source,'Fitbit');
+ assert.equal(today.metrics.sleepPerformance.value,94);
+ const whoopOnly=H.selection(H.records({...S,settings:{fitbit:{connected:false}}}),'2026-10-22','2026-10-22');
+ assert.equal(whoopOnly.metrics.hrv.value,70.3);assert.equal(whoopOnly.metrics.hrv.source,'WHOOP account');
+ assert.equal(whoopOnly.metrics.steps.value,9000);
+});

@@ -24,7 +24,11 @@ function fixture(fetchImpl) {
 }
 
 test('Fitbit sync writes the same check-in fields WHOOP uses', async () => {
-  const window = fixture(async () => ({ ok: true, json: async () => ({ connected: true, syncedAt: '2026-10-21T01:00:00Z', normalized: { date: '2026-10-21', recoveryScore: 72, hrvMs: 48, restingHr: 51, sleepPerformance: 81, strain: 4.2 } }) }));
+  const window = fixture(async () => ({ ok: true, json: async () => ({ connected: true, syncedAt: '2026-10-21T01:00:00Z', normalized: { date: '2026-10-21', recoveryScore: 72, hrvMs: 48, restingHr: 51, sleepPerformance: 81, sleepHours: 7.5, steps: 6400, strain: 4.2 }, dailyMetrics: [{ date: '2026-10-21', hrv: 48, rhr: 51, sleep: 7.5, steps: 6400, sleepPerformance: 81, strain: 4.2 }] }) }));
+  window.StrengthHome = { importHistory(state, body, today, source) {
+    state.fitbitHistory = state.fitbitHistory || [];
+    state.fitbitHistory.push({ source, today, sleep: body.dailyMetrics[0].sleep, steps: body.dailyMetrics[0].steps });
+  } };
   await window.Fitbit.sync({ quiet: true });
   const day = window.S.checkin['2026-10-21'];
   assert.equal(day.whoopRecovery, 72);
@@ -32,6 +36,9 @@ test('Fitbit sync writes the same check-in fields WHOOP uses', async () => {
   assert.equal(day.restingHr, 51);
   assert.equal(day.whoopSleepPerformance, 81);
   assert.equal(day.whoopStrain, 4.2);
+  assert.equal(day.sleepHours, 7.5);
+  assert.equal(day.steps, 6400);
+  assert.equal(window.S.fitbitHistory[0].source, 'Fitbit');
   assert.equal(window.S.settings.fitbit.connected, true);
 });
 

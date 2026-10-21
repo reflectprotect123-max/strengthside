@@ -370,6 +370,17 @@
       } catch (err) {
         bits.push('WHOOP: ' + ((err && err.message) || 'failed'));
       }
+      try {
+        if (global.Fitbit && appState()?.settings?.fitbit?.connected && !appState().settings.fitbit.reconnect) {
+          ui.message = 'Syncing Fitbit…';
+          renderPanels();
+          if (typeof global.Fitbit.refreshStatus === 'function') await global.Fitbit.refreshStatus();
+          await global.Fitbit.sync({ quiet: true });
+          bits.push('Fitbit');
+        }
+      } catch (err) {
+        bits.push('Fitbit: ' + ((err && err.message) || 'failed'));
+      }
 
       ui.message = 'Synced: ' + bits.join(' · ');
       ui.busy = false;
@@ -378,7 +389,9 @@
       ui.message = (err && err.message) || 'Sync failed';
     } finally {
       ui.busy = false;
+      if (/^Syncing\b/.test(String(ui.message || ''))) ui.message = bits.length ? ('Synced: ' + bits.join(' · ')) : 'Sync finished';
       renderPanels();
+      if (typeof global.render === 'function') global.render();
     }
   }
   async function signIn() {

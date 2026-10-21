@@ -43,6 +43,18 @@ test('daily rollup zone minutes use the summed field', () => {
   assert.equal(rows[0].strain, 2);
 });
 
+test('step rollups and sleep hours land on the normalized day', () => {
+  const rows = fitbit.buildFitbitDays({
+    steps: [{ civilStartTime: { date: { year: 2026, month: 10, day: 22 } }, interval: { civilStartTime: { date: { year: 2026, month: 10, day: 22 } } }, steps: { countSum: '4200' } }],
+    sleep: [{ sleep: { metadata: { mainSleep: true }, interval: { civilEndTime: { year: 2026, month: 10, day: 22 } }, summary: { minutesAsleep: '468', minutesInSleepPeriod: '500' } } }],
+  });
+  const latest = fitbit.normalizeFitbitDays(rows);
+  assert.equal(rows[0].steps, 4200);
+  assert.equal(latest.steps, 4200);
+  assert.equal(latest.sleepHours, 7.8);
+  assert.equal(latest.metricDates.steps, '2026-10-22');
+});
+
 test('active zone minutes map into the 0–21 strain field', () => {
   assert.equal(fitbit.strainFromActiveZoneMinutes(15), 1);
   assert.equal(fitbit.strainFromActiveZoneMinutes(400), 21);

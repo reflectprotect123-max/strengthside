@@ -4,21 +4,30 @@ const defs=[['recovery','Recovery','%',0,100,'whoopRecovery'],['hrv','HRV','ms',
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>v==null||String(v).trim()===''?null:Number.isFinite(Number(v))?Number(v):null;
 function day(d){if(!/^\d{4}-\d{2}-\d{2}$/.test(d||''))return null;const parsed=new Date(d+'T12:00:00Z');return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===d?d:null;}
-function importHistory(state,body,todayDate){
+function importHistory(state,body,todayDate,sourceLabel){
   state.checkin=state.checkin||{};
+  const label=sourceLabel==='Fitbit'?'Fitbit':'WHOOP account';
+  const bucket=label==='Fitbit'?'fitbitHistory':'whoopHistory';
   const rows=body.dailyMetrics||body.dailyPhysiology||[];
-  const map=new Map((state.whoopHistory||[]).map(r=>[r.date,r]));let count=0;
-  const all=[...rows];if(body.normalized){const n=body.normalized;all.push({date:n.date,recovery:n.recoveryScore,hrv:n.hrvMs,rhr:n.restingHr,sleep:n.sleepHours,steps:n.steps,sleepPerformance:n.metricDates?.sleepPerformance===n.date?n.sleepPerformance:null,strain:n.metricDates?.strain===n.date?n.strain:null});}
+  const map=new Map((state[bucket]||[]).map(r=>[r.date,r]));let count=0;
+  const all=[...rows];if(body.normalized){const n=body.normalized;const dated=key=>!n.metricDates||n.metricDates[key]===n.date?n[key]:null;all.push({date:n.date,recovery:n.recoveryScore,hrv:n.hrvMs,rhr:n.restingHr,sleep:n.sleepHours??n.sleep,steps:n.steps,sleepPerformance:dated('sleepPerformance'),strain:dated('strain')});}
   for(const r of body.dailyStrain||[])all.push({date:r.date,strain:r.strain});
   for(const [key,date] of Object.entries(body.normalized?.metricDates||{}))if(['sleepPerformance','strain'].includes(key))all.push({date,[key]:body.normalized[key]});
-  for(const r of all){const date=day(r.date);if(!date||date>todayDate)continue;const old=map.get(date)||{date,source:'WHOOP account'},row={...old,sources:{...old.sources}},c=state.checkin[date]||(state.checkin[date]={date});let changed=false;
+  for(const r of all){const date=day(r.date);if(!date||date>todayDate)continue;const old=map.get(date)||{date,source:label},row={...old,sources:{...old.sources}},c=state.checkin[date]||(state.checkin[date]={date});let changed=false;
     const aliases={recovery:'recoveryScore',hrv:'hrvMs',rhr:'restingHr',sleep:'sleepHours'};
-    for(const [key,,,min,max,field] of defs){const value=number(r[key]??r[aliases[key]]);if(value==null||value<min||value>max||(key==='hrv'&&value===0)||(key==='steps'&&!Number.isSafeInteger(value)))continue;row[key]=value;row.sources[key]=r.sources?.[key]||'WHOOP account';c[field]=value;changed=true;}
-    if(!changed)continue;row.source='WHOOP account';map.set(date,row);c.whoopSyncedAt=body.syncedAt||new Date().toISOString();c.whoopSampleDate=date;count++;
+    for(const [key,,,min,max,field] of defs){let value=number(r[key]??r[aliases[key]]);if(key==='steps'&&value!=null&&Math.abs(value-Math.round(value))<0.001)value=Math.round(value);if(value==null||value<min||value>max||(key==='hrv'&&value===0)||(key==='steps'&&!Number.isSafeInteger(value)))continue;row[key]=value;row.sources[key]=r.sources?.[key]||label;c[field]=value;changed=true;}
+    if(!changed)continue;row.source=label;map.set(date,row);if(label==='Fitbit'){c.fitbitSyncedAt=body.syncedAt||new Date().toISOString();c.fitbitSampleDate=date;}else{c.whoopSyncedAt=body.syncedAt||new Date().toISOString();c.whoopSampleDate=date;}count++;
   }
-  state.whoopHistory=[...map.values()].sort((a,b)=>a.date.localeCompare(b.date));return count;
+  state[bucket]=[...map.values()].sort((a,b)=>a.date.localeCompare(b.date));return count;
 }
-function records(state=root.S){const map=new Map();for(const [date,c] of Object.entries(state.checkin||{})){if(!day(date))continue;const row={date,source:c.whoopSyncedAt?'WHOOP account':'Manual entry'};for(const [key,,,,,field] of defs)row[key]=number(c[field]);map.set(date,row);}for(const r of state.whoopHistory||[]){const old=map.get(r.date)||{};map.set(r.date,{...old,...Object.fromEntries(Object.entries(r).filter(([,v])=>v!=null))});}return [...map.values()].sort((a,b)=>a.date.localeCompare(b.date));}
+function fitbitPreferred(state){return !!(state&&state.settings&&state.settings.fitbit&&state.settings.fitbit.connected&&!state.settings.fitbit.reconnect);}
+function putMetric(row,key,value,source,preferFitbit){
+  const n=number(value);if(n==null)return;
+  const incoming=source||'Manual entry';
+  if(!preferFitbit&&incoming==='Fitbit')return;
+  if(row[key]==null||(preferFitbit&&incoming==='Fitbit')){row[key]=n;row.sources[key]=incoming;}
+}
+function records(state=root.S){const map=new Map(),preferFitbit=fitbitPreferred(state);const ensure=date=>{let row=map.get(date);if(!row){row={date,source:'Manual entry',sources:{}};map.set(date,row);}return row;};for(const [date,c] of Object.entries((state&&state.checkin)||{})){if(!day(date))continue;const row=ensure(date);const src=c.fitbitSyncedAt&&!c.whoopSyncedAt?'Fitbit':(c.whoopSyncedAt?'WHOOP account':'Manual entry');for(const [key,,,,,field] of defs)putMetric(row,key,c[field],src,preferFitbit);}for(const r of (state&&state.whoopHistory)||[]){if(!day(r.date))continue;const row=ensure(r.date);for(const [key] of defs)putMetric(row,key,r[key],r.sources?.[key]||'WHOOP account',preferFitbit);}for(const r of (state&&state.fitbitHistory)||[]){if(!day(r.date))continue;const row=ensure(r.date);for(const [key] of defs)putMetric(row,key,r[key],'Fitbit',preferFitbit);}return [...map.values()].sort((a,b)=>a.date.localeCompare(b.date));}
 function selection(rows,date,todayDate){const exact=rows.find(r=>r.date===date)||{},metrics={};for(const [key] of defs){const observed=date===todayDate?rows.filter(r=>r.date<=date&&Number.isFinite(r[key])).sort((a,b)=>b.date.localeCompare(a.date))[0]:exact;if(observed&&Number.isFinite(observed[key]))metrics[key]={value:observed[key],date:observed.date,source:observed.sources?.[key]||observed.source};}return {metrics};}
 const fmt=(v,key)=>v==null?'—':key==='steps'?Math.round(v).toLocaleString():Number(v).toFixed(['sleep','hrv','strain'].includes(key)?1:0);
 const dailyQuestions=[['sleepQuality','Sleep quality','Bad','Great'],['soreness','Soreness','None','Very sore'],['wellbeing','How do you feel?','Bad','Great']];
