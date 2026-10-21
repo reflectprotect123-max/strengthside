@@ -222,6 +222,12 @@ function payloadOf(point: any, key: string) {
   return point?.[key] || point?.data?.[key] || null;
 }
 
+function stepsOf(point: any) {
+  const body = payloadOf(point, 'steps') || point?.steps || point;
+  if (typeof body !== 'object' || body == null) return finiteNumber(body);
+  return finiteNumber(body.count_sum) ?? finiteNumber(body.countSum) ?? finiteNumber(body.count) ?? finiteNumber(body.steps) ?? finiteNumber(body.sum);
+}
+
 function zoneMinutesOf(body: any) {
   const zone = body?.activeZoneMinutes;
   if (finiteNumber(zone) != null && (typeof zone === 'number' || typeof zone === 'string')) return finiteNumber(zone);
@@ -354,6 +360,7 @@ export function buildFitbitDays(input: {
   zoneMinutes?: any[];
   exercise?: any[];
   heartRate?: any[];
+  steps?: any[];
 } = {}) {
   const days = dayMap();
   for (const point of input.hrv || []) {
@@ -418,6 +425,12 @@ export function buildFitbitDays(input: {
     const row = ensure(days, date);
     if (row) row.exerciseCount = (row.exerciseCount || 0) + 1;
   }
+  for (const point of input.steps || []) {
+    const date = pointDate(point.interval?.civilStartTime) || pointDate(point.civilStartTime) || pointDate(point.date);
+    const row = ensure(days, date);
+    const count = stepsOf(point);
+    if (row && count != null && count >= 0) row.steps = Math.round(count);
+  }
   for (const point of input.heartRate || []) {
     const body = payloadOf(point, 'heartRate') || point;
     const date = pointDate(body.sampleTime?.civilTime) || pointDate(body.date) || pointDate(point.date);
@@ -425,7 +438,7 @@ export function buildFitbitDays(input: {
     const bpm = finiteNumber(body.beatsPerMinute) ?? finiteNumber(body.beatsPerMinuteAvg) ?? finiteNumber(body.averageBeatsPerMinute);
     if (row && bpm != null && row.heartRateBpm == null) row.heartRateBpm = bpm;
   }
-  const rows = [...days.values()].filter((row) => row.hrv != null || row.rhr != null || row.sleepPerformance != null || row.activeZoneMinutes != null).sort((a, b) => a.date.localeCompare(b.date));
+  const rows = [...days.values()].filter((row) => row.hrv != null || row.rhr != null || row.sleep != null || row.sleepPerformance != null || row.steps != null || row.activeZoneMinutes != null).sort((a, b) => a.date.localeCompare(b.date));
   for (const row of rows) {
     const prior = rows.filter((item) => item.date < row.date);
     row.recovery = recoveryScore({ hrv: row.hrv ?? null, rhr: row.rhr ?? null }, prior);
@@ -437,15 +450,20 @@ export function buildFitbitDays(input: {
 export function normalizeFitbitDays(rows: any[]) {
   const latest = [...rows].reverse().find((row) => row.hrv != null || row.rhr != null || row.recovery != null) || rows.at(-1) || {};
   const metricDates: Record<string, string> = {};
-  const sleep = [...rows].reverse().find((row) => row.sleepPerformance != null);
+  const sleep = [...rows].reverse().find((row) => row.sleepPerformance != null || row.sleep != null);
   const strain = [...rows].reverse().find((row) => row.strain != null);
-  if (sleep) metricDates.sleepPerformance = sleep.date;
+  const stepped = [...rows].reverse().find((row) => row.steps != null);
+  if (sleep?.sleepPerformance != null) metricDates.sleepPerformance = sleep.date;
+  if (sleep?.sleep != null) metricDates.sleepHours = sleep.date;
   if (strain) metricDates.strain = strain.date;
+  if (stepped) metricDates.steps = stepped.date;
   return {
     source: 'fitbit',
     date: latest.date || '',
     recoveryScore: latest.recovery ?? null,
     sleepPerformance: sleep?.sleepPerformance ?? null,
+    sleepHours: sleep?.sleep ?? null,
+    steps: stepped?.steps ?? null,
     hrvMs: latest.hrv ?? null,
     restingHr: latest.rhr ?? null,
     strain: strain?.strain ?? null,
@@ -500,6 +518,7 @@ export async function fetchFitbitSnapshot(accessToken: string, { historyDays = 1
     readPoints('sleep', () => listPoints('sleep', accessToken, between('sleep.interval.civil_end_time'), 25)),
     readPoints('active-zone-minutes', () => dailyRollup('active-zone-minutes', accessToken, start, exclusive), () => listPoints('active-zone-minutes', accessToken, between('activeZoneMinutes.interval.civil_start_time'), 100)),
     readPoints('exercise', () => listPoints('exercise', accessToken, between('exercise.interval.civil_start_time'), 25)),
+    readPoints('steps', () => dailyRollup('steps', accessToken, start, exclusive), () => listPoints('steps', accessToken, between('steps.interval.civil_start_time'), 100)),
     readPoints('heart-rate', () => dailyRollup('heart-rate', accessToken, heartStart, exclusive)),
   ]);
   const failed = series.filter((item) => item.error);
@@ -521,6 +540,7 @@ export async function fetchFitbitSnapshot(accessToken: string, { historyDays = 1
     zoneMinutes: points['active-zone-minutes'],
     exercise: points.exercise,
     heartRate: points['heart-rate'],
+    steps: points.steps,
   });
   return {
     normalized: normalizeFitbitDays(dailyMetrics),

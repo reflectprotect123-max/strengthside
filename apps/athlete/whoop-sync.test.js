@@ -16,7 +16,7 @@ test('legacy return is ignored; new denial return reports cancellation without s
  await w.Whoop.handleWhoopReturn('com.hybrid.strength://whoop?status=denied');assert.equal(count,0);assert.match(w.Whoop.uiMessage(),/cancelled/);assert.equal(w.S.settings.whoop.awaitingReturn,false);
 });
 
-test('the first sync pulls every stored day once, then later syncs ask for the day', async () => {
+test('a normal sync asks for the day, and only a full sync asks for the archive', async () => {
   const urls = [];
   const metrics = [
     { date: '2026-10-01', recovery: 60, hrv: 48, rhr: 54, sleep: 7, steps: 1000 },
@@ -24,32 +24,31 @@ test('the first sync pulls every stored day once, then later syncs ask for the d
   ];
   const w = fixture(async (url) => {
     urls.push(String(url));
-    const day = urls.length > 1;
+    const full = new URL(url).searchParams.get('history') === 'all';
     return { ok: true, json: async () => ({
       connected: true,
       historyTruncated: false,
       syncedAt: '2026-10-13T01:00:00.000Z',
-      normalized: { date: '2026-10-10', recoveryScore: day ? 71 : 70, hrvMs: 50, restingHr: 52 },
-      dailyMetrics: day ? [{ date: '2026-10-10', recovery: 71, hrv: 50, rhr: 52, sleep: 8, steps: 2000 }] : metrics,
+      normalized: { date: '2026-10-10', recoveryScore: full ? 70 : 71, hrvMs: 50, restingHr: 52 },
+      dailyMetrics: full ? metrics : [{ date: '2026-10-10', recovery: 71, hrv: 50, rhr: 52, sleep: 8, steps: 2000 }],
     }) };
   });
   runInNewContext(readFileSync(new URL('./strength-home.js', import.meta.url), 'utf8'), w);
   await w.Whoop.sync({ quiet: true });
-  assert.equal(new URL(urls[0]).searchParams.get('history'), 'all');
-  assert.equal(new URL(urls[0]).searchParams.get('backfill'), null);
+  assert.equal(new URL(urls[0]).searchParams.get('history'), 'day');
+  assert.equal(w.S.whoopHistory.length, 1);
+  await w.Whoop.sync({ quiet: true, full: true });
+  assert.equal(new URL(urls[1]).searchParams.get('history'), 'all');
   assert.equal(w.S.settings.whoop.historyBackfillAt, '2026-10-13T01:00:00.000Z');
-  assert.equal(w.S.whoopHistory.length, 2);
-  await w.Whoop.sync({ quiet: true });
-  assert.equal(new URL(urls[1]).searchParams.get('history'), 'day');
   assert.equal(w.S.whoopHistory.find((row) => row.date === '2026-10-01').recovery, 60);
-  assert.equal(w.S.whoopHistory.find((row) => row.date === '2026-10-10').recovery, 71);
+  assert.equal(w.S.whoopHistory.find((row) => row.date === '2026-10-10').recovery, 70);
 });
 
 test('a cut-off full history stays unmarked so the next sync tries again', async () => {
   const urls = [];
   const w = fixture(async (url) => { urls.push(String(url)); return { ok: true, json: async () => ({ connected: true, historyTruncated: true, syncedAt: '2026-10-13T01:00:00.000Z', dailyMetrics: [{ date: '2026-10-10', recovery: 70, hrv: 50, rhr: 52 }] }) }; });
   runInNewContext(readFileSync(new URL('./strength-home.js', import.meta.url), 'utf8'), w);
-  await w.Whoop.sync({ quiet: true });
+  await w.Whoop.sync({ quiet: true, full: true });
   assert.equal(new URL(urls[0]).searchParams.get('history'), 'all');
   assert.equal(w.S.settings.whoop.historyBackfillAt, undefined);
 });

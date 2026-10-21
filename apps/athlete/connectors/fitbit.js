@@ -27,11 +27,18 @@
     let changed = false;
     const recovery = finiteNum(n.recoveryScore), hrv = finiteNum(n.hrvMs), rhr = finiteNum(n.restingHr);
     const sleepPerf = finiteNum(n.sleepPerformance), strain = finiteNum(n.strain);
+    const sleepHours = finiteNum(n.sleepHours), steps = finiteNum(n.steps);
     if (recovery != null && recovery >= 0 && recovery <= 100) { c.whoopRecovery = Math.round(recovery); changed = true; }
     if (hrv != null && hrv > 0) { c.hrv = hrv; changed = true; }
     if (rhr != null && rhr > 0) { c.restingHr = rhr; changed = true; }
-    if (sleepPerf != null && sleepPerf >= 0 && sleepPerf <= 100) { c.whoopSleepPerformance = Math.round(sleepPerf); changed = true; }
-    if (strain != null && strain >= 0 && strain <= 21) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
+    const onSample = (key) => !n.metricDates || n.metricDates[key] == null || n.metricDates[key] === sampleDate;
+    if (sleepPerf != null && onSample('sleepPerformance') && sleepPerf >= 0 && sleepPerf <= 100) { c.whoopSleepPerformance = Math.round(sleepPerf); changed = true; }
+    if (strain != null && onSample('strain') && strain >= 0 && strain <= 21) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
+    if (sleepHours != null && onSample('sleepHours') && sleepHours >= 0 && sleepHours <= 24) { c.sleepHours = Math.round(sleepHours * 100) / 100; changed = true; }
+    if (steps != null && onSample('steps') && steps >= 0 && steps <= 2147483647) { c.steps = Math.round(steps); changed = true; }
+    if (global.StrengthHome && typeof global.StrengthHome.importHistory === 'function' && appState()) {
+      global.StrengthHome.importHistory(appState(), { normalized: n, dailyMetrics: meta.dailyMetrics || [], syncedAt: meta.syncedAt }, todayIso(), 'Fitbit');
+    }
     if (changed) {
       c.updatedAt = Date.now();
       c.fitbitSyncedAt = meta.syncedAt || n.capturedAt || new Date().toISOString();
@@ -137,7 +144,7 @@
     if (!opts.quiet) { ui.message = 'Syncing Fitbit…'; paint(); }
     try {
       const body = await api(FN.sync, { query: opts.full ? { history: 'all' } : {} });
-      if (body?.normalized) applyNormalized(body.normalized, { syncedAt: body.syncedAt });
+      if (body?.normalized || (body?.dailyMetrics || []).length) applyNormalized(body.normalized || { date: todayIso() }, { syncedAt: body.syncedAt, dailyMetrics: body.dailyMetrics || [] });
       const row = st();
       row.connected = body?.connected !== false;
       row.reconnect = false;
