@@ -1,20 +1,10 @@
 # Deploys the Fitbit / Google Health edge functions.
-# workflow_dispatch runs from a branch once this file is on the default branch.
-# A push of this branch runs it immediately and receives repository secrets.
-# pull_request runs do not receive SUPABASE_ACCESS_TOKEN.
+# workflow_dispatch only. A push or pull request does not receive
+# SUPABASE_ACCESS_TOKEN in this repo, so those events cannot ship.
 name: Deploy Fitbit edge
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - cursor/engine-fitbit-health-c537
-    paths:
-      - '.github/workflows/deploy-fitbit-edge.yml'
-      - 'supabase/functions/fitbit-*/**'
-      - 'supabase/functions/_shared/fitbit.ts'
-      - 'supabase/functions/_shared/oauth.ts'
-      - 'supabase/config.toml'
 
 permissions:
   contents: read
