@@ -1,37 +1,18 @@
 import { nativeAppId, publicOrigin } from '../_shared/auth.ts';
 import { methodGuard, preflight, redirect } from '../_shared/http.ts';
 import { consumePending, recordOAuthEvent, saveToken, syncRecord } from '../_shared/oauth.ts';
-import { exchangeFitbitCode, googleSubject } from '../_shared/fitbit.ts';
+import { exchangeFitbitCode, fitbitReturnLocation, googleSubject } from '../_shared/fitbit.ts';
 
 function allowedOutcome(outcome: string) {
   return /^[a-z0-9_=&-]+$/i.test(outcome) ? outcome : 'status=error';
 }
 
-function nativeDonePage(product: 'engine' | 'strength', outcome: string, requestedAppId?: string): Response {
-  const q = allowedOutcome(outcome);
-  const appId = nativeAppId(product, requestedAppId);
-  const deep = `${appId}://fitbit?${q}`;
-  const intent = `intent://fitbit?${q}#Intent;scheme=${appId};package=${appId};end`;
-  const label = appId === 'com.hybrid.strength' ? 'Hybrid Strength' : 'The Engine';
-  const html = `<!doctype html>
-<html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${label}</title>
-<meta http-equiv="refresh" content="0;url=${deep}">
-</head>
-<body style="font-family:system-ui,sans-serif;background:#111;color:#eee;padding:28px;line-height:1.5">
-<p>Fitbit finished. Returning to ${label}…</p>
-<p><a href="${deep}" style="color:#5ec4b4">Open ${label}</a></p>
-<p><a href="${intent}" style="color:#5ec4b4">Open ${label} (Android)</a></p>
-<p style="opacity:.7">If the app does not open, switch back and tap Sync Fitbit.</p>
-<script>location.replace(${JSON.stringify(deep)});</script>
-</body></html>`;
-  return new Response(html, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
-}
-
 function finish(kind: string, product: 'engine' | 'strength', outcome: string, requestedAppId?: string) {
-  if (kind === 'native') return nativeDonePage(product, outcome, requestedAppId);
-  return redirect(`${publicOrigin(product)}/?integration=fitbit&${allowedOutcome(outcome)}`, { 'cache-control': 'no-store' });
+  const q = allowedOutcome(outcome);
+  if (kind === 'native') {
+    return redirect(fitbitReturnLocation(nativeAppId(product, requestedAppId), q), { 'cache-control': 'no-store' });
+  }
+  return redirect(`${publicOrigin(product)}/?integration=fitbit&${q}`, { 'cache-control': 'no-store' });
 }
 
 Deno.serve(async (req) => {
@@ -63,14 +44,16 @@ Deno.serve(async (req) => {
       return finish(kind, product, 'status=error&message=invalid_oauth_response', requestedAppId);
     }
     const token = await exchangeFitbitCode(code, pending.codeVerifier);
-    const providerUserId = await googleSubject(token.access_token);
+    const providerUserId = (await googleSubject(token.access_token)) || pending.owner;
     await saveToken('fitbit', pending.owner, token, providerUserId);
     await syncRecord('fitbit', pending.owner, { provider: 'fitbit', connectedAt: new Date().toISOString(), providerUserId, reconnectRequired: false });
     await recordOAuthEvent('fitbit', { stage: 'callback', ok: true, error: null, kind, product });
     return finish(kind, product, 'status=connected', requestedAppId);
   } catch (error) {
-    console.error('[fitbit-callback]', (error as Error)?.message || error);
-    await recordOAuthEvent('fitbit', { stage: 'callback', ok: false, error: 'connection_failed', kind, product });
-    return finish(kind, product, 'status=error&message=connection_failed', requestedAppId);
+    const code = (error as { code?: string })?.code;
+    const safe = code && /^[a-z0-9_]+$/i.test(code) ? code : 'connection_failed';
+    console.error('[fitbit-callback]', safe);
+    await recordOAuthEvent('fitbit', { stage: 'callback', ok: false, error: safe, kind, product });
+    return finish(kind, product, `status=error&message=${safe}`, requestedAppId);
   }
 });

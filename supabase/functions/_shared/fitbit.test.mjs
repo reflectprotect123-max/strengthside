@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { build } from 'esbuild';
 
 const bundle = await build({
@@ -59,6 +60,20 @@ test('daily Google Health points become the WHOOP check-in shape', () => {
   assert.equal(latest.strain, 2);
   assert.ok(latest.recoveryScore > 50);
   assert.ok(latest.sleepPerformance > 80);
+});
+
+test('the native return is a real app redirect, not an HTML page', () => {
+  assert.equal(
+    fitbit.fitbitReturnLocation('com.hybrid.strength', 'status=error&message=connection_failed'),
+    'com.hybrid.strength://fitbit?status=error&message=connection_failed',
+  );
+  assert.equal(
+    fitbit.fitbitReturnLocation('com.hybrid.athlete', 'status=connected'),
+    'com.hybrid.athlete://fitbit?status=connected',
+  );
+  const callback = readFileSync(new URL('../fitbit-callback/index.ts', import.meta.url), 'utf8');
+  assert.match(callback, /redirect\(fitbitReturnLocation/);
+  assert.doesNotMatch(callback, /text\/html/);
 });
 
 test('the authorize URL is Google OAuth with PKCE and the three Health scopes', async () => {
