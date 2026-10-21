@@ -55,6 +55,66 @@ test('step rollups and sleep hours land on the normalized day', () => {
   assert.equal(latest.metricDates.steps, '2026-10-22');
 });
 
+test('a Sydney morning wake is keyed to the wake date, not the UTC end or the bedtime', () => {
+  assert.equal(fitbit.sydneyCivilDate(new Date('2026-10-21T21:30:00.000Z')), '2026-10-22');
+  const woke = fitbit.buildFitbitDays({
+    sleep: [{
+      sleep: {
+        metadata: { mainSleep: true },
+        interval: {
+          startTime: '2026-10-21T11:00:00Z',
+          endTime: '2026-10-21T20:30:00Z',
+          civilStartTime: { date: { year: 2026, month: 10, day: 21 } },
+          civilEndTime: { date: { year: 2026, month: 10, day: 22 } },
+        },
+        summary: { minutesAsleep: '450', minutesInSleepPeriod: '500' },
+      },
+    }],
+  });
+  assert.equal(woke[0].date, '2026-10-22');
+  const utcOnly = fitbit.buildFitbitDays({
+    sleep: [{
+      sleep: {
+        metadata: { mainSleep: true },
+        interval: { startTime: '2026-10-20T11:00:00Z', endTime: '2026-10-20T20:15:00Z', endUtcOffset: '39600s' },
+        summary: { minutesAsleep: '420' },
+      },
+    }],
+  });
+  assert.equal(utcOnly[0].date, '2026-10-21');
+});
+
+test('steps and strain from a physical timestamp use the Sydney day', () => {
+  const rows = fitbit.buildFitbitDays({
+    steps: [{ steps: { interval: { startTime: '2026-10-21T14:00:00Z', startUtcOffset: '+11:00' }, count: '1000' } }],
+    zoneMinutes: [{ interval: { startTime: '2026-10-21T14:00:00Z', startUtcOffset: '+11:00' }, activeZoneMinutes: { sumInFatBurnHeartZone: '30' } }],
+  });
+  assert.equal(rows.find((row) => row.steps === 1000).date, '2026-10-22');
+  assert.equal(rows.find((row) => row.strain === 2).date, '2026-10-22');
+});
+
+test('the sleep and step window includes the Sydney morning after UTC has already changed', async () => {
+  const calls = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url), body: init?.body });
+    return { ok: true, status: 200, json: async () => ({ dataPoints: [], rollupDataPoints: [] }) };
+  };
+  try {
+    await fitbit.fetchFitbitSnapshot('token', { historyDays: 14, now: new Date('2026-10-21T21:30:00.000Z') });
+  } finally {
+    globalThis.fetch = original;
+  }
+  const sleep = new URL(calls.find((call) => call.url.includes('/dataTypes/sleep/')).url).searchParams.get('filter');
+  assert.match(sleep, /sleep\.interval\.civil_end_time >= "2026-10-08"/);
+  assert.match(sleep, /sleep\.interval\.civil_end_time < "2026-10-23"/);
+  const steps = JSON.parse(calls.find((call) => call.url.includes('/dataTypes/steps/')).body);
+  assert.equal(steps.range.end.date.year, 2026);
+  assert.equal(steps.range.end.date.month, 10);
+  assert.equal(steps.range.end.date.day, 23);
+  assert.equal(steps.range.start.date.day, 8);
+});
+
 test('active zone minutes map into the 0–21 strain field', () => {
   assert.equal(fitbit.strainFromActiveZoneMinutes(15), 1);
   assert.equal(fitbit.strainFromActiveZoneMinutes(400), 21);
