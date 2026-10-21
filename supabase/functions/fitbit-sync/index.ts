@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
       dailyRecovery: snapshot.dailyRecovery,
       dailyStrain: snapshot.dailyStrain,
       warnings: snapshot.warnings || [],
+      seriesCounts: snapshot.seriesCounts || {},
       historyTruncated: snapshot.historyTruncated,
       modelVersion: SCORE_VERSION,
       syncedAt: snapshot.syncedAt,

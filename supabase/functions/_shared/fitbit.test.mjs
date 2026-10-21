@@ -78,7 +78,7 @@ test('one Health API failure keeps the readings from the calls that worked', asy
   try {
     const snap = await fitbit.fetchFitbitSnapshot('token', { historyDays: 2 });
     assert.equal(snap.normalized.hrvMs, 44);
-    assert.ok(snap.warnings.includes('daily-oxygen-saturation:403'));
+    assert.match(snap.warnings.join('|'), /daily-oxygen-saturation:403/);
   } finally {
     globalThis.fetch = original;
   }

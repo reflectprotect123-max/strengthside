@@ -226,7 +226,8 @@ async function listPoints(dataType: string, accessToken: string, filter: string,
   const points: any[] = [];
   let pageToken = '';
   for (let page = 0; page < 20 && points.length < 500; page += 1) {
-    const params = new URLSearchParams({ filter, pageSize: String(pageSize) });
+    const params = new URLSearchParams({ pageSize: String(pageSize) });
+    if (filter) params.set('filter', filter);
     if (pageToken) params.set('pageToken', pageToken);
     const body = await healthFetch(`/users/me/dataTypes/${dataType}/dataPoints?${params}`, accessToken);
     if (Array.isArray(body?.dataPoints)) points.push(...body.dataPoints);
@@ -454,7 +455,8 @@ export function normalizeFitbitDays(rows: any[]) {
 function failureLabel(type: string, error: any) {
   const status = Number(error?.status) || 0;
   const code = typeof error?.code === 'string' && /^[a-z0-9_]+$/i.test(error.code) ? error.code : 'failed';
-  return `${type}:${status || code}`;
+  const reason = String(error?.reason || '').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 80);
+  return `${type}:${status || code}${reason ? ':' + reason : ''}`;
 }
 
 async function readPoints(type: string, primary: () => Promise<any[]>, fallback?: () => Promise<any[]>) {
@@ -481,10 +483,10 @@ export async function fetchFitbitSnapshot(accessToken: string, { historyDays = 1
   const heartStart = addDays(exclusive, -Math.min(14, listDays + 1));
   const between = (field: string) => `${field} >= "${start}" AND ${field} < "${exclusive}"`;
   const series = await Promise.all([
-    readPoints('daily-heart-rate-variability', () => listPoints('daily-heart-rate-variability', accessToken, between('dailyHeartRateVariability.date'), 100)),
-    readPoints('daily-resting-heart-rate', () => listPoints('daily-resting-heart-rate', accessToken, between('dailyRestingHeartRate.date'), 100)),
-    readPoints('daily-oxygen-saturation', () => listPoints('daily-oxygen-saturation', accessToken, between('dailyOxygenSaturation.date'), 100)),
-    readPoints('daily-sleep-temperature-derivations', () => listPoints('daily-sleep-temperature-derivations', accessToken, between('dailySleepTemperatureDerivations.date'), 100)),
+    readPoints('daily-heart-rate-variability', () => listPoints('daily-heart-rate-variability', accessToken, between('dailyHeartRateVariability.date'), 100), () => listPoints('daily-heart-rate-variability', accessToken, '', 100)),
+    readPoints('daily-resting-heart-rate', () => listPoints('daily-resting-heart-rate', accessToken, between('dailyRestingHeartRate.date'), 100), () => listPoints('daily-resting-heart-rate', accessToken, '', 100)),
+    readPoints('daily-oxygen-saturation', () => listPoints('daily-oxygen-saturation', accessToken, between('dailyOxygenSaturation.date'), 100), () => listPoints('daily-oxygen-saturation', accessToken, '', 100)),
+    readPoints('daily-sleep-temperature-derivations', () => listPoints('daily-sleep-temperature-derivations', accessToken, between('dailySleepTemperatureDerivations.date'), 100), () => listPoints('daily-sleep-temperature-derivations', accessToken, '', 100)),
     readPoints('sleep', () => listPoints('sleep', accessToken, between('sleep.interval.civil_end_time'), 25)),
     readPoints('active-zone-minutes', () => dailyRollup('active-zone-minutes', accessToken, start, exclusive), () => listPoints('active-zone-minutes', accessToken, between('activeZoneMinutes.interval.civil_start_time'), 100)),
     readPoints('exercise', () => listPoints('exercise', accessToken, between('exercise.interval.civil_start_time'), 25)),
@@ -516,6 +518,7 @@ export async function fetchFitbitSnapshot(accessToken: string, { historyDays = 1
     dailyRecovery: dailyMetrics.filter((row) => row.recovery != null).map((row) => ({ date: row.date, recoveryScore: row.recovery })),
     dailyStrain: dailyMetrics.filter((row) => row.strain != null).map((row) => ({ date: row.date, strain: row.strain })),
     warnings: failed.map((item) => failureLabel(item.type, item.error)),
+    seriesCounts: Object.fromEntries(series.map((item) => [item.type, item.points.length])),
     historyTruncated: false,
     syncedAt: new Date().toISOString(),
   };
