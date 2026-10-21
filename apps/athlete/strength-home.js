@@ -10,9 +10,9 @@ function importHistory(state,body,todayDate,sourceLabel){
   const bucket=label==='Fitbit'?'fitbitHistory':'whoopHistory';
   const rows=body.dailyMetrics||body.dailyPhysiology||[];
   const map=new Map((state[bucket]||[]).map(r=>[r.date,r]));let count=0;
-  const all=[...rows];if(body.normalized){const n=body.normalized;const dated=key=>!n.metricDates||n.metricDates[key]===n.date?n[key]:null;all.push({date:n.date,recovery:n.recoveryScore,hrv:n.hrvMs,rhr:n.restingHr,sleep:n.sleepHours??n.sleep,steps:n.steps,sleepPerformance:dated('sleepPerformance'),strain:dated('strain')});}
+  const all=[...rows];if(body.normalized){const n=body.normalized;const dated=key=>!n.metricDates||n.metricDates[key]==null||n.metricDates[key]===n.date?n[key]:null;all.push({date:n.date,recovery:n.recoveryScore,hrv:n.hrvMs,rhr:n.restingHr,sleep:dated('sleepHours')??(!n.metricDates||n.metricDates.sleepHours==null?n.sleep:null),steps:dated('steps'),sleepPerformance:dated('sleepPerformance'),strain:dated('strain')});}
   for(const r of body.dailyStrain||[])all.push({date:r.date,strain:r.strain});
-  for(const [key,date] of Object.entries(body.normalized?.metricDates||{}))if(['sleepPerformance','strain'].includes(key))all.push({date,[key]:body.normalized[key]});
+  for(const [key,date] of Object.entries(body.normalized?.metricDates||{})){if(key==='sleepPerformance')all.push({date,sleepPerformance:body.normalized.sleepPerformance});else if(key==='strain')all.push({date,strain:body.normalized.strain});else if(key==='sleepHours')all.push({date,sleep:body.normalized.sleepHours});else if(key==='steps')all.push({date,steps:body.normalized.steps});}
   for(const r of all){const date=day(r.date);if(!date||date>todayDate)continue;const old=map.get(date)||{date,source:label},row={...old,sources:{...old.sources}},c=state.checkin[date]||(state.checkin[date]={date});let changed=false;
     const aliases={recovery:'recoveryScore',hrv:'hrvMs',rhr:'restingHr',sleep:'sleepHours'};
     for(const [key,,,min,max,field] of defs){let value=number(r[key]??r[aliases[key]]);if(key==='steps'&&value!=null&&Math.abs(value-Math.round(value))<0.001)value=Math.round(value);if(value==null||value<min||value>max||(key==='hrv'&&value===0)||(key==='steps'&&!Number.isSafeInteger(value)))continue;row[key]=value;row.sources[key]=r.sources?.[key]||label;c[field]=value;changed=true;}

@@ -139,7 +139,13 @@
   function paint() {
     if (typeof global.render === 'function') global.render();
   }
-  async function sync(opts) {
+  let syncPromise = null;
+  function sync(opts) {
+    if (syncPromise) return syncPromise;
+    syncPromise = performSync(opts).finally(function () { syncPromise = null; });
+    return syncPromise;
+  }
+  async function performSync(opts) {
     opts = opts || {};
     if (!opts.quiet) { ui.message = 'Syncing Fitbit…'; paint(); }
     try {

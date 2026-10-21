@@ -42,6 +42,22 @@ test('Fitbit sync writes the same check-in fields WHOOP uses', async () => {
   assert.equal(window.S.settings.fitbit.connected, true);
 });
 
+test('two Fitbit syncs share one request', async () => {
+  let calls = 0;
+  let finish;
+  const window = fixture(async () => {
+    calls += 1;
+    await new Promise((resolve) => { finish = resolve; });
+    return { ok: true, json: async () => ({ connected: true, syncedAt: '2026-10-21T01:00:00Z', normalized: { date: '2026-10-21', hrvMs: 40, restingHr: 60 } }) };
+  });
+  const first = window.Fitbit.sync({ quiet: true });
+  const second = window.Fitbit.sync({ quiet: true });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(calls, 1);
+  finish();
+  await Promise.all([first, second]);
+});
+
 test('the athlete Me page offers Fitbit beside WHOOP', () => {
   const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
