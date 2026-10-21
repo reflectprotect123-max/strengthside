@@ -32,6 +32,17 @@ test('sleep performance rewards eight hours and deep plus REM', () => {
   assert.equal(fitbit.sleepPerformance({ minutesAsleep: 0 }), null);
 });
 
+test('daily rollup zone minutes use the summed field', () => {
+  const rows = fitbit.buildFitbitDays({
+    zoneMinutes: [{
+      interval: { civilStartTime: { year: 2026, month: 10, day: 21 } },
+      activeZoneMinutes: { activeZoneMinutes_sum: '30' },
+    }],
+  });
+  assert.equal(rows[0].activeZoneMinutes, 30);
+  assert.equal(rows[0].strain, 2);
+});
+
 test('active zone minutes map into the 0–21 strain field', () => {
   assert.equal(fitbit.strainFromActiveZoneMinutes(15), 1);
   assert.equal(fitbit.strainFromActiveZoneMinutes(400), 21);

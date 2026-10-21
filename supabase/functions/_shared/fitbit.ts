@@ -222,6 +222,18 @@ function payloadOf(point: any, key: string) {
   return point?.[key] || point?.data?.[key] || null;
 }
 
+function zoneMinutesOf(body: any) {
+  const zone = body?.activeZoneMinutes;
+  if (finiteNumber(zone) != null && (typeof zone === 'number' || typeof zone === 'string')) return finiteNumber(zone);
+  if (!zone || typeof zone !== 'object') return null;
+  const sums = Object.entries(zone)
+    .filter(([key]) => /minute/i.test(key) && /_sum$/i.test(key))
+    .map(([, value]) => finiteNumber(value))
+    .filter((value): value is number => value != null);
+  if (sums.length) return sums.reduce((total, value) => total + value, 0);
+  return finiteNumber(zone.activeZoneMinutes) ?? finiteNumber(zone.total) ?? finiteNumber(zone.sum) ?? finiteNumber(zone.count);
+}
+
 async function listPoints(dataType: string, accessToken: string, filter: string, pageSize: number) {
   const points: any[] = [];
   let pageToken = '';
@@ -390,16 +402,10 @@ export function buildFitbitDays(input: {
     });
   }
   for (const point of input.zoneMinutes || []) {
-    const body = payloadOf(point, 'activeZoneMinutes') || point;
-    const date = pointDate(body.interval?.civilStartTime) || pointDate(body.date) || pointDate(point.date);
+    const payload = payloadOf(point, 'activeZoneMinutes') || point;
+    const date = pointDate(point.interval?.civilStartTime) || pointDate(point.civilStartTime) || pointDate(payload?.interval?.civilStartTime) || pointDate(payload?.date) || pointDate(point.date);
     const row = ensure(days, date);
-    const zone = body.activeZoneMinutes;
-    const minutes = finiteNumber(zone)
-      ?? finiteNumber(zone?.activeZoneMinutes)
-      ?? finiteNumber(zone?.total)
-      ?? finiteNumber(zone?.sum)
-      ?? finiteNumber(zone?.activeZoneMinutesSum)
-      ?? finiteNumber(zone?.count);
+    const minutes = zoneMinutesOf(point?.activeZoneMinutes != null ? point : { activeZoneMinutes: payload });
     if (row && minutes != null) row.activeZoneMinutes = (row.activeZoneMinutes || 0) + minutes;
   }
   for (const point of input.exercise || []) {
