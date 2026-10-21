@@ -32,6 +32,17 @@ test('sleep performance rewards eight hours and deep plus REM', () => {
   assert.equal(fitbit.sleepPerformance({ minutesAsleep: 0 }), null);
 });
 
+test('daily rollup zone minutes use the summed field', () => {
+  const rows = fitbit.buildFitbitDays({
+    zoneMinutes: [{
+      interval: { civilStartTime: { year: 2026, month: 10, day: 21 } },
+      activeZoneMinutes: { sumInFatBurnHeartZone: '10', sumInCardioHeartZone: '20' },
+    }],
+  });
+  assert.equal(rows[0].activeZoneMinutes, 30);
+  assert.equal(rows[0].strain, 2);
+});
+
 test('active zone minutes map into the 0–21 strain field', () => {
   assert.equal(fitbit.strainFromActiveZoneMinutes(15), 1);
   assert.equal(fitbit.strainFromActiveZoneMinutes(400), 21);
@@ -60,6 +71,28 @@ test('daily Google Health points become the WHOOP check-in shape', () => {
   assert.equal(latest.strain, 2);
   assert.ok(latest.recoveryScore > 50);
   assert.ok(latest.sleepPerformance > 80);
+});
+
+test('one Health API failure keeps the readings from the calls that worked', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const target = String(url);
+    if (target.includes('daily-oxygen-saturation')) {
+      return { ok: false, status: 403, json: async () => ({ error: { status: 'PERMISSION_DENIED', message: 'spo2 denied' } }) };
+    }
+    if (target.includes('dailyRollUp')) return { ok: true, status: 200, json: async () => ({ rollupDataPoints: [] }) };
+    if (target.includes('daily-heart-rate-variability')) {
+      return { ok: true, status: 200, json: async () => ({ dataPoints: [{ dailyHeartRateVariability: { date: { year: 2026, month: 10, day: 21 }, averageHeartRateVariabilityMilliseconds: 44 } }] }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ dataPoints: [] }) };
+  };
+  try {
+    const snap = await fitbit.fetchFitbitSnapshot('token', { historyDays: 2 });
+    assert.equal(snap.normalized.hrvMs, 44);
+    assert.match(snap.warnings.join('|'), /daily-oxygen-saturation:403/);
+  } finally {
+    globalThis.fetch = original;
+  }
 });
 
 test('the native return is a real app redirect, not an HTML page', () => {

@@ -50,18 +50,27 @@ Deno.serve(async (req) => {
       connected: true,
       provider: 'fitbit',
       normalized: snapshot.normalized,
-      dailyMetrics: saved.dailyMetrics,
-      dailyRecovery: saved.dailyRecovery,
-      dailyStrain: saved.dailyStrain,
+      dailyMetrics: snapshot.dailyMetrics,
+      dailyRecovery: snapshot.dailyRecovery,
+      dailyStrain: snapshot.dailyStrain,
+      warnings: snapshot.warnings || [],
+      seriesCounts: snapshot.seriesCounts || {},
       historyTruncated: snapshot.historyTruncated,
       modelVersion: SCORE_VERSION,
       syncedAt: snapshot.syncedAt,
+      storedDays: Array.isArray(saved.dailyMetrics) ? saved.dailyMetrics.length : 0,
     });
   } catch (error) {
     if (isFitbitReconnect(error)) {
       try { await markReconnect(owner); } catch { /* status still tells the athlete to reconnect */ }
     }
     const response = fitbitErrorResponse(error, 'sync_failed');
-    return json(response.body, response.status);
+    const failures = Array.isArray((error as { failures?: unknown[] })?.failures)
+      ? (error as { failures: unknown[] }).failures.filter((item): item is string => typeof item === 'string' && /^[a-z0-9_:-]+$/i.test(item)).slice(0, 12)
+      : [];
+    const body: { error: string; connected?: boolean; failures?: string[] } = response.body;
+    if (failures.length) body.failures = failures;
+    console.error('[fitbit-sync]', failures.join(',') || (error as { code?: string })?.code || 'sync_failed');
+    return json(body, response.status);
   }
 });

@@ -60,16 +60,24 @@
     if (!t) { const error = new Error('Sign in before connecting Fitbit'); error.code = 'auth_required'; throw error; }
     const cfg = global.STRENGTH_CONFIG || global.ENGINE_CONFIG || {};
     let res;
+    const AC = global.AbortController;
+    const controller = AC ? new AC() : null;
+    const timer = controller && global.setTimeout ? global.setTimeout(function () { controller.abort(); }, opts.timeoutMs || 25000) : 0;
     try {
       res = await fetch(Whoop.fnUrl(path, opts.query), {
         method: opts.method || 'GET',
         headers: { authorization: 'Bearer ' + t, apikey: cfg.supabaseAnon || '', 'x-hybrid-product': cfg.hybridProduct || 'strength', accept: 'application/json' },
         cache: 'no-store',
+        signal: controller ? controller.signal : undefined,
       });
     } catch (err) {
-      const error = new Error('Fitbit service is down — try again in a minute');
+      const timedOut = err && err.name === 'AbortError';
+      const error = new Error(timedOut ? 'Fitbit sync timed out — try again' : 'Fitbit service is down — try again in a minute');
       error.cause = err;
+      error.code = timedOut ? 'timeout' : 'fitbit_unreachable';
       throw error;
+    } finally {
+      if (timer) global.clearTimeout(timer);
     }
     if (requestAccount && requestAccount !== appState()?.accountId) throw new Error('Account changed during Fitbit sync');
     let body = null;
@@ -85,7 +93,8 @@
       throw error;
     }
     if (!res.ok) {
-      const error = new Error((body && body.error) || ('Fitbit request failed (' + res.status + ')'));
+      const failures = body && Array.isArray(body.failures) ? body.failures.filter(function (item) { return typeof item === 'string'; }).slice(0, 8) : [];
+      const error = new Error(failures.length ? failures.join(', ') : ((body && body.error) || ('Fitbit request failed (' + res.status + ')')));
       error.status = res.status;
       throw error;
     }
@@ -120,19 +129,30 @@
       throw err;
     } finally { ui.busy = false; }
   }
+  function paint() {
+    if (typeof global.render === 'function') global.render();
+  }
   async function sync(opts) {
     opts = opts || {};
-    if (!opts.quiet) ui.message = 'Syncing Fitbit…';
-    const body = await api(FN.sync, { query: opts.full ? { history: 'all' } : {} });
-    if (body?.normalized) applyNormalized(body.normalized, { syncedAt: body.syncedAt });
-    const row = st();
-    row.connected = body?.connected !== false;
-    row.reconnect = false;
-    row.lastSyncAt = body?.syncedAt || new Date().toISOString();
-    if (typeof global.save === 'function') global.save();
-    ui.message = body?.normalized ? 'Fitbit synced' : 'Fitbit connected · no dated readings yet';
-    if (typeof global.render === 'function') global.render();
-    return body;
+    if (!opts.quiet) { ui.message = 'Syncing Fitbit…'; paint(); }
+    try {
+      const body = await api(FN.sync, { query: opts.full ? { history: 'all' } : {} });
+      if (body?.normalized) applyNormalized(body.normalized, { syncedAt: body.syncedAt });
+      const row = st();
+      row.connected = body?.connected !== false;
+      row.reconnect = false;
+      row.lastSyncAt = body?.syncedAt || new Date().toISOString();
+      if (typeof global.save === 'function') global.save();
+      ui.message = body?.normalized ? 'Fitbit synced' : 'Fitbit connected · no dated readings yet';
+      return body;
+    } catch (err) {
+      ui.message = err.code === 'reconnect_fitbit'
+        ? 'Reconnect Fitbit — the Google testing login expired'
+        : (err.message || 'Fitbit sync failed');
+      throw err;
+    } finally {
+      paint();
+    }
   }
   async function refreshStatus() {
     const body = await api(FN.status);

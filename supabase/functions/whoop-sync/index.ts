@@ -62,13 +62,15 @@ Deno.serve(async (req) => {
     const minimumDays = dayHistory ? 2 : 7;
     const { snapshot } = await fetchSnapshotForOwner(owner, token, historyDays, allHistory, minimumDays);
     const saved = await syncRecord('whoop', owner, snapshot);
+    // A day refresh must not ship the whole stored archive. The phone was parsing ~1MB and rewriting local storage for every past day before it could leave "Syncing WHOOP…".
+    const responseMetrics = allHistory || backfill ? saved : snapshot;
     return json({
       connected: true,
       provider: 'whoop',
       normalized: snapshot.normalized,
       dailyStrain: snapshot.dailyStrain,
-      dailyRecovery: saved.dailyRecovery,
-      dailyMetrics: saved.dailyMetrics,
+      dailyRecovery: responseMetrics.dailyRecovery,
+      dailyMetrics: responseMetrics.dailyMetrics,
       historyTruncated: snapshot.historyTruncated,
       modelVersion: 'whoop-history-v3',
       stepsStatus: snapshot.dailyMetrics.some((r: any) => r.steps != null) ? 'ok' : 'no_dated_readings',

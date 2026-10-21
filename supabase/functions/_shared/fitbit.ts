@@ -23,12 +23,16 @@ export class FitbitError extends Error {
   status: number;
   code: string;
   kind: string;
-  constructor(message: string, { code = 'fitbit_error', kind = 'fitbit', status = 0 }: { code?: string; kind?: string; status?: number } = {}) {
+  reason: string;
+  failures: string[];
+  constructor(message: string, { code = 'fitbit_error', kind = 'fitbit', status = 0, reason = '', failures = [] }: { code?: string; kind?: string; status?: number; reason?: string; failures?: string[] } = {}) {
     super(message);
     this.name = 'FitbitError';
     this.code = code;
     this.kind = kind;
     this.status = status;
+    this.reason = reason;
+    this.failures = failures;
   }
 }
 
@@ -172,14 +176,24 @@ export async function revokeFitbitToken(token: any) {
   return true;
 }
 
+function googleReason(body: any) {
+  const status = typeof body?.error?.status === 'string' ? body.error.status : '';
+  const message = typeof body?.error?.message === 'string' ? body.error.message : '';
+  return [status, message].filter(Boolean).join(': ')
+    .replace(/ya29\.[A-Za-z0-9_-]+/g, '[token]')
+    .replace(/Bearer\s+\S+/gi, 'Bearer [token]')
+    .slice(0, 160);
+}
+
 async function healthFetch(path: string, accessToken: string, init: RequestInit = {}) {
   const response = await fetch(path.startsWith('http') ? path : `${API}${path}`, {
     ...init,
+    signal: init.signal || AbortSignal.timeout(12_000),
     headers: { accept: 'application/json', authorization: `Bearer ${accessToken}`, ...(init.headers || {}) },
   });
   if (!response.ok) {
-    await response.text().catch(() => '');
-    throw new FitbitError('Google Health request failed', { code: 'api_request_failed', kind: 'api', status: response.status });
+    const body = await response.json().catch(() => null);
+    throw new FitbitError('Google Health request failed', { code: 'api_request_failed', kind: 'api', status: response.status, reason: googleReason(body) });
   }
   if (response.status === 204) return null;
   return await response.json();
@@ -208,11 +222,28 @@ function payloadOf(point: any, key: string) {
   return point?.[key] || point?.data?.[key] || null;
 }
 
+function zoneMinutesOf(body: any) {
+  const zone = body?.activeZoneMinutes;
+  if (finiteNumber(zone) != null && (typeof zone === 'number' || typeof zone === 'string')) return finiteNumber(zone);
+  if (!zone || typeof zone !== 'object') return null;
+  const zoneParts = ['sumInFatBurnHeartZone', 'sumInCardioHeartZone', 'sumInPeakHeartZone']
+    .map((key) => finiteNumber(zone[key]))
+    .filter((value): value is number => value != null);
+  if (zoneParts.length) return zoneParts.reduce((total, value) => total + value, 0);
+  const sums = Object.entries(zone)
+    .filter(([key]) => /minute/i.test(key) && /_sum$/i.test(key))
+    .map(([, value]) => finiteNumber(value))
+    .filter((value): value is number => value != null);
+  if (sums.length) return sums.reduce((total, value) => total + value, 0);
+  return finiteNumber(zone.activeZoneMinutes) ?? finiteNumber(zone.total) ?? finiteNumber(zone.sum) ?? finiteNumber(zone.count);
+}
+
 async function listPoints(dataType: string, accessToken: string, filter: string, pageSize: number) {
   const points: any[] = [];
   let pageToken = '';
   for (let page = 0; page < 20 && points.length < 500; page += 1) {
-    const params = new URLSearchParams({ filter, pageSize: String(pageSize) });
+    const params = new URLSearchParams({ pageSize: String(pageSize) });
+    if (filter) params.set('filter', filter);
     if (pageToken) params.set('pageToken', pageToken);
     const body = await healthFetch(`/users/me/dataTypes/${dataType}/dataPoints?${params}`, accessToken);
     if (Array.isArray(body?.dataPoints)) points.push(...body.dataPoints);
@@ -230,13 +261,23 @@ function civilRange(start: string, end: string) {
   return { start: part(start), end: part(end) };
 }
 
+function rollupPoints(body: any) {
+  const rows = Array.isArray(body?.rollupDataPoints) ? body.rollupDataPoints
+    : Array.isArray(body?.dataPoints) ? body.dataPoints
+    : Array.isArray(body?.buckets) ? body.buckets
+    : [];
+  return rows.map((point: any) => point?.civilStartTime && !point.interval
+    ? { ...point, interval: { civilStartTime: point.civilStartTime } }
+    : point);
+}
+
 async function dailyRollup(dataType: string, accessToken: string, start: string, end: string) {
   const body = await healthFetch(`/users/me/dataTypes/${dataType}/dataPoints:dailyRollUp`, accessToken, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ range: civilRange(start, end), windowSizeDays: 1, dataSourceFamily: 'users/me/dataSourceFamilies/google-wearables' }),
   });
-  return Array.isArray(body?.dataPoints) ? body.dataPoints : Array.isArray(body?.buckets) ? body.buckets : [];
+  return rollupPoints(body);
 }
 
 function median(values: number[]) {
@@ -365,10 +406,10 @@ export function buildFitbitDays(input: {
     });
   }
   for (const point of input.zoneMinutes || []) {
-    const body = payloadOf(point, 'activeZoneMinutes') || point;
-    const date = pointDate(body.interval?.civilStartTime) || pointDate(body.date) || pointDate(point.date);
+    const payload = payloadOf(point, 'activeZoneMinutes') || point;
+    const date = pointDate(point.interval?.civilStartTime) || pointDate(point.civilStartTime) || pointDate(payload?.interval?.civilStartTime) || pointDate(payload?.date) || pointDate(point.date);
     const row = ensure(days, date);
-    const minutes = finiteNumber(body.activeZoneMinutes);
+    const minutes = zoneMinutesOf(point?.activeZoneMinutes != null ? point : { activeZoneMinutes: payload });
     if (row && minutes != null) row.activeZoneMinutes = (row.activeZoneMinutes || 0) + minutes;
   }
   for (const point of input.exercise || []) {
@@ -381,7 +422,7 @@ export function buildFitbitDays(input: {
     const body = payloadOf(point, 'heartRate') || point;
     const date = pointDate(body.sampleTime?.civilTime) || pointDate(body.date) || pointDate(point.date);
     const row = ensure(days, date);
-    const bpm = finiteNumber(body.beatsPerMinute) ?? finiteNumber(body.averageBeatsPerMinute);
+    const bpm = finiteNumber(body.beatsPerMinute) ?? finiteNumber(body.beatsPerMinuteAvg) ?? finiteNumber(body.averageBeatsPerMinute);
     if (row && bpm != null && row.heartRateBpm == null) row.heartRateBpm = bpm;
   }
   const rows = [...days.values()].filter((row) => row.hrv != null || row.rhr != null || row.sleepPerformance != null || row.activeZoneMinutes != null).sort((a, b) => a.date.localeCompare(b.date));
@@ -421,27 +462,73 @@ export function normalizeFitbitDays(rows: any[]) {
   };
 }
 
+function failureLabel(type: string, error: any) {
+  const status = Number(error?.status) || 0;
+  const code = typeof error?.code === 'string' && /^[a-z0-9_]+$/i.test(error.code) ? error.code : 'failed';
+  const reason = String(error?.reason || '').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 80);
+  return `${type}:${status || code}${reason ? ':' + reason : ''}`;
+}
+
+async function readPoints(type: string, primary: () => Promise<any[]>, fallback?: () => Promise<any[]>) {
+  try {
+    return { type, points: await primary(), error: null as any };
+  } catch (error) {
+    if ((error as { status?: number })?.status === 401) throw error;
+    if (!fallback) return { type, points: [] as any[], error };
+    try {
+      return { type, points: await fallback(), error: null as any };
+    } catch (fallbackError) {
+      if ((fallbackError as { status?: number })?.status === 401) throw fallbackError;
+      return { type, points: [] as any[], error: fallbackError };
+    }
+  }
+}
+
 export async function fetchFitbitSnapshot(accessToken: string, { historyDays = 10 } = {}) {
   const end = new Date().toISOString().slice(0, 10);
-  const start = addDays(end, -Math.max(1, Math.min(100, historyDays)));
+  // Heart-rate rollup accepts at most 14 civil days. A 90-day list window plus the exclusive end is 91 days, over the other rollup cap.
+  const listDays = Math.max(1, Math.min(89, historyDays));
+  const start = addDays(end, -listDays);
   const exclusive = addDays(end, 1);
+  const heartStart = addDays(exclusive, -Math.min(14, listDays + 1));
   const between = (field: string) => `${field} >= "${start}" AND ${field} < "${exclusive}"`;
-  const [hrv, resting, spo2, temperature, sleep, zoneMinutes, exercise, heartRate] = await Promise.all([
-    listPoints('daily-heart-rate-variability', accessToken, between('dailyHeartRateVariability.date'), 100),
-    listPoints('daily-resting-heart-rate', accessToken, between('dailyRestingHeartRate.date'), 100),
-    listPoints('daily-oxygen-saturation', accessToken, between('dailyOxygenSaturation.date'), 100),
-    listPoints('daily-sleep-temperature-derivations', accessToken, between('dailySleepTemperatureDerivations.date'), 100),
-    listPoints('sleep', accessToken, between('sleep.interval.civil_end_time'), 25),
-    dailyRollup('active-zone-minutes', accessToken, start, exclusive).catch(() => listPoints('active-zone-minutes', accessToken, between('activeZoneMinutes.interval.civil_start_time'), 100)),
-    listPoints('exercise', accessToken, between('exercise.interval.civil_start_time'), 25),
-    dailyRollup('heart-rate', accessToken, start, exclusive).catch(() => []),
+  const series = await Promise.all([
+    readPoints('daily-heart-rate-variability', () => listPoints('daily-heart-rate-variability', accessToken, between('dailyHeartRateVariability.date'), 100), () => listPoints('daily-heart-rate-variability', accessToken, '', 100)),
+    readPoints('daily-resting-heart-rate', () => listPoints('daily-resting-heart-rate', accessToken, between('dailyRestingHeartRate.date'), 100), () => listPoints('daily-resting-heart-rate', accessToken, '', 100)),
+    readPoints('daily-oxygen-saturation', () => listPoints('daily-oxygen-saturation', accessToken, between('dailyOxygenSaturation.date'), 100), () => listPoints('daily-oxygen-saturation', accessToken, '', 100)),
+    readPoints('daily-sleep-temperature-derivations', () => listPoints('daily-sleep-temperature-derivations', accessToken, between('dailySleepTemperatureDerivations.date'), 100), () => listPoints('daily-sleep-temperature-derivations', accessToken, '', 100)),
+    readPoints('sleep', () => listPoints('sleep', accessToken, between('sleep.interval.civil_end_time'), 25)),
+    readPoints('active-zone-minutes', () => dailyRollup('active-zone-minutes', accessToken, start, exclusive), () => listPoints('active-zone-minutes', accessToken, between('activeZoneMinutes.interval.civil_start_time'), 100)),
+    readPoints('exercise', () => listPoints('exercise', accessToken, between('exercise.interval.civil_start_time'), 25)),
+    readPoints('heart-rate', () => dailyRollup('heart-rate', accessToken, heartStart, exclusive)),
   ]);
-  const dailyMetrics = buildFitbitDays({ hrv, resting, spo2, temperature, sleep, zoneMinutes, exercise, heartRate });
+  const failed = series.filter((item) => item.error);
+  if (failed.length === series.length) {
+    throw new FitbitError('Google Health request failed', {
+      code: 'api_request_failed',
+      kind: 'api',
+      status: Number(failed.find((item) => item.error?.status)?.error?.status) || 502,
+      failures: failed.map((item) => failureLabel(item.type, item.error)),
+    });
+  }
+  const points = Object.fromEntries(series.map((item) => [item.type, item.points]));
+  const dailyMetrics = buildFitbitDays({
+    hrv: points['daily-heart-rate-variability'],
+    resting: points['daily-resting-heart-rate'],
+    spo2: points['daily-oxygen-saturation'],
+    temperature: points['daily-sleep-temperature-derivations'],
+    sleep: points.sleep,
+    zoneMinutes: points['active-zone-minutes'],
+    exercise: points.exercise,
+    heartRate: points['heart-rate'],
+  });
   return {
     normalized: normalizeFitbitDays(dailyMetrics),
     dailyMetrics,
     dailyRecovery: dailyMetrics.filter((row) => row.recovery != null).map((row) => ({ date: row.date, recoveryScore: row.recovery })),
     dailyStrain: dailyMetrics.filter((row) => row.strain != null).map((row) => ({ date: row.date, strain: row.strain })),
+    warnings: failed.map((item) => failureLabel(item.type, item.error)),
+    seriesCounts: Object.fromEntries(series.map((item) => [item.type, item.points.length])),
     historyTruncated: false,
     syncedAt: new Date().toISOString(),
   };
