@@ -9499,7 +9499,7 @@ async function signOut(){try{if(S.accountId)localStorage.setItem('engine-account
 function accountHtml(){
   const email=S.settings.whoop?.email,connected=S.settings.whoop?.connected;
   return '<section class="pg-card engine-account"><h2>Account and WHOOP sync</h2>'+(email?
-    '<p>'+esc(email)+'</p><button class="method-secondary" onclick="'+(connected?'EngineApp.refreshWhoop()':'EngineApp.connectWhoop()')+'" '+(busy?'disabled':'')+'>'+ (connected?'Refresh WHOOP':'Connect WHOOP account')+'</button><details><summary>Account</summary><button class="method-secondary" onclick="EngineApp.signOut()">Sign out</button></details>':
+    '<p>'+esc(email)+'</p><button class="method-secondary" onclick="'+(connected?'EngineApp.refreshWhoop()':'EngineApp.connectWhoop()')+'" '+(busy?'disabled':'')+'>'+ (connected?'Refresh WHOOP':'Connect WHOOP account')+'</button><button class="method-secondary" onclick="'+(S.settings.fitbit?.reconnect||!S.settings.fitbit?.connected?'Fitbit.connect()':'Fitbit.sync()')+'">'+(S.settings.fitbit?.reconnect?'Reconnect Fitbit':S.settings.fitbit?.connected?'Sync Fitbit':'Connect Fitbit')+'</button><details><summary>Account</summary><button class="method-secondary" onclick="EngineApp.signOut()">Sign out</button></details>':
     '<label>Email<input id="engineEmail" type="email" autocomplete="username"></label><label>Password<input id="enginePassword" type="password" autocomplete="current-password"></label><button class="method-load" onclick="EngineApp.signIn()">Sign in</button>')+
     '<p role="status">'+esc(accountMessage)+'</p></section>';
 }
@@ -9603,6 +9603,6 @@ const baseRender=window.render;window.render=function(){
 };
 render();
 })();
-</script><script src="hallway.js"></script></body>
+</script><script src="../connectors/fitbit.js"></script><script src="hallway.js"></script></body>
 </html>
 <!-- Source snapshot of the approved new HTML. Native integrations are added by scripts/conditioning/build.mjs. -->

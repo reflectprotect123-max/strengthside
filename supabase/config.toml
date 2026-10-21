@@ -38,3 +38,19 @@ enabled = true
 [functions.brain-coach]
 # This route verifies ES256 user tokens through auth.getUser in its handler.
 verify_jwt = false
+
+# Fitbit routes check the user JWT inside the handler. The callback is a Google redirect and has no Supabase session.
+[functions.fitbit-connect]
+verify_jwt = false
+
+[functions.fitbit-callback]
+verify_jwt = false
+
+[functions.fitbit-sync]
+verify_jwt = false
+
+[functions.fitbit-status]
+verify_jwt = false
+
+[functions.fitbit-disconnect]
+verify_jwt = false

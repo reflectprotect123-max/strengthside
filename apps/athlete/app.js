@@ -688,10 +688,14 @@ function meHtml() {
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
           <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p><p class="stub" id="whoopAccountStatus" role="status">${esc(window.Whoop?.uiMessage() || '')}</p>
+          <p class="stub">Fitbit · ${S.settings.fitbit?.reconnect ? 'Reconnect needed' : S.settings.fitbit?.connected ? 'Connected' : 'Not linked yet'}</p><p class="stub" id="fitbitAccountStatus" role="status">${esc(window.Fitbit?.uiMessage() || '')}</p>
           <div class="account-actions">
             ${w.connected
               ? '<button type="button" class="btn" onclick="Whoop.syncAll()">Sync WHOOP</button><button type="button" class="btn" onclick="StrengthHome.importAll()">Import WHOOP history</button>'
               : '<button type="button" class="btn" onclick="Whoop.connect()">Connect WHOOP</button>'}
+            ${S.settings.fitbit?.connected && !S.settings.fitbit?.reconnect
+              ? '<button type="button" class="btn" onclick="Fitbit.sync()">Sync Fitbit</button>'
+              : '<button type="button" class="btn" onclick="Fitbit.connect()">' + (S.settings.fitbit?.reconnect ? 'Reconnect Fitbit' : 'Connect Fitbit') + '</button>'}
             <button type="button" class="btn" onclick="Whoop.signOut()">Sign out</button>
           </div>
         </div>
