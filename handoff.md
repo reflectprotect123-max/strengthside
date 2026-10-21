@@ -1,3 +1,5 @@
+> 21 October 2026: the strength app, strength brain, and evidence-platform were removed from this checkout and packed into an archive outside git. The app that opens is the Engine. Historical strength paths below are superseded. See `docs/engine-adaptive-brain.md`.
+
 > Coach ownership update — 17 October 2026: the Coach UI, desktop installer, Coach checks and library tooling now live in `reflectprotect123-max/the-adaptivebrain-`. Run and publish Coach from that repository. This repository owns the athlete app and its supporting backend contracts. Historical Coach paths below are superseded.
 
 # Handoff — TheStrengthEngine

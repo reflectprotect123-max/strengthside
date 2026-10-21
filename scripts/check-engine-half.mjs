@@ -1,13 +1,10 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const ENGINE_ROOTS = [
-  'packages/adaptive/package.json',
-  'apps/athlete/conditioning/index.html',
-  'apps/engine-web/package.json',
-  'scripts/conditioning/build.mjs',
+  'apps/athlete/engine/index.html',
 ];
 
 export function repoRoot() {
@@ -18,37 +15,29 @@ export function presentEngineRoots(root) {
   return ENGINE_ROOTS.filter((rel) => existsSync(join(root, rel)));
 }
 
-function collectTests(dir) {
-  if (!existsSync(dir)) return [];
-  const found = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) found.push(...collectTests(full));
-    else if (/\.test\.(mjs|js|ts)$/.test(entry.name)) found.push(full);
-  }
-  return found;
-}
-
 export function engineCommands(root) {
   const commands = [];
-  const adaptivePackage = join(root, 'packages/adaptive/package.json');
-  if (existsSync(adaptivePackage)) {
-    const pkg = JSON.parse(readFileSync(adaptivePackage, 'utf8'));
-    if (pkg.scripts?.test) commands.push({ command: 'pnpm', args: ['--dir', 'packages/adaptive', 'test'] });
-  }
-  for (const dir of ['scripts/conditioning', 'apps/athlete/conditioning', 'apps/engine-web']) {
-    const tests = collectTests(join(root, dir)).map((full) => relative(root, full));
-    if (tests.length) commands.push({ command: process.execPath, args: ['--test', ...tests] });
+  if (existsSync(join(root, 'apps/athlete/engine/index.html'))) {
+    commands.push({
+      command: process.execPath,
+      args: ['--test',
+        'apps/athlete/engine/hallway.test.js',
+        'apps/athlete/progress-chart.test.js',
+        'scripts/stage-athlete.test.mjs',
+        'scripts/import-engine-house.test.mjs',
+        'scripts/engine-hr-transport.test.mjs',
+        'scripts/engine-updates.test.mjs'],
+    });
+    commands.push({ command: process.execPath, args: ['apps/athlete/checks/engine-door.smoke.mjs'] });
+    commands.push({ command: process.execPath, args: ['apps/athlete/checks/capgo-live-update.smoke.mjs'] });
   }
   return commands;
 }
 
 export function engineAbsenceMessage() {
   return [
-    'Engine half is not in this checkout.',
-    `Expected one of: ${ENGINE_ROOTS.join(', ')}`,
-    'Switch to an engine branch (known remote: origin/codex/engine-web-cloudflare) and run pnpm run verify:engine there.',
-    'A strength-only checkout cannot verify the engine half.',
+    'Engine app is not in this checkout.',
+    `Expected: ${ENGINE_ROOTS.join(', ')}`,
   ].join('\n');
 }
 
