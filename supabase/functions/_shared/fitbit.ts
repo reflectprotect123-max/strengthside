@@ -109,11 +109,12 @@ async function tokenRequest(body: Record<string, string>) {
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const grant = payload?.error === 'invalid_grant';
+    const googleError = typeof payload?.error === 'string' && /^[a-z0-9_]+$/i.test(payload.error) ? payload.error : '';
+    const grant = googleError === 'invalid_grant';
     throw new FitbitError(grant ? 'Fitbit refresh expired' : 'Google token request failed', {
-      code: grant ? 'reconnect_fitbit' : 'token_request_failed',
+      code: grant ? 'reconnect_fitbit' : (googleError || 'token_request_failed'),
       kind: 'oauth',
-      status: grant ? 401 : response.status,
+      status: grant ? 401 : response.status || 502,
     });
   }
   return normalizeTokenResponse(payload);
@@ -138,13 +139,23 @@ export function tokenNeedsRefresh(token: any, skewMs = 60 * 1000) {
   return expiresAt !== null && Date.now() >= expiresAt - skewMs;
 }
 
-export async function googleSubject(accessToken: string) {
-  const response = await fetch(`${TOKENINFO}?access_token=${encodeURIComponent(accessToken)}`);
-  if (!response.ok) throw new FitbitError('Google identity lookup failed', { code: 'identity_failed', kind: 'oauth', status: response.status });
-  const body = await response.json();
-  const sub = typeof body?.sub === 'string' ? body.sub.trim() : '';
-  if (!sub) throw new FitbitError('Google identity did not include a subject', { code: 'identity_failed', kind: 'oauth', status: 502 });
-  return sub;
+export function fitbitReturnLocation(appId: string, outcome: string) {
+  const query = /^[a-z0-9_=&-]+$/i.test(outcome) ? outcome : 'status=error';
+  const id = appId === 'com.hybrid.athlete' ? 'com.hybrid.athlete' : 'com.hybrid.strength';
+  return `${id}://fitbit?${query}`;
+}
+
+// Health-only access tokens often have no `sub` on tokeninfo. A missing subject must not fail the connection.
+export async function googleSubject(accessToken: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${TOKENINFO}?access_token=${encodeURIComponent(accessToken)}`);
+    if (!response.ok) return null;
+    const body = await response.json();
+    const sub = typeof body?.sub === 'string' ? body.sub.trim() : '';
+    return sub || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function revokeFitbitToken(token: any) {
