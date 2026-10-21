@@ -1,6 +1,8 @@
-> Current app change: the workout builder has been exported into a complete ZIP and removed from the athlete runtime. The Library now reads saved workouts; the calendar and logger remain. See [the removal and export record](docs/releases/workout-builder-removal.md). The builder implementation described below is historical.
+# The app that opens is the Engine
 
-# Session builder — shipped 17 October 2026
+Strength is parked in `park/strength-app/`. It is not deleted. The front door, `apps/athlete/index.html`, opens `apps/athlete/engine/index.html` and does not load the strength builder or logger.
+
+# Session builder — parked with the strength app
 
 The athlete Library builder is the warm-up circuit, the lift cards, then the cool-down circuit. Start Session plays that order in the logger. This is on `main` (pull request 262, merge `0c65cc7c`) and on the live app as Capgo bundle **1.3.11** for `com.hybrid.strength`, channel `strength-live`. The current bundle is **1.3.12**, including the calibration follow-up.
 
@@ -13,7 +15,7 @@ Contracts and the release path: [docs/training-contracts.md](docs/training-contr
 
 ## What we built
 
-A new session opens on the warm-up. Bike, Row, Run, and Ski start at 3:00. Jump Rope starts at 1:00. There are three rounds. The isometric hold counts 3, then runs. Lifts and stretches take reps. The carry takes metres. Timed warm-up pages start their countdown. They do not ask for effort.
+A new session opens on an empty warm-up. Bike, Row, Run, Ski, and Jump Rope are in the add list, and they are not placed on the session until you add them. A session saved with that old automatic set loses those five movements the next time it loads. Anything else you added in the warm-up stays. There are three rounds once movements are there. The isometric hold counts 3, then runs. Lifts and stretches take reps. The carry takes metres. Timed warm-up pages start their countdown. They do not ask for effort.
 
 Next opens the lift cards. The coach can set shared or per-set reps, including 5/3/1 and 10/8/6, plus a rep range and an explicit final AMRAP. The AMRAP uses the actual first working-set load. Supersets stay. Every suggested load stays editable in the logger. The builder does not ask for a target weight.
 

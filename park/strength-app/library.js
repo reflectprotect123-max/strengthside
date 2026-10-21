@@ -81,7 +81,7 @@
   function ensure(state) {
     if (!state || typeof state !== 'object') return emptyState();
     const next = {
-      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: (t.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
+      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, clearedSeededWarmup: true, blocks: (t.clearedSeededWarmup ? (t.blocks || []) : (t.blocks || []).filter((b) => !(b.role === 'warmup' && SEEDED_WARMUP.has(b.title)))).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
         const reps = parseRepTarget(b.repTarget);
         // Preserve ranges saved before Reps and Rep Range had separate entry rules.
         return canonicalBlock(reps && reps.min !== reps.max && (b.columns || []).includes('reps') && !(b.columns || []).includes('meters')
@@ -97,7 +97,7 @@
     if (!next.catalog.exercises.length && !next.catalog.circuits.length) next.catalog = seedCatalog();
     const byId=new Map(next.catalog.exercises.map(x=>[x.id,x])),byTitle=new Map(next.catalog.exercises.map(x=>[String(x.title||'').trim().toLowerCase(),x]));
     for(const template of next.templates)for(const block of template.blocks||[])if(block.kind==='lift'){
-      const hit=block.exerciseId?byId.get(block.exerciseId):byTitle.get(String(block.title||'').trim().toLowerCase());
+      const hit=byId.get(block.exerciseId)||byTitle.get(String(block.title||'').trim().toLowerCase());
       if(hit){block.exerciseId=hit.id;for(const key of LOAD_METADATA)if(block[key]==null&&hit[key]!=null)block[key]=clone(hit[key]);}
       else Object.assign(block,{...inferredMetadata(block.title),...block});
     }
@@ -108,9 +108,179 @@
     return (state.templates || []).find((t) => t.id === tid) || null;
   }
 
+  const SEEDED_WARMUP = new Set(['Bike', 'Row', 'Run', 'Ski', 'Jump Rope']);
+
+  function createTemplate(state, { title, instructions } = {}) {
+    const st = clone(ensure(state));
+    st.templates.unshift({
+      id: nid('tpl'),
+      title: String(title || 'Session Template').trim() || 'Session Template',
+      instructions: String(instructions || ''),
+      blocks: [],
+      clearedSeededWarmup: true,
+    });
+    return st;
+  }
+
+  function patchTemplate(state, tid, patch) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    Object.assign(t, patch);
+    return st;
+  }
+
+  function addCircuit(state, tid, { title, instructions, catalogId } = {}) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    let instr = instructions || '';
+    let name = title || 'Circuit';
+    if (catalogId) {
+      const hit = st.catalog.circuits.find((c) => c.id === catalogId);
+      if (hit) {
+        name = hit.title;
+        instr = hit.instructions || instr;
+      }
+    }
+    t.blocks.push({
+      id: nid('blk'),
+      kind: 'circuit',
+      title: name,
+      instructions: instr,
+      track: 'for_completion',
+    });
+    return st;
+  }
+
+  function addExercise(state, tid, { title, setCount, columns, notes, catalogId, value, role, countIn } = {}) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    let cols = Array.isArray(columns) && columns.length ? columns.slice() : ['reps', 'weight_kg'];
+    let name = title || 'Exercise';
+    let metadata=inferredMetadata(name),exerciseId=null;
+    if (catalogId) {
+      const hit = st.catalog.exercises.find((c) => c.id === catalogId);
+      if (hit) {
+        name = hit.title;
+        cols = (hit.columns || cols).slice();
+        exerciseId=hit.id;metadata=exerciseRecord(hit);
+      }
+    }
+    cols = cols.filter((k) => k && k !== 'none');
+    if (!cols.length) cols = ['reps'];
+    const tracksReps = cols.some((c) => c === 'reps' || c === 'reps_range');
+    const prescribed = value != null && String(value).trim() ? String(value).trim() : '';
+    const prepRole = role === 'warmup' || role === 'cooldown' ? role : null;
+    if (prepRole === 'cooldown') {
+      const allowed = cols.filter((c) => c === 'reps' || c === 'seconds');
+      cols = allowed.length ? allowed : ['seconds'];
+    }
+    t.blocks.push({
+      id: nid('blk'),
+      kind: 'lift',
+      title: name,
+      setCount: Math.max(1, Number(setCount) || 3),
+      repTarget: tracksReps && prescribed ? prescribed : (cols.includes('reps_range') ? '8-12' : '8'),
+      prescribed: !tracksReps && prescribed ? prescribed : '',
+      role: prepRole,
+      countIn: prepRole ? Math.max(0, Number(countIn) || 0) : 0,
+      columns: cols,
+      notes: Array.isArray(notes) ? notes : [],
+      exerciseId,
+      ...Object.fromEntries(LOAD_METADATA.filter(key=>metadata[key]!=null).map(key=>[key,clone(metadata[key])])),
+      groupId: null,
+    });
+    return st;
+  }
+
+  function removeBlock(state, tid, bid) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    t.blocks = t.blocks.filter((b) => b.id !== bid);
+    return st;
+  }
+
+  function moveBlock(state, tid, bid, dir) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    const i = t.blocks.findIndex((b) => b.id === bid);
+    const j = i + (dir < 0 ? -1 : 1);
+    if (i < 0 || j < 0 || j >= t.blocks.length) return st;
+    const tmp = t.blocks[i];
+    t.blocks[i] = t.blocks[j];
+    t.blocks[j] = tmp;
+    return st;
+  }
+
+  function patchBlock(state, tid, bid, patch) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    const b = t.blocks.find((x) => x.id === bid);
+    if (!b) return st;
+    Object.assign(b, patch);
+    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','restSec','demoStartingKg'])delete b[key];
+    if (Array.isArray(b.columns)) b.columns = b.columns.filter((k) => k && k !== 'none');
+    if (Array.isArray(patch.setTargets)) {
+      const targets=root.StrengthTargets.normalize({...b,setTargets:patch.setTargets});
+      b.setTargets=targets;b.setCount=targets.length;
+      const first=targets.find(x=>x.purpose==='working');
+      if(first?.reps)b.repTarget=first.reps.min===first.reps.max?String(first.reps.min):`${first.reps.min}-${first.reps.max}`;
+    } else if ((patch.setCount!=null||patch.repTarget!=null) && Array.isArray(b.setTargets)) {
+      delete b.setTargets;
+    }
+    return st;
+  }
+
+  function placeTextBlock(state, tid, { role, title, instructions } = {}) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t || (role !== 'warmup' && role !== 'cooldown')) return st;
+    t.blocks = (t.blocks || []).filter((b) => b.role !== role);
+    const text = String(instructions || '').trim();
+    if (!text) return st;
+    const block = {
+      id: nid('blk'),
+      kind: 'circuit',
+      role,
+      title: title || (role === 'cooldown' ? 'Cool-down' : 'Warm-up'),
+      instructions: text,
+      track: 'for_completion',
+    };
+    if (role === 'cooldown') t.blocks.push(block);
+    else t.blocks.unshift(block);
+    return st;
+  }
+
   function tempoText(value) {
     const chars = String(value || '').toUpperCase().replace(/[^0-9X]/g, '').slice(0, 4);
     return chars.length === 4 ? chars : '';
+  }
+
+  function linkSuperset(state, tid, aId, bId) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    const a = t.blocks.find((x) => x.id === aId);
+    const b = t.blocks.find((x) => x.id === bId);
+    if (!a || !b || a.kind !== 'lift' || b.kind !== 'lift') return st;
+    const gid = a.groupId || b.groupId || nid('ss');
+    a.groupId = gid;
+    b.groupId = gid;
+    return st;
+  }
+
+  function unlinkSuperset(state, tid, bid) {
+    const st = clone(ensure(state));
+    const t = st.templates.find((x) => x.id === tid);
+    if (!t) return st;
+    const b = t.blocks.find((x) => x.id === bid);
+    if (b) b.groupId = null;
+    return st;
   }
 
   function lettered(tpl) {
@@ -222,9 +392,6 @@
           columns,
           setCount: setTargets?.length||b.setCount,
           exerciseId: b.exerciseId,
-          coachAssignmentId: b.coachAssignmentId,
-          coachExerciseId: b.coachExerciseId,
-          coachBlockId: b.coachBlockId,
           equipmentId: b.equipmentId,
           equipmentStepKg: b.equipmentStepKg,
           availableLoads: b.availableLoads,
@@ -241,10 +408,22 @@
       id: tpl.id,
       title: tpl.title || 'Session Template',
       instructions: tpl.instructions || '',
-      coachAssignedIds: tpl.coachAssignedIds || [],
       blocks,
       dots: {},
     };
+  }
+
+  function assignDate(state, tid, date) {
+    const st = clone(ensure(state));
+    if (!st.templates.some((t) => t.id === tid)) return st;
+    st.assignments[date] = tid;
+    return st;
+  }
+
+  function unassignDate(state, date) {
+    const st = clone(ensure(state));
+    delete st.assignments[date];
+    return st;
   }
 
   function planForDate(state, date, fallback) {
@@ -255,6 +434,37 @@
     const plan = compile(tpl);
     plan.dots = Object.fromEntries(Object.keys(st.assignments).map((d) => [d, true]));
     return plan;
+  }
+
+  function createCatalogExercise(state, { title, columns, ...metadata } = {}) {
+    const st = clone(ensure(state));
+    const cols = (columns || ['reps']).filter((k) => k && k !== 'none');
+    st.catalog.exercises.unshift(exerciseRecord({
+      ...Object.fromEntries(LOAD_METADATA.filter(key=>metadata[key]!=null).map(key=>[key,clone(metadata[key])])),
+      id: nid('ex'),
+      title: String(title || 'Exercise').trim() || 'Exercise',
+      columns: cols.length ? cols : ['reps'],
+    }));
+    return st;
+  }
+
+  function createCatalogCircuit(state, { title, instructions } = {}) {
+    const st = clone(ensure(state));
+    st.catalog.circuits.unshift({
+      id: nid('ci'),
+      title: String(title || 'Circuit').trim() || 'Circuit',
+      track: 'for_completion',
+      instructions: instructions || '',
+    });
+    return st;
+  }
+
+  function searchCatalog(state, tab, q) {
+    const st = ensure(state);
+    const needle = String(q || '').trim().toLowerCase();
+    const list = tab === 'circuits' ? st.catalog.circuits : st.catalog.exercises;
+    if (!needle) return list.slice();
+    return list.filter((x) => x.title.toLowerCase().includes(needle));
   }
 
   function deleteTemplate(state, tid) {
@@ -276,13 +486,28 @@
     emptyState,
     ensure,
     template,
+    createTemplate,
+    patchTemplate,
     deleteTemplate,
+    addCircuit,
+    addExercise,
+    removeBlock,
+    moveBlock,
+    patchBlock,
+    placeTextBlock,
     tempoText,
+    linkSuperset,
+    unlinkSuperset,
     lettered,
     compile,
     parseRepTarget,
     rxFor,
+    assignDate,
+    unassignDate,
     planForDate,
+    createCatalogExercise,
+    createCatalogCircuit,
+    searchCatalog,
     trackLabel,
   };
 
