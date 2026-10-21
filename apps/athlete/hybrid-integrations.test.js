@@ -54,6 +54,26 @@ test('persistWhoop writes whoop + checkin fields for today', () => {
   assert.equal(shared.checkin['2026-09-15'].whoopStrain, 9.1);
 });
 
+test('persistWhoopDates writes every day in one local storage update', () => {
+  const { H, store } = loadIntegrations();
+  let writes = 0;
+  const setItem = globalThis.localStorage.setItem;
+  globalThis.localStorage.setItem = (key, value) => { writes += 1; setItem(key, value); };
+  const S = {
+    accountId: 'a',
+    settings: { whoop: { connected: true } },
+    checkin: {
+      '2026-10-01': { whoopRecovery: 60, hrv: 40 },
+      '2026-10-02': { whoopRecovery: 70, hrv: 50 },
+    },
+  };
+  H.persistWhoopDates(S, ['2026-10-01', '2026-10-02']);
+  assert.equal(writes, 1);
+  const shared = JSON.parse(store['HYBRID_SC_integrations_v1:a']);
+  assert.equal(shared.checkin['2026-10-01'].whoopRecovery, 60);
+  assert.equal(shared.checkin['2026-10-02'].hrv, 50);
+});
+
 test('wearable cache cannot cross athlete accounts',()=>{
  const {H}=loadIntegrations();H.persistWhoop({accountId:'a',settings:{whoop:{connected:true}},checkin:{'2026-10-10':{sleepHours:8,steps:0}}},'2026-10-10');
  const b={accountId:'b',settings:{whoop:{}},checkin:{}};H.mergeIntoState(b);assert.equal(Object.keys(b.checkin).length,0);

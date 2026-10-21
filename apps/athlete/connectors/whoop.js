@@ -107,11 +107,19 @@
     const requestAccount = user?.id || appState()?.accountId;
     if (!t) { const e = new Error('Sign in to sync WHOOP'); e.code = 'auth_required'; throw e; }
     const request = async route => {
+      const AC = global.AbortController;
+      const controller = AC ? new AC() : null;
+      const timer = controller && global.setTimeout ? global.setTimeout(function () { controller.abort(); }, opts.timeoutMs || 30000) : 0;
       try {return await fetch(fnUrl(route,opts.query), {
         method,
         headers: {authorization:'Bearer '+t,apikey:SUPABASE_ANON,'x-hybrid-product':hybridProduct(),accept:'application/json'},
-        cache:'no-store'
-      });}catch(err){const error=new Error('WHOOP service is down — try again in a minute');error.cause=err;error.code='whoop_unreachable';throw error;}
+        cache:'no-store',
+        signal: controller ? controller.signal : undefined
+      });}catch(err){
+        const timedOut = err && err.name === 'AbortError';
+        const error=new Error(timedOut ? 'WHOOP sync timed out — try again' : 'WHOOP service is down — try again in a minute');
+        error.cause=err;error.code=timedOut ? 'timeout' : 'whoop_unreachable';throw error;
+      } finally { if (timer) global.clearTimeout(timer); }
     };
     let res = await request(path);
     if (requestAccount && requestAccount !== appState()?.accountId) throw new Error('Account changed during WHOOP sync');
@@ -278,7 +286,13 @@
       w.lastSyncAt = body?.syncedAt || new Date().toISOString();
       global.WhoopCommon.noteHistoryBackfill(w, body, plan.pullAll);
       if (state && global.HybridIntegrations) {
-        for (const row of state.whoopHistory || []) global.HybridIntegrations.persistWhoop(state, row.date);
+        const dates = [];
+        for (const row of body?.dailyMetrics || []) if (row?.date) dates.push(row.date);
+        for (const row of body?.dailyRecovery || []) if (row?.date) dates.push(row.date);
+        for (const row of body?.dailyStrain || []) if (row?.date) dates.push(row.date);
+        if (body?.normalized?.date) dates.push(body.normalized.date);
+        if (typeof global.HybridIntegrations.persistWhoopDates === 'function') global.HybridIntegrations.persistWhoopDates(state, dates);
+        else for (const date of dates) global.HybridIntegrations.persistWhoop(state, date);
       }
       if (typeof global.save === 'function') global.save();
       ui.message = count || applied ? 'WHOOP synced · recovery, sleep and dated readings updated' : 'WHOOP connected · no dated readings available yet';

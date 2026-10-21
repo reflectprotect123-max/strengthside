@@ -45,6 +45,13 @@ test('the athlete Me page offers Fitbit beside WHOOP', () => {
   assert.match(html, /connectors\/whoop\.js/);
 });
 
+test('a failed sync replaces Syncing Fitbit with the Health API error', async () => {
+  const window = fixture(async () => ({ ok: false, status: 502, json: async () => ({ error: 'sync_failed', failures: ['sleep:403'] }) }));
+  window.render = () => {};
+  await assert.rejects(window.Fitbit.sync(), /sleep:403/);
+  assert.equal(window.Fitbit.uiMessage(), 'sleep:403');
+});
+
 test('an expired Google testing refresh asks the athlete to reconnect', async () => {
   const window = fixture(async () => ({ ok: false, status: 401, json: async () => ({ error: 'reconnect_fitbit', connected: false }) }));
   await assert.rejects(window.Fitbit.sync({ quiet: true }), /Reconnect Fitbit/);

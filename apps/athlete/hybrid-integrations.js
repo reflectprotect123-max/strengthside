@@ -61,12 +61,18 @@
   }
 
   function persistWhoop(S, iso) {
+    persistWhoopDates(S, [iso]);
+  }
+
+  function persistWhoopDates(S, dates) {
     if (!S || typeof S !== 'object') return;
     const shared = readShared(S.accountId);
     shared.whoop = Object.assign({}, shared.whoop || {}, S.settings && S.settings.whoop ? S.settings.whoop : {});
     shared.checkin = shared.checkin || {};
-    const slice = sliceCheckin(S.checkin && S.checkin[iso]);
-    if (slice) shared.checkin[iso] = Object.assign({}, sliceCheckin(shared.checkin[iso]) || {}, slice);
+    for (const iso of dates || []) {
+      const slice = sliceCheckin(S.checkin && S.checkin[iso]);
+      if (slice) shared.checkin[iso] = Object.assign({}, sliceCheckin(shared.checkin[iso]) || {}, slice);
+    }
     writeShared(shared, S.accountId);
   }
 
@@ -134,6 +140,7 @@
     STORAGE_KEY,
     mergeIntoState,
     persistWhoop,
+    persistWhoopDates,
     bootSync,
     bindForegroundSync,
   };
