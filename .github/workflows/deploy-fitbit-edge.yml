@@ -1,0 +1,72 @@
+# Deploys the Fitbit / Google Health edge functions.
+# workflow_dispatch only. A push or pull request does not receive
+# SUPABASE_ACCESS_TOKEN in this repo, so those events cannot ship.
+name: Deploy Fitbit edge
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-fitbit-edge
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.78.1
+
+      - name: Require deploy secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          GOOGLE_HEALTH_CLIENT_SECRET: ${{ secrets.GOOGLE_HEALTH_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          : "${SUPABASE_ACCESS_TOKEN:?Add the SUPABASE_ACCESS_TOKEN GitHub Actions secret}"
+          : "${GOOGLE_HEALTH_CLIENT_SECRET:?Add the GOOGLE_HEALTH_CLIENT_SECRET GitHub Actions secret}"
+
+      - name: Set Google Health secrets and deploy Fitbit functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          GOOGLE_HEALTH_CLIENT_ID: ${{ secrets.GOOGLE_HEALTH_CLIENT_ID }}
+          GOOGLE_HEALTH_CLIENT_SECRET: ${{ secrets.GOOGLE_HEALTH_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          id="${GOOGLE_HEALTH_CLIENT_ID:-485089859821-tca2snhj3iumqtlc6veni653o4bc16fu.apps.googleusercontent.com}"
+          url="https://orysjncrksmdfabpuftd.supabase.co/functions/v1/fitbit-callback"
+          supabase secrets set --project-ref orysjncrksmdfabpuftd \
+            "GOOGLE_HEALTH_CLIENT_ID=${id}" \
+            "GOOGLE_HEALTH_CLIENT_SECRET=${GOOGLE_HEALTH_CLIENT_SECRET}" \
+            "FITBIT_CALLBACK_URL=${url}"
+          for name in fitbit-connect fitbit-callback fitbit-sync fitbit-status fitbit-disconnect; do
+            supabase functions deploy "$name" --project-ref orysjncrksmdfabpuftd --use-api
+          done
+
+      - name: Smoke test fitbit-connect, fitbit-status, and a bad callback state
+        run: |
+          set -euo pipefail
+          base="https://orysjncrksmdfabpuftd.supabase.co/functions/v1"
+          check() {
+            local name="$1" url="$2" expect="$3" needle="$4"
+            local code
+            code="$(curl -sS -o "/tmp/${name}.body" -D "/tmp/${name}.hdr" -w '%{http_code}' "$url")"
+            echo "${name} HTTP ${code}"
+            if [[ "$code" != "$expect" ]]; then
+              echo "${name} returned ${code}, expected ${expect}" >&2
+              exit 1
+            fi
+            if ! grep -q "$needle" "/tmp/${name}.body" "/tmp/${name}.hdr"; then
+              echo "${name} response did not include the expected marker" >&2
+              exit 1
+            fi
+          }
+          check connect "${base}/fitbit-connect?client=native&product=strength" 401 unauthorized
+          check status "${base}/fitbit-status?product=strength" 401 unauthorized
+          check callback "${base}/fitbit-callback?state=not-a-real-state" 302 invalid_oauth_state

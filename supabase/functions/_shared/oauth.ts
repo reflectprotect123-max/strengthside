@@ -20,7 +20,7 @@ export async function recordOAuthEvent(provider: string, event: Record<string, u
   }
 }
 
-export async function savePending(provider: string, state: string, identity: { owner: string; kind?: string; sid?: string | null; product?: string; appId?: string }) {
+export async function savePending(provider: string, state: string, identity: { owner: string; kind?: string; sid?: string | null; product?: string; appId?: string; codeVerifier?: string }) {
   if (!identity?.owner) throw new Error('Pending OAuth record needs an owner');
   const kind = identity.kind === 'user' || identity.kind === 'native' ? 'native' : 'browser';
   await setJson(`oauth:pending:${provider}:${state}`, {
@@ -29,6 +29,7 @@ export async function savePending(provider: string, state: string, identity: { o
     sid: identity.sid ?? null,
     product: identity.product === 'strength' ? 'strength' : 'engine',
     appId: identity.appId,
+    codeVerifier: typeof identity.codeVerifier === 'string' ? identity.codeVerifier : undefined,
     createdAt: Date.now(),
   });
 }
@@ -44,7 +45,7 @@ export function pendingIsUsable(pending: any, expectedSid: string | undefined, n
     if (typeof pending?.sid !== 'string' || !pending.sid) return null;
     if (expectedSid !== undefined && pending.sid !== expectedSid) return null;
   }
-  return { owner, kind, sid: pending?.sid ?? null, createdAt, product: pending?.product === 'strength' ? 'strength' : 'engine', appId: pending?.appId };
+  return { owner, kind, sid: pending?.sid ?? null, createdAt, product: pending?.product === 'strength' ? 'strength' : 'engine', appId: pending?.appId, codeVerifier: typeof pending?.codeVerifier === 'string' ? pending.codeVerifier : null };
 }
 
 export async function consumePending(provider: string, state: string, expectedSid?: string) {
@@ -107,7 +108,7 @@ export async function removeToken(provider: string, owner: string, providerUserI
 export async function syncRecord(provider: string, owner: string, data: Record<string, unknown>) {
   const previous = await getJson(`data:${provider}:${owner}`);
   const next = data && typeof data === 'object' ? data : {};
-  const merged = provider === 'whoop'
+  const merged = provider === 'whoop' || provider === 'fitbit'
     ? mergeIntegrationHistory(previous || {}, next)
     : previous && typeof previous === 'object' ? { ...previous, ...next } : next;
   await setJson(`data:${provider}:${owner}`, merged);
@@ -116,4 +117,8 @@ export async function syncRecord(provider: string, owner: string, data: Record<s
 
 export async function loadData(provider: string, owner: string) {
   return getJson(`data:${provider}:${owner}`);
+}
+
+export async function setReconnect(provider: string, owner: string) {
+  await setJson(`data:${provider}:${owner}`, { provider, reconnectRequired: true, normalized: null });
 }

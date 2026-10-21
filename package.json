@@ -17,7 +17,7 @@
     "check:whoop-ownership": "node apps/athlete/checks/whoop-ownership.smoke.mjs",
     "check:openrouter-ownership": "node apps/athlete/checks/openrouter-ownership.smoke.mjs && node --test supabase/functions/brain-coach/index.test.mjs",
     "check:whoop-deeplink": "node apps/athlete/checks/whoop-deeplink.smoke.mjs",
-    "check:whoop-history": "node --test supabase/functions/whoop-sync/history.test.mjs supabase/functions/whoop-sync/observations.test.mjs supabase/functions/_shared/integrations.test.mjs",
+    "check:whoop-history": "node --test supabase/functions/whoop-sync/history.test.mjs supabase/functions/whoop-sync/observations.test.mjs supabase/functions/_shared/integrations.test.mjs supabase/functions/_shared/fitbit.test.mjs apps/athlete/connectors/fitbit.test.js",
     "check:whoop-live": "node apps/athlete/checks/whoop-live.smoke.mjs",
     "check:migrations": "node checks/migrations-apply.mjs",
     "rematerialize:capgo": "bash scripts/rematerialize-capgo-from-vault.sh",
