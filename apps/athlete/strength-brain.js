@@ -61,6 +61,30 @@
     }
     return null;
   }
+  function lastLoggedWorking(records,page) {
+    const want=E.nameKey?.(page);
+    if(!want)return null;
+    const tempoOf=p=>root.StrengthContext?.tempo?.(p?.tempo)??p?.tempo??null;
+    const wantTempo=tempoOf(page);
+    let best=null;
+    for(const rec of Object.values(records||{})) {
+      const prior=rec?.payload?.page,row=rec?.payload?.row;
+      if(!prior||!row||row.logged!==true||row.deleted||row.skipped)continue;
+      if(row.purpose==='ramp'||row.purpose==='warmup')continue;
+      if(E.nameKey(prior)!==want)continue;
+      if(tempoOf(prior)!==wantTempo)continue;
+      if(!Number.isFinite(Number(row.kg)))continue;
+      const at=Number(rec.payload?.sessionStartedAt)||0;
+      if(!best||at>=best.at)best={row,page:prior,at,record:rec};
+    }
+    return best;
+  }
+  function conventionOf(page,load) {
+    const c=load?.convention||page?.loadConvention;
+    if(['barbell_plates','barbell_total'].includes(c))return 'barbell_total';
+    if(c==='total'&&page?.equipmentId==='barbell')return 'barbell_total';
+    return c;
+  }
   function history(records,page,excludeSession,ownerId) {
     ownerId=ownerId??root.StrengthMemory?.ownerId?.()??root.S?.accountId??null;
     const filled=E.apply?E.apply(page):page;
@@ -98,6 +122,17 @@
       sourceSignature:'source-v3:'+JSON.stringify([e.observation.id,e.observation.revision,e.observation.weight,e.observation.reps,e.observation.rir,e.observation.miss]),
       sourceSetIds:[e.observation.id]}));
     let latest=null;
+    if((!r||r.accepted===0)&&!r.latestFirst) {
+      const last=lastLoggedWorking(records,filled);
+      if(last) {
+        const est=Core.estimate(last.row,last.page);
+        let nextKg=Number(last.row.kg);
+        if(!last.row.miss&&['very_easy','easy'].includes(last.row.effort))nextKg=E.next(nextKg,last.page)??nextKg;
+        const observation={id:last.record.id,revision:last.record.localRevision,sessionId:last.record.sessionId,weight:Number(last.row.kg),reps:Number(last.row.reps)||0,rir:3,purpose:'working',workingIndex:0,miss:!!last.row.miss,completed:true};
+        latest={observation,effort:last.row.effort,page:last.page,row:last.row,nextKg,rows:[last.row],earned:false,loadReduced:false,fromName:true,displayKg:Number(last.row.kg)};
+        if(Number.isFinite(est)&&est>0)r.startingScale=r.startingScale??est;
+      }
+    }
     if(r.latestFirst&&!r.conflicted){
       const e=r.latestFirst,rows=r.ledger.filter(x=>x.sessionId===e.observation.sessionId&&!x.deleted&&x.payload?.row).map(x=>x.payload.row).sort((a,b)=>a.ordinal-b.ordinal);
       const result=Core.review(e.page,rows);let nextKg=e.row.kg;
@@ -144,9 +179,12 @@
       const h=history(records,page,s.id),first=targets.find(t=>t.purpose==='working'),prior=h.latest;
       let working=null,confidence='unknown';
       const samePrescription=prior&&JSON.stringify(T.normalize(prior.page).map(({id,...t})=>t))===JSON.stringify(targets.map(({id,...t})=>t));
-      if(prior&&(samePrescription||prior.observation.miss||prior.effort==='max_effort')&&Number.isFinite(prior.nextKg)){
-        const mass=Core.normalized(prior.nextKg,prior.page)?.externalKg;
-        working=mass==null?null:E.floor(Core.display(mass,page),page);confidence='history';
+      if(prior&&(samePrescription||prior.observation.miss||prior.effort==='max_effort'||prior.fromName)&&Number.isFinite(prior.nextKg)){
+        if(prior.fromName){working=E.floor(prior.nextKg,page)??prior.nextKg;confidence='history';}
+        else {
+          const mass=Core.normalized(prior.nextKg,prior.page)?.externalKg;
+          working=mass==null?null:E.floor(Core.display(mass,page),page);confidence='history';
+        }
       } else if(prior&&first){
         const o=prior.observation,k=root.StrengthPolicy.learningMode==='online'?h.k:root.StrengthLearning.initial().k;
         const mass=root.StrengthLearning.project({weight:o.weight,fromReps:o.reps,fromRir:o.rir,toReps:first.reps.min,targetRir:3,k});
@@ -183,10 +221,29 @@
       const orm=root.StrengthPercent?.oneRm?.({page,history:h,records});
       const rangeBottom=rx?root.StrengthPercent.rampTargetKg({page,rx,oneRm:orm,firstWorkingKg:working}):null;
       const rampGoal=rangeBottom??working;
-      const belowWork=known&&rampGoal>0?E.floor(rampGoal*.5,page):null;
-      const step=E.next(0,page);
-      const second=belowWork>0&&belowWork<rampGoal?belowWork:step!=null&&step<rampGoal?step:0;
-      const rampLoad=bar&&known?[0,second]:[known&&rampGoal>0?belowWork:null,null];
+      const rampLoad=(()=>{
+        if(!count||!known)return Array.from({length:count},()=>null);
+        if(!(rampGoal>0))return Array.from({length:count},()=>bar?0:null);
+        const fracs=bar
+          ?(count===1?[0]:count===2?[0,.5]:[0,.5,.75])
+          :(count===1?[.5]:count===2?[.5,.75]:[.4,.55,.75]);
+        return fracs.slice(0,count).map((frac,i)=>{
+          if(frac===0)return 0;
+          let kg=E.floor(rampGoal*frac,page);
+          if(kg==null)kg=E.next(0,page);
+          return kg;
+        }).map((kg,i,all)=>{
+          if(kg==null)return kg;
+          if(i>0&&all[i-1]!=null&&kg<=all[i-1]&&all[i-1]!==0) {
+            const up=E.next(all[i-1],page);return up!=null&&up<rampGoal?up:kg;
+          }
+          if(kg>=rampGoal) {
+            const lower=E.floor(rampGoal-1e-7,page);
+            return lower!=null&&(i===0||lower>all[i-1])?lower:kg;
+          }
+          return kg;
+        });
+      })();
       const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i<rampLoad.length?rampLoad[i]:null,cells:{},logged:false,miss:false}));
       const authored=log.sets.map((row,i)=>{
         const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
@@ -203,7 +260,7 @@
   function learningContext({athleteId,page,load}={}) {
     const context=root.StrengthContext,normalized=context?.normalizeLoad(load);
     if(!normalized?.eligible)return null;
-    const convention=['barbell_plates','barbell_total'].includes(normalized.convention)?'barbell_total':normalized.convention;
+    const convention=conventionOf(page,normalized);
     try{return context.key({athleteId,exerciseId:page?.exerciseId,equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
     catch{return null;}
   }

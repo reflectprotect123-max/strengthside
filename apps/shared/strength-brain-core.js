@@ -83,8 +83,12 @@
     const warm=nextTarget.purpose==='warmup'||['warmup','ramp'].includes(row.purpose);
     const easy=['very_easy','easy'].includes(row.effort);
     if(warm&&nextTarget.purpose==='warmup'){
-      let next=easy?E.next(kg,page)??kg:kg;
-      if(!easy&&row.effort==='hard')next=guard(mass*.9,kg,page,{p});
+      const planned=finiteLoad(nextRow?.kg);
+      let next=kg;
+      if(easy){
+        const base=Math.max(kg,planned??kg);
+        next=E.next(base,page)??E.next(kg,page)??base;
+      } else if(row.effort==='hard')next=guard(mass*.9,kg,page,{p});
       return response(next,label,next>kg?'warmup_step':next<kg?'reduce_after_incomplete':'warmup_hold','directional',p);
     }
     if(warm&&nextTarget.purpose==='working'&&row.effort==='hard'){

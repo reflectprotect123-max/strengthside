@@ -53,3 +53,10 @@ test('Rest 60s does not become a seconds target',()=>{
  const p=N.parse('Rest 60s');
  assert.equal(p.restSec,60);assert.equal(p.seconds,null);
 });
+
+test('unnamed drop set after 2 x 2 @ 90-92% appends a drop',()=>{
+ const p=N.parse('2 x 2 @ 90-92% + drop set');
+ assert.equal(p.percentSets.length,3);
+ assert.equal(p.percentSets.filter(s=>s.setRole==='drop').length,1);
+ assert.equal(p.percentSets.filter(s=>!s.setRole).length,2);
+});

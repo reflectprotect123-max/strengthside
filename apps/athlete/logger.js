@@ -103,7 +103,7 @@
   function startChosenRest(s,page,{afterSupersetRound=false}={}) {
     if(!afterSupersetRound&&page.logMode==='superset')return;
     if(page.restSec===0)return;
-    const selected=HybridSession.restMs?HybridSession.restMs(s,page):(s.restChoices||{})[page.id];
+    const selected=HybridSession.restMs?HybridSession.restMs(s,page):(s.restChoices||{})[page.id]||(Number(page.restSec)>0?page.restSec*1000:null);
     if(!selected)return;
     let timer=HybridTimer.choose(timerState(),'rest');
     timer=HybridTimer.start(HybridTimer.quickStart(timer,selected),Date.now());
@@ -118,7 +118,8 @@
   function moveExercise(direction) {
     const s = session();
     if(direction>0&&prepClockPending(s))return;
-    const next = direction > 0 ? HybridSession.nextPage(s) : HybridSession.prevPage(s);
+    const from = direction>0&&HybridSession.isPrepPage?.(HybridSession.currentPage(s))?HybridSession.completeCurrent(s):s;
+    const next = direction > 0 ? HybridSession.nextPage(from) : HybridSession.prevPage(s);
     if (next.blockIndex !== s.blockIndex) {
       // Clear both timer history and the choice for the newly entered exercise.
       delete (next.restChoices || {})[HybridSession.currentPage(next).id];
@@ -202,6 +203,7 @@
       const ids = HybridSession.logIdsForPage(p);
       const done = p.logMode === 'complete' ? !!(s.logs[p.id] && s.logs[p.id].completed)
         : p.logMode === 'doneHub' ? false
+        : HybridSession.isPrepPage?.(p) ? !!(s.logs[p.id] && (s.logs[p.id].completed || s.logs[p.id].skipped))
         : ids.some((id) => s.logs[id] && s.logs[id].sets && s.logs[id].sets.some((r) => r.logged));
       const cur = s.phase === 'block' && i === s.blockIndex;
       return `<span class="log-dot${cur ? ' current' : done ? ' done' : ''}"></span>`;
@@ -518,10 +520,11 @@
   }
 
   function restNote(s, page) {
-    if (page.logMode === 'superset' && !(Number(page.restSec) > 0)) return 'No rest — go straight to the next movement.';
-    if (page.restSec === 0) return 'No rest — go straight to the next movement.';
-    const ms = HybridSession.restMs ? HybridSession.restMs(s, page) : (s.restChoices || {})[page.id];
-    if (page.logMode === 'superset' && ms) return `Rest: ${Math.round(ms/1000)} seconds after each round · starts on Log set`;
+    const current=HybridSession.currentPage(s);
+    const restPage=page.logMode==='superset'?page:(current?.logMode==='superset'?current:page);
+    if (restPage.logMode === 'superset' && !(Number(restPage.restSec) > 0)) return 'No rest — go straight to the next movement.';
+    if (page.restSec === 0 && !(Number(restPage.restSec) > 0)) return 'No rest — go straight to the next movement.';
+    const ms = HybridSession.restMs ? HybridSession.restMs(s, restPage) : (s.restChoices || {})[restPage.id];
     if (ms) return `Rest: ${Math.round(ms/1000)} seconds · starts on Log set`;
     return "Choose your rest using Select Timer below.";
   }
@@ -725,18 +728,14 @@
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
     else if (page.logMode === 'superset') {
-      const turn = HybridSession.supersetTurn ? HybridSession.supersetTurn(s, page) : null;
-      const current = turn && !turn.done ? turn.member : (page.members || [])[0];
-      const label = turn && !turn.done ? turn.label : '';
-      const members = current ? `
+      const members = (page.members || []).map((m) => `
         <section class="log-ss-member">
-          <h2 class="log-title">${esc(label)} · ${esc(current.title)}</h2>
-          ${current.logMode === 'kg' ? sideHtml(s, current) : ''}
-          ${supportsSetFlow(current) ? activeSetHtml(s, current, s.logs[current.id] || { sets: [], note: '' }) : tableHtml(s, current, s.logs[current.id] || { sets: [], note: '' })}
-        </section>` : '';
+          <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
+          ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
+          ${m.logMode === 'kg' && supportsSetFlow(m) ? activeSetHtml(s, m, s.logs[m.id] || { sets: [], note: '' }) : tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
+        </section>`).join('');
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
-        <p class="log-note">${restNote(s, page)}</p>
         <div class="log-ss">${members}</div>`;
     } else {
       body = `
@@ -969,7 +968,15 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';startChosenRest(s,page);persist(HybridSession.logSet(s,i,{},lift.id));}
+      if (!row.logged) {
+        const result=root.TrainingCore.validateRow(row,lift);
+        if(!result.ok){toast=result.error;paint();return;}
+        toast='';
+        const next=HybridSession.logSet(s,i,{},lift.id);
+        if(page.logMode==='superset'&&HybridSession.justFinishedRound?.(next,page,lift.id,i)) startChosenRest(next,page,{afterSupersetRound:true});
+        else startChosenRest(next,page);
+        persist(next);
+      }
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {

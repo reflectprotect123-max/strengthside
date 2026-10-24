@@ -19,7 +19,7 @@ function boot(){
 function bootPlan(plan,letter){
  const {ctx}=runtime();
  const element={innerHTML:'',classList:{add(){},remove(){}},querySelector(){return null;}};
- ctx.document={getElementById:id=>['logger','shell'].includes(id)?element:null};
+ ctx.document={getElementById:id=>['logger','shell'].includes(id)?element:null,querySelectorAll:()=>[]};
  ctx.setInterval=()=>1;ctx.clearInterval=()=>{};
  for(const name of ['timer','logger'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
  ctx.S={loggerOpen:true,timer:ctx.HybridTimer.create(),session:ctx.HybridSession.startSession({date:'2026-10-24',letter,plan})};
@@ -104,13 +104,45 @@ test('AC12 logging a lunge set auto-starts the prescribed rest',()=>{
  assert.equal(ctx.S.timer.config.restMs,90000);
 });
 
-test('AC13 logger shows the current superset turn, not both lists at once',()=>{
+test('AC13 logger keeps both members as original tables with F1/F2-style titles',()=>{
  const {ctx,element}=bootPlan({blocks:[
-  {kind:'lift',letter:'A',title:'Wall Sit',setCount:3,notes:['Superset with Jump Squat'],restSec:45},
+  {kind:'lift',letter:'F1',title:'Wall Sit',setCount:3,notes:['Superset with Jump Squat'],restSec:45},
+  {kind:'lift',letter:'F2',title:'Jump Squat',setCount:3,notes:['Superset with Wall Sit']},
+ ]},'F1');
+ ctx.Logger.paint();
+ const html=element.innerHTML;
+ assert.match(html,/F1\. Wall Sit/);
+ assert.match(html,/F2\. Jump Squat/);
+ assert.match(html,/log-table/);
+ assert.doesNotMatch(html,/F11|F21|F12/);
+ assert.doesNotMatch(html,/after each round/);
+ assert.equal((html.match(/log-ss-member/g)||[]).length,2);
+});
+
+test('bar Next on a warm-up marks the left page done',()=>{
+ const {ctx}=bootPlan({blocks:[
+  {kind:'lift',letter:'U',title:'Row',section:'Warm-Up',columns:['seconds'],prescribed:'180',setCount:1},
+  {kind:'lift',letter:'V',title:'Bodyweight Squat',section:'Warm-Up',setCount:2},
+ ]},'U');
+ ctx.Logger.paint();
+ ctx.S.timer.startedAt=Date.now()-181000;
+ const row=ctx.S.session.pages[0];
+ ctx.Logger.next();
+ assert.equal(ctx.S.session.pages[ctx.S.session.blockIndex].title,'Bodyweight Squat');
+ assert.equal(ctx.S.session.logs[row.id].completed,true);
+});
+
+test('AC12 logging the last member of a superset round auto-starts prescribed rest',()=>{
+ const {ctx}=bootPlan({blocks:[
+  {kind:'lift',letter:'A',title:'Wall Sit',setCount:3,notes:['3 x 45 sec','Superset with Jump Squat'],restSec:45,columns:['seconds']},
   {kind:'lift',letter:'B',title:'Jump Squat',setCount:3,notes:['Superset with Wall Sit']},
  ]},'A');
- ctx.Logger.paint();
- assert.match(element.innerHTML,/A1/);
- assert.match(element.innerHTML,/Wall Sit/);
- assert.doesNotMatch(element.innerHTML,/B1/);
+ const pair=ctx.HybridSession.currentPage(ctx.S.session);
+ const wall=pair.members[0],jump=pair.members[1];
+ ctx.Logger.rateRow(wall.id,0,'2');
+ ctx.Logger.check(wall.id,0);
+ ctx.Logger.rateRow(jump.id,0,'2');
+ ctx.Logger.check(jump.id,0);
+ assert.equal(ctx.S.timer.mode,'rest');
+ assert.equal(ctx.S.timer.config.restMs,45000);
 });

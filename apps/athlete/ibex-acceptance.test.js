@@ -50,6 +50,21 @@ test('AC3 two ramp rows on mains and rampCount is honoured',()=>{
  assert.equal(none.logs.A.sets.filter(r=>r.purpose==='ramp').length,0);
 });
 
+test('ramp rows are never blank: DB RDL ramp 2 and Back Squat ramp 3 have kg',()=>{
+ const rdl=seedLift('DB RDL',{rampCount:2});
+ const rdlRamps=rdl.logs.A.sets.filter(r=>r.purpose==='ramp');
+ assert.equal(rdlRamps.length,2);
+ assert.ok(rdlRamps.every(r=>r.kg!=null),`DB RDL ramps ${rdlRamps.map(r=>r.kg)}`);
+ const squat=seedLift('Back Squat',{rampCount:3,notes:['5 x 5 @ 72-77% (RPE 8) build over the 5 sets'],oneRm:140,pctLow:72,pctHigh:77,percentMode:'build',setCount:5,setTargets:targets(5)});
+ const squatRamps=squat.logs.A.sets.filter(r=>r.purpose==='ramp');
+ assert.equal(squatRamps.length,3);
+ assert.ok(squatRamps.every(r=>r.kg!=null),`squat ramps ${squatRamps.map(r=>r.kg)}`);
+ const work=squat.logs.A.sets.find(r=>r.purpose==='working').kg;
+ assert.ok(squatRamps[1].kg>squatRamps[0].kg||squatRamps[0].kg===0);
+ assert.ok(squatRamps[2].kg>squatRamps[1].kg);
+ assert.ok(squatRamps[2].kg<work);
+});
+
 test('AC4 Easy raises ramp 2, Hard drops about 90%, working sets resize after the last ramp',()=>{
  const page={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,workingKg:80,barWeightKg:20};
  const easy=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:20,effort:'easy'},nextRow:{purpose:'ramp',kg:20},index:1,state:{rows:[]}});
@@ -61,6 +76,8 @@ test('AC4 Easy raises ramp 2, Hard drops about 90%, working sets resize after th
  const hardOntoWork=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:20,effort:'hard'},nextRow:{purpose:'working',kg:80},index:2,state:{rows:[]}});
  assert.ok(hardOntoWork.kg>=70&&hardOntoWork.kg<=75,`Hard last ramp must be ~90% of planned 80, not empty bar; got ${hardOntoWork.kg}`);
  assert.ok(hardOntoWork.kg<80);
+ const raise=B.next({page,row:{purpose:'ramp',logged:true,reps:8,kg:0,effort:'very_easy'},nextRow:{purpose:'ramp',kg:30},index:1,state:{rows:[]}});
+ assert.ok(raise.kg>30,`Very Easy on empty-bar ramp 1 must raise ramp 2 above 30, got ${raise.kg}`);
 });
 
 test('AC5 history matches across coach vs library ids and populates Est 1RM / Last',()=>{
@@ -72,6 +89,20 @@ test('AC5 history matches across coach vs library ids and populates Est 1RM / La
  assert.ok(hist.latest.rows.some(r=>r.kg===60));
  assert.ok(hist.rolling>0||hist.freshE1rm>0||hist.latest.nextKg===60);
  const seeded=B.seed({id:'s',pages:[current],logs:{A:{sets:targets().map(t=>({targetId:t.id}))}}},records);
+ assert.equal(seeded.pages[0].workingKg,60);
+});
+
+test('AC5 on-device history matches name when convention, exerciseId and completed differ',()=>{
+ const prior={...bare('Incline Bench'),exerciseId:'exercise_catalogue_incline',title:'Incline Bench',equipmentId:'barbell',loadConvention:'barbell_total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20};
+ const current={...bare('Incline Bench'),exerciseId:'coach-live-uuid',title:'Incline Bench',equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5};
+ const rec=record(prior,{id:'oct23',targetId:'A:set:0',reps:6,effort:'average',kg:60,logged:true,purpose:'working',workingIndex:0,ordinal:0});
+ rec.payload.completed=false;
+ rec.payload.normalizedLoad={version:3,rawValue:60,rawUnit:'kg',convention:'barbell_total',externalKg:60,barKg:20,provenance:'explicit',eligible:true};
+ rec.payload.row.context={inputVersion:3,normalizedLoad:rec.payload.normalizedLoad};
+ const hist=B.history({oct23:rec},current);
+ assert.ok(hist.latest,JSON.stringify(hist.diagnostics||hist));
+ assert.equal(hist.latest.nextKg,60);
+ const seeded=B.seed({id:'s',pages:[current],logs:{A:{sets:targets().map(t=>({targetId:t.id}))}}},{oct23:rec});
  assert.equal(seeded.pages[0].workingKg,60);
 });
 
@@ -104,6 +135,21 @@ test('AC9 ramps warm up to the range bottom; next session starts where the athle
  assert.equal(P.rampTargetKg({page:p,rx:P.normalize(p),oneRm:100}),63);
  const next=P.workingKgs({page:p,rx:P.normalize(p),oneRm:100,history:{latest:{rows:[{purpose:'working',logged:true,kg:66}]}}});
  assert.equal(next[0],66);
+});
+
+test('drop notes 2 x 2 @ 90-92% + drop set produce two top sets plus a drop',()=>{
+ const parsed=N.parse('2 x 2 @ 90-92% + drop set');
+ assert.equal(parsed.percentSets.length,3);
+ assert.equal(parsed.percentSets.filter(s=>s.setRole==='drop').length,1);
+ assert.equal(parsed.percentSets.filter(s=>!s.setRole).length,2);
+ const s=H.startSession({date:'2026-10-24',plan:{blocks:[{kind:'lift',letter:'B',title:'Incline Bench drop',setCount:2,notes:['2 x 2 @ 90-92% + drop set'],oneRm:100,pctLow:90,pctHigh:92,setTargets:[
+  {id:'B:set:0',purpose:'working',reps:{min:2,max:2},loadRule:{kind:'adaptive'},toFailure:false,pctLow:90,pctHigh:92},
+  {id:'B:set:1',purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false,setRole:'drop',percentBasis:'top_set'},
+ ]}]}});
+ const page=s.pages.find(p=>p.title==='Incline Bench drop');
+ const work=(page.setTargets||[]).filter(t=>t.purpose==='working');
+ assert.ok(work.filter(t=>t.setRole!=='drop'&&t.setRole!=='backoff').length>=2,JSON.stringify(work));
+ assert.ok(work.some(t=>t.setRole==='drop'));
 });
 
 test('AC10 back-off / drop is a percent of the top set',()=>{

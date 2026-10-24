@@ -30,7 +30,7 @@
             "letter": "B",
             "title": "Incline Bench drop",
             "section": "Strength/Power",
-            "setCount": 2,
+            "setCount": 3,
             "rampCount": 0,
             "oneRm": 100,
             "pctLow": 90,
@@ -38,6 +38,7 @@
             "percentMode": "straight",
             "notes": ["2 x 2 @ 90-92% + drop set"],
             "setTargets": [
+              {"purpose": "working", "reps": {"min": 2, "max": 2}, "pctLow": 90, "pctHigh": 92},
               {"purpose": "working", "reps": {"min": 2, "max": 2}, "pctLow": 90, "pctHigh": 92},
               {"purpose": "working", "reps": {"min": 8, "max": 8}, "setRole": "drop", "percentBasis": "top_set"}
             ]

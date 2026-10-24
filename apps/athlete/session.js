@@ -126,10 +126,13 @@
       setTargets=setTargets.map((t,i)=>t.effort?t:{...t,effort:parsed.efforts[i]||parsed.efforts.at(-1)});
     }
     if(parsed.percentSets?.length) {
+      const fromNotes=()=>parsed.percentSets.map((s,i)=>({id:`${block.letter||block.title||'block'}:set:${i}`,purpose:'working',reps:s.reps?{min:s.reps,max:s.reps}:{min:block.targetReps||8,max:block.targetReps||8},loadRule:{kind:'adaptive'},toFailure:false,pctLow:s.pctLow,pctHigh:s.pctHigh,rpe:s.rpe,setRole:s.setRole,percentBasis:s.percentBasis}));
+      const notesTops=parsed.percentSets.filter(s=>s.setRole!=='drop'&&s.setRole!=='backoff').length;
+      const payloadTops=(setTargets||[]).filter(t=>t.setRole!=='drop'&&t.setRole!=='backoff').length;
       if(!setTargets) {
-        setTargets=parsed.percentSets.map((s,i)=>({id:`${block.letter||block.title||'block'}:set:${i}`,purpose:'working',reps:s.reps?{min:s.reps,max:s.reps}:null,loadRule:{kind:'adaptive'},toFailure:false,pctLow:s.pctLow,pctHigh:s.pctHigh,rpe:s.rpe,setRole:s.setRole,percentBasis:s.percentBasis}));
-      } else if(parsed.percentSets.length>setTargets.length) {
-        setTargets=setTargets.concat(parsed.percentSets.slice(setTargets.length).map((s,i)=>({id:`${block.letter||block.title||'block'}:set:${setTargets.length+i}`,purpose:'working',reps:s.reps?{min:s.reps,max:s.reps}:{min:block.targetReps||8,max:block.targetReps||8},loadRule:{kind:'adaptive'},toFailure:false,pctLow:s.pctLow,pctHigh:s.pctHigh,rpe:s.rpe,setRole:s.setRole,percentBasis:s.percentBasis})));
+        setTargets=fromNotes();
+      } else if(parsed.percentSets.length>setTargets.length||notesTops>payloadTops) {
+        setTargets=fromNotes();
       }
       setTargets=setTargets.map((t,i)=>{
         const s=parsed.percentSets[i];if(!s)return t;
@@ -324,7 +327,7 @@
       liftMemory: {},
       feel: { intensity: null, durationMin: 0, note: '' },
       unit: 'kg',
-      restChoices: Object.fromEntries(pages.filter((p)=>p.restSec>0&&p.logMode!=='superset').map((p)=>[p.id,p.restSec*1000])),
+      restChoices: Object.fromEntries(pages.filter((p)=>Number(p.restSec)>0).map((p)=>[p.id,p.restSec*1000])),
     });
     if (letter) {
       const idx = pages.findIndex((p) => pageMatchesLetter(p, letter));
