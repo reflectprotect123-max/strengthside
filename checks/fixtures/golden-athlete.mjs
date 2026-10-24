@@ -30,3 +30,32 @@ export async function bindGoldenAthlete(page, accountId = GOLDEN_DAN) {
     await StrengthMemory.bind(id);
   }, accountId);
 }
+
+/** Real signed-in UUID plus a mocked athlete_starting_level row. */
+export async function bindRealAccount(page, {accountId, level} = {}) {
+  await page.waitForFunction(() => Boolean(window.S && window.StrengthWeights && window.StrengthMemory));
+  await page.evaluate(async ({accountId, level}) => {
+    const rows = {};
+    if (level) rows[accountId] = {level};
+    const prev = window.Whoop?.client;
+    window.Whoop = window.Whoop || {};
+    window.Whoop.client = () => {
+      const inner = typeof prev === 'function' ? prev() : {};
+      return {
+        ...inner,
+        from(table) {
+          if (table !== 'athlete_starting_level') return inner.from ? inner.from(table) : {};
+          return {
+            select() { return this; },
+            eq(col, value) { this._id = value; return this; },
+            async maybeSingle() { return {data: rows[this._id] || null, error: null}; },
+            async upsert(row) { rows[row.athlete_id] = {level: row.level}; return {error: null}; },
+          };
+        },
+      };
+    };
+    S.accountId = accountId;
+    await StrengthWeights.loadAccount(accountId);
+    await StrengthMemory.bind(accountId);
+  }, {accountId, level});
+}

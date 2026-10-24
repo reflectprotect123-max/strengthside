@@ -39,6 +39,13 @@ function bindStrengthAccount(uid) {
   }
   S.accountId = uid;
   if (window.HybridIntegrations) HybridIntegrations.mergeIntoState(S);
+  if (window.StrengthWeights) {
+    StrengthWeights.use(StrengthWeights.fromLevel(uid, S.startingLevel || 'dan'));
+    StrengthWeights.loadAccount(uid).then(() => {
+      save();
+      if (typeof render === 'function' && document.getElementById('app')) render();
+    }).catch(() => {});
+  }
 }
 
 function signOutStrengthAccount() {
@@ -71,7 +78,15 @@ function resetBlankSlate(keepAuth = true) {
 }
 
 let S = load();
+try {
+  const coachAthlete = new URLSearchParams(location.search).get('coachAthlete');
+  if (coachAthlete) S.coachAthleteId = coachAthlete;
+} catch { /* ignore */ }
 if (window.HybridIntegrations) HybridIntegrations.mergeIntoState(S);
+if (S.accountId && window.StrengthWeights) {
+  StrengthWeights.use(StrengthWeights.fromLevel(S.accountId, S.startingLevel || 'dan'));
+  StrengthWeights.loadAccount(S.accountId).catch(() => {});
+}
 refreshHybridOccupancy();
 
 function load() {
@@ -685,6 +700,9 @@ function meHtml() {
         <h1>Profile</h1>
         ${HybridSc.lockerCardHtml()}
         ${meAppSectionHtml()}
+        ${S.coachAthleteId && window.StrengthWeights
+          ? `<div class="card account-compact">${StrengthWeights.selectHtml(S.coachAthleteId, S.startingLevel)}</div>`
+          : ''}
         <div class="card account-compact">
           <p class="account-email">${esc(w.email)}</p>
           <p class="stub">WHOOP · ${w.connected ? 'Connected' : 'Not linked yet'}</p><p class="stub" id="whoopAccountStatus" role="status">${esc(window.Whoop?.uiMessage() || '')}</p>

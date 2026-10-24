@@ -74,10 +74,10 @@ it:
 Both repositories write migrations against **one** Postgres. This is the rule that
 keeps that from becoming a disaster:
 
-- **This repo owns exactly thirteen tables**: `metric`, `equipment`, `exercise`,
+- **This repo owns exactly fourteen tables**: `metric`, `equipment`, `exercise`,
   `strength_block_item`, `prescribed_set`, `prescribed_target`, `assigned_session`,
   `performed_set`, `performed_measurement`, `working_max_event`, `pr_event`,
-  `coaching_note`, `strength_brain_records` — plus their RLS and the `embed-coaching-note` function.
+  `coaching_note`, `strength_brain_records`, `athlete_starting_level` — plus their RLS and the `embed-coaching-note` function.
 - **The hybrid stub owns the rest of the shared ledger** (auth helpers, nutrition
   domain history, legacy coach/ARC relationship SQL including
   `coaches_athlete_anywhere`). Those objects stay in Postgres as **frozen legacy** —
@@ -106,7 +106,7 @@ Strength's native return is `com.hybrid.strength://whoop`. The connect function
 stores an allowlisted APK target with single-use OAuth state, so conditioning
 installs can return to their own application. Do not accept arbitrary return URLs.
 
-The new strength memory table is the thirteenth strength-owned ledger table.
+The strength memory table is a strength-owned ledger table; `athlete_starting_level` is the fourteenth.
 It stores individual local-logger sets and derived session estimates without
 inventing coach-assignment foreign keys. Writes use the authenticated, revision-
 checked `sync_strength_brain_records` RPC; other accounts cannot read the records.

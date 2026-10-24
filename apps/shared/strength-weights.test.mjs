@@ -326,3 +326,37 @@ test('fixtures never use Dan\'s real account id', () => {
   assert.notEqual(DAN.accountId, 'dan');
   assert.ok(!/reflectprotect|real/i.test(DAN.accountId));
 });
+
+test('a real account defaults to dan starters and can load partner from a mocked row', async () => {
+  const uid = '11111111-1111-1111-1111-111111111111';
+  const unset = W.fromLevel(uid, null);
+  assert.equal(unset.startingLevel, 'dan');
+  assert.equal(unset.barKg, 20);
+  assert.equal(W.plan({page: db('DB RDL', {setCount: 3, rampCount: 0}), athlete: unset, records: {}}).workingKgs[0], 16);
+  const lunge = db('DB Lunge', {setCount: 3, rampCount: 0});
+  const loaded = await W.loadAccount(uid, {
+    from() {
+      return {select() {return this;}, eq() {return this;}, maybeSingle: async () => ({data: {level: 'partner'}, error: null})};
+    },
+  });
+  assert.equal(loaded.startingLevel, 'partner');
+  assert.equal(loaded.accountId, uid);
+  assert.equal(loaded.barKg, 15);
+  assert.equal(W.plan({page: db('DB RDL', {setCount: 3, rampCount: 0}), athlete: loaded, records: {}}).workingKgs[0], 8);
+  const rows = seedRows(W.plan({page: lunge, athlete: loaded, records: {}}));
+  assert.equal(rate(lunge, rows, 0, 'very_easy', loaded).rows[1].kg, 6);
+  assert.equal(rate(lunge, rows, 0, 'easy', loaded).rows[1].kg, 5);
+  assert.equal(rate(lunge, rows, 0, 'average', loaded).rows[1].kg, 4);
+  assert.equal(rate(lunge, rows, 0, 'hard', loaded).rows[1].kg, 0);
+  const html = W.selectHtml(uid, 'partner');
+  assert.match(html, /<select class="log-cell" aria-label="Starting level"/);
+  assert.match(html, /value="partner" selected/);
+  const saved = [];
+  await W.saveLevel(uid, 'dan', {
+    from() {
+      return {async upsert(row) { saved.push(row); return {error: null}; }};
+    },
+  });
+  assert.equal(saved[0].level, 'dan');
+  assert.equal(W.current().startingLevel, 'dan');
+});

@@ -1,6 +1,6 @@
 import {test, expect} from 'playwright/test';
 import {loadAssignedWorkout} from './assigned-workout.mjs';
-import {bindGoldenAthlete, GOLDEN_DAN, GOLDEN_REST_BLOCKS} from '../fixtures/golden-athlete.mjs';
+import {bindGoldenAthlete, bindRealAccount, GOLDEN_DAN, GOLDEN_REST_BLOCKS} from '../fixtures/golden-athlete.mjs';
 import {copyFileSync, mkdirSync} from 'node:fs';
 
 test.use({viewport: {width: 412, height: 915}});
@@ -338,4 +338,70 @@ test('golden F G H I J K: tops, empty-bar lunge, DB starts, history, timed, row 
   expect(pair.jumpPrescribed).toBe('20');
   expect(pair.wallPrescribed).toBe('45');
   await shot(page, testInfo, 'golden-f-k-mixed');
+});
+
+const STARTER_BLOCKS = [
+  {title: 'Deficit Back Rack Lunge', letter: 'A', setCount: 3, rampCount: 0, notes: ['90 seconds rest'], columns: ['reps', 'weight_kg']},
+  {title: 'DB RDL', letter: 'B', setCount: 3, rampCount: 0, notes: ['Rest: 60'], columns: ['reps', 'weight_kg']},
+  {title: 'DB Lunge', letter: 'C', setCount: 3, rampCount: 0, columns: ['reps', 'weight_kg']},
+];
+async function goTo(page, title) {
+  await page.evaluate((want) => {
+    const found = S.session.pages.find((p) => p.title === want) || S.session.pages.find((p) => p.members?.some((m) => m.title === want));
+    S.session = HybridSession.goToLetter(S.session, found.letter || found.id);
+    save();
+    Logger.paint();
+  }, title);
+}
+
+async function lungeWarmupRatings(page) {
+  return page.evaluate(() => {
+    const lift = S.session.pages.find((p) => p.title === 'DB Lunge');
+    const rows = (S.session.logs[lift.id].sets || []).map((r) => ({...r, logged: false, skipped: false}));
+    const out = {};
+    for (const effort of ['very_easy', 'easy', 'average', 'hard']) {
+      const copy = rows.map((r) => ({...r}));
+      copy[0] = {...copy[0], logged: true, effort};
+      out[effort] = StrengthWeights.applyRating({
+        page: lift, rows: copy, ratedIndex: 0, athlete: StrengthWeights.current(),
+      }).rows[1].kg;
+    }
+    return out;
+  });
+}
+
+test('real-account partner row: 15 / 8 / BW then 6 5 4 and Hard stays BW', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await loadAssignedWorkout(page, {prep: false, title: 'Real partner starters', blocks: STARTER_BLOCKS});
+  await bindRealAccount(page, {accountId: '11111111-1111-1111-1111-111111111111', level: 'partner'});
+  expect(await page.evaluate(() => S.athleteLevels.startingLevel)).toBe('partner');
+  await beginSession(page);
+  expect((await liftSets(page, 'Deficit Back Rack Lunge')).filter((r) => r.purpose === 'working')[0].kg).toBe(15);
+  await goTo(page, 'DB RDL');
+  expect((await liftSets(page, 'DB RDL')).filter((r) => r.purpose === 'working')[0].kg).toBe(8);
+  await goTo(page, 'DB Lunge');
+  expect((await liftSets(page, 'DB Lunge'))[0]).toMatchObject({purpose: 'warmup', kg: 0});
+  expect(await lungeWarmupRatings(page)).toEqual({very_easy: 6, easy: 5, average: 4, hard: 0});
+  await rateOnly(page, 3);
+  await startNext(page);
+  expect((await liftSets(page, 'DB Lunge'))[1].kg).toBe(0);
+  await shot(page, testInfo, 'golden-real-partner-starters');
+});
+
+test('real-account dan row: 20 / 16 / BW then 12 10 8 and Hard stays BW', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await loadAssignedWorkout(page, {prep: false, title: 'Real dan starters', blocks: STARTER_BLOCKS});
+  await bindRealAccount(page, {accountId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', level: 'dan'});
+  expect(await page.evaluate(() => S.athleteLevels.startingLevel)).toBe('dan');
+  await beginSession(page);
+  expect((await liftSets(page, 'Deficit Back Rack Lunge')).filter((r) => r.purpose === 'working')[0].kg).toBe(20);
+  await goTo(page, 'DB RDL');
+  expect((await liftSets(page, 'DB RDL')).filter((r) => r.purpose === 'working')[0].kg).toBe(16);
+  await goTo(page, 'DB Lunge');
+  expect((await liftSets(page, 'DB Lunge'))[0]).toMatchObject({purpose: 'warmup', kg: 0});
+  expect(await lungeWarmupRatings(page)).toEqual({very_easy: 12, easy: 10, average: 8, hard: 0});
+  await rateOnly(page, 3);
+  await startNext(page);
+  expect((await liftSets(page, 'DB Lunge'))[1].kg).toBe(0);
+  await shot(page, testInfo, 'golden-real-dan-starters');
 });

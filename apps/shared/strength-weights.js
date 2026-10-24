@@ -4,9 +4,9 @@
   const BAR_DELTA = {very_easy: 5, easy: 2.5, average: 0, hard: -2.5, max_effort: -5};
   const LAST_RAMP = {very_easy: 0, easy: 0, average: 0, hard: -2.5, max_effort: -5};
   const DB_LADDER = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 12.5, 14, 15, 16, 17.5, 18, 20];
-  const FIXTURES = {
-    'golden-dan': {
-      accountId: 'golden-dan',
+  const LEVELS = {
+    dan: {
+      key: 'dan',
       barKg: 20,
       startingLevels: {
         'db rdl': {perHandKg: 16},
@@ -18,8 +18,8 @@
         'deficit back rack lunge': {kg: 20},
       },
     },
-    'golden-partner': {
-      accountId: 'golden-partner',
+    partner: {
+      key: 'partner',
       barKg: 15,
       startingLevels: {
         'db rdl': {perHandKg: 8},
@@ -32,6 +32,23 @@
       },
     },
   };
+  const FIXTURES = {
+    'golden-dan': {accountId: 'golden-dan', startingLevel: 'dan', barKg: 20, startingLevels: LEVELS.dan.startingLevels},
+    'golden-partner': {accountId: 'golden-partner', startingLevel: 'partner', barKg: 15, startingLevels: LEVELS.partner.startingLevels},
+  };
+  function levelKey(value) {
+    const k = String(value || '').toLowerCase();
+    return k === 'partner' || k === 'golden-partner' ? 'partner' : 'dan';
+  }
+  function fromLevel(accountId, key) {
+    const spec = LEVELS[levelKey(key)];
+    return {
+      accountId: String(accountId || spec.key),
+      startingLevel: spec.key,
+      barKg: spec.barKg,
+      startingLevels: {...spec.startingLevels},
+    };
+  }
 
   function num(value) {
     if (!['number', 'string'].includes(typeof value) || String(value).trim() === '') return null;
@@ -76,30 +93,66 @@
     return dbLoads(value).filter((n) => n < value - 1e-8).at(-1) ?? null;
   }
   function normalizeAthlete(raw) {
-    if (!raw || typeof raw !== 'object') return {accountId: 'golden-unknown', barKg: 20, startingLevels: {}};
-    return {
-      accountId: String(raw.accountId || 'golden-unknown'),
-      barKg: num(raw.barKg) ?? 20,
-      startingLevels: {...(raw.startingLevels || {})},
-    };
+    if (!raw || typeof raw !== 'object') return fromLevel('golden-unknown', 'dan');
+    if (raw.startingLevels && Object.keys(raw.startingLevels).length) {
+      return {
+        accountId: String(raw.accountId || 'golden-unknown'),
+        startingLevel: levelKey(raw.startingLevel),
+        barKg: num(raw.barKg) ?? LEVELS[levelKey(raw.startingLevel)].barKg,
+        startingLevels: {...raw.startingLevels},
+      };
+    }
+    return fromLevel(raw.accountId, raw.startingLevel);
   }
   function profile(idOrObj) {
     if (idOrObj && typeof idOrObj === 'object') return normalizeAthlete(idOrObj);
     if (FIXTURES[idOrObj]) return normalizeAthlete(FIXTURES[idOrObj]);
     const fromState = root.S?.athleteLevels;
     if (fromState && (!idOrObj || fromState.accountId === idOrObj)) return normalizeAthlete(fromState);
-    return {accountId: idOrObj || 'golden-unknown', barKg: 20, startingLevels: {}};
+    return fromLevel(idOrObj || 'golden-unknown', 'dan');
   }
   function current() {
     const id = root.S?.athleteLevels?.accountId || root.S?.accountId;
     if (id && FIXTURES[id]) return profile(id);
     if (root.S?.athleteLevels) return profile(root.S.athleteLevels);
-    return profile(id);
+    return fromLevel(id, root.S?.startingLevel || 'dan');
   }
   function use(athlete) {
     const next = profile(athlete);
-    if (root.S) root.S.athleteLevels = next;
+    if (root.S) {
+      root.S.athleteLevels = next;
+      root.S.startingLevel = next.startingLevel;
+    }
     return next;
+  }
+  function clientOf(io) {
+    if (io && typeof io.from === 'function') return io;
+    return root.Whoop?.client?.() || null;
+  }
+  async function loadAccount(uid, io) {
+    let key = 'dan';
+    try {
+      const sb = clientOf(io);
+      if (sb && uid) {
+        const {data} = await sb.from('athlete_starting_level').select('level').eq('athlete_id', uid).maybeSingle();
+        if (data?.level) key = levelKey(data.level);
+      }
+    } catch { /* offline / unsigned: stay on dan */ }
+    return use(fromLevel(uid, key));
+  }
+  async function saveLevel(athleteId, key, io) {
+    const level = levelKey(key);
+    const sb = clientOf(io);
+    if (!sb) throw new Error('Sign in required');
+    const {error} = await sb.from('athlete_starting_level').upsert({athlete_id: athleteId, level});
+    if (error) throw error;
+    if (!root.S || root.S.accountId === athleteId || root.S.coachAthleteId === athleteId) use(fromLevel(athleteId, level));
+    return level;
+  }
+  function selectHtml(athleteId, selected) {
+    const cur = levelKey(selected);
+    const id = String(athleteId || '').replace(/[^a-zA-Z0-9-]/g, '');
+    return `<label class="stub">Starting level<select class="log-cell" aria-label="Starting level" onchange="StrengthWeights.saveLevel('${id}',this.value).then(()=>{if(typeof save==='function')save();if(typeof render==='function')render();})"><option value="dan"${cur === 'dan' ? ' selected' : ''}>Dan</option><option value="partner"${cur === 'partner' ? ' selected' : ''}>Partner</option></select></label>`;
   }
   function startingFor(page, athlete) {
     const key = liftKey(page);
@@ -501,6 +554,12 @@
 
   root.StrengthWeights = {
     FIXTURES,
+    LEVELS,
+    levelKey,
+    fromLevel,
+    loadAccount,
+    saveLevel,
+    selectHtml,
     profile,
     current,
     use,
