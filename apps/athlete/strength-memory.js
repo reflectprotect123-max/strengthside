@@ -102,13 +102,20 @@
       put({...record,deleted:true,payload:{...record.payload,completed}});
     for(const page of pages){
       const rows=session.logs?.[page.id]?.sets||[],exerciseKey=root.StrengthBrain.key(page);
-      if(!root.StrengthBrain.eligible(page)&&!session.brainEstimateIds[page.id])continue;
+      const machine=root.ConditioningScore?.machineKind?.(page);
+      if(!root.StrengthBrain.eligible(page)&&!machine&&!session.brainEstimateIds[page.id])continue;
       if(!rows.some(r=>r.logged)&&!session.brainEstimateIds[page.id])continue;
       const id=session.brainEstimateIds[page.id]||(session.brainEstimateIds[page.id]=root.crypto.randomUUID());
-      const result=root.StrengthBrain.review(page,rows),state=replay(exerciseKey,page),own=state.evidence.find(e=>e.sessionId===session.id);
+      const result=root.StrengthBrain.eligible(page)?root.StrengthBrain.review(page,rows):{};
+      const state=root.StrengthBrain.eligible(page)?replay(exerciseKey,page):{evidence:[],freshE1rm:null,exposures:0,confidence:'unknown',modelVersion:null};
+      const own=state.evidence.find(e=>e.sessionId===session.id);
+      const pageScore=machine?root.ConditioningScore.forPage(page,rows):null;
+      const sessionScore=root.ConditioningScore?root.ConditioningScore.receipt(session):null;
       put({id,sessionId:session.id,exerciseKey,kind:'session_estimate',deleted:!rows.some(r=>r.logged),payload:{...result,completed,coachAssignmentId:page.coachAssignmentId||null,sessionCompletedAt:page.coachAssignmentId?session.completedAt||null:null,
         sourceSetIds:own?.sourceSetIds||[],sourceSignature:own?.sourceSignature||null,prescriptionSignature:prescriptionSignature(page),
-        freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date}});
+        freshE1rm:state.freshE1rm,exposures:state.exposures,confidence:state.confidence,modelVersion:state.modelVersion,sessionStartedAt:session.startedAt,date:session.date,
+        conditioning:pageScore&&pageScore.rounds?{rounds:pageScore.rounds,splits:pageScore.splits,totals:pageScore.totals,pace500:pageScore.pace500}:null,
+        sessionConditioning:sessionScore&&sessionScore.rounds?sessionScore:null}});
     }
     persist();schedule();
   }

@@ -190,15 +190,20 @@
         lastSection = section;
       }
       if (b.kind === 'circuit') {
-        const recovery = /recover|cool/i.test(b.title || '');
+        const recovery = b.role === 'cooldown' || /recover|cool/i.test(b.title || '');
+        const items = Array.isArray(b.items) && b.items.length
+          ? b.items.map((it, i) => ({ n: it.n || i + 1, text: it.text || it.title || '', note: it.note || '', videoUrl: it.videoUrl || it.video_url || null }))
+          : itemsFromInstructions(b.instructions);
         blocks.push({
           kind: recovery ? 'recovery' : 'warmup',
           letter: b.letter,
           title: b.title,
-          items: itemsFromInstructions(b.instructions),
-          bullets: recovery ? itemsFromInstructions(b.instructions).map((x) => x.text) : [],
+          items,
+          bullets: recovery ? items.map((x) => x.text) : [],
           footer: 'For Completion',
           section,
+          role: b.role || (recovery ? 'cooldown' : 'warmup'),
+          videoUrl: b.videoUrl || b.video_url || null,
         });
       } else {
         let columns = (b.columns || ['reps']).slice();
@@ -233,6 +238,7 @@
           loadConvention: b.loadConvention,
           exerciseType: b.exerciseType,
           rampCount: b.rampCount,
+          videoUrl: b.videoUrl || b.video_url || null,
           section,
         });
       }

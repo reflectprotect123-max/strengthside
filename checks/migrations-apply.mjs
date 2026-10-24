@@ -7,7 +7,7 @@
  * foreign key reference walks around it. So this builds its own cluster,
  * applies the migrations in order, and asserts the switch — empirically.
  *
- * Scoped to THIS repository's thirteen tables. Everything the migrations lean on
+ * Scoped to THIS repository's owned strength tables. Everything the migrations lean on
  * but do not own is stubbed by checks/sql/strength-prelude.sql, which names the
  * real owner of each object. See CLAUDE.md's shared-Supabase contract.
  *
@@ -55,7 +55,7 @@ const dir = mkdtempSync(join('/tmp', 'strengthpg-'));
 execSync(`chmod 777 ${dir}${AS_ROOT ? ` && chown -R ${OWNER} ${dir}` : ''}`);
 
 const sqlFiles = readdirSync(join(ROOT, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort();
-for (const src of [...sqlFiles.map((f) => join(ROOT, 'supabase/migrations', f)), join(ROOT, 'checks/sql/strength-prelude.sql'),join(ROOT,'checks/sql/coach-assignment-results-test.sql')]) {
+for (const src of [...sqlFiles.map((f) => join(ROOT, 'supabase/migrations', f)), join(ROOT, 'checks/sql/strength-prelude.sql'),join(ROOT,'checks/sql/coach-assignment-results-test.sql'),join(ROOT,'checks/sql/session-comment-test.sql')]) {
   const dest = join(dir, src.split('/').pop());
   copyFileSync(src, dest);
   execSync(`chmod 644 ${dest}${AS_ROOT ? ` && chown ${OWNER} ${dest}` : ''}`);
@@ -107,13 +107,14 @@ const check = (label, fn) => {
   catch (e) { failures++; console.error(`  FAIL — ${label}: ${String(e.message || e).split('\n').slice(0, 3).join(' ')}`); }
 };
 
-/* The thirteen tables this repository owns. Not a convenience list — it is the
+/* The strength tables this repository owns. Not a convenience list — it is the
    shared-Supabase contract in executable form. A table added here that the
    contract does not name is the violation this check exists to catch. */
 const OWNED_TABLES = [
   'metric', 'equipment', 'exercise', 'strength_block_item', 'prescribed_set',
   'prescribed_target', 'assigned_session', 'performed_set',
   'performed_measurement', 'working_max_event', 'pr_event', 'strength_brain_records',
+  'session_comment',
 ];
 const VECTOR_TABLES = ['coaching_note'];
 
@@ -148,6 +149,7 @@ try {
   }
 
   check('Coach result receipts require owned durable evidence and preserve frozen prescriptions',()=>psql(`-q -f ${join(dir,'coach-assignment-results-test.sql')}`));
+  check('Coach comments are append-only to the athlete and a roster coach',()=>psql(`-q -f ${join(dir,'session-comment-test.sql')}`));
 
   console.log('\nOwned tables and their RLS:\n');
 
@@ -187,7 +189,7 @@ try {
   /* The whole point of the split. A migration here that creates a table the
      contract does not name means the two repos have started fighting over the
      same database, and the shared Postgres will not warn anyone. */
-  check('no migration creates a table outside the thirteen this repo owns', () => {
+  check('no migration creates a table outside the tables this repo owns', () => {
     const all = [...OWNED_TABLES, ...VECTOR_TABLES];
     const declared = sqlFiles
       .flatMap((f) => [...readFileSync(join(ROOT, 'supabase/migrations', f), 'utf8')

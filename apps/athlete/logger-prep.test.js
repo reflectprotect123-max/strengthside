@@ -37,3 +37,24 @@ test('failed countdown persistence leaves the previous timer intact and reports 
  assert.doesNotThrow(()=>ctx.Logger.paint());assert.equal(ctx.S.timer,previous);
  assert.equal(ctx.S.session.warmupClock,undefined);assert.match(element.innerHTML,/Could not save/);
 });
+
+test('Skip warm-up stops the fullscreen prep countdown so the first lift is not covered',()=>{
+ const {ctx}=runtime();let saved=null;
+ const element={innerHTML:'',classList:{add(){},remove(){}},querySelector(){return null;}};
+ ctx.document={getElementById:id=>['logger','shell'].includes(id)?element:null};
+ ctx.setInterval=()=>1;ctx.clearInterval=()=>{};
+ for(const name of ['timer','logger'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
+ ctx.S={loggerOpen:true,timer:ctx.HybridTimer.create(),session:ctx.HybridSession.startSession({date:'2026-10-24',letter:'A',plan:{blocks:[
+  {kind:'lift',letter:'A',title:'Bike',section:'Warm-Up',columns:['seconds'],prescribed:'180',setCount:1},
+  {kind:'lift',letter:'B',title:'Back Squat',section:'Main',columns:['reps','weight_kg'],setCount:3}
+ ]}})};
+ ctx.save=()=>{saved=JSON.parse(JSON.stringify(ctx.S));};
+ ctx.Logger.paint();
+ assert.equal(ctx.S.timer.mode,'countdown');
+ assert.equal(ctx.S.session.pages[ctx.S.session.blockIndex].title,'Bike');
+ ctx.Logger.skipBlock();
+ assert.equal(ctx.S.session.pages[ctx.S.session.blockIndex].title,'Back Squat');
+ assert.equal(ctx.S.timer.mode,null);
+ assert.equal(ctx.S.timer.view,'idle');
+ assert.equal(ctx.S.session.warmupClock,null);
+});

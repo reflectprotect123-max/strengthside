@@ -6,10 +6,60 @@ const fixture=JSON.parse(readFileSync(new URL('../../checks/fixtures/coach-publi
 const copy=x=>JSON.parse(JSON.stringify(x));
 function runtime(){
   const c={console};c.globalThis=c;vm.createContext(c);
-  for(const file of ['training-core','strength-targets','library','strength-only','coach-assignments'])vm.runInContext(readFileSync(new URL('./'+file+'.js',import.meta.url),'utf8'),c);
+  for(const file of ['training-core','strength-targets','library','strength-only','session','plan-sync','coach-assignments'])vm.runInContext(readFileSync(new URL('./'+file+'.js',import.meta.url),'utf8'),c);
   c.S={accountId:fixture.athlete_id,library:c.HybridLibrary.emptyState(),sessions:{},session:null};
   return c;
 }
+test('coach-published warmup and cooldown reach the logger with demo video after PlanSync',()=>{
+  const c=runtime(),row=copy(fixture);
+  row.resolved_snapshot.htmlSession.blocks=[
+    {id:'wu-text',type:'text',heading:'Warm-up',category:'Prep',scoring:'completion',
+      notes:'5 min easy bike or row.\nThen 2 rounds: world\'s greatest stretch.',
+      video_url:'https://youtu.be/warmuptext1'},
+    {id:'wu-ex',type:'strength',role:'warmup',category:'Warm-Up',scoring:'completion',exercises:[
+      {id:'bike',name:'Bike',sets:3,reps:'180',metric:'Seconds',logColumns:[{kind:'time_sec',values:['180','180','180']}],
+        video_url:'https://example.com/bike.mp4'}]},
+    row.resolved_snapshot.htmlSession.blocks[0],
+    {id:'cd-text',type:'text',heading:'Cool-down',category:'Recovery',scoring:'completion',
+      notes:'Walk 3 min. Nasal breathing.',videoUrl:'https://youtu.be/cooldowntext1'},
+    {id:'cd-ex',type:'strength',role:'cooldown',category:'Cool-Down',scoring:'completion',exercises:[
+      {id:'breath',name:'Breathing',sets:1,reps:'60',metric:'Seconds',logColumns:[{kind:'time_sec',values:['60']}],
+        video_url:'https://example.com/breath.mp4'}]}
+  ];
+  const applied=c.CoachAssignments.apply(c.S,[row],row.athlete_id).state;
+  const packed=c.PlanSync.pack(applied);
+  const restored=c.PlanSync.applyPlan({library:c.HybridLibrary.emptyState(),sessions:{}},packed);
+  const plan=c.HybridLibrary.planForDate(restored.library,row.scheduled_date);
+  const pages=c.HybridSession.pagesFromPlan(plan);
+  const sections=pages.filter(p=>p.kind!=='doneHub').map(p=>p.section);
+  assert.equal(sections[0],'Warm-Up');
+  assert.equal(sections.at(-1),'Cool-Down');
+  assert.ok(sections.includes('Strength/Power'));
+  const textWarm=pages.find(p=>p.title==='Warm-up');
+  assert.equal(textWarm.kind,'warmup');
+  assert.equal(textWarm.logMode,'complete');
+  assert.ok(textWarm.items.some(it=>/bike/i.test(it.text)));
+  assert.equal(textWarm.videoUrl,'https://youtu.be/warmuptext1');
+  const bike=pages.find(p=>p.title==='Bike');
+  assert.equal(bike.section,'Warm-Up');
+  assert.equal(bike.videoUrl,'https://example.com/bike.mp4');
+  const textCool=pages.find(p=>p.title==='Cool-down');
+  assert.equal(textCool.kind,'recovery');
+  assert.equal(textCool.section,'Cool-Down');
+  assert.equal(textCool.videoUrl,'https://youtu.be/cooldowntext1');
+  const breath=pages.find(p=>p.title==='Breathing');
+  assert.equal(breath.section,'Cool-Down');
+  assert.equal(breath.videoUrl,'https://example.com/breath.mp4');
+  assert.equal(c.HybridLibrary.createTemplate,undefined);
+});
+
+test('optional video_url from the Coach snapshot survives onto the compiled lift',()=>{
+  const c=runtime(),row=copy(fixture);
+  row.resolved_snapshot.htmlSession.blocks[0].exercises[0].video_url='https://youtu.be/dQw4w9wgGcQ';
+  const plan=c.HybridLibrary.planForDate(c.CoachAssignments.apply(c.S,[row],row.athlete_id).state.library,row.scheduled_date);
+  const lift=plan.blocks.find(b=>b.kind==='lift');
+  assert.equal(lift.videoUrl,'https://youtu.be/dQw4w9wgGcQ');
+});
 test('actual Coach producer payload compiles variable reps, first-set AMRAP and tempo without rewriting identity',()=>{
   const c=runtime(),before=JSON.stringify(fixture),r=c.CoachAssignments.apply(c.S,[fixture],fixture.athlete_id);
   const plan=c.HybridLibrary.planForDate(r.state.library,fixture.scheduled_date),p=plan.blocks.find(b=>b.kind==='lift');

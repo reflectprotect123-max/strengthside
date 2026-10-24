@@ -75,6 +75,14 @@ test('next from F pair lands on G not a second F page', () => {
   assert.equal(s.pages[s.blockIndex].id, 'G');
 });
 
+test('skipSection leaves the warm-up and lands on the first main lift', () => {
+  let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'A' });
+  s = HybridSession.skipSection(s);
+  assert.equal(s.pages[s.blockIndex].id, 'B');
+  assert.equal(s.logs.A.skipped, true);
+  assert.equal(s.logs.A.completed, true);
+});
+
 test('completeCurrent marks warmup done', () => {
   let s = HybridSession.startSession({ date: '2026-09-07', plan: demoPlan, letter: 'A' });
   s = HybridSession.completeCurrent(s);
@@ -252,6 +260,12 @@ test('reopening an active workout preserves captured targets and calibration whe
  const reopened=HybridSession.startSession({date:s.date,existing:s,plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 10-12'}]}});
  assert.equal(reopened.pages[0].targetReps,6);assert.equal(reopened.pages[0].workingKg,40);assert.equal(reopened.brainSeeded,true);
 });
+test('coach video_url is snapshotted onto the logger page',()=>{
+  const plan={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],video_url:'https://youtu.be/dQw4w9wgGcQ'}]};
+  const s=HybridSession.startSession({date:'2026-10-24',plan,letter:'A'});
+  assert.equal(s.pages[0].videoUrl,'https://youtu.be/dQw4w9wgGcQ');
+});
+
 test('tempo and completion lifecycle reach the real session without changing its prescription',()=>{
  const p={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'33X1',prescription:'3 x 5'}]};
  const s=HybridSession.startSession({date:'2026-10-16',plan:p});

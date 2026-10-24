@@ -30,7 +30,7 @@ test('received workout plays fully, reopens in history and seeds the next sessio
  await page.screenshot({path:testInfo.outputPath('next-session-load.png'),fullPage:true});
 });
 
-test('warm-up lifts cool-down before Ramp with no skip button',async({page})=>{
+test('warm-up lifts cool-down before Ramp and Skip warm-up jumps to the first lift',async({page})=>{
  test.setTimeout(180000);
  await loadAssignedWorkout(page);
  await page.clock.install();
@@ -38,8 +38,10 @@ test('warm-up lifts cool-down before Ramp with no skip button',async({page})=>{
  await page.clock.fastForward(2000);
  await page.getByRole('button',{name:'Got It',exact:true}).click();
  await expect(page.locator('#logger')).toContainText('Bike');
- await passWarmups(page);
+ await expect(page.getByRole('button',{name:'Skip warm-up',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Skip warm-up',exact:true}).click();
  await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
+ await expect(page.locator('#logTimerFull')).toHaveCount(0);
  await expect(page.getByRole('button',{name:/skip ramp/i})).toHaveCount(0);
 });
 

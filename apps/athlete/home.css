@@ -1173,6 +1173,66 @@ button {
   background: #fff;
 }
 
+.cal-month {
+  margin: 0 12px 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-month-head,
+.cal-month-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-month-head {
+  padding: 0 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.cal-month-day {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+}
+
+.cal-month-day.is-out {
+  opacity: 0.35;
+}
+
+.cal-month-day.active b {
+  border-bottom: 2px solid #fff;
+}
+
+.trn-own-picker {
+  margin: 16px 0 80px;
+  display: grid;
+  gap: 8px;
+}
+
+.trn-own-lead {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.trn-own-pick,
+.trn-own-cancel {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #1c1c1e;
+  color: #fff;
+}
+
+.trn-own-cancel {
+  background: transparent;
+}
+
 .trn-scroll {
   flex: 1;
   overflow-y: auto;
