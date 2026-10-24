@@ -252,10 +252,12 @@ test('golden rest fixture: log auto-starts rest; superset rests after the round'
 
   await page.evaluate(() => {
     const pair = S.session.pages.find((p) => p.members?.some((m) => m.title === 'Jump Squat'));
+    S.timer = HybridTimer.create();
     S.session = HybridSession.goToLetter(S.session, pair.letter || pair.id);
     save();
     Logger.paint();
   });
+  expect(await page.evaluate(() => S.timer.mode)).not.toBe('rest');
   const pairRest = await page.evaluate(() => {
     const pair = S.session.pages.find((p) => p.members?.some((m) => m.title === 'Jump Squat'));
     return {restSec: pair.restSec, mode: pair.logMode};
