@@ -32,6 +32,15 @@
   }
 
   function inferredMetadata(title='') {
+    if(root.StrengthEquipment?.infer) {
+      const meta=root.StrengthEquipment.infer({title});
+      const out={};
+      for(const key of ['equipmentId','loadConvention','exerciseType','minimumKg','equipmentStepKg','barWeightKg']) {
+        if(meta[key]!=null)out[key]=meta[key];
+      }
+      if(/farmer|suitcase|carry/i.test(title))out.exerciseType='carry';
+      return out;
+    }
     const value=String(title);
     if(/farmer|suitcase|carry/i.test(value))return {equipmentId:/dumbbell|\bdb\b/i.test(value)?'dumbbell':null,loadConvention:'per_hand',exerciseType:'carry'};
     if(/plank|\bhold\b/i.test(value))return {equipmentId:'bodyweight',loadConvention:'bodyweight',exerciseType:'hold'};

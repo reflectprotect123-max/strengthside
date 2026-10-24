@@ -37,3 +37,29 @@ test('failed countdown persistence leaves the previous timer intact and reports 
  assert.doesNotThrow(()=>ctx.Logger.paint());assert.equal(ctx.S.timer,previous);
  assert.equal(ctx.S.session.warmupClock,undefined);assert.match(element.innerHTML,/Could not save/);
 });
+
+test('AC14 timed warmup overlay exposes Skip and Next',()=>{
+ const {ctx,element}=boot();ctx.Logger.paint();
+ assert.match(element.innerHTML,/Skip warm-up/);
+ assert.match(element.innerHTML,/Next →/);
+});
+
+test('AC14 persistTimer patches a live overlay instead of a full paint remount',()=>{
+ const {ctx,element}=boot();ctx.Logger.paint();
+ ctx.document.createElement=()=>({innerHTML:'',firstElementChild:null});
+ const live={id:'logTimerFull',replaceWith(){}};
+ const orig=ctx.document.getElementById.bind(ctx.document);
+ ctx.document.getElementById=id=>id==='logTimerFull'||id==='logTimerDock'?live:orig(id);
+ let paints=0;const paint=ctx.Logger.paint.bind(ctx.Logger);ctx.Logger.paint=()=>{paints+=1;return paint();};
+ ctx.Logger.timerNudge(1);
+ assert.equal(paints,0);
+});
+
+test('AC14 Skip warm-up leaves the current countdown page',()=>{
+ const {ctx}=boot();ctx.Logger.paint();
+ assert.equal(ctx.S.session.pages[ctx.S.session.blockIndex].title,'Bike');
+ ctx.Logger.skipBlock();
+ assert.equal(ctx.S.session.blockIndex,1);
+ assert.equal(ctx.S.session.pages[1].title,'Stretch');
+});
+

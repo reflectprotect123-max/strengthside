@@ -1,7 +1,7 @@
 /** Coach assigned_session -> athlete library. Server-owned plans, athlete-owned actuals. */
 (function(root) {
   const clone=x=>JSON.parse(JSON.stringify(x));
-  const META=['equipmentId','loadConvention','exerciseType','minimumKg','barWeightKg','equipmentStepKg','availableLoads','rampCount'];
+  const META=['equipmentId','loadConvention','exerciseType','minimumKg','barWeightKg','equipmentStepKg','availableLoads','rampCount','pctLow','pctHigh','percentMode','percentBasis','basisLift','basisReps','restSec','restSeconds','oneRm','percent','startPct','rpe'];
   let epoch=0,flight=null;
   let status={ok:false,reason:'not_synced',count:0};
   function values(value,count) {
@@ -11,6 +11,10 @@
     return a;
   }
   function columnValues(c,count){return values(c.values?.length?c.values:c.value,count);}
+  function supersetKey(title,partner) {
+    if(!partner)return null;
+    return [String(title||'').toLowerCase(),String(partner).toLowerCase()].sort().join(' + ');
+  }
   function exercise(ex,b,id) {
     const count=ex.setCount??ex.sets;
     if(!Number.isSafeInteger(Number(count))||Number(count)<1||Number(count)>100)throw new Error('Coach exercise needs a valid set count');
@@ -45,16 +49,16 @@
       columns=columns.filter(c=>!['reps','reps_range'].includes(c));
       columns.unshift(targets.some(t=>t.reps&&t.reps.min!==t.reps.max)?'reps_range':'reps');
     }
-    const title=String(ex.title||ex.name||'').trim();
+    const title=root.StrengthNotes?root.StrengthNotes.decode(String(ex.title||ex.name||'').trim()):String(ex.title||ex.name||'').trim();
     if(!title)throw new Error('Coach exercise needs a name');
-    const notes=[ex.coachNote,b.notes,b.coachNote,b.instructions].flat().filter(Boolean).map(String);
+    const notes=[ex.coachNote,b.notes,b.coachNote,b.instructions].flat().filter(Boolean).map((n)=>root.StrengthNotes?root.StrengthNotes.decode(n):String(n));
     if(/^(yes|each|per side)$/i.test(ex.perSide||''))notes.push('Complete the prescription on each side.');
     if(ex.load)notes.push(`Coach load: ${ex.load}`);
     // Keep authored values as prescription metadata, never fabricated completed actuals.
     const prescribed=cols.filter(c=>!['reps','reps_range'].includes(c.kind)).map(c=>columnValues(c,n).join(' / ')).join(' · ');
     const block={id,kind:'lift',title,exerciseId:ex.exerciseId||null,columns:[...new Set(columns)],setCount:n,
       repTarget:ex.repTarget??ex.reps,setTargets:targets,tempo:ex.tempo||b.tempo||null,role,notes,
-      prescribed:ex.prescribed||prescribed||(!targets?String(ex.reps||''):''),groupId:b.groupId||null,
+      prescribed:ex.prescribed||prescribed||(!targets?String(ex.reps||''):''),groupId:b.groupId||supersetKey(title,root.StrengthNotes?.parse(notes).supersetWith)||null,
       coachAssignmentId:id.split(':')[1],coachExerciseId:ex.id||null,coachBlockId:b.id||null};
     for(const key of META)if(ex[key]!=null)block[key]=clone(ex[key]);
     return block;
@@ -77,7 +81,8 @@
           role:b.role||(/cool.?down/i.test(b.category||'')?'cooldown':'warmup')});
       }
     });
-    return {id:row.id,date,title:session.name||session.sessionTitle||'Coach workout',instructions:session.coachInstructions||'',blocks};
+    const rawTitle=session.name||session.sessionTitle||'Coach workout';
+    return {id:row.id,date,title:root.StrengthNotes?root.StrengthNotes.decode(rawTitle):rawTitle,instructions:session.coachInstructions||'',blocks};
   }
   function apply(state,rows,uid) {
     if(!uid||state.accountId!==uid)throw new Error('Coach account changed');

@@ -13,10 +13,28 @@
   const equipment=page=>E.profile(page);
   const round=(value,current,page,upCap=.05,downCap=.05)=>E.round(value,current,page,{upCap,downCap});
   function stepUp(kg,page,cap=.1){const n=E.next(kg,page);return n==null?kg:E.round(n,kg,page,{upCap:cap,downCap:cap});}
-  function target(page,row,index){let t=null;try{t=T.forRow(page,row,index);}catch{}return t?.purpose==='warmup'?'easy':'average';}
+  function target(page,row,index){
+    let t=null;try{t=T.forRow(page,row,index);}catch{}
+    if(t?.effort)return t.effort;
+    if(t?.rpe!=null) {
+      const fromRpe=root.StrengthNotes?.rpeToEffort?.(Number(t.rpe));
+      if(fromRpe)return fromRpe;
+    }
+    const efforts=page?.targetEfforts||[];
+    const workIndex=row?.purpose==='ramp'?-1:(row?.workingIndex??index);
+    if(workIndex>=0&&efforts[workIndex])return efforts[workIndex];
+    if(page?.rpe!=null) {
+      const fromPage=root.StrengthNotes?.rpeToEffort?.(Number(page.rpe));
+      if(fromPage)return fromPage;
+    }
+    return t?.purpose==='warmup'?'easy':'average';
+  }
   function next(args){
     const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
     const state={...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]};
+    const percentRow=args.row?.purpose!=='ramp'&&args.row?.purpose!=='warmup'&&args.nextRow?.purpose!=='ramp'&&args.nextRow?.purpose!=='warmup';
+    const percent=percentRow?root.StrengthPercent?.adjust?.({...args,history:h,state}):null;
+    if(percent)return percent;
     const mode=state.policy?.learningMode??root.StrengthPolicy.learningMode;
     const run=learningMode=>Core.suggest({...args,state:{...state,policy:{...state.policy,learningMode}}});
     const baseline=run('default');
@@ -30,16 +48,52 @@
   }
   const estimate=(row,page)=>Core.estimate(row,page);
   const review=(page,rows)=>Core.review(page,rows);
+  function aliasPage(records,page) {
+    const want=E.nameKey?.(page);
+    if(!want)return null;
+    for(const rec of Object.values(records||{})) {
+      const prior=rec?.payload?.page;
+      if(!prior)continue;
+      if(E.nameKey(prior)!==want)continue;
+      const eq=(page.equipmentId||'').toLowerCase(),priorEq=(prior.equipmentId||'').toLowerCase();
+      if(eq&&priorEq&&eq!==priorEq)continue;
+      return prior;
+    }
+    return null;
+  }
   function history(records,page,excludeSession,ownerId) {
     ownerId=ownerId??root.StrengthMemory?.ownerId?.()??root.S?.accountId??null;
-    const load=Core.normalized(0,page),contextKey=learningContext({athleteId:ownerId,page,load});
+    const filled=E.apply?E.apply(page):page;
+    let load=Core.normalized(0,filled);
+    let contextKey=learningContext({athleteId:ownerId,page:filled,load});
+    if(!contextKey) {
+      const alias=aliasPage(records,filled);
+      if(alias) {
+        const bridged={...filled,exerciseId:alias.exerciseId||filled.exerciseId};
+        load=Core.normalized(0,bridged)||load;
+        contextKey=learningContext({athleteId:ownerId,page:bridged,load});
+      }
+    }
     const cacheable=root.StrengthMemory?.isSnapshot?.(records);
     const cacheKey=JSON.stringify([ownerId,contextKey,excludeSession??null,VERSION]);
     let cached=cacheable?replayCache.get(records):null;
     if(cached?.has(cacheKey))return cached.get(cacheKey);
     const fallback={version:'online-v1',k:root.StrengthLearning?.initial().k??.0333/1.0333,rows:[],accepted:0,updates:0,startingScale:null,evidenceFingerprint:'unavailable',conflicted:false,ledger:[],diagnostics:[],evidence:[],latestFirst:null};
     let r=fallback;
-    try{if(contextKey&&root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
+    try{
+      if(contextKey&&root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});
+      if((!r||r.accepted===0)&&root.StrengthReplay) {
+        const alias=aliasPage(records,filled);
+        if(alias?.exerciseId&&alias.exerciseId!==filled.exerciseId) {
+          const bridged={...filled,exerciseId:alias.exerciseId};
+          const altKey=learningContext({athleteId:ownerId,page:bridged,load:Core.normalized(0,bridged)||load});
+          if(altKey) {
+            contextKey=altKey;
+            r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey:altKey,excludeSessionId:excludeSession});
+          }
+        }
+      }
+    }catch{/* Facts remain loggable while the optional learner is unavailable. */}
     const evidence=r.evidence.map(e=>({...e,sessionId:e.observation.sessionId,
       sourceSignature:'source-v3:'+JSON.stringify([e.observation.id,e.observation.revision,e.observation.weight,e.observation.reps,e.observation.rir,e.observation.miss]),
       sourceSetIds:[e.observation.id]}));
@@ -77,6 +131,12 @@
     const s=clone(session);if(s.brainSeeded)return s;
     let mainSeen=false;
     for(const outer of s.pages||[])for(const page of outer.members||[outer]) {
+      const filled=E.apply?E.apply(page):page;
+      for(const key of ['equipmentId','loadConvention','loadUnit','minimumKg','barWeightKg','equipmentStepKg','exerciseType']) {
+        if((page[key]==null||page[key]==='')&&filled[key]!=null)page[key]=filled[key];
+      }
+      if(filled.weighted===false)continue;
+      if(!page.loadUnit)page.loadUnit='kg';
       if(!eligible(page))continue;
       const log=s.logs?.[page.id];if(!log||log.sets.some(r=>r.logged))continue;
       let targets=[];try{targets=T.normalize(page);}catch{continue;}
@@ -94,22 +154,45 @@
         const directional=['very_easy','easy'].includes(prior.effort)&&first.reps.min<=o.reps;
         const nextMass=directional?Core.normalized(prior.nextKg,prior.page)?.externalKg:null;
         working=mass==null?(nextMass!=null?E.floor(Core.display(nextMass,page),page):current):Core.guard(mass,current,page,{transition:o.reps!==first.reps.min,planned:current});confidence='history';
-      } else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}
+      } else {
+        const rx=root.StrengthPercent?.normalize?.(page);
+        const orm=root.StrengthPercent?.oneRm?.({page,history:h,records});
+        if(rx&&orm) {
+          const plan=root.StrengthPercent.workingKgs({page,rx,oneRm:orm,history:h});
+          working=plan.find(n=>n!=null)??plan[0];confidence='prescription';
+          page.percentPlan=plan;
+        } else {
+          const notes=root.StrengthNotes?.parse?.(page.notes);
+          const oneRm=Number(page.oneRm||page.e1rm||notes?.oneRm);
+          const pct=Number(page.percent||notes?.percent)||70;
+          if(Number.isFinite(oneRm)&&oneRm>0) {
+            working=E.floor(oneRm*(pct/100),page);confidence='prescription';
+          } else {
+            const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;
+          }
+        }
+      }
       page.workingKg=working;page.startConfidence=confidence;
       const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
-      const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
-      const count=page.rampCount===0?0:main?2:page.rampCount===2?2:0;
+      const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|lunge|rdl|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
+      const requested=Number(page.rampCount);
+      const count=Number.isSafeInteger(requested)?Math.max(0,Math.min(3,requested)):(main?2:0);
       const bar=page.equipmentId==='barbell'||/\bbarbell\b/i.test(page.title||'');
       const known=typeof working==='number'&&Number.isFinite(working)&&working>=0;
-      const belowWork=known&&working>0?E.floor(working*.5,page):null;
+      const rx=root.StrengthPercent?.normalize?.(page);
+      const orm=root.StrengthPercent?.oneRm?.({page,history:h,records});
+      const rangeBottom=rx?root.StrengthPercent.rampTargetKg({page,rx,oneRm:orm,firstWorkingKg:working}):null;
+      const rampGoal=rangeBottom??working;
+      const belowWork=known&&rampGoal>0?E.floor(rampGoal*.5,page):null;
       const step=E.next(0,page);
-      const second=belowWork>0&&belowWork<working?belowWork:step!=null&&step<working?step:0;
-      const rampLoad=bar&&known?[0,second]:[known&&working>0?belowWork:null,null];
+      const second=belowWork>0&&belowWork<rampGoal?belowWork:step!=null&&step<rampGoal?step:0;
+      const rampLoad=bar&&known?[0,second]:[known&&rampGoal>0?belowWork:null,null];
       const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i<rampLoad.length?rampLoad[i]:null,cells:{},logged:false,miss:false}));
       const authored=log.sets.map((row,i)=>{
         const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
-        const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)?Core.matchLoad(working,from,reps,page):null;
-        const kg=matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
+        const planned=Array.isArray(page.percentPlan)?page.percentPlan[i]:null;
+        const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)&&planned==null?Core.matchLoad(working,from,reps,page):null;
+        const kg=planned!=null?planned:matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
         return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg};
       });
       log.sets=ramps.concat(authored);

@@ -49,7 +49,15 @@
       purpose:t?.purpose??'working',
       reps:t?.purpose==='amrap'?(t.reps===undefined?null:t.reps):reps(t?.reps),
       loadRule:{kind:t?.loadRule?.kind??'adaptive'},
-      toFailure:t?.toFailure??false
+      toFailure:t?.toFailure??false,
+      effort:t?.effort||null,
+      pctLow:t?.pctLow??null,
+      pctHigh:t?.pctHigh??null,
+      rpe:t?.rpe??null,
+      percentBasis:t?.percentBasis||null,
+      basisLift:t?.basisLift||null,
+      basisReps:t?.basisReps??null,
+      setRole:t?.setRole||null
     }));
     const result=validate(targets);
     if(!result.valid)throw new RangeError(result.error);

@@ -89,10 +89,16 @@
     }
     root.S.timer = next;
     if (typeof root.save === 'function') root.save();
+    const live = document.getElementById('logTimerFull') || document.getElementById('logTimerDock');
+    if (live) {
+      patchLiveTimer(HybridTimer.snapshot(next, Date.now()));
+      return;
+    }
     paint();
   }
 
   function startChosenRest(s,page) {
+    if(page.logMode==='superset'||page.restSec===0)return;
     const selected=(s.restChoices||{})[page.id];
     if(!selected)return;
     let timer=HybridTimer.choose(timerState(),'rest');
@@ -385,12 +391,24 @@
     </div>`;
   }
 
+  function overlayNavHtml() {
+    const page = session() && HybridSession.currentPage(session());
+    if (!root.HybridSession?.isPrepPage?.(page)) return '';
+    const skip = page.kind === 'recovery' || page.section === 'Cool-Down' || page.section === 'Recovery' ? 'Skip cool-down' : 'Skip warm-up';
+    return `<div class="tm-overlay-nav">
+      <button type="button" class="log-set-skip" onclick="Logger.skipBlock()">${skip}</button>
+      <button type="button" class="log-primary" onclick="Logger.timerNext()">Next →</button>
+    </div>`;
+  }
+
   function runHtml(snap) {
     const title = modeTitle(snap.mode);
+    const nav = overlayNavHtml();
     if (snap.view === 'countIn') {
       return `<div class="tm-full" id="logTimerFull">
         <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
         <div class="tm-countin">${esc(snap.countInLabel)}</div>
+        ${nav}
       </div>`;
     }
     const inner = `<div class="tm-face">
@@ -402,6 +420,7 @@
       <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
       <div class="tm-run">${ringSvg(snap.progress == null ? 1 : snap.progress, inner)}</div>
       ${snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : ''}
+      ${nav}
     </div>`;
   }
 
@@ -547,9 +566,9 @@
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
-      <p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
+      <p class="log-note">${page.logMode==='superset'||page.restSec===0?'No rest — go straight to the next movement.':(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
       <section class="log-active-set" data-exercise="${id}">
-        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
+        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of ${rows.filter(r=>r.purpose==='ramp').length}` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
           <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
@@ -706,7 +725,7 @@
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
         <h2 class="log-title">${esc(page.title)}</h2>
-        ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
+        ${page.logMode === 'kg' && page.weighted !== false ? sideHtml(s, page) : ''}
         ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
     return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
@@ -862,6 +881,21 @@
     next() { moveExercise(1); },
     prev() { moveExercise(-1); },
     complete() { persist(HybridSession.completeCurrent(session())); },
+    skipBlock() {
+      const s = session();
+      const next = HybridSession.skipSection(s);
+      next.warmupClock = null;
+      root.S.timer = HybridTimer.create();
+      lastBeep = '';
+      persist(next);
+    },
+    timerNext() {
+      const s = session();
+      s.warmupClock = null;
+      root.S.timer = HybridTimer.create();
+      lastBeep = '';
+      persist(HybridSession.completeCurrent(HybridSession.nextPage(s)));
+    },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);

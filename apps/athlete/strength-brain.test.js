@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 const ctx=vm.createContext({crypto:webcrypto,S:{accountId:'athlete'}});
-for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
+for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
 const B=ctx.StrengthBrain;
 const targets=[0,1,2].map(i=>({id:`A:set:${i}`,purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'},toFailure:false}));
 const page={exerciseId:'squat',equipmentId:'machine',id:'A',title:'Squat',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'total',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,minimumKg:0,columns:['reps','weight_kg'],setTargets:targets};
@@ -94,7 +94,7 @@ test('recognized cold start is provisional and manual actuals remain untouched',
 test('history replays all canonical first-set facts and isolates exercise identity and tempo',()=>{
  const records={};[40,42,44,46].forEach((kg,i)=>{records[i]=record(page,row(0,6,'hard',kg),{id:'r'+i,sessionId:'s'+i,startedAt:i+1});});
  const h=B.history(records,page);assert.equal(h.sessions,4);assert.ok(h.rolling>46);assert.equal(h.latest.rows[0].kg,46);
- assert.equal(B.history(records,{...page,exerciseId:'bench'}).rolling,null);
+ assert.equal(B.history(records,{...page,exerciseId:'bench',title:'Bench Press'}).rolling,null);
  assert.equal(B.history(records,{...page,tempo:'33X1'}).rolling,null);
  assert.equal(B.history(records,{...page,title:'Renamed squat'}).rolling,h.rolling);
  assert.equal(h.evidenceFingerprint,ctx.StrengthReplay.replay(Object.values(records),{ownerId:'athlete',contextKey:h.contextKey}).evidenceFingerprint);
@@ -171,4 +171,27 @@ test('missing canonical exercise identity cannot share another unidentified lift
  const h=B.history(records,current);assert.equal(h.latest,null);assert.equal(h.rolling,null);
  const seeded=B.seed({id:'next',pages:[current],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
  assert.notEqual(seeded.pages[0].workingKg,81);
+});
+
+test('coach lifts without load metadata still seed ramps and a conservative start',()=>{
+ const bare={id:'A',title:'Incline Bench',kind:'lift',logMode:'kg',columns:['reps','weight_kg'],setCount:3,setTargets:targets};
+ const seeded=B.seed({id:'s',pages:[bare],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},{});
+ assert.equal(seeded.pages[0].equipmentId,'barbell');
+ assert.equal(seeded.pages[0].workingKg,0);
+ assert.equal(seeded.logs.A.sets.filter(r=>r.purpose==='ramp').length,2);
+});
+
+test('rampCount from the payload is honoured and 1RM percent seeds the work weight',()=>{
+ const bare={id:'A',title:'Incline Bench',kind:'lift',logMode:'kg',columns:['reps','weight_kg'],setCount:3,setTargets:targets,rampCount:3,notes:['70% of 1RM 100kg']};
+ const seeded=B.seed({id:'s',pages:[bare],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},{});
+ assert.equal(seeded.logs.A.sets.filter(r=>r.purpose==='ramp').length,3);
+ assert.equal(seeded.pages[0].workingKg,70);
+});
+
+test('history matches a renamed coach exerciseId by normalised name',()=>{
+ const prior={...page,exerciseId:'ex_library_bench',title:'Incline Bench',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5};
+ const current={...page,exerciseId:'coach-uuid-bench',title:'Incline Bench',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5};
+ const records={old:record(prior,{...row(0,6,'average',60),id:'old'})};
+ const seeded=B.seed({id:'s',pages:[current],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
+ assert.equal(seeded.pages[0].workingKg,60);
 });
