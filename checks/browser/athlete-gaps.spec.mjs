@@ -113,4 +113,5 @@ test('warm-up circuit still lists items, ticks one, and can skip the block',asyn
   await expect(page.getByRole('button',{name:'Skip warm-up',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Skip warm-up',exact:true}).click();
   await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
+  await expect(page.locator('#logTimerFull')).toHaveCount(0);
 });

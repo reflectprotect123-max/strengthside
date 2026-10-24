@@ -922,7 +922,16 @@
       if (items.length && items.every((it, i) => log.ticks[it.n || i + 1])) log.completed = true;
       persist(s);
     },
-    skipBlock() { persist(HybridSession.skipSection(session())); },
+    skipBlock() {
+      const s = session();
+      const next = HybridSession.skipSection(s);
+      if (next.blockIndex !== s.blockIndex) {
+        next.warmupClock = null;
+        root.S.timer = HybridTimer.create();
+        lastBeep = '';
+      }
+      persist(next);
+    },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);

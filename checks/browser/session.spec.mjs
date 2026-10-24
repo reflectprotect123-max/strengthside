@@ -41,6 +41,7 @@ test('warm-up lifts cool-down before Ramp and Skip warm-up jumps to the first li
  await expect(page.getByRole('button',{name:'Skip warm-up',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Skip warm-up',exact:true}).click();
  await expect(page.getByText('Ramp 1 of 2',{exact:true})).toBeVisible();
+ await expect(page.locator('#logTimerFull')).toHaveCount(0);
  await expect(page.getByRole('button',{name:/skip ramp/i})).toHaveCount(0);
 });
 
