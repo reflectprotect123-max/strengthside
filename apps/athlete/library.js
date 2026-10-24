@@ -55,7 +55,7 @@
 
   function canonicalBlock(block) {
     const b={...block};
-    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','restSec','demoStartingKg'])delete b[key];
+    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','demoStartingKg'])delete b[key];
     return b;
   }
 
@@ -242,6 +242,19 @@
           loadConvention: b.loadConvention,
           exerciseType: b.exerciseType,
           rampCount: b.rampCount,
+          restSec: b.restSec,
+          restSeconds: b.restSeconds,
+          groupId: b.groupId,
+          pctLow: b.pctLow,
+          pctHigh: b.pctHigh,
+          percentMode: b.percentMode,
+          percentBasis: b.percentBasis,
+          basisLift: b.basisLift,
+          basisReps: b.basisReps,
+          oneRm: b.oneRm,
+          percent: b.percent,
+          startPct: b.startPct,
+          rpe: b.rpe,
           section,
         });
       }

@@ -119,3 +119,28 @@ test('UI-produced weight prescription retains blank kg, block notes, tempo, per-
  assert.equal(p.tempo,'20X1');assert.deepEqual(copy(plan.coachAssignedIds),[row.id]);
  ex.metric='Reps';const reps=c.CoachAssignments.convert(row).blocks[0];assert.deepEqual(copy(reps.columns),['reps']);
 });
+
+test('AC20 athlete compile keeps coach rest, rampCount, seconds, superset and catalogue metadata',()=>{
+ const c=runtime();
+ for(const file of ['strength-notes','strength-equipment','session'])vm.runInContext(readFileSync(new URL('./'+file+'.js',import.meta.url),'utf8'),c);
+ const row=copy(fixture),b=row.resolved_snapshot.htmlSession.blocks[0];
+ b.groupId='ss-ibex';
+ b.exercises.push({id:'rdl',name:'DB RDL',sets:3,reps:'8',metric:'Weight',equipmentId:'dumbbell',loadConvention:'per_hand',minimumKg:1,logColumns:[{kind:'reps',values:['8','8','8']}]});
+ row.resolved_snapshot.htmlSession.blocks.push({id:'plank',type:'strength',exercises:[{id:'plank',name:'Foam Roller Plank Rollout',sets:3,reps:'45',metric:'Seconds',logColumns:[{kind:'time_sec',values:['45']}]}]});
+ const plan=c.HybridLibrary.planForDate(c.CoachAssignments.apply(c.S,[row],fixture.athlete_id).state.library,fixture.scheduled_date);
+ const squat=plan.blocks.find(p=>p.title==='Back Squat');
+ const rdl=plan.blocks.find(p=>p.title==='DB RDL');
+ const plank=plan.blocks.find(p=>p.title==='Foam Roller Plank Rollout');
+ assert.equal(squat.restSec,90);
+ assert.equal(squat.rampCount,0);
+ assert.equal(squat.equipmentId,'barbell');
+ assert.equal(squat.loadConvention,'barbell_total');
+ assert.equal(squat.groupId,rdl.groupId);
+ assert.ok(plank.columns.includes('seconds'));
+ const session=c.HybridSession.startSession({date:fixture.scheduled_date,plan});
+ const pair=session.pages.find(p=>p.logMode==='superset');
+ assert.ok(pair);assert.equal(pair.restSec,0);
+ const plankPage=session.pages.find(p=>p.title==='Foam Roller Plank Rollout');
+ assert.match(String(plankPage.prescribed),/^45/);
+ assert.ok(!plankPage.columns.includes('weight_kg'));
+});

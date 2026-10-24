@@ -91,8 +91,11 @@
     if (typeof root.save === 'function') root.save();
     const live = document.getElementById('logTimerFull') || document.getElementById('logTimerDock');
     if (live) {
-      patchLiveTimer(HybridTimer.snapshot(next, Date.now()));
-      return;
+      const snap = HybridTimer.snapshot(next, Date.now());
+      if (snap.view === 'countIn' || snap.view === 'running') {
+        patchLiveTimer(snap);
+        return;
+      }
     }
     paint();
   }
@@ -397,7 +400,7 @@
     const skip = page.kind === 'recovery' || page.section === 'Cool-Down' || page.section === 'Recovery' ? 'Skip cool-down' : 'Skip warm-up';
     return `<div class="tm-overlay-nav">
       <button type="button" class="log-set-skip" onclick="Logger.skipBlock()">${skip}</button>
-      <button type="button" class="log-primary" onclick="Logger.timerNext()">Next →</button>
+      <button type="button" class="log-primary" onclick="Logger.timerNext()" aria-label="Next movement">Next →</button>
     </div>`;
   }
 

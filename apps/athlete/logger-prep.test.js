@@ -41,7 +41,7 @@ test('failed countdown persistence leaves the previous timer intact and reports 
 test('AC14 timed warmup overlay exposes Skip and Next',()=>{
  const {ctx,element}=boot();ctx.Logger.paint();
  assert.match(element.innerHTML,/Skip warm-up/);
- assert.match(element.innerHTML,/Next →/);
+ assert.match(element.innerHTML,/Next movement|Next →/);
 });
 
 test('AC14 persistTimer patches a live overlay instead of a full paint remount',()=>{
@@ -53,6 +53,16 @@ test('AC14 persistTimer patches a live overlay instead of a full paint remount',
  let paints=0;const paint=ctx.Logger.paint.bind(ctx.Logger);ctx.Logger.paint=()=>{paints+=1;return paint();};
  ctx.Logger.timerNudge(1);
  assert.equal(paints,0);
+});
+
+test('AC14 persistTimer paints when the overlay is no longer countIn or running',()=>{
+ const {ctx,element}=boot();ctx.Logger.paint();
+ const live={id:'logTimerFull',replaceWith(){}};
+ const orig=ctx.document.getElementById.bind(ctx.document);
+ ctx.document.getElementById=id=>id==='logTimerFull'||id==='logTimerDock'?live:orig(id);
+ element.innerHTML='STALE_OVERLAY';
+ ctx.Logger.timerStop();
+ assert.notEqual(element.innerHTML,'STALE_OVERLAY');
 });
 
 test('AC14 Skip warm-up leaves the current countdown page',()=>{
