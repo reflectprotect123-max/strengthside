@@ -129,6 +129,36 @@ test('golden D-E: build climb 75-107.5 survives Average ramps and the next sessi
   await shot(page, testInfo, 'golden-e-next-build');
 });
 
+test('golden B-C: Hard repeats the ramp; Very Easy working set steps +5 through the slider', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await loadAssignedWorkout(page, {
+    prep: false,
+    title: 'Golden B-C ratings',
+    blocks: [{
+      title: 'Incline Bench', letter: 'A', setCount: 4, rampCount: 2, oneRm: 100, pctLow: 63, pctHigh: 68,
+      percentMode: 'straight', notes: ['4 x 8 @ 63-68% (RPE 6)'], columns: ['reps', 'weight_kg'],
+      equipmentId: 'barbell', loadConvention: 'total', minimumKg: 20, equipmentStepKg: 2.5, barWeightKg: 20,
+    }],
+  });
+  await bindGoldenAthlete(page, GOLDEN_DAN);
+  await beginSession(page);
+  await rateOnly(page, 3);
+  await startNext(page);
+  const afterHard = await liftSets(page, 'Incline Bench');
+  expect(afterHard.filter((r) => r.purpose === 'ramp').map((r) => r.kg)).toEqual([30, 30]);
+  expect(afterHard.filter((r) => r.purpose === 'working').map((r) => r.kg)).toEqual([62.5, 62.5, 62.5, 62.5]);
+  await shot(page, testInfo, 'golden-b-after-hard-ramp');
+  await rateOnly(page, 2);
+  await startNext(page);
+  const afterLastRamp = await liftSets(page, 'Incline Bench');
+  expect(afterLastRamp.filter((r) => r.purpose === 'working').map((r) => r.kg)).toEqual([62.5, 62.5, 62.5, 62.5]);
+  await rateOnly(page, 0);
+  await startNext(page);
+  const afterVe = await liftSets(page, 'Incline Bench');
+  expect(afterVe.filter((r) => r.purpose === 'working').map((r) => r.kg).slice(0, 2)).toEqual([62.5, 67.5]);
+  await shot(page, testInfo, 'golden-c-after-very-easy');
+});
+
 test('golden F G H I J K: tops, empty-bar lunge, DB starts, history, timed, row timer', async ({page}, testInfo) => {
   test.setTimeout(180000);
   await loadAssignedWorkout(page, {
