@@ -7,6 +7,7 @@
   let toastTimer = 0;
   let clockTimer = 0;
   let lastBeep = '';
+  let videoOpen = false;
 
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -68,6 +69,7 @@
   function close() {
     root.S.loggerOpen = false;
     pad = null;
+    videoOpen = false;
     if (typeof root.save === 'function') root.save();
     const el = document.getElementById('logger');
     if (el) el.classList.add('hidden');
@@ -234,7 +236,7 @@
     if (snap.chrome === 'select') {
       return `<button type="button" class="tm-select" onclick="Logger.timerOpen()" aria-label="Select Timer">${icoSwitch()} Select Timer</button>`;
     }
-    return `<button type="button" class="log-play" onclick="Logger.timerPlay()" aria-label="Start last timer">▶</button>`;
+    return `<button type="button" class="log-play log-play--timer" onclick="Logger.timerPlay()" aria-label="Start last timer"><span>▶</span><small>Timer</small></button>`;
   }
 
   function barHtml(s) {
@@ -438,11 +440,27 @@
       </div>`;
   }
 
+  function skipButtonHtml(page) {
+    if (!root.HybridSession?.isPrepPage?.(page)) return '';
+    const cooldown = page.kind === 'recovery' || page.section === 'Cool-Down' || page.section === 'Recovery';
+    return `<button type="button" class="log-set-skip" onclick="Logger.skipBlock()">${cooldown ? 'Skip cool-down' : 'Skip warm-up'}</button>`;
+  }
+
   function completeHtml(s, page, log) {
-    const items = (page.items || []).map((it) => `
-      <li><strong>${it.n}.</strong> ${esc(it.text)}
-        ${it.note ? `<p class="log-note"><em>*${esc(it.note)}</em></p>` : ''}
-      </li>`).join('');
+    const ticks = log.ticks || {};
+    const items = (page.items || []).map((it, i) => {
+      const n = it.n || i + 1;
+      const on = !!ticks[n];
+      const video = root.ExerciseVideo ? ExerciseVideo.buttonHtml({videoUrl: it.videoUrl || page.videoUrl}) : '';
+      return `<li class="log-check-item">
+        <button type="button" class="log-check${on ? ' on' : ''}" onclick="Logger.tickItem('${esc(page.id)}',${n})" aria-pressed="${on}" aria-label="Done: ${esc(it.text)}">${on ? '✓' : ''}</button>
+        <div>
+          <strong>${n}.</strong> ${esc(it.text)}
+          ${it.note ? `<p class="log-note"><em>*${esc(it.note)}</em></p>` : ''}
+          ${video}
+        </div>
+      </li>`;
+    }).join('');
     const bullets = (page.bullets || []).map((b) => `<li>${esc(b)}</li>`).join('');
     return `
       <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
@@ -454,15 +472,17 @@
       <button type="button" class="log-complete${log.completed ? ' is-done' : ''}" onclick="Logger.complete()">
         ${log.completed ? 'Completed' : 'Mark As Completed'}
       </button>
+      ${skipButtonHtml(page)}
       <input class="log-ex-note" placeholder="Add circuit note" value="${esc(log.note || '')}" onchange="Logger.note('${esc(page.id)}',this.value)">`;
   }
 
   function sideHtml(s, page) {
     const past = root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
     const wm = past.rolling ? Math.round(past.rolling * 10) / 10 : '';
+    const video = root.ExerciseVideo ? ExerciseVideo.buttonHtml(page) : '';
     return `
       <div class="log-meta-row">
-        <div class="log-thumb">▶</div>
+        ${video || '<div class="log-thumb" aria-hidden="true"></div>'}
         <div class="log-side">
           <div class="log-side-row"><span>EST. 1RM</span><span>${wm ? esc(wm) : 'Learning'}</span></div>
           <div class="log-side-row"><span>LAST</span><span>${past.latest ? loggedLoad(page, past.latest.rows.filter(r=>r.logged && r.purpose!=='ramp').at(-1)?.kg) || 'None' : 'None'}</span></div>
@@ -648,15 +668,29 @@
   function summaryHtml(s) {
     const st = HybridSession.summaryStats(s);
     const title = s.title || 'Completed session';
+    const score = s.score || st.conditioning;
+    const cond = score && score.rounds ? `
+        <div class="log-stat"><span>Rounds</span><b>${score.rounds}</b></div>
+        <div class="log-stat"><span>Calories</span><b>${score.totals.calories}</b></div>
+        <div class="log-stat"><span>Metres</span><b>${score.totals.meters}</b></div>
+        <div class="log-stat"><span>Avg watts</span><b>${score.totals.watts}</b></div>
+        <div class="log-stat"><span>Time</span><b>${root.ConditioningScore.clock(score.totals.seconds)}</b></div>
+        ${score.pace500 ? `<div class="log-stat"><span>Pace /500 m</span><b>${root.ConditioningScore.clock(score.pace500)}</b></div>` : ''}
+        ${score.splits && score.splits.length ? `<ol class="log-splits">${score.splits.map((split) => `<li>R${split.index}${split.title ? ` ${esc(split.title)}` : ''} · ${split.calories} cal · ${split.meters} m${split.pace500 ? ` · ${root.ConditioningScore.clock(split.pace500)}/500 m` : ''}</li>`).join('')}</ol>` : ''}` : '';
+    const badge = (s.prs || []).length ? `<p class="log-pr-badge" role="status">New PR</p>` : '';
+    const thread = root.SessionComments ? SessionComments.threadHtml(SessionComments.fromSession(s, root.S && root.S.accountId)) : '';
     return `
       <div class="log-sum">
         <p class="log-kicker">${esc(s.date)}</p>
         <h2 class="log-title">${esc(title)}</h2>
+        ${badge}
         <div class="log-stat"><span>Exercises</span><b>${st.exercises}</b></div>
         <div class="log-stat"><span>Sets</span><b>${st.sets}</b></div>
         <div class="log-stat"><span>Reps</span><b>${st.reps}</b></div>
         <div class="log-stat"><span>Blocks</span><b>${st.blocksDone}/${st.blocksTotal}</b></div>
         <div class="log-stat"><span>Minutes</span><b>${st.minutes}</b></div>
+        ${cond}
+        ${thread}
         <button type="button" class="log-primary" onclick="Logger.close()">Close</button>
       </div>`;
   }
@@ -696,7 +730,7 @@
       const members = (page.members || []).map((m) => `
         <section class="log-ss-member">
           <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
-          ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
+          ${m.logMode === 'kg' ? sideHtml(s, m) : (root.ExerciseVideo ? ExerciseVideo.buttonHtml(m) : '')}
           ${supportsSetFlow(m) ? activeSetHtml(s, m, s.logs[m.id] || { sets: [], note: '' }) : tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
         </section>`).join('');
       body = `
@@ -706,10 +740,10 @@
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
         <h2 class="log-title">${esc(page.title)}</h2>
-        ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
+        ${page.logMode === 'kg' ? sideHtml(s, page) : (root.ExerciseVideo ? ExerciseVideo.buttonHtml(page) : '')}
         ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
-    return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
+    return `${headerHtml(s)}<div class="log-body">${body}${page.logMode === 'complete' ? '' : skipButtonHtml(page)}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
   }
 
   function prepClockPending(s) {
@@ -763,7 +797,8 @@
     else if (s.phase === 'feel') inner = feelHtml(s);
     else if (s.phase === 'summary') inner = summaryHtml(s);
     else inner = blockHtml(s);
-    el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
+    const video = videoOpen && s.phase === 'block' && root.ExerciseVideo ? ExerciseVideo.playerHtml(HybridSession.currentPage(s)) : '';
+    el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}${video}</div>`;
     startClock();
     if (s.phase === 'quote') {
       el.querySelector('.log-quote')?.addEventListener('click', () => Logger.gotQuote());
@@ -862,6 +897,18 @@
     next() { moveExercise(1); },
     prev() { moveExercise(-1); },
     complete() { persist(HybridSession.completeCurrent(session())); },
+    tickItem(pageId, n) {
+      const s = JSON.parse(JSON.stringify(session()));
+      const page = s.pages.find((p) => p.id === pageId) || HybridSession.currentPage(s);
+      const log = s.logs[pageId] || {completed: false, sets: [], note: '', ticks: {}};
+      s.logs[pageId] = log;
+      log.ticks = {...(log.ticks || {})};
+      log.ticks[n] = !log.ticks[n];
+      const items = page.items || [];
+      if (items.length && items.every((it, i) => log.ticks[it.n || i + 1])) log.completed = true;
+      persist(s);
+    },
+    skipBlock() { persist(HybridSession.skipSection(session())); },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);
@@ -947,7 +994,19 @@
       persist(HybridSession.setFeel(session(), { durationMin: Math.max(1, cur + d) }));
     },
     feelNote(v) { root.S.session = HybridSession.setFeel(session(), { note: v }); root.save(); },
-    finish() { persist(HybridSession.finishToSummary(session())); },
+    playVideo() { videoOpen = true; paint(); },
+    closeVideo() { videoOpen = false; paint(); },
+    finish() {
+      const next = HybridSession.finishToSummary(session());
+      const prior = {};
+      for (const [id, rec] of Object.entries(root.StrengthMemory && root.StrengthMemory.records() || {})) {
+        if (rec.sessionId !== next.id) prior[id] = rec;
+      }
+      next.prs = root.StrengthRecords ? StrengthRecords.detect(next, prior) : [];
+      next.score = root.ConditioningScore ? ConditioningScore.receipt(next) : null;
+      persist(next);
+      if (root.SessionComments) SessionComments.sync(next).catch(() => {});
+    },
     chevron() {
       const t = timerState();
       const snap = HybridTimer.snapshot(t, Date.now());

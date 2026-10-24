@@ -68,6 +68,7 @@
             completed: false,
             sets: emptySets(m),
             note: '',
+            ticks: {},
           };
         }
       }
@@ -78,6 +79,7 @@
         completed: false,
         sets: emptySets(page),
         note: '',
+        ticks: {},
       };
     }
     return session.logs[page.id];
@@ -128,6 +130,7 @@
       setTargets,
       ...(setTargets||block.targetContractVersion===2?{}:{targetReps:rx.targetReps,targetRepMax:rx.targetRepMax}),
       exerciseId: block.exerciseId || block.libraryExerciseId || null,
+      videoUrl: block.videoUrl || block.video_url || null,
       coachAssignmentId: block.coachAssignmentId || null,
       coachExerciseId: block.coachExerciseId || null,
       coachBlockId: block.coachBlockId || null,
@@ -333,6 +336,36 @@
     return s;
   }
 
+  function isPrepPage(page) {
+    if (!page) return false;
+    return page.kind === 'warmup' || page.kind === 'recovery'
+      || page.section === 'Warm-Up' || page.section === 'Cool-Down'
+      || page.section === 'Prep' || page.section === 'Recovery';
+  }
+
+  function skipSection(session) {
+    const s = clone(session);
+    const page = currentPage(s);
+    if (!isPrepPage(page)) return s;
+    const cooldown = page.kind === 'recovery' || page.section === 'Cool-Down' || page.section === 'Recovery';
+    const match = (p) => {
+      if (!isPrepPage(p)) return false;
+      const cold = p.kind === 'recovery' || p.section === 'Cool-Down' || p.section === 'Recovery';
+      return cold === cooldown;
+    };
+    for (const p of s.pages) {
+      if (!match(p)) continue;
+      const log = ensureLog(s, p);
+      log.skipped = true;
+      log.completed = true;
+    }
+    const next = s.pages.findIndex((p, i) => i >= (s.blockIndex || 0) && !match(p));
+    s.blockIndex = next >= 0 ? next : s.pages.length - 1;
+    if (s.phase === 'summary') s.completedAt = null;
+    s.phase = 'block';
+    return s;
+  }
+
   function canLogRow(row,page) { return root.TrainingCore.validateRow(row,page).ok; }
 
   function logSet(session, setIndex, patch, memberId, options = {}) {
@@ -455,6 +488,7 @@
         blocksDone += 1;
       }
     }
+    const conditioning = root.ConditioningScore ? root.ConditioningScore.fromSession(session) : null;
     return {
       exercises,
       sets,
@@ -463,6 +497,7 @@
       blocksDone,
       blocksTotal: workPages.length,
       minutes: (session.feel && session.feel.durationMin) || 0,
+      conditioning,
     };
   }
 
@@ -478,6 +513,8 @@
     prevPage,
     goToLetter,
     completeCurrent,
+    skipSection,
+    isPrepPage,
     logSet,
     toggleLogged,
     autofillFrom,

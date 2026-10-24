@@ -449,7 +449,7 @@ function trainingTopBarHtml() {
         </button>
       </div>
       <div class="trn-top-right">
-        <button type="button" class="trn-month" aria-label="Month">
+        <button type="button" class="trn-month" aria-label="${S.calendarView === 'month' ? 'Week calendar' : 'Month calendar'}" onclick="toggleMonthCalendar()">
           <span>${esc(monthLabel(S.selectedDate))}</span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
         </button>
@@ -463,6 +463,29 @@ function trainingTopBarHtml() {
 }
 
 function trainingCalendarHtml() {
+  if (S.calendarView === 'month' && window.TrainingCalendar) {
+    const weeks = TrainingCalendar.monthDays(S.selectedDate);
+    const selected = parseDate(S.selectedDate);
+    const month = selected.getMonth();
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return `
+      <div class="cal-month" role="grid" aria-label="Training month">
+        <div class="cal-month-head">${labels.map((d) => `<span>${d}</span>`).join('')}</div>
+        ${weeks.map((week) => `
+          <div class="cal-month-week" role="row">
+            ${week.map((iso) => {
+              const d = parseDate(iso);
+              const inMonth = d.getMonth() === month;
+              const active = iso === S.selectedDate ? ' active' : '';
+              const dots = HybridSc.dotsHtml(iso, S.hybridOccupancy);
+              return `<button type="button" class="cal-day cal-month-day${active}${inMonth ? '' : ' is-out'}" onclick="selectDate('${iso}')" aria-selected="${iso === S.selectedDate}">
+                <b>${d.getDate()}</b>
+                <div class="cal-dots">${dots}</div>
+              </button>`;
+            }).join('')}
+          </div>`).join('')}
+      </div>`;
+  }
   const days = weekDays(S.selectedDate);
   return `
     <div class="cal-strip cal-strip--training" role="tablist" aria-label="Training calendar">
@@ -575,6 +598,7 @@ function trainingTabHtml() {
       ${trainingTopBarHtml()}
       ${trainingCalendarHtml()}
       <div class="trn-scroll">${trainingBlocksHtml(S.selectedDate)}
+        ${ownSessionPickerHtml()}
         <div class="trn-start-bar">
           <button type="button" class="log-primary" onclick="startTrainingSession()">Start Session</button>
         </div>
@@ -582,8 +606,46 @@ function trainingTabHtml() {
     </div>`;
 }
 
+function ownSessionPickerHtml() {
+  if (!S.ownSessionPicker || !window.TrainingCalendar) return '';
+  const items = TrainingCalendar.pickerItems(S.library);
+  return `<section class="trn-own-picker" aria-label="Start an unscheduled session">
+    <p class="trn-own-lead">Nothing is scheduled. Start an empty session or a saved workout.</p>
+    ${items.map((item) => `<button type="button" class="trn-own-pick" onclick="startOwnSession('${esc(item.id)}')">${esc(item.title)}</button>`).join('')}
+    <button type="button" class="trn-own-cancel" onclick="cancelOwnSession()">Cancel</button>
+  </section>`;
+}
+
 function startTrainingSession(letter) {
-  if (window.Logger) Logger.open({ date: S.selectedDate, letter, plan: trainingPlanForDate(S.selectedDate) });
+  const plan = trainingPlanForDate(S.selectedDate);
+  if (!plan && !letter) {
+    S.ownSessionPicker = true;
+    save();
+    render();
+    return;
+  }
+  S.ownSessionPicker = false;
+  if (window.Logger) Logger.open({ date: S.selectedDate, letter, plan });
+}
+
+function startOwnSession(pickId) {
+  const plan = window.TrainingCalendar
+    ? TrainingCalendar.planForPick(S.library, pickId, S.selectedDate)
+    : { title: 'Own session', blocks: [{ kind: 'lift', letter: 'A', title: 'Open work', setCount: 3, columns: ['reps', 'weight_kg'] }] };
+  S.ownSessionPicker = false;
+  if (window.Logger) Logger.open({ date: S.selectedDate, plan });
+}
+
+function cancelOwnSession() {
+  S.ownSessionPicker = false;
+  save();
+  render();
+}
+
+function toggleMonthCalendar() {
+  S.calendarView = S.calendarView === 'month' ? 'week' : 'month';
+  save();
+  render();
 }
 
 function libraryHtml() {
@@ -724,7 +786,7 @@ function historyHtml() {
       return `<article class="card account-compact history-session">
         <p class="eyebrow">${esc(date)}</p>
         <h2>${esc(title)}</h2>
-        <p class="stub">${num(stats.exercises)} exercises · ${num(stats.sets)} sets · ${num(stats.reps)} reps</p>
+        <p class="stub">${num(stats.exercises)} exercises · ${num(stats.sets)} sets · ${num(stats.reps)} reps${stats.conditioning && stats.conditioning.rounds ? ` · ${stats.conditioning.rounds} rounds` : ''}</p>
       </article>`;
     }).join('')
     : '<p class="stub page-lead">Completed strength sessions will appear here.</p>';
@@ -801,7 +863,29 @@ function progressHtml() {
       <p class="eyebrow">Goals</p>
       ${goals}
     </section>
+    ${recordsTableHtml()}
   </div>`;
+}
+
+function recordsTableHtml() {
+  if (!window.StrengthRecords) return '';
+  const rows = StrengthRecords.table(window.StrengthMemory ? StrengthMemory.records() : {});
+  if (!rows.length) return '';
+  const body = rows.map((row) => {
+    const reps = Object.keys(row.repMax).sort((a, b) => Number(a) - Number(b))
+      .map((n) => `${n}r ${row.repMax[n]} kg`).join(' · ');
+    const cond = row.conditioning && (row.conditioning.calories || row.conditioning.meters)
+      ? `${row.conditioning.calories} cal · ${row.conditioning.meters} m${row.conditioning.pace500 ? ` · ${ConditioningScore.clock(row.conditioning.pace500)}/500 m` : ''}`
+      : '';
+    return `<article class="progress-row records-row">
+      <div><b>${esc(row.title)}</b><small>${row.e1rm ? `Best e1RM ${Math.round(row.e1rm * 10) / 10} kg` : 'Machine'}</small></div>
+      <span>${esc(reps || cond || '—')}</span>
+    </article>`;
+  }).join('');
+  return `<section class="card progress-section" aria-label="Records">
+    <p class="eyebrow">Records</p>
+    ${body}
+  </section>`;
 }
 
 function whoopTrendHtml() {
@@ -1032,6 +1116,9 @@ window.askCoach = askCoach;
 window.applyOtaUpdate = applyOtaUpdate;
 window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;
+window.startOwnSession = startOwnSession;
+window.cancelOwnSession = cancelOwnSession;
+window.toggleMonthCalendar = toggleMonthCalendar;
 window.trainingPlanForDate = trainingPlanForDate;
 window.openLibraryForDay = openLibraryForDay;
 window.render = render;
