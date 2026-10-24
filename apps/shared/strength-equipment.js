@@ -136,6 +136,12 @@
       if(page[key]!=null&&page[key]!=='')out[key]=page[key];
     }
     if(page.equipmentId!=null&&page.equipmentId!=='')out.equipmentId=typeof page.equipmentId==='string'?page.equipmentId.trim().toLowerCase()||page.equipmentId:page.equipmentId;
+    if(/\bjump\b/i.test(title)&&!loadedName(title)) {
+      out.equipmentId='bodyweight';
+      out.loadConvention='added_bodyweight';
+      out.exerciseType='bodyweight';
+      out.weighted=false;
+    }
     return out;
   }
   function apply(page={}) {

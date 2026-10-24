@@ -82,6 +82,10 @@
     }
     const warm=nextTarget.purpose==='warmup'||['warmup','ramp'].includes(row.purpose);
     const easy=['very_easy','easy'].includes(row.effort);
+    if(warm&&(nextTarget.purpose==='warmup'||nextRow?.purpose==='ramp'||nextRow?.purpose==='warmup')&&!easy&&row.effort!=='hard'&&row.effort!=='max_effort'){
+      const planned=finiteLoad(nextRow?.kg)??kg;
+      return response(planned,label,'warmup_hold','directional',p);
+    }
     if(warm&&nextTarget.purpose==='warmup'){
       const planned=finiteLoad(nextRow?.kg);
       const barFloor=E.emptyBarKg?.(page)??0;

@@ -131,13 +131,15 @@
       const payloadTops=(setTargets||[]).filter(t=>t.setRole!=='drop'&&t.setRole!=='backoff').length;
       if(!setTargets) {
         setTargets=fromNotes();
-      } else if(parsed.percentSets.length>setTargets.length||notesTops>payloadTops) {
+      } else if(parsed.percentSets.length>setTargets.length||notesTops>payloadTops||parsed.percentSets.some((s,i)=>s.reps&&setTargets[i]?.reps?.min&&s.reps!==setTargets[i].reps.min)) {
         setTargets=fromNotes();
       }
       setTargets=setTargets.map((t,i)=>{
         const s=parsed.percentSets[i];if(!s)return t;
         return {...t,pctLow:t.pctLow??s.pctLow,pctHigh:t.pctHigh??s.pctHigh,rpe:t.rpe??s.rpe,setRole:t.setRole||s.setRole,percentBasis:t.percentBasis||s.percentBasis,effort:t.effort||(s.rpe!=null?root.StrengthNotes.rpeToEffort(Number(String(s.rpe).split(/[-–]/)[0])):null)};
       });
+    } else if(parsed.schemeReps&&setTargets) {
+      setTargets=setTargets.map(t=>t.purpose==='working'&&t.reps?.min&&t.reps.min!==parsed.schemeReps?{...t,reps:{min:parsed.schemeReps,max:parsed.schemeReps}}:t);
     }
     const rx=setTargets?{setCount:setTargets.length,targetReps:null,targetRepMax:null,isMax:false}
       :block.targetContractVersion===2?{setCount:Math.max(1,Number(block.setCount)||1),targetReps:null,targetRepMax:null,isMax:false}
@@ -153,7 +155,7 @@
       title,
       kind: block.kind,
       logMode: mode,
-      prescription: block.prescription || '',
+      prescription: block.prescription || (parsed.percentSets?.length?`${parsed.percentSets.filter(s=>s.setRole!=='drop'&&s.setRole!=='backoff').length||parsed.percentSets[0]?.setCount||block.setCount} x ${parsed.percentSets[0].reps}`:(parsed.schemeReps&&parsed.setCount?`${parsed.setCount} x ${parsed.schemeReps}`:'')),
       tempo: block.tempo || null,
       barWeightKg: block.barWeightKg ?? meta.barWeightKg ?? null,
       notes,
@@ -492,10 +494,11 @@
     return Number.isFinite(n)&&n>0?n:20;
   }
   function totalKg(row, page) {
+    if(page?.weighted===false||/\bjump\b/i.test(page?.title||'')||(page?.columns||[]).includes('seconds'))return 0;
     const n=Number(row?.kg);
     if(page?.loadConvention==='barbell_plates')return (Number.isFinite(n)?n:0)+barMass(page);
     const barbell=page?.equipmentId==='barbell'||page?.loadConvention==='barbell_total'
-      ||/bench|squat|deadlift|press/i.test(page?.title||'');
+      ||(/bench|squat|deadlift|press/i.test(page?.title||'')&&!/\bjump\b/i.test(page?.title||''));
     if(barbell&&(!Number.isFinite(n)||n===0))return barMass(page);
     return Number.isFinite(n)?n:0;
   }

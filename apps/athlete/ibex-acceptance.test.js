@@ -130,11 +130,13 @@ test('AC8 percent build: final 1-2 sets land inside the range',()=>{
  assert.ok(kgs[0]<72);
 });
 
-test('AC9 ramps warm up to the range bottom; next session starts where the athlete finished',()=>{
+test('AC9 ramps warm up to the range bottom; percent days keep coach range on the next session',()=>{
  const p={...bare('Incline Bench'),equipmentId:'machine',minimumKg:0,equipmentStepKg:1,notes:['4 x 8 @ 63-68% (RPE 6)'],oneRm:100,setCount:4,setTargets:targets(4)};
  assert.equal(P.rampTargetKg({page:p,rx:P.normalize(p),oneRm:100}),63);
  const next=P.workingKgs({page:p,rx:P.normalize(p),oneRm:100,history:{latest:{rows:[{purpose:'working',logged:true,kg:66}]}}});
- assert.equal(next[0],66);
+ assert.ok(next[0]>=63&&next[0]<=68,`next session stays in 63-68, got ${next[0]}`);
+ const seeded=B.seed({id:'s',pages:[{...p}],logs:{A:{sets:p.setTargets.map(t=>({targetId:t.id}))}}},{old:{id:'old',deleted:false,payload:{completed:true,page:p,row:{kg:70,reps:8,effort:'average',logged:true,purpose:'working'},sessionStartedAt:9}}});
+ assert.ok(seeded.logs.A.sets.filter(r=>r.purpose==='working').every(r=>r.kg>=63&&r.kg<=68));
 });
 
 test('drop notes 2 x 2 @ 90-92% + drop set produce two top sets plus a drop',()=>{

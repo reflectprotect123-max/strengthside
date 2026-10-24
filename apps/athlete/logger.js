@@ -44,6 +44,7 @@
     const d = date || (root.S && root.S.selectedDate);
     const p = plan || (typeof root.trainingPlanForDate === 'function' ? root.trainingPlanForDate(d) : null);
     if (!p || !HS) return;
+    const previousDate=root.S.session?.date;
     const existing = root.S.session && root.S.session.date === d && root.S.session.phase !== 'summary' && (!root.S.session.demo || p.title === 'Slider demo')
       ? root.S.session
       : null;
@@ -56,6 +57,7 @@
     }
     if (p.title === 'Slider demo') root.S.session.demo = true;
     else root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
+    if (!existing || (d && previousDate && d !== previousDate)) root.S.timer = HybridTimer.create();
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');

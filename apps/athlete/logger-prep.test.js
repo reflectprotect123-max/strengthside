@@ -147,3 +147,15 @@ test('AC12 logging the last member of a superset round auto-starts prescribed re
  assert.equal(ctx.S.timer.mode,'rest');
  assert.equal(ctx.S.timer.config.restMs,45000);
 });
+
+test('opening a new session date clears a leftover rest timer',()=>{
+ const {ctx}=bootPlan({blocks:[
+  {kind:'lift',letter:'A',title:'Incline Bench',setCount:3,notes:['Rest 60s'],restSec:60,columns:['reps','weight_kg']},
+ ]},'A');
+ ctx.S.timer=ctx.HybridTimer.start(ctx.HybridTimer.quickStart(ctx.HybridTimer.choose(ctx.HybridTimer.create(),'rest'),60000),Date.now());
+ ctx.S.selectedDate='2026-10-25';
+ ctx.trainingPlanForDate=()=>({title:'Next day',blocks:[{kind:'lift',letter:'A',title:'Back Squat',setCount:3,columns:['reps','weight_kg']}]});
+ ctx.StrengthMemory={records:()=>({})};
+ ctx.Logger.open({date:'2026-10-25',letter:'A'});
+ assert.notEqual(ctx.S.timer.mode,'rest');
+});

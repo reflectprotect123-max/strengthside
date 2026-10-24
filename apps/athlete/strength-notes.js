@@ -34,6 +34,7 @@
       restSec=/m/i.test(rest[2]||'s')&&!/^s/i.test(rest[2]||'s')?n*60:n;
     }
     const timed=text.match(/(\d+)\s*x\s*(\d+)\s*(s|sec|secs|seconds)\b/i);
+    const scheme=text.match(/(\d+)\s*[x×]\s*(\d+)\b(?!\s*(?:s|sec|secs|seconds)\b)/i);
     const oneSeconds=[...text.matchAll(/\b(\d+)\s*(s|sec|secs|seconds)\b/gi)].find(m=>!/rest\s*$/i.test(text.slice(Math.max(0,m.index-5),m.index)));
     const rpeHits=[...text.matchAll(/rpe\s*([0-9]+(?:\s*[-–]\s*[0-9]+)?)/gi)];
     const slash=text.match(/rpe\s*([0-9]+(?:\s*[-–\/]\s*[0-9]+)(?:\s*\/\s*[0-9]+(?:\s*[-–]\s*[0-9]+)?)*)/i);
@@ -71,6 +72,8 @@
       pctLow=Number(range[1]);pctHigh=Number(range[2]);
     } else if(startAt) {
       pctLow=pctHigh=Number(startAt[1]);
+    } else if(pct) {
+      pctLow=pctHigh=Number(pct[1]);
     }
     if(ofTop||drop)percentBasis=ofTop?'top_set':percentBasis;
     if(ofReps){percentBasis='rep_weight';basisReps=Number(ofReps[1]);}
@@ -86,8 +89,9 @@
     }
     return {
       restSec,
-      setCount:timed?Number(timed[1]):null,
+      setCount:timed?Number(timed[1]):(scheme&&!timed?Number(scheme[1]):null),
       seconds:timed?Number(timed[2]):(oneSeconds&&!timed?Number(oneSeconds[1]):null),
+      schemeReps:scheme&&!timed?Number(scheme[2]):null,
       efforts,
       supersetWith:pair?decode(pair[1]).replace(/[.,;].*$/,'').trim():null,
       oneRm:oneRm?Number(oneRm[1]):null,

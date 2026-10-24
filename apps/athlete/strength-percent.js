@@ -226,7 +226,8 @@
       kg=clampKg(kg,null,highKg,page,{allowBelow:true});
       return {kg,reason:kg<current?'percent_down':'percent_hold',target:targetEffort,confidence:'broad'};
     }
-    kg=clampKg(kg,lowKg,highKg,page,{allowBelow:false});
+    const climb=rx.mode==='build'&&authoredIndex!=null&&authoredIndex<Math.max(0,rx.sets.length-Math.min(2,rx.sets.length));
+    kg=clampKg(kg,climb?null:lowKg,highKg,page,{allowBelow:climb});
     return {kg,reason:kg>current?'percent_up':kg<current?'percent_down':'percent_hold',target:targetEffort,confidence:'broad'};
   }
   root.StrengthPercent={normalize,oneRm,toKg,clampKg,workingKgs,rampTargetKg,finishedKg,topSetKg,adjust};

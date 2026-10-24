@@ -89,10 +89,13 @@ test('payload percent fields win over notes and unknown 1RM stays null so the st
  assert.equal(P.oneRm({page:p,history:{}}),null);
 });
 
-test('brain e1RM is preferred to a coach 1RM when both exist',()=>{
- const p=page({oneRm:140,notes:['70% of 1RM 140kg']});
- assert.equal(P.oneRm({page:p,history:{freshE1rm:100}}),100);
- assert.equal(P.oneRm({page:p,history:{}}),140);
+test('coach 1RM wins on percent days; brain e1RM is only used when there is no percent plan',()=>{
+ const percent=page({oneRm:140,notes:['70% of 1RM 140kg']});
+ assert.equal(P.oneRm({page:percent,history:{freshE1rm:100}}),140);
+ assert.equal(P.oneRm({page:percent,history:{}}),140);
+ const noPercent=page({oneRm:140,notes:['3 x 8']});
+ assert.equal(P.oneRm({page:noPercent,history:{freshE1rm:100}}),100);
+ assert.equal(P.oneRm({page:noPercent,history:{}}),140);
 });
 
 test('percent of another lift uses the named 1RM',()=>{
