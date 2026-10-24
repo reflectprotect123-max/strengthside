@@ -387,12 +387,25 @@
     </div>`;
   }
 
+  function timerCoversPage() {
+    const snap = HybridTimer.snapshot(timerState(), Date.now());
+    return snap.view === 'picker' || snap.view === 'setup'
+      || ((snap.view === 'running' || snap.view === 'countIn') && snap.display === 'fullscreen');
+  }
+
+  function overlaySkipHtml() {
+    const page = session() && HybridSession.currentPage(session());
+    return skipButtonHtml(page);
+  }
+
   function runHtml(snap) {
     const title = modeTitle(snap.mode);
+    const skip = overlaySkipHtml();
     if (snap.view === 'countIn') {
       return `<div class="tm-full" id="logTimerFull">
         <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
         <div class="tm-countin">${esc(snap.countInLabel)}</div>
+        ${skip}
       </div>`;
     }
     const inner = `<div class="tm-face">
@@ -404,6 +417,7 @@
       <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
       <div class="tm-run">${ringSvg(snap.progress == null ? 1 : snap.progress, inner)}</div>
       ${snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : ''}
+      ${skip}
     </div>`;
   }
 
@@ -743,7 +757,7 @@
         ${page.logMode === 'kg' ? sideHtml(s, page) : (root.ExerciseVideo ? ExerciseVideo.buttonHtml(page) : '')}
         ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
-    return `${headerHtml(s)}<div class="log-body">${body}${page.logMode === 'complete' ? '' : skipButtonHtml(page)}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
+    return `${headerHtml(s)}<div class="log-body">${body}${page.logMode === 'complete' || timerCoversPage() ? '' : skipButtonHtml(page)}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
   }
 
   function prepClockPending(s) {

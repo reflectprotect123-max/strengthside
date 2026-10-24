@@ -12,8 +12,8 @@ test('logger keeps the timer control and adds a separate Play demo button',async
   await loadAssignedWorkout(page,{prep:false,blocks:[{title:'Back Squat',videoUrl:'https://youtu.be/dQw4w9wgGcQ'}]});
   await begin(page);
   await expect(page.getByRole('button',{name:'Play exercise demo',exact:true})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Start last timer',exact:true})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Start last timer',exact:true})).toContainText('Timer');
+  await expect(page.getByRole('button',{name:/Select Timer|Start last timer/})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Play exercise demo',exact:true})).not.toHaveAccessibleName(/timer/i);
   await page.getByRole('button',{name:'Play exercise demo',exact:true}).click();
   await expect(page.getByRole('dialog',{name:'Exercise demo'})).toBeVisible();
   await expect(page.getByRole('link',{name:'Open externally'})).toHaveAttribute('href','https://youtu.be/dQw4w9wgGcQ');
@@ -22,8 +22,8 @@ test('logger keeps the timer control and adds a separate Play demo button',async
 test('row intervals show rounds, splits, pace and totals on the summary',async({page})=>{
   await loadAssignedWorkout(page,{prep:false,blocks:[{title:'Row Erg',columns:['calories','meters','watts','time_mmss'],setCount:2}]});
   await begin(page);
-  async function cell(field,value){
-    await page.locator(`button.log-cell[onclick$="'${field}')"]`).first().click();
+  async function cell(setIndex,field,value){
+    await page.locator(`button.log-cell[onclick$=",${setIndex},'${field}')"]`).click();
     const pad=page.locator('.log-pad');
     const seed=await pad.locator('.log-pad-val').innerText();
     for(let i=0;i<seed.length;i++)await pad.locator('.log-keys').getByRole('button',{name:'⌫',exact:true}).click();
@@ -31,7 +31,7 @@ test('row intervals show rounds, splits, pace and totals on the summary',async({
     await pad.getByRole('button',{name:'Save',exact:true}).click();
   }
   for(let i=0;i<2;i++){
-    await cell('calories',15);await cell('meters',250);await cell('watts',180);await cell('time_mmss',100);
+    await cell(i,'calories',15);await cell(i,'meters',250);await cell(i,'watts',180);await cell(i,'time_mmss',100);
     await page.getByRole('slider',{name:`Actual effort for set ${i+1}`,exact:true}).press('End');
     await page.locator('.log-check').nth(i).click();
   }

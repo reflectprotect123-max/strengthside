@@ -632,6 +632,12 @@
   padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   font-family: "Space Grotesk", system-ui, sans-serif;
 }
+.tm-full .log-set-skip {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  pointer-events: auto;
+}
 
 .tm-head {
   display: flex;
