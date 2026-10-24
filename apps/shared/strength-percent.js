@@ -133,6 +133,15 @@
     const last=rows.filter(r=>r?.logged&&!r.miss&&r.purpose!=='ramp'&&r.purpose!=='warmup').at(-1);
     return num(last?.kg);
   }
+  function isDrop(spec) {
+    return !!spec&&(spec.setRole==='drop'||spec.setRole==='backoff');
+  }
+  function dropFraction(spec,rx) {
+    const own=num(spec?.pctLow);
+    const main=rx?.sets?.find(s=>!isDrop(s))?.pctLow??rx?.pctLow;
+    if(own!=null&&(spec.percentBasis==='top_set'||spec.setRole)&&main!=null&&Math.abs(own-main)>1e-8)return own/100;
+    return 0.875;
+  }
   function workingKgs({page,rx,oneRm:orm,history}={}) {
     rx=rx||normalize(page);
     if(!rx||!(orm>0))return [];
@@ -141,8 +150,8 @@
     const prior=finishedKg(history);
     const n=rx.sets.length,lastN=rx.mode==='build'?Math.min(2,n):0,climbEnd=n-lastN;
     const startPct=rx.startPct??(rx.mode==='build'?Math.max(40,(rx.pctLow||50)-15):rx.pctLow);
-    return rx.sets.map((s,i)=>{
-      if(s.setRole==='drop'||s.setRole==='backoff'||s.percentBasis==='top_set')return null;
+    const kgs=rx.sets.map((s,i)=>{
+      if(isDrop(s))return null;
       if(s.pctLow!=null&&rx.sets.some((x,j)=>j!==i&&x.pctLow!=null&&Math.abs(x.pctLow-rx.pctLow)>1e-8)) {
         return toKg(s.pctLow,orm,page);
       }
@@ -158,6 +167,12 @@
       let kg=lowKg;
       if(prior!=null)kg=clampKg(E.floor(prior,page)??prior,lowKg,highKg,page);
       return kg;
+    });
+    const top=kgs.find(n=>n!=null);
+    return kgs.map((kg,i)=>{
+      if(kg!=null)return kg;
+      if(top==null||!isDrop(rx.sets[i]))return kg;
+      return E.floor(top*dropFraction(rx.sets[i],rx),page);
     });
   }
   function rampTargetKg({page,rx,oneRm:orm,firstWorkingKg}={}) {
@@ -177,10 +192,10 @@
     const authoredIndex=nextRow?.purpose==='working'||nextRow?.purpose==null?(Number.isInteger(nextRow?.workingIndex)?nextRow.workingIndex:Math.max(0,index-((state?.rows||[]).filter(r=>r.purpose==='ramp').length))):null;
     const nextSpec=authoredIndex==null?null:rx.sets[authoredIndex]||rx.sets.at(-1);
     const lowKg=toKg(rx.pctLow,orm,page),highKg=toKg(rx.pctHigh??rx.pctLow,orm,page);
-    if(nextSpec&&(nextSpec.setRole==='drop'||nextSpec.setRole==='backoff'||nextSpec.percentBasis==='top_set')) {
-      const top=topSetKg(state?.rows);
-      if(top==null||nextSpec.pctLow==null)return {kg:null,reason:'percent_top_unresolved',target:nextSpec.effort||'average',confidence:'unknown'};
-      return {kg:E.floor(top*(nextSpec.pctLow/100),page),reason:'percent_of_top_set',target:nextSpec.effort||'average',confidence:'exact_reference'};
+    if(nextSpec&&isDrop(nextSpec)) {
+      const top=topSetKg(state?.rows)??num(row?.kg);
+      if(top==null)return {kg:null,reason:'percent_top_unresolved',target:nextSpec.effort||'average',confidence:'unknown'};
+      return {kg:E.floor(top*dropFraction(nextSpec,rx),page),reason:'percent_of_top_set',target:nextSpec.effort||'average',confidence:'exact_reference'};
     }
     if(!(orm>0))return null;
     const current=num(row?.kg);

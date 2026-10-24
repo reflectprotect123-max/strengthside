@@ -139,7 +139,7 @@ test('AC20 athlete compile keeps coach rest, rampCount, seconds, superset and ca
  assert.ok(plank.columns.includes('seconds'));
  const session=c.HybridSession.startSession({date:fixture.scheduled_date,plan});
  const pair=session.pages.find(p=>p.logMode==='superset');
- assert.ok(pair);assert.equal(pair.restSec,0);
+ assert.ok(pair);assert.equal(pair.restSec,90);
  const plankPage=session.pages.find(p=>p.title==='Foam Roller Plank Rollout');
  assert.match(String(plankPage.prescribed),/^45/);
  assert.ok(!plankPage.columns.includes('weight_kg'));

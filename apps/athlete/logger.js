@@ -100,9 +100,10 @@
     paint();
   }
 
-  function startChosenRest(s,page) {
-    if(page.logMode==='superset'||page.restSec===0)return;
-    const selected=(s.restChoices||{})[page.id];
+  function startChosenRest(s,page,{afterSupersetRound=false}={}) {
+    if(!afterSupersetRound&&page.logMode==='superset')return;
+    if(page.restSec===0)return;
+    const selected=HybridSession.restMs?HybridSession.restMs(s,page):(s.restChoices||{})[page.id];
     if(!selected)return;
     let timer=HybridTimer.choose(timerState(),'rest');
     timer=HybridTimer.start(HybridTimer.quickStart(timer,selected),Date.now());
@@ -516,6 +517,15 @@
     return text === 'empty bar' ? 'empty bar' : `${text} kg`;
   }
 
+  function restNote(s, page) {
+    if (page.logMode === 'superset' && !(Number(page.restSec) > 0)) return 'No rest — go straight to the next movement.';
+    if (page.restSec === 0) return 'No rest — go straight to the next movement.';
+    const ms = HybridSession.restMs ? HybridSession.restMs(s, page) : (s.restChoices || {})[page.id];
+    if (page.logMode === 'superset' && ms) return `Rest: ${Math.round(ms/1000)} seconds after each round · starts on Log set`;
+    if (ms) return `Rest: ${Math.round(ms/1000)} seconds · starts on Log set`;
+    return "Choose your rest using Select Timer below.";
+  }
+
   function cellVal(row, field) {
     if (field === 'reps') return row.reps == null ? 'MAX' : row.reps;
     if (field === 'kg') return row.kg == null || row.kg === '' ? '' : row.kg;
@@ -569,7 +579,7 @@
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
-      <p class="log-note">${page.logMode==='superset'||page.restSec===0?'No rest — go straight to the next movement.':(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
+      <p class="log-note">${restNote(s,page)}</p>
       <section class="log-active-set" data-exercise="${id}">
         <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of ${rows.filter(r=>r.purpose==='ramp').length}` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
@@ -715,14 +725,18 @@
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
     else if (page.logMode === 'superset') {
-      const members = (page.members || []).map((m) => `
+      const turn = HybridSession.supersetTurn ? HybridSession.supersetTurn(s, page) : null;
+      const current = turn && !turn.done ? turn.member : (page.members || [])[0];
+      const label = turn && !turn.done ? turn.label : '';
+      const members = current ? `
         <section class="log-ss-member">
-          <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
-          ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
-          ${supportsSetFlow(m) ? activeSetHtml(s, m, s.logs[m.id] || { sets: [], note: '' }) : tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
-        </section>`).join('');
+          <h2 class="log-title">${esc(label)} · ${esc(current.title)}</h2>
+          ${current.logMode === 'kg' ? sideHtml(s, current) : ''}
+          ${supportsSetFlow(current) ? activeSetHtml(s, current, s.logs[current.id] || { sets: [], note: '' }) : tableHtml(s, current, s.logs[current.id] || { sets: [], note: '' })}
+        </section>` : '';
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
+        <p class="log-note">${restNote(s, page)}</p>
         <div class="log-ss">${members}</div>`;
     } else {
       body = `
@@ -873,7 +887,13 @@
         index, rest: !f.editing && index >= 0, editing: false, adjustment,
         draft: { reps: r && r.reps != null ? r.reps : '', kg: r && r.kg != null ? r.kg : '', effort: null, miss: false },
       } };
-      if (!f.editing) startChosenRest(s,page);
+      if (!f.editing) {
+        if (page.logMode === 'superset' && HybridSession.justFinishedRound?.(next, page, memberId, f.index)) {
+          startChosenRest(next, page, {afterSupersetRound: true});
+        } else {
+          startChosenRest(next, page);
+        }
+      }
       persist(next);
     },
     gotQuote() {
@@ -897,7 +917,7 @@
       s.warmupClock = null;
       root.S.timer = HybridTimer.create();
       lastBeep = '';
-      persist(HybridSession.completeCurrent(HybridSession.nextPage(s)));
+      persist(HybridSession.nextPage(HybridSession.completeCurrent(s)));
     },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));

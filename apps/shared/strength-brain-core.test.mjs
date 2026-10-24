@@ -73,7 +73,8 @@ test('warmup calibration uses physical performance once and later work supersede
  const eight={...p,setTargets:targets('a',[8,8,8])};
  const projected=B.suggest({page:eight,row:warm,nextRow:{targetId:'a:set:0',kg:100},index:2}).kg;
  assert.equal(projected,102.5); // one rung above this target's plan, physical increase below 10%
- assert.equal(B.suggest({page:eight,row:{...warm,effort:'hard'},nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,100);
+ const hardLast=B.suggest({page:eight,row:{...warm,effort:'hard',kg:20},nextRow:{targetId:'a:set:0',purpose:'working',kg:80},index:2});
+ assert.ok(hardLast.kg>=70&&hardLast.kg<=75,`Hard last ramp must stay near 90% of planned 80, got ${hardLast.kg}`);
  assert.ok(B.suggest({page:eight,row:{...warm,miss:true},nextRow:{targetId:'a:set:0',kg:100},index:2}).kg<100);
  const hard=row('a:set:0',10,40,'hard');
  assert.ok(B.suggest({page:p,row:hard,nextRow:{targetId:'a:set:1',kg:90},index:3,state:{rows:[warm,hard]}}).kg<40);

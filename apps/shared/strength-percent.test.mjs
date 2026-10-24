@@ -70,6 +70,18 @@ test('AC10 back-off and drop sets are a percent of the top set',()=>{
  assert.equal(drop.kg,72);
 });
 
+test('AC10 unnamed drop seeds 85-90% of the first working set',()=>{
+ const p=page({pctLow:90,pctHigh:92,oneRm:100,setCount:2,setTargets:[
+  {purpose:'working',reps:{min:2,max:2},pctLow:90,pctHigh:92},
+  {purpose:'working',reps:{min:8,max:8},setRole:'drop',percentBasis:'top_set'},
+ ]});
+ const rx=P.normalize(p);
+ const kgs=P.workingKgs({page:p,rx,oneRm:100});
+ assert.ok(kgs[1]>=76&&kgs[1]<=81,`got ${kgs[1]}`);
+ const unnamed=P.adjust({page:p,row:{kg:90,effort:'average',logged:true,purpose:'working',workingIndex:0},nextRow:{purpose:'working',workingIndex:1},index:1,state:{rows:[{purpose:'working',logged:true,kg:90}]}});
+ assert.ok(unnamed.kg>=76&&unnamed.kg<=81,`adjust got ${unnamed.kg}`);
+});
+
 test('payload percent fields win over notes and unknown 1RM stays null so the starter can run',()=>{
  const p=page({pctLow:70,pctHigh:75,percentMode:'straight',notes:['4 x 8 @ 63-68%'],setCount:3});
  const rx=P.normalize(p);

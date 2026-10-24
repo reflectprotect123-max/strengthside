@@ -87,6 +87,16 @@
       if(!easy&&row.effort==='hard')next=guard(mass*.9,kg,page,{p});
       return response(next,label,next>kg?'warmup_step':next<kg?'reduce_after_incomplete':'warmup_hold','directional',p);
     }
+    if(warm&&nextTarget.purpose==='working'&&row.effort==='hard'){
+      const planned=finiteLoad(nextRow?.kg)??finiteLoad(page.workingKg);
+      if(planned!=null){
+        const target=planned*.9;
+        let next=E.floor(target,page);
+        if(next==null||Math.abs(next-planned)<1e-8)next=E.floor(planned-1e-7,page);
+        if(next==null)next=guard(target,planned,page,{p});
+        return response(next,label,'reduce_after_incomplete','directional',p);
+      }
+    }
     if(warm&&easy){
       const planned=finiteLoad(nextRow?.kg)??finiteLoad(page.workingKg);
       return response(Math.max(kg,planned??kg),label,'working_load','provisional',p);

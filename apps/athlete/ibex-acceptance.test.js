@@ -51,13 +51,16 @@ test('AC3 two ramp rows on mains and rampCount is honoured',()=>{
 });
 
 test('AC4 Easy raises ramp 2, Hard drops about 90%, working sets resize after the last ramp',()=>{
- const page={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,workingKg:80};
+ const page={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,workingKg:80,barWeightKg:20};
  const easy=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:20,effort:'easy'},nextRow:{purpose:'ramp',kg:20},index:1,state:{rows:[]}});
  assert.ok(easy.kg>20,`Easy ramp should raise, got ${easy.kg}`);
  const hard=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:100,effort:'hard'},nextRow:{purpose:'ramp',kg:100},index:1,state:{rows:[]}});
  assert.ok(hard.kg<=90&&hard.kg>=80,`Hard ramp should drop ~90, got ${hard.kg}`);
  const work=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:40,effort:'easy'},nextRow:{purpose:'working',kg:80},index:2,state:{rows:[]}});
  assert.equal(work.kg,80);
+ const hardOntoWork=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:20,effort:'hard'},nextRow:{purpose:'working',kg:80},index:2,state:{rows:[]}});
+ assert.ok(hardOntoWork.kg>=70&&hardOntoWork.kg<=75,`Hard last ramp must be ~90% of planned 80, not empty bar; got ${hardOntoWork.kg}`);
+ assert.ok(hardOntoWork.kg<80);
 });
 
 test('AC5 history matches across coach vs library ids and populates Est 1RM / Last',()=>{
@@ -110,6 +113,18 @@ test('AC10 back-off / drop is a percent of the top set',()=>{
  ]};
  const out=P.adjust({page:p,row:{kg:90,effort:'average',logged:true,purpose:'working',workingIndex:0},nextRow:{purpose:'working',workingIndex:1},index:1,state:{rows:[{purpose:'working',logged:true,kg:90}]}});
  assert.equal(out.kg,58);
+ const unnamed={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20,oneRm:100,pctLow:90,pctHigh:92,setCount:2,setTargets:[
+  {id:'A:set:0',purpose:'working',reps:{min:2,max:2},loadRule:{kind:'adaptive'},toFailure:false,pctLow:90,pctHigh:92},
+  {id:'A:set:1',purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false,setRole:'drop',percentBasis:'top_set'},
+ ]};
+ const rx=P.normalize(unnamed);
+ const kgs=P.workingKgs({page:unnamed,rx,oneRm:100});
+ assert.ok(kgs[1]>=76&&kgs[1]<=81,`unnamed drop must be 85-90% of 90, got ${kgs[1]}`);
+ const seeded=B.seed({id:'s',pages:[unnamed],logs:{A:{sets:unnamed.setTargets.map(t=>({targetId:t.id}))}}},{});
+ const drop=seeded.logs.A.sets.filter(r=>r.purpose==='working').at(-1);
+ assert.ok(drop.kg>=76&&drop.kg<=81,`seeded drop must be 85-90% of the top set, got ${drop.kg}`);
+ assert.notEqual(drop.kg,0);
+ assert.notEqual(drop.kg,2.5);
 });
 
 test('AC11 per-set RPE target is mapped for the slider label',()=>{
@@ -120,10 +135,22 @@ test('AC11 per-set RPE target is mapped for the slider label',()=>{
 });
 
 test('AC12 prescribed rest including notes is applied automatically',()=>{
- const s=H.startSession({date:'2026-10-24',plan:{blocks:[{kind:'lift',letter:'A',title:'Incline Bench',setCount:3,notes:['Rest 60s']}]}});
+ const s=H.startSession({date:'2026-10-24',plan:{blocks:[
+  {kind:'lift',letter:'A',title:'Incline Bench',setCount:3,notes:['Rest 60s']},
+  {kind:'lift',letter:'B',title:'Deficit Back Rack Lunge',setCount:3,notes:['90 seconds rest']},
+  {kind:'lift',letter:'C',title:'DB RDL',setCount:3,notes:['Rest: 60']},
+ ]}});
  const bench=s.pages.find(p=>p.title==='Incline Bench');
+ const lunge=s.pages.find(p=>p.title==='Deficit Back Rack Lunge');
+ const rdl=s.pages.find(p=>p.title==='DB RDL');
  assert.equal(bench.restSec,60);
+ assert.equal(lunge.restSec,90);
+ assert.equal(rdl.restSec,60);
  assert.equal(s.restChoices[bench.id],60000);
+ assert.equal(s.restChoices[lunge.id],90000);
+ assert.equal(s.restChoices[rdl.id],60000);
+ assert.equal(H.restMs(s,lunge),90000);
+ assert.equal(H.restMs({restChoices:{}},lunge),90000);
 });
 
 test('AC13 supersets alternate as one page with no rest between',()=>{
@@ -134,6 +161,29 @@ test('AC13 supersets alternate as one page with no rest between',()=>{
  const pair=s.pages.find(p=>p.logMode==='superset');
  assert.ok(pair&&pair.id);assert.equal(pair.restSec,0);
  assert.equal(pair.members.map(m=>m.title).join(','),'DB RDL,Deficit Back Rack Lunge');
+});
+
+test('AC13 Wall Sit + Jump Squat alternate A1/B1/A2/B2 and rest after a round is configurable',()=>{
+ const s=H.startSession({date:'2026-10-24',plan:{blocks:[
+  {kind:'lift',letter:'A',title:'Wall Sit',setCount:3,notes:['Superset with Jump Squat'],restSec:45},
+  {kind:'lift',letter:'B',title:'Jump Squat',setCount:3,notes:['Superset with Wall Sit']},
+ ]}});
+ const pair=s.pages.find(p=>p.logMode==='superset');
+ assert.ok(pair,'expected a shared superset page');
+ assert.equal(pair.restSec,45);
+ const t0=H.supersetTurn(s,pair);
+ assert.equal(t0.label,'A1');
+ assert.equal(t0.member.title,'Wall Sit');
+ assert.equal(t0.restAfterRound,false);
+ let next=H.logSet(s,0,{reps:30,effort:'average'},t0.member.id);
+ const t1=H.supersetTurn(next,pair);
+ assert.equal(t1.label,'B1');
+ assert.equal(t1.member.title,'Jump Squat');
+ next=H.logSet(next,0,{reps:8,effort:'average'},t1.member.id);
+ assert.equal(H.justFinishedRound(next,pair,t1.member.id,0),true);
+ const t2=H.supersetTurn(next,pair);
+ assert.equal(t2.label,'A2');
+ assert.equal(t2.member.title,'Wall Sit');
 });
 
 test('AC15 bodyweight and timed moves have no kg/1RM and seconds are prefilled',()=>{
@@ -168,6 +218,56 @@ test('AC18 header KG is volume (kg × reps), not a raw load sum',()=>{
  s=H.logSet(s,0,{kg:60,reps:8,effort:'average'});
  s=H.logSet(s,1,{kg:60,reps:8,effort:'average'});
  assert.equal(H.totals(s).kg,960);
+});
+
+test('AC18 empty-bar sets count bar weight in header volume',()=>{
+ let s=H.startSession({date:'2026-10-24',plan:{blocks:[{kind:'lift',letter:'B',title:'Incline Bench',prescription:'3 x 5'}]},letter:'B'});
+ s=H.logSet(s,0,{kg:0,reps:5,effort:'average'});
+ assert.equal(H.totals(s).kg,100);
+ s=H.logSet(s,1,{kg:80,reps:5,effort:'average'});
+ assert.equal(H.totals(s).kg,500);
+});
+
+test('Warm-Up cardio and bodyweight items do not get a kg box',()=>{
+ const s=H.startSession({date:'2026-10-24',plan:{blocks:[
+  {kind:'lift',letter:'U',title:'Row 3x180 sec',section:'Warm-Up',notes:['3 x 180 sec']},
+  {kind:'lift',letter:'V',title:'Bodyweight Squat',section:'Warm-Up',setCount:2},
+  {kind:'lift',letter:'W',title:'Row',section:'Warm-Up',notes:['3 x 180 sec']},
+ ]}});
+ for(const title of ['Row 3x180 sec','Bodyweight Squat','Row']) {
+  const page=s.pages.find(p=>p.title===title);
+  assert.ok(page,title);
+  assert.ok(!page.columns.includes('weight_kg'),`${title} must not have a kg column`);
+  assert.equal(page.weighted,false,title);
+ }
+ const timed=s.pages.find(p=>p.title==='Row');
+ assert.ok(timed.columns.includes('seconds'));
+ assert.equal(timed.prescribed,'180');
+});
+
+test('debug build package id is com.hybrid.strength by design',()=>{
+ const config=JSON.parse(readFileSync(join(here,'../mobile/capacitor/capacitor.config.json'),'utf8'));
+ const gradle=readFileSync(join(here,'../mobile/capacitor/android/app/build.gradle'),'utf8');
+ assert.equal(config.appId,'com.hybrid.strength');
+ assert.match(gradle,/applicationId\s+"com\.hybrid\.strength"/);
+});
+
+test('emulator fixture seeds straight %, build %, coach 1RM, rampCount and history',()=>{
+ const seed=JSON.parse(readFileSync(join(here,'../../checks/fixtures/ibex-emulator-seed.json'),'utf8'));
+ const straight=seed.coachPublish.days.find(d=>d.id==='straight-percent');
+ const build=seed.coachPublish.days.find(d=>d.id==='build-percent');
+ const hist=seed.coachPublish.days.find(d=>d.id==='history-alias');
+ const bench=straight.blocks[0];
+ const squat=build.blocks[0];
+ const seeded=seedLift(bench.title,{notes:bench.notes,oneRm:bench.oneRm,pctLow:bench.pctLow,pctHigh:bench.pctHigh,percentMode:bench.percentMode,rampCount:bench.rampCount,setCount:bench.setCount,setTargets:targets(bench.setCount)});
+ assert.equal(seeded.logs.A.sets.filter(r=>r.purpose==='ramp').length,2);
+ assert.ok(seeded.pages[0].workingKg>=60&&seeded.pages[0].workingKg<=63);
+ const built=seedLift(squat.title,{notes:squat.notes,oneRm:squat.oneRm,pctLow:squat.pctLow,pctHigh:squat.pctHigh,percentMode:squat.percentMode,rampCount:squat.rampCount,startPct:squat.startPct,setCount:squat.setCount,setTargets:targets(squat.setCount)});
+ assert.equal(built.logs.A.sets.filter(r=>r.purpose==='ramp').length,3);
+ const prior={...bare('Incline Bench'),exerciseId:'ex_library_bench',title:'Incline Bench',equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5};
+ const current={...prior,exerciseId:'coach-uuid-bench'};
+ const records={old:record(prior,{id:'old',targetId:'A:set:0',reps:hist.priorHistory.reps,effort:hist.priorHistory.effort,kg:hist.priorHistory.loggedKg,logged:true,purpose:'working'})};
+ assert.equal(B.seed({id:'s',pages:[current],logs:{A:{sets:targets().map(t=>({targetId:t.id}))}}},records).pages[0].workingKg,60);
 });
 
 test('AC19 em dash is not garbled',()=>{

@@ -101,7 +101,11 @@
     const parsed=root.StrengthNotes?root.StrengthNotes.parse([...notes,block.prescribed,block.prescription,block.instructions,block.coachNote]):{};
     const title=root.StrengthNotes?root.StrengthNotes.decode(block.title||''): (block.title||'');
     const circuit=block.kind==='warmup'||block.kind==='recovery';
-    const meta=circuit?{weighted:false}: (root.StrengthEquipment?.apply?root.StrengthEquipment.apply({...block,title,notes}):{});
+    const prep=['Warm-Up','Cool-Down'].includes(block.section);
+    let meta=circuit?{weighted:false}: (root.StrengthEquipment?.apply?root.StrengthEquipment.apply({...block,title,notes}):{});
+    if(prep&&(parsed.seconds||meta.weighted===false||/bodyweight/i.test(title))) {
+      meta={...meta,weighted:false,equipmentId:meta.equipmentId==='barbell'?null:meta.equipmentId};
+    }
     let cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
     if(meta.weighted===false) {
       cols=cols.filter(c=>!['weight_kg','weight_lb','weight_pct','lwp'].includes(c));
@@ -270,7 +274,7 @@
           footer: '',
           section: a.section,
           setCount: 0,
-          restSec: 0,
+          restSec: group.some((m)=>Number(m.restSec)>0)?Math.max(...group.map((m)=>Number(m.restSec)||0)):0,
           members: group,
         });
         i = j - 1;
@@ -466,6 +470,60 @@
     return s;
   }
 
+  function barMass(page) {
+    const n=Number(page?.barWeightKg??page?.minimumKg);
+    return Number.isFinite(n)&&n>0?n:20;
+  }
+  function totalKg(row, page) {
+    const n=Number(row?.kg);
+    if(page?.loadConvention==='barbell_plates')return (Number.isFinite(n)?n:0)+barMass(page);
+    const barbell=page?.equipmentId==='barbell'||page?.loadConvention==='barbell_total'
+      ||/bench|squat|deadlift|press/i.test(page?.title||'');
+    if(barbell&&(!Number.isFinite(n)||n===0))return barMass(page);
+    return Number.isFinite(n)?n:0;
+  }
+  function restMs(session, page) {
+    if(!page||page.restSec===0)return null;
+    const chosen=Number((session?.restChoices||{})[page.id]);
+    if(chosen>0)return chosen;
+    if(Number(page.restSec)>0)return Number(page.restSec)*1000;
+    return null;
+  }
+  function workSets(log) {
+    return (log?.sets||[]).filter((r)=>r.purpose!=='ramp');
+  }
+  function supersetTurn(session, page) {
+    if(!page||page.logMode!=='superset')return null;
+    const members=page.members||[];
+    const maxSets=Math.max(1,...members.map((m)=>workSets((session.logs||{})[m.id]).length||Number(m.setCount)||0));
+    for(let setIndex=0;setIndex<maxSets;setIndex++) {
+      for(let memberIndex=0;memberIndex<members.length;memberIndex++) {
+        const member=members[memberIndex];
+        const row=workSets((session.logs||{})[member.id])[setIndex];
+        if(!row||!row.logged) {
+          return {
+            memberIndex,
+            setIndex,
+            member,
+            label:`${member.letter||String.fromCharCode(65+memberIndex)}${setIndex+1}`,
+            restAfterRound:memberIndex===members.length-1&&Number(page.restSec)>0,
+            done:false,
+          };
+        }
+      }
+    }
+    return {done:true,member:null,label:'',setIndex:-1,memberIndex:-1,restAfterRound:false};
+  }
+  function justFinishedRound(session, page, memberId, setIndex) {
+    if(!page||page.logMode!=='superset')return false;
+    const members=page.members||[];
+    const idx=members.findIndex((m)=>m.id===memberId||m.letter===memberId);
+    if(idx!==members.length-1)return false;
+    return members.every((m)=>{
+      const row=workSets((session.logs||{})[m.id])[setIndex];
+      return !!(row&&row.logged);
+    });
+  }
   function totals(session) {
     let reps = 0;
     let kg = 0;
@@ -473,10 +531,11 @@
       for (const id of logIdsForPage(page)) {
         const log = (session.logs || {})[id];
         if (!log) continue;
+        const lift = page.logMode === 'superset' ? memberOf(page, id) : page;
         for (const row of log.sets || []) {
           if (!row.logged || row.purpose === 'ramp') continue;
           reps += Number(row.reps) || 0;
-          kg += (Number(row.kg) || 0) * (Number(row.reps) || 0);
+          kg += totalKg(row, lift) * (Number(row.reps) || 0);
         }
       }
     }
@@ -568,6 +627,10 @@
     autofillFrom,
     logIdsForPage,
     memberOf,
+    restMs,
+    supersetTurn,
+    justFinishedRound,
+    totalKg,
     totals,
     openFeel,
     setFeel,

@@ -115,6 +115,12 @@ test('infer fills missing barbell and dumbbell metadata from the lift name',()=>
  assert.equal(jump.equipmentId,'bodyweight');assert.equal(jump.weighted,false);
  const kept=E.infer({title:'Incline Bench',equipmentId:'machine',loadConvention:'total',loadUnit:'kg'});
  assert.equal(kept.equipmentId,'machine');
+ const row=E.infer({title:'Row 3x180 sec'});
+ assert.equal(row.weighted,false);
+ const bw=E.infer({title:'Bodyweight Squat'});
+ assert.equal(bw.equipmentId,'bodyweight');assert.equal(bw.weighted,false);
+ const liftRow=E.infer({title:'Bent Over Row'});
+ assert.equal(liftRow.equipmentId,'barbell');assert.equal(liftRow.weighted,true);
 });
 
 test('starter picks a conservative load for every weighted equipment type',()=>{

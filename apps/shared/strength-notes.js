@@ -8,7 +8,7 @@
     return String(value??'')
       .replace(/â€”/g,'—').replace(/â€“/g,'–')
       .replace(/â€™/g,'\u2019').replace(/â€˜/g,'\u2018')
-      .replace(/â€œ/g,'\u201C').replace(/â€\u009D/g,'\u201D').replace(/â€/g,'"');
+      .replace(/â€œ/g,'\u201C').replace(/â€\u009D/g,'\u201D').replace(/â€/g,'\u201D');
   }
   function rpeToEffort(n) {
     if(!Number.isFinite(n))return null;
@@ -26,7 +26,8 @@
   }
   function parse(notes) {
     const text=decode(textOf(notes));
-    const rest=text.match(/rest\s*(\d+)\s*(s|sec|secs|seconds|m|min|mins)?/i);
+    const rest=text.match(/rest\s*[:=]?\s*(\d+)\s*(s|sec|secs|seconds|m|min|mins)?/i)
+      ||text.match(/(\d+)\s*(s|sec|secs|seconds|m|min|mins)\s+rest/i);
     let restSec=null;
     if(rest) {
       const n=Number(rest[1]);

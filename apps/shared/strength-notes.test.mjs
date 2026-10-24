@@ -21,6 +21,18 @@ test('decode common UTF-8 em dash mojibake',()=>{
  assert.equal(N.decode('Ibex â€” Sat 24 Oct'),'Ibex — Sat 24 Oct');
 });
 
+test('decode leftover mojibake does not become a straight quote',()=>{
+ const leftover=N.decode('keep â€ leftover');
+ assert.ok(!leftover.includes('"'),leftover);
+ assert.equal(N.decode('Ibex â€” Sat 24 Oct'),'Ibex — Sat 24 Oct');
+});
+
+test('parse rest after the duration and Rest: N',()=>{
+ assert.equal(N.parse('90 seconds rest').restSec,90);
+ assert.equal(N.parse('Rest: 60').restSec,60);
+ assert.equal(N.parse('Rest 90s').restSec,90);
+});
+
 test('parse ibex percentage patterns into structured ranges',()=>{
  const straight=N.parse('4 x 8 @ 63-68% (RPE 6)');
  assert.equal(straight.pctLow,63);assert.equal(straight.pctHigh,68);assert.equal(straight.percentMode,'straight');

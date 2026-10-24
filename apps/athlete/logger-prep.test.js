@@ -16,6 +16,16 @@ function boot(){
  ctx.save=()=>{saved=JSON.parse(JSON.stringify(ctx.S));};
  return {ctx,element,saved:()=>saved};
 }
+function bootPlan(plan,letter){
+ const {ctx}=runtime();
+ const element={innerHTML:'',classList:{add(){},remove(){}},querySelector(){return null;}};
+ ctx.document={getElementById:id=>['logger','shell'].includes(id)?element:null};
+ ctx.setInterval=()=>1;ctx.clearInterval=()=>{};
+ for(const name of ['timer','logger'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
+ ctx.S={loggerOpen:true,timer:ctx.HybridTimer.create(),session:ctx.HybridSession.startSession({date:'2026-10-24',letter,plan})};
+ ctx.save=()=>{};
+ return {ctx,element};
+}
 test('a timed prep countdown persists its start so reload does not restart it',()=>{
  const b=boot();b.ctx.Logger.paint();
  assert.equal(b.saved()?.timer.mode,'countdown');assert.equal(b.saved()?.session.warmupClock,'A-r1');
@@ -73,3 +83,34 @@ test('AC14 Skip warm-up leaves the current countdown page',()=>{
  assert.equal(ctx.S.session.pages[1].title,'Stretch');
 });
 
+test('timerNext marks the page being left, not the next page',()=>{
+ const {ctx}=boot();ctx.Logger.paint();
+ const left=ctx.S.session.pages[0];
+ const next=ctx.S.session.pages[1];
+ ctx.Logger.timerNext();
+ assert.equal(ctx.S.session.blockIndex,1);
+ assert.equal(ctx.S.session.logs[left.id].completed,true);
+ assert.notEqual(ctx.S.session.logs[next.id]?.completed,true);
+});
+
+test('AC12 logging a lunge set auto-starts the prescribed rest',()=>{
+ const {ctx}=bootPlan({blocks:[
+  {kind:'lift',letter:'B',title:'Deficit Back Rack Lunge',setCount:3,notes:['90 seconds rest'],columns:['reps','weight_kg']},
+ ]},'B');
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ ctx.S.session.loggerSetFlow={[page.id]:{index:0,draft:{reps:8,kg:40,effort:'average',miss:false}}};
+ ctx.Logger.saveSet(page.id);
+ assert.equal(ctx.S.timer.mode,'rest');
+ assert.equal(ctx.S.timer.config.restMs,90000);
+});
+
+test('AC13 logger shows the current superset turn, not both lists at once',()=>{
+ const {ctx,element}=bootPlan({blocks:[
+  {kind:'lift',letter:'A',title:'Wall Sit',setCount:3,notes:['Superset with Jump Squat'],restSec:45},
+  {kind:'lift',letter:'B',title:'Jump Squat',setCount:3,notes:['Superset with Wall Sit']},
+ ]},'A');
+ ctx.Logger.paint();
+ assert.match(element.innerHTML,/A1/);
+ assert.match(element.innerHTML,/Wall Sit/);
+ assert.doesNotMatch(element.innerHTML,/B1/);
+});

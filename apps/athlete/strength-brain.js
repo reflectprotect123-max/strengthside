@@ -191,8 +191,9 @@
       const authored=log.sets.map((row,i)=>{
         const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
         const planned=Array.isArray(page.percentPlan)?page.percentPlan[i]:null;
-        const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)&&planned==null?Core.matchLoad(working,from,reps,page):null;
-        const kg=planned!=null?planned:matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
+        const drop=target?.setRole==='drop'||target?.setRole==='backoff'||target?.percentBasis==='top_set';
+        const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)&&planned==null&&!drop?Core.matchLoad(working,from,reps,page):null;
+        const kg=planned!=null?planned:drop&&known?E.floor(working*0.875,page):matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
         return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg};
       });
       log.sets=ramps.concat(authored);

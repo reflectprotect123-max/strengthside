@@ -84,7 +84,14 @@
   function loadedName(title) {
     return /\bdumbbell\b|\bdb\b|\bbarbell\b|\bkettlebell\b|\bkb\b|\bweighted\b|\bband\b/i.test(title);
   }
+  function cardioName(title) {
+    return /^(row|ski|run|jog|bike|cycle|erg|assault|echo|jump\s*rope|rower)(\b|$|\s|\d)/i.test(title)
+      &&!loadedName(title)
+      &&!/bench|press|squat|deadlift|lunge|rdl|seated|bent|chest|pendlay|meadow/i.test(title);
+  }
   function guessedEquipment(title) {
+    if(/bodyweight/i.test(title)&&!loadedName(title))return 'bodyweight';
+    if(cardioName(title))return 'bodyweight';
     if((/plank|rollout|foam roller|\bhold\b|isometric|hollow|dead bug|bird.?dog|stretch|mobility/i.test(title)&&!loadedName(title))
       ||(/\bjump\b/i.test(title)&&!loadedName(title)))return 'bodyweight';
     if(/\bdumbbell\b|\bdb\b/i.test(title))return 'dumbbell';
