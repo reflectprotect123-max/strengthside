@@ -44,6 +44,7 @@
     const d = date || (root.S && root.S.selectedDate);
     const p = plan || (typeof root.trainingPlanForDate === 'function' ? root.trainingPlanForDate(d) : null);
     if (!p || !HS) return;
+    const previousDate=root.S.session?.date;
     const existing = root.S.session && root.S.session.date === d && root.S.session.phase !== 'summary' && (!root.S.session.demo || p.title === 'Slider demo')
       ? root.S.session
       : null;
@@ -56,6 +57,7 @@
     }
     if (p.title === 'Slider demo') root.S.session.demo = true;
     else root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
+    if (!existing || (d && previousDate && d !== previousDate)) root.S.timer = HybridTimer.create();
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');
@@ -89,11 +91,21 @@
     }
     root.S.timer = next;
     if (typeof root.save === 'function') root.save();
+    const live = document.getElementById('logTimerFull') || document.getElementById('logTimerDock');
+    if (live) {
+      const snap = HybridTimer.snapshot(next, Date.now());
+      if (snap.view === 'countIn' || snap.view === 'running') {
+        patchLiveTimer(snap);
+        return;
+      }
+    }
     paint();
   }
 
-  function startChosenRest(s,page) {
-    const selected=(s.restChoices||{})[page.id];
+  function startChosenRest(s,page,{afterSupersetRound=false}={}) {
+    if(!afterSupersetRound&&page.logMode==='superset')return;
+    if(page.restSec===0)return;
+    const selected=HybridSession.restMs?HybridSession.restMs(s,page):(s.restChoices||{})[page.id]||(Number(page.restSec)>0?page.restSec*1000:null);
     if(!selected)return;
     let timer=HybridTimer.choose(timerState(),'rest');
     timer=HybridTimer.start(HybridTimer.quickStart(timer,selected),Date.now());
@@ -108,7 +120,8 @@
   function moveExercise(direction) {
     const s = session();
     if(direction>0&&prepClockPending(s))return;
-    const next = direction > 0 ? HybridSession.nextPage(s) : HybridSession.prevPage(s);
+    const from = direction>0&&HybridSession.isPrepPage?.(HybridSession.currentPage(s))?HybridSession.completeCurrent(s):s;
+    const next = direction > 0 ? HybridSession.nextPage(from) : HybridSession.prevPage(s);
     if (next.blockIndex !== s.blockIndex) {
       // Clear both timer history and the choice for the newly entered exercise.
       delete (next.restChoices || {})[HybridSession.currentPage(next).id];
@@ -192,6 +205,7 @@
       const ids = HybridSession.logIdsForPage(p);
       const done = p.logMode === 'complete' ? !!(s.logs[p.id] && s.logs[p.id].completed)
         : p.logMode === 'doneHub' ? false
+        : HybridSession.isPrepPage?.(p) ? !!(s.logs[p.id] && (s.logs[p.id].completed || s.logs[p.id].skipped))
         : ids.some((id) => s.logs[id] && s.logs[id].sets && s.logs[id].sets.some((r) => r.logged));
       const cur = s.phase === 'block' && i === s.blockIndex;
       return `<span class="log-dot${cur ? ' current' : done ? ' done' : ''}"></span>`;
@@ -385,12 +399,24 @@
     </div>`;
   }
 
+  function overlayNavHtml() {
+    const page = session() && HybridSession.currentPage(session());
+    if (!root.HybridSession?.isPrepPage?.(page)) return '';
+    const skip = page.kind === 'recovery' || page.section === 'Cool-Down' || page.section === 'Recovery' ? 'Skip cool-down' : 'Skip warm-up';
+    return `<div class="tm-overlay-nav">
+      <button type="button" class="log-set-skip" onclick="Logger.skipBlock()">${skip}</button>
+      <button type="button" class="log-primary" onclick="Logger.timerNext()" aria-label="Next movement">Next →</button>
+    </div>`;
+  }
+
   function runHtml(snap) {
     const title = modeTitle(snap.mode);
+    const nav = overlayNavHtml();
     if (snap.view === 'countIn') {
       return `<div class="tm-full" id="logTimerFull">
         <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
         <div class="tm-countin">${esc(snap.countInLabel)}</div>
+        ${nav}
       </div>`;
     }
     const inner = `<div class="tm-face">
@@ -402,6 +428,7 @@
       <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
       <div class="tm-run">${ringSvg(snap.progress == null ? 1 : snap.progress, inner)}</div>
       ${snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : ''}
+      ${nav}
     </div>`;
   }
 
@@ -494,6 +521,23 @@
     return text === 'empty bar' ? 'empty bar' : `${text} kg`;
   }
 
+  function notesHtml(page) {
+    const notes = (page.notes || []).map((n) => String(n || '').trim()).filter(Boolean);
+    if (!notes.length) return '';
+    const joined = notes.some((n) => /superset with/i.test(n)) ? [notes.join(' | ')] : notes;
+    return `<ul class="log-notes">${joined.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`;
+  }
+
+  function restNote(s, page) {
+    const current=HybridSession.currentPage(s);
+    const restPage=page.logMode==='superset'?page:(current?.logMode==='superset'?current:page);
+    if (restPage.logMode === 'superset' && !(Number(restPage.restSec) > 0)) return 'No rest — go straight to the next movement.';
+    if (page.restSec === 0 && !(Number(restPage.restSec) > 0)) return 'No rest — go straight to the next movement.';
+    const ms = HybridSession.restMs ? HybridSession.restMs(s, restPage) : (s.restChoices || {})[restPage.id];
+    if (ms) return `Rest: ${Math.round(ms/1000)} seconds · starts on Log set`;
+    return "Choose your rest using Select Timer below.";
+  }
+
   function cellVal(row, field) {
     if (field === 'reps') return row.reps == null ? 'MAX' : row.reps;
     if (field === 'kg') return row.kg == null || row.kg === '' ? '' : row.kg;
@@ -546,10 +590,10 @@
     const repTarget = activeRow?.purpose==='ramp'?(activeRow.reps??page.targetReps):authored?.purpose==='amrap'?'AMRAP':authored?.reps?(authored.reps.max>authored.reps.min?`${authored.reps.min}–${authored.reps.max}`:authored.reps.min):page.targetReps == null?'MAX':page.targetRepMax>page.targetReps?`${page.targetReps}–${page.targetRepMax}`:page.targetReps;
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
-      ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
-      <p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
+      ${notesHtml(page)}
+      <p class="log-note">${restNote(s,page)}</p>
       <section class="log-active-set" data-exercise="${id}">
-        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
+        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of ${rows.filter(r=>r.purpose==='ramp').length}` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
           <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
@@ -604,7 +648,7 @@
     }).join('');
     return `
       <p class="log-rx">${esc(page.prescription)}</p>
-      ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+      ${notesHtml(page)}
       <table class="log-table">
         <thead><tr><th>Sets</th>${heads}<th></th></tr></thead>
         <tbody>${rows}</tbody>
@@ -697,7 +741,7 @@
         <section class="log-ss-member">
           <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
           ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
-          ${supportsSetFlow(m) ? activeSetHtml(s, m, s.logs[m.id] || { sets: [], note: '' }) : tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
+          ${m.logMode === 'kg' && supportsSetFlow(m) ? activeSetHtml(s, m, s.logs[m.id] || { sets: [], note: '' }) : tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
         </section>`).join('');
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
@@ -706,7 +750,7 @@
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
         <h2 class="log-title">${esc(page.title)}</h2>
-        ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
+        ${page.logMode === 'kg' && page.weighted !== false ? sideHtml(s, page) : ''}
         ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
     return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
@@ -851,7 +895,13 @@
         index, rest: !f.editing && index >= 0, editing: false, adjustment,
         draft: { reps: r && r.reps != null ? r.reps : '', kg: r && r.kg != null ? r.kg : '', effort: null, miss: false },
       } };
-      if (!f.editing) startChosenRest(s,page);
+      if (!f.editing) {
+        if (page.logMode === 'superset' && HybridSession.justFinishedRound?.(next, page, memberId, f.index)) {
+          startChosenRest(next, page, {afterSupersetRound: true});
+        } else {
+          startChosenRest(next, page);
+        }
+      }
       persist(next);
     },
     gotQuote() {
@@ -862,6 +912,21 @@
     next() { moveExercise(1); },
     prev() { moveExercise(-1); },
     complete() { persist(HybridSession.completeCurrent(session())); },
+    skipBlock() {
+      const s = session();
+      const next = HybridSession.skipSection(s);
+      next.warmupClock = null;
+      root.S.timer = HybridTimer.create();
+      lastBeep = '';
+      persist(next);
+    },
+    timerNext() {
+      const s = session();
+      s.warmupClock = null;
+      root.S.timer = HybridTimer.create();
+      lastBeep = '';
+      persist(HybridSession.nextPage(HybridSession.completeCurrent(s)));
+    },
     note(memberId, v) {
       const s = JSON.parse(JSON.stringify(session()));
       const page = HybridSession.currentPage(s);
@@ -912,7 +977,15 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';startChosenRest(s,page);persist(HybridSession.logSet(s,i,{},lift.id));}
+      if (!row.logged) {
+        const result=root.TrainingCore.validateRow(row,lift);
+        if(!result.ok){toast=result.error;paint();return;}
+        toast='';
+        const next=HybridSession.logSet(s,i,{},lift.id);
+        if(page.logMode==='superset'&&HybridSession.justFinishedRound?.(next,page,lift.id,i)) startChosenRest(next,page,{afterSupersetRound:true});
+        else startChosenRest(next,page);
+        persist(next);
+      }
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {

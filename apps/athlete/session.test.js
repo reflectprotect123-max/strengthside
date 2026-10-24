@@ -8,6 +8,8 @@ const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
 require(join(here, 'training-core.js'));
 require(join(here, 'strength-targets.js'));
+require(join(here, 'strength-equipment.js'));
+require(join(here, 'strength-notes.js'));
 require(join(here, 'session.js'));
 const HybridSession = globalThis.HybridSession;
 
@@ -89,7 +91,7 @@ test('logSet kg updates totals and check', () => {
   assert.equal(s.logs.B.sets[0].reps, 3);
   const t = HybridSession.totals(s);
   assert.equal(t.reps, 3);
-  assert.equal(t.kg, 60);
+  assert.equal(t.kg, 180);
 });
 
 test('logSet preserves the requested rest as set evidence', () => {
@@ -252,6 +254,28 @@ test('reopening an active workout preserves captured targets and calibration whe
  const reopened=HybridSession.startSession({date:s.date,existing:s,plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 10-12'}]}});
  assert.equal(reopened.pages[0].targetReps,6);assert.equal(reopened.pages[0].workingKg,40);assert.equal(reopened.brainSeeded,true);
 });
+test('weighted coach names get kg; bodyweight and jumps do not',()=>{
+ const s=HybridSession.startSession({date:'2026-10-24',plan:{title:'Ibex â€” Sat 24 Oct',blocks:[
+  {kind:'lift',letter:'A',title:'Incline Bench',setCount:3,notes:['RPE 6/7/8','Rest 60s']},
+  {kind:'lift',letter:'B',title:'DB RDL',setCount:3,notes:['Superset with Deficit Back Rack Lunge']},
+  {kind:'lift',letter:'C',title:'Deficit Back Rack Lunge',setCount:3,notes:['Superset with DB RDL']},
+  {kind:'lift',letter:'D',title:'Foam Roller Plank Rollout',notes:['3 x 45 sec']},
+  {kind:'lift',letter:'E',title:'Jump Squat',setCount:3},
+ ]}});
+ assert.equal(s.title,'Ibex — Sat 24 Oct');
+ const pages=s.pages.filter(p=>p.logMode!=='doneHub');
+ const bench=pages.find(p=>p.title==='Incline Bench');
+ assert.ok(bench.columns.includes('weight_kg'));assert.equal(bench.equipmentId,'barbell');assert.equal(s.restChoices[bench.id],60000);
+ assert.deepEqual(bench.targetEfforts,['easy','average','hard']);
+ const pair=pages.find(p=>p.logMode==='superset');
+ assert.ok(pair);assert.ok(pair.id);assert.equal(pair.restSec,0);
+ assert.ok(pair.members.some(m=>m.title==='DB RDL'));assert.ok(pair.members.some(m=>m.title==='Deficit Back Rack Lunge'));
+ const plank=pages.find(p=>p.title==='Foam Roller Plank Rollout');
+ assert.ok(!plank.columns.includes('weight_kg'));assert.equal(plank.columns.includes('seconds'),true);assert.equal(plank.prescribed,'45');
+ const jump=pages.find(p=>p.title==='Jump Squat');
+ assert.ok(!jump.columns.includes('weight_kg'));
+});
+
 test('tempo and completion lifecycle reach the real session without changing its prescription',()=>{
  const p={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'33X1',prescription:'3 x 5'}]};
  const s=HybridSession.startSession({date:'2026-10-16',plan:p});

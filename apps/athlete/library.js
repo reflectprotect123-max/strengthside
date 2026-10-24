@@ -32,6 +32,15 @@
   }
 
   function inferredMetadata(title='') {
+    if(root.StrengthEquipment?.infer) {
+      const meta=root.StrengthEquipment.infer({title});
+      const out={};
+      for(const key of ['equipmentId','loadConvention','exerciseType','minimumKg','equipmentStepKg','barWeightKg']) {
+        if(meta[key]!=null)out[key]=meta[key];
+      }
+      if(/farmer|suitcase|carry/i.test(title))out.exerciseType='carry';
+      return out;
+    }
     const value=String(title);
     if(/farmer|suitcase|carry/i.test(value))return {equipmentId:/dumbbell|\bdb\b/i.test(value)?'dumbbell':null,loadConvention:'per_hand',exerciseType:'carry'};
     if(/plank|\bhold\b/i.test(value))return {equipmentId:'bodyweight',loadConvention:'bodyweight',exerciseType:'hold'};
@@ -46,7 +55,7 @@
 
   function canonicalBlock(block) {
     const b={...block};
-    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','restSec','demoStartingKg'])delete b[key];
+    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','demoStartingKg'])delete b[key];
     return b;
   }
 
@@ -233,6 +242,19 @@
           loadConvention: b.loadConvention,
           exerciseType: b.exerciseType,
           rampCount: b.rampCount,
+          restSec: b.restSec,
+          restSeconds: b.restSeconds,
+          groupId: b.groupId,
+          pctLow: b.pctLow,
+          pctHigh: b.pctHigh,
+          percentMode: b.percentMode,
+          percentBasis: b.percentBasis,
+          basisLift: b.basisLift,
+          basisReps: b.basisReps,
+          oneRm: b.oneRm,
+          percent: b.percent,
+          startPct: b.startPct,
+          rpe: b.rpe,
           section,
         });
       }

@@ -44,7 +44,7 @@ test('declared bar minima and offsets are respected',()=>{
  assert.equal(E.floor(0,bar),0);assert.equal(E.next(0,bar),2.5);assert.equal(E.floor(19,bar),17.5);assert.equal(E.next(20,bar),22.5);
  assert.equal(E.next(1000,bar),1002.5);assert.equal(E.round(1,20,bar,{downCap:.1}),17.5);
  assert.equal(E.next(15,{...bar,minimumKg:15}),17.5);
- assert.equal(E.starter({...bar,minimumKg:undefined}).kg,null);
+ assert.equal(E.starter({...bar,minimumKg:undefined}).kg,0);
  assert.equal(E.starter({...bar,minimumKg:undefined,barWeightKg:15}).kg,0);
  assert.equal(E.starter({...bar,minimumKg:20,barWeightKg:15}).kg,0);
  assert.equal(E.label({...bar,minimumKg:15},0),'empty bar');
@@ -57,15 +57,16 @@ test('versioned provisional exercise starters use exact conventions and defaults
  }
  assert.equal(E.starter({...db,loadConvention:'single',title:'Goblet Squat'}).kg,6);
  assert.equal(E.starter({...db,equipmentId:undefined,title:'DB Bench Press'}).kg,5);
- assert.equal(E.starter({...db,equipmentId:'machine',title:'DB Bench Press'}).kg,null);
+ assert.equal(E.starter({...db,equipmentId:'machine',title:'DB Bench Press'}).kg,10);
  assert.equal(E.starter({...db,equipmentId:' Dumbbell ',title:'DB Bench Press'}).kg,5);
  assert.equal(E.next(10,{...db,equipmentId:' Dumbbell '}),12.5);
  assert.equal(E.starter({...db,title:'Bench Press',availableLoads:[2,4,6]}).kg,4);
 });
-test('unknown equipment, units, conventions and unrelated exercises do not start or convert',()=>{
- for(const page of [{equipmentId:'machine',title:'Press'},{...db,loadUnit:'lb',title:'DB Bench Press'},{...db,loadConvention:'total',title:'DB Bench Press'},{...db,loadConvention:'assistance',title:'DB Row'},{...db,loadConvention:undefined,title:'DB Curl'},{...db,title:'DB Deadlift'},{...db,loadConvention:'single',title:'DB Curl'}]) {
-  const result=E.starter(page);assert.equal(result.kg,null);assert.equal(result.confidence,'unknown');
- }
+test('pound units stay unsupported while missing convention still starts a conservative kg load',()=>{
+ assert.equal(E.starter({...db,loadUnit:'lb',title:'DB Bench Press'}).kg,null);
+ assert.equal(E.starter({equipmentId:'machine',title:'Press',loadUnit:'kg'}).kg,10);
+ assert.equal(E.starter({...db,title:'DB Deadlift'}).kg,6);
+ assert.equal(E.starter({...db,loadConvention:undefined,title:'DB Curl'}).kg,4);
  assert.equal(E.next(10,{...db,loadConvention:'total'}),null);
  assert.equal(E.profile({...db,loadUnit:'lb'}).unit,'lb');assert.equal(E.profile({...db,loadConvention:'total'}).convention,'total');
 });
@@ -78,7 +79,7 @@ test('invalid numeric values never become automatic loads',()=>{
 test('legacy unspecified rack uses declared generic steps without inventing a starter',()=>{
  const page={equipmentStepKg:2.5,minimumKg:0,loadUnit:'kg',loadConvention:'total',availableLoads:[],title:'Squat'};
  assert.equal(E.next(40,page),42.5);assert.equal(E.round(42.5,40,page,{upCap:.1}),42.5);
- assert.equal(E.starter(page).kg,null);
+ assert.equal(E.starter(page).kg,0);
  const offset={...page,minimumKg:3,equipmentStepKg:4};
  assert.equal(E.floor(10,offset),7);assert.equal(E.next(7,offset),11);
  assert.equal(E.floor(2,offset),null);assert.equal(E.round(1,3,offset,{downCap:.1}),3);
@@ -98,6 +99,39 @@ test('explicit canonical bar conventions keep their grids in the displayed units
   assert.equal(E.label(total,0),'0');
   assert.deepEqual(plain(E.profile({...page,availableLoads:[0,10,20]}).loads),[0,10,20]);
  }
+});
+
+test('infer fills missing barbell and dumbbell metadata from the lift name',()=>{
+ const bench=E.infer({title:'Incline Bench'});
+ assert.equal(bench.equipmentId,'barbell');assert.equal(bench.loadConvention,'total');assert.equal(bench.loadUnit,'kg');
+ assert.equal(bench.minimumKg,20);assert.equal(bench.weighted,true);
+ const lunge=E.infer({title:'Deficit Back Rack Lunge'});
+ assert.equal(lunge.equipmentId,'barbell');assert.equal(lunge.weighted,true);
+ const rdl=E.infer({title:'DB RDL'});
+ assert.equal(rdl.equipmentId,'dumbbell');assert.equal(rdl.loadConvention,'per_hand');assert.equal(rdl.weighted,true);
+ const plank=E.infer({title:'Foam Roller Plank Rollout'});
+ assert.equal(plank.equipmentId,'bodyweight');assert.equal(plank.weighted,false);
+ const jump=E.infer({title:'Jump Squat'});
+ assert.equal(jump.equipmentId,'bodyweight');assert.equal(jump.weighted,false);
+ const kept=E.infer({title:'Incline Bench',equipmentId:'machine',loadConvention:'total',loadUnit:'kg'});
+ assert.equal(kept.equipmentId,'machine');
+ const row=E.infer({title:'Row 3x180 sec'});
+ assert.equal(row.weighted,false);
+ const bw=E.infer({title:'Bodyweight Squat'});
+ assert.equal(bw.equipmentId,'bodyweight');assert.equal(bw.weighted,false);
+ const liftRow=E.infer({title:'Bent Over Row'});
+ assert.equal(liftRow.equipmentId,'barbell');assert.equal(liftRow.weighted,true);
+});
+
+test('starter picks a conservative load for every weighted equipment type',()=>{
+ assert.equal(E.starter(E.apply({title:'Incline Bench'})).kg,0);
+ assert.equal(E.starter(E.apply({title:'Romanian Deadlift'})).kg,0);
+ assert.equal(E.starter(E.apply({title:'Deficit Back Rack Lunge'})).kg,0);
+ assert.equal(E.starter(E.apply({title:'DB RDL'})).kg,6);
+ assert.equal(E.starter({equipmentId:'machine',loadConvention:'total',loadUnit:'kg',title:'Press'}).kg,10);
+ assert.equal(E.starter({equipmentId:'dumbbell',loadConvention:'per_hand',loadUnit:'kg',title:'DB Deadlift'}).kg,6);
+ assert.equal(E.starter({...db,loadUnit:'lb',title:'DB Bench Press'}).kg,null);
+ assert.equal(E.starter(E.apply({title:'Foam Roller Plank Rollout'})).kg,null);
 });
 
 test('canonical bar mass is explicit and positive without changing legacy total semantics',()=>{

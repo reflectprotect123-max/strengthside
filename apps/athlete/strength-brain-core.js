@@ -82,10 +82,34 @@
     }
     const warm=nextTarget.purpose==='warmup'||['warmup','ramp'].includes(row.purpose);
     const easy=['very_easy','easy'].includes(row.effort);
+    if(warm&&(nextTarget.purpose==='warmup'||nextRow?.purpose==='ramp'||nextRow?.purpose==='warmup')&&!easy&&row.effort!=='hard'&&row.effort!=='max_effort'){
+      const planned=finiteLoad(nextRow?.kg)??kg;
+      return response(planned,label,'warmup_hold','directional',p);
+    }
     if(warm&&nextTarget.purpose==='warmup'){
-      let next=easy?E.next(kg,page)??kg:kg;
-      if(!easy&&row.effort==='hard')next=guard(mass*.9,kg,page,{p});
+      const planned=finiteLoad(nextRow?.kg);
+      const barFloor=E.emptyBarKg?.(page)??0;
+      const prevRamp=finiteLoad((state.rows||[]).filter(r=>r?.purpose==='ramp'&&r.kg!=null).at(-1)?.kg)??kg;
+      let next=kg;
+      if(easy){
+        const base=Math.max(kg,planned??kg,barFloor,prevRamp??0);
+        next=E.next(base,page)??E.next(kg,page)??base;
+        if(next<base)next=base;
+        if(next<barFloor)next=barFloor;
+        if(prevRamp!=null&&next<prevRamp)next=prevRamp;
+      } else if(row.effort==='hard')next=guard(mass*.9,kg,page,{p});
+      if(prevRamp!=null&&next!=null&&next<prevRamp&&row.effort!=='hard'&&row.effort!=='max_effort')next=prevRamp;
       return response(next,label,next>kg?'warmup_step':next<kg?'reduce_after_incomplete':'warmup_hold','directional',p);
+    }
+    if(warm&&nextTarget.purpose==='working'&&row.effort==='hard'){
+      const planned=finiteLoad(nextRow?.kg)??finiteLoad(page.workingKg);
+      if(planned!=null){
+        const target=planned*.9;
+        let next=E.floor(target,page);
+        if(next==null||Math.abs(next-planned)<1e-8)next=E.floor(planned-1e-7,page);
+        if(next==null)next=guard(target,planned,page,{p});
+        return response(next,label,'reduce_after_incomplete','directional',p);
+      }
     }
     if(warm&&easy){
       const planned=finiteLoad(nextRow?.kg)??finiteLoad(page.workingKg);

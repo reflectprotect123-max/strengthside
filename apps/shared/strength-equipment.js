@@ -81,24 +81,120 @@
     candidates.sort((a,b)=>Math.abs(a-value)-Math.abs(b-value)||a-b);
     return candidates[0];
   }
-  function starter(page={}) {
-    const m=metadata(page),unknown=reason=>({kg:null,confidence:'unknown',reason});
-    if(page.loadUnit!=='kg')return unknown('unsupported_unit');
-    let desired=null;
-    const title=String(page.title||'').trim();
-    if(m.bar) {
-      if(!/\b(bench|press|squat|deadlift|row)\b/i.test(title))return unknown('unknown_exercise');
-      desired=m.plates?0:m.declared;
-    } else if(m.db&&m.convention==='single'&&/\bgoblet squat\b/i.test(title))desired=6;
-    else if(m.db&&m.convention==='per_hand') {
-      if(/\blateral raise\b/i.test(title))desired=2;
-      else if(/\bcurl\b/i.test(title))desired=4;
-      else if(/\bbench press\b/i.test(title))desired=5;
-      else if(/\boverhead press\b/i.test(title))desired=4;
-      else if(/\brow\b/i.test(title))desired=6;
+  function loadedName(title) {
+    return /\bdumbbell\b|\bdb\b|\bbarbell\b|\bkettlebell\b|\bkb\b|\bweighted\b|\bband\b/i.test(title);
+  }
+  function cardioName(title) {
+    return /^(row|ski|run|jog|bike|cycle|erg|assault|echo|jump\s*rope|rower)(\b|$|\s|\d)/i.test(title)
+      &&!loadedName(title)
+      &&!/bench|press|squat|deadlift|lunge|rdl|seated|bent|chest|pendlay|meadow/i.test(title);
+  }
+  function guessedEquipment(title) {
+    if(/bodyweight/i.test(title)&&!loadedName(title))return 'bodyweight';
+    if(cardioName(title))return 'bodyweight';
+    if((/plank|rollout|foam roller|\bhold\b|isometric|hollow|dead bug|bird.?dog|stretch|mobility/i.test(title)&&!loadedName(title))
+      ||(/\bjump\b/i.test(title)&&!loadedName(title)))return 'bodyweight';
+    if(/\bdumbbell\b|\bdb\b/i.test(title))return 'dumbbell';
+    if(/kettlebell|\bkb\b/i.test(title))return 'kettlebell';
+    if(/cable/i.test(title))return 'cable';
+    if(/machine|lat pull|leg press|hack squat|pec deck|smith/i.test(title))return 'machine';
+    if(/bench|press|squat|deadlift|rdl|row|lunge|hinge|good morning|thruster|clean|snatch|rack/i.test(title))return 'barbell';
+    return '';
+  }
+  function infer(page={}) {
+    const title=String(page.title||page.name||'');
+    const declared=typeof page.equipmentId==='string'&&page.equipmentId.trim()?page.equipmentId.trim().toLowerCase():'';
+    const equipment=declared||guessedEquipment(title);
+    const out={equipmentId:equipment||null,loadUnit:page.loadUnit||'kg',weighted:false};
+    if(page.loadConvention)out.loadConvention=page.loadConvention;
+    else if(equipment==='dumbbell')out.loadConvention=/goblet/i.test(title)?'single':'per_hand';
+    else if(equipment==='kettlebell')out.loadConvention=/double|pair/i.test(title)?'per_hand':'single';
+    else if(equipment==='bodyweight')out.loadConvention='added_bodyweight';
+    else if(equipment)out.loadConvention='total';
+    if(equipment==='bodyweight') {
+      out.exerciseType=/hold|plank|isometric/i.test(title)?'hold':'bodyweight';
+      out.weighted=false;
+    } else if(equipment==='dumbbell') {
+      if(page.minimumKg==null)out.minimumKg=1;
+      out.exerciseType=/curl|extension|raise|fly|flye|calf|kickback/i.test(title)?'accessory':null;
+      out.weighted=true;
+    } else if(equipment==='kettlebell') {
+      if(page.minimumKg==null)out.minimumKg=4;
+      out.weighted=true;
+    } else if(equipment==='machine'||equipment==='cable') {
+      if(page.minimumKg==null)out.minimumKg=0;
+      if(page.equipmentStepKg==null)out.equipmentStepKg=1;
+      out.weighted=true;
+    } else if(equipment==='barbell') {
+      if(page.minimumKg==null&&out.loadConvention!=='barbell_plates')out.minimumKg=20;
+      if(page.equipmentStepKg==null)out.equipmentStepKg=2.5;
+      if(page.barWeightKg==null&&out.loadConvention!=='barbell_plates')out.barWeightKg=20;
+      out.exerciseType=/curl|extension|raise|fly|calf/i.test(title)?'accessory':'main';
+      out.weighted=true;
     }
+    for(const key of ['minimumKg','barWeightKg','equipmentStepKg','exerciseType','loadUnit']) {
+      if(page[key]!=null&&page[key]!=='')out[key]=page[key];
+    }
+    if(page.equipmentId!=null&&page.equipmentId!=='')out.equipmentId=typeof page.equipmentId==='string'?page.equipmentId.trim().toLowerCase()||page.equipmentId:page.equipmentId;
+    if(/\bjump\b/i.test(title)&&!loadedName(title)) {
+      out.equipmentId='bodyweight';
+      out.loadConvention='added_bodyweight';
+      out.exerciseType='bodyweight';
+      out.weighted=false;
+    }
+    return out;
+  }
+  function apply(page={}) {
+    const meta=infer(page);
+    const next={...page};
+    for(const key of ['equipmentId','loadConvention','loadUnit','minimumKg','barWeightKg','equipmentStepKg','exerciseType']) {
+      if((next[key]==null||next[key]==='')&&meta[key]!=null)next[key]=meta[key];
+    }
+    next.weighted=meta.weighted;
+    return next;
+  }
+  function namedDesired(page,title) {
+    const m=metadata(page);
+    if(m.bar)return m.plates?0:(m.declared??20);
+    if(m.db&&m.convention==='single')return /\bgoblet squat\b/i.test(title)?6:6;
+    if(m.db&&m.convention==='per_hand') {
+      if(/\blateral raise\b/i.test(title))return 2;
+      if(/\bcurl\b/i.test(title))return 4;
+      if(/\bbench press\b/i.test(title))return 5;
+      if(/\boverhead press\b/i.test(title))return 4;
+      if(/\brow\b/i.test(title))return 6;
+      if(/deadlift|rdl|lunge|squat/i.test(title))return 6;
+      return 4;
+    }
+    const eq=identity(page);
+    if(eq==='kettlebell')return 8;
+    if(eq==='cable')return 5;
+    if(eq==='machine')return 10;
+    if(eq==='barbell') {
+      if(page.loadConvention==='barbell_plates'&&number(page.barWeightKg)==null&&number(page.minimumKg)==null)return null;
+      return m.plates?0:(m.declared??20);
+    }
+    if(eq==='dumbbell')return 4;
+    if(page.loadUnit==='kg'&&(m.grid||m.convention==='total'))return m.declared??10;
+    return null;
+  }
+  function gridPage(page) {
+    const m=metadata(page);
+    if(m.db||m.bar||m.grid||explicitLoads(page).length)return page;
+    const eq=identity(page);
+    if(eq==='dumbbell')return {...page,loadConvention:'per_hand',loadUnit:'kg',minimumKg:page.minimumKg??1};
+    if(eq==='barbell')return {...page,loadConvention:page.loadConvention||'total',loadUnit:'kg',minimumKg:page.minimumKg??20,equipmentStepKg:page.equipmentStepKg??2.5};
+    return {...page,loadConvention:page.loadConvention||'total',loadUnit:'kg',minimumKg:page.minimumKg??0,equipmentStepKg:page.equipmentStepKg??1};
+  }
+  function starter(page={}) {
+    const filled=apply(page),unknown=reason=>({kg:null,confidence:'unknown',reason});
+    if(filled.loadUnit&&filled.loadUnit!=='kg')return unknown('unsupported_unit');
+    if(filled.equipmentId==='bodyweight'||filled.exerciseType==='hold'||filled.weighted===false)return unknown('bodyweight');
+    const title=String(filled.title||'').trim();
+    const desired=namedDesired(filled,title);
     if(desired==null)return unknown('unsupported_equipment_convention_or_exercise');
-    const p=profile(page),kg=floor(Math.max(desired,p.min),page);
+    const usable=gridPage(filled);
+    const p=profile(usable),kg=floor(Math.max(desired,p.min),usable);
     if(kg==null)return unknown('no_available_load');
     return {kg,confidence:'provisional',reason:VERSION+':provisional_exercise_default'};
   }
@@ -108,5 +204,24 @@
     const m=metadata(page);
     return m.bar&&n===(m.plates?0:m.declared)?'empty bar':String(n);
   }
-  root.StrengthEquipment={profile,floor,next,round,starter,label};
+  function nameKey(page={}) {
+    return String(page.title||page.name||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  }
+  function emptyBarKg(page={}) {
+    const filled=apply(page),m=metadata(filled);
+    if(!(m.bar||filled.equipmentId==='barbell'))return 0;
+    if(filled.loadConvention==='barbell_plates')return 0;
+    return number(filled.barWeightKg)||20;
+  }
+  function plausibleWorking(page={},kg) {
+    const n=number(kg);
+    if(n==null||n<=0)return false;
+    const filled=apply(page);
+    if(filled.equipmentId==='barbell'||metadata(filled).bar) {
+      if(n<=emptyBarKg(filled)+EPS)return false;
+      if(n<20-EPS)return false;
+    }
+    return true;
+  }
+  root.StrengthEquipment={profile,floor,next,round,starter,label,infer,apply,nameKey,emptyBarKg,plausibleWorking};
 })(typeof window!=='undefined'?window:globalThis);

@@ -47,15 +47,28 @@ Different rep prescription, with a usable strength estimate:
 
 Use the lower rep boundary as the initial target, e.g. 6 for 6–8, and the brain's intended effort. This inverse formula is a heuristic, particularly when the total of reps and RIR exceeds 12. Outside that provisional envelope, use comparable history or athlete input rather than invent precision.
 
-No evidence: the athlete supplies a comfortable first ramp load. Never assign everyone 10 kg. Two ramps are enough; uncertain calibration can continue across future sessions. Manual load edits alone do not establish capacity.
+No evidence: the brain picks a conservative first load from the equipment type — empty bar for barbells, lightest sensible dumbbell/kettlebell/machine default — never a flat 10 kg for everyone. The athlete rates that start on the slider; set 2 and the working sets follow existing adjustment rules. Two ramps are the default (honour an explicit `rampCount` of 0–3). Uncertain calibration can continue across future sessions. Manual load edits alone do not establish capacity.
 
 History must match exercise/variation, equipment, units, load convention (e.g. per dumbbell), and prescription sufficiently to be comparable. Recent, unchanged history matters more than distant records. Do not silently transfer barbell estimates to machines or related variations. Assisted/bodyweight movements need their own model; do not treat zero external kg as zero total resistance.
+
+## 2b. Percentage prescriptions
+
+Ibex and similar coach notes prescribe a percent of 1RM, often with an RPE cap. The payload may send `pctLow` / `pctHigh` / `percentMode` / `percentBasis` / `basisLift` per exercise and optional per-set copies. Notes are a fallback parser for `@ 63-68% (RPE 6)`, `start at 78% and build`, `Set 1 3 @ 55-60%`, `4x2 @ 90-92% + 1 x 8 at 65%`, `% of your 6-rep weight`, and `30-40% of your back squat 1RM`.
+
+`kg = percent × 1RM`, rounded to the available equipment increment. Prefer the brain's rolling / session e1RM; if none exists, use a coach-provided 1RM. If neither exists, fall back to the conservative equipment starter in rule 2 and keep calibrating.
+
+Two modes:
+
+- **Straight** (default): the first working set is the bottom of the range. The slider compared with the prescribed RPE moves the next set up, holds, or down, clamped inside `[low, high]`. Missed reps may drop below the range.
+- **Build** (notes say build / building / build to, or per-set percentages rise): earlier working sets climb from below the range; the final 1–2 sets must land inside it.
+
+Ramps warm up to the bottom of the range, not to a formula working max. The next session of the same lift starts from the load the athlete finished, clamped into the new range. Back-off and drop sets are a percent of the session top set, or of another named lift's 1RM.
 
 ## 3. Ramps and changes between sets
 
 Known working load: start with two provisional ramps around 50% and 75% of that load, rounded to usable equipment. These percentages are simple defaults, not universal warm-up requirements. Minimum bar/machine loads can make a percentage impossible; never increase a ramp beyond the planned working weight just to fit them. Use the lower prescribed rep boundary. Accessories usually have no automatic ramps.
 
-Unknown load: keep the athlete's comfortable start and use small equipment steps. Do not jump to a formula-derived working weight from one Easy ramp. Allow up to one available upward step after an Easy/Very Easy ramp only if it is no more than 10%; otherwise hold. At most two ramps; the first working set can continue calibration. A user can manually choose a different weight.
+Unknown load: start from the conservative equipment default (empty bar / lightest sensible DB) and use small equipment steps. Do not jump to a formula-derived working weight from one Easy ramp. Allow up to one available upward step after an Easy/Very Easy ramp only if it is no more than 10%; otherwise hold. Default two ramps, or the payload `rampCount` when present; the first working set can continue calibration. A user can manually choose a different weight.
 
 For eligible working-set observations:
 

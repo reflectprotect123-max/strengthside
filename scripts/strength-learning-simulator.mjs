@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 const fixture=JSON.parse(readFileSync(new URL('../checks/fixtures/strength-learning-cases.json',import.meta.url)));
 export const registered={training:fixture.trainingSeeds,evaluation:fixture.evaluationSeeds};
-const sources=['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-brain','strength-memory','session'].map(n=>[n,readFileSync(new URL('../apps/athlete/'+n+'.js',import.meta.url),'utf8')]);
+const sources=['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-brain','strength-memory','session'].map(n=>[n,readFileSync(new URL('../apps/athlete/'+n+'.js',import.meta.url),'utf8')]);
 const digest=x=>createHash('sha256').update(x).digest('hex');
 const analysisSha256=digest(readFileSync(fileURLToPath(import.meta.url)));
 function rng(seed){let x=seed>>>0;return()=>((x=(Math.imul(1664525,x)+1013904223)>>>0)/4294967296);}

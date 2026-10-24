@@ -49,7 +49,15 @@
       purpose:t?.purpose??'working',
       reps:t?.purpose==='amrap'?(t.reps===undefined?null:t.reps):reps(t?.reps),
       loadRule:{kind:t?.loadRule?.kind??'adaptive'},
-      toFailure:t?.toFailure??false
+      toFailure:t?.toFailure??false,
+      effort:t?.effort||null,
+      ...(t?.pctLow!=null?{pctLow:t.pctLow}:{}),
+      ...(t?.pctHigh!=null?{pctHigh:t.pctHigh}:{}),
+      ...(t?.rpe!=null?{rpe:t.rpe}:{}),
+      ...(t?.percentBasis?{percentBasis:t.percentBasis}:{}),
+      ...(t?.basisLift?{basisLift:t.basisLift}:{}),
+      ...(t?.basisReps!=null?{basisReps:t.basisReps}:{}),
+      ...(t?.setRole?{setRole:t.setRole}:{})
     }));
     const result=validate(targets);
     if(!result.valid)throw new RangeError(result.error);

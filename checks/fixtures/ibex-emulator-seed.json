@@ -1,0 +1,151 @@
+{
+  "purpose": "Emulator seed for draft PR #289 acceptance items 3 and 5-10. Publish these three days from the coach companion (the-adaptivebrain-). Do not invent athlete-side authoring.",
+  "packageId": "com.hybrid.strength",
+  "packageIdNote": "The strength debug APK is com.hybrid.strength by design. It installs beside the conditioning APK com.hybrid.sc and must not be renamed.",
+  "coachPublish": {
+    "how": "In the coach app, create three assigned sessions for the same athlete and publish them. Each block must keep restSec, rampCount, oneRm, pctLow/pctHigh, percentMode, and notes. The athlete app copies them silently when signed in.",
+    "days": [
+      {
+        "id": "straight-percent",
+        "title": "Ibex emulator — straight %",
+        "covers": ["AC3 rampCount", "AC6 coach 1RM", "AC7 straight %", "AC9 ramps to range bottom", "AC10 drop 85-90% of top"],
+        "blocks": [
+          {
+            "kind": "lift",
+            "letter": "A",
+            "title": "Incline Bench",
+            "section": "Strength/Power",
+            "setCount": 4,
+            "rampCount": 2,
+            "oneRm": 100,
+            "pctLow": 63,
+            "pctHigh": 68,
+            "percentMode": "straight",
+            "restSec": 60,
+            "notes": ["4 x 8 @ 63-68% (RPE 6)", "Rest 60s"],
+            "columns": ["reps", "weight_kg"]
+          },
+          {
+            "kind": "lift",
+            "letter": "B",
+            "title": "Incline Bench drop",
+            "section": "Strength/Power",
+            "setCount": 3,
+            "rampCount": 0,
+            "oneRm": 100,
+            "pctLow": 90,
+            "pctHigh": 92,
+            "percentMode": "straight",
+            "notes": ["2 x 2 @ 90-92% + drop set", "Rest 60s"],
+            "restSec": 60,
+            "setTargets": [
+              {"purpose": "working", "reps": {"min": 2, "max": 2}, "pctLow": 90, "pctHigh": 92},
+              {"purpose": "working", "reps": {"min": 2, "max": 2}, "pctLow": 90, "pctHigh": 92},
+              {"purpose": "working", "reps": {"min": 8, "max": 8}, "setRole": "drop", "percentBasis": "top_set"}
+            ]
+          }
+        ]
+      },
+      {
+        "id": "build-percent",
+        "title": "Ibex emulator — build %",
+        "covers": ["AC8 build %", "AC3 rampCount 3"],
+        "blocks": [
+          {
+            "kind": "lift",
+            "letter": "A",
+            "title": "Back Squat",
+            "section": "Strength/Power",
+            "setCount": 5,
+            "rampCount": 3,
+            "oneRm": 140,
+            "pctLow": 72,
+            "pctHigh": 77,
+            "percentMode": "build",
+            "startPct": 55,
+            "restSec": 90,
+            "notes": ["5 x 5 @ 72-77% (RPE 8) build over the 5 sets", "90 seconds rest"],
+            "columns": ["reps", "weight_kg"]
+          }
+        ]
+      },
+      {
+        "id": "history-alias",
+        "title": "Ibex emulator — history + rest + warmup",
+        "covers": ["AC5 history across coach vs library ids", "AC12 rest on Lunge and RDL", "Warm-Up no kg"],
+        "priorHistory": {
+          "lift": "Incline Bench",
+          "equipmentId": "barbell",
+          "loggedKg": 60,
+          "reps": 6,
+          "effort": "average",
+          "note": "Log this once on a previous day (library id or coach id). Next Incline Bench must show Last 60 and seed from that history."
+        },
+        "blocks": [
+          {
+            "kind": "lift",
+            "letter": "U",
+            "title": "Row",
+            "section": "Warm-Up",
+            "notes": ["3 x 180 sec"]
+          },
+          {
+            "kind": "lift",
+            "letter": "V",
+            "title": "Bodyweight Squat",
+            "section": "Warm-Up",
+            "setCount": 2
+          },
+          {
+            "kind": "lift",
+            "letter": "A",
+            "title": "Incline Bench",
+            "section": "Strength/Power",
+            "setCount": 3,
+            "rampCount": 2,
+            "restSec": 60,
+            "notes": ["Rest 60s", "RPE 6/7/8"],
+            "columns": ["reps", "weight_kg"]
+          },
+          {
+            "kind": "lift",
+            "letter": "B",
+            "title": "Deficit Back Rack Lunge",
+            "section": "Strength/Power",
+            "setCount": 3,
+            "restSec": 90,
+            "notes": ["90 seconds rest"],
+            "columns": ["reps", "weight_kg"]
+          },
+          {
+            "kind": "lift",
+            "letter": "C",
+            "title": "DB RDL",
+            "section": "Strength/Power",
+            "setCount": 3,
+            "restSec": 60,
+            "notes": ["Rest: 60"],
+            "columns": ["reps", "weight_kg"]
+          },
+          {
+            "kind": "lift",
+            "letter": "D",
+            "title": "Wall Sit",
+            "section": "Strength/Power",
+            "setCount": 3,
+            "restSec": 45,
+            "notes": ["Superset with Jump Squat"]
+          },
+          {
+            "kind": "lift",
+            "letter": "E",
+            "title": "Jump Squat",
+            "section": "Strength/Power",
+            "setCount": 3,
+            "notes": ["Superset with Wall Sit"]
+          }
+        ]
+      }
+    ]
+  }
+}

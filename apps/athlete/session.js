@@ -97,27 +97,68 @@
   }
 
   function pageFromBlock(block) {
-    const cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
+    const notes=(block.notes||[]).map((n)=>root.StrengthNotes?root.StrengthNotes.decode(n):n);
+    const parsed=root.StrengthNotes?root.StrengthNotes.parse([...notes,block.prescribed,block.prescription,block.instructions,block.coachNote]):{};
+    const title=root.StrengthNotes?root.StrengthNotes.decode(block.title||''): (block.title||'');
+    const circuit=block.kind==='warmup'||block.kind==='recovery';
+    const prep=['Warm-Up','Cool-Down'].includes(block.section);
+    let meta=circuit?{weighted:false}: (root.StrengthEquipment?.apply?root.StrengthEquipment.apply({...block,title,notes}):{});
+    if(prep&&(parsed.seconds||meta.weighted===false||/bodyweight/i.test(title))) {
+      meta={...meta,weighted:false,equipmentId:meta.equipmentId==='barbell'?null:meta.equipmentId};
+    }
+    let cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
+    if(meta.weighted===false) {
+      cols=cols.filter(c=>!['weight_kg','weight_lb','weight_pct','lwp'].includes(c));
+      if(!cols.length&&parsed.seconds)cols=['seconds'];
+      if(!cols.length)cols=['reps'];
+    } else if(meta.weighted) {
+      if(!cols.some(c=>['weight_kg','weight_lb','weight_pct','lwp'].includes(c))) {
+        if(!cols.includes('reps')&&!cols.includes('reps_range'))cols=['reps','weight_kg'];
+        else cols=[...cols,'weight_kg'];
+      }
+    }
+    if(parsed.seconds&&meta.weighted===false&&!cols.includes('seconds'))cols=['seconds'];
     let setTargets=Array.isArray(block.setTargets)?JSON.parse(JSON.stringify(block.setTargets)):null;
     if(!setTargets&&cols.some(c=>c==='reps'||c==='reps_range')){
       try{setTargets=JSON.parse(JSON.stringify(root.StrengthTargets.normalize(block)));}catch{}
     }
+    if(setTargets&&parsed.efforts?.length) {
+      setTargets=setTargets.map((t,i)=>t.effort?t:{...t,effort:parsed.efforts[i]||parsed.efforts.at(-1)});
+    }
+    if(parsed.percentSets?.length) {
+      const fromNotes=()=>parsed.percentSets.map((s,i)=>({id:`${block.letter||block.title||'block'}:set:${i}`,purpose:'working',reps:s.reps?{min:s.reps,max:s.reps}:{min:block.targetReps||8,max:block.targetReps||8},loadRule:{kind:'adaptive'},toFailure:false,pctLow:s.pctLow,pctHigh:s.pctHigh,rpe:s.rpe,setRole:s.setRole,percentBasis:s.percentBasis}));
+      const notesTops=parsed.percentSets.filter(s=>s.setRole!=='drop'&&s.setRole!=='backoff').length;
+      const payloadTops=(setTargets||[]).filter(t=>t.setRole!=='drop'&&t.setRole!=='backoff').length;
+      if(!setTargets) {
+        setTargets=fromNotes();
+      } else if(parsed.percentSets.length>setTargets.length||notesTops>payloadTops||parsed.percentSets.some((s,i)=>s.reps&&setTargets[i]?.reps?.min&&s.reps!==setTargets[i].reps.min)) {
+        setTargets=fromNotes();
+      }
+      setTargets=setTargets.map((t,i)=>{
+        const s=parsed.percentSets[i];if(!s)return t;
+        return {...t,pctLow:t.pctLow??s.pctLow,pctHigh:t.pctHigh??s.pctHigh,rpe:t.rpe??s.rpe,setRole:t.setRole||s.setRole,percentBasis:t.percentBasis||s.percentBasis,effort:t.effort||(s.rpe!=null?root.StrengthNotes.rpeToEffort(Number(String(s.rpe).split(/[-–]/)[0])):null)};
+      });
+    } else if(parsed.schemeReps&&setTargets) {
+      setTargets=setTargets.map(t=>t.purpose==='working'&&t.reps?.min&&t.reps.min!==parsed.schemeReps?{...t,reps:{min:parsed.schemeReps,max:parsed.schemeReps}}:t);
+    }
     const rx=setTargets?{setCount:setTargets.length,targetReps:null,targetRepMax:null,isMax:false}
       :block.targetContractVersion===2?{setCount:Math.max(1,Number(block.setCount)||1),targetReps:null,targetRepMax:null,isMax:false}
       :parseRx(block.prescription);
-    const mode = cols.length && !cols.includes('weight_kg') && !cols.includes('weight_lb') && !cols.includes('weight_pct') && !cols.includes('lwp')
-      ? (rx.isMax ? 'max' : 'reps')
+    if(!setTargets&&parsed.setCount&&parsed.seconds)rx.setCount=parsed.setCount;
+    const mode = circuit ? 'complete' : cols.length && !cols.includes('weight_kg') && !cols.includes('weight_lb') && !cols.includes('weight_pct') && !cols.includes('lwp')
+      ? (rx.isMax ? 'max' : cols.includes('seconds') ? 'reps' : 'reps')
       : logModeFor(block, rx);
+    const restSec=block.restSec??block.restSeconds??parsed.restSec??null;
     return {
       id: block.letter || block.title,
       letter: block.letter || '',
-      title: block.title || '',
+      title,
       kind: block.kind,
       logMode: mode,
-      prescription: block.prescription || '',
+      prescription: block.prescription || (parsed.percentSets?.length?`${parsed.percentSets.filter(s=>s.setRole!=='drop'&&s.setRole!=='backoff').length||parsed.percentSets[0]?.setCount||block.setCount} x ${parsed.percentSets[0].reps}`:(parsed.schemeReps&&parsed.setCount?`${parsed.setCount} x ${parsed.schemeReps}`:'')),
       tempo: block.tempo || null,
-      barWeightKg: block.barWeightKg ?? null,
-      notes: block.notes || [],
+      barWeightKg: block.barWeightKg ?? meta.barWeightKg ?? null,
+      notes,
       items: block.items || [],
       bullets: block.bullets || [],
       note: block.note || '',
@@ -131,18 +172,32 @@
       coachAssignmentId: block.coachAssignmentId || null,
       coachExerciseId: block.coachExerciseId || null,
       coachBlockId: block.coachBlockId || null,
-      equipmentId: block.equipmentId || null,
-      equipmentStepKg: Number(block.equipmentStepKg) > 0 ? Number(block.equipmentStepKg) : null,
+      equipmentId: block.equipmentId || meta.equipmentId || null,
+      equipmentStepKg: Number(block.equipmentStepKg) > 0 ? Number(block.equipmentStepKg) : (meta.equipmentStepKg ?? null),
       availableLoads: Array.isArray(block.availableLoads) ? block.availableLoads : [],
-      minimumKg: block.minimumKg==null?null:Number(block.minimumKg),
-      loadConvention: block.loadConvention || null,
-      loadUnit: cols.includes('weight_lb') ? 'lb' : 'kg',
-      exerciseType: block.exerciseType || null,
+      minimumKg: block.minimumKg==null?(meta.minimumKg??null):Number(block.minimumKg),
+      loadConvention: block.loadConvention || meta.loadConvention || null,
+      loadUnit: cols.includes('weight_lb') ? 'lb' : (meta.loadUnit || 'kg'),
+      exerciseType: block.exerciseType || meta.exerciseType || null,
       rampCount: block.rampCount,
       columns: cols,
-      prescribed: block.prescribed || '',
+      prescribed: block.prescribed || (parsed.seconds&&meta.weighted===false?String(parsed.seconds):''),
       countIn: Number(block.countIn) || 0,
       askEffort: block.section !== 'Warm-Up' && block.section !== 'Cool-Down',
+      restSec,
+      targetEfforts: parsed.efforts || [],
+      groupId: block.groupId || (parsed.supersetWith?[String(title||'').toLowerCase(),String(parsed.supersetWith).toLowerCase()].sort().join(' + '):null),
+      oneRm: block.oneRm || parsed.oneRm || null,
+      percent: block.percent || parsed.percent || null,
+      pctLow: block.pctLow ?? parsed.pctLow ?? null,
+      pctHigh: block.pctHigh ?? parsed.pctHigh ?? null,
+      percentMode: block.percentMode || parsed.percentMode || null,
+      percentBasis: block.percentBasis || parsed.percentBasis || null,
+      basisLift: block.basisLift || parsed.basisLift || null,
+      basisReps: block.basisReps ?? parsed.basisReps ?? null,
+      startPct: block.startPct ?? parsed.startPct ?? null,
+      rpe: block.rpe ?? parsed.rpe ?? null,
+      weighted: meta.weighted,
     };
   }
 
@@ -191,22 +246,27 @@
     for (let i = 0; i < members.length; i++) {
       const a = members[i];
       const pa = letterParts(a.letter);
-      if (!pa) {
+      if (!pa && !a.groupId) {
         pages.push(a);
         continue;
       }
       const group = [a];
       let j = i + 1;
       while (j < members.length) {
+        if (a.groupId && members[j].groupId === a.groupId) {
+          group.push(members[j]);
+          j += 1;
+          continue;
+        }
         const pb = letterParts(members[j].letter);
-        if (!pb || pb.base !== pa.base || pb.n !== pa.n + (j - i)) break;
+        if (!pa || !pb || pb.base !== pa.base || pb.n !== pa.n + (j - i)) break;
         group.push(members[j]);
         j += 1;
       }
       if (group.length >= 2) {
         pages.push({
-          id: pa.base,
-          letter: pa.base,
+          id: pa?.base || group.map((m) => m.id || m.letter).filter(Boolean).join('+') || group[0].title,
+          letter: pa?.base || '',
           title: group.map((m) => m.title).join(' / '),
           kind: 'lift',
           logMode: 'superset',
@@ -219,6 +279,7 @@
           footer: '',
           section: a.section,
           setCount: 0,
+          restSec: group.some((m)=>Number(m.restSec)>0)?Math.max(...group.map((m)=>Number(m.restSec)||0)):0,
           members: group,
         });
         i = j - 1;
@@ -234,7 +295,21 @@
       logMode: 'doneHub',
       setCount: 0,
     });
+    inheritRest(pages);
     return pages;
+  }
+
+  function inheritRest(pages) {
+    let prevSec=null,prevSection=null;
+    for(const page of pages||[]) {
+      if(!page||page.kind==='doneHub'||page.id==='done')continue;
+      if(page.members) {
+        if(Number(page.restSec)>0){prevSec=Number(page.restSec);prevSection=page.section||prevSection;}
+        continue;
+      }
+      if(page.restSec==null&&prevSec>0&&(!page.section||!prevSection||page.section===prevSection))page.restSec=prevSec;
+      if(Number(page.restSec)>0){prevSec=Number(page.restSec);prevSection=page.section||prevSection;}
+    }
   }
 
   function attachLogs(session) {
@@ -255,7 +330,7 @@
     const session = attachLogs({
       id: root.crypto?.randomUUID?.() || String(Date.now()),
       date,
-      title: (plan && plan.title) || '',
+      title: root.StrengthNotes?root.StrengthNotes.decode((plan && plan.title) || ''):(plan && plan.title) || '',
       instructions: (plan && plan.instructions) || '',
       coachAssignedIds: (plan && plan.coachAssignedIds) || [],
       phase: letter ? 'block' : 'quote',
@@ -268,6 +343,7 @@
       liftMemory: {},
       feel: { intensity: null, durationMin: 0, note: '' },
       unit: 'kg',
+      restChoices: Object.fromEntries(pages.filter((p)=>Number(p.restSec)>0).map((p)=>[p.id,p.restSec*1000])),
     });
     if (letter) {
       const idx = pages.findIndex((p) => pageMatchesLetter(p, letter));
@@ -333,6 +409,36 @@
     return s;
   }
 
+  function isPrepPage(page) {
+    if (!page) return false;
+    return page.kind === 'warmup' || page.kind === 'recovery'
+      || page.section === 'Warm-Up' || page.section === 'Cool-Down'
+      || page.section === 'Prep' || page.section === 'Recovery';
+  }
+
+  function skipSection(session) {
+    const s = clone(session);
+    const page = currentPage(s);
+    if (!isPrepPage(page)) return s;
+    const cooldown = page.kind === 'recovery' || page.section === 'Cool-Down' || page.section === 'Recovery';
+    const match = (p) => {
+      if (!isPrepPage(p)) return false;
+      const cold = p.kind === 'recovery' || p.section === 'Cool-Down' || p.section === 'Recovery';
+      return cold === cooldown;
+    };
+    for (const p of s.pages) {
+      if (!match(p)) continue;
+      const log = ensureLog(s, p);
+      log.skipped = true;
+      log.completed = true;
+    }
+    const next = s.pages.findIndex((p, i) => i >= (s.blockIndex || 0) && !match(p));
+    s.blockIndex = next >= 0 ? next : s.pages.length - 1;
+    if (s.phase === 'summary') s.completedAt = null;
+    s.phase = 'block';
+    return s;
+  }
+
   function canLogRow(row,page) { return root.TrainingCore.validateRow(row,page).ok; }
 
   function logSet(session, setIndex, patch, memberId, options = {}) {
@@ -383,6 +489,61 @@
     return s;
   }
 
+  function barMass(page) {
+    const n=Number(page?.barWeightKg??page?.minimumKg);
+    return Number.isFinite(n)&&n>0?n:20;
+  }
+  function totalKg(row, page) {
+    if(page?.weighted===false||/\bjump\b/i.test(page?.title||'')||(page?.columns||[]).includes('seconds'))return 0;
+    const n=Number(row?.kg);
+    if(page?.loadConvention==='barbell_plates')return (Number.isFinite(n)?n:0)+barMass(page);
+    const barbell=page?.equipmentId==='barbell'||page?.loadConvention==='barbell_total'
+      ||(/bench|squat|deadlift|press/i.test(page?.title||'')&&!/\bjump\b/i.test(page?.title||''));
+    if(barbell&&(!Number.isFinite(n)||n===0))return barMass(page);
+    return Number.isFinite(n)?n:0;
+  }
+  function restMs(session, page) {
+    if(!page||page.restSec===0)return null;
+    const chosen=Number((session?.restChoices||{})[page.id]);
+    if(chosen>0)return chosen;
+    if(Number(page.restSec)>0)return Number(page.restSec)*1000;
+    return null;
+  }
+  function workSets(log) {
+    return (log?.sets||[]).filter((r)=>r.purpose!=='ramp');
+  }
+  function supersetTurn(session, page) {
+    if(!page||page.logMode!=='superset')return null;
+    const members=page.members||[];
+    const maxSets=Math.max(1,...members.map((m)=>workSets((session.logs||{})[m.id]).length||Number(m.setCount)||0));
+    for(let setIndex=0;setIndex<maxSets;setIndex++) {
+      for(let memberIndex=0;memberIndex<members.length;memberIndex++) {
+        const member=members[memberIndex];
+        const row=workSets((session.logs||{})[member.id])[setIndex];
+        if(!row||!row.logged) {
+          return {
+            memberIndex,
+            setIndex,
+            member,
+            label:`${member.letter||String.fromCharCode(65+memberIndex)}${setIndex+1}`,
+            restAfterRound:memberIndex===members.length-1&&Number(page.restSec)>0,
+            done:false,
+          };
+        }
+      }
+    }
+    return {done:true,member:null,label:'',setIndex:-1,memberIndex:-1,restAfterRound:false};
+  }
+  function justFinishedRound(session, page, memberId, setIndex) {
+    if(!page||page.logMode!=='superset')return false;
+    const members=page.members||[];
+    const idx=members.findIndex((m)=>m.id===memberId||m.letter===memberId);
+    if(idx!==members.length-1)return false;
+    return members.every((m)=>{
+      const row=workSets((session.logs||{})[m.id])[setIndex];
+      return !!(row&&row.logged);
+    });
+  }
   function totals(session) {
     let reps = 0;
     let kg = 0;
@@ -390,10 +551,11 @@
       for (const id of logIdsForPage(page)) {
         const log = (session.logs || {})[id];
         if (!log) continue;
+        const lift = page.logMode === 'superset' ? memberOf(page, id) : page;
         for (const row of log.sets || []) {
           if (!row.logged || row.purpose === 'ramp') continue;
           reps += Number(row.reps) || 0;
-          kg += Number(row.kg) || 0;
+          kg += totalKg(row, lift) * (Number(row.reps) || 0);
         }
       }
     }
@@ -478,11 +640,17 @@
     prevPage,
     goToLetter,
     completeCurrent,
+    skipSection,
+    isPrepPage,
     logSet,
     toggleLogged,
     autofillFrom,
     logIdsForPage,
     memberOf,
+    restMs,
+    supersetTurn,
+    justFinishedRound,
+    totalKg,
     totals,
     openFeel,
     setFeel,

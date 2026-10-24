@@ -3,18 +3,20 @@
   "fixtureSha256": "9382e279c657d79d994f107855ca8514029929ba77f09ff83f40675277c81d92",
   "sourceSha256": {
     "training-core": "e93d732bc4ebc77c567aa0117efb0874822b85acf2542bd4a046621f2c1be861",
-    "strength-targets": "5b76ded8c43ab92d7a6c9f31dfd71f881e5827ad6671918a0cd0c80795f2703e",
-    "strength-equipment": "77d058d7f796802e03bb87630c0c3889241a62005668f5a0cf47b9a0f982c73b",
+    "strength-targets": "4345f85108e22711cf44e2e34babcde0d8e423355463cd90d6d7c15732c0d9f4",
+    "strength-equipment": "42a3d329b206824ac5379d5b6c803215694a39b296f12e22e71ec29ef7822afa",
     "strength-rts": "36d867dd2fb85bbe14e414ca10ec6cbc43bf3f05a53b5b5d7c7bd4b4f52d6fb6",
     "strength-policy": "5db4ac29b9c4cf4343c7d06ebff84c5386b2597b7ab9617ca3f263fc12f15a38",
     "strength-load": "0d79503e312c1907415b707d1e26f2d8b5561402cb71a05ffcac5c42fe80c07c",
     "strength-context": "ab20c81fbc1e4a2d16dbff64197f3132dd14d1804c1d2220347a2972801e7b0a",
     "strength-learning": "7de2d70aa443134150c0174af12cd4407aaa5536d04a527c002a5552c3a43c8b",
     "strength-replay": "3797268f7aff26d628e7b5728bc4aacd34b0ef170e1c2c16c32fa397b6a9d4df",
-    "strength-brain-core": "48696f6a53d57f958e1122674bd64f7401a98262403a08051842dca5d42d643f",
-    "strength-brain": "fdb0e9955e18b60524150c2e250ac8881886386e5d060f6af105217b0b281c93",
+    "strength-brain-core": "5d3610551aa037b5c399b7a7de4e9f51eb02e51bf36406f064c37bcce28eb539",
+    "strength-notes": "6597fdfbcb70f486bebb518747022c32233066d7a98d9597baba781ff930ced5",
+    "strength-percent": "31731f44521a23e0360f2d4f7303f611ead23b4c335b4fe6f79513f4e88eb9af",
+    "strength-brain": "c4317b4881f8025694478d0598ce6017d80d8b17835f4ebe81b93ab4035b7a39",
     "strength-memory": "eb74afe28d99b8406a45053d75e42beef6fe5b01e51da215dddf2fc303c7ea13",
-    "session": "521f5c3e15fe6a3cc33f3b4404ab89ad1b376f6158e425d5c505710e21efc3cd"
+    "session": "1ad7bce4a2f9720cc595372c190842cd01382ef006db9fc82fd13ea2ca585e05"
   },
   "registered": {
     "training": [
@@ -6139,7 +6141,7 @@
   },
   "violations": 0,
   "bootstrapUnit": "seed + athlete, with all repeated scenarios kept together",
-  "analysisSha256": "f12ed0a89c58ed577d580affd4238af882e19faa35b4b534fc03c0b7bd0036d5",
+  "analysisSha256": "8cdd8f4b0932cf591236c8d711d92f6eae656994bb15273851417d3f41aa9236",
   "gate": {
     "pass": false,
     "shippingMode": "default",
