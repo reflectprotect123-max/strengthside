@@ -4,19 +4,19 @@
   "sourceSha256": {
     "training-core": "e93d732bc4ebc77c567aa0117efb0874822b85acf2542bd4a046621f2c1be861",
     "strength-targets": "4345f85108e22711cf44e2e34babcde0d8e423355463cd90d6d7c15732c0d9f4",
-    "strength-equipment": "12e4695981c231fe34db424500d77cfa9f0d0f1f4fa88b00d1e1a1d53871f5aa",
+    "strength-equipment": "6403ce93cfa983fbfeb60f62e2fb43e47296f8ba648d2d8ce87dffb261a92899",
     "strength-rts": "36d867dd2fb85bbe14e414ca10ec6cbc43bf3f05a53b5b5d7c7bd4b4f52d6fb6",
     "strength-policy": "5db4ac29b9c4cf4343c7d06ebff84c5386b2597b7ab9617ca3f263fc12f15a38",
     "strength-load": "0d79503e312c1907415b707d1e26f2d8b5561402cb71a05ffcac5c42fe80c07c",
     "strength-context": "ab20c81fbc1e4a2d16dbff64197f3132dd14d1804c1d2220347a2972801e7b0a",
     "strength-learning": "7de2d70aa443134150c0174af12cd4407aaa5536d04a527c002a5552c3a43c8b",
     "strength-replay": "3797268f7aff26d628e7b5728bc4aacd34b0ef170e1c2c16c32fa397b6a9d4df",
-    "strength-brain-core": "48696f6a53d57f958e1122674bd64f7401a98262403a08051842dca5d42d643f",
-    "strength-notes": "4e63ee35348cd85e418c43154e1214c74611169b6540501a5e1b6647fede286b",
-    "strength-percent": "7e173ed0e4eef983b3dc526fba1f2d3de6d6b7f046163d6c6e6b6dd953110099",
-    "strength-brain": "1d6c695185f6a6ae9d68018f0819064213a7f75919bfd2269b544b4b5c9ae263",
+    "strength-brain-core": "b409bcc0081c768473a04111eae4cf54cb2a8e5fc928249c41fee740a573335a",
+    "strength-notes": "91f7536b0054f873dcde63a1bc0b5a419fefed1d1eab8c0dfcb1c42feddd68c0",
+    "strength-percent": "1ddc06562a19552516a40fdb7b87b3923c5ec882c33f7ccb6ffa1362ef6d37c6",
+    "strength-brain": "a6983b314398c865f5ff3d7606130bf6280b02b052510ae7f4711abe84e858f1",
     "strength-memory": "eb74afe28d99b8406a45053d75e42beef6fe5b01e51da215dddf2fc303c7ea13",
-    "session": "1afba4d168c90891780695f96dfe6be8ee17a133d11590b0848c87327736a7a0"
+    "session": "930febed616ec061019ed4f6c955cad2a7a05168b1b75243e1d5fb9599697d13"
   },
   "registered": {
     "training": [
