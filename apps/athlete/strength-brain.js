@@ -36,7 +36,17 @@
       if(t?.loadRule?.kind==='first_working_set')return Core.suggest(args);
     } catch {}
     if(root.StrengthWeights) {
-      return root.StrengthWeights.nextSet({...args,athlete:root.StrengthWeights.current()});
+      const visible=root.StrengthWeights.nextSet({...args,athlete:root.StrengthWeights.current()});
+      const mode=args.state?.policy?.learningMode??root.StrengthPolicy.learningMode;
+      if(mode==='shadow') {
+        const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
+        const state={...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]};
+        let candidate;try{candidate=Core.suggest({...args,state:{...state,policy:{...state.policy,learningMode:'online'}}});}catch{candidate=null;}
+        let hash=2166136261;for(const c of h.contextKey||'unknown'){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619);}
+        diagnosticEvents.push({contextHash:(hash>>>0).toString(16),model:VERSION,reason:candidate?.reason??visible.reason,delta:candidate?.kg!=null&&visible.kg!=null?candidate.kg-visible.kg:null});
+        if(diagnosticEvents.length>64)diagnosticEvents.shift();
+      }
+      return visible;
     }
     const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
     const state={...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]};

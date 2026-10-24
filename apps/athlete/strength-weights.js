@@ -125,7 +125,7 @@
   function lastExact(history, records, page) {
     const fromHist = history?.latest;
     if (fromHist && sameLift(fromHist.page || page, page)) {
-      const rows = (fromHist.rows || []).filter((r) => r?.logged && r.purpose !== 'ramp' && r.purpose !== 'warmup' && num(r.kg) != null);
+      const rows = (fromHist.rows || []).filter((r) => r.purpose !== 'ramp' && r.purpose !== 'warmup' && num(r.kg) != null);
       const last = rows.at(-1);
       if (last && num(last.kg) > 0) return {kg: Number(last.kg), rows};
     }

@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import vm f
 function create(store=new Map()) {
  if(!store.has('strength-memory-v1'))store.set('strength-memory-v1',JSON.stringify({version:1,ownerId:'athlete',records:{},pending:{},revisions:{}}));
  const c=vm.createContext({crypto:webcrypto,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},setTimeout:()=>1,clearTimeout:()=>{},console,addEventListener:()=>{}});
- for(const f of ['training-core.js','strength-targets.js','strength-equipment.js','strength-rts.js','strength-policy.js','strength-load.js','strength-context.js','strength-learning.js','strength-replay.js','strength-brain-core.js','strength-brain.js','strength-memory.js','session.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
+ for(const f of ['training-core.js','strength-targets.js','strength-equipment.js','strength-rts.js','strength-policy.js','strength-load.js','strength-context.js','strength-learning.js','strength-replay.js','strength-brain-core.js','strength-notes.js','strength-percent.js','strength-weights.js','strength-brain.js','strength-memory.js','session.js'])vm.runInContext(readFileSync(new URL('./'+f,import.meta.url),'utf8'),c);
  return {M:c.StrengthMemory,store,ctx:c};
 }
 function session(){return {id:webcrypto.randomUUID(),phase:'summary',completedAt:'2026-10-16T00:00:00Z',startedAt:10,date:'2026-10-10',pages:[{id:'A',exerciseId:'squat',equipmentId:'machine',loadUnit:'kg',loadConvention:'total',minimumKg:0,equipmentStepKg:1,title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,miss:false,purpose:'working',context:{inputVersion:3,normalizedLoad:{version:3,rawValue:40,rawUnit:'kg',convention:'single',externalKg:40,barKg:null,provenance:'explicit',eligible:true}}}]}}};}
@@ -104,7 +104,7 @@ test('real logger facts survive two ramps, finish, reload, edit and next-session
  const restored=create(store),next=()=>restored.ctx.StrengthBrain.seed(HS.startSession({date:'2026-10-17',plan}),restored.M.records());
  assert.equal(next().pages[0].workingKg,40); // Bottom of 6–8 is a hold, not an earned increase.
  const ids=s.logs.A.sets.map(r=>r.id);
- s=HS.goToLetter(s,'A');s=HS.logSet(s,2,{kg:42});s=HS.finishToSummary(s);restored.M.capture(s);
+ s=HS.goToLetter(s,'A');s=HS.logSet(s,4,{kg:42});s=HS.finishToSummary(s);restored.M.capture(s);
  assert.equal(next().pages[0].workingKg,42);
  assert.equal(JSON.stringify(s.logs.A.sets.map(r=>r.id)),JSON.stringify(ids));
 });

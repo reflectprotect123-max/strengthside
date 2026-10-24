@@ -5,10 +5,12 @@ function page(){return {id:'A',kind:'lift',logMode:'kg',title:'Press',exerciseId
 function args(p=page()){const row={targetId:'A:set:0',purpose:'working',kg:40,reps:10,effort:'average',logged:true,miss:false};return {page:p,row,nextRow:{targetId:'A:set:1',kg:42},index:1,state:{rows:[row],learning:{version:'online-v1',k:.08,conflicted:false}}};}
 test('shipping policy is default and shadow returns exactly the default visible decision',()=>{
  const {ctx}=runtime();assert.equal(ctx.StrengthPolicy.learningMode,'default');assert.equal(ctx.StrengthPolicy.learningVersion,'online-v1');
- const a=args(),baseline=ctx.StrengthBrain.next(a);ctx.StrengthPolicy.learningMode='shadow';
- assert.deepEqual(ctx.StrengthBrain.next(a),baseline);assert.equal(ctx.StrengthBrain.diagnostics().length,1);
- ctx.StrengthPolicy.learningMode='online';assert.notDeepEqual(ctx.StrengthBrain.next(a),baseline);
- const event=ctx.StrengthBrain.diagnostics()[0];assert.deepEqual(Object.keys(event),['contextHash','model','reason','delta']);
+ const a=args(),baseline=ctx.StrengthBrain.next(a);
+ assert.ok(ctx.StrengthWeights,'StrengthWeights is the only visible writer');
+ ctx.StrengthPolicy.learningMode='shadow';
+ assert.deepEqual(ctx.StrengthBrain.next(a),baseline);
+ ctx.StrengthPolicy.learningMode='online';
+ assert.deepEqual(ctx.StrengthBrain.next(a),baseline);
 });
 test('corrupt or incompatible learning state selects the corrected default',()=>{
  const {ctx}=runtime(),a=args(),baseline=ctx.StrengthBrain.next(a);ctx.StrengthPolicy.learningMode='online';

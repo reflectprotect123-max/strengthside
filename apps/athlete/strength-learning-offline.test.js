@@ -7,7 +7,7 @@ function boot({store=new Map(),native=null}={}) {
  let reject=false;
  const ctx=vm.createContext({crypto:webcrypto,console,setTimeout:()=>1,clearTimeout(){},addEventListener(){},Capacitor:native,
  localStorage:{getItem:k=>store.get(k)||null,setItem(k,v){if(reject)throw Error('QuotaExceededError');store.set(k,v);}}});
- for(const n of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-brain','strength-memory'])vm.runInContext(readFileSync(new URL('./'+n+'.js',import.meta.url),'utf8'),ctx);
+ for(const n of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-weights','strength-brain','strength-memory'])vm.runInContext(readFileSync(new URL('./'+n+'.js',import.meta.url),'utf8'),ctx);
  return {M:ctx.StrengthMemory,ctx,store,quota:v=>reject=v};
 }
 function workout(){return {id:webcrypto.randomUUID(),phase:'summary',startedAt:1,completedAt:'2026-10-16T00:00:00Z',pages:[{id:'A',kind:'lift',title:'Squat',exerciseId:'squat',equipmentId:'machine',loadConvention:'total',loadUnit:'kg',logMode:'kg',columns:['reps','weight_kg'],minimumKg:0,equipmentStepKg:1,setCount:1,targetReps:6}],logs:{A:{sets:[{kg:40,reps:6,effort:'average',logged:true,miss:false,purpose:'working',context:{normalizedLoad:{version:3,rawValue:40,rawUnit:'kg',convention:'single',externalKg:40,barKg:null,provenance:'explicit',eligible:true}}}]}}};}
