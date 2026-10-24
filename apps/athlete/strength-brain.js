@@ -53,7 +53,7 @@
     if(!want)return null;
     for(const rec of Object.values(records||{})) {
       const prior=rec?.payload?.page;
-      if(!prior)continue;
+      if(!rec||rec.deleted||!prior)continue;
       if(E.nameKey(prior)!==want)continue;
       const eq=(page.equipmentId||'').toLowerCase(),priorEq=(prior.equipmentId||'').toLowerCase();
       if(eq&&priorEq&&eq!==priorEq)continue;
@@ -69,7 +69,7 @@
     let best=null;
     for(const rec of Object.values(records||{})) {
       const prior=rec?.payload?.page,row=rec?.payload?.row;
-      if(!prior||!row||row.logged!==true||row.deleted||row.skipped)continue;
+      if(!rec||rec.deleted||!prior||!row||row.logged!==true||row.deleted||row.skipped)continue;
       if(row.purpose==='ramp'||row.purpose==='warmup')continue;
       if(E.nameKey(prior)!==want)continue;
       if(tempoOf(prior)!==wantTempo)continue;
