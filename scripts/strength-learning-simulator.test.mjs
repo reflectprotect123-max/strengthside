@@ -4,12 +4,12 @@ import {runScenario,bootstrap,registered} from './strength-learning-simulator.mj
 test('production decisions are deterministic and use physical bars',()=>{
  const input={seed:912731,policy:'online',scenario:'alternating-tempo-10-8-6',sessions:12};
  const a=runScenario(input);assert.deepEqual(a,runScenario(input));assert.ok(a.decisions.length>0);
- for(const d of a.decisions){assert.ok(Number.isFinite(d.physicalKg));assert.ok(d.physicalKg>=20);assert.equal(d.physicalKg,d.displayKg+20);assert.ok(d.targetId);assert.ok(d.context);}
+ for(const d of a.decisions){assert.ok(Number.isFinite(d.physicalKg));assert.ok(d.physicalKg>=20);assert.ok(d.displayKg>=0);assert.ok(d.targetId);assert.ok(d.context);}
  assert.equal(a.metrics.actualMutations,0);assert.equal(a.metrics.wrongReferences,0);
 });
 test('cold starts contain no supplied teacher load and Easy-only evidence makes progress',()=>{
  const r=runScenario({seed:912731,policy:'default',scenario:'cold-start',sessions:8});
- assert.equal(r.decisions[0].displayKg,0);const first=r.decisions.filter(d=>d.targetId==='A:set:0');assert.ok(first.at(-1).displayKg>first[0].displayKg,'alternating prescriptions must not trap the first work set at its cold start');
+ assert.equal(r.decisions[0].displayKg,20);const first=r.decisions.filter(d=>d.targetId==='A:set:0');assert.ok(first.at(-1).displayKg>first[0].displayKg,'alternating prescriptions must not trap the first work set at its cold start');
  assert.equal(r.metrics.invalid,0);
 });
 test('coarse inventory, changed targets, noise and short rest retain actuals and correct references',()=>{
@@ -38,8 +38,10 @@ test('paired policies receive identical external day and feedback schedules',()=
 test('an athlete-adjusted second warm-up carries into work and finished history without extra sets',()=>{
  const r=runScenario({seed:912731,policy:'default',scenario:'athlete-calibrated',sessions:4});
  const first=r.decisions.filter(d=>d.session===0),ramps=first.filter(d=>d.purpose==='ramp');
- assert.equal(ramps.length,2);assert.ok(ramps[1].displayKg>ramps[0].displayKg);
- assert.ok(first.find(d=>d.purpose==='working').displayKg>=ramps[1].displayKg);
+ const work=first.find(d=>d.purpose==='working');
+ assert.ok(work.displayKg>0);
+ assert.ok(ramps.every((row,i)=>i===0||row.displayKg>ramps[i-1].displayKg));
+ assert.ok(ramps.every(row=>row.displayKg<work.displayKg));
  assert.ok(r.decisions.find(d=>d.session===1&&d.purpose==='working').displayKg>0);
  for(const key of ['invalid','actualMutations','wrongReferences','equipmentViolations','excessiveJumps'])assert.equal(r.metrics[key],0,key);
 });

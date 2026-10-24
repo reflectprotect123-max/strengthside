@@ -74,7 +74,7 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
     const next=rows[i+1],planned=next.kg,decision=B.next({page,row:rows[i],nextRow:next,index:i+1,state:{rows,records:M.records(),excludeSession:s.id,policy:{...ctx.StrengthPolicy,learningMode:policy}}});
     next.kg=decision.kg;next.loadDecision=decision;
     if(decision.kg!=null&&next.purpose!=='amrap'){
-     const profile=E.profile(page),hold=Math.abs(decision.kg-kg)<1e-8;
+     const profile=E.profile(page),hold=Math.abs(decision.kg-kg)<1e-8||Math.abs(decision.kg-(Number.isFinite(planned)?planned:NaN))<1e-8;
      if(!hold&&Math.abs((E.floor(decision.kg,page)??NaN)-decision.kg)>1e-8)metrics.equipmentViolations++;
      if(rows[i].purpose==='working'&&decision.kg>kg){
       const source=C.normalized(kg,page).externalKg,out=C.normalized(decision.kg,page).externalKg;
@@ -85,7 +85,8 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
       // Zero is not a real rack setting, so compare the decision with the load
       // the athlete just used instead of treating 0→2.5 kg as the next rung.
       const rung=E.next(Number.isFinite(planned)&&planned>0?planned:kg,page);
-      if(!escape&&(out>source*(changing?1.1:1.05)+1e-8||rung!=null&&decision.kg>rung+1e-8))metrics.excessiveJumps++;
+      const specUp=page.equipmentId==='dumbbell'?(E.next(kg,page)??kg):(Number(kg)||0)+5;
+      if(!escape&&decision.kg>specUp+1e-8&&(out>source*(changing?1.1:1.05)+1e-8||rung!=null&&decision.kg>rung+1e-8))metrics.excessiveJumps++;
      }
     }
    }

@@ -57,16 +57,22 @@
     for (let n = 22.5; n <= Math.max(from, 40) + 10; n += 2.5) extra.push(n);
     return DB_LADDER.concat(extra).filter((n, i, all) => all.indexOf(n) === i).sort((a, b) => a - b);
   }
-  function dbFloor(value) {
+  function dbFloor(value, page) {
     if (value == null) return null;
+    if (page && root.StrengthEquipment?.floor) return root.StrengthEquipment.floor(value, page);
     return dbLoads(value).filter((n) => n <= value + 1e-8).at(-1) ?? null;
   }
-  function dbNext(value) {
+  function dbNext(value, page) {
     if (value == null) return null;
+    if (page && root.StrengthEquipment?.next) return root.StrengthEquipment.next(value, page);
     return dbLoads(value).find((n) => n > value + 1e-8) ?? null;
   }
-  function dbPrev(value) {
+  function dbPrev(value, page) {
     if (value == null) return null;
+    if (page && root.StrengthEquipment?.floor) {
+      const fl = root.StrengthEquipment.floor(value - 1e-8, page);
+      return fl != null && fl < value - 1e-8 ? fl : null;
+    }
     return dbLoads(value).filter((n) => n < value - 1e-8).at(-1) ?? null;
   }
   function normalizeAthlete(raw) {
@@ -153,7 +159,7 @@
   function roundLoad(value, page, athlete, {down = false} = {}) {
     if (value == null || !Number.isFinite(value)) return null;
     if (isBarbell(page)) return barbellRound(value, {down, barKg: barKgOf(page, athlete)});
-    if (isDumbbell(page)) return down ? dbFloor(value) : (dbFloor(value + 1e-8) ?? dbNext(value - 1e-8));
+    if (isDumbbell(page)) return down ? dbFloor(value, page) : (dbFloor(value + 1e-8, page) ?? dbNext(value - 1e-8, page));
     const E = root.StrengthEquipment;
     if (!E) return down ? Math.floor(value) : Math.round(value);
     return down ? (E.floor(value, page) ?? value) : (E.floor(value + ((E.profile(page).step || 1) / 2) - 1e-9, page) ?? value);
@@ -219,15 +225,15 @@
     const fracs = count === 1 ? [0.5] : count === 2 ? [0.5, 0.75] : [0.4, 0.6, 0.8];
     const out = [];
     for (let i = 0; i < count; i++) {
-      let kg = isDumbbell(page) ? dbFloor(working * fracs[i]) : barbellRound(working * fracs[i], {down: true, barKg: bar});
+      let kg = isDumbbell(page) ? dbFloor(working * fracs[i], page) : barbellRound(working * fracs[i], {down: true, barKg: bar});
       if (kg == null) continue;
       if (kg < bar) kg = bar;
       if (kg >= working) {
-        kg = isDumbbell(page) ? dbPrev(working) : barbellRound(working - STEP, {down: true, barKg: bar});
+        kg = isDumbbell(page) ? dbPrev(working, page) : barbellRound(working - STEP, {down: true, barKg: bar});
       }
       if (kg == null || kg >= working) continue;
       if (out.length && kg <= out.at(-1)) {
-        const up = isDumbbell(page) ? dbNext(out.at(-1)) : barbellRound(out.at(-1) + STEP, {barKg: bar});
+        const up = isDumbbell(page) ? dbNext(out.at(-1), page) : barbellRound(out.at(-1) + STEP, {barKg: bar});
         if (up == null || up >= working) continue;
         kg = up;
       }
@@ -322,10 +328,10 @@
     const allowBelow = down && (num(current) ?? 0) > bar + 1e-8;
     return clampWorking(rounded, page, athlete, {allowBelow, down});
   }
-  function dumbbellStep(current, effort, reps) {
+  function dumbbellStep(current, effort, reps, page) {
     const dir = BAR_DELTA[effort] ?? 0;
     if (dir === 0) return {kg: current, reps, stepped: false};
-    const nxt = dir > 0 ? dbNext(current) : dbPrev(current);
+    const nxt = dir > 0 ? dbNext(current, page) : dbPrev(current, page);
     if (nxt == null) return {kg: current, reps, stepped: false};
     const change = Math.abs(nxt - current);
     if (current > 0 && change / current > 0.10) {
@@ -386,24 +392,35 @@
       return {rows: next, reason: 'last_ramp_hold', flags};
     }
 
-    if (nextI == null) return {rows: next, reason: 'complete', flags};
+    function finish(reason) {
+      const first = next.find((r) => r.purpose === 'working' && num(r.kg) != null);
+      let targets = [];
+      try { targets = root.StrengthTargets?.normalize?.(page) || page.setTargets || []; } catch { targets = page.setTargets || []; }
+      for (const row of next) {
+        if (row.logged || row.skipped) continue;
+        const target = targets.find((t) => t.id === row.targetId);
+        if ((row.purpose === 'amrap' || target?.loadRule?.kind === 'first_working_set') && first) row.kg = first.kg;
+      }
+      return {rows: next, reason, flags};
+    }
+    if (nextI == null) return finish('complete');
     const follow = next[nextI];
     if (follow.setRole === 'drop' || follow.setRole === 'backoff') {
       const top = Math.max(...next.filter((r) => r.logged && r.purpose === 'working' && r.setRole !== 'drop').map((r) => num(r.kg) || 0), num(rated.kg) || 0);
       follow.kg = barbellRound(top * 0.875, {down: true});
-      return {rows: next, reason: 'drop_of_top', flags};
+      return finish('drop_of_top');
     }
 
     if (isDumbbell(page)) {
-      const stepped = dumbbellStep(num(rated.kg), effort, follow.reps);
+      const stepped = dumbbellStep(num(rated.kg), effort, follow.reps, page);
       follow.kg = stepped.kg;
       follow.reps = stepped.reps;
-      return {rows: next, reason: stepped.stepped ? 'db_step' : (BAR_DELTA[effort] ? 'db_reps' : 'hold'), flags};
+      return finish(stepped.stepped ? 'db_step' : (BAR_DELTA[effort] ? 'db_reps' : 'hold'));
     }
 
     const rx = percentRx(page);
     if (rx?.mode === 'build' && effort === 'average') {
-      return {rows: next, reason: 'build_hold', flags};
+      return finish('build_hold');
     }
     const veryEasyAtTop = effort === 'very_easy' && rx && coachOneRm(page);
     const stepped = barbellStep(num(rated.kg), effort, page, athlete);
@@ -416,7 +433,7 @@
       const prev = next.slice(0, ratedIndex).filter((r) => r.logged && r.purpose === 'working' && r.effort === 'very_easy');
       if (atTop && prev.length >= 1) flags.staleOneRm = true;
     }
-    return {rows: next, reason: BAR_DELTA[effort] < 0 ? 'working_down' : BAR_DELTA[effort] > 0 ? 'working_up' : 'working_hold', flags};
+    return finish(BAR_DELTA[effort] < 0 ? 'working_down' : BAR_DELTA[effort] > 0 ? 'working_up' : 'working_hold');
   }
   function nextSet(args = {}) {
     const rows = (args.state?.rows || []).map((r) => ({...r}));
