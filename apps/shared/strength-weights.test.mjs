@@ -99,6 +99,7 @@ test('B. Hard repeats the same ramp load; Very Hard stops ramping', () => {
   assert.equal(hard.rows[1].skipped, false);
   const vh = rate(page, rows, 0, 'max_effort');
   assert.equal(vh.rows[1].skipped, true);
+  assert.equal(vh.rows.find((r) => !r.logged && !r.skipped).purpose, 'working');
   same(kgs(vh.rows, 'working'), [62.5, 62.5, 62.5, 62.5]);
 });
 
@@ -114,7 +115,8 @@ test('B. only the last ramp may cut working sets, and only downward', () => {
   lastVhRows[0] = {...lastVhRows[0], logged: true, effort: 'average'};
   lastVhRows[1] = {...lastVhRows[1], logged: true, effort: 'max_effort'};
   const lastVh = W.applyRating({page, rows: lastVhRows, ratedIndex: 1, athlete: DAN});
-  same(kgs(lastVh.rows, 'working'), [57.5, 57.5, 57.5, 57.5]);
+  same(kgs(lastVh.rows, 'working'), [60, 60, 60, 60]);
+  assert.equal(lastVh.flags.belowRange, true);
 });
 
 test('B. regression: rating a ramp never writes a ramp weight onto working sets', () => {
@@ -152,8 +154,12 @@ test('C. barbell working-set steps and % clamp / stale / below-range flag', () =
   assert.equal(hard.rows[1].kg, 60);
   assert.equal(hard.flags.belowRange, true);
   const vh = rate(page, rows, 0, 'max_effort');
-  assert.equal(vh.rows[1].kg, 57.5);
+  assert.equal(vh.rows[1].kg, 60);
   assert.equal(vh.flags.belowRange, true);
+  vh.rows[1] = {...vh.rows[1], logged: true, effort: 'max_effort', kg: 60};
+  const vhTwice = W.applyRating({page, rows: vh.rows, ratedIndex: 1, athlete: DAN});
+  assert.equal(vhTwice.rows[2].kg, 60);
+  assert.equal(vhTwice.flags.belowRange, true);
   const top = seedRows({rampKgs: [], workingKgs: [67.5, 67.5, 67.5, 67.5]});
   const firstVe = rate(page, top, 0, 'very_easy');
   assert.equal(firstVe.rows[1].kg, 67.5);
@@ -161,6 +167,20 @@ test('C. barbell working-set steps and % clamp / stale / below-range flag', () =
   const secondVe = W.applyRating({page, rows: firstVe.rows, ratedIndex: 1, athlete: DAN});
   assert.equal(secondVe.rows[2].kg, 67.5);
   assert.equal(secondVe.flags.staleOneRm, true);
+});
+
+test('C. last-ramp Hard to 60 then Average holds, never reclamps up', () => {
+  const page = barbell('Incline Bench', {oneRm: 100, pctLow: 63, pctHigh: 68, percentMode: 'straight', setCount: 4, rampCount: 2, workingKg: 62.5});
+  const rows = seedRows(W.plan({page, athlete: DAN, records: {}}));
+  rows[0] = {...rows[0], logged: true, effort: 'average'};
+  rows[1] = {...rows[1], logged: true, effort: 'hard'};
+  const cut = W.applyRating({page, rows, ratedIndex: 1, athlete: DAN});
+  same(kgs(cut.rows, 'working'), [60, 60, 60, 60]);
+  assert.equal(cut.flags.belowRange, true);
+  const afterCut = cut.rows.map((r, i) => i === 2 ? {...r, logged: true, effort: 'average', kg: 60} : r);
+  const held = W.applyRating({page, rows: afterCut, ratedIndex: 2, athlete: DAN});
+  assert.equal(held.rows[3].kg, 60);
+  assert.equal(held.reason, 'working_hold');
 });
 
 test('C. dumbbells take one step, or +/-2 reps when the step is >10%', () => {

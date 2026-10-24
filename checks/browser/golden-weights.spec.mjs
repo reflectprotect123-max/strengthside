@@ -1,6 +1,6 @@
 import {test, expect} from 'playwright/test';
 import {loadAssignedWorkout} from './assigned-workout.mjs';
-import {bindGoldenAthlete, GOLDEN_DAN} from '../fixtures/golden-athlete.mjs';
+import {bindGoldenAthlete, GOLDEN_DAN, GOLDEN_REST_BLOCKS} from '../fixtures/golden-athlete.mjs';
 import {copyFileSync, mkdirSync} from 'node:fs';
 
 test.use({viewport: {width: 412, height: 915}});
@@ -157,6 +157,122 @@ test('golden B-C: Hard repeats the ramp; Very Easy working set steps +5 through 
   const afterVe = await liftSets(page, 'Incline Bench');
   expect(afterVe.filter((r) => r.purpose === 'working').map((r) => r.kg).slice(0, 2)).toEqual([62.5, 67.5]);
   await shot(page, testInfo, 'golden-c-after-very-easy');
+});
+
+async function openIncline(page) {
+  await loadAssignedWorkout(page, {
+    prep: false,
+    title: 'Golden B-C floor',
+    blocks: [{
+      title: 'Incline Bench', letter: 'A', setCount: 4, rampCount: 2, oneRm: 100, pctLow: 63, pctHigh: 68,
+      percentMode: 'straight', notes: ['4 x 8 @ 63-68% (RPE 6)'], columns: ['reps', 'weight_kg'],
+      equipmentId: 'barbell', loadConvention: 'total', minimumKg: 20, equipmentStepKg: 2.5, barWeightKg: 20,
+    }],
+  });
+  await bindGoldenAthlete(page, GOLDEN_DAN);
+  await beginSession(page);
+}
+
+test('golden B live: Very Hard on ramp 1 skips ramp 2 and keeps working 62.5', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await openIncline(page);
+  await rateOnly(page, 4);
+  await startNext(page);
+  const afterFirstVh = await liftSets(page, 'Incline Bench');
+  expect(afterFirstVh.filter((r) => r.purpose === 'ramp').map((r) => ({kg: r.kg, skipped: r.skipped}))).toEqual([
+    {kg: 30, skipped: false},
+    {kg: 45, skipped: true},
+  ]);
+  expect(afterFirstVh.filter((r) => r.purpose === 'working').every((r) => r.kg === 62.5)).toBeTruthy();
+  await expect(page.getByText('Set 1 of 4', {exact: true})).toBeVisible();
+  await expect(page.getByText('Ramp 2 of 2', {exact: true})).toHaveCount(0);
+  await shot(page, testInfo, 'golden-b-vh-skips-ramp-2');
+});
+
+test('golden B live: last-ramp Very Hard cuts working to the one-step floor', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await openIncline(page);
+  await rateOnly(page, 2);
+  await startNext(page);
+  await rateOnly(page, 4);
+  await startNext(page);
+  const afterLastVh = await liftSets(page, 'Incline Bench');
+  expect(afterLastVh.filter((r) => r.purpose === 'working').map((r) => r.kg)).toEqual([60, 60, 60, 60]);
+  await shot(page, testInfo, 'golden-b-last-ramp-vh');
+});
+
+test('golden C live: last-ramp Hard to 60 then Average holds 60', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await openIncline(page);
+  await rateOnly(page, 2);
+  await startNext(page);
+  await rateOnly(page, 3);
+  await startNext(page);
+  const afterLastHard = await liftSets(page, 'Incline Bench');
+  expect(afterLastHard.filter((r) => r.purpose === 'working').map((r) => r.kg)).toEqual([60, 60, 60, 60]);
+  await rateOnly(page, 2);
+  await startNext(page);
+  const afterAverage = await liftSets(page, 'Incline Bench');
+  expect(afterAverage.filter((r) => r.purpose === 'working').map((r) => r.kg).slice(0, 2)).toEqual([60, 60]);
+  await shot(page, testInfo, 'golden-c-average-holds-60');
+});
+
+test('golden C live: Very Hard twice floors at one step under pctLow', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await openIncline(page);
+  await rateOnly(page, 2);
+  await startNext(page);
+  await rateOnly(page, 2);
+  await startNext(page);
+  await rateOnly(page, 4);
+  await startNext(page);
+  const afterWorkVh = await liftSets(page, 'Incline Bench');
+  expect(afterWorkVh.filter((r) => r.purpose === 'working').map((r) => r.kg).slice(0, 2)).toEqual([62.5, 60]);
+  await rateOnly(page, 4);
+  await startNext(page);
+  const afterWorkVhTwice = await liftSets(page, 'Incline Bench');
+  expect(afterWorkVhTwice.filter((r) => r.purpose === 'working').map((r) => r.kg).slice(0, 3)).toEqual([62.5, 60, 60]);
+  await shot(page, testInfo, 'golden-c-vh-twice-floor');
+});
+
+test('golden rest fixture: log auto-starts rest; superset rests after the round', async ({page}, testInfo) => {
+  test.setTimeout(180000);
+  await loadAssignedWorkout(page, {prep: false, title: 'Golden rest times', blocks: GOLDEN_REST_BLOCKS});
+  await bindGoldenAthlete(page, GOLDEN_DAN);
+  await beginSession(page);
+  const restMs = await page.evaluate(() => {
+    const incline = S.session.pages.find((p) => p.title === 'Incline Bench');
+    return {pageRest: incline.restSec, chosen: S.session.restChoices[incline.id]};
+  });
+  expect(restMs.pageRest).toBe(60);
+  expect(restMs.chosen).toBe(60000);
+  await rateOnly(page, 2);
+  expect(await page.evaluate(() => ({mode: S.timer.mode, restMs: S.timer.config.restMs}))).toEqual({mode: 'rest', restMs: 60000});
+  await shot(page, testInfo, 'golden-rest-autostart');
+
+  await page.evaluate(() => {
+    const pair = S.session.pages.find((p) => p.members?.some((m) => m.title === 'Jump Squat'));
+    S.session = HybridSession.goToLetter(S.session, pair.letter || pair.id);
+    save();
+    Logger.paint();
+  });
+  const pairRest = await page.evaluate(() => {
+    const pair = S.session.pages.find((p) => p.members?.some((m) => m.title === 'Jump Squat'));
+    return {restSec: pair.restSec, mode: pair.logMode};
+  });
+  expect(pairRest.mode).toBe('superset');
+  expect(pairRest.restSec).toBe(45);
+  await page.locator('[aria-label="Actual effort for set 1"]').first().press('Home');
+  await page.locator('[aria-label="Actual effort for set 1"]').first().press('ArrowRight');
+  await page.locator('[aria-label="Actual effort for set 1"]').first().press('ArrowRight');
+  await page.locator('.log-check').first().click();
+  expect(await page.evaluate(() => S.timer.mode)).not.toBe('rest');
+  await page.locator('[aria-label="Actual effort for set 1"]').nth(1).press('Home');
+  await page.locator('[aria-label="Actual effort for set 1"]').nth(1).press('ArrowRight');
+  await page.locator('[aria-label="Actual effort for set 1"]').nth(1).press('ArrowRight');
+  await page.locator('.log-check').nth(1).click();
+  expect(await page.evaluate(() => ({mode: S.timer.mode, restMs: S.timer.config.restMs}))).toEqual({mode: 'rest', restMs: 45000});
+  await shot(page, testInfo, 'golden-rest-superset-round');
 });
 
 test('golden F G H I J K: tops, empty-bar lunge, DB starts, history, timed, row timer', async ({page}, testInfo) => {

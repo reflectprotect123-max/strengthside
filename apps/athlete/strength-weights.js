@@ -309,9 +309,10 @@
       clamped = true;
     }
     if (next < lowKg - 1e-8) {
+      const floorKg = barbellRound(lowKg - STEP, {down: true, barKg: bar});
       if (allowBelow) {
         belowRange = true;
-        next = barbellRound(next, {down: true, barKg: 0});
+        next = Math.max(floorKg, barbellRound(next, {down: true, barKg: 0}));
       } else {
         next = barbellRound(lowKg, {down, barKg: bar});
         clamped = true;
@@ -321,11 +322,21 @@
   }
   function barbellStep(current, effort, page, athlete) {
     const delta = BAR_DELTA[effort] ?? 0;
+    const now = num(current) ?? 0;
+    if (delta === 0) {
+      const rx = percentRx(page);
+      const orm = coachOneRm(page);
+      let belowRange = false;
+      if (rx && orm > 0 && rx.mode !== 'build') {
+        const {lowKg} = rangeKgs(page, rx, orm, athlete);
+        belowRange = now < lowKg - 1e-8;
+      }
+      return {kg: now, belowRange, clamped: false};
+    }
     const down = delta < 0;
     const bar = barKgOf(page, athlete);
-    const raw = (num(current) ?? 0) + delta;
-    const rounded = barbellRound(raw, {down, barKg: bar});
-    const allowBelow = down && (num(current) ?? 0) > bar + 1e-8;
+    const rounded = barbellRound(now + delta, {down, barKg: bar});
+    const allowBelow = down && now > bar + 1e-8;
     return clampWorking(rounded, page, athlete, {allowBelow, down});
   }
   function dumbbellStep(current, effort, reps, page) {
@@ -382,11 +393,13 @@
       if (cut < 0) {
         const firstWork = upcoming.find((i) => next[i].purpose === 'working');
         const planned = num(next[firstWork]?.kg) ?? num(page.workingKg);
-        const down = barbellRound((planned ?? 0) + cut, {down: true});
+        const raw = barbellRound((planned ?? 0) + cut, {down: true});
+        const stepped = clampWorking(raw, page, athlete, {allowBelow: true, down: true});
         for (const i of upcoming) {
-          if (next[i].purpose === 'working') next[i].kg = down;
+          if (next[i].purpose === 'working') next[i].kg = stepped.kg;
         }
-        flags.belowRange = true;
+        if (stepped.belowRange) flags.belowRange = true;
+        if (stepped.clamped) flags.clamped = true;
         return {rows: next, reason: 'last_ramp_cut', flags};
       }
       return {rows: next, reason: 'last_ramp_hold', flags};

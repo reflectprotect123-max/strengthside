@@ -872,9 +872,9 @@
       patch.context={requestedRestSec:selectedRest?Math.round(selectedRest/1000):null,elapsedRestSec:null};
       const next = HybridSession.logSet(s, f.index, patch, memberId);
       const rows = next.logs[memberId].sets;
-      const index = rows.findIndex(r => !r.logged && !r.skipped);
+      let index = rows.findIndex(r => !r.logged && !r.skipped);
       let adjustment = null;
-      if (index >= 0 && lift.logMode === 'kg' && root.StrengthWeights) {
+      if (lift.logMode === 'kg' && root.StrengthWeights) {
         const ratedIndex = f.index;
         const planned = root.StrengthWeights.applyRating({
           page: lift,
@@ -889,6 +889,7 @@
           if (src.reps != null) rows[i].reps = src.reps;
           if (src.skipped) rows[i].skipped = true;
         }
+        index = rows.findIndex(r => !r.logged && !r.skipped);
         const source = rows[ratedIndex];
         adjustment = {kg: rows[index]?.kg, reason: planned.reason, flags: planned.flags};
         if (source) source.loadDecision = adjustment;
