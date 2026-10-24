@@ -36,7 +36,8 @@
             "pctLow": 90,
             "pctHigh": 92,
             "percentMode": "straight",
-            "notes": ["2 x 2 @ 90-92% + drop set"],
+            "notes": ["2 x 2 @ 90-92% + drop set", "Rest 60s"],
+            "restSec": 60,
             "setTargets": [
               {"purpose": "working", "reps": {"min": 2, "max": 2}, "pctLow": 90, "pctHigh": 92},
               {"purpose": "working", "reps": {"min": 2, "max": 2}, "pctLow": 90, "pctHigh": 92},

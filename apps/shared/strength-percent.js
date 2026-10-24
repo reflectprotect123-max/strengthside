@@ -107,8 +107,11 @@
       }
     }
     const brain=num(history?.freshE1rm??history?.rolling??history?.startingScale);
-    if(brain>0)return brain;
     const coach=num(page?.oneRm??page?.e1rm??parsedNotes(page).oneRm);
+    const barbell=page?.equipmentId==='barbell';
+    const brainOk=brain>0&&!(barbell&&brain<40)&&!(coach>0&&brain<coach*0.5);
+    if(rx&&rx.pctLow!=null&&coach>0)return coach;
+    if(brainOk)return brain;
     if(coach>0)return coach;
     if(rx?.basis==='rep_weight'&&rx.basisReps>0) {
       const est=num(history?.freshE1rm??history?.rolling);
@@ -128,9 +131,12 @@
     if(highKg!=null&&kg>highKg+1e-8)return E.floor(highKg,page)??kg;
     return E.floor(kg,page)??kg;
   }
-  function finishedKg(history) {
+  function finishedKg(history,page) {
     const rows=history?.latest?.rows||[];
-    const last=rows.filter(r=>r?.logged&&!r.miss&&r.purpose!=='ramp'&&r.purpose!=='warmup').at(-1);
+    const last=rows.filter(r=>{
+      if(!r?.logged||r.miss||r.purpose==='ramp'||r.purpose==='warmup'||num(r.kg)==null)return false;
+      return !root.StrengthEquipment?.plausibleWorking||root.StrengthEquipment.plausibleWorking(page||history?.latest?.page,r.kg);
+    }).at(-1);
     return num(last?.kg);
   }
   function isDrop(spec) {
@@ -147,7 +153,7 @@
     if(!rx||!(orm>0))return [];
     const E=root.StrengthEquipment;
     const lowKg=toKg(rx.pctLow,orm,page),highKg=toKg(rx.pctHigh??rx.pctLow,orm,page);
-    const prior=finishedKg(history);
+    const prior=finishedKg(history,page);
     const n=rx.sets.length,lastN=rx.mode==='build'?Math.min(2,n):0,climbEnd=n-lastN;
     const startPct=rx.startPct??(rx.mode==='build'?Math.max(40,(rx.pctLow||50)-15):rx.pctLow);
     const kgs=rx.sets.map((s,i)=>{
@@ -203,7 +209,12 @@
     const targetEffort=nextSpec?.effort||row&&root.StrengthNotes?.rpeToEffort?.(rx.rpe)||'average';
     const targetRank=rank[targetEffort]??2;
     const miss=!!row?.miss;
+    const junk=E.plausibleWorking&&!E.plausibleWorking(page,current);
     let kg=current;
+    if(junk&&lowKg!=null) {
+      kg=clampKg(lowKg,lowKg,highKg,page);
+      return {kg,reason:'percent_seed',target:targetEffort,confidence:'provisional'};
+    }
     if(miss) {
       kg=E.floor(current*0.9,page)??current;
       return {kg,reason:'percent_miss_below',target:targetEffort,confidence:'low'};
@@ -212,6 +223,8 @@
     if(actualRank!=null&&actualRank<targetRank)kg=E.next(current,page)??current;
     else if(actualRank!=null&&actualRank>targetRank) {
       const lower=E.floor(current-1e-7,page);kg=lower??current;
+      kg=clampKg(kg,null,highKg,page,{allowBelow:true});
+      return {kg,reason:kg<current?'percent_down':'percent_hold',target:targetEffort,confidence:'broad'};
     }
     kg=clampKg(kg,lowKg,highKg,page,{allowBelow:false});
     return {kg,reason:kg>current?'percent_up':kg<current?'percent_down':'percent_hold',target:targetEffort,confidence:'broad'};

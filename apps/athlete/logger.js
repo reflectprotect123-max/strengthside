@@ -519,6 +519,13 @@
     return text === 'empty bar' ? 'empty bar' : `${text} kg`;
   }
 
+  function notesHtml(page) {
+    const notes = (page.notes || []).map((n) => String(n || '').trim()).filter(Boolean);
+    if (!notes.length) return '';
+    const joined = notes.some((n) => /superset with/i.test(n)) ? [notes.join(' | ')] : notes;
+    return `<ul class="log-notes">${joined.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`;
+  }
+
   function restNote(s, page) {
     const current=HybridSession.currentPage(s);
     const restPage=page.logMode==='superset'?page:(current?.logMode==='superset'?current:page);
@@ -581,7 +588,7 @@
     const repTarget = activeRow?.purpose==='ramp'?(activeRow.reps??page.targetReps):authored?.purpose==='amrap'?'AMRAP':authored?.reps?(authored.reps.max>authored.reps.min?`${authored.reps.min}–${authored.reps.max}`:authored.reps.min):page.targetReps == null?'MAX':page.targetRepMax>page.targetReps?`${page.targetReps}–${page.targetRepMax}`:page.targetReps;
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
-      ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+      ${notesHtml(page)}
       <p class="log-note">${restNote(s,page)}</p>
       <section class="log-active-set" data-exercise="${id}">
         <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of ${rows.filter(r=>r.purpose==='ramp').length}` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
@@ -639,7 +646,7 @@
     }).join('');
     return `
       <p class="log-rx">${esc(page.prescription)}</p>
-      ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+      ${notesHtml(page)}
       <table class="log-table">
         <thead><tr><th>Sets</th>${heads}<th></th></tr></thead>
         <tbody>${rows}</tbody>

@@ -106,7 +106,7 @@ test('AC12 logging a lunge set auto-starts the prescribed rest',()=>{
 
 test('AC13 logger keeps both members as original tables with F1/F2-style titles',()=>{
  const {ctx,element}=bootPlan({blocks:[
-  {kind:'lift',letter:'F1',title:'Wall Sit',setCount:3,notes:['Superset with Jump Squat'],restSec:45},
+  {kind:'lift',letter:'F1',title:'Wall Sit',setCount:3,notes:['3 x 45 sec','Rest 60s','Superset with Jump Squat'],restSec:60},
   {kind:'lift',letter:'F2',title:'Jump Squat',setCount:3,notes:['Superset with Wall Sit']},
  ]},'F1');
  ctx.Logger.paint();
@@ -114,6 +114,7 @@ test('AC13 logger keeps both members as original tables with F1/F2-style titles'
  assert.match(html,/F1\. Wall Sit/);
  assert.match(html,/F2\. Jump Squat/);
  assert.match(html,/log-table/);
+ assert.match(html,/3 x 45 sec\s*\|\s*Rest 60s\s*\|\s*Superset with Jump Squat/);
  assert.doesNotMatch(html,/F11|F21|F12/);
  assert.doesNotMatch(html,/after each round/);
  assert.equal((html.match(/log-ss-member/g)||[]).length,2);

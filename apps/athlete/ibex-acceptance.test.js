@@ -316,6 +316,84 @@ test('emulator fixture seeds straight %, build %, coach 1RM, rampCount and histo
  assert.equal(B.seed({id:'s',pages:[current],logs:{A:{sets:targets().map(t=>({targetId:t.id}))}}},records).pages[0].workingKg,60);
 });
 
+test('junk empty-bar and 2.5kg test logs do not steal Last or seed from a real 60x6',()=>{
+ const real={...bare('Incline Bench'),exerciseId:'ex_library_bench',title:'Incline Bench',equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20};
+ const current={...real,exerciseId:'coach-live-uuid'};
+ const good=record(real,{id:'oct23',targetId:'A:set:0',reps:6,effort:'average',kg:60,logged:true,purpose:'working'});
+ good.payload.completed=true;good.payload.sessionStartedAt=1;
+ const junk0=record(real,{id:'r1empty',targetId:'A:set:0',reps:8,effort:'average',kg:0,logged:true,purpose:'working'});
+ junk0.payload.completed=true;junk0.payload.sessionStartedAt=9;
+ const junk25=record({...real,title:'Deficit Back Rack Lunge',exerciseId:'lunge'},{id:'lunge25',targetId:'A:set:0',reps:8,effort:'average',kg:2.5,logged:true,purpose:'working'});
+ junk25.payload.completed=true;junk25.payload.sessionStartedAt=10;
+ const hist=B.history({oct23:good,r1empty:junk0,lunge25:junk25},current);
+ assert.equal(hist.latest.nextKg,60,JSON.stringify(hist.latest));
+ assert.ok(hist.latest.rows.some(r=>r.kg===60));
+ const seeded=B.seed({id:'s',pages:[current],logs:{A:{sets:targets().map(t=>({targetId:t.id}))}}},{oct23:good,r1empty:junk0,lunge25:junk25});
+ assert.equal(seeded.pages[0].workingKg,60);
+ const lunge={...bare('Deficit Back Rack Lunge'),exerciseId:'coach-lunge',equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20};
+ const lungeHist=B.history({oct23:good,r1empty:junk0,lunge25:junk25},lunge);
+ assert.equal(lungeHist.latest,null);
+});
+
+test('DB RDL never seeds blank ramps or 0 kg working sets',()=>{
+ const junk=record({...bare('DB RDL'),equipmentId:'dumbbell',loadConvention:'per_hand'},{id:'j',targetId:'A:set:0',reps:8,effort:'average',kg:0,logged:true,purpose:'working'});
+ junk.payload.completed=true;
+ const seeded=B.seed({id:'s',pages:[{...bare('DB RDL'),rampCount:2}],logs:{A:{sets:targets().map(t=>({targetId:t.id}))}}},{j:junk});
+ const ramps=seeded.logs.A.sets.filter(r=>r.purpose==='ramp');
+ const work=seeded.logs.A.sets.filter(r=>r.purpose==='working');
+ assert.ok(ramps.every(r=>r.kg!=null&&r.kg>0),`ramps ${ramps.map(r=>r.kg)}`);
+ assert.ok(work.every(r=>r.kg!=null&&r.kg>0),`work ${work.map(r=>r.kg)}`);
+});
+
+test('Very Easy cannot drop a ramp below the previous ramp or empty bar',()=>{
+ const page={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,workingKg:80,barWeightKg:20};
+ const down=B.next({page,row:{purpose:'ramp',logged:true,reps:8,kg:0,effort:'very_easy'},nextRow:{purpose:'ramp',kg:0},index:1,state:{rows:[{purpose:'ramp',kg:0}]}});
+ assert.ok(down.kg>=0,`got ${down.kg}`);
+ assert.ok(down.kg!==2.5||0===2.5);
+ const pageTotal={...page,loadConvention:'barbell_total'};
+ const belowBar=B.next({page:pageTotal,row:{purpose:'ramp',logged:true,reps:8,kg:20,effort:'very_easy'},nextRow:{purpose:'ramp',kg:0},index:1,state:{rows:[]}});
+ assert.ok(belowBar.kg>=20,`must not go below empty bar 20, got ${belowBar.kg}`);
+});
+
+test('coach 1RM percent wins over junk 5kg history and keeps ramps below working',()=>{
+ const prior={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20};
+ const junk=record(prior,{id:'five',targetId:'A:set:0',reps:8,effort:'average',kg:5,logged:true,purpose:'working'});
+ junk.payload.completed=true;junk.payload.sessionStartedAt=99;
+ const p={...prior,notes:['4 x 8 @ 63-68% (RPE 6)'],oneRm:100,pctLow:63,pctHigh:68,percentMode:'straight',rampCount:2,setCount:4,setTargets:targets(4)};
+ const seeded=B.seed({id:'s',pages:[p],logs:{A:{sets:p.setTargets.map(t=>({targetId:t.id}))}}},{five:junk});
+ const ramps=seeded.logs.A.sets.filter(r=>r.purpose==='ramp');
+ const work=seeded.logs.A.sets.filter(r=>r.purpose==='working');
+ assert.ok(work[0].kg>=62.5&&work[0].kg<=68,`working ${work.map(r=>r.kg)}`);
+ assert.ok(work.every(r=>r.kg>=62.5&&r.kg<=68),`work ${work.map(r=>r.kg)}`);
+ assert.ok(ramps.every(r=>r.kg!=null&&r.kg<work[0].kg),`ramps ${ramps.map(r=>r.kg)} vs work ${work[0].kg}`);
+});
+
+test('Hard on a junk top must not raise; unnamed drop is 85-90% of the top with 8 reps',()=>{
+ const p={...bare('Incline Bench drop'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20,oneRm:100,pctLow:90,pctHigh:92,notes:['2 x 2 @ 90-92% + drop set'],setCount:3,setTargets:[
+  {id:'A:set:0',purpose:'working',reps:{min:2,max:2},loadRule:{kind:'adaptive'},toFailure:false,pctLow:90,pctHigh:92},
+  {id:'A:set:1',purpose:'working',reps:{min:2,max:2},loadRule:{kind:'adaptive'},toFailure:false,pctLow:90,pctHigh:92},
+  {id:'A:set:2',purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false,setRole:'drop',percentBasis:'top_set'},
+ ]};
+ const parsed=N.parse('2 x 2 @ 90-92% + drop set');
+ assert.equal(parsed.percentSets.at(-1).setRole,'drop');
+ assert.equal(parsed.percentSets.at(-1).reps,8);
+ const hard=B.next({page:p,row:{purpose:'working',logged:true,reps:2,kg:5,effort:'hard',workingIndex:0},nextRow:{purpose:'working',workingIndex:1},index:1,state:{rows:[{purpose:'working',logged:true,kg:5}],records:{}}});
+ assert.ok(hard.kg<=5||(hard.kg>=90&&hard.kg<=92),`Hard must not jump 5 to 105, got ${hard.kg}`);
+ assert.ok(hard.kg!==105);
+ const drop=P.adjust({page:p,row:{kg:90,effort:'average',logged:true,purpose:'working',workingIndex:1},nextRow:{purpose:'working',workingIndex:2},index:2,state:{rows:[{purpose:'working',logged:true,kg:90},{purpose:'working',logged:true,kg:90}]}});
+ assert.ok(drop.kg>=76&&drop.kg<=81,`drop 85-90% of 90, got ${drop.kg}`);
+});
+
+test('drop block inherits rest from the previous lift when notes omit rest',()=>{
+ const s=H.startSession({date:'2026-10-24',plan:{blocks:[
+  {kind:'lift',letter:'A',title:'Incline Bench',setCount:4,notes:['Rest 60s'],oneRm:100},
+  {kind:'lift',letter:'B',title:'Incline Bench drop',setCount:3,notes:['2 x 2 @ 90-92% + drop set'],oneRm:100,pctLow:90,pctHigh:92},
+ ]}});
+ const drop=s.pages.find(p=>p.title==='Incline Bench drop');
+ assert.equal(drop.restSec,60);
+ assert.equal(s.restChoices[drop.id],60000);
+});
+
 test('AC19 em dash is not garbled',()=>{
  assert.equal(N.decode('Ibex â€” Sat 24 Oct'),'Ibex — Sat 24 Oct');
  const s=H.startSession({date:'2026-10-24',plan:{title:'Ibex â€” Sat 24 Oct',blocks:[]}});

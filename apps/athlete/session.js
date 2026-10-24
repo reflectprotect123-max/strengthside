@@ -293,7 +293,21 @@
       logMode: 'doneHub',
       setCount: 0,
     });
+    inheritRest(pages);
     return pages;
+  }
+
+  function inheritRest(pages) {
+    let prevSec=null,prevSection=null;
+    for(const page of pages||[]) {
+      if(!page||page.kind==='doneHub'||page.id==='done')continue;
+      if(page.members) {
+        if(Number(page.restSec)>0){prevSec=Number(page.restSec);prevSection=page.section||prevSection;}
+        continue;
+      }
+      if(page.restSec==null&&prevSec>0&&(!page.section||!prevSection||page.section===prevSection))page.restSec=prevSec;
+      if(Number(page.restSec)>0){prevSec=Number(page.restSec);prevSection=page.section||prevSection;}
+    }
   }
 
   function attachLogs(session) {

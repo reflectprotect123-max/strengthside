@@ -79,7 +79,9 @@
       for(const s of percentSets)if(s.setRole){s.percentBasis='top_set';}
       if(!percentSets.some(s=>s.setRole==='drop'||s.setRole==='backoff')) {
         const last=percentSets.at(-1);
-        percentSets.push({reps:last.reps,pctLow:last.pctLow,pctHigh:last.pctHigh,rpe:last.rpe,setRole:'drop',percentBasis:'top_set'});
+        const named=text.match(/drop\s+sets?(?:\s+of\s+(\d+))?/i);
+        const dropReps=named?.[1]?Number(named[1]):8;
+        percentSets.push({reps:dropReps,pctLow:last.pctLow,pctHigh:last.pctHigh,rpe:last.rpe,setRole:'drop',percentBasis:'top_set'});
       }
     }
     return {

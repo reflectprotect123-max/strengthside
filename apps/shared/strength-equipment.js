@@ -201,5 +201,21 @@
   function nameKey(page={}) {
     return String(page.title||page.name||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
   }
-  root.StrengthEquipment={profile,floor,next,round,starter,label,infer,apply,nameKey};
+  function emptyBarKg(page={}) {
+    const filled=apply(page),m=metadata(filled);
+    if(!(m.bar||filled.equipmentId==='barbell'))return 0;
+    if(filled.loadConvention==='barbell_plates')return 0;
+    return number(filled.barWeightKg)||20;
+  }
+  function plausibleWorking(page={},kg) {
+    const n=number(kg);
+    if(n==null||n<=0)return false;
+    const filled=apply(page);
+    if(filled.equipmentId==='barbell'||metadata(filled).bar) {
+      if(n<=emptyBarKg(filled)+EPS)return false;
+      if(n<20-EPS)return false;
+    }
+    return true;
+  }
+  root.StrengthEquipment={profile,floor,next,round,starter,label,infer,apply,nameKey,emptyBarKg,plausibleWorking};
 })(typeof window!=='undefined'?window:globalThis);
