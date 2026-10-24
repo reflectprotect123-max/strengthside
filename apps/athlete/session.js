@@ -103,10 +103,15 @@
     const circuit=block.kind==='warmup'||block.kind==='recovery';
     const prep=['Warm-Up','Cool-Down'].includes(block.section);
     let meta=circuit?{weighted:false}: (root.StrengthEquipment?.apply?root.StrengthEquipment.apply({...block,title,notes}):{});
-    if(prep&&(parsed.seconds||meta.weighted===false||/bodyweight/i.test(title))) {
+    const timed=root.StrengthWeights?.describeTimed?.({...block,title,notes,section:block.section,role:block.role,kind:block.kind});
+    if(timed?.columns?.includes('seconds')||(prep&&(parsed.seconds||meta.weighted===false||/bodyweight/i.test(title)))) {
       meta={...meta,weighted:false,equipmentId:meta.equipmentId==='barbell'?null:meta.equipmentId};
     }
     let cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
+    if(timed?.columns?.includes('seconds')) {
+      cols=['seconds'];
+      if(timed.prescribed&&!block.prescribed)block={...block,prescribed:timed.prescribed};
+    }
     if(meta.weighted===false) {
       cols=cols.filter(c=>!['weight_kg','weight_lb','weight_pct','lwp'].includes(c));
       if(!cols.length&&parsed.seconds)cols=['seconds'];
@@ -155,7 +160,7 @@
       title,
       kind: block.kind,
       logMode: mode,
-      prescription: block.prescription || (parsed.percentSets?.length?`${parsed.percentSets.filter(s=>s.setRole!=='drop'&&s.setRole!=='backoff').length||parsed.percentSets[0]?.setCount||block.setCount} x ${parsed.percentSets[0].reps}`:(parsed.schemeReps&&parsed.setCount?`${parsed.setCount} x ${parsed.schemeReps}`:'')),
+      prescription: (root.StrengthWeights?.cardPrescription?.({...block,notes})||'') || block.prescription || (parsed.percentSets?.length?`${parsed.percentSets.filter(s=>s.setRole!=='drop'&&s.setRole!=='backoff').length||parsed.percentSets[0]?.setCount||block.setCount} x ${parsed.percentSets[0].reps}`:(parsed.schemeReps&&parsed.setCount?`${parsed.setCount} x ${parsed.schemeReps}`:'')),
       tempo: block.tempo || null,
       barWeightKg: block.barWeightKg ?? meta.barWeightKg ?? null,
       notes,
@@ -167,7 +172,7 @@
       section: block.section || (block.kind === 'recovery' ? 'Recovery' : block.kind === 'warmup' ? 'Prep' : 'Strength/Power'),
       setCount: mode === 'complete' ? 0 : (setTargets?.length||Number(block.setCount) || rx.setCount),
       setTargets,
-      ...(setTargets||block.targetContractVersion===2?{}:{targetReps:rx.targetReps,targetRepMax:rx.targetRepMax}),
+      ...(setTargets||block.targetContractVersion===2||cols.includes('seconds')?{}:{targetReps:rx.targetReps,targetRepMax:rx.targetRepMax}),
       exerciseId: block.exerciseId || block.libraryExerciseId || null,
       coachAssignmentId: block.coachAssignmentId || null,
       coachExerciseId: block.coachExerciseId || null,
@@ -181,7 +186,7 @@
       exerciseType: block.exerciseType || meta.exerciseType || null,
       rampCount: block.rampCount,
       columns: cols,
-      prescribed: block.prescribed || (parsed.seconds&&meta.weighted===false?String(parsed.seconds):''),
+      prescribed: block.prescribed || timed?.prescribed || (parsed.seconds&&meta.weighted===false?String(parsed.seconds):''),
       countIn: Number(block.countIn) || 0,
       askEffort: block.section !== 'Warm-Up' && block.section !== 'Cool-Down',
       restSec,

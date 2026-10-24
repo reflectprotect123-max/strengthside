@@ -8,7 +8,7 @@ import vm from 'node:vm';
 
 const here=dirname(fileURLToPath(import.meta.url));
 const ctx=vm.createContext({crypto:webcrypto,S:{accountId:'athlete'},console,document:{getElementById:()=>null},setInterval:()=>1,clearInterval(){}});
-for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-brain','session','timer']) {
+for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-weights','strength-brain','session','timer']) {
   vm.runInContext(readFileSync(join(here,`${name}.js`),'utf8'),ctx);
 }
 const B=ctx.StrengthBrain,H=ctx.HybridSession,E=ctx.StrengthEquipment,P=ctx.StrengthPercent;

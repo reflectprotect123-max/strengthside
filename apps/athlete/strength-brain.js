@@ -14,6 +14,7 @@
   const round=(value,current,page,upCap=.05,downCap=.05)=>E.round(value,current,page,{upCap,downCap});
   function stepUp(kg,page,cap=.1){const n=E.next(kg,page);return n==null?kg:E.round(n,kg,page,{upCap:cap,downCap:cap});}
   function target(page,row,index){
+    if(row?.purpose==='ramp'||row?.purpose==='warmup')return 'easy';
     let t=null;try{t=T.forRow(page,row,index);}catch{}
     if(t?.effort)return t.effort;
     if(t?.rpe!=null) {
@@ -30,6 +31,13 @@
     return t?.purpose==='warmup'?'easy':'average';
   }
   function next(args){
+    try {
+      const t=T.forRow(args.page,args.nextRow,args.index);
+      if(t?.loadRule?.kind==='first_working_set')return Core.suggest(args);
+    } catch {}
+    if(root.StrengthWeights) {
+      return root.StrengthWeights.nextSet({...args,athlete:root.StrengthWeights.current()});
+    }
     const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
     const state={...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]};
     const percentRow=args.row?.purpose!=='ramp'&&args.row?.purpose!=='warmup'&&args.nextRow?.purpose!=='ramp'&&args.nextRow?.purpose!=='warmup';
@@ -246,7 +254,6 @@
   }
   function seed(session,records) {
     const s=clone(session);if(s.brainSeeded)return s;
-    let mainSeen=false;
     for(const outer of s.pages||[])for(const page of outer.members||[outer]) {
       const filled=E.apply?E.apply(page):page;
       for(const key of ['equipmentId','loadConvention','loadUnit','minimumKg','barWeightKg','equipmentStepKg','exerciseType']) {
@@ -259,61 +266,21 @@
       let targets=[];try{targets=T.normalize(page);}catch{continue;}
       page.setTargets=targets;
       const h=history(records,page,s.id),first=targets.find(t=>t.purpose==='working');
-      const picked=pickWorking(page,records,h);
-      let working=picked.working,confidence=picked.confidence;
-      if(picked.plan)page.percentPlan=picked.plan;
-      if(working==null||(confidence!=='prescription'&&confidence!=='history'&&!Number.isFinite(working))) {
-        const starter=E.starter(page);working=starter.kg;confidence=starter.confidence||confidence;
-      }
-      page.workingKg=working;page.startConfidence=confidence;
-      const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
-      const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|lunge|rdl|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
-      const requested=Number(page.rampCount);
-      const count=Number.isSafeInteger(requested)?Math.max(0,Math.min(3,requested)):(main?2:0);
-      const bar=page.equipmentId==='barbell'||/\bbarbell\b/i.test(page.title||'');
+      const planned=root.StrengthWeights.plan({page,history:h,records,athlete:root.StrengthWeights.current()});
+      const working=planned.workingKgs.find(n=>n!=null);
+      page.workingKg=working;
+      page.percentPlan=planned.workingKgs;
+      page.startConfidence=planned.confidence;
+      page.weightFlags=planned.flags;
       const known=typeof working==='number'&&Number.isFinite(working)&&working>=0;
-      const firstWorking=Array.isArray(picked.plan)?picked.plan.find(n=>n!=null):null;
-      const starterKg=E.starter(page).kg;
-      const rampGoal=(known&&firstWorking>0?firstWorking:null)??(known?working:null)??starterKg;
-      const rampLoad=(()=>{
-        if(!count)return [];
-        const goal=rampGoal>0?rampGoal:starterKg;
-        if(!(goal>0))return Array.from({length:count},()=>bar?(page.loadConvention==='barbell_total'?(Number(page.barWeightKg)||20):0):null);
-        const empty=bar?(page.loadConvention==='barbell_total'?(Number(page.barWeightKg)||20):0):null;
-        const start=empty??0;
-        const fracs=bar
-          ?(count===1?[.5]:count===2?[0,.5]:[.3,.6,.9])
-          :(count===1?[.5]:count===2?[.5,.75]:[.35,.6,.85]);
-        return fracs.slice(0,count).map((frac,i)=>{
-          if(frac===0)return start;
-          let kg=E.floor(start+(goal-start)*frac,page);
-          if(kg==null)kg=E.next(start,page);
-          return kg;
-        }).map((kg,i,all)=>{
-          if(kg==null) {
-            const prev=i>0?all[i-1]:empty??0;
-            return E.next(prev??0,page)??(bar?empty:starterKg);
-          }
-          if(i>0&&all[i-1]!=null&&kg<all[i-1]) {
-            const up=E.next(all[i-1],page);return up!=null&&(goal==null||up<goal)?up:all[i-1];
-          }
-          if(goal>0&&kg>=goal) {
-            const lower=E.floor(goal-1e-7,page);
-            return lower!=null&&(i===0||lower>all[i-1])?lower:kg;
-          }
-          return kg;
-        });
-      })();
-      const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i<rampLoad.length?rampLoad[i]:null,cells:{},logged:false,miss:false}));
+      const warmups=(planned.warmupKgs||[]).map((kg,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:bw:${i}`,purpose:'warmup',reps:first?.reps.min??page.targetReps,kg,cells:{},logged:false,miss:false}));
+      const ramps=(planned.rampKgs||[]).map((kg,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg,cells:{},logged:false,miss:false}));
       const authored=log.sets.map((row,i)=>{
-        const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
-        const planned=Array.isArray(page.percentPlan)?page.percentPlan[i]:null;
-        const drop=target?.setRole==='drop'||target?.setRole==='backoff'||target?.percentBasis==='top_set';
-        const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)&&planned==null&&!drop?Core.matchLoad(working,from,reps,page):null;
-        const kg=planned!=null?planned:drop&&known?E.floor(working*0.875,page):matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
-        return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg};
+        const target=targets[i];
+        const kg=Array.isArray(planned.workingKgs)?planned.workingKgs[i]:known?working:row.kg;
+        return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg,setRole:target?.setRole||null};
       });
-      log.sets=ramps.concat(authored);
+      log.sets=warmups.concat(ramps,authored);
     }
     s.brainSeeded=true;return s;
   }

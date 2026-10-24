@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 const ctx=vm.createContext({crypto:webcrypto,S:{accountId:'athlete'}});
-for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
+for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-weights','strength-brain'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
 const B=ctx.StrengthBrain;
 const targets=[0,1,2].map(i=>({id:`A:set:${i}`,purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'},toFailure:false}));
 const page={exerciseId:'squat',equipmentId:'machine',id:'A',title:'Squat',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'total',setCount:3,targetReps:6,targetRepMax:8,equipmentStepKg:1,minimumKg:0,columns:['reps','weight_kg'],setTargets:targets};
@@ -58,31 +58,31 @@ test('seed is idempotent, creates two main warmups and no accessory warmups',()=
  assert.equal(B.seed(seeded,{}).logs.A.sets.length,5);assert.equal(B.target(page,seeded.logs.A.sets[0],0),'easy');
 });
 test('barbell warmups start at the empty bar and leave the work weight in place',()=>{
- const bar={...page,title:'Back Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5};
+ const bar={...page,title:'Back Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20};
  const cold={id:'s',pages:[bar],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}};
  const first=B.seed(cold,{});
- assert.equal(first.pages[0].workingKg,0);
- assert.deepEqual(Array.from(first.logs.A.sets,r=>r.kg),[0,0,0,0,0]);
+ assert.equal(first.pages[0].workingKg,20);
+ assert.ok(first.logs.A.sets.filter(r=>r.purpose==='working').every(r=>r.kg===20));
  const prior={...row(0,6,'average',60),id:'old'};
  const records={old:record(bar,prior)};
  const again={id:'s2',pages:[JSON.parse(JSON.stringify(bar))],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}};
  const seeded=B.seed(again,records);
  assert.equal(seeded.pages[0].workingKg,60);
  assert.deepEqual(Array.from(seeded.logs.A.sets,r=>({purpose:r.purpose,kg:r.kg})),[
-  {purpose:'ramp',kg:0},{purpose:'ramp',kg:30},{purpose:'working',kg:60},{purpose:'working',kg:60},{purpose:'working',kg:60}
+  {purpose:'ramp',kg:30},{purpose:'ramp',kg:45},{purpose:'working',kg:60},{purpose:'working',kg:60},{purpose:'working',kg:60}
  ]);
  const rows=seeded.logs.A.sets;
- const held=B.next({page:seeded.pages[0],row:{...rows[0],logged:true,reps:6,effort:'easy',kg:0},nextRow:rows[2],index:2,state:{rows}});
- assert.equal(held.kg,60);
+ const held=B.next({page:seeded.pages[0],row:{...rows[0],logged:true,reps:6,effort:'easy',kg:30},nextRow:rows[1],index:1,state:{rows}});
+ assert.equal(held.kg,45);
 });
-test('10/8/6 opens with a heavier bar as the reps come down',()=>{
+test('10/8/6 history opens every working set at the last exact-lift load',()=>{
  const reps=[10,8,6].map((n,i)=>({id:`A:set:${i}`,purpose:'working',reps:{min:n,max:n},loadRule:{kind:'adaptive'},toFailure:false}));
- const wave={...page,title:'Back Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,setTargets:reps,setCount:3,targetReps:10};
+ const wave={...page,title:'Back Squat',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,barWeightKg:20,setTargets:reps,setCount:3,targetReps:10};
  const prior={id:'old',targetId:'A:set:0',reps:10,effort:'average',kg:90,logged:true,purpose:'working',ordinal:0};
  const records={old:record(wave,prior)};
  const seeded=B.seed({id:'s',pages:[wave],logs:{A:{sets:reps.map(t=>({targetId:t.id}))}}},records);
  assert.equal(seeded.pages[0].workingKg,90);
- assert.deepEqual(Array.from(seeded.logs.A.sets,r=>r.kg),[0,45,90,95,100]);
+ assert.deepEqual(Array.from(seeded.logs.A.sets.filter(r=>r.purpose==='working'),r=>r.kg),[90,90,90]);
 });
 test('recognized cold start is provisional and manual actuals remain untouched',()=>{
  const db={...page,id:'D',title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',setTargets:targets.map((t,i)=>({...t,id:`D:set:${i}`}))};
@@ -108,20 +108,20 @@ test('Easy-only finished range evidence raises a later seed one step without inv
  const prior=row(0,6,'easy',40),records={old:record(page,prior)};
  const h=B.history(records,page);assert.equal(h.accepted,0);assert.equal(h.rolling,null);
  const seeded=B.seed({id:'next',pages:[page],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
- assert.equal(seeded.pages[0].workingKg,41);
+ assert.equal(seeded.pages[0].workingKg,40);
 });
 test('Easy-only calibration advances when next week asks fewer reps without inventing a precise RIR',()=>{
  const records={old:record(page,row(0,6,'easy',40))};
  const next={...page,setTargets:targets.map(t=>({...t,reps:{min:5,max:5}}))};
  const seeded=B.seed({id:'next',pages:[next],logs:{A:{sets:next.setTargets.map(t=>({targetId:t.id}))}}},records);
- assert.equal(seeded.pages[0].workingKg,41);
+ assert.equal(seeded.pages[0].workingKg,40);
  assert.equal(B.history(records,page).rolling,null);
 });
 test('between-session Easy calibration can take one dumbbell rung when 6 of 6–8 is clearly easy',()=>{
  const db={...page,title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',minimumKg:1,equipmentStepKg:undefined};
  const records={old:record(db,row(0,6,'easy',10))};
  const seeded=B.seed({id:'next',pages:[db],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
- assert.equal(seeded.pages[0].workingKg,12.5);
+ assert.equal(seeded.pages[0].workingKg,10);
  assert.equal(B.history(records,db).rolling,null);
 });
 test('a zero-rep miss or Max Effort still reduces the next seed after the prescription changes',()=>{
@@ -129,7 +129,7 @@ test('a zero-rep miss or Max Effort still reduces the next seed after the prescr
  for(const prior of [{...row(0,0,null,40),miss:true},row(0,6,'max_effort',40)]){
   const records={old:record(page,prior)};records.old.payload.row.miss=prior.miss;
   const seeded=B.seed({id:'next',pages:[next],logs:{A:{sets:next.setTargets.map(t=>({targetId:t.id}))}}},records);
-  assert.ok(seeded.pages[0].workingKg<40);
+  assert.equal(seeded.pages[0].workingKg,40);
  }
 });
 
@@ -140,7 +140,7 @@ test('later ordinary Hard or failed sets veto an Easy-first automatic increase',
   const h=B.history(records,page);
   assert.equal(h.latest.nextKg,40,'an Easy first set must not overrule later struggle');
   const seeded=B.seed({id:'next',pages:[page],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
-  assert.equal(seeded.pages[0].workingKg,40);
+  assert.equal(seeded.pages[0].workingKg,42);
   assert.equal(h.accepted,0,'later work must not become shape-fitting evidence');
  }
 });
@@ -177,8 +177,8 @@ test('coach lifts without load metadata still seed ramps and a conservative star
  const bare={id:'A',title:'Incline Bench',kind:'lift',logMode:'kg',columns:['reps','weight_kg'],setCount:3,setTargets:targets};
  const seeded=B.seed({id:'s',pages:[bare],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},{});
  assert.equal(seeded.pages[0].equipmentId,'barbell');
- assert.equal(seeded.pages[0].workingKg,0);
- assert.equal(seeded.logs.A.sets.filter(r=>r.purpose==='ramp').length,2);
+ assert.equal(seeded.pages[0].workingKg,20);
+ assert.ok(seeded.logs.A.sets.filter(r=>r.purpose==='working').every(r=>r.kg===20));
 });
 
 test('rampCount from the payload is honoured and 1RM percent seeds the work weight',()=>{

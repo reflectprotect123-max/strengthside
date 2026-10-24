@@ -8,7 +8,7 @@ import vm from 'node:vm';
 
 const here=dirname(fileURLToPath(import.meta.url));
 const ctx=vm.createContext({crypto:webcrypto,S:{accountId:'athlete'},console});
-for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-brain','session']) {
+for(const name of ['training-core','strength-targets','strength-equipment','strength-rts','strength-policy','strength-load','strength-context','strength-learning','strength-replay','strength-brain-core','strength-notes','strength-percent','strength-weights','strength-brain','session']) {
   vm.runInContext(readFileSync(join(here,`${name}.js`),'utf8'),ctx);
 }
 const B=ctx.StrengthBrain,H=ctx.HybridSession,N=ctx.StrengthNotes,E=ctx.StrengthEquipment,P=ctx.StrengthPercent;
@@ -42,11 +42,11 @@ test('AC2 brain picks a conservative start with no history and never leaves kg b
 });
 
 test('AC3 two ramp rows on mains and rampCount is honoured',()=>{
- const two=seedLift('Incline Bench');
+ const two=seedLift('Incline Bench',{oneRm:100,pctLow:63,pctHigh:68,percentMode:'straight',rampCount:2,setCount:4,setTargets:targets(4)});
  assert.equal(two.logs.A.sets.filter(r=>r.purpose==='ramp').length,2);
- const three=seedLift('Incline Bench',{rampCount:3});
+ const three=seedLift('Incline Bench',{oneRm:100,pctLow:63,pctHigh:68,percentMode:'straight',rampCount:3,setCount:4,setTargets:targets(4)});
  assert.equal(three.logs.A.sets.filter(r=>r.purpose==='ramp').length,3);
- const none=seedLift('Incline Bench',{rampCount:0});
+ const none=seedLift('Incline Bench',{oneRm:100,pctLow:63,pctHigh:68,percentMode:'straight',rampCount:0,setCount:4,setTargets:targets(4)});
  assert.equal(none.logs.A.sets.filter(r=>r.purpose==='ramp').length,0);
 });
 
@@ -65,19 +65,16 @@ test('ramp rows are never blank: DB RDL ramp 2 and Back Squat ramp 3 have kg',()
  assert.ok(squatRamps[2].kg<work);
 });
 
-test('AC4 Easy raises ramp 2, Hard drops about 90%, working sets resize after the last ramp',()=>{
+test('AC4 Easy/Average hold the next ramp; Hard repeats; last-ramp Hard cuts working 2.5',()=>{
  const page={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,workingKg:80,barWeightKg:20};
- const easy=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:20,effort:'easy'},nextRow:{purpose:'ramp',kg:20},index:1,state:{rows:[]}});
- assert.ok(easy.kg>20,`Easy ramp should raise, got ${easy.kg}`);
- const hard=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:100,effort:'hard'},nextRow:{purpose:'ramp',kg:100},index:1,state:{rows:[]}});
- assert.ok(hard.kg<=90&&hard.kg>=80,`Hard ramp should drop ~90, got ${hard.kg}`);
- const work=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:40,effort:'easy'},nextRow:{purpose:'working',kg:80},index:2,state:{rows:[]}});
+ const easy=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:20,effort:'easy'},nextRow:{purpose:'ramp',kg:40},index:1,state:{rows:[{purpose:'ramp',kg:20},{purpose:'ramp',kg:40},{purpose:'working',kg:80}]}});
+ assert.equal(easy.kg,40);
+ const hard=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:40,effort:'hard'},nextRow:{purpose:'ramp',kg:60},index:1,state:{rows:[{purpose:'ramp',kg:40},{purpose:'ramp',kg:60},{purpose:'working',kg:80}]}});
+ assert.equal(hard.kg,40);
+ const work=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:60,effort:'easy'},nextRow:{purpose:'working',kg:80},index:2,state:{rows:[{purpose:'ramp',logged:true,kg:40},{purpose:'ramp',kg:60},{purpose:'working',kg:80}]}});
  assert.equal(work.kg,80);
- const hardOntoWork=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:20,effort:'hard'},nextRow:{purpose:'working',kg:80},index:2,state:{rows:[]}});
- assert.ok(hardOntoWork.kg>=70&&hardOntoWork.kg<=75,`Hard last ramp must be ~90% of planned 80, not empty bar; got ${hardOntoWork.kg}`);
- assert.ok(hardOntoWork.kg<80);
- const raise=B.next({page,row:{purpose:'ramp',logged:true,reps:8,kg:0,effort:'very_easy'},nextRow:{purpose:'ramp',kg:30},index:1,state:{rows:[]}});
- assert.ok(raise.kg>30,`Very Easy on empty-bar ramp 1 must raise ramp 2 above 30, got ${raise.kg}`);
+ const hardOntoWork=B.next({page,row:{purpose:'ramp',logged:true,reps:6,kg:60,effort:'hard'},nextRow:{purpose:'working',kg:80},index:2,state:{rows:[{purpose:'ramp',logged:true,kg:40},{purpose:'ramp',logged:true,kg:60},{purpose:'working',kg:80}]}});
+ assert.equal(hardOntoWork.kg,77.5);
 });
 
 test('AC5 history matches across coach vs library ids and populates Est 1RM / Last',()=>{
@@ -256,7 +253,8 @@ test('AC16 lunge and RDL expose a kg field',()=>{
 
 test('AC17 set list layout keeps the body scrolling above a fixed action bar',()=>{
  const css=readFileSync(join(here,'logger.css'),'utf8');
- assert.match(css,/\.log-body\s*\{[^}]*overflow-y:\s*auto/s);
+  assert.match(css,/\.log-body\s*\{[^}]*overflow-y:\s*auto/s);
+  assert.match(css,/\.log-body\s*\{[^}]*padding:[^}]*var\(--nav-h\)/s);
  assert.match(css,/\.log-bar\s*\{[^}]*flex-shrink:\s*0/s);
  assert.match(css,/\.log-totals\s*\{[^}]*flex-shrink:\s*0/s);
 });
@@ -347,14 +345,10 @@ test('DB RDL never seeds blank ramps or 0 kg working sets',()=>{
  assert.ok(work.every(r=>r.kg!=null&&r.kg>0),`work ${work.map(r=>r.kg)}`);
 });
 
-test('Very Easy cannot drop a ramp below the previous ramp or empty bar',()=>{
+test('Very Easy on a ramp holds the planned next ramp',()=>{
  const page={...bare('Incline Bench'),equipmentId:'barbell',loadConvention:'total',loadUnit:'kg',minimumKg:20,equipmentStepKg:2.5,workingKg:80,barWeightKg:20};
- const down=B.next({page,row:{purpose:'ramp',logged:true,reps:8,kg:0,effort:'very_easy'},nextRow:{purpose:'ramp',kg:0},index:1,state:{rows:[{purpose:'ramp',kg:0}]}});
- assert.ok(down.kg>=0,`got ${down.kg}`);
- assert.ok(down.kg!==2.5||0===2.5);
- const pageTotal={...page,loadConvention:'barbell_total'};
- const belowBar=B.next({page:pageTotal,row:{purpose:'ramp',logged:true,reps:8,kg:20,effort:'very_easy'},nextRow:{purpose:'ramp',kg:0},index:1,state:{rows:[]}});
- assert.ok(belowBar.kg>=20,`must not go below empty bar 20, got ${belowBar.kg}`);
+ const hold=B.next({page,row:{purpose:'ramp',logged:true,reps:8,kg:30,effort:'very_easy'},nextRow:{purpose:'ramp',kg:45},index:1,state:{rows:[{purpose:'ramp',kg:30},{purpose:'ramp',kg:45},{purpose:'working',kg:80}]}});
+ assert.equal(hold.kg,45);
 });
 
 test('coach 1RM percent wins over junk 5kg history and keeps ramps below working',()=>{

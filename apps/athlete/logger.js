@@ -874,21 +874,24 @@
       const rows = next.logs[memberId].sets;
       const index = rows.findIndex(r => !r.logged && !r.skipped);
       let adjustment = null;
-      if (index >= 0 && lift.logMode === 'kg') {
-        const source = rows.slice(0,index).filter(r=>r.logged).at(-1);
-        if (source) {
-          adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
-          rows[index].kg = adjustment.kg;
-          if ((source.purpose === 'ramp' || source.purpose === 'warmup') && adjustment) {
-            for (let i = index + 1; i < rows.length; i++) {
-              const later = rows[i];
-              if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
-              const adj = StrengthBrain.next({page:lift,row:source,nextRow:later,index:i,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
-              if (adj && typeof adj.kg==='number' && Number.isFinite(adj.kg)) later.kg = adj.kg;
-            }
-          }
-          source.loadDecision = adjustment;
+      if (index >= 0 && lift.logMode === 'kg' && root.StrengthWeights) {
+        const ratedIndex = f.index;
+        const planned = root.StrengthWeights.applyRating({
+          page: lift,
+          rows,
+          ratedIndex,
+          athlete: root.StrengthWeights.current(),
+        });
+        for (let i = 0; i < rows.length; i++) {
+          const src = planned.rows[i];
+          if (!src || rows[i].logged) continue;
+          if (src.kg !== undefined) rows[i].kg = src.kg;
+          if (src.reps != null) rows[i].reps = src.reps;
+          if (src.skipped) rows[i].skipped = true;
         }
+        const source = rows[ratedIndex];
+        adjustment = {kg: rows[index]?.kg, reason: planned.reason, flags: planned.flags};
+        if (source) source.loadDecision = adjustment;
       }
       const r = rows[index];
       next.loggerSetFlow = { ...(next.loggerSetFlow || {}), [memberId]: {
