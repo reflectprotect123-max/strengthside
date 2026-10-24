@@ -51,13 +51,13 @@
       loadRule:{kind:t?.loadRule?.kind??'adaptive'},
       toFailure:t?.toFailure??false,
       effort:t?.effort||null,
-      pctLow:t?.pctLow??null,
-      pctHigh:t?.pctHigh??null,
-      rpe:t?.rpe??null,
-      percentBasis:t?.percentBasis||null,
-      basisLift:t?.basisLift||null,
-      basisReps:t?.basisReps??null,
-      setRole:t?.setRole||null
+      ...(t?.pctLow!=null?{pctLow:t.pctLow}:{}),
+      ...(t?.pctHigh!=null?{pctHigh:t.pctHigh}:{}),
+      ...(t?.rpe!=null?{rpe:t.rpe}:{}),
+      ...(t?.percentBasis?{percentBasis:t.percentBasis}:{}),
+      ...(t?.basisLift?{basisLift:t.basisLift}:{}),
+      ...(t?.basisReps!=null?{basisReps:t.basisReps}:{}),
+      ...(t?.setRole?{setRole:t.setRole}:{})
     }));
     const result=validate(targets);
     if(!result.valid)throw new RangeError(result.error);
