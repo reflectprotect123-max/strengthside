@@ -586,7 +586,7 @@
     const position = EFFORTS.indexOf(chosen || target || 'average');
     const done = flow.index < 0;
     const rows = flow.rows;
-    const activeRow=flow.rows[flow.index];let authored=null;try{authored=root.StrengthTargets.forRow(page,activeRow,flow.index);}catch{}
+    const activeRow=flow.rows[flow.index];let authored=null;try{authored=root.StrengthTargets.forRow(page,activeRow,Number.isInteger(activeRow?.workingIndex)?activeRow.workingIndex:Math.max(0,flow.index-(flow.rows||[]).filter(r=>r.purpose==='ramp'||r.purpose==='warmup').length));}catch{}
     const repTarget = activeRow?.purpose==='ramp'?(activeRow.reps??page.targetReps):authored?.purpose==='amrap'?'AMRAP':authored?.reps?(authored.reps.max>authored.reps.min?`${authored.reps.min}–${authored.reps.max}`:authored.reps.min):page.targetReps == null?'MAX':page.targetRepMax>page.targetReps?`${page.targetReps}–${page.targetRepMax}`:page.targetReps;
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>

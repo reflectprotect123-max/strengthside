@@ -118,10 +118,7 @@
       if(!cols.length)cols=['reps'];
     } else if(meta.weighted) {
       if(!cols.some(c=>['weight_kg','weight_lb','weight_pct','lwp'].includes(c))) {
-        if(!cols.length || cols.every(c=>['reps','reps_range'].includes(c))) {
-          if(!cols.includes('reps')&&!cols.includes('reps_range'))cols=['reps','weight_kg'];
-          else cols=[...cols,'weight_kg'];
-        } else cols=[...cols,'weight_kg'];
+        if(!cols.length) cols=['reps','weight_kg'];
       }
     }
     if(parsed.seconds&&meta.weighted===false&&!cols.includes('seconds'))cols=['seconds'];

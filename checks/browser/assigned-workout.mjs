@@ -5,12 +5,15 @@ export async function loadAssignedWorkout(page, options={}) {
   await page.waitForFunction(()=>Boolean(window.PlanSync && window.S));
   const template=workout(options);
   await page.evaluate(template=>{
+    for(const key of Object.keys(localStorage))if(key.includes('strength-memory'))localStorage.removeItem(key);
     const date=S.selectedDate;
     const plan=PlanSync.pack(S);
     plan.templates=[template];
     plan.sessions=plan.sessions.filter(x=>x.kind!=='assignment');
     plan.sessions.push({id:'asg_'+date,date,kind:'assignment',templateId:template.id});
-    S=PlanSync.applyPlan(S,plan);S.tab='training';S.libUi={screen:'list'};save();render();
+    S.session=null;S.timer=null;
+    if(window.StrengthBrain?.clearCache)StrengthBrain.clearCache();
+    S=PlanSync.applyPlan(S,plan);S.tab='training';S.libUi={screen:'list'};S.session=null;save();render();
   },template);
 }
 export async function setAssignedReps(page, index, value) {

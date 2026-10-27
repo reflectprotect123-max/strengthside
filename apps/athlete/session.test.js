@@ -278,9 +278,11 @@ test('weighted coach names get kg; bodyweight and jumps do not',()=>{
 
 test('authored meters and mm:ss columns are not replaced by inferred kg or seconds',()=>{
  const carry=HybridSession.startSession({date:'2026-10-18',plan:{blocks:[{kind:'lift',letter:'A',title:'Farmer Carry',columns:['meters']}]}});
- assert.ok(carry.pages[0].columns.includes('meters'));
+ assert.deepEqual(carry.pages[0].columns,['meters']);
  const hold=HybridSession.startSession({date:'2026-10-18',plan:{blocks:[{kind:'lift',letter:'B',title:'Plank Hold',columns:['time_mmss']}]}});
  assert.deepEqual(hold.pages[0].columns,['time_mmss']);
+ const repsOnly=HybridSession.startSession({date:'2026-10-18',plan:{blocks:[{kind:'lift',letter:'C',title:'Back Squat',columns:['reps']}]}});
+ assert.deepEqual(repsOnly.pages[0].columns,['reps']);
 });
 
 test('coach 10/8/6/AMRAP with a 20X1 tempo keeps per-set reps',()=>{
