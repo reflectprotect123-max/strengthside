@@ -270,8 +270,8 @@
         if((page[key]==null||page[key]==='')&&filled[key]!=null)page[key]=filled[key];
       }
       if(filled.weighted===false)continue;
-      if(!page.loadUnit)page.loadUnit='kg';
-      if(!eligible(page))continue;
+      if(!page.loadUnit)page.loadUnit=page.columns?.includes('weight_lb')?'lb':'kg';
+      if(!eligible(page)&&!(page.columns||[]).includes('weight_kg'))continue;
       const log=s.logs?.[page.id];if(!log||log.sets.some(r=>r.logged))continue;
       let targets=[];try{targets=T.normalize(page);}catch{continue;}
       page.setTargets=targets;

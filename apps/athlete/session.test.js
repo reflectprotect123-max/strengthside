@@ -283,6 +283,8 @@ test('authored meters and mm:ss columns are not replaced by inferred kg or secon
  assert.deepEqual(hold.pages[0].columns,['time_mmss']);
  const repsOnly=HybridSession.startSession({date:'2026-10-18',plan:{blocks:[{kind:'lift',letter:'C',title:'Back Squat',columns:['reps']}]}});
  assert.deepEqual(repsOnly.pages[0].columns,['reps']);
+ const lb=HybridSession.startSession({date:'2026-10-18',plan:{blocks:[{kind:'lift',letter:'D',title:'Metric Audit',columns:['weight_lb','reps']}]}});
+ assert.ok(lb.pages[0].columns.includes('weight_lb'));
 });
 
 test('coach 10/8/6/AMRAP with a 20X1 tempo keeps per-set reps',()=>{

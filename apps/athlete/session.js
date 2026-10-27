@@ -112,7 +112,7 @@
       cols=['seconds'];
       if(timed.prescribed&&!block.prescribed)block={...block,prescribed:timed.prescribed};
     }
-    if(meta.weighted===false) {
+    if(meta.weighted===false && !cols.some(c=>['weight_kg','weight_lb','weight_pct','lwp'].includes(c))) {
       cols=cols.filter(c=>!['weight_kg','weight_lb','weight_pct','lwp'].includes(c));
       if(!cols.length&&parsed.seconds)cols=['seconds'];
       if(!cols.length)cols=['reps'];
