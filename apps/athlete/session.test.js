@@ -276,6 +276,25 @@ test('weighted coach names get kg; bodyweight and jumps do not',()=>{
  assert.ok(!jump.columns.includes('weight_kg'));
 });
 
+test('authored meters and mm:ss columns are not replaced by inferred kg or seconds',()=>{
+ const carry=HybridSession.startSession({date:'2026-10-18',plan:{blocks:[{kind:'lift',letter:'A',title:'Farmer Carry',columns:['meters']}]}});
+ assert.ok(carry.pages[0].columns.includes('meters'));
+ const hold=HybridSession.startSession({date:'2026-10-18',plan:{blocks:[{kind:'lift',letter:'B',title:'Plank Hold',columns:['time_mmss']}]}});
+ assert.deepEqual(hold.pages[0].columns,['time_mmss']);
+});
+
+test('coach 10/8/6/AMRAP with a 20X1 tempo keeps per-set reps',()=>{
+ const plan={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'20X1',prescription:'10 / 8 / 6 / AMRAP · 20X1',rampCount:0,setTargets:[
+  {id:'a0',purpose:'working',reps:{min:10,max:10},loadRule:{kind:'adaptive'},toFailure:false},
+  {id:'a1',purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false},
+  {id:'a2',purpose:'working',reps:{min:6,max:6},loadRule:{kind:'adaptive'},toFailure:false},
+  {id:'a3',purpose:'amrap',reps:null,loadRule:{kind:'first_working_set'},toFailure:true},
+ ]}]};
+ const s=HybridSession.startSession({date:'2026-10-18',plan});
+ assert.deepEqual(s.pages[0].setTargets.map(t=>t.reps?.min??'AMRAP'),[10,8,6,'AMRAP']);
+ assert.deepEqual(s.logs.A.sets.map(r=>r.reps),[10,8,6,null]);
+});
+
 test('tempo and completion lifecycle reach the real session without changing its prescription',()=>{
  const p={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'33X1',prescription:'3 x 5'}]};
  const s=HybridSession.startSession({date:'2026-10-16',plan:p});

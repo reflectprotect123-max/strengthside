@@ -108,7 +108,7 @@
       meta={...meta,weighted:false,equipmentId:meta.equipmentId==='barbell'?null:meta.equipmentId};
     }
     let cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
-    if(timed?.columns?.includes('seconds')) {
+    if(timed?.columns?.includes('seconds') && !cols.some(c=>c && c!=='reps' && c!=='reps_range')) {
       cols=['seconds'];
       if(timed.prescribed&&!block.prescribed)block={...block,prescribed:timed.prescribed};
     }
@@ -118,8 +118,10 @@
       if(!cols.length)cols=['reps'];
     } else if(meta.weighted) {
       if(!cols.some(c=>['weight_kg','weight_lb','weight_pct','lwp'].includes(c))) {
-        if(!cols.includes('reps')&&!cols.includes('reps_range'))cols=['reps','weight_kg'];
-        else cols=[...cols,'weight_kg'];
+        if(!cols.length || cols.every(c=>['reps','reps_range'].includes(c))) {
+          if(!cols.includes('reps')&&!cols.includes('reps_range'))cols=['reps','weight_kg'];
+          else cols=[...cols,'weight_kg'];
+        } else cols=[...cols,'weight_kg'];
       }
     }
     if(parsed.seconds&&meta.weighted===false&&!cols.includes('seconds'))cols=['seconds'];
@@ -144,7 +146,9 @@
         return {...t,pctLow:t.pctLow??s.pctLow,pctHigh:t.pctHigh??s.pctHigh,rpe:t.rpe??s.rpe,setRole:t.setRole||s.setRole,percentBasis:t.percentBasis||s.percentBasis,effort:t.effort||(s.rpe!=null?root.StrengthNotes.rpeToEffort(Number(String(s.rpe).split(/[-–]/)[0])):null)};
       });
     } else if(parsed.schemeReps&&setTargets) {
-      setTargets=setTargets.map(t=>t.purpose==='working'&&t.reps?.min&&t.reps.min!==parsed.schemeReps?{...t,reps:{min:parsed.schemeReps,max:parsed.schemeReps}}:t);
+      const working=setTargets.filter(t=>t.purpose==='working'&&t.reps?.min);
+      const varied=new Set(working.map(t=>t.reps.min)).size>1;
+      if(!varied) setTargets=setTargets.map(t=>t.purpose==='working'&&t.reps?.min&&t.reps.min!==parsed.schemeReps?{...t,reps:{min:parsed.schemeReps,max:parsed.schemeReps}}:t);
     }
     const rx=setTargets?{setCount:setTargets.length,targetReps:null,targetRepMax:null,isMax:false}
       :block.targetContractVersion===2?{setCount:Math.max(1,Number(block.setCount)||1),targetReps:null,targetRepMax:null,isMax:false}

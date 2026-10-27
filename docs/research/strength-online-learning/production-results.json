@@ -12,11 +12,12 @@
     "strength-learning": "7de2d70aa443134150c0174af12cd4407aaa5536d04a527c002a5552c3a43c8b",
     "strength-replay": "3797268f7aff26d628e7b5728bc4aacd34b0ef170e1c2c16c32fa397b6a9d4df",
     "strength-brain-core": "5d3610551aa037b5c399b7a7de4e9f51eb02e51bf36406f064c37bcce28eb539",
-    "strength-notes": "6597fdfbcb70f486bebb518747022c32233066d7a98d9597baba781ff930ced5",
+    "strength-notes": "c1844f239c063d3e0e457949738968ef3318d7fa926cb60165051ccbe27308c9",
     "strength-percent": "31731f44521a23e0360f2d4f7303f611ead23b4c335b4fe6f79513f4e88eb9af",
-    "strength-brain": "c4317b4881f8025694478d0598ce6017d80d8b17835f4ebe81b93ab4035b7a39",
+    "strength-weights": "8420670ace04df8b873698e9eb180f436949706c0bc640dd5fd81376d60b3770",
+    "strength-brain": "35ad73a602db8545a70db66f49c2ef28d0ddc477b412f50dd75384970466d7c0",
     "strength-memory": "eb74afe28d99b8406a45053d75e42beef6fe5b01e51da215dddf2fc303c7ea13",
-    "session": "1ad7bce4a2f9720cc595372c190842cd01382ef006db9fc82fd13ea2ca585e05"
+    "session": "a406ebeeab02d46a5a4a2989383d68ebab4954f7119686f4feaf51143b0d7b1d"
   },
   "registered": {
     "training": [
@@ -6141,7 +6142,7 @@
   },
   "violations": 0,
   "bootstrapUnit": "seed + athlete, with all repeated scenarios kept together",
-  "analysisSha256": "8cdd8f4b0932cf591236c8d711d92f6eae656994bb15273851417d3f41aa9236",
+  "analysisSha256": "b4da3633f55c00b843f103e37e3f7309914f8bfd25e7e21420963669b11f132b",
   "gate": {
     "pass": false,
     "shippingMode": "default",

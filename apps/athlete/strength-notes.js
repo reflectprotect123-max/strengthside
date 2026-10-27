@@ -34,7 +34,8 @@
       restSec=/m/i.test(rest[2]||'s')&&!/^s/i.test(rest[2]||'s')?n*60:n;
     }
     const timed=text.match(/(\d+)\s*x\s*(\d+)\s*(s|sec|secs|seconds)\b/i);
-    const scheme=text.match(/(\d+)\s*[x×]\s*(\d+)\b(?!\s*(?:s|sec|secs|seconds)\b)/i);
+    const withoutTempo=text.replace(/\b\d{2}[xX]\d\b/g,'');
+    const scheme=withoutTempo.match(/(\d+)\s*[x×]\s*(\d+)\b(?!\s*(?:s|sec|secs|seconds)\b)/i);
     const oneSeconds=[...text.matchAll(/\b(\d+)\s*(s|sec|secs|seconds)\b/gi)].find(m=>!/rest\s*$/i.test(text.slice(Math.max(0,m.index-5),m.index)));
     const rpeHits=[...text.matchAll(/rpe\s*([0-9]+(?:\s*[-–]\s*[0-9]+)?)/gi)];
     const slash=text.match(/rpe\s*([0-9]+(?:\s*[-–\/]\s*[0-9]+)(?:\s*\/\s*[0-9]+(?:\s*[-–]\s*[0-9]+)?)*)/i);

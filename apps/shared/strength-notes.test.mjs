@@ -17,6 +17,14 @@ test('parse rest, timed sets, RPE bands, superset and 1RM from notes',()=>{
  assert.equal(p.percent,70);
 });
 
+test('a lift tempo like 20X1 is not a 20 x 1 set scheme',()=>{
+ const p=N.parse('10 / 8 / 6 / AMRAP · 20X1');
+ assert.equal(p.schemeReps,null);
+ assert.equal(p.setCount,null);
+ assert.equal(N.parse('3 x 5 · 33X1').schemeReps,5);
+ assert.equal(N.parse('3 x 5 · 33X1').setCount,3);
+});
+
 test('decode common UTF-8 em dash mojibake',()=>{
  assert.equal(N.decode('Ibex â€” Sat 24 Oct'),'Ibex — Sat 24 Oct');
 });
