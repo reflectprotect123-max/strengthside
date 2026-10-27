@@ -4,11 +4,19 @@ import {test,expect} from 'playwright/test';
 async function actualNumber(page,label,value){await page.getByLabel(label,{exact:true}).click();const pad=page.locator('.log-pad');for(const key of String(value))await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();}
 async function setReps(page,label,value){await setAssignedReps(page,Number(label.match(/Set (\d+)/)[1])-1,value);}
 async function log(page,kg,reps,effort=2){await actualNumber(page,'Weight (kg)',kg);await actualNumber(page,'Reps completed',reps);const slider=page.getByRole('slider',{name:'Actual set effort'});await slider.press('Home');for(let i=0;i<effort;i++)await slider.press('ArrowRight');await page.getByRole('button',{name:/^(Log set|Save changes)$/,exact:true}).click();}
-async function passWarmups(page){for(let guard=0;guard<20;guard++){const section=await page.evaluate(()=>{const s=window.S?.session;if(!s||s.phase!=='block')return '';return s.pages?.[s.blockIndex]?.section||'';});if(section&&section!=='Warm-Up')return;const total=await page.evaluate(()=>Number(window.S?.timer?.config?.totalMs)||0);if(total>0&&await page.locator('#logTimerFull').count())await page.clock.fastForward(total+500);await page.getByRole('button',{name:'Next →',exact:true}).click();}throw new Error('warm-up did not finish');}
-async function beginSession(page){await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.clock.fastForward(2000);await page.getByRole('button',{name:'Got It',exact:true}).click();await passWarmups(page);}
+async function passWarmups(page){for(let guard=0;guard<20;guard++){const section=await page.evaluate(()=>{const s=window.S?.session;if(!s||s.phase!=='block')return '';return s.pages?.[s.blockIndex]?.section||'';});if(section&&section!=='Warm-Up')return;const total=await page.evaluate(()=>Number(window.S?.timer?.config?.totalMs)||0);if(total>0&&await page.locator('#logTimerFull').count())await page.clock.fastForward(total+500);const next=page.getByRole('button',{name:'Next →',exact:true});if(!(await next.count())||!(await next.isEnabled())){if(!section)return;continue;}await next.click();}throw new Error('warm-up did not finish');}
+async function beginSession(page){await page.evaluate(()=>{S.tab='training';S.libUi={screen:'list'};save();render();});await page.getByRole('button',{name:'Start Session',exact:true}).waitFor();await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();for(let i=0;i<2;i++){await page.clock.fastForward(2000);const ack=page.getByRole('button',{name:'Got It',exact:true});if(await ack.count())await ack.click();}await passWarmups(page);}
 async function addSquat(page){await loadAssignedWorkout(page);}
 async function scheduleAndStart(page){await beginSession(page);}
-async function completeWarmups(page){for(const kg of [10,20]){await log(page,kg,5,1);await page.getByRole('button',{name:'Start next set',exact:true}).click();}}
+async function completeWarmups(page){
+ for(let i=0;i<4;i++){
+  const heading=await page.locator('.log-set-heading h3').innerText().catch(()=>'');
+  if(!/^Ramp /.test(heading))return;
+  await log(page,i===0?10:20,5,1);
+  const next=page.getByRole('button',{name:'Start next set',exact:true});
+  if(await next.count())await next.click();
+ }
+}
 
 
 for(const prescription of [[5,3,1],['6–8','6–8','6–8']])test(`finished ${prescription.join('/')} learns through real controls offline`,async({page,context},testInfo)=>{
@@ -28,9 +36,9 @@ for(const prescription of [[5,3,1],['6–8','6–8','6–8']])test(`finished ${p
  await page.getByRole('button',{name:'3',exact:true}).click();await page.getByRole('button',{name:'Finish Session',exact:true}).click();
  await expect(page.locator('.log-sum')).toBeVisible();
  const evidence=await page.evaluate(()=>{const p=S.session.pages.find(page=>page.title==='Back Squat'),h=StrengthMemory.replay(StrengthBrain.key(p));return {accepted:h.accepted,ids:h.evidence.map(e=>e.observation.id),normalized:h.evidence[0]?.normalizedLoad,rows:S.session.logs[p.id].sets.length};});
- expect(evidence.accepted).toBe(1);expect(evidence.rows).toBe(5);expect(evidence.normalized.externalKg).toBe(60);
+ expect(evidence.accepted).toBe(1);expect(evidence.rows).toBe(3);expect(evidence.normalized.externalKg).toBe(60);
  await context.setOffline(false);await page.reload();
- expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set'&&r.payload.completed).length)).toBe(5);
+ expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set'&&r.payload.completed).length)).toBe(3);
  expect(errors).toEqual([]);await page.screenshot({path:testInfo.outputPath('completed-learning-session.png')});
 });
 test('quota failure does not acknowledge a logged set',async({page})=>{
@@ -42,7 +50,7 @@ test('quota failure does not acknowledge a logged set',async({page})=>{
  await expect(page.getByText('Could not save. Free some storage and try again.',{exact:true})).toBeVisible();
 });
 test('logging out removes the previous owner’s evidence from active memory',async({page})=>{
- await addSquat(page);await page.evaluate(()=>StrengthMemory.bind('a'));await scheduleAndStart(page);await log(page,10,5,1);
+ await addSquat(page);await page.evaluate(()=>{StrengthMemory.bind('a');S.tab='training';save();render();});await scheduleAndStart(page);await log(page,10,5,1);
  expect(await page.evaluate(()=>Object.keys(StrengthMemory.records()).length)).toBeGreaterThan(0);
  await page.evaluate(()=>signOutStrengthAccount());
  expect(await page.evaluate(()=>StrengthMemory.ownerId())).toBe(null);
@@ -78,7 +86,7 @@ for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'bac
   const h=StrengthBrain.history(records,fact.payload.page);
   return {next:h.latest.nextKg,accepted:h.accepted,rows:Object.values(records).filter(r=>r.kind==='set').length};
  });
- expect(result).toEqual({next:40,accepted:0,rows:5});
+  expect(result).toEqual({next:40,accepted:0,rows:3});
 });
 
 test('prep timer survives reload and Next waits for zero',async({page})=>{

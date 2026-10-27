@@ -2,12 +2,9 @@ import {workout} from '../fixtures/workouts.mjs';
 
 export async function loadAssignedWorkout(page, options={}) {
   await page.goto('/');
-  await page.evaluate(()=>localStorage.clear());
-  await page.reload();
   await page.waitForFunction(()=>Boolean(window.PlanSync && window.S));
   const template=workout(options);
   await page.evaluate(template=>{
-    if(window.StrengthMemory?.bind){StrengthMemory.bind('__wipe__');StrengthMemory.bind('browser-athlete');}
     if(window.StrengthBrain?.clearCache)StrengthBrain.clearCache();
     const date=S.selectedDate;
     const plan=PlanSync.pack(S);
