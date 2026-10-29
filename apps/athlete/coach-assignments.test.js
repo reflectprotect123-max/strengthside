@@ -119,3 +119,15 @@ test('UI-produced weight prescription retains blank kg, block notes, tempo, per-
  assert.equal(p.tempo,'20X1');assert.deepEqual(copy(plan.coachAssignedIds),[row.id]);
  ex.metric='Reps';const reps=c.CoachAssignments.convert(row).blocks[0];assert.deepEqual(copy(reps.columns),['reps']);
 });
+test('coach rest, count-in, each side and prep section reach the logger plan',()=>{
+ const c=runtime();
+ const row={id:'a1',scheduled_date:'2026-11-02',resolved_snapshot:{htmlSession:{title:'T',blocks:[
+  {kind:'lift',id:'b1',title:'DB Bench Press',restSec:90,groupId:'ss1',exercises:[{id:'b1',name:'DB Bench Press',sets:3,reps:'8'}]},
+  {kind:'lift',id:'b2',title:'Suitcase Carry',groupId:'ss1',restSec:90,exercises:[{id:'b2',name:'Suitcase Carry',sets:3,reps:'20',perSide:'each'}]},
+  {kind:'lift',id:'b3',title:'Bike Easy',role:'warmup',countIn:3,exercises:[{id:'b3',name:'Bike Easy',sets:1,reps:'90'}]},
+  {kind:'lift',id:'b4',title:'Couch Stretch',role:'cooldown',exercises:[{id:'b4',name:'Couch Stretch',sets:1,reps:'45',perSide:'each'}]}]}}};
+ const out=c.CoachAssignments.convert(row),by=t=>out.blocks.find(b=>b.title===t);
+ assert.equal(by('DB Bench Press').restSec,90);assert.equal(by('Suitcase Carry').eachSide,true);
+ assert.equal(by('Bike Easy').countIn,3);assert.equal(by('Bike Easy').section,'Warm-Up');
+ assert.equal(by('Couch Stretch').section,'Cool-Down');assert.equal(by('Couch Stretch').eachSide,true);
+});
