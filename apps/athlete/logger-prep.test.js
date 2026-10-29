@@ -153,6 +153,22 @@ test('superset rest uses coach restSec and skips a one-member ramp round',()=>{
  assert.equal(ctx.S.timer.config.restMs,75000);
 });
 
+test('a prep result posted before the logger opens is kept',()=>{
+ const {ctx}=runtime();
+ const element={innerHTML:'',classList:{add(){},remove(){}},querySelector(){return null;}};
+ ctx.document={getElementById:id=>['logger','shell'].includes(id)?element:null};
+ ctx.setInterval=()=>1;ctx.clearInterval=()=>{};
+ ctx.window=ctx;
+ const listeners=[];
+ ctx.addEventListener=(type,fn)=>{if(type==='message')listeners.push(fn);};
+ for(const name of ['timer','logger'])vm.runInContext(readFileSync(new URL(`./${name}.js`,import.meta.url),'utf8'),ctx);
+ ctx.S={loggerOpen:false,timer:ctx.HybridTimer.create(),session:null,selectedDate:'2026-11-02'};
+ ctx.Logger.paint();
+ listeners[0]({data:{type:'hybrid-prep-result',phase:'warmup',items:[{id:'bike',title:'Bike Easy',status:'completed'}]}});
+ ctx.Logger.open({date:'2026-11-02',plan:{title:'Monday',blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],setCount:1,repTarget:'5'}]}});
+ assert.equal(ctx.S.session.prep.warmup[0].title,'Bike Easy');
+});
+
 test('a finished hold records the prescribed seconds and a count-in stop records zero',()=>{
  const {ctx}=boot([
   {kind:'lift',letter:'A',title:'Dead Hang',section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}

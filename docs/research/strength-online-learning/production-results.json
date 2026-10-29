@@ -12,9 +12,9 @@
     "strength-learning": "7de2d70aa443134150c0174af12cd4407aaa5536d04a527c002a5552c3a43c8b",
     "strength-replay": "3797268f7aff26d628e7b5728bc4aacd34b0ef170e1c2c16c32fa397b6a9d4df",
     "strength-brain-core": "48696f6a53d57f958e1122674bd64f7401a98262403a08051842dca5d42d643f",
-    "strength-brain": "3dcd07dd2aed94ed2fe14c4162177505b51eebc2b858a79b95a2f1fbde1366a5",
-    "strength-memory": "eb74afe28d99b8406a45053d75e42beef6fe5b01e51da215dddf2fc303c7ea13",
-    "session": "98da11fbdbbc808658797ed967e3c1ed982e03c1c96cfb9483aee783923c66f7"
+    "strength-brain": "2363dc181ca3504f57943d4699c72b2e54f69e473bb29b16cfae4ada1f74e94e",
+    "strength-memory": "18a4ec3a55fd71f97e5c00c90daa8e5efa1fa11a5e1a24e7984701550d4e8ccc",
+    "session": "6cf9aee135b779118bef1de59bc2c8cd05885742e5ffc6a63624a6e4a9dc3f4f"
   },
   "registered": {
     "training": [

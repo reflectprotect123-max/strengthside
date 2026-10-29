@@ -359,6 +359,13 @@ test('autofill copies metres down empty carry rows', () => {
   assert.equal(s.logs.A.sets[2].logged, false);
 });
 
+test('per-hand volume counts both hands',()=>{
+ const plan={blocks:[{kind:'lift',letter:'A',title:'DB Bench Press',columns:['reps','weight_kg'],loadConvention:'per_hand',setCount:1,repTarget:'8'}]};
+ let s=HybridSession.startSession({date:'2026-11-02',plan,letter:'A'});
+ s=HybridSession.logSet(s,0,{kg:10,reps:8,effort:'average',context:{normalizedLoad:{convention:'per_hand'}}},'A');
+ assert.equal(HybridSession.totals(s).volumeKg,160);
+});
+
 test('tempo and completion lifecycle reach the real session without changing its prescription',()=>{
  const p={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'33X1',prescription:'3 x 5'}]};
  const s=HybridSession.startSession({date:'2026-10-16',plan:p});

@@ -56,6 +56,7 @@
     }
     if (p.title === 'Slider demo') root.S.session.demo = true;
     else root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
+    drainPrep();
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');
@@ -918,14 +919,24 @@
     armPrepClock(page, 1);
   }
 
+  const pendingPrep=[];
+  function takePrep(data) {
+    if (!data || data.type !== 'hybrid-prep-result') return;
+    const item={phase:data.phase==='cooldown'?'cooldown':'warmup',items:data.items||[]};
+    if (!session()) { pendingPrep.push(item); return; }
+    persist(HybridSession.recordPrep(session(), item.phase, item.items));
+  }
+  function drainPrep() {
+    if (!session() || !pendingPrep.length) return;
+    let next=session();
+    for (const item of pendingPrep) next=HybridSession.recordPrep(next, item.phase, item.items);
+    pendingPrep.length=0;
+    root.S.session=next;
+  }
   function listenPrep() {
     if (root.__prepWired || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
     root.__prepWired = true;
-    window.addEventListener('message', (event) => {
-      const data = event && event.data;
-      if (!data || data.type !== 'hybrid-prep-result' || !session()) return;
-      persist(HybridSession.recordPrep(session(), data.phase === 'cooldown' ? 'cooldown' : 'warmup', data.items || []));
-    });
+    window.addEventListener('message', (event) => takePrep(event && event.data));
   }
 
   function paint() {

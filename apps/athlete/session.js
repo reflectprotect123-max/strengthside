@@ -433,7 +433,8 @@
           const count = Number(row.reps) || 0;
           const weight = Number(row.kg) || 0;
           if (countsReps) reps += count;
-          if (countsReps && count > 0) kg += weight * count;
+          const hands=row.context?.normalizedLoad?.convention==='per_hand'?2:1;
+          if (countsReps && count > 0) kg += weight * count * hands;
           meters += Number(row.cells && row.cells.meters) || 0;
           seconds += rowSeconds(row);
         }
