@@ -620,7 +620,7 @@
   function hubHtml() {
     return `
       <div class="log-hub">
-        <img src="assets/hpp-logo.jpg" alt="Hybrid Power Project">
+        <img src="assets/eds-strength-logo.png" alt="EDS Strength">
         <button type="button" class="log-primary" onclick="Logger.doneTraining()">Done Training</button>
       </div>`;
   }

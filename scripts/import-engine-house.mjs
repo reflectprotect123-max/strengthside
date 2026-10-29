@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { applyBrand } from './engine-house-brand.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const outDir = fileURLToPath(new URL('../apps/athlete/engine/', import.meta.url));
@@ -54,7 +55,7 @@ export function importEngineHouse(ref = DEFAULT_REF) {
     source[path] = git('rev-parse', `${commit}:${path}`).toString().trim();
     files[name] = git('show', `${commit}:${path}`);
   }
-  files['index.html'] = Buffer.from(applyIntegrationOverrides(patchEngineHtml(files['index.html'].toString('utf8'))));
+  files['index.html'] = Buffer.from(applyBrand(applyIntegrationOverrides(patchEngineHtml(files['index.html'].toString('utf8')))));
   mkdirSync(outDir, { recursive: true });
   const output = {};
   for (const [name, buf] of Object.entries(files)) {

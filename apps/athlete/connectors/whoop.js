@@ -1,4 +1,4 @@
-/* WHOOP bridge — one connection per Hybrid Strength login (Supabase user u:). */
+/* WHOOP bridge — one connection per EDS Strength login (Supabase user u:). */
 (function (global) {
   function cfg() {
     return global.STRENGTH_CONFIG || {};
@@ -134,7 +134,7 @@
       const raw = (body && (body.error || body.message)) || ('WHOOP request failed (' + res.status + ')');
       const boot = res.status === 503 || /failed to start|BOOT_ERROR/i.test(String(raw));
       const friendly = (res.status === 401 || raw === 'unauthorized')
-        ? 'Sign in again in Hybrid Strength, then tap Connect WHOOP'
+        ? 'Sign in again in EDS Strength, then tap Connect WHOOP'
         : (boot ? 'WHOOP service is down — try again in a minute' : raw);
       const e = new Error(friendly);
       e.status = res.status; e.body = body; throw e;
@@ -398,7 +398,7 @@
     const em = ((document.getElementById('whoopEmail') && document.getElementById('whoopEmail').value) || '').trim();
     const pw = (document.getElementById('whoopPassword') && document.getElementById('whoopPassword').value) || '';
     if (!em || !pw) {
-      global.alert('Enter the same email + password you use in Hybrid Strength');
+      global.alert('Enter the same email + password you use in EDS Strength');
       return;
     }
     ui.busy = true;

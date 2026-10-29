@@ -8,8 +8,8 @@ const require = createRequire(import.meta.url);
 require(join(dirname(fileURLToPath(import.meta.url)), 'hybrid-sc.js'));
 const H = globalThis.HybridSc;
 
-test('product is Hybrid Strength', () => {
-  assert.equal(H.PRODUCT, 'HYBRID STRENGTH');
+test('product is EDS Strength', () => {
+  assert.equal(H.PRODUCT, 'EDS STRENGTH');
 });
 
 test('datesFromState marks scheduled plans, not archived session keys', () => {
@@ -32,7 +32,7 @@ test('occupancy and calendar dots contain Strength only', () => {
 });
 
 test('brand stays Strength; account card carries the Strength | Engine switch', () => {
-  assert.match(H.brandHtml(), /HYBRID STRENGTH/);
+  assert.match(H.brandHtml(), /EDS STRENGTH/);
   const card = H.lockerCardHtml();
   assert.match(card, /role="group" aria-label="Locker"/);
   assert.match(card, /aria-pressed="true" onclick="switchHybridLocker\('strength'\)">Strength</);
