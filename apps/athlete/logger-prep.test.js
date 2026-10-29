@@ -169,6 +169,24 @@ test('a prep result posted before the logger opens is kept',()=>{
  assert.equal(ctx.S.session.prep.warmup[0].title,'Bike Easy');
 });
 
+test('Next advances after an each-side cool-down side 2 is ticked',()=>{
+ const {ctx}=boot([
+  {kind:'lift',letter:'A',title:'Couch Stretch (each side)',section:'Cool-Down',columns:['seconds'],prescribed:'45',setCount:1,countIn:3},
+  {kind:'lift',letter:'B',title:'Figure Four (each side)',section:'Cool-Down',columns:['seconds'],prescribed:'45',setCount:1}
+ ]);
+ const step=clock(ctx);
+ ctx.Logger.paint();
+ step(3000+45000);
+ assert.equal(ctx.S.timer.config.prepSide,2);
+ assert.equal(ctx.S.session.blockIndex,0);
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ ctx.Logger.check(page.id,0);
+ assert.equal(ctx.S.session.logs[page.id].sets[0].logged,true);
+ ctx.Logger.next();
+ assert.equal(ctx.S.session.blockIndex,1);
+ assert.equal(ctx.HybridSession.currentPage(ctx.S.session).title,'Figure Four (each side)');
+});
+
 test('ramp sets do not start the working rest',()=>{
  const {ctx}=boot([
   {kind:'lift',letter:'A',title:'Back Squat',restSec:180,columns:['reps','weight_kg'],setCount:1,repTarget:'5',equipmentId:'barbell',exerciseType:'main'}

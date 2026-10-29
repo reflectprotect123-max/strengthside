@@ -845,7 +845,11 @@
     const page=HybridSession.currentPage(s),timer=timerState();
     if(!page||!['Warm-Up','Cool-Down'].includes(page.section)||s.warmupClock!==page.id||timer.mode!=='countdown')return false;
     const snap=HybridTimer.snapshot(timer,Date.now());
-    return ['running','countIn'].includes(snap.view)&&!snap.done;
+    if(!['running','countIn'].includes(snap.view)||snap.done)return false;
+    const side=Number(timer.config&&timer.config.prepSide)||1;
+    const rows=(s.logs[page.id]&&s.logs[page.id].sets)||[];
+    if(side>=2&&rows.some((row)=>row.logged))return false;
+    return true;
   }
 
   function heldSeconds(timer, now) {
