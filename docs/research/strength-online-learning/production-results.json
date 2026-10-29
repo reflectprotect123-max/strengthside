@@ -10,11 +10,11 @@
     "strength-load": "0d79503e312c1907415b707d1e26f2d8b5561402cb71a05ffcac5c42fe80c07c",
     "strength-context": "ab20c81fbc1e4a2d16dbff64197f3132dd14d1804c1d2220347a2972801e7b0a",
     "strength-learning": "7de2d70aa443134150c0174af12cd4407aaa5536d04a527c002a5552c3a43c8b",
-    "strength-replay": "3797268f7aff26d628e7b5728bc4aacd34b0ef170e1c2c16c32fa397b6a9d4df",
+    "strength-replay": "d8822c618c50cdc314373d4d67ac9b6f5823b5aedd5009e372a0f504589854a6",
     "strength-brain-core": "48696f6a53d57f958e1122674bd64f7401a98262403a08051842dca5d42d643f",
     "strength-brain": "2363dc181ca3504f57943d4699c72b2e54f69e473bb29b16cfae4ada1f74e94e",
-    "strength-memory": "18a4ec3a55fd71f97e5c00c90daa8e5efa1fa11a5e1a24e7984701550d4e8ccc",
-    "session": "ffaec219aad7d0966188b355472865348261df40490431b852c05a466f8c10c1"
+    "strength-memory": "7c043b9390563dabbf41dca44cb10bea68361cbc164b9a7a433b8c1d44e7eb24",
+    "session": "cf18db7712be191a7c9a1730cdf19189239d3b742bf031c579c4f10965cfd388"
   },
   "registered": {
     "training": [

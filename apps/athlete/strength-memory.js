@@ -86,7 +86,7 @@
       let workingIndex=0;
       rows.forEach((row,index)=>{
         row.id=row.id||root.crypto.randomUUID();alive.add(row.id);
-        const position=['ramp','warmup'].includes(row.purpose)?-1:workingIndex++;
+        const position=['ramp','warmup','cooldown'].includes(row.purpose)?-1:workingIndex++;
         if(!row.logged&&!row.skipped&&!memory.records[row.id])return;
         const target=position>=0?targets?.filter(t=>t.purpose!=='warmup')[position]:null;
         const snapshot={...clone(row),targetId:row.targetId||target?.id||null,workingIndex:position,ordinal:index,context:clone(row.context||{})};

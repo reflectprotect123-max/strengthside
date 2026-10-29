@@ -413,3 +413,13 @@ test('each-side carry rows save per-side metres and totals count both sides', ()
   assert.equal(run({ kind: 'lift', letter: 'A', title: 'Suitcase Carry (each side)', columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 }).total, 40);
   assert.equal(run({ kind: 'lift', letter: 'A', title: 'Farmer Carry', columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 }).total, 20);
 });
+
+test('cool-down rows save purpose cooldown and warm-up rows keep warmup', () => {
+  const s = HybridSession.startSession({ date: '2026-10-30', letter: 'A', plan: { blocks: [
+    { kind: 'lift', letter: 'A', title: 'Bike Easy', section: 'Warm-Up', columns: ['seconds'], prescribed: '60', setCount: 1 },
+    { kind: 'lift', letter: 'B', title: 'Couch Stretch', eachSide: true, section: 'Cool-Down', columns: ['seconds'], prescribed: '45', setCount: 1 },
+  ] } });
+  const bySection = Object.fromEntries(s.pages.filter((p) => p.section).map((p) => [p.section, s.logs[p.id].sets[0].purpose]));
+  assert.equal(bySection['Warm-Up'], 'warmup');
+  assert.equal(bySection['Cool-Down'], 'cooldown');
+});

@@ -32,7 +32,7 @@
       if (page.prescribed && (page.columns || []).includes('meters')) cells.meters = String(page.prescribed);
       rows.push({
         targetId:target?.id||null,
-        purpose:page.section === 'Warm-Up' || page.section === 'Cool-Down' ? 'warmup' : (target?.purpose||'working'),
+        purpose:page.section === 'Cool-Down' ? 'cooldown' : page.section === 'Warm-Up' ? 'warmup' : (target?.purpose||'working'),
         workingIndex:targets.slice(0,i).filter(t=>t.purpose!=='warmup').length,
         reps: target?.purpose==='amrap'||page.logMode === 'max' ? null : target?.reps?.min??page.targetReps,
         kg: null,

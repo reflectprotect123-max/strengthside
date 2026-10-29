@@ -42,7 +42,7 @@
     const {page,row}=record.payload||{};
     if(!page||!row||!Number.isSafeInteger(row.ordinal)||row.ordinal<0)return null;
     let targets;try{targets=root.StrengthTargets.normalize(page);}catch{return null;}
-    if(row.purpose==='ramp'||row.purpose==='warmup')return {purpose:'warmup',workingIndex:-1};
+    if(row.purpose==='ramp'||row.purpose==='warmup'||row.purpose==='cooldown')return {purpose:'warmup',workingIndex:-1};
     // Target identity establishes position even if a prior set was never logged.
     const target=targets.find(t=>t.id===row.targetId);
     if(!target||row.purpose!==target.purpose)return null;
