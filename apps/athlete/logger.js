@@ -108,6 +108,8 @@
   }
   function restAfterRound(s, page, memberId, setIndex) {
     if (!completesRound(s, page, memberId, setIndex)) return false;
+    const row = s.logs[memberId] && s.logs[memberId].sets[setIndex];
+    if (row && row.purpose === 'ramp') return false;
     if (!page || page.logMode !== 'superset') return true;
     const steps = HybridSession.supersetSteps(s, page);
     const step = steps.find((item) => item.memberId === memberId && item.setIndex === setIndex);

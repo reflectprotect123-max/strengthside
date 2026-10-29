@@ -169,6 +169,24 @@ test('a prep result posted before the logger opens is kept',()=>{
  assert.equal(ctx.S.session.prep.warmup[0].title,'Bike Easy');
 });
 
+test('ramp sets do not start the working rest',()=>{
+ const {ctx}=boot([
+  {kind:'lift',letter:'A',title:'Back Squat',restSec:180,columns:['reps','weight_kg'],setCount:1,repTarget:'5',equipmentId:'barbell',exerciseType:'main'}
+ ]);
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ const id=page.id;
+ ctx.S.session.logs[id].sets.unshift({purpose:'ramp',reps:5,kg:20,effort:'easy',logged:false,miss:false,cells:{}});
+ ctx.Logger.check(id,0);
+ assert.notEqual(ctx.S.timer.mode,'rest');
+ const work=ctx.S.session.logs[id].sets.findIndex(r=>r.purpose!=='ramp');
+ ctx.S.session.logs[id].sets[work].reps=5;
+ ctx.S.session.logs[id].sets[work].kg=100;
+ ctx.S.session.logs[id].sets[work].effort='average';
+ ctx.Logger.check(id,work);
+ assert.equal(ctx.S.timer.mode,'rest');
+ assert.equal(ctx.S.timer.config.restMs,180000);
+});
+
 test('an each-side carry shows a second side the same way as a hold',()=>{
  const {ctx,element}=boot([
   {kind:'lift',letter:'A',title:'Suitcase Carry',eachSide:true,columns:['meters','weight_kg'],prescribed:'20',setCount:1}
