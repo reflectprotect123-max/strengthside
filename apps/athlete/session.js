@@ -15,7 +15,10 @@
   function logModeFor(block, rx) {
     if (block.kind === 'warmup' || block.kind === 'recovery') return 'complete';
     if (rx.isMax) return 'max';
-    if (/^F\d/i.test(block.letter || '')) return 'reps';
+    // Legacy plans used letter F for bodyweight finishers; a block that
+    // declares a weight column is a loaded lift whatever its letter.
+    const weighted = (block.columns || []).some((c) => ['weight_kg', 'weight_lb', 'weight_pct', 'lwp'].includes(c));
+    if (!weighted && /^F\d/i.test(block.letter || '')) return 'reps';
     return 'kg';
   }
 

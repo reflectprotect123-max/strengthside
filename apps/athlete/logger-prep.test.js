@@ -291,3 +291,17 @@ test('superset lifts get the brain next-set weight from the logged effort, like 
  assert.notEqual(rows()[first+1].kg,before);
  assert.ok(rows()[first+1].kg>=20,'a very easy set does not drop the next weight');
 });
+
+test('a weighted superset lift lettered F logs in kg and gets brain next-set weights',()=>{
+ const {ctx}=boot([
+  {kind:'lift',letter:'F1',title:'DB Bench Press',restSec:90,columns:['reps','weight_kg'],setCount:3,repTarget:'8',equipmentId:'dumbbell',loadConvention:'per_hand',minimumKg:1},
+  {kind:'lift',letter:'F2',title:'Chin-up',columns:['reps'],setCount:3,repTarget:'6'}
+ ]);
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ const bench=page.members.find(m=>m.title==='DB Bench Press'),chin=page.members.find(m=>m.title==='Chin-up');
+ assert.equal(bench.logMode,'kg');assert.equal(chin.logMode,'reps');
+ const rows=()=>ctx.S.session.logs[bench.id].sets;
+ rows()[0].kg=20;rows()[0].reps=8;rows()[0].effort='very_easy';
+ ctx.Logger.check(bench.id,0);
+ assert.equal(rows()[1].kg,rows()[0].loadDecision.kg);
+});
