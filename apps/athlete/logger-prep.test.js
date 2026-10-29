@@ -44,6 +44,17 @@ function clock(ctx){
  return (ms)=>{now+=ms;if(ctx.tick)ctx.tick();};
 }
 
+test('a finished warm-up countdown logs its seconds before auto-advancing',()=>{
+ const {ctx}=boot([{id:'W',kind:'lift',letter:'A',title:'Bike Easy',section:'Warm-Up',columns:['seconds'],setCount:1,repTarget:'90',prescribed:'90',countIn:3},
+               {id:'X',kind:'lift',letter:'B',title:'Plank Hold',section:'Warm-Up',columns:['seconds'],setCount:1,repTarget:'30',prescribed:'30'}]);
+ const step=clock(ctx);
+ ctx.Logger.paint();
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ step((Number(ctx.S.timer.config?.countInMs)||0)+(Number(ctx.S.timer.config?.totalMs)||94000));
+ const w=ctx.S.session.logs[page.id].sets[0];
+ assert.equal(w.logged,true);assert.equal(Number(w.cells.seconds),90);assert.notEqual(w.reps,8);
+});
+
 test('the logger warm-up clock advances itself at zero',()=>{
  const {ctx}=boot();
  const step=clock(ctx);

@@ -865,6 +865,16 @@
     }
   }
 
+  function logFinishedPrep(s, page, timer) {
+    const rows = (s.logs[page.id] && s.logs[page.id].sets) || [];
+    const idx = rows.findIndex((r) => !r.logged);
+    if (idx < 0 || rows[idx].skipped) return s;
+    const secondsOnly = (page.columns || []).includes('seconds') && !(page.columns || []).some((c) => c === 'reps' || c === 'reps_range');
+    if (secondsOnly) rows[idx].reps = null;
+    const totalMs = Number(timer.config && timer.config.totalMs) || 0;
+    return HybridSession.logSet(s, idx, { cells: { seconds: Math.round(totalMs / 1000) } }, page.id, { commit: true });
+  }
+
   function continuePrep(timer) {
     const s = session();
     if (!s) return;
@@ -876,7 +886,8 @@
       paint();
       return;
     }
-    const moved = HybridSession.nextPage(s);
+    const logged = logFinishedPrep(s, page, timer);
+    const moved = HybridSession.nextPage(logged);
     if (moved.blockIndex === s.blockIndex) return;
     delete (moved.restChoices || {})[HybridSession.currentPage(moved).id];
     root.S.timer = HybridTimer.create();
