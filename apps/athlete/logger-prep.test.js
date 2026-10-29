@@ -169,6 +169,22 @@ test('a prep result posted before the logger opens is kept',()=>{
  assert.equal(ctx.S.session.prep.warmup[0].title,'Bike Easy');
 });
 
+test('an each-side carry shows a second side the same way as a hold',()=>{
+ const {ctx,element}=boot([
+  {kind:'lift',letter:'A',title:'Suitcase Carry',eachSide:true,columns:['meters','weight_kg'],prescribed:'20',setCount:1}
+ ]);
+ ctx.Logger.paint();
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ assert.match(element.innerHTML,/Suitcase Carry · side 1/);
+ const row=ctx.S.session.logs[page.id].sets[0];
+ row.kg=8;row.effort='average';
+ ctx.Logger.check(page.id,0);
+ assert.match(element.innerHTML,/Suitcase Carry · side 2/);
+ assert.equal(ctx.S.session.logs[page.id].sets[0].logged,false);
+ ctx.Logger.check(page.id,0);
+ assert.equal(ctx.S.session.logs[page.id].sets[0].logged,true);
+});
+
 test('an each-side strength hold runs and saves both sides',()=>{
  const {ctx,element}=boot([
   {kind:'lift',letter:'A',title:'Side Plank',eachSide:true,section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}

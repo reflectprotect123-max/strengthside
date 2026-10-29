@@ -426,6 +426,19 @@
     return page && (page.eachSide || /\(each side\)/i.test(page.title || '')) ? 2 : 1;
   }
 
+  function isEachSideCarry(page) {
+    return !!(page && sidesFor(page) === 2 && /carry|farmer|suitcase/i.test(page.title || ''));
+  }
+
+  function carrySide(s, id) {
+    return s && s.loggerSides && s.loggerSides[id] === 2 ? 2 : 1;
+  }
+
+  function titled(page, s) {
+    if (!page || !isEachSideCarry(page)) return (page && page.title) || '';
+    return `${page.title} · side ${carrySide(s, page.id)}`;
+  }
+
   function timerHeading(snap) {
     let title = modeTitle(snap.mode);
     const hold = snap.config && snap.config.hold;
@@ -805,7 +818,7 @@
         if (!m) return '';
         return `
         <section class="log-ss-member">
-          <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
+          <h2 class="log-title">${esc(m.letter)}. ${esc(titled(m, s))}</h2>
           ${showsEstimate(m) ? sideHtml(s, m) : ''}
           ${tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' }, step.setIndex)}
         </section>`;
@@ -818,7 +831,7 @@
     } else {
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
-        <h2 class="log-title">${esc(page.title)}</h2>
+        <h2 class="log-title">${esc(titled(page, s))}</h2>
         ${showsEstimate(page) ? sideHtml(s, page) : ''}
         ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
@@ -1159,7 +1172,16 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(restAfterRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
+      if (!row.logged && isEachSideCarry(lift) && carrySide(s, lift.id) < 2) {
+        const result = root.TrainingCore.validateRow(row, lift);
+        if (!result.ok) { toast = result.error; paint(); return; }
+        toast = '';
+        const next = JSON.parse(JSON.stringify(s));
+        next.loggerSides = { ...(next.loggerSides || {}), [lift.id]: 2 };
+        persist(next);
+        return;
+      }
+      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(isEachSideCarry(lift))next.loggerSides={...(next.loggerSides||{}),[lift.id]:1};if(restAfterRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {
