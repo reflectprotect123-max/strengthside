@@ -1,6 +1,6 @@
 /* Recovery home adapted from the conditioning APK. Observations never change strength loads. */
 (function(root){
-const defs=[['recovery','Recovery','%',0,100,'whoopRecovery'],['hrv','HRV','ms',0,1000,'hrv'],['rhr','Resting HR','bpm',1,300,'restingHr'],['sleep','Sleep','h',0,24,'sleepHours'],['steps','Steps','',0,2147483647,'steps'],['sleepPerformance','Sleep performance','%',0,100,'whoopSleepPerformance'],['strain','Strain','',0,21,'whoopStrain']];
+const defs=[['recovery','Recovery','%',0,100,'whoopRecovery'],['hrv','HRV','ms',0,1000,'hrv'],['rhr','Resting HR','bpm',1,300,'restingHr'],['sleep','Sleep','h',0,24,'sleepHours'],['steps','Steps','',0,2147483647,'steps'],['sleepPerformance','Sleep performance','%',0,100,'whoopSleepPerformance'],['strain','Strain','',0,21,'whoopStrain'],['hr','HR','bpm',1,300,'heartRateBpm']];
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>v==null||String(v).trim()===''?null:Number.isFinite(Number(v))?Number(v):null;
 function day(d){if(!/^\d{4}-\d{2}-\d{2}$/.test(d||''))return null;const parsed=new Date(d+'T12:00:00Z');return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===d?d:null;}
@@ -10,11 +10,11 @@ function importHistory(state,body,todayDate,sourceLabel){
   const bucket=label==='Fitbit'?'fitbitHistory':'whoopHistory';
   const rows=body.dailyMetrics||body.dailyPhysiology||[];
   const map=new Map((state[bucket]||[]).map(r=>[r.date,r]));let count=0;
-  const all=[...rows];if(body.normalized){const n=body.normalized;const dated=key=>!n.metricDates||n.metricDates[key]==null||n.metricDates[key]===n.date?n[key]:null;all.push({date:n.date,recovery:n.recoveryScore,hrv:n.hrvMs,rhr:n.restingHr,sleep:dated('sleepHours')??(!n.metricDates||n.metricDates.sleepHours==null?n.sleep:null),steps:dated('steps'),sleepPerformance:dated('sleepPerformance'),strain:dated('strain')});}
+  const all=[...rows];if(body.normalized){const n=body.normalized;const dated=key=>!n.metricDates||n.metricDates[key]==null||n.metricDates[key]===n.date?n[key]:null;all.push({date:n.date,recovery:n.recoveryScore,hrv:n.hrvMs,rhr:n.restingHr,sleep:dated('sleepHours')??(!n.metricDates||n.metricDates.sleepHours==null?n.sleep:null),steps:dated('steps'),sleepPerformance:dated('sleepPerformance'),strain:dated('strain'),hr:dated('heartRateBpm')});}
   for(const r of body.dailyStrain||[])all.push({date:r.date,strain:r.strain});
   for(const [key,date] of Object.entries(body.normalized?.metricDates||{})){if(key==='sleepPerformance')all.push({date,sleepPerformance:body.normalized.sleepPerformance});else if(key==='strain')all.push({date,strain:body.normalized.strain});else if(key==='sleepHours')all.push({date,sleep:body.normalized.sleepHours});else if(key==='steps')all.push({date,steps:body.normalized.steps});}
   for(const r of all){const date=day(r.date);if(!date||date>todayDate)continue;const old=map.get(date)||{date,source:label},row={...old,sources:{...old.sources}},c=state.checkin[date]||(state.checkin[date]={date});let changed=false;
-    const aliases={recovery:'recoveryScore',hrv:'hrvMs',rhr:'restingHr',sleep:'sleepHours'};
+    const aliases={recovery:'recoveryScore',hrv:'hrvMs',rhr:'restingHr',sleep:'sleepHours',hr:'heartRateBpm'};
     for(const [key,,,min,max,field] of defs){let value=number(r[key]??r[aliases[key]]);if(key==='steps'&&value!=null&&Math.abs(value-Math.round(value))<0.001)value=Math.round(value);if(value==null||value<min||value>max||(key==='hrv'&&value===0)||(key==='steps'&&!Number.isSafeInteger(value)))continue;row[key]=value;row.sources[key]=r.sources?.[key]||label;c[field]=value;changed=true;}
     if(!changed)continue;row.source=label;map.set(date,row);if(label==='Fitbit'){c.fitbitSyncedAt=body.syncedAt||new Date().toISOString();c.fitbitSampleDate=date;}else{c.whoopSyncedAt=body.syncedAt||new Date().toISOString();c.whoopSampleDate=date;}count++;
   }
@@ -61,12 +61,15 @@ function bedtimeCheckin(date){
   return '<details class="pg-card pg-bedtime" '+(current&&draft.open?'open':'')+' ontoggle="StrengthHome.bedtimeToggle(\''+date+'\',this.open)"><summary>Bedtime check-in'+(complete?' · Completed':'')+'</summary><p class="pg-muted">'+e(date)+' · Optional. Saved separately from your morning answers.'+'</p>'+(current&&(!complete||draft.editing)?form:summary+(current?'<button class="method-secondary" onclick="StrengthHome.editBedtime(\''+date+'\')">Edit bedtime check-in</button>':''))+'</details>';
 }
 
-function readingsHtml(date=S.selectedDate||today()){
-  const reading=selection(records(),date,today());return '<div class="pg-cards">'+defs.map(([key,label,unit])=>{const m=reading.metrics[key];return '<section class="pg-card" data-metric="'+key+'"><h2>'+label+'</h2><div class="pg-value">'+fmt(m?.value,key)+' <small>'+unit+'</small></div><p class="pg-muted">'+e(m?m.source+(m.date!==date?' · '+m.date:''):'Not recorded')+'</p></section>';}).join('')+'</div>';
+// Home shows only these readings (top row, then three across). Other metrics stay stored for Progress/plan-sync.
+const homeRows=[[['recovery','Recovery','%'],['sleep','Sleep','h']],[['hr','HR','bpm'],['rhr','RHR','bpm'],['steps','Steps','']]];
+function card(m,key,label,unit,date){return '<section class="pg-card" data-metric="'+key+'"><h2>'+label+'</h2><div class="pg-value">'+fmt(m?.value,key)+' <small>'+unit+'</small></div><p class="pg-muted">'+e(m?m.source+(m.date!==date?' · '+m.date:''):'Not recorded')+'</p></section>';}
+function readingsHtml(date=today()){
+  const reading=selection(records(),date,today());return homeRows.map((row,i)=>'<div class="pg-cards'+(i?' pg-cards-3':'')+'">'+row.map(([key,label,unit])=>card(reading.metrics[key],key,label,unit,date)).join('')+'</div>').join('');
 }
-function html(){const d=S.selectedDate||today(),connected=!!S.settings.whoop?.connected,message=root.Whoop?.uiMessage()||'';
-return '<div class="pg-page strength-recovery-home"><p class="lib-kicker">EDS Strength</p><h1>Today</h1><label class="pg-date">View day <input aria-label="Home date" type="date" max="'+today()+'" value="'+e(d)+'" onchange="StrengthHome.homeDate(this.value)"></label><button class="method-secondary" onclick="'+(connected?'StrengthHome.refresh()':"setTab('me')")+'">'+(connected?'Refresh WHOOP':'Connect WHOOP')+'</button><p class="pg-muted" id="whoopHomeStatus" role="status">'+e(message||root.Whoop?.metaLine()||'')+'</p>'+dailyCheckin(d)+bedtimeCheckin(d)+readingsHtml(d)+'<button class="method-load" onclick="setTab(\'training\')">Start training</button><button class="method-secondary" onclick="setTab(\'progress\')">View progress and history</button></div>';}
-root.StrengthHome={html,readingsHtml,records,selection,importHistory,day,
+function html(){return '<div class="pg-page strength-recovery-home"><p class="lib-kicker">EDS Strength</p><h1>Today</h1>'+readingsHtml(today())+'</div>';}
+// Check-in UI removed from Home; dailyCheckin/bedtimeCheckin kept (exported) so stored answers and handlers still work.
+root.StrengthHome={html,readingsHtml,dailyCheckin,bedtimeCheckin,records,selection,importHistory,day,
 bedtimeToggle(date,open){bedtimeState(date).open=open;},
 bedtimeAnswer(date,key,value){if(date!==today()||!['fatigue','nutrition','alcoholDrinks'].includes(key))return;bedtimeState(date).values[key]=value===''?'':Number(value);},
 editBedtime(date){if(date!==today())return;const draft=bedtimeState(date);draft.values={...(S.checkin[date]?.bedtimeQuestionnaire||{})};draft.editing=true;draft.open=true;render();},

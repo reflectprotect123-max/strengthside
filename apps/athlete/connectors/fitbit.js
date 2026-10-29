@@ -35,6 +35,8 @@
     if (sleepPerf != null && onSample('sleepPerformance') && sleepPerf >= 0 && sleepPerf <= 100) { c.whoopSleepPerformance = Math.round(sleepPerf); changed = true; }
     if (strain != null && onSample('strain') && strain >= 0 && strain <= 21) { c.whoopStrain = Math.round(strain * 10) / 10; changed = true; }
     if (sleepHours != null && onSample('sleepHours') && sleepHours >= 0 && sleepHours <= 24) { c.sleepHours = Math.round(sleepHours * 100) / 100; changed = true; }
+    const hr = finiteNum(n.heartRateBpm);
+    if (hr != null && hr > 0 && hr <= 300) { c.heartRateBpm = Math.round(hr); changed = true; }
     if (steps != null && onSample('steps') && steps >= 0 && steps <= 2147483647) { c.steps = Math.round(steps); changed = true; }
     if (global.StrengthHome && typeof global.StrengthHome.importHistory === 'function' && appState()) {
       global.StrengthHome.importHistory(appState(), { normalized: n, dailyMetrics: meta.dailyMetrics || [], syncedAt: meta.syncedAt }, todayIso(), 'Fitbit');
