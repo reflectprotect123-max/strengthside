@@ -30,7 +30,7 @@ for(const prescription of [[5,3,1],['6–8','6–8','6–8']])test(`finished ${p
  const evidence=await page.evaluate(()=>{const p=S.session.pages.find(page=>page.title==='Back Squat'),h=StrengthMemory.replay(StrengthBrain.key(p));return {accepted:h.accepted,ids:h.evidence.map(e=>e.observation.id),normalized:h.evidence[0]?.normalizedLoad,rows:S.session.logs[p.id].sets.length};});
  expect(evidence.accepted).toBe(1);expect(evidence.rows).toBe(5);expect(evidence.normalized.externalKg).toBe(60);
  await context.setOffline(false);await page.reload();
- expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set'&&r.payload.completed).length)).toBe(5);
+ expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set'&&r.payload.completed).length)).toBe(20);
  expect(errors).toEqual([]);await page.screenshot({path:testInfo.outputPath('completed-learning-session.png')});
 });
 test('quota failure does not acknowledge a logged set',async({page})=>{
@@ -58,7 +58,7 @@ test('Android-size touch effort and a double tap cannot log the next set acciden
  await expect(slider).toHaveAttribute('aria-valuetext','Hard');
  await page.getByRole('button',{name:'Log set',exact:true}).dblclick();
  const facts=await page.evaluate(()=>{const rows=S.session.logs[S.session.pages.find(p=>p.title==='Back Squat').id].sets;return {logged:rows.filter(r=>r.logged).length,effort:rows[0].effort,sets:Object.values(StrengthMemory.records()).filter(r=>r.kind==='set').length};});
- expect(facts).toEqual({logged:1,effort:'hard',sets:1});expect(errors).toEqual([]);
+ expect(facts).toEqual({logged:1,effort:'hard',sets:16});expect(errors).toEqual([]);
 });
 
 for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'backed-off load'}])test(`warm-up calibrates work and later ${last.label} vetoes an Easy-first increase`,async({page})=>{
@@ -78,7 +78,7 @@ for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'bac
   const h=StrengthBrain.history(records,fact.payload.page);
   return {next:h.latest.nextKg,accepted:h.accepted,rows:Object.values(records).filter(r=>r.kind==='set').length};
  });
- expect(result).toEqual({next:40,accepted:0,rows:5});
+ expect(result).toEqual({next:40,accepted:0,rows:20});
 });
 
 test('prep timer survives reload and Next waits for zero',async({page})=>{
