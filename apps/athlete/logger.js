@@ -458,11 +458,24 @@
     return `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.stopHold()">Stop</button><button type="button" class="tm-reset" onclick="Logger.skipHold()">Skip</button></div>`;
   }
 
+  function holdIsEachSide(snap) {
+    const hold = snap.config && snap.config.hold;
+    if (!hold || !session()) return false;
+    const page = HybridSession.currentPage(session());
+    const lift = page && page.logMode === 'superset' ? HybridSession.memberOf(page, hold.memberId) : page;
+    return sidesFor(lift) === 2;
+  }
+
+  function runSwitch(snap) {
+    if (snap.config && snap.config.hold && !holdIsEachSide(snap)) return '';
+    return switchBtn();
+  }
+
   function runHtml(snap) {
     const title = timerHeading(snap);
     if (snap.view === 'countIn') {
       return `<div class="tm-full" id="logTimerFull">
-        <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
+        <div class="tm-head"><h2>${esc(title)}</h2>${runSwitch(snap)}</div>
         <div class="tm-countin">${esc(snap.countInLabel)}</div>
         ${holdActions(snap)}
       </div>`;
@@ -476,7 +489,7 @@
       ? holdActions(snap)
       : (snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : '');
     return `<div class="tm-full" id="logTimerFull">
-      <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
+      <div class="tm-head"><h2>${esc(title)}</h2>${runSwitch(snap)}</div>
       <div class="tm-run">${ringSvg(snap.progress == null ? 1 : snap.progress, inner)}</div>
       ${runningActions}
     </div>`;

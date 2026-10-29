@@ -169,6 +169,19 @@ test('a prep result posted before the logger opens is kept',()=>{
  assert.equal(ctx.S.session.prep.warmup[0].title,'Bike Easy');
 });
 
+test('a hold that is not each-side hides the timer Switch button',()=>{
+ const hang=boot([{kind:'lift',letter:'A',title:'Dead Hang',section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}]);
+ hang.ctx.Logger.paint();
+ const page=hang.ctx.HybridSession.currentPage(hang.ctx.S.session);
+ hang.ctx.Logger.startHold(page.id,0);
+ assert.doesNotMatch(hang.element.innerHTML,/tm-switch/);
+ const plank=boot([{kind:'lift',letter:'A',title:'Side Plank',eachSide:true,section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}]);
+ plank.ctx.Logger.paint();
+ const hold=plank.ctx.HybridSession.currentPage(plank.ctx.S.session);
+ plank.ctx.Logger.startHold(hold.id,0);
+ assert.match(plank.element.innerHTML,/tm-switch/);
+});
+
 test('Next advances after an each-side cool-down side 2 is ticked',()=>{
  const {ctx}=boot([
   {kind:'lift',letter:'A',title:'Couch Stretch (each side)',section:'Cool-Down',columns:['seconds'],prescribed:'45',setCount:1,countIn:3},
