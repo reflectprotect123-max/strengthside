@@ -166,32 +166,22 @@
 
   function expandWarmupRounds(members) {
     const out = [];
-    let i = 0;
-    while (i < members.length) {
-      const section = members[i].section;
-      const roundSection = section === 'Warm-Up' || section === 'Cool-Down';
-      if (!roundSection || members[i].logMode === 'complete') {
-        out.push(members[i]);
-        i += 1;
+    for (const member of members) {
+      const roundSection = member.section === 'Warm-Up' || member.section === 'Cool-Down';
+      if (!roundSection || member.logMode === 'complete') {
+        out.push(member);
         continue;
       }
-      let j = i;
-      while (j < members.length && members[j].section === section && members[j].logMode !== 'complete') j += 1;
-      const group = members.slice(i, j);
-      const rounds = group.reduce((n, member) => Math.max(n, member.setCount || 1), 1);
+      const rounds = Math.max(1, member.setCount || 1);
       for (let r = 0; r < rounds; r++) {
-        for (const member of group) {
-          if (r >= (member.setCount || 1)) continue;
-          const one = JSON.parse(JSON.stringify(member));
-          one.setCount = 1;
-          one.round = r + 1;
-          one.rounds = rounds;
-          one.id = member.id + '-r' + (r + 1);
-          if (Array.isArray(one.setTargets)) one.setTargets = one.setTargets[r] ? [one.setTargets[r]] : null;
-          out.push(one);
-        }
+        const one = JSON.parse(JSON.stringify(member));
+        one.setCount = 1;
+        one.round = r + 1;
+        one.rounds = rounds;
+        one.id = member.id + '-r' + (r + 1);
+        if (Array.isArray(one.setTargets)) one.setTargets = one.setTargets[r] ? [one.setTargets[r]] : null;
+        out.push(one);
       }
-      i = j;
     }
     return out;
   }

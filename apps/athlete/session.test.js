@@ -366,6 +366,18 @@ test('per-hand volume counts both hands',()=>{
  assert.equal(HybridSession.totals(s).volumeKg,160);
 });
 
+test('warm-up rounds stay with their step instead of spreading later rounds', () => {
+  const pages = HybridSession.pagesFromPlan({ blocks: [
+    { kind: 'lift', letter: 'A', title: 'Bike Easy', section: 'Warm-Up', columns: ['seconds'], prescribed: '90', setCount: 1 },
+    { kind: 'lift', letter: 'B', title: 'Bike Sprint', section: 'Warm-Up', columns: ['seconds'], prescribed: '20', setCount: 3 },
+    { kind: 'lift', letter: 'C', title: 'Plank Hold', section: 'Warm-Up', columns: ['seconds'], prescribed: '30', setCount: 1 },
+    { kind: 'lift', letter: 'D', title: 'Bodyweight Squat', section: 'Warm-Up', columns: ['reps'], prescribed: '12', setCount: 1 },
+    { kind: 'lift', letter: 'E', title: 'Back Squat', columns: ['reps', 'weight_kg'], setCount: 5, repTarget: '5' },
+  ]});
+  const titles = pages.filter((page) => page.logMode !== 'doneHub').map((page) => page.title);
+  assert.deepEqual(titles, ['Bike Easy', 'Bike Sprint', 'Bike Sprint', 'Bike Sprint', 'Plank Hold', 'Bodyweight Squat', 'Back Squat']);
+});
+
 test('tempo and completion lifecycle reach the real session without changing its prescription',()=>{
  const p={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'33X1',prescription:'3 x 5'}]};
  const s=HybridSession.startSession({date:'2026-10-16',plan:p});
