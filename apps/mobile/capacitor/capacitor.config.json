@@ -1,6 +1,6 @@
 {
   "appId": "com.hybrid.strength",
-  "appName": "Hybrid Strength",
+  "appName": "EDS Strength",
   "webDir": "www",
   "server": {
     "androidScheme": "https"

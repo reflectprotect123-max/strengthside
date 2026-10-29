@@ -65,7 +65,7 @@ must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-sc
 must(readFileSync(join(root, 'service-worker.js'), 'utf8').includes('./hybrid-integrations.js'), 'hybrid-integrations.js in SW cache');
 must(js.includes('HybridIntegrations.bootSync'), 'boot runs full sync on open');
 must(js.includes('HybridIntegrations.mergeIntoState'), 'shared WHOOP merges on load');
-must(html.includes('Hybrid Strength'), 'Hybrid Strength title');
+must(html.includes('<title>EDS Strength</title>'), 'EDS Strength title');
 must(js.includes('HybridSc.brandHtml()'), 'Home brand uses the Strength-only brand');
 must(js.includes('HybridSc.dotsHtml') && js.includes('S.hybridOccupancy'), 'calendar dots from hybrid occupancy');
 must(js.includes('HybridSc.lockerCardHtml()'), 'Me shows the Strength | Engine switch card');

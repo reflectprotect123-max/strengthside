@@ -1487,3 +1487,9 @@ button {
 .log-load-decision {margin:0 0 12px;color:var(--trn-blue);}
 
 @media (max-height:660px) { .log-active-set h3{font-size:19px;} .log-active-fields input{min-height:50px;} }
+
+.home-mark-img {
+  padding: 0;
+  border: 0;
+  object-fit: cover;
+}

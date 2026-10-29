@@ -245,8 +245,8 @@ function topBarHtml() {
   return `
     <header class="home-top">
       <div class="home-brand">
-        <span class="home-mark" aria-hidden="true">TH</span>
-        <div class="home-brand-text" aria-label="Hybrid Strength">
+        <img class="home-mark home-mark-img" src="assets/eds-strength-logo.png" width="36" height="36" alt="" aria-hidden="true">
+        <div class="home-brand-text" aria-label="EDS Strength">
           ${HybridSc.brandHtml()}
         </div>
       </div>
@@ -440,7 +440,7 @@ function trainingTopBarHtml() {
   return `
     <header class="trn-top">
       <div class="trn-top-left">
-        <img class="trn-logo" src="assets/hpp-logo.jpg" width="36" height="36" alt="Hybrid Power Project">
+        <img class="trn-logo" src="assets/eds-strength-logo.png" width="36" height="36" alt="EDS Strength">
         <button type="button" class="trn-icon-btn" aria-label="Program menu">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
         </button>
@@ -707,7 +707,7 @@ function meHtml() {
       <h1>Sign in</h1>
       ${HybridSc.lockerCardHtml()}
       ${meAppSectionHtml()}
-      <p class="stub page-lead">Sign in to sync your Hybrid Strength sessions and progress.</p>
+      <p class="stub page-lead">Sign in to sync your EDS Strength sessions and progress.</p>
       <div id="whoopCard"></div>
     </div>`;
 }

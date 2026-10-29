@@ -1,5 +1,5 @@
 (function (root) {
-  const PRODUCT = 'HYBRID STRENGTH';
+  const PRODUCT = 'EDS STRENGTH';
   const SNAPSHOT_DOMAINS = {
     strength: ['strength_side', 'strength'],
   };
@@ -49,7 +49,7 @@
 
   function brandHtml() {
     return `
-          <b>HYBRID STRENGTH</b>`;
+          <b>EDS STRENGTH</b>`;
   }
 
   function lockerCardHtml() {

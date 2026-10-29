@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain navy plate for the Android 12+ splash icon, so launch never flashes the
+     mark before EdsSplashOverlay plays the animation (same as EDS Conditioning). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#0A1020"/>
+</shape>
