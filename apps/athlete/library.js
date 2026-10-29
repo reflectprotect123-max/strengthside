@@ -46,7 +46,7 @@
 
   function canonicalBlock(block) {
     const b={...block};
-    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','restSec','demoStartingKg'])delete b[key];
+    for(const key of ['repMin','repMax','targetReps','targetRepMax','targetEffort','demoStartingKg'])delete b[key];
     return b;
   }
 

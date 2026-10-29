@@ -41,6 +41,14 @@ test('deleting a saved workout clears its assignments and keeps other workouts',
  const next=Lib.deleteTemplate(st,'a');assert.deepEqual(next.templates.map(t=>t.id),['b']);assert.deepEqual(next.assignments,{'2026-10-20':'b'});assert.equal(st.templates.length,2);
  assert.deepEqual(Lib.ensure({...next,assignments:{missing:'gone'}}).assignments,{});
 });
+test('a prescribed rest stays on the block and reaches the logger page',()=>{
+ const t=workout({prep:false,blocks:[{title:'Bench Press',restSec:45,columns:['reps','weight_kg'],notes:['rest 90']}]});
+ const kept=Lib.ensure({templates:[t],assignments:{}});
+ const block=kept.templates[0].blocks.find(b=>b.title==='Bench Press');
+ assert.equal(block.restSec,45);
+ const pages=HybridSession.pagesFromPlan(Lib.compile(kept.templates[0]));
+ assert.equal(pages.find(p=>p.title==='Bench Press').restSec,45);
+});
 test('received warm-up, working lifts and cool-down still compile in session order',()=>{
  const t=workout();t.blocks.push({id:'cool',kind:'lift',title:'Breathing',role:'cooldown',columns:['seconds'],prescribed:'60',setCount:3,countIn:3});
  const plan=Lib.compile(t),lifts=plan.blocks.filter(b=>b.kind==='lift');

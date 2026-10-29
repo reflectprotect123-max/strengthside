@@ -168,11 +168,11 @@ test('backing off a later comparable load vetoes Easy-first seeding without fitt
 test('dumbbell and kettlebell ramps both suggest a load below the work weight',()=>{
  const db={...page,id:'D',title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',setTargets:targets.map((t,i)=>({...t,id:`D:set:${i}`}))};
  const seeded=B.seed({id:'s',pages:[db],logs:{D:{sets:db.setTargets.map(t=>({targetId:t.id}))}}},{});
- assert.deepEqual(Array.from(seeded.logs.D.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[2,3]);
+ assert.deepEqual(Array.from(seeded.logs.D.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[3,4]);
  const kb={...page,id:'K',title:'Kettlebell Goblet Squat',equipmentId:'kettlebell',loadConvention:'single',setTargets:targets.map((t,i)=>({...t,id:`K:set:${i}`}))};
  const kbSeed=B.seed({id:'k',pages:[kb],logs:{K:{sets:kb.setTargets.map(t=>({targetId:t.id}))}}},{});
  assert.equal(kbSeed.pages[0].workingKg,6);
- assert.deepEqual(Array.from(kbSeed.logs.K.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[3,4]);
+ assert.deepEqual(Array.from(kbSeed.logs.K.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[3,5]);
 });
 test('a carry gets a starter load on every set and still produces no e1RM',()=>{
  const carry={...page,id:'C',title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand',columns:['weight_kg','meters'],setTargets:null,setCount:3};

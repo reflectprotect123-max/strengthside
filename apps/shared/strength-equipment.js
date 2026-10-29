@@ -106,11 +106,28 @@
     if(kg==null)return unknown('no_available_load');
     return {kg,confidence:'provisional',reason:VERSION+':provisional_exercise_default'};
   }
+  function ramps(working,page={}) {
+    working=number(working);
+    if(working==null||working<=0)return [null,null];
+    const min=profile(page).min;
+    const legal=target=>{
+      const loads=rack(page,[target,working,min]).filter(n=>n+EPS>=min&&n<working-EPS);
+      if(!loads.length)return null;
+      loads.sort((a,b)=>Math.abs(a-target)-Math.abs(b-target)||b-a);
+      return loads[0];
+    };
+    let first=legal(working*.5),second=legal(working*.75);
+    if(first!=null&&second!=null&&second<=first){
+      const up=next(first,page);
+      second=up!=null&&up<working-EPS?up:null;
+    }
+    return [first,second];
+  }
   function label(page={},kg) {
     if(kg==null||kg==='')return '';
     const n=number(kg);if(n==null)return '';
     const m=metadata(page);
     return m.bar&&n===(m.plates?0:m.declared)?'empty bar':String(n);
   }
-  root.StrengthEquipment={profile,floor,next,round,starter,label};
+  root.StrengthEquipment={profile,floor,next,round,ramps,starter,label};
 })(typeof window!=='undefined'?window:globalThis);

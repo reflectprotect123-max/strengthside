@@ -74,6 +74,18 @@ test('unknown equipment, units, conventions and unrelated exercises do not start
  assert.equal(E.next(10,{...db,loadConvention:'total'}),null);
  assert.equal(E.profile({...db,loadUnit:'lb'}).unit,'lb');assert.equal(E.profile({...db,loadConvention:'total'}).convention,'total');
 });
+test('dumbbell and kettlebell ramps sit near half and three quarters of the work weight',()=>{
+ const kb={equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg'};
+ assert.deepEqual(plain(E.ramps(5,db)),[3,4]);
+ assert.deepEqual(plain(E.ramps(6,kb)),[3,5]);
+ assert.deepEqual(plain(E.ramps(2,db)),[1,null]);
+ assert.deepEqual(plain(E.ramps(1,db)),[null,null]);
+ assert.deepEqual(plain(E.ramps(5,{...db,minimumKg:4})),[4,null]);
+ assert.deepEqual(plain(E.ramps(10,{...db,availableLoads:[8,12]})),[8,null]);
+ assert.deepEqual(plain(E.ramps(20,{...db,availableLoads:[5,10,15,20]})),[10,15]);
+ assert.deepEqual(plain(E.ramps(0,db)),[null,null]);
+ assert.deepEqual(plain(E.ramps(null,db)),[null,null]);
+});
 test('invalid numeric values never become automatic loads',()=>{
  for(const value of [NaN,Infinity,-1,null,undefined,'',true]){
   assert.equal(E.floor(value,db),null);assert.equal(E.next(value,db),null);assert.equal(E.round(value,10,db),null);assert.equal(E.round(10,value,db),null);

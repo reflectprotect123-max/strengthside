@@ -26,7 +26,8 @@
     for (let i = 0; i < page.setCount; i++) {
       const target=targets[i];
       const cells = {};
-      if (page.prescribed && (page.columns || []).includes('seconds')) cells.seconds = String(page.prescribed);
+      const strengthHold = page.section !== 'Warm-Up' && page.section !== 'Cool-Down' && /plank|hang|\bhold\b/i.test(page.title || '') && (page.columns || []).includes('seconds');
+      if (page.prescribed && (page.columns || []).includes('seconds') && !strengthHold) cells.seconds = String(page.prescribed);
       if (page.prescribed && (page.columns || []).includes('time_mmss')) cells.time_mmss = String(page.prescribed);
       if (page.prescribed && (page.columns || []).includes('meters')) cells.meters = String(page.prescribed);
       rows.push({

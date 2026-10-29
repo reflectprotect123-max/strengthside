@@ -163,8 +163,12 @@
       if (next !== t) {
         if (next.view === 'idle' && t.view !== 'idle') {
           beep('done');
-          const hold = t.config && t.config.hold;
-          if (hold && session()) root.S.session = HybridSession.logSet(session(), hold.setIndex, { cells: { seconds: hold.seconds } }, hold.memberId, { commit: false });
+          if (t.config && t.config.hold) recordHold(t, now);
+          const prep = prepCountdown(t);
+          lastBeep = '';
+          persistTimer(next);
+          if (prep) continuePrep(t);
+          return;
         }
         lastBeep = '';
         persistTimer(next);
@@ -405,12 +409,24 @@
     </div>`;
   }
 
-  function runHtml(snap) {
+  function timerHeading(snap) {
     const title = modeTitle(snap.mode);
+    const side = snap.config && snap.config.prepSide;
+    return side ? `${title} · side ${side}` : title;
+  }
+
+  function holdActions(snap) {
+    if (!(snap.config && snap.config.hold)) return '';
+    return `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.stopHold()">Stop</button><button type="button" class="tm-reset" onclick="Logger.skipHold()">Skip</button></div>`;
+  }
+
+  function runHtml(snap) {
+    const title = timerHeading(snap);
     if (snap.view === 'countIn') {
       return `<div class="tm-full" id="logTimerFull">
         <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
         <div class="tm-countin">${esc(snap.countInLabel)}</div>
+        ${holdActions(snap)}
       </div>`;
     }
     const inner = `<div class="tm-face">
@@ -418,10 +434,13 @@
       <strong>${esc(snap.clock || '')}</strong>
       ${snap.roundLabel ? `<em>${esc(snap.roundLabel)}</em>` : ''}
     </div>`;
+    const runningActions = snap.config && snap.config.hold
+      ? holdActions(snap)
+      : (snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : '');
     return `<div class="tm-full" id="logTimerFull">
       <div class="tm-head"><h2>${esc(title)}</h2>${switchBtn()}</div>
       <div class="tm-run">${ringSvg(snap.progress == null ? 1 : snap.progress, inner)}</div>
-      ${snap.mode !== 'rest' ? `<div class="tm-run-btns"><button type="button" class="tm-reset" onclick="Logger.timerReset()">Reset</button>${snap.mode === 'stopwatch' || snap.mode === 'forTime' ? `<button type="button" class="tm-pause" onclick="Logger.timerPause()">Pause</button>` : ''}</div>` : ''}
+      ${runningActions}
     </div>`;
   }
 
@@ -588,12 +607,14 @@
     const rows = flow.rows;
     const activeRow=flow.rows[flow.index];let authored=null;try{authored=root.StrengthTargets.forRow(page,activeRow,flow.index);}catch{}
     const repTarget = activeRow?.purpose==='ramp'?(activeRow.reps??page.targetReps):authored?.purpose==='amrap'?'AMRAP':authored?.reps?(authored.reps.max>authored.reps.min?`${authored.reps.min}–${authored.reps.max}`:authored.reps.min):page.targetReps == null?'MAX':page.targetRepMax>page.targetReps?`${page.targetReps}–${page.targetRepMax}`:page.targetReps;
-    const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
+    const eachSideReps = /each side/i.test(page.title || '') && repTarget != null && repTarget !== 'AMRAP';
+    const shownReps = eachSideReps ? `${repTarget} L · ${repTarget} R` : repTarget;
+    const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${/each side/i.test(page.title || '') ? `${esc(r.reps)} L · ${esc(r.reps)} R` : `${esc(r.reps)} reps`} · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <p class="log-note">${esc(restNote(s, page))}</p>
       <section class="log-active-set" data-exercise="${id}">
-        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
+        <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(shownReps)}${repTarget==='AMRAP'||eachSideReps?'':' reps'}</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
           <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
@@ -789,6 +810,70 @@
     return ['running','countIn'].includes(snap.view)&&!snap.done;
   }
 
+  function heldSeconds(timer, now) {
+    if (!timer) return 0;
+    const countIn = Number(timer.config && timer.config.countInMs) || 0;
+    const startedAt = timer.startedAt || (timer.countInAt != null ? timer.countInAt + countIn : null);
+    if (!startedAt) return 0;
+    const elapsed = Math.max(0, now - startedAt - (timer.pauseAccum || 0));
+    const cap = Number(timer.config && timer.config.totalMs) || 0;
+    const ms = cap > 0 ? Math.min(elapsed, cap) : elapsed;
+    return Math.floor(ms / 1000);
+  }
+
+  function recordHold(timer, now) {
+    const hold = timer.config && timer.config.hold;
+    if (!hold || !session()) return;
+    root.S.session = HybridSession.logSet(session(), hold.setIndex, { cells: { seconds: heldSeconds(timer, now) } }, hold.memberId, { commit: false });
+  }
+
+  function prepCountdown(timer) {
+    const s = session();
+    const page = s && HybridSession.currentPage(s);
+    return !!(timer && timer.mode === 'countdown' && !(timer.config && timer.config.hold) && page && ['Warm-Up', 'Cool-Down'].includes(page.section) && s.warmupClock === page.id);
+  }
+
+  function armPrepClock(page, side) {
+    const s = session();
+    const total = Number(page.prescribed) * 1000;
+    if (!Number.isFinite(total) || total <= 0) return;
+    const previous = timerState();
+    const previousClock = s.warmupClock;
+    s.warmupClock = page.id;
+    let next = HybridTimer.create();
+    next.mode = 'countdown';
+    next.config = { totalMs: total, countInMs: (Number(page.countIn) || 0) * 1000, plainCount: true };
+    if (/each side/i.test(page.title || '')) next.config.prepSide = side || 1;
+    next.view = 'setup';
+    next = HybridTimer.start(next, Date.now());
+    root.S.timer = next;
+    try { if (typeof root.save === 'function') root.save(); }
+    catch {
+      root.S.timer = previous;
+      s.warmupClock = previousClock;
+      toast = 'Could not save. Free some storage and try again.';
+    }
+  }
+
+  function continuePrep(timer) {
+    const s = session();
+    if (!s) return;
+    const page = HybridSession.currentPage(s);
+    if (!page || !['Warm-Up', 'Cool-Down'].includes(page.section) || s.warmupClock !== page.id) return;
+    const side = Number(timer.config && timer.config.prepSide) || 1;
+    if (/each side/i.test(page.title || '') && side < 2) {
+      armPrepClock(page, 2);
+      paint();
+      return;
+    }
+    const moved = HybridSession.nextPage(s);
+    if (moved.blockIndex === s.blockIndex) return;
+    delete (moved.restChoices || {})[HybridSession.currentPage(moved).id];
+    root.S.timer = HybridTimer.create();
+    lastBeep = '';
+    persist(moved);
+  }
+
   function armWarmupClock() {
     const s = session();
     if (!s || !root.S.loggerOpen || s.phase !== 'block') return;
@@ -800,19 +885,7 @@
     const timer = timerState();
     if (timer.view === 'running' || timer.view === 'countIn') return;
     if (s.warmupClock === page.id) return;
-    const previousClock=s.warmupClock;
-    s.warmupClock = page.id;
-    let next = HybridTimer.create();
-    next.mode = 'countdown';
-    next.config = { totalMs: total, countInMs: (Number(page.countIn) || 0) * 1000, plainCount: true };
-    next.view = 'setup';
-    next = HybridTimer.start(next, Date.now());
-    root.S.timer = next;
-    try{if(typeof root.save==='function')root.save();}
-    catch{
-      root.S.timer=timer;s.warmupClock=previousClock;
-      toast='Could not save. Free some storage and try again.';
-    }
+    armPrepClock(page, 1);
   }
 
   function listenPrep() {
@@ -971,15 +1044,21 @@
       const s = session();
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
-      const row = s.logs[lift.id] && s.logs[lift.id].sets[index];
-      const seconds = Number((row && row.cells && row.cells.seconds) || lift.prescribed) || 30;
+      const seconds = Number(lift.prescribed) || 30;
       let next = HybridTimer.create();
       next.mode = 'countdown';
-      next.config = { totalMs: seconds * 1000, countInMs: 3000, plainCount: true, hold: { memberId: lift.id, setIndex: index, seconds } };
+      next.config = { totalMs: seconds * 1000, countInMs: 3000, plainCount: true, hold: { memberId: lift.id, setIndex: index } };
       next.view = 'setup';
       next = HybridTimer.start(next, Date.now());
       persistTimer(next);
     },
+    stopHold() {
+      const timer = timerState();
+      if (!(timer.config && timer.config.hold)) return;
+      recordHold(timer, Date.now());
+      persistTimer(HybridTimer.stop(timer));
+    },
+    skipHold() { Logger.stopHold(); },
 
     padMiss() { if (pad) { pad.miss = !pad.miss; paint(); } },
     padLog() {
