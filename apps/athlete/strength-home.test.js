@@ -48,3 +48,19 @@ test('sleep hours and steps stay on their own dates when the summary day is newe
  assert.equal(S.checkin['2026-10-21'].steps,22089);
  assert.equal(S.checkin['2026-10-21'].whoopStrain,3.4);
 });
+function homeWith(S,todayDate){const window={S};runInNewContext(code,{window,S,today:()=>todayDate});return window.StrengthHome;}
+test('Home shows only Recovery and Sleep, then HR, RHR and Steps, from Fitbit',()=>{
+ const S={settings:{fitbit:{connected:true}},checkin:{},fitbitHistory:[]};
+ const H=homeWith(S,'2026-10-29');
+ H.importHistory(S,{normalized:{date:'2026-10-29',recoveryScore:71,hrvMs:40,restingHr:58,heartRateBpm:72,sleepHours:7.4,steps:6420,sleepPerformance:90}},'2026-10-29','Fitbit');
+ const out=H.html();
+ const order=[...out.matchAll(/data-metric="(\w+)"/g)].map(m=>m[1]);
+ assert.deepEqual(order,['recovery','sleep','hr','rhr','steps']);
+ assert.match(out,/>71 <small>%/);assert.match(out,/>7\.4 <small>h/);assert.match(out,/>72 <small>bpm/);assert.match(out,/>58 <small>bpm/);assert.match(out,/>6,420 </);
+ for(const gone of ['View day','WHOOP','Synced','Morning check-in','Bedtime check-in','HRV','Sleep performance','Start training','View progress','type="date"'])assert.ok(!out.includes(gone),gone);
+ assert.ok(out.includes('pg-cards pg-cards-3'));
+});
+test('Home shows dashes and Not recorded when nothing has synced',()=>{
+ const S={settings:{},checkin:{}};const out=homeWith(S,'2026-10-29').html();
+ assert.equal((out.match(/Not recorded/g)||[]).length,5);assert.equal((out.match(/>— </g)||[]).length,5);
+});

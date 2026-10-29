@@ -17,9 +17,6 @@ project(':capacitor-mlkit-text-recognition').projectDir = new File('../node_modu
 include ':capacitor-app'
 project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
 
-include ':capacitor-browser'
-project(':capacitor-browser').projectDir = new File('../node_modules/@capacitor/browser/android')
-
 include ':capacitor-camera'
 project(':capacitor-camera').projectDir = new File('../node_modules/@capacitor/camera/android')
 
@@ -28,3 +25,6 @@ project(':capacitor-filesystem').projectDir = new File('../node_modules/@capacit
 
 include ':capgo-capacitor-updater'
 project(':capgo-capacitor-updater').projectDir = new File('../node_modules/@capgo/capacitor-updater/android')
+
+include ':capacitor-browser'
+project(':capacitor-browser').projectDir = new File('../node_modules/@capacitor/browser/android')
