@@ -126,6 +126,33 @@ test('eachSide flag drives side handling without a title suffix',()=>{
  assert.doesNotMatch(hold.element.innerHTML,/DB RDL \/ Side Plank · side/);
 });
 
+test('superset rest uses coach restSec and skips a one-member ramp round',()=>{
+ const {ctx}=boot([
+  {kind:'lift',letter:'F1',title:'DB Bench Press',restSec:75,columns:['reps','weight_kg'],setCount:1,repTarget:'8',equipmentId:'dumbbell',loadConvention:'per_hand'},
+  {kind:'lift',letter:'F2',title:'Chin-up',columns:['reps','weight_kg'],setCount:1,repTarget:'5'}
+ ]);
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ const bench=page.members.find(m=>m.title==='DB Bench Press');
+ const chin=page.members.find(m=>m.title==='Chin-up');
+ ctx.S.session.logs[bench.id].sets.unshift({purpose:'ramp',reps:8,kg:10,effort:'easy',logged:false,miss:false,cells:{}});
+ ctx.Logger.check(bench.id,0);
+ assert.notEqual(ctx.S.timer.mode,'rest');
+ assert.equal(ctx.S.session.logs[bench.id].sets[0].logged,true);
+ assert.equal(ctx.S.session.logs[bench.id].sets[0].purpose,'ramp');
+ const work=ctx.S.session.logs[bench.id].sets.findIndex(r=>r.purpose!=='ramp');
+ ctx.S.session.logs[bench.id].sets[work].reps=8;
+ ctx.S.session.logs[bench.id].sets[work].kg=24;
+ ctx.S.session.logs[bench.id].sets[work].effort='average';
+ ctx.S.session.logs[chin.id].sets[0].reps=5;
+ ctx.S.session.logs[chin.id].sets[0].kg=0;
+ ctx.S.session.logs[chin.id].sets[0].effort='average';
+ ctx.Logger.check(bench.id,work);
+ assert.notEqual(ctx.S.timer.mode,'rest');
+ ctx.Logger.check(chin.id,0);
+ assert.equal(ctx.S.timer.mode,'rest');
+ assert.equal(ctx.S.timer.config.restMs,75000);
+});
+
 test('a finished hold records the prescribed seconds and a count-in stop records zero',()=>{
  const {ctx}=boot([
   {kind:'lift',letter:'A',title:'Dead Hang',section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}

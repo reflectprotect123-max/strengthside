@@ -105,6 +105,15 @@
     if (!step) return true;
     return steps.filter((item) => item.purpose === step.purpose && item.round === step.round && !(item.memberId === memberId && item.setIndex === setIndex)).every((item) => s.logs[item.memberId] && s.logs[item.memberId].sets[item.setIndex] && s.logs[item.memberId].sets[item.setIndex].logged);
   }
+  function restAfterRound(s, page, memberId, setIndex) {
+    if (!completesRound(s, page, memberId, setIndex)) return false;
+    if (!page || page.logMode !== 'superset') return true;
+    const steps = HybridSession.supersetSteps(s, page);
+    const step = steps.find((item) => item.memberId === memberId && item.setIndex === setIndex);
+    if (!step) return true;
+    const members = steps.filter((item) => item.purpose === step.purpose && item.round === step.round);
+    return !(members.length === 1 && step.purpose === 'ramp');
+  }
   function startChosenRest(s,page) {
     const ms=restMilliseconds(s,page);
     if(!ms)return;
@@ -999,7 +1008,7 @@
       if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
       const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
       if (lift.logMode === 'kg') patch.kg = Number.isFinite(kg) ? kg : null;
-      const selectedRest=completesRound(s,page,memberId,f.index)?restMilliseconds(s,page):0;
+      const selectedRest=restAfterRound(s,page,memberId,f.index)?restMilliseconds(s,page):0;
       patch.context={requestedRestSec:selectedRest?Math.round(selectedRest/1000):null,elapsedRestSec:null};
       const next = HybridSession.logSet(s, f.index, patch, memberId);
       const rows = next.logs[memberId].sets;
@@ -1026,7 +1035,7 @@
         index, rest: !f.editing && index >= 0, editing: false, adjustment,
         draft: { reps: r && r.reps != null ? r.reps : '', kg: r && r.kg != null ? r.kg : '', effort: null, miss: false },
       } };
-      if (!f.editing && completesRound(s, page, memberId, f.index)) startChosenRest(next, page);
+      if (!f.editing && restAfterRound(s, page, memberId, f.index)) startChosenRest(next, page);
       persist(next);
     },
     gotQuote() {
@@ -1107,7 +1116,7 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(completesRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
+      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(restAfterRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {
