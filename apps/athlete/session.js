@@ -425,9 +425,10 @@
           if (countsReps) reps += count;
           const hands=row.context?.normalizedLoad?.convention==='per_hand'?2:1;
           if (countsReps && count > 0) kg += weight * count * hands;
-          meters += Number(row.cells && row.cells.meters) || 0;
-          // Each-side seconds are saved per side; count both sides in the total.
-          seconds += rowSeconds(row) * (member.eachSide === true || /\(each side\)/i.test(member.title || '') ? 2 : 1);
+          // Each-side holds and carries are saved per side; count both sides in the total.
+          const sides = member.eachSide === true || /\(each side\)/i.test(member.title || '') ? 2 : 1;
+          meters += (Number(row.cells && row.cells.meters) || 0) * sides;
+          seconds += rowSeconds(row) * sides;
         }
       }
     }

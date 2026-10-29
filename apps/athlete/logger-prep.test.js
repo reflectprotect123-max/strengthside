@@ -232,6 +232,8 @@ test('an each-side carry shows a second side the same way as a hold',()=>{
  assert.equal(ctx.S.session.logs[page.id].sets[0].logged,false);
  ctx.Logger.check(page.id,0);
  assert.equal(ctx.S.session.logs[page.id].sets[0].logged,true);
+ assert.equal(Number(ctx.S.session.logs[page.id].sets[0].cells.meters),20);
+ assert.equal(ctx.HybridSession.totals(ctx.S.session).meters,40);
 });
 
 test('an each-side strength hold runs both sides and saves per-side seconds',()=>{

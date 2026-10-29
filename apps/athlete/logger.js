@@ -1191,6 +1191,8 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
+      // Each-side carries keep one row of per-side metres (prescribed per side);
+      // side 2 confirms the same distance and totals() counts both sides.
       if (!row.logged && isEachSideCarry(lift) && carrySide(s, lift.id) < 2) {
         const result = root.TrainingCore.validateRow(row, lift);
         if (!result.ok) { toast = result.error; paint(); return; }

@@ -399,3 +399,17 @@ test('each-side hold rows save per-side seconds and totals count both sides', ()
   assert.equal(run({ kind: 'lift', letter: 'A', title: 'Side Plank (each side)', columns: ['seconds'], prescribed: '30', setCount: 1 }).total, 60);
   assert.equal(run({ kind: 'lift', letter: 'A', title: 'Front Plank', columns: ['seconds'], prescribed: '30', setCount: 1 }).total, 30);
 });
+
+test('each-side carry rows save per-side metres and totals count both sides', () => {
+  const run = (block) => {
+    let s = HybridSession.startSession({ date: '2026-10-30', letter: 'A', plan: { blocks: [block] } });
+    const page = s.pages.find((p) => p.kind === 'lift');
+    s = HybridSession.logSet(s, 0, { cells: { meters: 20 }, kg: 16, effort: 'medium' }, page.id);
+    return { row: s.logs[page.id].sets[0], total: HybridSession.totals(s).meters };
+  };
+  const flagged = run({ kind: 'lift', letter: 'A', title: 'Suitcase Carry', eachSide: true, columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 });
+  assert.equal(flagged.row.cells.meters, 20);
+  assert.equal(flagged.total, 40);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Suitcase Carry (each side)', columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 }).total, 40);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Farmer Carry', columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 }).total, 20);
+});
