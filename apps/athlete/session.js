@@ -159,6 +159,7 @@
       prescribed,
       restSec: restSeconds(block),
       countIn: Number(block.countIn) || 0,
+      eachSide: block.eachSide === true,
       askEffort: block.section !== 'Warm-Up' && block.section !== 'Cool-Down',
     };
   }

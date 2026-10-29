@@ -409,8 +409,18 @@
     </div>`;
   }
 
+  function sidesFor(page) {
+    return page && (page.eachSide || /\(each side\)/i.test(page.title || '')) ? 2 : 1;
+  }
+
   function timerHeading(snap) {
-    const title = modeTitle(snap.mode);
+    let title = modeTitle(snap.mode);
+    const hold = snap.config && snap.config.hold;
+    if (hold && session()) {
+      const page = HybridSession.currentPage(session());
+      const member = page && page.logMode === 'superset' ? HybridSession.memberOf(page, hold.memberId) : null;
+      if (member && member.title) title = member.title;
+    }
     const side = snap.config && snap.config.prepSide;
     return side ? `${title} · side ${side}` : title;
   }
@@ -503,7 +513,7 @@
   }
 
   function columnLabel(page, key) {
-    if (key === 'weight_kg' && page.loadConvention === 'per_hand' && /farmer|carry|each side/i.test(page.title || '')) return 'Weight (kg each side)';
+    if (key === 'weight_kg' && page.loadConvention === 'per_hand' && (/farmer|carry/i.test(page.title || '') || sidesFor(page) === 2)) return 'Weight (kg each side)';
     return (root.HybridLibrary && root.HybridLibrary.trackLabel && root.HybridLibrary.trackLabel(key)) || key;
   }
 
@@ -607,9 +617,9 @@
     const rows = flow.rows;
     const activeRow=flow.rows[flow.index];let authored=null;try{authored=root.StrengthTargets.forRow(page,activeRow,flow.index);}catch{}
     const repTarget = activeRow?.purpose==='ramp'?(activeRow.reps??page.targetReps):authored?.purpose==='amrap'?'AMRAP':authored?.reps?(authored.reps.max>authored.reps.min?`${authored.reps.min}–${authored.reps.max}`:authored.reps.min):page.targetReps == null?'MAX':page.targetRepMax>page.targetReps?`${page.targetReps}–${page.targetRepMax}`:page.targetReps;
-    const eachSideReps = /each side/i.test(page.title || '') && repTarget != null && repTarget !== 'AMRAP';
+    const eachSideReps = sidesFor(page) === 2 && repTarget != null && repTarget !== 'AMRAP';
     const shownReps = eachSideReps ? `${repTarget} L · ${repTarget} R` : repTarget;
-    const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${/each side/i.test(page.title || '') ? `${esc(r.reps)} L · ${esc(r.reps)} R` : `${esc(r.reps)} reps`} · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
+    const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${sidesFor(page) === 2 ? `${esc(r.reps)} L · ${esc(r.reps)} R` : `${esc(r.reps)} reps`} · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
       <p class="log-note">${esc(restNote(s, page))}</p>
@@ -843,7 +853,7 @@
     let next = HybridTimer.create();
     next.mode = 'countdown';
     next.config = { totalMs: total, countInMs: (Number(page.countIn) || 0) * 1000, plainCount: true };
-    if (/each side/i.test(page.title || '')) next.config.prepSide = side || 1;
+    if (sidesFor(page) === 2) next.config.prepSide = side || 1;
     next.view = 'setup';
     next = HybridTimer.start(next, Date.now());
     root.S.timer = next;
@@ -861,7 +871,7 @@
     const page = HybridSession.currentPage(s);
     if (!page || !['Warm-Up', 'Cool-Down'].includes(page.section) || s.warmupClock !== page.id) return;
     const side = Number(timer.config && timer.config.prepSide) || 1;
-    if (/each side/i.test(page.title || '') && side < 2) {
+    if (sidesFor(page) === 2 && side < 2) {
       armPrepClock(page, 2);
       paint();
       return;
@@ -931,6 +941,7 @@
   }
 
   const Logger = {
+    sidesFor,
     open,
     close,
     paint,
@@ -1048,6 +1059,7 @@
       let next = HybridTimer.create();
       next.mode = 'countdown';
       next.config = { totalMs: seconds * 1000, countInMs: 3000, plainCount: true, hold: { memberId: lift.id, setIndex: index } };
+      if (sidesFor(lift) === 2) next.config.prepSide = 1;
       next.view = 'setup';
       next = HybridTimer.start(next, Date.now());
       persistTimer(next);

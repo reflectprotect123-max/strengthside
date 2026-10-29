@@ -98,6 +98,23 @@ test('a strength hold counts down after the count-in and records the seconds act
  assert.equal(ctx.S.timer.view,'idle');
 });
 
+test('eachSide flag drives side handling without a title suffix',()=>{
+ const carry=boot([{id:'C',kind:'lift',letter:'A',title:'Suitcase Carry',eachSide:true,columns:['meters','weight_kg'],setCount:2,repTarget:'20'}]);
+ const page=carry.ctx.HybridSession.currentPage(carry.ctx.S.session);
+ const sides=carry.ctx.Logger.sidesFor?carry.ctx.Logger.sidesFor(page):null;
+ assert.equal(sides,2);
+ const hold=boot([
+  {kind:'lift',letter:'F1',title:'DB RDL',columns:['reps','weight_kg'],setCount:1,repTarget:'8'},
+  {kind:'lift',letter:'F2',title:'Side Plank',eachSide:true,section:'Strength',columns:['seconds'],repTarget:'30',setCount:1}
+ ]);
+ hold.ctx.Logger.paint();
+ const pair=hold.ctx.HybridSession.currentPage(hold.ctx.S.session);
+ const plank=pair.members.find(m=>m.title==='Side Plank');
+ hold.ctx.Logger.startHold(plank.id,0);
+ assert.match(hold.element.innerHTML,/Side Plank · side 1/);
+ assert.doesNotMatch(hold.element.innerHTML,/DB RDL \/ Side Plank · side/);
+});
+
 test('a finished hold records the prescribed seconds and a count-in stop records zero',()=>{
  const {ctx}=boot([
   {kind:'lift',letter:'A',title:'Dead Hang',section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}
