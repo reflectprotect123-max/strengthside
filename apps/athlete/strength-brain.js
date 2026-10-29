@@ -39,7 +39,12 @@
     if(cached?.has(cacheKey))return cached.get(cacheKey);
     const fallback={version:'online-v1',k:root.StrengthLearning?.initial().k??.0333/1.0333,rows:[],accepted:0,updates:0,startingScale:null,evidenceFingerprint:'unavailable',conflicted:false,ledger:[],diagnostics:[],evidence:[],latestFirst:null};
     let r=fallback;
-    try{if(contextKey&&root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
+    const facts=Object.values(records||{}).filter(record=>{
+      const row=record?.payload?.row,section=record?.payload?.page?.section;
+      if(row?.skipped)return false;
+      return section!=='Warm-Up'&&section!=='Cool-Down';
+    });
+    try{if(contextKey&&root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(facts,{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
     const evidence=r.evidence.map(e=>({...e,sessionId:e.observation.sessionId,
       sourceSignature:'source-v3:'+JSON.stringify([e.observation.id,e.observation.revision,e.observation.weight,e.observation.reps,e.observation.rir,e.observation.miss]),
       sourceSetIds:[e.observation.id]}));

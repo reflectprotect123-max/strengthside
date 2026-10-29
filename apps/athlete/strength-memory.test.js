@@ -142,6 +142,30 @@ test('Coach receipt waits for durable evidence, retries across restart and does 
  await restored.bind('someone-else');await restored.sync({...io,userId:async()=> 'someone-else'});assert.equal(receipts,3);
 });
 
+test('skipped and prep rows become set records; brain history ignores them',()=>{
+ const {M,ctx}=create();const S=ctx.HybridSession;
+ let s=S.startSession({date:'2026-11-02',letter:'A',plan:{blocks:[
+  {id:'W',kind:'lift',letter:'A',title:'Bike Easy',section:'Warm-Up',columns:['seconds'],setCount:1,repTarget:'90',prescribed:'90'},
+  {id:'E',kind:'lift',letter:'B',title:'Back Squat',equipmentId:'barbell',loadConvention:'barbell_total',barWeightKg:20,columns:['reps','weight_kg'],setCount:2,repTarget:'5'}]}});
+ s.coachAssignmentId='a1';
+ const warm=s.pages.find(p=>p.title==='Bike Easy');
+ s=S.logSet(s,0,{cells:{seconds:90}},warm.id,{commit:true});
+ const squat=s.pages.find(p=>p.title==='Back Squat');
+ s.logs[squat.id].sets[0].skipped=true;
+ s=S.logSet(s,1,{kg:80,reps:5,effort:'average'},squat.id,{commit:true});
+ s.completedAt=new Date('2026-11-02T08:00:00Z').toISOString();
+ s.phase='summary';
+ M.capture(s);
+ const recs=Object.values(M.records()).filter(r=>r.kind==='set');
+ assert.ok(recs.some(r=>r.payload.row.skipped===true&&r.deleted===false));
+ assert.ok(recs.some(r=>r.payload.page.section==='Warm-Up'&&r.deleted===false));
+ const hist=ctx.StrengthBrain.history(M.records(),squat,'other');
+ const learned=[...hist.evidence.map(e=>e.observation?.id),...hist.ledger.filter(x=>!x.deleted).map(x=>x.id)];
+ const ignored=recs.filter(r=>r.payload.row.skipped||['Warm-Up','Cool-Down'].includes(r.payload.page?.section)).map(r=>r.id);
+ assert.ok(ignored.length>=2);
+ assert.ok(ignored.every(id=>!learned.includes(id)));
+});
+
 test('finishing during an in-flight upload defers the receipt until final revisions are acknowledged',async()=>{
  const {M}=create(),s=session();s.pages[0].coachAssignmentId='assignment';s.completedAt=null;M.capture(s);
  let release,entered;const started=new Promise(r=>entered=r);let completions=0;
