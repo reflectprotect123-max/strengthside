@@ -92,7 +92,8 @@ test('prep timer survives reload and Next waits for zero',async({page})=>{
  await page.clock.fastForward(10000);await page.reload();
  expect(await page.evaluate(()=>S.timer.startedAt)).toBe(start);
  await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeDisabled();
- await page.clock.fastForward(171000);await expect(page.locator('#logTimerFull h2')).toHaveText('Row');
+ await page.clock.fastForward(171000);await expect(page.locator('#logTimerFull h2')).toHaveText('Bike');
+ expect(await page.evaluate(()=>S.session.pages[S.session.blockIndex].id)).toBe('A-r2');
 });
 test('an assigned reps-only workout keeps the logger reps-only',async({page})=>{
  await addSquat(page);await patchAssignedBlock(page,{columns:['reps']});
