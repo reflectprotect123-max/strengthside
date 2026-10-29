@@ -174,6 +174,24 @@ test('dumbbell and kettlebell ramps both suggest a load below the work weight',(
  assert.equal(kbSeed.pages[0].workingKg,6);
  assert.deepEqual(Array.from(kbSeed.logs.K.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[3,5]);
 });
+test('a superset member gets the same working kg as the same solo history',()=>{
+ const reps=id=>[0,1,2].map(i=>({id:`${id}:set:${i}`,purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false}));
+ const bench=id=>({exerciseId:'db-bench',equipmentId:'dumbbell',id,letter:id,title:'DB Bench Press',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'per_hand',minimumKg:1,setCount:3,columns:['reps','weight_kg'],setTargets:reps(id)});
+ const f1=bench('F1');
+ const chin={exerciseId:'chin',id:'F2',letter:'F2',title:'Chin-up',kind:'lift',logMode:'reps',loadUnit:'kg',columns:['reps'],setCount:3,setTargets:reps('F2')};
+ const pair={id:'F',letter:'F',title:'DB Bench Press / Chin-up',kind:'lift',logMode:'superset',members:[f1,chin]};
+ const solo=bench('G');
+ const prior=record(f1,{...row(0,8,'average',24),id:'old'},{id:'old'});
+ const records={old:prior};
+ const sets=targets=>targets.map(t=>({targetId:t.id}));
+ const sup=B.seed({id:'sup',pages:[pair],logs:{F1:{sets:sets(f1.setTargets)},F2:{sets:sets(chin.setTargets)}}},records);
+ const alone=B.seed({id:'solo',pages:[solo],logs:{G:{sets:sets(solo.setTargets)}}},records);
+ const f1kg=sup.logs.F1.sets.find(r=>r.purpose==='working').kg;
+ const gkg=alone.logs.G.sets.find(r=>r.purpose==='working').kg;
+ assert.equal(f1kg,gkg);
+ assert.equal(typeof f1kg,'number');
+});
+
 test('a carry gets a starter load on every set and still produces no e1RM',()=>{
  const carry={...page,id:'C',title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand',columns:['weight_kg','meters'],setTargets:null,setCount:3};
  const seeded=B.seed({id:'s',pages:[carry],logs:{C:{sets:[{kg:null},{kg:null},{kg:null}]}}},{});
