@@ -938,6 +938,30 @@
     }
   }
 
+  // After a set is logged, the brain picks the next unlogged row's weight from
+  // the logged effort. Used by the single-lift flow and by superset rows.
+  function feedBrainNext(next, lift, sessionId) {
+    const rows = (next.logs[lift.id] && next.logs[lift.id].sets) || [];
+    const index = rows.findIndex(r => !r.logged && !r.skipped);
+    if (index < 0 || lift.logMode !== 'kg') return null;
+    const source = rows.slice(0, index).filter(r => r.logged).at(-1);
+    if (!source) return null;
+    const state = { rows, records: root.StrengthMemory?.records?.() || {}, excludeSession: sessionId };
+    const adjustment = StrengthBrain.next({ page: lift, row: source, nextRow: rows[index], index, state });
+    if (!adjustment) return null;
+    rows[index].kg = adjustment.kg;
+    if (source.purpose === 'ramp' || source.purpose === 'warmup') {
+      for (let i = index + 1; i < rows.length; i++) {
+        const later = rows[i];
+        if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
+        const adj = StrengthBrain.next({ page: lift, row: source, nextRow: later, index: i, state });
+        if (adj && typeof adj.kg === 'number' && Number.isFinite(adj.kg)) later.kg = adj.kg;
+      }
+    }
+    source.loadDecision = adjustment;
+    return adjustment;
+  }
+
   function logFinishedPrep(s, page, timer) {
     const rows = (s.logs[page.id] && s.logs[page.id].sets) || [];
     const idx = rows.findIndex((r) => !r.logged);
@@ -1087,23 +1111,7 @@
       const next = HybridSession.logSet(s, f.index, patch, memberId);
       const rows = next.logs[memberId].sets;
       const index = rows.findIndex(r => !r.logged && !r.skipped);
-      let adjustment = null;
-      if (index >= 0 && lift.logMode === 'kg') {
-        const source = rows.slice(0,index).filter(r=>r.logged).at(-1);
-        if (source) {
-          adjustment = StrengthBrain.next({page:lift,row:source,nextRow:rows[index],index,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
-          rows[index].kg = adjustment.kg;
-          if ((source.purpose === 'ramp' || source.purpose === 'warmup') && adjustment) {
-            for (let i = index + 1; i < rows.length; i++) {
-              const later = rows[i];
-              if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
-              const adj = StrengthBrain.next({page:lift,row:source,nextRow:later,index:i,state:{rows,records:root.StrengthMemory?.records?.()||{},excludeSession:s.id}});
-              if (adj && typeof adj.kg==='number' && Number.isFinite(adj.kg)) later.kg = adj.kg;
-            }
-          }
-          source.loadDecision = adjustment;
-        }
-      }
+      const adjustment = feedBrainNext(next, lift, s.id);
       const r = rows[index];
       next.loggerSetFlow = { ...(next.loggerSetFlow || {}), [memberId]: {
         index, rest: !f.editing && index >= 0, editing: false, adjustment,
@@ -1202,7 +1210,7 @@
         persist(next);
         return;
       }
-      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(isEachSideCarry(lift))next.loggerSides={...(next.loggerSides||{}),[lift.id]:1};if(restAfterRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
+      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(page.logMode==='superset')feedBrainNext(next,lift,s.id);if(isEachSideCarry(lift))next.loggerSides={...(next.loggerSides||{}),[lift.id]:1};if(restAfterRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {

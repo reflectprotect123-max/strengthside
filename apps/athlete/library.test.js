@@ -62,3 +62,13 @@ test('a coach each-side flag survives compile without an "(each side)" title',()
  assert.equal(lifts.find(b=>b.title==='Suitcase Carry').eachSide,true);
  assert.notEqual(lifts.find(b=>b.title==='Farmer Carry').eachSide,true);
 });
+test('our inferred mapping records KB goblet squats as kettlebell and plain goblet squats as dumbbell',()=>{
+ const t=workout({prep:false,blocks:[{title:'KB Goblet Squat',columns:['reps','weight_kg']},{title:'Goblet Squat',columns:['reps','weight_kg']}]});
+ const st=Lib.ensure({templates:[t],assignments:{}}),[kb,db]=st.templates[0].blocks.filter(b=>b.kind==='lift');
+ assert.equal(kb.equipmentId,'kettlebell');assert.equal(kb.loadConvention,'single');
+ assert.equal(db.equipmentId,'dumbbell');
+});
+test('DB RDL gets a provisional first-set weight from the normal starter',()=>{
+ const s=globalThis.StrengthEquipment.starter({title:'DB RDL',equipmentId:'dumbbell',loadConvention:'per_hand',loadUnit:'kg',minimumKg:1});
+ assert.equal(s.kg,8);assert.equal(s.confidence,'provisional');
+});

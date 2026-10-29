@@ -99,6 +99,7 @@
       else if(/\bcurl\b/i.test(title))desired=4;
       else if(/\bbench press\b/i.test(title))desired=5;
       else if(/\boverhead press\b/i.test(title))desired=4;
+      else if(/\brdl\b|\bromanian deadlift\b/i.test(title))desired=8;
       else if(/\brow\b/i.test(title))desired=6;
     }
     if(desired==null)return unknown('unsupported_equipment_convention_or_exercise');

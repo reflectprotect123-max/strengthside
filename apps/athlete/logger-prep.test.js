@@ -270,3 +270,24 @@ test('a finished hold records the prescribed seconds and a count-in stop records
  assert.equal(ctx.S.session.logs[page.id].sets[0].cells.seconds,30);
  assert.equal(ctx.S.timer.view,'idle');
 });
+
+test('superset lifts get the brain next-set weight from the logged effort, like a single lift',()=>{
+ const {ctx}=boot([
+  {kind:'lift',letter:'G1',title:'DB RDL',restSec:60,columns:['reps','weight_kg'],setCount:3,repTarget:'10',equipmentId:'dumbbell',loadConvention:'per_hand',minimumKg:1},
+  {kind:'lift',letter:'G2',title:'KB Goblet Squat',restSec:60,columns:['reps','weight_kg'],setCount:3,repTarget:'10',equipmentId:'kettlebell',loadConvention:'single',minimumKg:1}
+ ]);
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ const rdl=page.members.find(m=>m.title==='DB RDL');
+ const rows=()=>ctx.S.session.logs[rdl.id].sets;
+ const first=rows().findIndex(r=>r.purpose!=='ramp');
+ rows().forEach((r,i)=>{if(i<first){r.logged=true;r.effort='easy';}});
+ rows()[first].kg=20;rows()[first].reps=10;rows()[first].effort='very_easy';
+ const before=rows()[first+1].kg;
+ ctx.Logger.check(rdl.id,first);
+ assert.equal(rows()[first].logged,true);
+ const decision=rows()[first].loadDecision;
+ assert.ok(decision&&Number.isFinite(decision.kg),'brain decision recorded on the logged row');
+ assert.equal(rows()[first+1].kg,decision.kg);
+ assert.notEqual(rows()[first+1].kg,before);
+ assert.ok(rows()[first+1].kg>=20,'a very easy set does not drop the next weight');
+});
