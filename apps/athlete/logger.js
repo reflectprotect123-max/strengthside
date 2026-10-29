@@ -876,15 +876,15 @@
     return Math.floor(ms / 1000);
   }
 
-  function heldTotal(timer, now) {
-    const prior = Number(timer.config && timer.config.hold && timer.config.hold.sideSeconds) || 0;
-    return prior + heldSeconds(timer, now);
-  }
-
   function recordHold(timer, now) {
     const hold = timer.config && timer.config.hold;
     if (!hold || !session()) return;
-    root.S.session = HybridSession.logSet(session(), hold.setIndex, { cells: { seconds: heldTotal(timer, now) } }, hold.memberId, { commit: false });
+    // Each-side holds are prescribed per side, so save seconds per side:
+    // side 1 alone, or the mean of both sides once side 2 has been held.
+    const firstSide = hold.sideSeconds == null ? null : Number(hold.sideSeconds) || 0;
+    const held = heldSeconds(timer, now);
+    const seconds = firstSide == null ? held : (held > 0 ? Math.round((firstSide + held) / 2) : firstSide);
+    root.S.session = HybridSession.logSet(session(), hold.setIndex, { cells: { seconds } }, hold.memberId, { commit: false });
   }
 
   function continueHold(timer, now) {
@@ -902,7 +902,7 @@
       countInMs: timer.config.countInMs,
       plainCount: true,
       prepSide: 2,
-      hold: { memberId: hold.memberId, setIndex: hold.setIndex, sideSeconds: heldTotal(timer, now) },
+      hold: { memberId: hold.memberId, setIndex: hold.setIndex, sideSeconds: heldSeconds(timer, now) },
     };
     next.view = 'setup';
     next = HybridTimer.start(next, Date.now());

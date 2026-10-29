@@ -234,7 +234,7 @@ test('an each-side carry shows a second side the same way as a hold',()=>{
  assert.equal(ctx.S.session.logs[page.id].sets[0].logged,true);
 });
 
-test('an each-side strength hold runs and saves both sides',()=>{
+test('an each-side strength hold runs both sides and saves per-side seconds',()=>{
  const {ctx,element}=boot([
   {kind:'lift',letter:'A',title:'Side Plank',eachSide:true,section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}
  ]);
@@ -247,7 +247,7 @@ test('an each-side strength hold runs and saves both sides',()=>{
  assert.equal(ctx.S.timer.config.prepSide,2);
  assert.match(element.innerHTML,/side 2/);
  step(3000+30000);
- assert.equal(ctx.S.session.logs[page.id].sets[0].cells.seconds,60);
+ assert.equal(ctx.S.session.logs[page.id].sets[0].cells.seconds,30);
  assert.equal(ctx.S.timer.view,'idle');
 });
 

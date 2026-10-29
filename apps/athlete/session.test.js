@@ -385,3 +385,17 @@ test('tempo and completion lifecycle reach the real session without changing its
  const done=HybridSession.finishToSummary(s);assert.ok(done.completedAt);
  assert.equal(HybridSession.goToLetter(done,'A').completedAt,null);
 });
+
+test('each-side hold rows save per-side seconds and totals count both sides', () => {
+  const run = (block) => {
+    let s = HybridSession.startSession({ date: '2026-10-30', letter: 'A', plan: { blocks: [block] } });
+    const page = s.pages.find((p) => p.kind === 'lift');
+    s = HybridSession.logSet(s, 0, { cells: { seconds: 30 }, effort: 'medium' }, page.id);
+    return { row: s.logs[page.id].sets[0], total: HybridSession.totals(s).seconds };
+  };
+  const flagged = run({ kind: 'lift', letter: 'A', title: 'Side Plank Hold', eachSide: true, columns: ['seconds'], prescribed: '30', setCount: 1 });
+  assert.equal(flagged.row.cells.seconds, 30);
+  assert.equal(flagged.total, 60);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Side Plank (each side)', columns: ['seconds'], prescribed: '30', setCount: 1 }).total, 60);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Front Plank', columns: ['seconds'], prescribed: '30', setCount: 1 }).total, 30);
+});
