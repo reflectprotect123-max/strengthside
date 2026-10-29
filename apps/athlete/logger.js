@@ -173,7 +173,10 @@
       if (next !== t) {
         if (next.view === 'idle' && t.view !== 'idle') {
           beep('done');
-          if (t.config && t.config.hold) recordHold(t, now);
+          if (t.config && t.config.hold) {
+            if (continueHold(t, now)) return;
+            recordHold(t, now);
+          }
           const prep = prepCountdown(t);
           lastBeep = '';
           persistTimer(next);
@@ -841,10 +844,38 @@
     return Math.floor(ms / 1000);
   }
 
+  function heldTotal(timer, now) {
+    const prior = Number(timer.config && timer.config.hold && timer.config.hold.sideSeconds) || 0;
+    return prior + heldSeconds(timer, now);
+  }
+
   function recordHold(timer, now) {
     const hold = timer.config && timer.config.hold;
     if (!hold || !session()) return;
-    root.S.session = HybridSession.logSet(session(), hold.setIndex, { cells: { seconds: heldSeconds(timer, now) } }, hold.memberId, { commit: false });
+    root.S.session = HybridSession.logSet(session(), hold.setIndex, { cells: { seconds: heldTotal(timer, now) } }, hold.memberId, { commit: false });
+  }
+
+  function continueHold(timer, now) {
+    const hold = timer.config && timer.config.hold;
+    if (!hold || !session()) return false;
+    const page = HybridSession.currentPage(session());
+    const lift = page && page.logMode === 'superset' ? HybridSession.memberOf(page, hold.memberId) : page;
+    const side = Number(timer.config.prepSide) || 1;
+    if (sidesFor(lift) !== 2 || side >= 2) return false;
+    recordHold(timer, now);
+    let next = HybridTimer.create();
+    next.mode = 'countdown';
+    next.config = {
+      totalMs: timer.config.totalMs,
+      countInMs: timer.config.countInMs,
+      plainCount: true,
+      prepSide: 2,
+      hold: { memberId: hold.memberId, setIndex: hold.setIndex, sideSeconds: heldTotal(timer, now) },
+    };
+    next.view = 'setup';
+    next = HybridTimer.start(next, Date.now());
+    persistTimer(next);
+    return true;
   }
 
   function prepCountdown(timer) {
@@ -1098,6 +1129,7 @@
     stopHold() {
       const timer = timerState();
       if (!(timer.config && timer.config.hold)) return;
+      if (continueHold(timer, Date.now())) return;
       recordHold(timer, Date.now());
       persistTimer(HybridTimer.stop(timer));
     },

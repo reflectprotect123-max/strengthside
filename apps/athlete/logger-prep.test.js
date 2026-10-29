@@ -169,6 +169,23 @@ test('a prep result posted before the logger opens is kept',()=>{
  assert.equal(ctx.S.session.prep.warmup[0].title,'Bike Easy');
 });
 
+test('an each-side strength hold runs and saves both sides',()=>{
+ const {ctx,element}=boot([
+  {kind:'lift',letter:'A',title:'Side Plank',eachSide:true,section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}
+ ]);
+ const step=clock(ctx);
+ ctx.Logger.paint();
+ const page=ctx.HybridSession.currentPage(ctx.S.session);
+ ctx.Logger.startHold(page.id,0);
+ assert.match(element.innerHTML,/side 1/);
+ step(3000+30000);
+ assert.equal(ctx.S.timer.config.prepSide,2);
+ assert.match(element.innerHTML,/side 2/);
+ step(3000+30000);
+ assert.equal(ctx.S.session.logs[page.id].sets[0].cells.seconds,60);
+ assert.equal(ctx.S.timer.view,'idle');
+});
+
 test('a finished hold records the prescribed seconds and a count-in stop records zero',()=>{
  const {ctx}=boot([
   {kind:'lift',letter:'A',title:'Dead Hang',section:'Strength',columns:['seconds'],prescribed:'30',setCount:1}
