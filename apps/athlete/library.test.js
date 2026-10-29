@@ -55,3 +55,10 @@ test('received warm-up, working lifts and cool-down still compile in session ord
  assert.equal(lifts[0].role,'warmup');assert.equal(lifts[0].prescribed,'180');assert.equal(lifts[0].setCount,3);assert.equal(lifts.at(-1).role,'cooldown');assert.equal(lifts.at(-1).countIn,3);
  const pages=HybridSession.pagesFromPlan(plan);assert.ok(pages.length>0);assert.equal(pages[0].section,'Warm-Up');assert.equal(pages.filter(p=>p.section).at(-1).section,'Cool-Down');
 });
+
+test('a coach each-side flag survives compile without an "(each side)" title',()=>{
+ const t=workout({prep:false,blocks:[{title:'Suitcase Carry',columns:['meters','weight_kg'],setCount:3,repTarget:'20',eachSide:true},{title:'Farmer Carry',columns:['meters','weight_kg'],setCount:2,repTarget:'40'}]});
+ const lifts=Lib.compile(t).blocks.filter(b=>b.kind==='lift');
+ assert.equal(lifts.find(b=>b.title==='Suitcase Carry').eachSide,true);
+ assert.notEqual(lifts.find(b=>b.title==='Farmer Carry').eachSide,true);
+});

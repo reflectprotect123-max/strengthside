@@ -216,6 +216,7 @@
           tempo: tempo || undefined,
           prescribed: b.prescribed || '',
           restSec: Number(b.restSec) || 0,
+          eachSide: b.eachSide === true || undefined,
           countIn: Number(b.countIn) || 0,
           role: b.role || null,
           setTargets: setTargets?clone(setTargets):null,
