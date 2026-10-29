@@ -61,6 +61,11 @@ test('versioned provisional exercise starters use exact conventions and defaults
  assert.equal(E.starter({...db,equipmentId:' Dumbbell ',title:'DB Bench Press'}).kg,5);
  assert.equal(E.next(10,{...db,equipmentId:' Dumbbell '}),12.5);
  assert.equal(E.starter({...db,title:'Bench Press',availableLoads:[2,4,6]}).kg,4);
+ assert.equal(E.starter({...db,title:'Farmer Carry'}).kg,8);
+ assert.equal(E.starter({...db,loadConvention:'single',title:'Suitcase Carry'}).kg,8);
+ assert.equal(E.starter({equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg',title:'Kettlebell Swing'}).kg,8);
+ assert.equal(E.starter({equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg',title:'Kettlebell Goblet Squat'}).kg,6);
+ assert.equal(E.floor(3.75,{equipmentId:'kettlebell',loadConvention:'per_hand',loadUnit:'kg'}),3);
 });
 test('unknown equipment, units, conventions and unrelated exercises do not start or convert',()=>{
  for(const page of [{equipmentId:'machine',title:'Press'},{...db,loadUnit:'lb',title:'DB Bench Press'},{...db,loadConvention:'total',title:'DB Bench Press'},{...db,loadConvention:'assistance',title:'DB Row'},{...db,loadConvention:undefined,title:'DB Curl'},{...db,title:'DB Deadlift'},{...db,loadConvention:'single',title:'DB Curl'}]) {

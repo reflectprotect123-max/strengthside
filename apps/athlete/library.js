@@ -215,6 +215,7 @@
           prescription: tempo ? `${rx} · ${tempo}` : rx,
           tempo: tempo || undefined,
           prescribed: b.prescribed || '',
+          restSec: Number(b.restSec) || 0,
           countIn: Number(b.countIn) || 0,
           role: b.role || null,
           setTargets: setTargets?clone(setTargets):null,

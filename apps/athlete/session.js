@@ -96,8 +96,23 @@
     return JSON.parse(JSON.stringify(session));
   }
 
+  function restSeconds(block) {
+    const direct = Number(block && block.restSec);
+    if (Number.isFinite(direct) && direct > 0) return Math.round(direct);
+    const text = [block && block.prescription, block && block.note, ...((block && block.notes) || [])].filter(Boolean).join(' ');
+    const named = String(text).match(/\brest\s+(\d+)\s*(?:s|sec|secs|seconds)?\b/i);
+    if (named) return Number(named[1]);
+    const trailing = String(text).match(/\b(\d+)\s*(?:s|sec|seconds)\s+rest\b/i);
+    return trailing ? Number(trailing[1]) : 0;
+  }
+
   function pageFromBlock(block) {
     const cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
+    let prescribed = block.prescribed || '';
+    if (!prescribed && cols.includes('meters')) {
+      const meters = String(block.prescription || '').match(/(\d+)\s*m\b/i);
+      if (meters) prescribed = meters[1];
+    }
     let setTargets=Array.isArray(block.setTargets)?JSON.parse(JSON.stringify(block.setTargets)):null;
     if(!setTargets&&cols.some(c=>c==='reps'||c==='reps_range')){
       try{setTargets=JSON.parse(JSON.stringify(root.StrengthTargets.normalize(block)));}catch{}
@@ -140,7 +155,8 @@
       exerciseType: block.exerciseType || null,
       rampCount: block.rampCount,
       columns: cols,
-      prescribed: block.prescribed || '',
+      prescribed,
+      restSec: restSeconds(block),
       countIn: Number(block.countIn) || 0,
       askEffort: block.section !== 'Warm-Up' && block.section !== 'Cool-Down',
     };
@@ -219,6 +235,7 @@
           footer: '',
           section: a.section,
           setCount: 0,
+          restSec: Math.max(0, ...group.map((member) => Number(member.restSec) || 0)),
           members: group,
         });
         i = j - 1;
@@ -379,25 +396,98 @@
       if (log.sets[i].logged) continue;
       log.sets[i].kg = src.kg;
       if (src.reps != null) log.sets[i].reps = src.reps;
+      if (src.cells && src.cells.meters != null) log.sets[i].cells = { ...(log.sets[i].cells || {}), meters: src.cells.meters };
     }
     return s;
+  }
+
+  function rowSeconds(row) {
+    const cells = (row && row.cells) || {};
+    if (cells.seconds != null && cells.seconds !== '') {
+      const n = Number(cells.seconds);
+      if (Number.isFinite(n)) return n;
+    }
+    const clock = String(cells.time_mmss || '');
+    const match = clock.match(/^(\d+):(\d{2})$/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : 0;
   }
 
   function totals(session) {
     let reps = 0;
     let kg = 0;
-    for (const page of session.pages) {
-      for (const id of logIdsForPage(page)) {
-        const log = (session.logs || {})[id];
+    let sets = 0;
+    let meters = 0;
+    let seconds = 0;
+    for (const page of session.pages || []) {
+      const members = page.logMode === 'superset' ? (page.members || []) : [page];
+      for (const member of members) {
+        const log = (session.logs || {})[member.id];
         if (!log) continue;
+        const columns = member.columns || [];
+        const countsReps = !columns.length || columns.some((column) => column === 'reps' || column === 'reps_range');
         for (const row of log.sets || []) {
-          if (!row.logged || row.purpose === 'ramp') continue;
-          reps += Number(row.reps) || 0;
-          kg += Number(row.kg) || 0;
+          if (!row.logged) continue;
+          sets += 1;
+          const count = Number(row.reps) || 0;
+          const weight = Number(row.kg) || 0;
+          if (countsReps) reps += count;
+          if (countsReps && count > 0) kg += weight * count;
+          meters += Number(row.cells && row.cells.meters) || 0;
+          seconds += rowSeconds(row);
         }
       }
     }
-    return { reps, kg };
+    return { reps, kg, volumeKg: kg, sets, meters, seconds };
+  }
+
+  function rowsOf(session, member) {
+    return (((session.logs || {})[member.id] || {}).sets) || [];
+  }
+
+  function supersetSteps(session, page) {
+    if (!page || page.logMode !== 'superset') return [];
+    const members = page.members || [];
+    const indexed = members.map((member) => rowsOf(session, member).map((row, index) => ({ row, index })));
+    const steps = [];
+    const maxRamp = Math.max(0, ...indexed.map((rows) => rows.filter((item) => item.row.purpose === 'ramp').length));
+    for (let round = 0; round < maxRamp; round++) {
+      members.forEach((member, memberIndex) => {
+        const ramp = indexed[memberIndex].filter((item) => item.row.purpose === 'ramp')[round];
+        if (!ramp) return;
+        steps.push({ memberId: member.id, letter: member.letter, setIndex: ramp.index, purpose: 'ramp', round: round + 1 });
+      });
+    }
+    const maxWork = Math.max(0, ...indexed.map((rows) => rows.filter((item) => item.row.purpose !== 'ramp').length));
+    for (let round = 0; round < maxWork; round++) {
+      members.forEach((member, memberIndex) => {
+        const work = indexed[memberIndex].filter((item) => item.row.purpose !== 'ramp')[round];
+        if (!work) return;
+        steps.push({ memberId: member.id, letter: member.letter, setIndex: work.index, purpose: 'working', round: round + 1 });
+      });
+    }
+    return steps;
+  }
+
+  function currentSupersetRound(session, page) {
+    const steps = supersetSteps(session, page);
+    const pending = steps.find((step) => !rowsOf(session, { id: step.memberId })[step.setIndex]?.logged);
+    if (!pending) return { steps, round: null, purpose: null, members: [] };
+    const members = steps.filter((step) => step.purpose === pending.purpose && step.round === pending.round && !rowsOf(session, { id: step.memberId })[step.setIndex]?.logged);
+    return { steps, round: pending.round, purpose: pending.purpose, members };
+  }
+
+  function recordPrep(session, phase, items) {
+    const s = clone(session);
+    const name = phase === 'cooldown' ? 'cooldown' : 'warmup';
+    s.prep = {
+      ...(s.prep || {}),
+      [name]: (Array.isArray(items) ? items : []).map((item) => ({
+        id: item.id,
+        title: item.title || '',
+        status: item.status === 'skipped' ? 'skipped' : 'completed',
+      })),
+    };
+    return s;
   }
 
   function openFeel(session) {
@@ -443,7 +533,7 @@
       for (const id of logIdsForPage(page)) {
         const log = (session.logs || {})[id];
         if (!log) continue;
-        const logged = (log.sets || []).filter((r) => r.logged && r.purpose !== 'ramp').length;
+        const logged = (log.sets || []).filter((r) => r.logged).length;
         if (logged) {
           pageExercises += 1;
           pageSets += logged;
@@ -457,12 +547,15 @@
     }
     return {
       exercises,
-      sets,
+      sets: t.sets,
       reps: t.reps,
       kg: t.kg,
+      meters: t.meters,
+      seconds: t.seconds,
       blocksDone,
       blocksTotal: workPages.length,
       minutes: (session.feel && session.feel.durationMin) || 0,
+      prep: session.prep || {},
     };
   }
 
@@ -484,6 +577,9 @@
     logIdsForPage,
     memberOf,
     totals,
+    supersetSteps,
+    currentSupersetRound,
+    recordPrep,
     openFeel,
     setFeel,
     finishToSummary,

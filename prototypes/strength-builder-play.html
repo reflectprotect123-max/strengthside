@@ -1996,7 +1996,8 @@ button {
       confirmAnchor: '',
       clock: null,
       timer: null,
-      setAt: 0
+      setAt: 0,
+      results: []
     };
   }
   let state = load();
@@ -2008,6 +2009,7 @@ button {
         saved.clock = null;
         saved.timer = null;
         saved.setAt = saved.setAt || 0;
+        saved.results = saved.results || [];
         return saved;
       }
     } catch (e) {}
@@ -2072,8 +2074,10 @@ button {
     const b = block(state.timer.blockId);
     if (!b) return '';
     const done = state.clock && state.clock.done && state.clock.blockId === state.timer.blockId && state.clock.setIndex === state.timer.setIndex;
-    const next = done ? '<div class="play-dock"><div class="play-next"><button type="button" class="btn oled-cta" onclick="Play.nextAfterTimer()">Next</button></div></div>' : '';
-    return '<div class="tm-full" role="dialog" aria-label="Timer"><div class="tm-head"><button type="button" class="lib-back" aria-label="Back" onclick="Play.closeTimer()">←</button><h2>' + esc(b.title) + '</h2></div>' + timerBody(state.timer.blockId, state.timer.setIndex, state.timer.field) + next + '</div>';
+    const side = /each side/i.test(b.title || '') ? (state.clock && state.clock.side === 2 ? ' · side 2' : ' · side 1') : '';
+    const skip = '<button type="button" class="btn oled-cta" onclick="Play.skipWarm()">Skip</button>';
+    const next = '<div class="play-dock"><div class="play-next">' + skip + (done ? '<button type="button" class="btn oled-cta" onclick="Play.nextAfterTimer()">Next</button>' : '') + '</div></div>';
+    return '<div class="tm-full" role="dialog" aria-label="Timer"><div class="tm-head"><button type="button" class="lib-back" aria-label="Back" onclick="Play.closeTimer()">←</button><h2>' + esc(b.title + side) + '</h2></div>' + timerBody(state.timer.blockId, state.timer.setIndex, state.timer.field) + next + '</div>';
   }
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2229,7 +2233,7 @@ button {
     const roundAt = Math.max(0, roundSteps.findIndex((s) => s.blockId === b.id));
     const heading = 'Round ' + ((state.setAt || 0) + 1);
     const place = '<p class="play-step">' + (roundAt + 1) + ' of ' + roundSteps.length + '</p>';
-    const action = '<button type="button" class="btn oled-cta" onclick="Play.advanceWarm()">Next</button>';
+    const action = '<button type="button" class="btn oled-cta" onclick="Play.advanceWarm()">Next</button><button type="button" class="btn oled-cta" onclick="Play.skipWarm()">Skip</button>';
     return `<div class="shell-screen shell-screen--library">
       <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backWarm()">←</button><h1>${heading}</h1></div>
       ${place}
@@ -2305,8 +2309,26 @@ button {
       notes: '',
       notice: '',
       prep: true,
-      countIn: catalogId === 'isometric_hold' ? 3 : 0
+      countIn: catalogId === 'isometric_hold' || ['bike', 'row', 'run', 'ski', 'jump_rope'].includes(catalogId) ? 3 : 0
     };
+  }
+
+  function noteStep(step, status) {
+    const b = block(step.blockId);
+    if (!b) return;
+    state.results = state.results || [];
+    const id = b.id + '-r' + (step.setIndex + 1);
+    const existing = state.results.find((item) => item.id === id);
+    if (!existing) state.results.push({ id: id, title: b.title, status: status });
+    else if (status === 'completed') existing.status = 'completed';
+  }
+  function postPrep(phase) {
+    try {
+      const target = window.parent;
+      if (target && target !== window && typeof target.postMessage === 'function') {
+        target.postMessage({ type: 'hybrid-prep-result', phase: phase, items: state.results || [] }, '*');
+      }
+    } catch (e) {}
   }
 
   const Play = {
@@ -2377,21 +2399,27 @@ button {
       }
       render(true);
     },
-    advanceWarm() {
+    advanceWarm(skip) {
       const { steps, at } = warmAt();
       const current = steps[at];
       const here = current && block(current.blockId);
       const finished = state.clock && state.clock.done && current && state.clock.blockId === current.blockId && state.clock.setIndex === current.setIndex;
-      if (here && isTimedMetric(here.metric) && !finished && !state.timer) {
+      if (!skip && here && isTimedMetric(here.metric) && !finished && !state.timer) {
         Play.openWarmStep(current, true);
         return;
       }
+      if (!skip && current) noteStep(current, 'completed');
       const next = steps[at + 1];
       state.clock = null;
       state.pad = null;
       state.timer = null;
-      if (!next) { Play.goWarm(); return; }
+      if (!next) { postPrep('warmup'); Play.goWarm(); return; }
       Play.openWarmStep(next, true);
+    },
+    skipWarm() {
+      const { steps, at } = warmAt();
+      if (steps[at]) noteStep(steps[at], 'skipped');
+      Play.advanceWarm(true);
     },
     backWarm() {
       const { steps, at } = warmAt();
@@ -2545,7 +2573,21 @@ button {
       return;
     }
     const node = document.querySelector('[data-clock="' + key + '"]');
-    if (left <= 0) { state.clock.done = true; render(); return; }
+    if (left <= 0) {
+      const b = block(state.clock.blockId);
+      if (b && /each side/i.test(b.title || '') && (state.clock.side || 1) < 2) {
+        state.clock.side = 2;
+        state.clock.done = false;
+        const countIn = (b.countIn || 0) * 1000;
+        state.clock.phase = countIn ? 'count' : 'run';
+        state.clock.endsAt = Date.now() + (countIn || state.clock.totalMs);
+        render();
+        return;
+      }
+      state.clock.done = true;
+      Play.advanceWarm();
+      return;
+    }
     if (!node) return;
     const strong = node.querySelector('strong');
     const arc = node.querySelector('.tm-arc');

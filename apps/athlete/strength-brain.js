@@ -73,11 +73,35 @@
     }
     return result;
   }
+  function isCarry(page){return /carry|farmer|suitcase/i.test(page.title||'')||(page.columns||[]).includes('meters');}
+  function seedCarry(page,log){
+    if(!page.loadUnit)page.loadUnit='kg';
+    if(!['dumbbell','kettlebell'].includes(page.equipmentId))page.equipmentId=/kettlebell|\bkb\b/i.test(page.title||'')?'kettlebell':'dumbbell';
+    if(/suitcase/i.test(page.title||''))page.loadConvention='single';
+    else if(!page.loadConvention||page.loadConvention==='total')page.loadConvention='per_hand';
+    const starter=E.starter(page);
+    if(starter.kg==null)return;
+    page.workingKg=starter.kg;page.startConfidence=starter.confidence;
+    for(const row of log.sets||[])if(row.kg==null)row.kg=starter.kg;
+  }
+  function handheldRamps(working,page){
+    const below=kg=>kg!=null&&kg<working?kg:null;
+    const half=E.floor(working*.5,page),upper=E.floor(working*.75,page);
+    let first=below(half),second=below(upper);
+    if(first!=null&&second!=null&&second<=first){const up=E.next(first,page);second=up!=null&&up<working?up:first;}
+    if(first==null)first=second;
+    if(second==null)second=first;
+    return [first,second];
+  }
   function seed(session,records) {
     const s=clone(session);if(s.brainSeeded)return s;
     let mainSeen=false;
     for(const outer of s.pages||[])for(const page of outer.members||[outer]) {
-      if(!eligible(page))continue;
+      if(!eligible(page)){
+        const log=s.logs?.[page.id];
+        if(log&&isCarry(page)&&!log.sets.some(r=>r.logged))seedCarry(page,log);
+        continue;
+      }
       const log=s.logs?.[page.id];if(!log||log.sets.some(r=>r.logged))continue;
       let targets=[];try{targets=T.normalize(page);}catch{continue;}
       page.setTargets=targets;
@@ -104,7 +128,7 @@
       const belowWork=known&&working>0?E.floor(working*.5,page):null;
       const step=E.next(0,page);
       const second=belowWork>0&&belowWork<working?belowWork:step!=null&&step<working?step:0;
-      const rampLoad=bar&&known?[0,second]:[known&&working>0?belowWork:null,null];
+      const rampLoad=bar&&known?[0,second]:known&&working>0?handheldRamps(working,page):[null,null];
       const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i<rampLoad.length?rampLoad[i]:null,cells:{},logged:false,miss:false}));
       const authored=log.sets.map((row,i)=>{
         const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);

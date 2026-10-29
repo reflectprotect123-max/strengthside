@@ -27,6 +27,7 @@ must(!catalog.includes('meters'), 'cool-down catalog includes metres');
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
 must(scripts.length === 1, 'expected one cool-down script');
 const store = {};
+const intervals = [];
 const phone = { classList: { toggle() {} } };
 const view = { innerHTML: '', scrollTop: 0, querySelector() { return null; } };
 const context = {
@@ -44,7 +45,7 @@ const context = {
     getItem(key) { return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null; },
     setItem(key, value) { store[key] = String(value); }
   },
-  setInterval() { return 1; },
+  setInterval(fn) { intervals.push(fn); return intervals.length; },
   clearInterval() {},
   console,
   __now: Date.parse('2026-10-16T12:00:00.000Z')
@@ -53,13 +54,37 @@ vm.createContext(context);
 context.window = context;
 vm.runInContext('Date.now = function () { return __now; };', context);
 vm.runInContext(scripts[0][1], context);
+function jump(ms) {
+  context.__now += ms;
+  intervals.forEach((fn) => fn());
+}
 context.Play.restart();
 const saved = JSON.parse(store['strength-cooldown-play']);
 must(saved.warmups.length === 6, 'seed length ' + saved.warmups.length);
 must(saved.warmups.every((block) => block.sets.length === 3), 'cool-down is not three rounds');
-must(saved.warmups[0].title === 'Easy Bike' && saved.warmups[0].metric === 'seconds' && saved.warmups[0].sets[0].text === '180', 'easy bike is not 180 seconds');
+must(saved.warmups[0].title === 'Easy Bike' && saved.warmups[0].metric === 'seconds' && saved.warmups[0].sets[0].text === '180' && saved.warmups[0].countIn === 3, 'easy bike is not a 3-count into 180 seconds');
+must(saved.warmups[2].title.includes('each side'), 'couch stretch is not marked each side');
 must(saved.warmups[5].title === 'Cat-Cow' && saved.warmups[5].metric === 'reps', 'cat-cow is not reps');
-must(view.innerHTML.includes('>Cool-down<'), 'screen did not open on Cool-down');
+must(view.innerHTML.includes('>Cool-down<') && !view.innerHTML.includes('tm-full'), 'screen did not open on the cool-down list');
 context.Play.startPrep();
-must(view.innerHTML.includes('>Easy Bike<') && view.innerHTML.includes('>3:00<'), 'easy bike did not start at 3:00');
+must(view.innerHTML.includes('>Easy Bike<') && view.innerHTML.includes('tm-count') && view.innerHTML.includes('>3<'), 'easy bike did not count in from 3');
+jump(3000);
+must(view.innerHTML.includes('>3:00<'), 'easy bike did not reach 3:00');
+context.Play.restart();
+JSON.parse(store['strength-cooldown-play']).warmups.map((block) => block.id).forEach((id) => context.Play.removeBlock(id));
+context.Play.togglePick('couch_stretch');
+context.Play.addSelected();
+context.Play.startPrep();
+must(view.innerHTML.includes('side 1'), 'each-side stretch did not start on side 1');
+jump(60000);
+must(view.innerHTML.includes('side 2') && view.innerHTML.includes('>1:00<'), 'each-side stretch did not start side 2');
+context.Play.restart();
+JSON.parse(store['strength-cooldown-play']).warmups.map((block) => block.id).forEach((id) => context.Play.removeBlock(id));
+context.Play.togglePick('cat_cow');
+context.Play.addSelected();
+context.Play.startPrep();
+context.Play.advanceWarm();
+context.Play.advanceWarm();
+context.Play.advanceWarm();
+must(view.innerHTML.includes('>Finished<') && view.innerHTML.includes('completed'), 'cool-down did not finish');
 console.log('cool-down play ok');

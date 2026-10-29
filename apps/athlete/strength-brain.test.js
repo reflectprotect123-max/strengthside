@@ -165,6 +165,27 @@ test('backing off a later comparable load vetoes Easy-first seeding without fitt
  const h=B.history(records,page);assert.equal(h.latest.nextKg,40);assert.equal(h.latest.loadReduced,true);assert.equal(h.accepted,0);
 });
 
+test('dumbbell and kettlebell ramps both suggest a load below the work weight',()=>{
+ const db={...page,id:'D',title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',setTargets:targets.map((t,i)=>({...t,id:`D:set:${i}`}))};
+ const seeded=B.seed({id:'s',pages:[db],logs:{D:{sets:db.setTargets.map(t=>({targetId:t.id}))}}},{});
+ assert.deepEqual(Array.from(seeded.logs.D.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[2,3]);
+ const kb={...page,id:'K',title:'Kettlebell Goblet Squat',equipmentId:'kettlebell',loadConvention:'single',setTargets:targets.map((t,i)=>({...t,id:`K:set:${i}`}))};
+ const kbSeed=B.seed({id:'k',pages:[kb],logs:{K:{sets:kb.setTargets.map(t=>({targetId:t.id}))}}},{});
+ assert.equal(kbSeed.pages[0].workingKg,6);
+ assert.deepEqual(Array.from(kbSeed.logs.K.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[3,4]);
+});
+test('a carry gets a starter load on every set and still produces no e1RM',()=>{
+ const carry={...page,id:'C',title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand',columns:['weight_kg','meters'],setTargets:null,setCount:3};
+ const seeded=B.seed({id:'s',pages:[carry],logs:{C:{sets:[{kg:null},{kg:null},{kg:null}]}}},{});
+ assert.deepEqual(Array.from(seeded.logs.C.sets,r=>r.kg),[8,8,8]);
+ assert.equal(seeded.logs.C.sets.some(r=>r.purpose==='ramp'),false);
+ assert.equal(B.estimate({...row(),kg:8},seeded.pages[0]),null);
+ const suitcase={...page,id:'S',title:'Suitcase Carry',columns:['weight_kg','meters'],setTargets:null};
+ const suit=B.seed({id:'s2',pages:[suitcase],logs:{S:{sets:[{kg:null}]}}},{});
+ assert.equal(suit.pages[0].loadConvention,'single');
+ assert.equal(suit.logs.S.sets[0].kg,8);
+ assert.equal(B.estimate({...row(),kg:8},suit.pages[0]),null);
+});
 test('missing canonical exercise identity cannot share another unidentified lift history',()=>{
  const unknown={...page,exerciseId:null},records={old:record(unknown,row(0,8,'easy',80))};
  const current={...unknown,title:'Different unidentified press'};

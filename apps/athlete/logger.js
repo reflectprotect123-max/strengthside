@@ -92,11 +92,24 @@
     paint();
   }
 
+  function restMilliseconds(s, page) {
+    const selected = (s.restChoices || {})[page.id];
+    if (selected) return selected;
+    const sec = Number(page && page.restSec) || 0;
+    return sec > 0 ? sec * 1000 : 0;
+  }
+  function completesRound(s, page, memberId, setIndex) {
+    if (!page || page.logMode !== 'superset') return true;
+    const steps = HybridSession.supersetSteps(s, page);
+    const step = steps.find((item) => item.memberId === memberId && item.setIndex === setIndex);
+    if (!step) return true;
+    return steps.filter((item) => item.purpose === step.purpose && item.round === step.round && !(item.memberId === memberId && item.setIndex === setIndex)).every((item) => s.logs[item.memberId] && s.logs[item.memberId].sets[item.setIndex] && s.logs[item.memberId].sets[item.setIndex].logged);
+  }
   function startChosenRest(s,page) {
-    const selected=(s.restChoices||{})[page.id];
-    if(!selected)return;
+    const ms=restMilliseconds(s,page);
+    if(!ms)return;
     let timer=HybridTimer.choose(timerState(),'rest');
-    timer=HybridTimer.start(HybridTimer.quickStart(timer,selected),Date.now());
+    timer=HybridTimer.start(HybridTimer.quickStart(timer,ms),Date.now());
     timer.display='docked';root.S.timer=timer;
   }
   function rememberRest(timer) {
@@ -148,7 +161,11 @@
       const now = Date.now();
       const next = HybridTimer.tick(t, now);
       if (next !== t) {
-        if (next.view === 'idle' && t.view !== 'idle') beep('done');
+        if (next.view === 'idle' && t.view !== 'idle') {
+          beep('done');
+          const hold = t.config && t.config.hold;
+          if (hold && session()) root.S.session = HybridSession.logSet(session(), hold.setIndex, { cells: { seconds: hold.seconds } }, hold.memberId, { commit: false });
+        }
         lastBeep = '';
         persistTimer(next);
         return;
@@ -207,8 +224,11 @@
         <div class="log-clock" id="logClock">${elapsed()}</div>
       </div>
       <div class="log-totals">
+        <div><b>${t.sets || 0}</b><span>SETS</span></div>
         <div><b>${t.reps}</b><span>REPS</span></div>
         <div><b>${t.kg}</b><span>KG</span></div>
+        <div><b>${t.meters || 0}</b><span>M</span></div>
+        <div><b>${t.seconds || 0}</b><span>SEC</span></div>
       </div>`;
   }
 
@@ -457,6 +477,30 @@
       <input class="log-ex-note" placeholder="Add circuit note" value="${esc(log.note || '')}" onchange="Logger.note('${esc(page.id)}',this.value)">`;
   }
 
+  function showsEstimate(page) {
+    if (!page || page.logMode !== 'kg') return false;
+    if (/carry|farmer|suitcase|plank|hang|\bhold\b/i.test(page.title || '')) return false;
+    return !columnsFor(page).some((column) => ['meters', 'seconds', 'time_mmss'].includes(column));
+  }
+
+  function columnLabel(page, key) {
+    if (key === 'weight_kg' && page.loadConvention === 'per_hand' && /farmer|carry|each side/i.test(page.title || '')) return 'Weight (kg each side)';
+    return (root.HybridLibrary && root.HybridLibrary.trackLabel && root.HybridLibrary.trackLabel(key)) || key;
+  }
+
+  function restNote(s, page) {
+    const outer = HybridSession.currentPage(s);
+    const ms = restMilliseconds(s, outer && outer.logMode === 'superset' ? outer : page);
+    if (!ms) return 'Choose your rest using Select Timer below.';
+    const when = outer && outer.logMode === 'superset' ? 'after the pair' : 'on Log set';
+    return `Rest: ${Math.round(ms / 1000)} seconds · starts ${when}`;
+  }
+
+  function isStrengthHold(page) {
+    if (!page || page.section === 'Warm-Up' || page.section === 'Cool-Down') return false;
+    return /plank|hang|\bhold\b/i.test(page.title || '') && columnsFor(page).includes('seconds');
+  }
+
   function sideHtml(s, page) {
     const past = root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
     const wm = past.rolling ? Math.round(past.rolling * 10) / 10 : '';
@@ -547,13 +591,13 @@
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${esc(r.reps)} reps · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
-      <p class="log-note">${(s.restChoices || {})[HybridSession.currentPage(s).id] ? `Rest: ${Math.round(s.restChoices[HybridSession.currentPage(s).id]/1000)} seconds · starts on Log set` : "Choose your rest using Select Timer below."}</p>
+      <p class="log-note">${esc(restNote(s, page))}</p>
       <section class="log-active-set" data-exercise="${id}">
         <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(repTarget)}${repTarget==='AMRAP'?'':' reps'}</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
           <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
-          ${page.logMode === 'kg' ? `<label>Weight (kg)<input class="log-cell" type="text" readonly value="${esc(weightText(page, flow.draft.kg))}" onclick="Logger.focusDraftPad('${id}','kg')"></label>` : ''}
+          ${page.logMode === 'kg' ? `<label>${esc(columnLabel(page, 'weight_kg'))}<input class="log-cell" type="text" readonly value="${esc(weightText(page, flow.draft.kg))}" onclick="Logger.focusDraftPad('${id}','kg')"></label>` : ''}
         </div>
         ${page.askEffort === false ? '' : (target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>')}
         ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed.</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : page.askEffort === false ? (dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`) : `
@@ -584,11 +628,14 @@
     else { root.S.session = s; if (typeof root.save === 'function') root.save(); }
   }
 
-  function tableHtml(s, page, log) {
+  function tableHtml(s, page, log, onlyIndex) {
     const cols = columnsFor(page);
     const mid = esc(page.id);
-    const heads = cols.map((k) => `<th>${esc((root.HybridLibrary && HybridLibrary.trackLabel(k)) || k)}</th>`).join('');
-    const rows = (log.sets || []).map((row, i) => {
+    const heads = cols.map((k) => `<th>${esc(columnLabel(page, k))}</th>`).join('');
+    const indexes = onlyIndex == null ? (log.sets || []).map((_, i) => i) : [onlyIndex];
+    const rows = indexes.map((i) => {
+      const row = (log.sets || [])[i];
+      if (!row) return '';
       const tds = cols.map((k) => {
         const field = colField(k);
         const focus = pad && pad.memberId === page.id && pad.setIndex === i && pad.field === field;
@@ -600,7 +647,7 @@
         <td>${i + 1}</td>
         ${tds}
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
-      </tr>${page.askEffort === false ? '' : `<tr><td colspan="${cols.length+2}"><label class="log-note">This set felt: <span id="rowEffort-${mid}-${i}">${esc(row.effort ? effortShort(row.effort) : 'Choose effort')}</span><input class="log-effort-slider" type="range" min="0" max="4" step="1" value="${Math.max(0,EFFORTS.indexOf(row.effort||'average'))}" aria-label="Actual effort for set ${i+1}" oninput="Logger.rateRow('${mid}',${i},this.value)" onpointerup="Logger.rateRow('${mid}',${i},this.value)"></label><button type="button" class="log-set-incomplete" aria-label="Did Not Complete set ${i+1}" aria-pressed="${!!row.miss}" onclick="Logger.markMissRow('${mid}',${i})">Did Not Complete</button></td></tr>`}`;
+      </tr>${isStrengthHold(page) ? `<tr><td colspan="${cols.length + 2}"><button type="button" class="log-cell" onclick="Logger.startHold('${mid}',${i})">Start hold</button></td></tr>` : ''}${page.askEffort === false ? '' : `<tr><td colspan="${cols.length+2}"><label class="log-note">This set felt: <span id="rowEffort-${mid}-${i}">${esc(row.effort ? effortShort(row.effort) : 'Choose effort')}</span><input class="log-effort-slider" type="range" min="0" max="4" step="1" value="${Math.max(0,EFFORTS.indexOf(row.effort||'average'))}" aria-label="Actual effort for set ${i+1}" oninput="Logger.rateRow('${mid}',${i},this.value)" onpointerup="Logger.rateRow('${mid}',${i},this.value)"></label><button type="button" class="log-set-incomplete" aria-label="Did Not Complete set ${i+1}" aria-pressed="${!!row.miss}" onclick="Logger.markMissRow('${mid}',${i})">Did Not Complete</button></td></tr>`}`;
     }).join('');
     return `
       <p class="log-rx">${esc(page.prescription)}</p>
@@ -645,6 +692,13 @@
       </div>`;
   }
 
+  function prepStat(label, items) {
+    if (!items || !items.length) return '';
+    const done = items.filter((item) => item.status === 'completed').length;
+    const skipped = items.filter((item) => item.status === 'skipped').length;
+    return `<div class="log-stat"><span>${esc(label)}</span><b>${done} completed · ${skipped} skipped</b></div>`;
+  }
+
   function summaryHtml(s) {
     const st = HybridSession.summaryStats(s);
     const title = s.title || 'Completed session';
@@ -655,6 +709,11 @@
         <div class="log-stat"><span>Exercises</span><b>${st.exercises}</b></div>
         <div class="log-stat"><span>Sets</span><b>${st.sets}</b></div>
         <div class="log-stat"><span>Reps</span><b>${st.reps}</b></div>
+        <div class="log-stat"><span>Volume</span><b>${st.kg} kg</b></div>
+        <div class="log-stat"><span>Distance</span><b>${st.meters || 0} m</b></div>
+        <div class="log-stat"><span>Time</span><b>${st.seconds || 0} sec</b></div>
+        ${prepStat('Warm-up', st.prep && st.prep.warmup)}
+        ${prepStat('Cool-down', st.prep && st.prep.cooldown)}
         <div class="log-stat"><span>Blocks</span><b>${st.blocksDone}/${st.blocksTotal}</b></div>
         <div class="log-stat"><span>Minutes</span><b>${st.minutes}</b></div>
         <button type="button" class="log-primary" onclick="Logger.close()">Close</button>
@@ -693,20 +752,30 @@
     if (page.logMode === 'complete') body = completeHtml(s, page, log);
     else if (page.logMode === 'doneHub') body = hubHtml();
     else if (page.logMode === 'superset') {
-      const members = (page.members || []).map((m) => `
+      const round = HybridSession.currentSupersetRound(s, page);
+      const guide = round.members.length
+        ? `${round.purpose === 'ramp' ? 'Ramp' : 'Round'} ${round.round} · ${round.members.map((member) => member.letter).join(' then ')}`
+        : 'All rounds recorded';
+      const members = round.members.map((step) => {
+        const m = (page.members || []).find((member) => member.id === step.memberId);
+        if (!m) return '';
+        return `
         <section class="log-ss-member">
           <h2 class="log-title">${esc(m.letter)}. ${esc(m.title)}</h2>
-          ${m.logMode === 'kg' ? sideHtml(s, m) : ''}
-          ${supportsSetFlow(m) ? activeSetHtml(s, m, s.logs[m.id] || { sets: [], note: '' }) : tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' })}
-        </section>`).join('');
+          ${showsEstimate(m) ? sideHtml(s, m) : ''}
+          ${tableHtml(s, m, s.logs[m.id] || { sets: [], note: '' }, step.setIndex)}
+        </section>`;
+      }).join('');
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
+        <p class="log-note">${esc(guide)}</p>
+        <p class="log-note">${esc(restNote(s, page))}</p>
         <div class="log-ss">${members}</div>`;
     } else {
       body = `
         <p class="log-kicker">${esc(page.letter)}. ${esc(page.section)}</p>
         <h2 class="log-title">${esc(page.title)}</h2>
-        ${page.logMode === 'kg' ? sideHtml(s, page) : ''}
+        ${showsEstimate(page) ? sideHtml(s, page) : ''}
         ${supportsSetFlow(page) ? activeSetHtml(s, page, log, true) : tableHtml(s, page, log)}`;
     }
     return `${headerHtml(s)}<div class="log-body">${body}</div>${supportsSetFlow(page) ? setActionHtml(s,page) : ""}${barHtml(s)}${padHtml()}${timerOverlayHtml()}`;
@@ -746,7 +815,18 @@
     }
   }
 
+  function listenPrep() {
+    if (root.__prepWired || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    root.__prepWired = true;
+    window.addEventListener('message', (event) => {
+      const data = event && event.data;
+      if (!data || data.type !== 'hybrid-prep-result' || !session()) return;
+      persist(HybridSession.recordPrep(session(), data.phase === 'cooldown' ? 'cooldown' : 'warmup', data.items || []));
+    });
+  }
+
   function paint() {
+    listenPrep();
     armWarmupClock();
     const el = document.getElementById('logger');
     if (!el) return;
@@ -824,7 +904,7 @@
       if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
       const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
       if (lift.logMode === 'kg') patch.kg = Number.isFinite(kg) ? kg : null;
-      const selectedRest=(s.restChoices||{})[page.id];
+      const selectedRest=completesRound(s,page,memberId,f.index)?restMilliseconds(s,page):0;
       patch.context={requestedRestSec:selectedRest?Math.round(selectedRest/1000):null,elapsedRestSec:null};
       const next = HybridSession.logSet(s, f.index, patch, memberId);
       const rows = next.logs[memberId].sets;
@@ -851,7 +931,7 @@
         index, rest: !f.editing && index >= 0, editing: false, adjustment,
         draft: { reps: r && r.reps != null ? r.reps : '', kg: r && r.kg != null ? r.kg : '', effort: null, miss: false },
       } };
-      if (!f.editing) startChosenRest(s,page);
+      if (!f.editing && completesRound(s, page, memberId, f.index)) startChosenRest(next, page);
       persist(next);
     },
     gotQuote() {
@@ -886,7 +966,20 @@
     padClear() { if(pad){pad=root.TrainingCore.numberKey(pad,'clear');paint();} },
     focusDraftPad(memberId,field) {const page=HybridSession.currentPage(session());const lift=page.logMode==='superset'?HybridSession.memberOf(page,memberId):page;const f=setFlow(session(),lift);pad={...root.TrainingCore.numberEntry(f.draft[field],{key:field==='kg'?'weight_kg':'reps'}),memberId,field,draft:true};paint();},
     markMissRow(memberId,index) {const row=session().logs[memberId].sets[index];persist(HybridSession.logSet(session(),index,{miss:!row.miss},memberId,{commit:false}));},
-    rateRow(memberId,index,value) {const effort=EFFORTS[Number(value)];root.S.session=HybridSession.logSet(session(),index,{effort},memberId,{commit:false});if(typeof root.save==='function')root.save();const label=document.getElementById(`rowEffort-${memberId}-${index}`);if(label)label.textContent=effortShort(effort);const checks=document.querySelectorAll('.log-check');if(checks[index]){checks[index].classList.remove('on');checks[index].textContent='';}},
+    rateRow(memberId,index,value) {const effort=EFFORTS[Number(value)];root.S.session=HybridSession.logSet(session(),index,{effort},memberId,{commit:false});if(typeof root.save==='function')root.save();const label=document.getElementById(`rowEffort-${memberId}-${index}`);if(label)label.textContent=effortShort(effort);let effortRow=label&&label.closest?label.closest('tr'):null;let check=null;while(effortRow&&!check){check=effortRow.querySelector('.log-check');effortRow=effortRow.previousElementSibling;}if(check){check.classList.remove('on');check.textContent='';}},
+    startHold(memberId, index) {
+      const s = session();
+      const page = HybridSession.currentPage(s);
+      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
+      const row = s.logs[lift.id] && s.logs[lift.id].sets[index];
+      const seconds = Number((row && row.cells && row.cells.seconds) || lift.prescribed) || 30;
+      let next = HybridTimer.create();
+      next.mode = 'countdown';
+      next.config = { totalMs: seconds * 1000, countInMs: 3000, plainCount: true, hold: { memberId: lift.id, setIndex: index, seconds } };
+      next.view = 'setup';
+      next = HybridTimer.start(next, Date.now());
+      persistTimer(next);
+    },
 
     padMiss() { if (pad) { pad.miss = !pad.miss; paint(); } },
     padLog() {
@@ -912,7 +1005,7 @@
       const page = HybridSession.currentPage(s);
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[i];
-      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';startChosenRest(s,page);persist(HybridSession.logSet(s,i,{},lift.id));}
+      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(completesRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
     unit(u) {

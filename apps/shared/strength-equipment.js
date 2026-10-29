@@ -9,6 +9,7 @@
   function identity(page) {
     if(typeof page.equipmentId==='string'&&page.equipmentId.trim())return page.equipmentId.trim().toLowerCase();
     const title=page.title||'';
+    if(/\bkettlebell\b|\bkb\b/i.test(title))return 'kettlebell';
     if(/\bdumbbell\b|\bdb\b/i.test(title))return 'dumbbell';
     if(/\bbarbell\b/i.test(title))return 'barbell';
     return '';
@@ -21,7 +22,7 @@
     const unit=page.loadUnit||'',convention=page.loadConvention||'',equipment=identity(page);
     const canonicalBar=['barbell_plates','barbell_total'].includes(convention);
     const declared=canonicalBar?number(page.barWeightKg??page.minimumKg):(number(page.minimumKg)??number(page.barWeightKg));
-    const db=equipment==='dumbbell'&&unit==='kg'&&['per_hand','single'].includes(convention);
+    const db=(equipment==='dumbbell'||equipment==='kettlebell')&&unit==='kg'&&['per_hand','single'].includes(convention);
     const bar=equipment==='barbell'&&unit==='kg'&&(canonicalBar?declared>0:convention==='total'&&declared!=null);
     // Legacy `total` is the existing plates keypad convention, never a persisted-load inference.
     const plates=convention==='total'||convention==='barbell_plates';
@@ -90,8 +91,11 @@
       if(!/\b(bench|press|squat|deadlift|row)\b/i.test(title))return unknown('unknown_exercise');
       desired=m.plates?0:m.declared;
     } else if(m.db&&m.convention==='single'&&/\bgoblet squat\b/i.test(title))desired=6;
+    else if(m.db&&m.convention==='single'&&/\bsuitcase\b/i.test(title))desired=8;
+    else if(m.db&&m.convention==='single'&&/\bswing\b/i.test(title))desired=8;
     else if(m.db&&m.convention==='per_hand') {
-      if(/\blateral raise\b/i.test(title))desired=2;
+      if(/\bfarmer\b/i.test(title)||(/\bcarry\b/i.test(title)&&!/suitcase/i.test(title)))desired=8;
+      else if(/\blateral raise\b/i.test(title))desired=2;
       else if(/\bcurl\b/i.test(title))desired=4;
       else if(/\bbench press\b/i.test(title))desired=5;
       else if(/\boverhead press\b/i.test(title))desired=4;

@@ -11,11 +11,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const html = readFileSync(join(root, 'prototypes/strength-builder-play.html'), 'utf8');
 const KEY = 'strength-builder-play';
 const LOCKED = [
-  ['bike', 'Bike', 'seconds', '180', 0],
-  ['row', 'Row', 'seconds', '180', 0],
-  ['run', 'Run', 'seconds', '180', 0],
-  ['ski', 'Ski', 'seconds', '180', 0],
-  ['jump_rope', 'Jump Rope', 'seconds', '60', 0],
+  ['bike', 'Bike', 'seconds', '180', 3],
+  ['row', 'Row', 'seconds', '180', 3],
+  ['run', 'Run', 'seconds', '180', 3],
+  ['ski', 'Ski', 'seconds', '180', 3],
+  ['jump_rope', 'Jump Rope', 'seconds', '60', 3],
   ['push_downs', 'Push Downs', 'reps', '10', 0],
   ['hip_switch', '90/90 Hip Switch', 'reps', '8', 0],
   ['isometric_hold', 'Isometric Hold', 'seconds', '30', 3],
@@ -96,23 +96,28 @@ const seeded = play.saved().warmups;
 must(seeded.length === 5, 'seed is ' + seeded.map((b) => b.catalogId).join(', '));
 seeded.forEach((block, index) => {
   const row = LOCKED[index];
-  must(block.catalogId === row[0] && block.metric === row[2] && block.countIn === 0, row[0] + ' left the timed seed');
+  must(block.catalogId === row[0] && block.metric === row[2] && block.countIn === row[4], row[0] + ' left the timed seed');
   must(block.sets.length === 3 && block.sets.every((set) => set.text === row[3]), row[1] + ' is not three rounds of ' + row[3]);
 });
 
 play.Play.startPrep();
 let timer = timerHtml(play.view);
-must(timer.includes('>Bike<') && timer.includes('>3:00<'), 'Bike did not start at 3:00');
+must(timer.includes('>Bike<') && timer.includes('tm-count') && timer.includes('>3<'), 'Bike did not count in from 3');
 must(!timer.includes('>Next<'), 'Next appeared before Bike finished');
 must(cells(play.view) === 1, 'Bike showed more than the current round');
-play.jump(180000);
+play.jump(3000);
 timer = timerHtml(play.view);
-must(timer.includes('>0:00<') && timer.includes('>Next<'), 'Bike did not finish at 0:00 with Next');
+must(timer.includes('>3:00<') && !timer.includes('>Next<'), 'Bike did not roll into 3:00');
+play.jump(180000);
+must(play.view.innerHTML.includes('>Row<'), 'Bike did not auto-advance to Row');
 
 const rope = play.saved().warmups.find((block) => block.catalogId === 'jump_rope');
 play.Play.startListed(rope.id);
 timer = timerHtml(play.view);
-must(timer.includes('>Jump Rope<') && timer.includes('>1:00<') && !timer.includes('>Next<'), 'Jump Rope did not start at 1:00');
+must(timer.includes('>Jump Rope<') && timer.includes('tm-count') && timer.includes('>3<') && !timer.includes('>Next<'), 'Jump Rope did not count in from 3');
+play.jump(3000);
+timer = timerHtml(play.view);
+must(timer.includes('>1:00<') && !timer.includes('>Next<'), 'Jump Rope did not roll into 1:00');
 
 function only(id) {
   play.Play.restart();
@@ -132,7 +137,7 @@ timer = timerHtml(play.view);
 must(!timer.includes('tm-count') && timer.includes('>0:30<') && !timer.includes('>Next<'), 'hold did not roll into 0:30');
 play.jump(30000);
 timer = timerHtml(play.view);
-must(timer.includes('>0:00<') && timer.includes('>Next<'), 'hold did not finish with Next');
+must(timer.includes('tm-count') && timer.includes('>3<'), 'hold did not auto-advance into the next round');
 
 const carry = only('farmers_carry');
 play.Play.startPrep();
@@ -166,9 +171,10 @@ all.forEach((block, index) => {
 });
 
 play.Play.startPrep();
-must(play.view.innerHTML.includes('>Round 1<') && play.view.innerHTML.includes('>Bike<') && timerHtml(play.view).includes('>3:00<'), 'full circuit did not start on Bike');
+must(play.view.innerHTML.includes('>Round 1<') && play.view.innerHTML.includes('>Bike<') && timerHtml(play.view).includes('tm-count'), 'full circuit did not count in on Bike');
+play.jump(3000);
+must(timerHtml(play.view).includes('>3:00<'), 'full circuit Bike did not reach 3:00');
 play.jump(180000);
-play.Play.nextAfterTimer();
 must(play.view.innerHTML.includes('>Round 1<') && play.view.innerHTML.includes('>Row<'), 'Bike did not hand off to Row in the same round');
 
 console.log('warmup play lock ok: ' + LOCKED.length + ' movements, 3 rounds');
