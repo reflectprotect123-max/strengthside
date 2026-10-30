@@ -39,6 +39,13 @@
           loadRule:{kind:amrap?'first_working_set':'adaptive'},toFailure:amrap};
       });
     }
+    // Coach "Weight % (of WM)": carry the % on each set; the athlete logs kg and the brain derives the load.
+    const pctCol=cols.find(c=>c.kind==='weight_pct');
+    if(targets&&pctCol){
+      const pcts=columnValues(pctCol,n).map(v=>{const m=/^\s*(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?\s*%?\s*$/.exec(String(v??''));return m?Number(m[2]??m[1]):null;});
+      targets=targets.map((t,i)=>pcts[i]>0&&t.pct==null?{...t,pct:pcts[i]}:t);
+      columns=columns.map(c=>c==='weight_pct'?'weight_kg':c).filter((c,i,a)=>a.indexOf(c)===i);
+    }
     if(targets){
       if(targets.length!==n)throw new Error('Coach set count does not match targets');
       targets=root.StrengthTargets.normalize({id,setTargets:targets});

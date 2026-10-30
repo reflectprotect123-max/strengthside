@@ -195,16 +195,16 @@ test('a superset member gets the same working kg as the same solo history',()=>{
  assert.equal(typeof f1kg,'number');
 });
 
-test('a carry gets a starter load on every set and still produces no e1RM',()=>{
+test('a carry gets no suggested load (athlete enters it) and produces no e1RM',()=>{
  const carry={...page,id:'C',title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand',columns:['weight_kg','meters'],setTargets:null,setCount:3};
  const seeded=B.seed({id:'s',pages:[carry],logs:{C:{sets:[{kg:null},{kg:null},{kg:null}]}}},{});
- assert.deepEqual(Array.from(seeded.logs.C.sets,r=>r.kg),[8,8,8]);
+ assert.deepEqual(Array.from(seeded.logs.C.sets,r=>r.kg),[null,null,null]);
  assert.equal(seeded.logs.C.sets.some(r=>r.purpose==='ramp'),false);
  assert.equal(B.estimate({...row(),kg:8},seeded.pages[0]),null);
  const suitcase={...page,id:'S',title:'Suitcase Carry',columns:['weight_kg','meters'],setTargets:null};
  const suit=B.seed({id:'s2',pages:[suitcase],logs:{S:{sets:[{kg:null}]}}},{});
  assert.equal(suit.pages[0].loadConvention,'single');
- assert.equal(suit.logs.S.sets[0].kg,8);
+ assert.equal(suit.logs.S.sets[0].kg,null);
  assert.equal(B.estimate({...row(),kg:8},suit.pages[0]),null);
 });
 test('missing canonical exercise identity cannot share another unidentified lift history',()=>{

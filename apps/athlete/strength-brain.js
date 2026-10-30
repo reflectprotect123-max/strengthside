@@ -69,23 +69,6 @@
   }
   function isCarry(page){return /carry|farmer|suitcase/i.test(page.title||'')||(page.columns||[]).includes('meters');}
   // Carries: Easy at full distance adds 2 kg per hand next time; anything else holds.
-  function carryHistory(records,page,excludeSession){
-    const id=root.StrengthContext?.exerciseKey?.(page);let best=null;
-    for(const r of Object.values(records||{})){
-      const p=r?.payload,row=p?.row;
-      if(!p||r.deleted||r.kind!=='set'||r.sessionId===excludeSession||!row?.logged||row.skipped||row.purpose==='ramp')continue;
-      if(root.StrengthContext.exerciseKey(p.page)!==id)continue;
-      const t=String(p.sessionStartedAt??p.date??''),o=Number(row.ordinal)||0;
-      if(!best||t>best.t||(t===best.t&&o<best.o))best={t,o,row,page:p.page};
-    }
-    if(!best||finiteKg(best.row.kg)==null)return null;
-    const goal=Number(best.page?.prescribed||best.row.cells?.meters),done=Number(best.row.cells?.meters);
-    const full=!Number.isFinite(goal)||!(goal>0)||done>=goal;
-    const easy=['very_easy','easy'].includes(Core.effortOf(best.row.effort));
-    const kg=finiteKg(best.row.kg);if(!(easy&&full&&!best.row.miss))return kg;
-    // +2 kg, rounded to a real dumbbell/kettlebell size and always at least one size up.
-    const up=E.nearest(kg+2,page);return up!=null&&up>kg?up:E.next(kg,page)??kg+2;
-  }
   // Newest session's last logged working weight for this exercise (title-key fallback).
   function lastLogged(records,page,excludeSession){
     const id=root.StrengthContext?.exerciseKey?.(page);let best=null;
@@ -98,17 +81,44 @@
     }
     return best&&{kg:best.kg,sessionId:best.sessionId};
   }
+  // Dan's % rule: Epley 1RM from his own logged sets. The first logged session sets it; after that it
+  // rises only when a set beats it, or a set rated Hard or harder gives a higher Epley estimate.
+  const epley=(kg,reps)=>reps===1?kg:kg*(1+reps/30);
+  function oneRM(records,page,excludeSession){
+    const id=root.StrengthContext?.exerciseKey?.(page),sessions=new Map();
+    for(const r of Object.values(records||{})){
+      const p=r?.payload,row=p?.row,kg=finiteKg(row?.kg),reps=Number(row?.reps);
+      if(!p||r.deleted||r.kind!=='set'||r.sessionId===excludeSession||!row?.logged||row.skipped||row.miss||row.purpose==='ramp'||!(kg>0)||!Number.isInteger(reps)||reps<1||reps>12)continue;
+      if(root.StrengthContext.exerciseKey(p.page)!==id)continue;
+      const t=String(p.sessionStartedAt??p.date??'');
+      if(!sessions.has(r.sessionId))sessions.set(r.sessionId,{t,sets:[]});
+      sessions.get(r.sessionId).sets.push({kg,reps,effort:Core.effortOf(row.effort)});
+    }
+    let best=null;
+    for(const {sets} of [...sessions.values()].sort((a,b)=>a.t<b.t?-1:a.t>b.t?1:0))for(const x of sets){
+      const e=Math.round(epley(x.kg,x.reps)*100)/100;
+      if(best==null){best=Math.max(...sets.map(y=>Math.round(epley(y.kg,y.reps)*100)/100));break;}
+      if(e>best&&(x.kg>=best||['hard','max_effort'].includes(x.effort)))best=e;
+    }
+    return best==null?null:{kg:best};
+  }
+  function pctLoad(oneRm,pct,page){
+    const raw=oneRm*pct/100;
+    if(page.equipmentId==='barbell'||/\bbarbell\b/i.test(page.title||''))return Math.max(Number(page.barWeightKg)||0,Math.round(raw/2.5)*2.5);
+    return E.nearest(raw,page)??E.floor(raw,page)??raw;
+  }
   function finiteKg(v){const n=Number(v);return v!=null&&v!==''&&Number.isFinite(n)&&n>=0?n:null;}
   function seedCarry(page,log,records,sessionId){
     if(!page.loadUnit)page.loadUnit='kg';
     if(!['dumbbell','kettlebell'].includes(page.equipmentId))page.equipmentId=/kettlebell|\bkb\b/i.test(page.title||'')?'kettlebell':'dumbbell';
     if(/suitcase/i.test(page.title||''))page.loadConvention='single';
     else if(!page.loadConvention||page.loadConvention==='total')page.loadConvention='per_hand';
-    const past=carryHistory(records,page,sessionId);
-    const starter=past!=null?{kg:past,confidence:'history'}:E.starter(page);
-    if(starter.kg==null)return;
-    page.workingKg=starter.kg;page.startConfidence=starter.confidence;
-    for(const row of log.sets||[])if(row.kg==null||past!=null)row.kg=starter.kg;
+    // Dan: the brain never suggests or progresses a carry load. The athlete enters it;
+    // the next session prefills the last weight entered, exactly as entered.
+    const last=lastLogged(records,page,sessionId);
+    if(!last)return;
+    page.lastKg=last.kg;
+    for(const row of log.sets||[])if(row.kg==null&&!row.logged)row.kg=last.kg;
   }
   function seed(session,records) {
     const s=clone(session);
@@ -142,6 +152,8 @@
         const matched=!samePrescription&&first&&Number.isInteger(was)&&first.reps.min>was&&here!=null?Core.matchLoad(here,was,first.reps.min,page):null;
         working=here==null?null:matched??E.nearest(here,page)??E.floor(here,page);confidence='history';
       } else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}
+      const firstPct=first?.pct,rm=firstPct>0?oneRM(records,page,s.id):null;
+      if(rm){page.oneRmKg=rm.kg;working=pctLoad(rm.kg,firstPct,page);confidence='one_rm';}
       page.workingKg=working;page.startConfidence=confidence;
       const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
       const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
@@ -156,7 +168,7 @@
       const authored=log.sets.map((row,i)=>{
         const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
         const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)?Core.matchLoad(working,from,reps,page):null;
-        const kg=matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
+        const kg=rm&&target?.pct>0?pctLoad(rm.kg,target.pct,page):matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
         return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg,plannedKg:kg};
       });
       log.sets=ramps.concat(authored);page.brainSeeded=true;
@@ -170,5 +182,5 @@
     try{return context.key({athleteId,exerciseId:context.exerciseKey(page),equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
     catch{return null;}
   }
-  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,lastLogged,seed,clearCache(){replayCache=new WeakMap();diagnosticEvents.length=0;},diagnostics:()=>diagnosticEvents.map(e=>({...e}))};
+  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,lastLogged,oneRM,seed,clearCache(){replayCache=new WeakMap();diagnosticEvents.length=0;},diagnostics:()=>diagnosticEvents.map(e=>({...e}))};
 })(typeof window!=='undefined'?window:globalThis);

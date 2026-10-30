@@ -122,13 +122,13 @@ test('second session seeds from the first (Easy -> +5 lower)',()=>{
   assert.equal(seeded.pages[0].workingKg,105);assert.equal(seeded.pages[0].startConfidence,'history');
   assert.ok(seeded.logs.A.sets.filter(r=>r.purpose==='working').every(r=>r.kg===105&&r.plannedKg===105));
 });
-test('carry: Easy at full distance adds 2 kg per hand; Average holds',()=>{
+test('carry: no progression; next session prefills the last entered weight whatever the rating',()=>{
   const carry={id:'C',kind:'lift',title:'Farmer Carry',exerciseId:'ex_farmer_carry',equipmentId:'dumbbell',loadConvention:'per_hand',loadUnit:'kg',columns:['meters','weight_kg'],prescribed:'40',setCount:2};
   const crow=(e,m=40)=>({id:'c0',kg:24,effort:e,logged:true,cells:{meters:String(m)},ordinal:0,purpose:'working'});
   const run=(e,m)=>{const r=rec(carry,crow(e,m));const s={id:'now',pages:[{...carry}],logs:{C:{sets:[{kg:null,logged:false},{kg:null,logged:false}]}}};return B.seed(s,{[r.id]:r}).logs.C.sets[0].kg;};
-  assert.equal(run('easy'),26);assert.equal(run('average'),24);assert.equal(run('easy',20),24);
+  assert.equal(run('easy'),24);assert.equal(run('very_easy'),24);assert.equal(run('average'),24);assert.equal(run('easy',20),24);
 });
-test('%-prescriptions are not in the session payload (reported, not invented)',()=>{
+test('a prescription without % carries no pct',()=>{
   assert.equal(JSON.stringify(ctx.StrengthTargets.normalize(squat)).includes('pct'),false);
 });
 test('a weight typed into an unlogged set is the plan the brain keeps',()=>{
@@ -161,12 +161,12 @@ test('dumbbell ladder: 1-10 by 1 kg, then 12..50 by 2 kg',()=>{
   assert.equal(E.next(9,db),10);assert.equal(E.next(10,db),12);assert.equal(E.next(12,db),14);assert.equal(E.next(48,db),50);assert.equal(E.next(50,db),null);
   assert.equal(E.floor(19,db),18);assert.equal(E.nearest(22.5,db)%2,0);assert.equal(C.stepUp(24,db,1),26);
 });
-test('carry +2 kg rounds to a real dumbbell / kettlebell size, always at least one size up',()=>{
+test('carry: the athlete enters the weight; it is kept exactly as entered (no rounding, gym max 32)',()=>{
   const base={id:'C',kind:'lift',exerciseId:'ex_suitcase',loadUnit:'kg',columns:['meters','weight_kg'],prescribed:'40',setCount:1};
-  const run=(page,kg)=>{const r=rec(page,{id:'c0',kg,effort:'easy',logged:true,cells:{meters:'40'},ordinal:0,purpose:'working'});const s={id:'now',pages:[{...page}],logs:{C:{sets:[{kg:null,logged:false}]}}};return B.seed(s,{[r.id]:r}).logs.C.sets[0].kg;};
-  assert.equal(run({...base,title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand'},9),10);
-  assert.equal(run({...base,title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand'},10),12);
-  assert.equal(run({...base,title:'KB Suitcase Carry',equipmentId:'kettlebell',loadConvention:'single'},24),28);
+  const run=(page,kg,effort='easy')=>{const r=rec(page,{id:'c0',kg,effort,logged:true,cells:{meters:'40'},ordinal:0,purpose:'working'});const s={id:'now',pages:[{...page}],logs:{C:{sets:[{kg:null,logged:false}]}}};return B.seed(s,{[r.id]:r}).logs.C.sets[0].kg;};
+  assert.equal(run({...base,title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand'},9),9);
+  assert.equal(run({...base,title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand'},32,'very_easy'),32);
+  assert.equal(run({...base,title:'KB Suitcase Carry',equipmentId:'kettlebell',loadConvention:'single'},24),24);
 });
 test('manual (unsupported) lift remembers its last weight by title key: prefills and exposes LAST',()=>{
   const man={id:'M',kind:'lift',title:'Zercher Good Morning',loadUnit:'kg',columns:['reps','weight_kg'],setCount:3,targetReps:8};
@@ -178,4 +178,36 @@ test('manual (unsupported) lift remembers its last weight by title key: prefills
   assert.ok(out.logs.M.sets.every(r=>r.kg===32.5),JSON.stringify(out.logs.M.sets));
   assert.equal(B.lastLogged(records,man,'now').kg,32.5);
   assert.equal(B.lastLogged(records,{...man,title:'Something Else'},'now'),null);
+});
+// Dan's % rules: 1RM estimated with Epley from his own logged sets; % loads come from it.
+const pctTg=(id,reps,pcts)=>reps.map((r,i)=>({id:`${id}:set:${i}`,purpose:'working',reps:{min:r,max:r},loadRule:{kind:'adaptive'},toFailure:false,pct:pcts[i]}));
+const dl=mk({id:'D',title:'Deadlift',exerciseId:'ex_deadlift',setCount:4,targetReps:6,setTargets:pctTg('D',[6,6,6,6],[65,68,70,72])});
+const sess=(page,startedAt,sets)=>Object.fromEntries(sets.map(([kg,reps,effort],i)=>{const r=rec(page,row(page,i,kg,effort,{reps}),{sessionId:'s'+startedAt,startedAt});return [r.id,r];}));
+test('% sets: Epley 1RM from the first logged sets; never rises on easier, lower estimates',()=>{
+  const first=sess(dl,1,[[100,5,'easy'],[100,5,'average']]);
+  assert.equal(Math.round(B.oneRM(first,dl,'now').kg*100)/100,116.67);
+  const lower={...first,...sess(dl,2,[[90,5,'hard']])};assert.equal(Math.round(B.oneRM(lower,dl,'now').kg*100)/100,116.67);
+  const easyHigher={...first,...sess(dl,3,[[105,5,'average']])};assert.equal(Math.round(B.oneRM(easyHigher,dl,'now').kg*100)/100,116.67,'average/easy estimate does not raise');
+  const hard={...first,...sess(dl,4,[[105,5,'hard']])};assert.equal(B.oneRM(hard,dl,'now').kg,122.5);
+  const beaten={...first,...sess(dl,5,[[120,1,'easy']])};assert.equal(B.oneRM(beaten,dl,'now').kg,120,'lifting more than the 1RM raises it');
+  assert.equal(B.oneRM({},dl,'now'),null);
+});
+test('% sets: loads = 1RM x % rounded to 2.5 kg total on a barbell (Week 2 deadlift 65/68/70/72)',()=>{
+  const records=sess(dl,1,[[120,6,'hard']]);// Epley 144
+  const s={id:'now',pages:[{...dl}],logs:{D:{sets:[0,1,2,3].map(()=>({kg:null,reps:6,logged:false}))}}};
+  const out=B.seed(s,records),w=out.logs.D.sets.filter(r=>r.purpose==='working').map(r=>r.kg);
+  assert.deepEqual(JSON.parse(JSON.stringify(w)),[92.5,97.5,100,102.5]);// 93.6, 97.92, 100.8, 103.68
+  assert.equal(out.pages[0].oneRmKg,144);assert.equal(out.pages[0].startConfidence,'one_rm');
+});
+test('% sets: before any 1RM estimate exists the first-set pick is kept',()=>{
+  const p={...dl,startingKg:60};
+  const s={id:'now',pages:[p],logs:{D:{sets:[0,1,2,3].map(()=>({kg:null,reps:6,logged:false}))}}};
+  const out=B.seed(s,{}),w=out.logs.D.sets.filter(r=>r.purpose==='working').map(r=>r.kg);
+  assert.ok(w.every(k=>k===60),JSON.stringify(w));assert.notEqual(out.pages[0].startConfidence,'one_rm');
+});
+test('% sets on dumbbells round to a real dumbbell size',()=>{
+  const p=mk({id:'Q',title:'DB Bench Press',exerciseId:'ex_db_bench',equipmentId:'dumbbell',loadConvention:'per_hand',minimumKg:1,barWeightKg:undefined,equipmentStepKg:undefined,setTargets:pctTg('Q',[5,5,5],[65,70,75])});
+  const records=sess(p,1,[[30,5,'hard']]);// 35
+  const out=B.seed({id:'now',pages:[p],logs:{Q:{sets:[0,1,2].map(()=>({kg:null,reps:5,logged:false}))}}},records);
+  assert.deepEqual(JSON.parse(JSON.stringify(out.logs.Q.sets.filter(r=>r.purpose==='working').map(r=>r.kg))),[22,24,26]);// 22.75, 24.5, 26.25
 });

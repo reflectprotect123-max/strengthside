@@ -140,3 +140,11 @@ test('coach starting weight and body region reach the athlete plan and session p
   const src=readFileSync(new URL('./session.js',import.meta.url),'utf8');
   assert.match(src,/startingKg:/);assert.match(src,/bodyRegion:/);
 });
+test('Coach Weight % (of WM) per set is carried on each set target and logged as kg',()=>{
+  const c=runtime(),row=copy(fixture),ex=row.resolved_snapshot.htmlSession.blocks[0].exercises[0];
+  delete ex.setTargets;delete ex.columns;ex.setCount=5;
+  ex.logColumns=[{kind:'reps',values:['8','6','6','6','4']},{kind:'weight_pct_wm',values:['65','70','72.5','75','80']}];
+  const r=c.CoachAssignments.apply(c.S,[row],row.athlete_id),p=c.HybridLibrary.planForDate(r.state.library,row.scheduled_date).blocks.find(b=>b.kind==='lift');
+  assert.deepEqual(copy(p.setTargets.map(t=>t.pct)),[65,70,72.5,75,80]);
+  assert.ok(p.columns.includes('weight_kg')&&!p.columns.includes('weight_pct'),JSON.stringify(p.columns));
+});

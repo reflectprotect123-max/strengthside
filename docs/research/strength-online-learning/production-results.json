@@ -3,7 +3,7 @@
   "fixtureSha256": "9382e279c657d79d994f107855ca8514029929ba77f09ff83f40675277c81d92",
   "sourceSha256": {
     "training-core": "e93d732bc4ebc77c567aa0117efb0874822b85acf2542bd4a046621f2c1be861",
-    "strength-targets": "5b76ded8c43ab92d7a6c9f31dfd71f881e5827ad6671918a0cd0c80795f2703e",
+    "strength-targets": "a1c4eb48ee0d716a597f39309657e4c696297022ccb36159519b4e0355f9fa8b",
     "strength-equipment": "5b4d160d278e74c22e46504b807d9c513a5e0926770c8631eaf5262c3dd705fc",
     "strength-rts": "36d867dd2fb85bbe14e414ca10ec6cbc43bf3f05a53b5b5d7c7bd4b4f52d6fb6",
     "strength-policy": "5db4ac29b9c4cf4343c7d06ebff84c5386b2597b7ab9617ca3f263fc12f15a38",
@@ -12,7 +12,7 @@
     "strength-learning": "7de2d70aa443134150c0174af12cd4407aaa5536d04a527c002a5552c3a43c8b",
     "strength-replay": "e5aaf54731759c9840e1c8bcb143ca06d8fee2930e9d13ddc8462718c9a7618d",
     "strength-brain-core": "a9cc6fb20d4b744c8b59ae1feab62b56f877dd9d735e4d292ae872e83fd30a8a",
-    "strength-brain": "f7c148d242a2ba703ab4c0ffa83b679be071abfd2dbad2de34db53b467ccb451",
+    "strength-brain": "6c7c5b9b6740b87413c7ba0e47d48f57a36e547a457095d2f451fcc5ed58fd65",
     "strength-memory": "193d6cf0f29a2750c73eaaf2c4b20f6da439d6652f56430231a496b97061a059",
     "session": "dcf83bac5539664c70cf99f97286bd20f0a2688b1cea223bc7213911f3484daa"
   },
