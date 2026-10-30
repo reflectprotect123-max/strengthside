@@ -131,3 +131,12 @@ test('coach rest, count-in, each side and prep section reach the logger plan',()
  assert.equal(by('Bike Easy').countIn,3);assert.equal(by('Bike Easy').section,'Warm-Up');
  assert.equal(by('Couch Stretch').section,'Cool-Down');assert.equal(by('Couch Stretch').eachSide,true);
 });
+test('coach starting weight and body region reach the athlete plan and session page',()=>{
+  const c=runtime(),row=copy(fixture),ex=row.resolved_snapshot.htmlSession.blocks[0].exercises[0];
+  ex.startingKg=60;ex.bodyRegion='lower';
+  const r=c.CoachAssignments.apply(c.S,[row],row.athlete_id);
+  const p=c.HybridLibrary.planForDate(r.state.library,row.scheduled_date).blocks.find(b=>b.kind==='lift');
+  assert.equal(p.startingKg,60);assert.equal(p.bodyRegion,'lower');
+  const src=readFileSync(new URL('./session.js',import.meta.url),'utf8');
+  assert.match(src,/startingKg:/);assert.match(src,/bodyRegion:/);
+});

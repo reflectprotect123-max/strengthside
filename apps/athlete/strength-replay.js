@@ -24,7 +24,7 @@
     const p=record.payload,page=p?.page,load=root.StrengthContext.normalizeLoad(p?.normalizedLoad);
     if(!load)return null;
     const convention=['barbell_total','barbell_plates'].includes(load.convention)?'barbell_total':load.convention;
-    try{return root.StrengthContext.key({athleteId:p.ownerId,exerciseId:page?.exerciseId,equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
+    try{return root.StrengthContext.key({athleteId:p.ownerId,exerciseId:root.StrengthContext.exerciseKey(page),equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
     catch{return null;}
   }
   function time(record) {
@@ -63,7 +63,9 @@
     const expected=root.StrengthLoad.fromPage({page,value:actual,provenance:normalized.provenance});
     if(!expected||Object.keys(expected).some(key=>expected[key]!==normalized[key]))return {reason:'load_actual_mismatch'};
     const supported=(!page.columns||Array.isArray(page.columns))&&root.StrengthBrainCore.supported({...page,loadUnit:'kg'});
-    if(!supported||page.equipmentId==='bodyweight'||normalized.convention==='added_bodyweight'||[p,page,row].some(source=>source.modelEligible===false||source.model!=null))return {reason:'unsupported_model'};
+    // Weighted bodyweight keeps its load history but never fits the curve (bodyweight is unknown).
+    const loadOnly=page.equipmentId==='bodyweight'||normalized.convention==='added_bodyweight';
+    if(!supported||[p,page,row].some(source=>source.modelEligible===false||source.model!=null))return {reason:'unsupported_model'};
     const effort=row.effort==='medium'?'average':row.effort;
     const rir=Object.prototype.hasOwnProperty.call(RIR,effort)?RIR[effort]:null;
     if(rir==null&&!row.miss)return {reason:'invalid_effort'};
@@ -73,7 +75,7 @@
     const next=root.StrengthEquipment.next(actual,page);
     const delta=next==null?null:next-actual;
     const stepKg=delta!=null&&delta>0?delta*(page.loadUnit==='lb'?.45359237:1):null;
-    return {evidence:{observation,effort:effort??null,sessionStartedAt:time(record),stepKg,
+    return {loadOnly,evidence:{observation,effort:effort??null,sessionStartedAt:time(record),stepKg,
       page:clone(page),row:clone(row),normalizedLoad:normalized}};
   }
   function replay(records,{ownerId,contextKey,excludeSessionId}={}) {
@@ -85,7 +87,7 @@
         const p=record.payload,page=p?.page;
         // Identity can reject unrelated exercises cheaply. Matching identities
         // still pass the complete physical-envelope validation before use.
-        const unrelated=scope&&(p?.ownerId!==scope[0]||page?.exerciseId!==scope[1]||page?.equipmentId!==scope[2]);
+        const unrelated=scope&&(p?.ownerId!==scope[0]||root.StrengthContext.exerciseKey(page)!==scope[1]||page?.equipmentId!==scope[2]);
         contextCache.set(record,unrelated?null:context(record));
       }
       return contextCache.get(record);
@@ -138,18 +140,23 @@
       if(bucket[0].sessionId===excludeSessionId)continue;
       // Completion is a session fact, not a claim in a cached observation. A stale
       // completed first set cannot teach while another snapshot says reopened.
-      if(bucket.some(record=>record.payload.completed!==true||time(record)==null)||new Set(bucket.map(time)).size!==1){
+      if(bucket.some(record=>time(record)==null)||new Set(bucket.map(time)).size!==1){
         for(const record of relevant)diagnostic(record,'incomplete_or_inconsistent_session');continue;
       }
+      // An unfinished session still teaches its load, at lower confidence (never the curve).
+      const partial=bucket.some(record=>record.payload.completed!==true);
+      if(partial)for(const record of relevant)diagnostic(record,'partial_session_low_confidence');
       const first=relevant.filter(record=>{const position=identity(record);return position?.purpose==='working'&&position.workingIndex===0;});
       if(first.length!==1){for(const record of relevant)diagnostic(record,first.length?'duplicate_first_working':'missing_first_working');continue;}
       const record=first[0];
       if(record.deleted){diagnostic(record,'deleted');continue;}
       const result=derive(record,contextKey);
       if(result.reason){diagnostic(record,result.reason);continue;}
+      if(result.loadOnly)diagnostic(record,'unsupported_model');
       const row=result.evidence;
+      if(partial){row.partial=true;row.observation.completed=false;}
       evidence.push(row);
-      if(!conflicted){state=L.observe(state,row.observation);startingScale=L.updateStart(startingScale,row.observation,row.stepKg);}
+      if(!conflicted&&!partial&&!result.loadOnly){state=L.observe(state,row.observation);startingScale=L.updateStart(startingScale,row.observation,row.stepKg);}
     }
     diagnostics.sort((a,b)=>compare(a.id,b.id)||compare(a.reason,b.reason)||compare(a.sessionId??'',b.sessionId??''));
     // Exact canonical content avoids hash collisions in cache invalidation. It

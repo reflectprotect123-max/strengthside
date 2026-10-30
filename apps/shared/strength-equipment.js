@@ -14,6 +14,9 @@
     if(/\bbarbell\b/i.test(title))return 'barbell';
     return '';
   }
+  const MACHINE=/machine|cable|smith|sled|plate.?loaded|selector|pulley/;
+  // Competition-style bells: 4-16 kg in 2s, then 4s, then 48.
+  const KB=[4,6,8,10,12,14,16,20,24,28,32,36,40,48];
   function unique(loads) {return [...new Set(loads)].sort((a,b)=>a-b);}
   function explicitLoads(page) {
     return Array.isArray(page.availableLoads)?unique(page.availableLoads.map(number).filter(n=>n!=null)):[];
@@ -26,8 +29,13 @@
     const bar=equipment==='barbell'&&unit==='kg'&&(canonicalBar?declared>0:convention==='total'&&declared!=null);
     // Legacy `total` is the existing plates keypad convention, never a persisted-load inference.
     const plates=convention==='total'||convention==='barbell_plates';
-    const grid=(number(page.equipmentStepKg)??0)>0&&declared!=null&&(!canonicalBar||bar);
-    return {unit,convention,declared,db,bar,plates,grid};
+    const kb=db&&equipment==='kettlebell';
+    // Machines, cables and added bodyweight with no declared step move in 5 kg / 2.5 kg plates.
+    const machine=!db&&!bar&&unit==='kg'&&MACHINE.test(equipment)&&!['barbell_plates','barbell_total'].includes(convention);
+    const added=convention==='added_bodyweight'||(equipment==='bodyweight'&&unit==='kg');
+    const defaultStep=machine?5:added?2.5:null;
+    const grid=((number(page.equipmentStepKg)??0)>0&&declared!=null&&(!canonicalBar||bar))||(defaultStep!=null&&!bar);
+    return {unit,convention,declared:grid&&declared==null?0:declared,db,kb,bar,plates,grid,defaultStep};
   }
   function profile(page={}) {
     const m=metadata(page);
@@ -36,7 +44,8 @@
       const loads=explicit;
       return {loads,step:0,min:loads[0]??0,convention:m.convention,unit:m.unit};
     }
-    const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?number(page.equipmentStepKg):0;
+    if(m.kb){const min=Math.max(4,number(page.minimumKg)??4);return {loads:KB.filter(n=>n>=min),step:0,min:KB.find(n=>n>=min)??48,convention:m.convention,unit:m.unit};}
+    const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?(number(page.equipmentStepKg)||m.defaultStep):0;
     // Grids remain in display units: plates start at 0; explicit totals include the bar.
     const min=m.db?Math.max(1,m.declared??1):m.bar?(m.plates?0:m.declared):m.grid?m.declared:0;
     const loads=m.db?[1,2,3,4,5,6,7,8,9,10,12.5,15,17.5,20].filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
@@ -66,6 +75,13 @@
     value=number(value);if(value==null)return null;
     return rack(page,[value]).find(n=>n>value+EPS)??null;
   }
+  // Off-ladder entries (e.g. 13 kg dumbbell) snap to the closest available load.
+  function nearest(value,page={}) {
+    value=number(value);if(value==null)return null;
+    const lo=floor(value,page),hi=next(value-EPS*2,page);
+    if(lo==null)return hi;if(hi==null)return lo;
+    return value-lo<=hi-value?lo:hi;
+  }
   function round(value,current,page={},options={}) {
     value=number(value);current=number(current);
     if(value==null||current==null)return null;
@@ -87,6 +103,8 @@
     if(page.loadUnit!=='kg')return unknown('unsupported_unit');
     let desired=null;
     const title=String(page.title||'').trim();
+    const coach=number(page.startingKg);
+    if(coach!=null&&coach>0){const kg=nearest(coach,page);if(kg!=null)return {kg,confidence:'coach',reason:VERSION+':coach_starting_weight'};}
     if(m.bar) {
       if(!/\b(bench|press|squat|deadlift|row)\b/i.test(title))return unknown('unknown_exercise');
       desired=m.plates?0:m.declared;
@@ -130,5 +148,5 @@
     const m=metadata(page);
     return m.bar&&n===(m.plates?0:m.declared)?'empty bar':String(n);
   }
-  root.StrengthEquipment={profile,floor,next,round,ramps,starter,label};
+  root.StrengthEquipment={profile,floor,next,nearest,round,ramps,starter,label};
 })(typeof window!=='undefined'?window:globalThis);

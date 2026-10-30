@@ -29,7 +29,7 @@
     "check:training-play": "node checks/training-play.mjs",
     "check:cooldown-play": "node checks/cooldown-play.mjs",
     "check:ownership-halves": "node --test scripts/check-ownership-halves.test.mjs && node scripts/setup-cursor-skills.mjs --check",
-    "check:strength-brain": "node --test apps/athlete/strength-brain.test.js apps/athlete/strength-memory.test.js apps/athlete/strength-learning-offline.test.js apps/athlete/strength-learning-rollout.test.js",
+    "check:strength-brain": "node --test apps/athlete/strength-brain.test.js apps/athlete/strength-rules.test.js apps/athlete/strength-memory.test.js apps/athlete/strength-learning-offline.test.js apps/athlete/strength-learning-rollout.test.js",
     "check:strength-memory-sql": "node scripts/check-strength-memory-sql.mjs",
     "check:strength-simulator": "node --test scripts/strength-simulator.test.mjs && node scripts/strength-simulator.mjs --report-dir docs/research && git diff --exit-code -- docs/research/strength-brain-v2-simulation.json docs/research/strength-brain-v2-simulation.md",
     "check:whoop-home": "node --test apps/athlete/strength-home.test.js apps/athlete/whoop-sync.test.js && node --test supabase/functions/whoop-connect/return.test.mjs",

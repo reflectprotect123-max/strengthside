@@ -235,6 +235,8 @@
           loadConvention: b.loadConvention,
           exerciseType: b.exerciseType,
           rampCount: b.rampCount,
+          bodyRegion: b.bodyRegion,
+          startingKg: b.startingKg,
           section,
         });
       }

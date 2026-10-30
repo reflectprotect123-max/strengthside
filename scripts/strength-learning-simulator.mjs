@@ -85,7 +85,10 @@ export function runScenario({seed=912731,policy='default',scenario='cold-start',
       // Zero is not a real rack setting, so compare the decision with the load
       // the athlete just used instead of treating 0→2.5 kg as the next rung.
       const rung=E.next(Number.isFinite(planned)&&planned>0?planned:kg,page);
-      if(!escape&&(out>source*(changing?1.1:1.05)+1e-8||rung!=null&&decision.kg>rung+1e-8))metrics.excessiveJumps++;
+      // Dan's ibex rules: the first-session climb (+1/+2 fixed steps) and ibex's own planned
+      // jumps are prescribed, not brain jumps; only a load above the plan is audited.
+      const prescribed=decision.reason==='cold_start_step'||(Number.isFinite(planned)&&planned>0&&decision.kg<=planned+1e-8);
+      if(!escape&&!prescribed&&(out>source*(changing?1.1:1.05)+1e-8||rung!=null&&decision.kg>rung+1e-8))metrics.excessiveJumps++;
      }
     }
    }

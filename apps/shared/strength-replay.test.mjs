@@ -197,7 +197,8 @@ test('large unrelated histories validate only the requested exercise while retai
  const other=record('open-other-exercise',1,50);other.payload.page.exerciseId='other';
  other.sessionId=rows[0].sessionId;other.payload.completed=false;
  const gated=ctx.StrengthReplay.replay([...rows,other],{ownerId:'a',contextKey});
- assert.equal(gated.accepted,99);assert.ok(gated.diagnostics.some(d=>d.id===rows[0].id&&d.reason==='incomplete_or_inconsistent_session'));
+ // An unfinished session still yields low-confidence load evidence but never fits the curve.
+ assert.equal(gated.accepted,99);assert.ok(gated.diagnostics.some(d=>d.id===rows[0].id&&d.reason==='partial_session_low_confidence'));
 });
 
 test('an absent context never groups unrelated facts with missing exercise identity',()=>{

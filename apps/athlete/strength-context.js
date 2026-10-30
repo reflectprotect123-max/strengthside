@@ -16,6 +16,13 @@
     if(canonical.some(phase=>phase!=='X'&&(!Number.isSafeInteger(phase)||phase<0)))return null;
     return canonical.join('-');
   }
+  // Lifts typed in by hand have no catalogue id; a normalised title keeps their history together.
+  function exerciseKey(page) {
+    const id=page?.exerciseId;
+    if(typeof id==='string'&&id.trim())return id.trim();
+    const slug=String(page?.title||'').toLowerCase().replace(/\((?:each side|per side)\)/g,' ').replace(/\bdb\b/g,'dumbbell').replace(/\bkb\b/g,'kettlebell').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,'_');
+    return slug?'title:'+slug:null;
+  }
   function key(p) {
     for(const name of ['athleteId','exerciseId','equipmentId']) {
       const id=p?.[name];
@@ -39,5 +46,5 @@
     // Neither dates/titles nor a claimed known_legacy_version can resolve that ambiguity.
     return 'ambiguous_legacy';
   }
-  root.StrengthContext={tempo,key,normalizeLoad,classifyLegacy};
+  root.StrengthContext={exerciseKey,tempo,key,normalizeLoad,classifyLegacy};
 })(typeof window!=='undefined'?window:globalThis);

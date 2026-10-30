@@ -66,10 +66,17 @@ test('#15 odd effort spellings are normalised, unknown ones warn',()=>{
  const next={targetId:page.setTargets[1].id,purpose:'working',kg:20};
  const hard=ctx.StrengthBrain.next({page,row:{...base,effort:'hard'},nextRow:next,index:1,state:{}});
  for(const e of ['HARD',' Hard ','rpe9'])assert.equal(ctx.StrengthBrain.next({page,row:{...base,effort:e},nextRow:next,index:1,state:{}}).kg,hard.kg,e);
- assert.equal(ctx.StrengthBrain.next({page,row:{...base,effort:'medium'},nextRow:next,index:1,state:{}}).reason,'combined_projection_hold');
+ assert.equal(ctx.StrengthBrain.next({page,row:{...base,effort:'medium'},nextRow:next,index:1,state:{}}).reason,'hold_planned');
  const odd=ctx.StrengthBrain.next({page,row:{...base,effort:'banana'},nextRow:next,index:1,state:{}});
  assert.equal(odd.reason,'unknown_effort');assert.equal(odd.warning,'unrecognised_effort');
 });
 test('#14 the kg/lb toggle cannot switch the logger into lb',()=>{
  const {ctx}=boot([dbBench]);ctx.Logger.unit('lb');assert.notEqual(ctx.S.session.unit,'lb');
+});
+test('#4 a weighted lift the brain cannot pick for shows an unobtrusive manual note',()=>{
+ const odd={kind:'lift',letter:'A',title:'Landmine Press',columns:['reps','weight_kg','seconds'],setCount:3,repTarget:'8',exerciseId:'ex_landmine'};
+ const {ctx}=boot([odd]);const page=ctx.HybridSession.currentPage(ctx.S.session);
+ assert.match(ctx.Logger._sideHtml(ctx.S.session,page),/<span>LOAD<\/span><span>Manual<\/span>/);
+ const {ctx:c2}=boot([dbBench]);const p2=c2.HybridSession.currentPage(c2.S.session);
+ assert.doesNotMatch(c2.Logger._sideHtml(c2.S.session,p2),/Manual/);
 });

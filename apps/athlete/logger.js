@@ -571,6 +571,12 @@
     return /plank|hang|\bhold\b/i.test(page.title || '') && columnsFor(page).includes('seconds');
   }
 
+  // Weighted lifts the brain cannot pick for say so quietly instead of looking broken.
+  function manualLoad(page) {
+    const cols = page.columns || [];
+    return page.kind === 'lift' && cols.includes('weight_kg') && !/carry|farmer|suitcase/i.test(page.title || '') && !cols.includes('meters') &&
+      !(root.StrengthBrain && root.StrengthBrain.eligible(page));
+  }
   function sideHtml(s, page, history) {
     const past = history || root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
     // EST. 1RM is learned on physical kg; show it on the same entry basis as LAST (plates for bars).
@@ -581,6 +587,7 @@
         <div class="log-thumb">▶</div>
         <div class="log-side">
           <div class="log-side-row"><span>EST. 1RM</span><span>${wm ? esc(wm) : 'Learning'}</span></div>
+          ${manualLoad(page) ? '<div class="log-side-row"><span>LOAD</span><span>Manual</span></div>' : ''}
           <div class="log-side-row"><span>LAST</span><span>${past.latest ? loggedLoad(page, past.latest.rows.filter(r=>r.logged && r.purpose!=='ramp').at(-1)?.kg) || 'None' : 'None'}</span></div>
         </div>
       </div>`;
@@ -952,14 +959,7 @@
     const adjustment = StrengthBrain.next({ page: lift, row: source, nextRow: rows[index], index, state });
     if (!adjustment) return null;
     rows[index].kg = adjustment.kg;
-    if (source.purpose === 'ramp' || source.purpose === 'warmup') {
-      for (let i = index + 1; i < rows.length; i++) {
-        const later = rows[i];
-        if (!later || later.logged || later.skipped || later.purpose !== 'working') continue;
-        const adj = StrengthBrain.next({ page: lift, row: source, nextRow: later, index: i, state });
-        if (adj && typeof adj.kg === 'number' && Number.isFinite(adj.kg)) later.kg = adj.kg;
-      }
-    }
+    // Only the next set moves; later sets follow their own plan (ramps never re-project work).
     source.loadDecision = adjustment;
     return adjustment;
   }

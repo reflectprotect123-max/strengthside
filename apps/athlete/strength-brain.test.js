@@ -23,7 +23,8 @@ test('learning context requires canonical identity, keeps tempo and owner separa
  assert.equal(context(canonical,ctx.StrengthLoad.normalize({value:60,unit:'kg',convention:'barbell_total',barKg:20,provenance:'explicit'})),context());
  assert.equal(context(canonical,ctx.StrengthLoad.normalize({value:60/0.45359237,unit:'lb',convention:'barbell_total',barKg:20,provenance:'explicit'})),context());
  assert.notEqual(context({...canonical,tempo:'20X1'}),context());assert.notEqual(context({...canonical,tempo:null}),context());assert.notEqual(context(canonical,normalized,'b'),context());
- for(const [p,load,owner] of [[{...page,exerciseId:null},normalized,'a'],[{...canonical,exerciseId:null},normalized,'a'],[canonical,normalized,null],[{...canonical,equipmentId:''},normalized,'a'],[canonical,{...normalized,externalKg:999},'a'],[canonical,{...normalized,provenance:'ambiguous_legacy',eligible:false},'a']])assert.equal(context(p,load,owner),null);
+ assert.match(context({...canonical,exerciseId:null}),/title:back_squat|title:squat/);
+ for(const [p,load,owner] of [[canonical,normalized,null],[{...canonical,equipmentId:''},normalized,'a'],[canonical,{...normalized,externalKg:999},'a'],[canonical,{...normalized,provenance:'ambiguous_legacy',eligible:false},'a']])assert.equal(context(p,load,owner),null);
  assert.equal(normalized.externalKg,60);assert.equal(normalized.rawValue,40);
 });
 test('legacy history key and facts remain readable independently of the new context',()=>{
@@ -36,8 +37,9 @@ test('legacy history key and facts remain readable independently of the new cont
 
 test('adapter delegates per-set range progression to the canonical core',()=>{
  assert.equal(B.review(page,[row(0,6),row(1,6),row(2,6)]).nextKg,40);
- assert.equal(B.review(page,[row(0),row(1),row(2)]).nextKg,41);
- assert.equal(B.review(page,[row(0),row(1),row(2,8,'hard')]).earned,false);
+ assert.equal(B.review(page,[row(0),row(1),row(2)]).nextKg,40,'no rep-range progression');
+ assert.equal(B.review(page,[row(0,8,'easy'),row(1,8,'easy'),row(2,8,'easy')]).nextKg,41);
+ assert.equal(B.review(page,[row(0,8,'easy'),row(1,8,'easy'),row(2,8,'hard')]).earned,false);
 });
 test('RTS estimate ignores ramps failures Easy and unsupported movements',()=>{
  assert.ok(B.estimate(row(0,8,'hard'),page)>40);
@@ -124,23 +126,23 @@ test('between-session Easy calibration can take one dumbbell rung when 6 of 6–
  assert.equal(seeded.pages[0].workingKg,12.5);
  assert.equal(B.history(records,db).rolling,null);
 });
-test('a zero-rep miss or Max Effort still reduces the next seed after the prescription changes',()=>{
+test('a zero-rep miss reduces the next seed after the prescription changes; Max Effort with all reps holds',()=>{
  const next={...page,setTargets:targets.map(t=>({...t,reps:{min:5,max:5}}))};
- for(const prior of [{...row(0,0,null,40),miss:true},row(0,6,'max_effort',40)]){
+ for(const [prior,low] of [[{...row(0,0,null,40),miss:true},true],[row(0,6,'max_effort',40),false]]){
   const records={old:record(page,prior)};records.old.payload.row.miss=prior.miss;
   const seeded=B.seed({id:'next',pages:[next],logs:{A:{sets:next.setTargets.map(t=>({targetId:t.id}))}}},records);
-  assert.ok(seeded.pages[0].workingKg<40);
+  assert.equal(seeded.pages[0].workingKg<40,low);
  }
 });
 
 test('later ordinary Hard or failed sets veto an Easy-first automatic increase',()=>{
- for(const last of [row(2,6,'hard',42),{...row(2,4,'average',42),miss:true},row(2,6,'max_effort',42)]){
+ for(const [last,want] of [[row(2,6,'hard',42),40],[{...row(2,4,'average',42),miss:true},38],[row(2,6,'max_effort',42),40]]){
   const records={first:record(page,row(0,6,'easy',40))};
   const r=record(page,last,{id:'last'});r.payload.row={...last};records.last=r;
   const h=B.history(records,page);
-  assert.equal(h.latest.nextKg,40,'an Easy first set must not overrule later struggle');
+  assert.equal(h.latest.nextKg,want,'an Easy first set must not overrule later struggle; a miss drops ~5%');
   const seeded=B.seed({id:'next',pages:[page],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
-  assert.equal(seeded.pages[0].workingKg,40);
+  assert.equal(seeded.pages[0].workingKg,want);
   assert.equal(h.accepted,0,'later work must not become shape-fitting evidence');
  }
 });
@@ -172,7 +174,8 @@ test('dumbbell and kettlebell ramps both suggest a load below the work weight',(
  const kb={...page,id:'K',title:'Kettlebell Goblet Squat',equipmentId:'kettlebell',loadConvention:'single',setTargets:targets.map((t,i)=>({...t,id:`K:set:${i}`}))};
  const kbSeed=B.seed({id:'k',pages:[kb],logs:{K:{sets:kb.setTargets.map(t=>({targetId:t.id}))}}},{});
  assert.equal(kbSeed.pages[0].workingKg,6);
- assert.deepEqual(Array.from(kbSeed.logs.K.sets.filter(r=>r.purpose==='ramp'),r=>r.kg),[3,5]);
+ // Real bells: only the 4 kg bell sits below a 6 kg working bell.
+ assert.equal(kbSeed.logs.K.sets.filter(r=>r.purpose==='ramp')[0].kg,4);
 });
 test('a superset member gets the same working kg as the same solo history',()=>{
  const reps=id=>[0,1,2].map(i=>({id:`${id}:set:${i}`,purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false}));

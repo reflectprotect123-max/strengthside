@@ -158,6 +158,8 @@
       loadUnit: cols.includes('weight_lb') ? 'lb' : 'kg',
       exerciseType: block.exerciseType || null,
       rampCount: block.rampCount,
+      bodyRegion: block.bodyRegion || null,
+      startingKg: Number(block.startingKg) > 0 ? Number(block.startingKg) : null,
       columns: cols,
       prescribed,
       restSec: restSeconds(block),

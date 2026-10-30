@@ -65,7 +65,8 @@ test('versioned provisional exercise starters use exact conventions and defaults
  assert.equal(E.starter({...db,loadConvention:'single',title:'Suitcase Carry'}).kg,8);
  assert.equal(E.starter({equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg',title:'Kettlebell Swing'}).kg,8);
  assert.equal(E.starter({equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg',title:'Kettlebell Goblet Squat'}).kg,6);
- assert.equal(E.floor(3.75,{equipmentId:'kettlebell',loadConvention:'per_hand',loadUnit:'kg'}),3);
+ // Kettlebells come in real bell sizes; 4 kg is the lightest.
+ assert.equal(E.floor(5,{equipmentId:'kettlebell',loadConvention:'per_hand',loadUnit:'kg'}),4);
 });
 test('unknown equipment, units, conventions and unrelated exercises do not start or convert',()=>{
  for(const page of [{equipmentId:'machine',title:'Press'},{...db,loadUnit:'lb',title:'DB Bench Press'},{...db,loadConvention:'total',title:'DB Bench Press'},{...db,loadConvention:'assistance',title:'DB Row'},{...db,loadConvention:undefined,title:'DB Curl'},{...db,title:'DB Deadlift'},{...db,loadConvention:'single',title:'DB Curl'}]) {
@@ -77,7 +78,8 @@ test('unknown equipment, units, conventions and unrelated exercises do not start
 test('dumbbell and kettlebell ramps sit near half and three quarters of the work weight',()=>{
  const kb={equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg'};
  assert.deepEqual(plain(E.ramps(5,db)),[3,4]);
- assert.deepEqual(plain(E.ramps(6,kb)),[3,5]);
+ assert.deepEqual(plain(E.ramps(6,kb)),[4,null]);
+ assert.deepEqual(plain(E.ramps(16,kb)),[8,12]);
  assert.deepEqual(plain(E.ramps(2,db)),[1,null]);
  assert.deepEqual(plain(E.ramps(1,db)),[null,null]);
  assert.deepEqual(plain(E.ramps(5,{...db,minimumKg:4})),[4,null]);
