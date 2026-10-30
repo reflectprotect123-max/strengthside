@@ -1140,6 +1140,18 @@
   }
 
   let lastRate = { key: '', at: 0 };
+  let rating = false;
+  function restoreKnob(memberId) {
+    const slider = typeof document !== 'undefined' && document.getElementById(`setEffort-${memberId}`);
+    if (!slider) return;
+    const page = HybridSession.currentPage(session());
+    const lift = page && (page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page);
+    if (!lift) return;
+    const flow = setFlow(session(), lift);
+    const chosen = EFFORTS.includes(flow.draft.effort) ? flow.draft.effort : null;
+    const target = root.StrengthBrain.target(lift, flow.rows[flow.index], flow.index);
+    slider.value = String(Math.min(SLIDER_STOPS - 1, Math.max(0, EFFORTS.indexOf(chosen || target || 'average'))));
+  }
   let lastRowLog = { memberId: '', index: -1, at: 0 };
   const Logger = {
     openStored,
@@ -1155,6 +1167,8 @@
       updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, [field]: raw } }), false);
     },
     setEffort(memberId, raw) {
+      // A trailing event from a tap that was just blocked must change nothing: snap the knob back.
+      if (!rating && lastRate.key === String(memberId) && Date.now() - lastRate.at < 600) return restoreKnob(memberId);
       const effort = EFFORTS[Number(raw)];
       if (!effort) return;
       updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, effort } }), false);
@@ -1169,9 +1183,10 @@
     rate(memberId, raw) {
       // Dan: one tap on the rating logs the set; a duplicate event from the same tap is ignored.
       const now = Date.now(), key = String(memberId);
-      if (lastRate.key === key && now - lastRate.at < 600) return;
+      if (lastRate.key === key && now - lastRate.at < 600) return restoreKnob(memberId);
       lastRate = { key, at: now };
-      Logger.setEffort(memberId, raw);
+      rating = true;
+      try { Logger.setEffort(memberId, raw); } finally { rating = false; }
       const page = HybridSession.currentPage(session());
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       if (!lift) return;

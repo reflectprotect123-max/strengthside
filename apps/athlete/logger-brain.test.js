@@ -286,3 +286,19 @@ test('R12 the stylesheet paints a green-to-red chunky track and a big white knob
  const knob=css.match(/\.log-effort-colour::-webkit-slider-thumb\s*\{([^}]*)\}/)?.[1]||'';
  assert.match(knob,/background:\s*#fff/);assert.match(knob,/width:\s*(3[6-9]|4\d)px/);
 });
+test('R14 a blocked trailing tap changes nothing: the next set stays unrated with its knob untouched',()=>{
+ for(const v of [0,2,4]){
+  const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+  ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+  ctx.Logger.setEffort(id,v);ctx.Logger.rate(id,v);
+  const before=sliderTag(element.innerHTML);
+  const slider={value:String(v),disabled:false,setAttribute(){},closest:()=>({querySelector:()=>({})})};
+  const texts={};ctx.document.getElementById=k=>k===`setEffort-${id}`?slider:['logger','shell'].includes(k)?element:(texts[k]={textContent:''});
+  ctx.Logger.setEffort(id,v);ctx.Logger.rate(id,v);
+  const flow=ctx.S.session.loggerSetFlow[id];
+  assert.equal(flow.draft.effort,null,`stop ${v}: draft stays unrated`);
+  assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,1);
+  assert.equal(Object.keys(texts).length,0,`stop ${v}: no label text rewritten`);
+  assert.equal(slider.value,before.match(/value="(\d)"/)[1],`stop ${v}: knob snapped back`);
+ }
+});
