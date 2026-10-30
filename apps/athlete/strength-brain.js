@@ -15,6 +15,21 @@
   function stepUp(kg,page,cap=.1){const n=E.next(kg,page);return n==null?kg:E.round(n,kg,page,{upCap:cap,downCap:cap});}
   function target(page,row,index){let t=null;try{t=T.forRow(page,row,index);}catch{}return t?.purpose==='warmup'?'easy':'average';}
   function next(args){
+    const out=nextRaw(args),kg=pctAnchorNext(args);
+    return kg==null?out:{...out,kg,reason:'pct_anchor'};
+  }
+  // Dan: before any 1RM exists, % sets scale from the first working set the athlete logged
+  // (anchor x pct_n / pct_1), rounded like every % load. Once a 1RM exists the seed already owns them.
+  function pctAnchorNext({page,row,nextRow,state}={}){
+    if(!page||Number(page.oneRmKg)>0||!row||row.miss||nextRow?.logged)return null;
+    let targets=[];try{targets=T.normalize(page);}catch{return null;}
+    const byId=new Map(targets.map(t=>[t.id,t])),next=byId.get(nextRow?.targetId);
+    if(!(next?.pct>0)||next.purpose!=='working')return null;
+    const rows=state?.rows||[],anchor=rows.find(r=>r?.logged&&!r.skipped&&!r.miss&&r.purpose==='working'&&byId.get(r.targetId)?.pct>0&&Number(r.kg)>0);
+    if(!anchor)return null;
+    return pctLoad(Number(anchor.kg)*next.pct/byId.get(anchor.targetId).pct,100,page);
+  }
+  function nextRaw(args){
     const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
     const state={...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]};
     const mode=state.policy?.learningMode??root.StrengthPolicy.learningMode;
@@ -94,6 +109,9 @@
       if(!sessions.has(r.sessionId))sessions.set(r.sessionId,{t,sets:[]});
       sessions.get(r.sessionId).sets.push({kg,reps,effort:Core.effortOf(row.effort)});
     }
+    // Credibility: a set far off the rest of this lift's history (a typo, a per-hand slip) is not evidence.
+    const kgs=[...sessions.values()].flatMap(x=>x.sets.map(y=>y.kg)).sort((a,b)=>a-b),mid=kgs.length?kgs[Math.floor((kgs.length-1)/2)]:0;
+    for(const [id,x] of sessions){x.sets=x.sets.filter(y=>y.kg>=mid*.4&&y.kg<=mid*2.5);if(!x.sets.length)sessions.delete(id);}
     let best=null;
     for(const {sets} of [...sessions.values()].sort((a,b)=>a.t<b.t?-1:a.t>b.t?1:0))for(const x of sets){
       const e=Math.round(epley(x.kg,x.reps)*100)/100;
@@ -168,7 +186,8 @@
       const authored=log.sets.map((row,i)=>{
         const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
         const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)?Core.matchLoad(working,from,reps,page):null;
-        const kg=rm&&target?.pct>0?pctLoad(rm.kg,target.pct,page):matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
+        const anchored=!rm&&known&&working>0&&first?.pct>0&&target?.purpose==='working'&&target?.pct>0?(target===first?working:pctLoad(working*target.pct/first.pct,100,page)):null;
+        const kg=rm&&target?.pct>0?pctLoad(rm.kg,target.pct,page):anchored!=null?anchored:matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
         return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg,plannedKg:kg};
       });
       log.sets=ramps.concat(authored);page.brainSeeded=true;

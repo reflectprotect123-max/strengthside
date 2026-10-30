@@ -258,7 +258,8 @@
 
   function startSession({ date, plan, letter, existing } = {}) {
     const pages = pagesFromPlan(plan);
-    if (existing && existing.date === date && existing.phase !== 'summary' && !letter) {
+    const slotKey = (plan && plan.slotKey) || date;
+    if (existing && existing.date === date && (existing.slotKey || existing.date) === slotKey && existing.phase !== 'summary' && !letter) {
       const s = root.TrainingCore.migrateSession(clone(existing));
       s.pages = s.pages?.length ? s.pages : pages;
       for(const log of Object.values(s.logs||{}))for(const row of log.sets||[])
@@ -269,6 +270,7 @@
     const session = attachLogs({
       id: root.crypto?.randomUUID?.() || String(Date.now()),
       date,
+      slotKey,
       title: (plan && plan.title) || '',
       instructions: (plan && plan.instructions) || '',
       coachAssignedIds: (plan && plan.coachAssignedIds) || [],

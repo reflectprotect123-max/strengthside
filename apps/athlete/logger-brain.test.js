@@ -54,11 +54,16 @@ test('#12 per-hand weight is labelled per hand, and each-side reps count both si
  const t=ctx.HybridSession.totals(s);
  assert.equal(t.reps,16);assert.equal(t.kg,10*8*2*2);
 });
-test('#13 barbell Est. 1RM and Last are on the same (plates) basis',()=>{
- const sq={kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],setCount:1,repTarget:'5',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,exerciseId:'ex_back_squat'};
+test('#13 EST. 1RM is the Epley working 1RM the % loads use (old estimator retired)',()=>{
+ const sq={kind:'lift',letter:'A',title:'Deadlift',columns:['reps','weight_kg'],setCount:1,repTarget:'6',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,exerciseId:'ex_deadlift'};
  const {ctx}=boot([sq]);const page=ctx.HybridSession.currentPage(ctx.S.session);
- const html=ctx.Logger._sideHtml({id:'x'},page,{rolling:100,latest:{rows:[{logged:true,purpose:'working',kg:60}]}});
- assert.match(html,/EST\. 1RM<\/span><span>80 kg/);assert.match(html,/LAST<\/span><span>60 kg/);
+ const row={id:'r1',purpose:'working',kg:102.5,reps:6,effort:'average',logged:true};
+ const records={a:{id:'a',kind:'set',sessionId:'old',deleted:false,payload:{page,row,sessionStartedAt:1}}};
+ ctx.StrengthMemory.records=()=>records;
+ const html=ctx.Logger._sideHtml({id:'x'},page,{rolling:130.9,latest:{rows:[row]}});
+ assert.match(html,/EST\. 1RM<\/span><span>123 kg/);assert.match(html,/LAST<\/span><span>102\.5 kg/);
+ ctx.StrengthMemory.records=()=>({});
+ assert.match(ctx.Logger._sideHtml({id:'x'},page,{rolling:6.6,latest:null}),/EST\. 1RM<\/span><span>Learning/);
 });
 test('#15 odd effort spellings are normalised, unknown ones warn',()=>{
  const {ctx}=boot([dbBench]);const page=ctx.HybridSession.currentPage(ctx.S.session);
@@ -85,4 +90,70 @@ test('manual lift: LAST shows the last weight used (title-key fallback)',()=>{
  const {ctx}=boot([odd]);const page=ctx.HybridSession.currentPage(ctx.S.session);
  ctx.StrengthBrain.lastLogged=()=>({kg:27.5,sessionId:'old'});
  assert.match(ctx.Logger._sideHtml(ctx.S.session,page),/<span>LAST<\/span><span>27.5 kg<\/span>/);
+});
+const sideButtons=html=>[...(html.match(/<div class="log-pad-side"[\s\S]*?<\/div>/)||[''])[0].matchAll(/<button[^>]*>([^<]*)<\/button>/g)].map(m=>m[1]);
+const sq5={kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],setCount:3,repTarget:'5',equipmentId:'barbell',loadConvention:'total',minimumKg:20,equipmentStepKg:2.5,exerciseId:'ex_back_squat'};
+test('#8 one tap on an effort rating logs the set',()=>{
+ const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ ctx.S.session.loggerSetFlow={[id]:{index:0,rest:false,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ ctx.Logger.rate(id,2);
+ const row=ctx.S.session.logs[id].sets[0];assert.equal(row.logged,true);assert.equal(row.effort,'average');
+});
+test('#8 during rest the next rating logs the next set with no Start-next-set tap',()=>{
+ const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ ctx.S.session.loggerSetFlow={[id]:{index:0,rest:false,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ ctx.Logger.rate(id,2);assert.equal(ctx.S.session.loggerSetFlow[id].rest,true);
+ ctx.Logger.rate(id,3);
+ assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,2);assert.equal(ctx.S.session.logs[id].sets[1].effort,'hard');
+ ctx.Logger.rate(id,3);assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,2,'a duplicate event from the same tap does not log twice');
+});
+test('#8 the first tap after the keypad registers: an outside tap commits the entry without a repaint',()=>{
+ const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.loggerSetFlow={[id]:{index:0,rest:false,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ ctx.Logger.focusDraftPad(id,'kg');ctx.Logger.padKey('⌫');ctx.Logger.padKey('⌫');ctx.Logger.padKey('⌫');ctx.Logger.padKey('1');ctx.Logger.padKey('1');ctx.Logger.padKey('0');
+ element.innerHTML='SENTINEL';
+ assert.equal(ctx.Logger.padDismiss(),true);
+ assert.equal(element.innerHTML,'SENTINEL','no repaint, so the tapped control still receives the tap');
+ assert.equal(Number(ctx.S.session.loggerSetFlow[id].draft.kg),110);
+ ctx.Logger.rate(id,2);assert.equal(ctx.S.session.logs[id].sets[0].kg,110);assert.equal(ctx.S.session.logs[id].sets[0].logged,true);
+});
+test('#9 the keypad has the same side keys in the same slots on the single-set and table-row screens',()=>{
+ const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.Logger.focusDraftPad(id,'kg');const single=sideButtons(element.innerHTML);
+ ctx.Logger.closePad();ctx.Logger.focusPad(id,0,'kg');const table=sideButtons(element.innerHTML);
+ assert.deepEqual(single,['Save','Clear','Autofill']);assert.deepEqual(table,single);
+});
+test('#9 Autofill from the single-set keypad fills this and the remaining sets',()=>{
+ const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.loggerSetFlow={[id]:{index:0,rest:false,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ ctx.Logger.focusDraftPad(id,'kg');['⌫','⌫','⌫','9','0'].forEach(k=>ctx.Logger.padKey(k));ctx.Logger.padAutofill();
+ assert.equal(Number(ctx.S.session.loggerSetFlow[id].draft.kg),90);
+ assert.deepEqual(JSON.parse(JSON.stringify(ctx.S.session.logs[id].sets.slice(1).map(r=>r.kg))),[90,90]);
+});
+test('#8 the rest dock offers Log set (no Start-next-set mode switch) and a tap on the current rating position also logs',()=>{
+ const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ ctx.S.session.loggerSetFlow={[id]:{index:1,rest:true,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ ctx.Logger.paint();
+ assert.doesNotMatch(element.innerHTML,/Start next set/);
+ assert.match(element.innerHTML,/class="log-effort-slider"[^>]*onclick="Logger\.rate\(/);
+ assert.match(element.innerHTML,/class="log-effort-slider"[^>]*ontouchend="Logger\.rate\(/);
+});
+test('#8 a resumed session (no Logger.open) still dismisses the keypad on the first outside tap',()=>{
+ const {ctx}=boot([sq5]);const listeners=[];ctx.document.addEventListener=(n,fn)=>listeners.push([n,fn]);
+ const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.Logger.focusDraftPad(id,'kg');
+ const down=listeners.filter(l=>l[0]==='pointerdown');assert.ok(down.length>=1);
+ down[0][1]({target:{closest:()=>null}});
+ assert.equal(ctx.Logger.padDismiss(),false);
+});
+test('#9 table-row Autofill on an empty cell copies the previous row value instead of erroring',()=>{
+ const hold={kind:'lift',letter:'F',title:'Plank Hold',columns:['seconds'],setCount:2,exerciseId:'ex_plank'};
+ const {ctx}=boot([hold]);const page=ctx.HybridSession.currentPage(ctx.S.session);const id=page.id;
+ ctx.S.session=ctx.HybridSession.logSet(ctx.S.session,0,{cells:{seconds:30}},id,{commit:false});
+ ctx.Logger.focusPad(id,1,'seconds');ctx.Logger.padClear&&ctx.Logger.padClear();
+ ctx.Logger.padAutofill();
+ assert.equal(ctx.S.session.logs[id].sets[1].cells.seconds,30);
 });

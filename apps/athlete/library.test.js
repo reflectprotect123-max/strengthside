@@ -72,3 +72,15 @@ test('DB RDL gets a provisional first-set weight from the normal starter',()=>{
  const s=globalThis.StrengthEquipment.starter({title:'DB RDL',equipmentId:'dumbbell',loadConvention:'per_hand',loadUnit:'kg',minimumKg:1});
  assert.equal(s.kg,8);assert.equal(s.confidence,'provisional');
 });
+
+test('a day with two coach sessions compiles one plan per session, each with its own slot',()=>{
+ const blk=t=>({kind:'lift',title:t,columns:['reps','weight_kg'],setCount:3,repTarget:'5'});
+ const st={templates:[{id:'coach-day:2026-10-30',source:'coach-assignment',coachAssignedIds:['a1','b2'],title:'Lower + Upper',blocks:[blk('Deadlift'),blk('Bench Press')],
+  parts:[{assignedId:'a1',title:'Lower',instructions:'',blocks:[blk('Deadlift')]},{assignedId:'b2',title:'Upper',instructions:'go',blocks:[blk('Bench Press')]}]}],assignments:{'2026-10-30':'coach-day:2026-10-30'}};
+ const plans=HybridLibrary.plansForDate(st,'2026-10-30');
+ assert.deepEqual(plans.map(p=>[p.title,p.slotKey,p.coachAssignedIds.join()]),[['Lower','2026-10-30#a1','a1'],['Upper','2026-10-30#b2','b2']]);
+ assert.deepEqual(plans.map(p=>p.blocks.filter(b=>b.kind==='lift').map(b=>b.title)),[['Deadlift'],['Bench Press']]);
+ assert.equal(HybridLibrary.planForDate(st,'2026-10-30',null,'2026-10-30#b2').title,'Upper');
+ const one={templates:[{id:'t',title:'Solo',blocks:[blk('Squat')]}],assignments:{'2026-10-31':'t'}};
+ assert.deepEqual(HybridLibrary.plansForDate(one,'2026-10-31').map(p=>p.slotKey),['2026-10-31']);
+});

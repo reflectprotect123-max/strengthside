@@ -148,3 +148,14 @@ test('Coach Weight % (of WM) per set is carried on each set target and logged as
   assert.deepEqual(copy(p.setTargets.map(t=>t.pct)),[65,70,72.5,75,80]);
   assert.ok(p.columns.includes('weight_kg')&&!p.columns.includes('weight_pct'),JSON.stringify(p.columns));
 });
+
+test('two Coach sessions on a day keep separate parts with their own title and blocks',()=>{
+  const c=runtime();
+  const other={...copy(fixture),id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'};
+  const r=c.CoachAssignments.apply(c.S,[fixture,other],fixture.athlete_id);
+  const t=r.state.library.templates[0];
+  assert.deepEqual(copy(t.parts.map(p=>p.assignedId)),[fixture.id,other.id]);
+  assert.ok(t.parts.every(p=>p.blocks.length===1));
+  const plans=c.HybridLibrary.plansForDate(r.state.library,fixture.scheduled_date);
+  assert.equal(plans.length,2);assert.notEqual(plans[0].slotKey,plans[1].slotKey);
+});

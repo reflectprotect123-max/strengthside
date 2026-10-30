@@ -119,7 +119,8 @@
       items.sort((a,b)=>a.id.localeCompare(b.id));
       const id='coach-day:'+date;
       library.templates.push({id,source:'coach-assignment',coachAssignedIds:items.map(x=>x.id),
-        title:items.map(x=>x.title).join(' + '),instructions:items.map(x=>x.instructions).filter(Boolean).join('\n\n'),blocks:items.flatMap(x=>x.blocks)});
+        title:items.map(x=>x.title).join(' + '),instructions:items.map(x=>x.instructions).filter(Boolean).join('\n\n'),blocks:items.flatMap(x=>x.blocks),
+        ...(items.length>1?{parts:items.map(x=>({assignedId:x.id,title:x.title,instructions:x.instructions||'',blocks:x.blocks}))}:{})});
       if(!library.assignments[date])library.assignments[date]=id;
       else conflicts.push(date); // Never silently replace a locally assigned workout.
     }

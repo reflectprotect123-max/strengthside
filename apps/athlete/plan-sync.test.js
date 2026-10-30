@@ -171,3 +171,14 @@ test('edits made while a pull is in flight survive merging and are pushed',async
  assert.equal(globalThis.S.session.blockIndex,1);assert.equal(globalThis.S.session.logs.A.sets[0].logged,true);
  assert.equal(pushed.sessions.find(s=>s.kind==='log').payload.blockIndex,1);
 });
+
+test('two sessions on one date sync as separate log entities and come back apart',()=>{
+ const a={id:'a',date:'2026-10-30',slotKey:'2026-10-30#a1',phase:'summary'},b={id:'b',date:'2026-10-30',slotKey:'2026-10-30#b2',phase:'block'};
+ const packed=P.pack(libState([],{sessions:{'2026-10-30#a1':a,'2026-10-30#b2':b}}));
+ const logs=packed.sessions.filter(r=>r.kind==='log');
+ assert.deepEqual(logs.map(r=>[r.id,r.date]).sort(),[['log_2026-10-30#a1','2026-10-30'],['log_2026-10-30#b2','2026-10-30']]);
+ const back=P.applyPlan({},packed);
+ assert.deepEqual(Object.keys(back.sessions).sort(),['2026-10-30#a1','2026-10-30#b2']);
+ const gone=P.applyPlan({session:{id:'b',date:'2026-10-30',slotKey:'2026-10-30#b2'},loggerOpen:true},{sessions:[],tombstones:[{kind:'session',id:'log_2026-10-30#b2'}]});
+ assert.equal(gone.session,null,'a discarded slot closes the active logger');
+});

@@ -1493,3 +1493,11 @@ button {
   border: 0;
   object-fit: cover;
 }
+
+/* Two or more sessions on one day: one pill per session, each logged on its own. */
+.trn-slots { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 10px; }
+.trn-slot { flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.22); background: transparent; color: var(--oled-muted, #aaa); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.trn-slot.active { border-color: #1ba3ff; color: #fff; background: rgba(27,163,255,0.14); }
+.history-session { display: block; width: 100%; text-align: left; color: inherit; font: inherit; }
+.btn-danger { color: #ff5a5a; }
+.progress-row-btn { width: 100%; background: none; border-left: 0; border-right: 0; border-bottom: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }

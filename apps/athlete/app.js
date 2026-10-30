@@ -105,7 +105,8 @@ function save() {
   }
   if (S.session && S.session.date && !S.session.demo && !S.sliderDemoOpening) {
     S.sessions = S.sessions || {};
-    S.sessions[S.session.date] = S.session;
+    if (window.HybridSlots) HybridSlots.store(S.sessions, S.session);
+    else S.sessions[S.session.date] = S.session;
   }
   refreshHybridOccupancy();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
@@ -427,7 +428,7 @@ const TRAINING_DEMO = {
 function trainingPlanForDate(iso) {
   if (window.HybridLibrary) {
     S.library = HybridLibrary.ensure(S.library);
-    const fromLib = HybridLibrary.planForDate(S.library, iso, null);
+    const fromLib = HybridLibrary.planForDate(S.library, iso, null, S.selectedSlot);
     if (fromLib) return fromLib;
   }
   if (S.trainingPlans && S.trainingPlans[iso]) return S.trainingPlans[iso];
@@ -569,14 +570,39 @@ function trainingBlocksHtml(iso) {
     ${body}`;
 }
 
+function trainingSlotsHtml(iso) {
+  const plans = window.HybridLibrary ? HybridLibrary.plansForDate(S.library, iso) : [];
+  if (plans.length < 2) return '';
+  const current = (trainingPlanForDate(iso) || {}).slotKey;
+  return `<div class="trn-slots" role="tablist">${plans.map((p, i) => {
+    const st = window.HybridSlots ? HybridSlots.status(S.sessions, p.slotKey) : 'start';
+    const mark = st === 'done' ? ' ✓' : st === 'resume' ? ' •' : '';
+    return `<button type="button" class="trn-slot${p.slotKey === current ? ' active' : ''}" aria-selected="${p.slotKey === current}" onclick="selectTrainingSlot('${esc(p.slotKey)}')">${esc(p.title || `Session ${i + 1}`)}${mark}</button>`;
+  }).join('')}</div>`;
+}
+
+function selectTrainingSlot(key) {
+  S.selectedSlot = key;
+  render();
+}
+
+function trainingButtonLabel(iso) {
+  const plan = trainingPlanForDate(iso);
+  if (!plan || !window.HybridSlots) return 'Start Session';
+  const key = plan.slotKey || iso;
+  let st = HybridSlots.status(S.sessions, key);
+  if (S.session && S.session.date === iso && HybridSlots.keyOf(S.session) === key && S.session.phase !== 'summary') st = 'resume';
+  return HybridSlots.buttonLabel(st);
+}
+
 function trainingTabHtml() {
   return `
     <div class="shell-screen shell-screen--training">
       ${trainingTopBarHtml()}
       ${trainingCalendarHtml()}
-      <div class="trn-scroll">${trainingBlocksHtml(S.selectedDate)}
+      <div class="trn-scroll">${trainingSlotsHtml(S.selectedDate)}${trainingBlocksHtml(S.selectedDate)}
         <div class="trn-start-bar">
-          <button type="button" class="log-primary" onclick="startTrainingSession()">Start Session</button>
+          <button type="button" class="log-primary" onclick="startTrainingSession()">${esc(trainingButtonLabel(S.selectedDate))}</button>
         </div>
       </div>
     </div>`;
@@ -713,19 +739,20 @@ function meHtml() {
 }
 
 function historyHtml() {
-  const sessions = Object.values(S.sessions || {})
-    .filter((session) => session && session.phase === 'summary')
-    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
-  const rows = sessions.length
-    ? sessions.map((session) => {
+  const items = window.HybridSlots ? HybridSlots.history(S.sessions) : [];
+  const open = S.historyKey && items.find((x) => x.key === S.historyKey);
+  if (open) return historyDetailHtml(open);
+  const rows = items.length
+    ? items.map(({ key, session, status }) => {
       const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
-      const title = session.title || 'Completed session';
+      const title = session.title || (status === 'done' ? 'Completed session' : 'Session');
       const date = session.date || 'Date unavailable';
-      return `<article class="card account-compact history-session">
-        <p class="eyebrow">${esc(date)}</p>
+      const badge = status === 'done' ? '' : ' · <b>Unfinished</b>';
+      return `<button type="button" class="card account-compact history-session" onclick="openHistorySession('${esc(key)}')">
+        <p class="eyebrow">${esc(date)}${badge}</p>
         <h2>${esc(title)}</h2>
         <p class="stub">${num(stats.exercises)} exercises · ${num(stats.sets)} sets · ${num(stats.reps)} reps</p>
-      </article>`;
+      </button>`;
     }).join('')
     : '<p class="stub page-lead">Completed strength sessions will appear here.</p>';
   return `<div class="page">
@@ -734,6 +761,55 @@ function historyHtml() {
     ${rows}
     <button type="button" class="btn" onclick="setTab('me')">Back to Me</button>
   </div>`;
+}
+
+function historyDetailHtml({ key, session, status }) {
+  const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
+  const actions = status === 'done'
+    ? `<button type="button" class="log-primary" onclick="historyAction('view')">View summary</button>`
+    : `<button type="button" class="log-primary" onclick="historyAction('resume')">Resume</button>
+       <button type="button" class="btn" onclick="historyAction('finish')">Finish</button>`;
+  return `<div class="page">
+    <div class="eyebrow">${esc(session.date || '')}${status === 'done' ? '' : ' · Unfinished'}</div>
+    <h1>${esc(session.title || 'Session')}</h1>
+    <p class="stub">${num(stats.exercises)} exercises · ${num(stats.sets)} sets · ${num(stats.reps)} reps</p>
+    ${actions}
+    <button type="button" class="btn btn-danger" onclick="historyAction('discard')">Discard</button>
+    <button type="button" class="btn" onclick="closeHistorySession()">Back to history</button>
+  </div>`;
+}
+
+function openHistorySession(key) {
+  S.tab = 'history';
+  S.fabOpen = false;
+  S.historyKey = key;
+  render();
+}
+
+function closeHistorySession() {
+  S.historyKey = null;
+  render();
+}
+
+function historyAction(kind) {
+  const key = S.historyKey;
+  const stored = key && window.HybridSlots && HybridSlots.find(S.sessions, key);
+  if (!stored) return closeHistorySession();
+  if (kind === 'discard') {
+    if (!window.confirm(`Discard "${stored.title || 'this session'}" from ${stored.date}? Its logged sets are removed.`)) return;
+    HybridSlots.discard(S, key);
+    if (window.StrengthMemory) StrengthMemory.removeSession(stored.id);
+    if (window.Logger && !S.loggerOpen) document.getElementById('logger')?.classList.add('hidden');
+    S.historyKey = null;
+    save();
+    return render();
+  }
+  if (kind === 'finish') {
+    S.session = HybridSession.finishToSummary(stored);
+    save();
+  }
+  S.historyKey = null;
+  if (window.Logger) Logger.openStored(key);
 }
 
 function completedSessions() {
@@ -763,15 +839,17 @@ function progressHtml() {
   ].map(([label, metric, unit]) => {
     const value = metric?.value;
     const dated = metric?.date && metric.date !== today() ? `<small>${esc(metric.date)}</small>` : '';
-    return `<div class="progress-metric"><span>${label}</span><b>${value === '' || value == null ? '—' : `${esc(value)}${unit}`}</b>${dated}</div>`;
+    const shown = label === 'Strain' && value !== '' && value != null && window.StrengthHome?.metricText ? StrengthHome.metricText(value, 'strain') : value;
+    return `<div class="progress-metric"><span>${label}</span><b>${value === '' || value == null ? '—' : `${esc(shown)}${unit}`}</b>${dated}</div>`;
   }).join('');
   const workoutRows = recent.length
     ? recent.map((session) => {
       const stats = window.HybridSession ? HybridSession.summaryStats(session) : {};
-      return `<article class="progress-row">
+      const key = window.HybridSlots ? HybridSlots.keyOf(session) : session.date;
+      return `<button type="button" class="progress-row progress-row-btn" onclick="openHistorySession('${esc(key)}')">
         <div><b>${esc(session.title || 'Completed session')}</b><small>${esc(session.date || '')}</small></div>
         <span>${num(stats.sets)} sets</span>
-      </article>`;
+      </button>`;
     }).join('')
     : '<p class="stub">Your completed strength sessions will appear here.</p>';
   const goals = (S.goals || []).length
@@ -850,6 +928,7 @@ function setTab(tab) {
 
 function selectDate(iso) {
   S.selectedDate = iso;
+  S.selectedSlot = null;
   save();
   render();
 }
@@ -1033,6 +1112,7 @@ window.applyOtaUpdate = applyOtaUpdate;
 window.lookForAppUpdate = lookForAppUpdate;
 window.startTrainingSession = startTrainingSession;
 window.trainingPlanForDate = trainingPlanForDate;
+Object.assign(window, { selectTrainingSlot, openHistorySession, closeHistorySession, historyAction });
 window.openLibraryForDay = openLibraryForDay;
 window.render = render;
 

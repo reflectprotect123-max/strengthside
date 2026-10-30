@@ -78,15 +78,20 @@
     };
   }
 
+  function normalBlocks(blocks) {
+    return (blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
+      const reps = parseRepTarget(b.repTarget);
+      // Preserve ranges saved before Reps and Rep Range had separate entry rules.
+      return canonicalBlock(reps && reps.min !== reps.max && (b.columns || []).includes('reps') && !(b.columns || []).includes('meters')
+        ? { ...b, columns: b.columns.map(c => c === 'reps' ? 'reps_range' : c) } : b);
+    });
+  }
+
   function ensure(state) {
     if (!state || typeof state !== 'object') return emptyState();
     const next = {
-      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: (t.blocks || []).filter((b) => ['lift', 'circuit'].includes(b.kind)).map(b => {
-        const reps = parseRepTarget(b.repTarget);
-        // Preserve ranges saved before Reps and Rep Range had separate entry rules.
-        return canonicalBlock(reps && reps.min !== reps.max && (b.columns || []).includes('reps') && !(b.columns || []).includes('meters')
-          ? { ...b, columns: b.columns.map(c => c === 'reps' ? 'reps_range' : c) } : b);
-      }) })) : [],
+      templates: Array.isArray(state.templates) ? state.templates.filter((t) => !root.StrengthOnly?.isConditioning(t)).map((t) => ({ ...t, blocks: normalBlocks(t.blocks),
+        ...(Array.isArray(t.parts) ? { parts: t.parts.map(p => ({ ...p, blocks: normalBlocks(p.blocks) })) } : {}) })) : [],
       catalog: state.catalog && Array.isArray(state.catalog.exercises)
         ? {...state.catalog,exercises:state.catalog.exercises.map(exerciseRecord)}
         : seedCatalog(),
@@ -96,7 +101,7 @@
     next.assignments = Object.fromEntries(Object.entries(next.assignments).filter(([, id]) => templateIds.has(id)));
     if (!next.catalog.exercises.length && !next.catalog.circuits.length) next.catalog = seedCatalog();
     const byId=new Map(next.catalog.exercises.map(x=>[x.id,x])),byTitle=new Map(next.catalog.exercises.map(x=>[String(x.title||'').trim().toLowerCase(),x]));
-    for(const template of next.templates)for(const block of template.blocks||[])if(block.kind==='lift'){
+    for(const template of next.templates)for(const block of [...(template.blocks||[]),...(template.parts||[]).flatMap(p=>p.blocks||[])])if(block.kind==='lift'){
       const hit=block.exerciseId?byId.get(block.exerciseId):byTitle.get(String(block.title||'').trim().toLowerCase());
       if(hit){block.exerciseId=hit.id;for(const key of LOAD_METADATA)if(block[key]==null&&hit[key]!=null)block[key]=clone(hit[key]);}
       else Object.assign(block,{...inferredMetadata(block.title),...block});
@@ -251,14 +256,22 @@
     };
   }
 
-  function planForDate(state, date, fallback) {
+  // One plan per assigned session on the day; each gets its own slotKey so sessions never merge.
+  function plansForDate(state, date) {
     const st = ensure(state);
     const tid = st.assignments[date];
     const tpl = tid && st.templates.find((t) => t.id === tid);
-    if (!tpl) return fallback || null;
-    const plan = compile(tpl);
-    plan.dots = Object.fromEntries(Object.keys(st.assignments).map((d) => [d, true]));
-    return plan;
+    if (!tpl) return [];
+    const dots = Object.fromEntries(Object.keys(st.assignments).map((d) => [d, true]));
+    const parts = Array.isArray(tpl.parts) && tpl.parts.length > 1 ? tpl.parts : null;
+    if (!parts) return [{ ...compile(tpl), slotKey: date, dots }];
+    return parts.map((p) => ({ ...compile({ ...tpl, id: tpl.id + '#' + p.assignedId, title: p.title, instructions: p.instructions, blocks: p.blocks, coachAssignedIds: [p.assignedId] }), slotKey: date + '#' + p.assignedId, dots }));
+  }
+
+  function planForDate(state, date, fallback, slotKey) {
+    const plans = plansForDate(state, date);
+    if (!plans.length) return fallback || null;
+    return (slotKey && plans.find((p) => p.slotKey === slotKey)) || plans[0];
   }
 
   function deleteTemplate(state, tid) {
@@ -287,6 +300,7 @@
     parseRepTarget,
     rxFor,
     planForDate,
+    plansForDate,
     trackLabel,
   };
 

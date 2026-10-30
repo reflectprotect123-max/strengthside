@@ -199,11 +199,35 @@ test('% sets: loads = 1RM x % rounded to 2.5 kg total on a barbell (Week 2 deadl
   assert.deepEqual(JSON.parse(JSON.stringify(w)),[92.5,97.5,100,102.5]);// 93.6, 97.92, 100.8, 103.68
   assert.equal(out.pages[0].oneRmKg,144);assert.equal(out.pages[0].startConfidence,'one_rm');
 });
-test('% sets: before any 1RM estimate exists the first-set pick is kept',()=>{
+test('% sets: before any 1RM exists, later sets scale from the first working set by pct ratio (2.5 kg)',()=>{
   const p={...dl,startingKg:60};
   const s={id:'now',pages:[p],logs:{D:{sets:[0,1,2,3].map(()=>({kg:null,reps:6,logged:false}))}}};
   const out=B.seed(s,{}),w=out.logs.D.sets.filter(r=>r.purpose==='working').map(r=>r.kg);
-  assert.ok(w.every(k=>k===60),JSON.stringify(w));assert.notEqual(out.pages[0].startConfidence,'one_rm');
+  assert.deepEqual(JSON.parse(JSON.stringify(w)),[60,62.5,65,67.5]);// 60, 62.77, 64.62, 66.46
+  assert.notEqual(out.pages[0].startConfidence,'one_rm');
+});
+test('% sets: before any 1RM, the logged first working set is the anchor for every later set',()=>{
+  const page={...dl,startConfidence:'unknown',workingKg:60};
+  const rows=[0,1,2,3].map(i=>({targetId:`D:set:${i}`,purpose:'working',workingIndex:i,kg:60,plannedKg:60,reps:6,logged:false}));
+  Object.assign(rows[0],{kg:100,effort:'average',logged:true});
+  assert.equal(B.next({page,row:rows[0],nextRow:rows[1],index:1,state:{rows,records:{}}}).kg,105);// 104.6
+  Object.assign(rows[1],{kg:105,effort:'average',logged:true});
+  assert.equal(B.next({page,row:rows[1],nextRow:rows[2],index:2,state:{rows,records:{}}}).kg,107.5);// 100*70/65
+  Object.assign(rows[2],{kg:107.5,effort:'hard',logged:true});
+  assert.equal(B.next({page,row:rows[2],nextRow:rows[3],index:3,state:{rows,records:{}}}).kg,110);// 110.77
+});
+test('% sets: once a 1RM exists the next set keeps its 1RM x pct load',()=>{
+  const page={...dl,startConfidence:'one_rm',oneRmKg:123,workingKg:80};
+  const rows=[[80,80],[82.5,82.5]].map(([kg,p],i)=>({targetId:`D:set:${i}`,purpose:'working',workingIndex:i,kg,plannedKg:p,reps:6,logged:false}));
+  Object.assign(rows[0],{effort:'average',logged:true});
+  assert.equal(B.next({page,row:rows[0],nextRow:rows[1],index:1,state:{rows,records:{}}}).kg,82.5);
+});
+test('1RM ignores sets that are not credible next to the rest of the history (typos, per-hand slips)',()=>{
+  const low={...sess(dl,1,[[6.6,5,'average']]),...sess(dl,2,[[77.5,5,'average']]),...sess(dl,3,[[80,5,'average']])};
+  assert.equal(Math.round(B.oneRM(low,dl,'now').kg*100)/100,90.42);// Epley 77.5x5, not 7.7
+  const high={...sess(dl,1,[[1000,5,'average']]),...sess(dl,2,[[100,5,'average']]),...sess(dl,3,[[102.5,5,'average']])};
+  assert.equal(Math.round(B.oneRM(high,dl,'now').kg*100)/100,116.67);
+  assert.equal(B.oneRM(sess(dl,1,[[6.6,5,'average']]),dl,'now').kg,7.7,'a lone set is all there is');
 });
 test('% sets on dumbbells round to a real dumbbell size',()=>{
   const p=mk({id:'Q',title:'DB Bench Press',exerciseId:'ex_db_bench',equipmentId:'dumbbell',loadConvention:'per_hand',minimumKg:1,barWeightKg:undefined,equipmentStepKg:undefined,setTargets:pctTg('Q',[5,5,5],[65,70,75])});

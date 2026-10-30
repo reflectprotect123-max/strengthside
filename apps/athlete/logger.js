@@ -23,7 +23,7 @@
     try{if (typeof root.save === 'function') root.save();}
     catch(e){
       root.S.session=previous;root.S.loggerOpen=wasOpen;
-      if(next?.date&&root.S.sessions?.[next.date]===next)root.S.sessions[next.date]=previous;
+      const k=next&&(next.slotKey||next.date);if(k&&root.S.sessions?.[k]===next){if(previous&&(previous.slotKey||previous.date)===k)root.S.sessions[k]=previous;else delete root.S.sessions[k];}
       toast='Could not save. Free some storage and try again.';
       paint();return false;
     }
@@ -44,9 +44,17 @@
     const d = date || (root.S && root.S.selectedDate);
     const p = plan || (typeof root.trainingPlanForDate === 'function' ? root.trainingPlanForDate(d) : null);
     if (!p || !HS) return;
-    const existing = root.S.session && root.S.session.date === d && root.S.session.phase !== 'summary' && (!root.S.session.demo || p.title === 'Slider demo')
+    const Slots = root.HybridSlots, slot = p.slotKey || d;
+    const sameSlot = (x) => x && x.date === d && (x.slotKey || x.date) === slot;
+    let existing = sameSlot(root.S.session) && root.S.session.phase !== 'summary' && (!root.S.session.demo || p.title === 'Slider demo')
       ? root.S.session
       : null;
+    const stored = Slots && p.title !== 'Slider demo' ? Slots.find(root.S.sessions, slot) : null;
+    // Leaving midway and coming back resumes the stored session; a finished one opens its summary, never restarts.
+    if (!existing && stored && !letter) {
+      if (stored.phase === 'summary') return openStored(slot);
+      existing = stored;
+    }
     if (letter && existing) {
       root.S.session = HS.goToLetter(HS.startSession({ date: d, plan: p, existing }), letter);
     } else if (letter) {
@@ -57,6 +65,7 @@
     if (p.title === 'Slider demo') root.S.session.demo = true;
     else root.S.session = root.StrengthBrain.seed(root.S.session, root.StrengthMemory.records());
     drainPrep();
+    installPadGuard();
     root.S.loggerOpen = true;
     if (typeof root.save === 'function') root.save();
     document.getElementById('logger').classList.remove('hidden');
@@ -64,6 +73,32 @@
     if (typeof root.syncFab === 'function') root.syncFab();
     startClock();
     paint();
+  }
+
+  // Open a stored session as-is (history: view a summary, or resume an unfinished one).
+  function openStored(key) {
+    const stored = root.HybridSlots && root.HybridSlots.find(root.S.sessions, key);
+    if (!stored) return false;
+    root.S.session = stored.phase === 'summary' ? stored : root.StrengthBrain.seed(root.HybridSession.startSession({ date: stored.date, plan: { slotKey: root.HybridSlots.keyOf(stored) }, existing: stored }), root.StrengthMemory.records());
+    root.S.loggerOpen = true;
+    if (typeof root.save === 'function') root.save();
+    document.getElementById('logger').classList.remove('hidden');
+    document.getElementById('shell').classList.add('logger-open');
+    if (typeof root.syncFab === 'function') root.syncFab();
+    startClock();
+    paint();
+    return true;
+  }
+
+  let padGuard = false;
+  function installPadGuard() {
+    if (padGuard || typeof document.addEventListener !== 'function') return;
+    padGuard = true;
+    document.addEventListener('pointerdown', (e) => {
+      const t = e.target;
+      if (!pad || !t || !t.closest || t.closest('.log-pad') || t.closest('.log-cell')) return;
+      Logger.padDismiss();
+    }, true);
   }
 
   function close() {
@@ -586,8 +621,10 @@
   function sideHtml(s, page, history) {
     const past = history || root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
     // EST. 1RM is learned on physical kg; show it on the same entry basis as LAST (plates for bars).
-    const shown = past.rolling && root.StrengthBrainCore ? root.StrengthBrainCore.display(past.rolling, page) : null;
-    const wm = shown != null && shown > 0 ? loggedLoad(page, Math.round(shown * 10) / 10) : '';
+    // One number: the Epley working 1RM the % loads use (the old rolling estimator is no longer shown).
+    const rm = root.StrengthBrain.oneRM ? root.StrengthBrain.oneRM(root.StrengthMemory.records(), page, s.id) : null;
+    const shown = rm && rm.kg > 0 ? rm.kg : null;
+    const wm = shown != null ? loggedLoad(page, Math.round(shown * 10) / 10) : '';
     return `
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
@@ -660,7 +697,7 @@
   function setActionHtml(s, page) {
     const flow = setFlow(s, page);
     if (flow.index < 0) return '';
-    return `<div class="log-set-action"><button type="button" class="log-primary" onclick="Logger.${flow.rest ? 'startSet' : 'saveSet'}('${esc(page.id)}')">${flow.rest ? 'Start next set' : flow.editing ? 'Save changes' : 'Log set'}</button></div>`;
+    return `<div class="log-set-action"><button type="button" class="log-primary" onclick="Logger.saveSet('${esc(page.id)}')">${flow.editing ? 'Save changes' : 'Log set'}</button></div>`;
   }
 
   function activeSetHtml(s, page, log, dockAction = false) {
@@ -687,10 +724,10 @@
           ${page.logMode === 'kg' ? `<label>${esc(columnLabel(page, 'weight_kg'))}<input class="log-cell" type="text" readonly value="${esc(weightText(page, flow.draft.kg))}" onclick="Logger.focusDraftPad('${id}','kg')"></label>` : ''}
         </div>
         ${page.askEffort === false ? '' : (target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>')}
-        ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed.</p>${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.startSet('${id}')">Start next set</button>`}<button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : page.askEffort === false ? (dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`) : `
+        ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed, then rate the set when it is done.</p><button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : ''}${page.askEffort === false ? (dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`) : `
         <div class="log-effort-inline">
           <div class="log-effort-heading"><label id="effortHeading-${id}" for="setEffort-${id}">${chosen ? 'This set felt' : target ? 'This set should feel' : 'How did this set feel?'}</label><strong id="effortValue-${id}">${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : target ? target === 'medium' ? 'Medium' : effortShort(target) : 'Choose effort'}</strong></div>
-          <input id="setEffort-${id}" class="log-effort-slider" type="range" min="0" max="4" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onpointerup="Logger.setEffort('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.setEffort('${id}',this.value)}">
+          <input id="setEffort-${id}" class="log-effort-slider" type="range" min="0" max="4" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onchange="Logger.rate('${id}',this.value)" onpointerup="Logger.rate('${id}',this.value)" onclick="Logger.rate('${id}',this.value)" ontouchend="Logger.rate('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.rate('${id}',this.value)}">
           <div class="log-effort-labels" aria-hidden="true"><span>Very Easy</span><span>Easy</span><span>Average</span><span>Hard</span><span>Max Effort</span></div>
           <p class="log-note" id="effortHelp-${id}">${flow.draft.miss ? 'Enter the reps you actually completed.' : chosen ? EFFORT_COPY[chosen] : 'Rate the actual effort after completing your set.'}</p>
         </div>
@@ -825,8 +862,8 @@
           ${keyBtns}
           <div class="log-pad-side" style="grid-column:4;grid-row:1 / span 4">
             <button type="button" class="blue" onclick="Logger.padLog()">Save</button>
-            ${pad.draft ? '' : '<button type="button" class="blue" onclick="Logger.padAutofill()">Autofill</button>'}
-            <button type="button" onclick="Logger.padClear()">Clear</button>${pad.key === 'lwp' ? '<button type="button" onclick="Logger.padKey(\'-\')">−</button>' : ''}
+            <button type="button" onclick="Logger.padClear()">Clear</button>
+            <button type="button" class="blue" onclick="Logger.padAutofill()">Autofill</button>${pad.key === 'lwp' ? '<button type="button" onclick="Logger.padKey(\'-\')">−</button>' : ''}
           </div>
         </div>
       </div>`;
@@ -1066,7 +1103,9 @@
     }
   }
 
+  let lastRate = { key: '', at: 0 };
   const Logger = {
+    openStored,
     sidesFor,
     _sideHtml: sideHtml,
     _columnLabel: columnLabel,
@@ -1089,6 +1128,18 @@
       document.getElementById(`effortHelp-${memberId}`).textContent = EFFORT_COPY[effort];
       slider.closest('.log-active-set').querySelector('.log-set-error').textContent = '';
     },
+    rate(memberId, raw) {
+      // Dan: one tap on the rating logs the set; a duplicate event from the same tap is ignored.
+      const now = Date.now(), key = `${memberId}:${raw}`;
+      if (lastRate.key === key && now - lastRate.at < 600) return;
+      lastRate = { key, at: now };
+      Logger.setEffort(memberId, raw);
+      const page = HybridSession.currentPage(session());
+      const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
+      if (!lift) return;
+      const f = setFlow(session(), lift);
+      Logger.saveSet(memberId);
+    },
     setIncomplete(memberId) {
       updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, miss: !f.draft.miss, effort: null } }));
     },
@@ -1109,11 +1160,12 @@
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       if (!lift || lift.id !== memberId) return;
       const f = setFlow(s, lift);
-      if (f.index < 0 || f.rest) return;
+      if (f.index < 0) return;
       const reps = Number(f.draft.reps), kg = Number(f.draft.kg);
       const candidate={...f.draft,reps:f.draft.reps===''?null:reps,kg:f.draft.kg===''||f.draft.kg==null?null:kg};
       const error=root.TrainingCore.validateRow(candidate,lift).error;
       if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
+      if (f.rest) { const t = timerState(); if (t && t.mode === 'rest') root.S.timer = HybridTimer.stop(t); }
       const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
       if (lift.logMode === 'kg') patch.kg = f.draft.kg === '' || f.draft.kg == null || !Number.isFinite(kg) ? null : kg;
       const selectedRest=restAfterRound(s,page,memberId,f.index)?restMilliseconds(s,page):0;
@@ -1151,7 +1203,7 @@
       const lift = page.logMode === 'superset' ? HybridSession.memberOf(page, memberId) : page;
       const row = s.logs[lift.id].sets[setIndex];
       const seed = field === 'kg' ? row.kg : field === 'reps' ? row.reps : (row.cells && row.cells[field]);
-      pad = { ...root.TrainingCore.numberEntry(seed,{key:field === 'kg' ? 'weight_kg' : field}),memberId:lift.id,setIndex,field,miss:!!row.miss };
+      pad = { ...root.TrainingCore.numberEntry(seed,{key:field === 'kg' ? 'weight_kg' : field}),memberId:lift.id,setIndex,field,miss:!!row.miss }; installPadGuard();
       paint();
     },
     closePad() { pad = null; paint(); },
@@ -1160,9 +1212,16 @@
       pad = root.TrainingCore.numberKey(pad,k); paint();
     },
     padClear() { if(pad){pad=root.TrainingCore.numberKey(pad,'clear');paint();} },
-    focusDraftPad(memberId,field) {const page=HybridSession.currentPage(session());const lift=page.logMode==='superset'?HybridSession.memberOf(page,memberId):page;const f=setFlow(session(),lift);pad={...root.TrainingCore.numberEntry(f.draft[field],{key:field==='kg'?'weight_kg':'reps'}),memberId,field,draft:true};paint();},
+    focusDraftPad(memberId,field) {const page=HybridSession.currentPage(session());const lift=page.logMode==='superset'?HybridSession.memberOf(page,memberId):page;const f=setFlow(session(),lift);pad={...root.TrainingCore.numberEntry(f.draft[field],{key:field==='kg'?'weight_kg':'reps'}),memberId,field,draft:true};installPadGuard();paint();},
     markMissRow(memberId,index) {const row=session().logs[memberId].sets[index];persist(HybridSession.logSet(session(),index,{miss:!row.miss},memberId,{commit:false}));},
-    rateRow(memberId,index,value) {const effort=EFFORTS[Number(value)];root.S.session=HybridSession.logSet(session(),index,{effort},memberId,{commit:false});if(typeof root.save==='function')root.save();const label=document.getElementById(`rowEffort-${memberId}-${index}`);if(label)label.textContent=effortShort(effort);let effortRow=label&&label.closest?label.closest('tr'):null;let check=null;while(effortRow&&!check){check=effortRow.querySelector('.log-check');effortRow=effortRow.previousElementSibling;}if(check){check.classList.remove('on');check.textContent='';}},
+    rateRow(memberId,index,value) {
+      // One tap: rating a row logs it (validation still applies); re-rating a logged row just updates its effort.
+      const effort=EFFORTS[Number(value)];if(!effort)return;
+      const was=session().logs[memberId]?.sets?.[index];
+      if(was&&was.logged){persist(HybridSession.logSet(session(),index,{effort},memberId));return;}
+      root.S.session=HybridSession.logSet(session(),index,{effort},memberId,{commit:false});
+      Logger.check(memberId,index);
+    },
     startHold(memberId, index) {
       const s = session();
       const page = HybridSession.currentPage(s);
@@ -1195,9 +1254,30 @@
       const next=HybridSession.logSet(session(),pad.setIndex,patch,pad.memberId,{commit:false});
       pad=null;persist(next);
     },
+    padDismiss() {
+      // A tap outside the keypad keeps the entry and closes the pad WITHOUT repainting, so that tap still lands.
+      if(!pad)return false;
+      const entry=pad,n=root.TrainingCore.parse(entry.buffer,entry.key);pad=null;
+      if(n!=null){
+        if(entry.draft)updateSetFlow(entry.memberId,f=>({...f,error:'',draft:{...f.draft,[entry.field]:n}}),false);
+        else{const patch=entry.field==='kg'?{kg:n}:entry.field==='reps'?{reps:n}:{cells:{[entry.field]:n}};root.S.session=HybridSession.logSet(session(),entry.setIndex,patch,entry.memberId,{commit:false});if(typeof root.save==='function')root.save();}
+      }
+      const el=document.getElementById('logger');const node=el&&el.querySelector?el.querySelector('.log-pad'):null;if(node&&node.remove)node.remove();
+      return true;
+    },
     padAutofill() {
-      if(!pad||pad.draft)return;
-      const n=root.TrainingCore.parse(pad.buffer,pad.key);if(n==null){pad.error='Enter a valid value.';paint();return;}
+      if(!pad)return;
+      if(pad.draft){
+        const entry=pad,n=root.TrainingCore.parse(entry.buffer,entry.key);if(n==null){pad.error='Enter a valid value.';paint();return;}
+        const page=HybridSession.currentPage(session());const lift=page.logMode==='superset'?HybridSession.memberOf(page,entry.memberId):page;
+        const f=setFlow(session(),lift),patch=entry.field==='kg'?{kg:n}:{reps:n};
+        let next=session();const rows=next.logs[lift.id].sets;
+        for(let i=Math.max(0,f.index)+1;i<rows.length;i++)if(!rows[i].logged&&!rows[i].skipped)next=HybridSession.logSet(next,i,patch,lift.id,{commit:false});
+        pad=null;root.S.session=next;updateSetFlow(entry.memberId,fl=>({...fl,error:'',draft:{...fl.draft,[entry.field]:n}}),false);persist(session());return;
+      }
+      let n=root.TrainingCore.parse(pad.buffer,pad.key);
+      if(n==null){const prev=(session().logs[pad.memberId]?.sets||[]).slice(0,pad.setIndex).reverse().map(r=>pad.field==='kg'?r.kg:pad.field==='reps'?r.reps:r.cells?.[pad.field]).find(v=>v!=null&&v!=='');if(prev!=null)n=Number(prev);}
+      if(n==null||!Number.isFinite(n)){pad.error='Enter a valid value.';paint();return;}
       const patch=pad.field==='kg'?{kg:n}:pad.field==='reps'?{reps:n}:{cells:{[pad.field]:n}};
       let next=HybridSession.logSet(session(),pad.setIndex,patch,pad.memberId,{commit:false});
       const rows=next.logs[pad.memberId].sets;
