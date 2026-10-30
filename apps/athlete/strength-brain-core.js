@@ -135,7 +135,9 @@
     // (lighter or heavier) carries to the next set in proportion to ibex's planned jumps.
     const own=finiteLoad(row.plannedKg);
     let out=planned??kg;
-    if(own!=null&&own>0&&planned!=null&&Math.abs(kg-own)>1e-8)out=planned*kg/own;
+    // Scale ibex's plan for the next set, not a load already typed there (that would scale the change twice).
+    const nextPlan=finiteLoad(nextRow?.plannedKg)??planned;
+    if(own!=null&&own>0&&nextPlan!=null&&nextPlan>0&&Math.abs(kg-own)>1e-8)out=nextPlan*kg/own;
     else if((own===0||planned===0)&&kg>0)out=kg; // an empty-bar placeholder is not a plan
     if(planned==null)out=kg;
     if(Math.abs(out-kg)>1e-8)out=nearest(out,page)??out; // the load actually used is always a valid hold

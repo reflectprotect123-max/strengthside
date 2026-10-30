@@ -214,3 +214,23 @@ test('missing canonical exercise identity cannot share another unidentified lift
  const seeded=B.seed({id:'next',pages:[current],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
  assert.notEqual(seeded.pages[0].workingKg,81);
 });
+// Session C (ses_21blgy8y): DB bench working set 1 lifted 4 kg (plan 5) at Average; Autofill had already put 4 kg
+// on set 2. The scaling read set 2's typed 4 kg as the plan and scaled it again: 4*4/5=3.2 -> 3 kg.
+const C=ctx.StrengthBrainCore;
+const bench={exerciseId:'ex_db_bench',equipmentId:'dumbbell',id:'C1',title:'DB Bench Press',kind:'lift',logMode:'kg',loadUnit:'kg',loadConvention:'per_hand',setCount:2,targetReps:8,minimumKg:1,workingKg:5,startConfidence:'history',columns:['reps','weight_kg'],
+ setTargets:[{id:'C1:set:0',purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false},{id:'C1:set:1',purpose:'working',reps:{min:8,max:8},loadRule:{kind:'adaptive'},toFailure:false}]};
+const w=(i,kg,extra={})=>({targetId:`C1:set:${i}`,purpose:'working',reps:8,kg,plannedKg:5,effort:'average',logged:true,miss:false,...extra});
+test('R11 an athlete-entered next-set load is not scaled a second time (session C 4 kg -> 3 kg drop)',()=>{
+ const out=C.suggest({page:bench,row:w(0,4),nextRow:{...w(1,4),logged:false,effort:null},index:1});
+ assert.equal(out.kg,4);
+});
+test('R11 a lighter working set still carries proportionally when the next row is untouched',()=>{
+ const out=C.suggest({page:bench,row:w(0,4),nextRow:{...w(1,5),logged:false,effort:null},index:1});
+ assert.equal(out.kg,4);
+});
+test('R11 a ramp never changes the working load, even when logged twice by one tap',()=>{
+ const ramp={targetId:'C1:warmup:1',purpose:'ramp',reps:8,kg:4,plannedKg:4,effort:'average',logged:true};
+ const next={...w(0,5),logged:false,effort:null};
+ assert.equal(C.suggest({page:bench,row:ramp,nextRow:next,index:0}).kg,5);
+ assert.equal(C.suggest({page:bench,row:{...ramp,effort:'easy'},nextRow:next,index:0}).kg,5);
+});
