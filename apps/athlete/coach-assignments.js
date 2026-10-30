@@ -1,7 +1,7 @@
 /** Coach assigned_session -> athlete library. Server-owned plans, athlete-owned actuals. */
 (function(root) {
   const clone=x=>JSON.parse(JSON.stringify(x));
-  const META=['equipmentId','loadConvention','exerciseType','minimumKg','barWeightKg','equipmentStepKg','availableLoads','rampCount'];
+  const META=['equipmentId','loadConvention','exerciseType','minimumKg','barWeightKg','equipmentStepKg','availableLoads','rampCount','bodyRegion','startingKg'];
   let epoch=0,flight=null;
   let status={ok:false,reason:'not_synced',count:0};
   function values(value,count) {
@@ -39,6 +39,13 @@
           loadRule:{kind:amrap?'first_working_set':'adaptive'},toFailure:amrap};
       });
     }
+    // Coach "Weight % (of WM)": carry the % on each set; the athlete logs kg and the brain derives the load.
+    const pctCol=cols.find(c=>c.kind==='weight_pct');
+    if(targets&&pctCol){
+      const pcts=columnValues(pctCol,n).map(v=>{const m=/^\s*(\d+(?:\.\d+)?)(?:\s*[-–]\s*(\d+(?:\.\d+)?))?\s*%?\s*$/.exec(String(v??''));return m?Number(m[2]??m[1]):null;});
+      targets=targets.map((t,i)=>pcts[i]>0&&t.pct==null?{...t,pct:pcts[i]}:t);
+      columns=columns.map(c=>c==='weight_pct'?'weight_kg':c).filter((c,i,a)=>a.indexOf(c)===i);
+    }
     if(targets){
       if(targets.length!==n)throw new Error('Coach set count does not match targets');
       targets=root.StrengthTargets.normalize({id,setTargets:targets});
@@ -57,7 +64,14 @@
       prescribed:ex.prescribed||prescribed||(!targets?String(ex.reps||''):''),groupId:b.groupId||null,
       coachAssignmentId:id.split(':')[1],coachExerciseId:ex.id||null,coachBlockId:b.id||null};
     for(const key of META)if(ex[key]!=null)block[key]=clone(ex[key]);
+    carryFields(block, ex, role);
     return block;
+  }
+  function carryFields(block, ex, role) {
+    const rest=Number(ex?.restSec??block.restSec);if(Number.isFinite(rest)&&rest>=0&&rest<=600)block.restSec=Math.round(rest);
+    const ci=Number(ex?.countIn??block.countIn);if(Number.isFinite(ci)&&ci>0&&ci<=10)block.countIn=Math.round(ci);
+    if(/^(yes|each|per side)$/i.test(ex?.perSide||'')||block.perSide===true)block.eachSide=true;
+    if(role==='warmup')block.section='Warm-Up';else if(role==='cooldown')block.section='Cool-Down';
   }
   function convert(row) {
     const date=row.scheduled_date;
@@ -69,7 +83,12 @@
     session.blocks.forEach((b,i)=>{
       if(root.StrengthOnly.isConditioning(b))return;
       const id=`coach:${row.id}:${b.id||i}`;
-      if(b.kind==='lift'||b.kind==='circuit') {blocks.push({...clone(b),id,coachAssignmentId:row.id,coachExerciseId:b.id});return;}
+      if(b.kind==='lift'||b.kind==='circuit') {
+        const block={...clone(b),id,coachAssignmentId:row.id,coachExerciseId:b.id};
+        const role=block.role||(/warm.?up/i.test(block.category||'')?'warmup':/cool.?down/i.test(block.category||'')?'cooldown':null);
+        carryFields(block, (b.exercises||[])[0], role);
+        blocks.push(block);return;
+      }
       if(Array.isArray(b.exercises)&&b.exercises.length) {
         b.exercises.forEach((ex,j)=>blocks.push(exercise(ex,b,`${id}:${ex.id||j}`)));
       } else if(b.instructions||b.coachNote) {
@@ -100,7 +119,8 @@
       items.sort((a,b)=>a.id.localeCompare(b.id));
       const id='coach-day:'+date;
       library.templates.push({id,source:'coach-assignment',coachAssignedIds:items.map(x=>x.id),
-        title:items.map(x=>x.title).join(' + '),instructions:items.map(x=>x.instructions).filter(Boolean).join('\n\n'),blocks:items.flatMap(x=>x.blocks)});
+        title:items.map(x=>x.title).join(' + '),instructions:items.map(x=>x.instructions).filter(Boolean).join('\n\n'),blocks:items.flatMap(x=>x.blocks),
+        ...(items.length>1?{parts:items.map(x=>({assignedId:x.id,title:x.title,instructions:x.instructions||'',blocks:x.blocks}))}:{})});
       if(!library.assignments[date])library.assignments[date]=id;
       else conflicts.push(date); // Never silently replace a locally assigned workout.
     }

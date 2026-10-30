@@ -1493,3 +1493,18 @@ button {
   border: 0;
   object-fit: cover;
 }
+
+/* Two or more sessions on one day: one pill per session, each logged on its own. */
+.trn-slots { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 10px; }
+.trn-slot { flex: 0 0 auto; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.22); background: transparent; color: var(--oled-muted, #aaa); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.trn-slot.active { border-color: #1ba3ff; color: #fff; background: rgba(27,163,255,0.14); }
+.history-session { display: block; width: 100%; text-align: left; color: inherit; font: inherit; }
+.btn-danger { color: #ff5a5a; }
+.progress-row-btn { width: 100%; background: none; border-left: 0; border-right: 0; border-bottom: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+
+/* Dan's colour effort slider: chunky green-to-red track, big white knob, five snapped stops, Max Effort at the deep-red end. */
+.log-effort-colour { height: 56px; }
+.log-effort-colour::-webkit-slider-runnable-track { height: 18px; border-radius: 9px; background: linear-gradient(90deg, #22c55e 0%, #a3e635 25%, #f59e0b 50%, #e5484d 75%, #7f1d1d 100%); }
+.log-effort-colour::-moz-range-track { height: 18px; border-radius: 9px; background: linear-gradient(90deg, #22c55e 0%, #a3e635 25%, #f59e0b 50%, #e5484d 75%, #7f1d1d 100%); }
+.log-effort-colour::-webkit-slider-thumb { appearance: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #fff; margin-top: -11px; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
+.log-effort-colour::-moz-range-thumb { width: 40px; height: 40px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.45); }

@@ -15,6 +15,21 @@
   function stepUp(kg,page,cap=.1){const n=E.next(kg,page);return n==null?kg:E.round(n,kg,page,{upCap:cap,downCap:cap});}
   function target(page,row,index){let t=null;try{t=T.forRow(page,row,index);}catch{}return t?.purpose==='warmup'?'easy':'average';}
   function next(args){
+    const out=nextRaw(args),kg=pctAnchorNext(args);
+    return kg==null?out:{...out,kg,reason:'pct_anchor'};
+  }
+  // Dan: before any 1RM exists, % sets scale from the first working set the athlete logged
+  // (anchor x pct_n / pct_1), rounded like every % load. Once a 1RM exists the seed already owns them.
+  function pctAnchorNext({page,row,nextRow,state}={}){
+    if(!page||Number(page.oneRmKg)>0||!row||row.miss||nextRow?.logged)return null;
+    let targets=[];try{targets=T.normalize(page);}catch{return null;}
+    const byId=new Map(targets.map(t=>[t.id,t])),next=byId.get(nextRow?.targetId);
+    if(!(next?.pct>0)||next.purpose!=='working')return null;
+    const rows=state?.rows||[],anchor=rows.find(r=>r?.logged&&!r.skipped&&!r.miss&&r.purpose==='working'&&byId.get(r.targetId)?.pct>0&&Number(r.kg)>0);
+    if(!anchor)return null;
+    return pctLoad(Number(anchor.kg)*next.pct/byId.get(anchor.targetId).pct,100,page);
+  }
+  function nextRaw(args){
     const h=history(args.state?.records||{},args.page,args.state?.excludeSession,args.state?.ownerId);
     const state={...(args.state||{}),learning:args.state?.learning||h,rows:args.state?.rows||[]};
     const mode=state.policy?.learningMode??root.StrengthPolicy.learningMode;
@@ -39,33 +54,27 @@
     if(cached?.has(cacheKey))return cached.get(cacheKey);
     const fallback={version:'online-v1',k:root.StrengthLearning?.initial().k??.0333/1.0333,rows:[],accepted:0,updates:0,startingScale:null,evidenceFingerprint:'unavailable',conflicted:false,ledger:[],diagnostics:[],evidence:[],latestFirst:null};
     let r=fallback;
-    try{if(contextKey&&root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(Object.values(records||{}),{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
+    const facts=Object.values(records||{}).filter(record=>{
+      const row=record?.payload?.row,section=record?.payload?.page?.section;
+      if(row?.skipped)return false;
+      return section!=='Warm-Up'&&section!=='Cool-Down';
+    });
+    try{if(contextKey&&root.StrengthReplay&&root.StrengthContext&&root.StrengthLearning)r=root.StrengthReplay.replay(facts,{ownerId,contextKey,excludeSessionId:excludeSession});}catch{/* Facts remain loggable while the optional learner is unavailable. */}
     const evidence=r.evidence.map(e=>({...e,sessionId:e.observation.sessionId,
       sourceSignature:'source-v3:'+JSON.stringify([e.observation.id,e.observation.revision,e.observation.weight,e.observation.reps,e.observation.rir,e.observation.miss]),
       sourceSetIds:[e.observation.id]}));
     let latest=null;
-    if(r.latestFirst&&!r.conflicted){
+    // A conflicted fact is skipped; the newest clean session still sets the load.
+    if(r.latestFirst){
       const e=r.latestFirst,rows=r.ledger.filter(x=>x.sessionId===e.observation.sessionId&&!x.deleted&&x.payload?.row).map(x=>x.payload.row).sort((a,b)=>a.ordinal-b.ordinal);
-      const result=Core.review(e.page,rows);let nextKg=e.row.kg;
-      // Later work cannot fit the fresh curve, but a struggle must veto an
-      // increase earned solely from the first set feeling Easy.
-      const targets=T.normalize(e.page);
-      const laterStruggle=rows.some(row=>{
-        const target=targets.find(t=>t.id===row.targetId);
-        return target?.purpose==='working'&&row.logged&&!row.deleted&&!row.skipped&&
-          (row.miss||['hard','max_effort'].includes(row.effort)||Number(row.reps)<target.reps.min);
-      });
-      if(result.earned)nextKg=E.next(e.row.kg,e.page)??e.row.kg;
-      else if(!laterStruggle&&!result.loadReduced&&!e.observation.miss&&['very_easy','easy'].includes(e.effort))nextKg=E.next(e.row.kg,e.page)??e.row.kg;
-      else if(e.observation.miss||['hard','max_effort'].includes(e.effort)){
-        const first=T.normalize(e.page).find(t=>t.purpose==='working');
-        nextKg=Core.suggest({page:e.page,row:e.row,nextRow:{targetId:first?.id},index:0,state:{learning:r,rows}}).kg;
-      }
+      const result=Core.review(e.page,rows);
+      const decision=Core.sessionNext(e.page,rows,{partial:!!e.partial});
+      const nextKg=decision.nextKg??e.row.kg;result.reason=decision.reason;
       latest={...e,...result,nextKg,rows};
     }
     const freshE1rm=r.startingScale;
     const result={...r,evidence,contextKey,rolling:freshE1rm,freshE1rm,latest,sessions:r.accepted,exposures:r.accepted,
-      confidence:r.accepted===0?'unknown':r.updates>0?'personal':'provisional',modelVersion:VERSION};
+      confidence:r.accepted===0?(latest?.partial?'partial':'unknown'):r.updates>0?'personal':'provisional',modelVersion:VERSION};
     if(cacheable){
       if(!cached){cached=new Map();replayCache.set(records,cached);}
       if(cached.size>=32)cached.delete(cached.keys().next().value);
@@ -73,28 +82,96 @@
     }
     return result;
   }
+  function isCarry(page){return /carry|farmer|suitcase/i.test(page.title||'')||(page.columns||[]).includes('meters');}
+  // Carries: Easy at full distance adds 2 kg per hand next time; anything else holds.
+  // Newest session's last logged working weight for this exercise (title-key fallback).
+  function lastLogged(records,page,excludeSession){
+    const id=root.StrengthContext?.exerciseKey?.(page);let best=null;
+    for(const r of Object.values(records||{})){
+      const p=r?.payload,row=p?.row;
+      if(!p||r.deleted||r.kind!=='set'||r.sessionId===excludeSession||!row?.logged||row.skipped||row.purpose==='ramp'||finiteKg(row.kg)==null)continue;
+      if(root.StrengthContext.exerciseKey(p.page)!==id)continue;
+      const t=String(p.sessionStartedAt??p.date??''),o=Number(row.ordinal)||0;
+      if(!best||t>best.t||(t===best.t&&o>best.o))best={t,o,kg:finiteKg(row.kg),sessionId:r.sessionId};
+    }
+    return best&&{kg:best.kg,sessionId:best.sessionId};
+  }
+  // Dan's % rule: Epley 1RM from his own logged sets. The first logged session sets it; after that it
+  // rises only when a set beats it, or a set rated Hard or harder gives a higher Epley estimate.
+  const epley=(kg,reps)=>reps===1?kg:kg*(1+reps/30);
+  function oneRM(records,page,excludeSession){
+    const id=root.StrengthContext?.exerciseKey?.(page),sessions=new Map();
+    for(const r of Object.values(records||{})){
+      const p=r?.payload,row=p?.row,kg=finiteKg(row?.kg),reps=Number(row?.reps);
+      if(!p||r.deleted||r.kind!=='set'||r.sessionId===excludeSession||!row?.logged||row.skipped||row.miss||row.purpose==='ramp'||!(kg>0)||!Number.isInteger(reps)||reps<1||reps>12)continue;
+      if(root.StrengthContext.exerciseKey(p.page)!==id)continue;
+      const t=String(p.sessionStartedAt??p.date??'');
+      if(!sessions.has(r.sessionId))sessions.set(r.sessionId,{t,sets:[]});
+      sessions.get(r.sessionId).sets.push({kg,reps,effort:Core.effortOf(row.effort)});
+    }
+    // Credibility: a set far off the rest of this lift's history (a typo, a per-hand slip) is not evidence.
+    const kgs=[...sessions.values()].flatMap(x=>x.sets.map(y=>y.kg)).sort((a,b)=>a-b),mid=kgs.length?kgs[Math.floor((kgs.length-1)/2)]:0;
+    for(const [id,x] of sessions){x.sets=x.sets.filter(y=>y.kg>=mid*.4&&y.kg<=mid*2.5);if(!x.sets.length)sessions.delete(id);}
+    let best=null;
+    for(const {sets} of [...sessions.values()].sort((a,b)=>a.t<b.t?-1:a.t>b.t?1:0))for(const x of sets){
+      const e=Math.round(epley(x.kg,x.reps)*100)/100;
+      if(best==null){best=Math.max(...sets.map(y=>Math.round(epley(y.kg,y.reps)*100)/100));break;}
+      if(e>best&&(x.kg>=best||['hard','max_effort'].includes(x.effort)))best=e;
+    }
+    return best==null?null:{kg:best};
+  }
+  function pctLoad(oneRm,pct,page){
+    const raw=oneRm*pct/100;
+    if(page.equipmentId==='barbell'||/\bbarbell\b/i.test(page.title||''))return Math.max(Number(page.barWeightKg)||0,Math.round(raw/2.5)*2.5);
+    return E.nearest(raw,page)??E.floor(raw,page)??raw;
+  }
+  function finiteKg(v){const n=Number(v);return v!=null&&v!==''&&Number.isFinite(n)&&n>=0?n:null;}
+  function seedCarry(page,log,records,sessionId){
+    if(!page.loadUnit)page.loadUnit='kg';
+    if(!['dumbbell','kettlebell'].includes(page.equipmentId))page.equipmentId=/kettlebell|\bkb\b/i.test(page.title||'')?'kettlebell':'dumbbell';
+    if(/suitcase/i.test(page.title||''))page.loadConvention='single';
+    else if(!page.loadConvention||page.loadConvention==='total')page.loadConvention='per_hand';
+    // Dan: the brain never suggests or progresses a carry load. The athlete enters it;
+    // the next session prefills the last weight entered, exactly as entered.
+    const last=lastLogged(records,page,sessionId);
+    if(!last)return;
+    page.lastKg=last.kg;
+    for(const row of log.sets||[])if(row.kg==null&&!row.logged)row.kg=last.kg;
+  }
   function seed(session,records) {
-    const s=clone(session);if(s.brainSeeded)return s;
+    const s=clone(session);
     let mainSeen=false;
     for(const outer of s.pages||[])for(const page of outer.members||[outer]) {
-      if(!eligible(page))continue;
-      const log=s.logs?.[page.id];if(!log||log.sets.some(r=>r.logged))continue;
+      const log=s.logs?.[page.id];
+      // Seed per page: blocks added or swapped mid-session get weights; a page that was
+      // already seeded (or has ramps/logged sets) is never reseeded.
+      const done=page.brainSeeded||page.startConfidence!==undefined||!log||log.sets.some(r=>r.logged||r.purpose==='ramp');
+      if(page.exerciseType==='main'||(eligible(page)&&page.startConfidence!==undefined&&!/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'')))mainSeen=true;
+      if(done)continue;
+      if(!eligible(page)){
+        if(isCarry(page)){seedCarry(page,log,records,s.id);page.brainSeeded=true;}
+        else if((page.columns||[]).includes('weight_kg')){
+          // Manual lifts: the brain does not pick the load, but the last weight used is prefilled.
+          const last=lastLogged(records,page,s.id);
+          if(last){page.lastKg=last.kg;for(const row of log.sets||[])if(row.kg==null&&!row.logged)row.kg=last.kg;}
+          page.brainSeeded=true;
+        }
+        continue;
+      }
       let targets=[];try{targets=T.normalize(page);}catch{continue;}
       page.setTargets=targets;
       const h=history(records,page,s.id),first=targets.find(t=>t.purpose==='working'),prior=h.latest;
       let working=null,confidence='unknown';
       const samePrescription=prior&&JSON.stringify(T.normalize(prior.page).map(({id,...t})=>t))===JSON.stringify(targets.map(({id,...t})=>t));
-      if(prior&&(samePrescription||prior.observation.miss||prior.effort==='max_effort')&&Number.isFinite(prior.nextKg)){
-        const mass=Core.normalized(prior.nextKg,prior.page)?.externalKg;
-        working=mass==null?null:E.floor(Core.display(mass,page),page);confidence='history';
-      } else if(prior&&first){
-        const o=prior.observation,k=root.StrengthPolicy.learningMode==='online'?h.k:root.StrengthLearning.initial().k;
-        const mass=root.StrengthLearning.project({weight:o.weight,fromReps:o.reps,fromRir:o.rir,toReps:first.reps.min,targetRir:3,k});
-        const current=Core.display(o.weight,page);
-        const directional=['very_easy','easy'].includes(prior.effort)&&first.reps.min<=o.reps;
-        const nextMass=directional?Core.normalized(prior.nextKg,prior.page)?.externalKg:null;
-        working=mass==null?(nextMass!=null?E.floor(Core.display(nextMass,page),page):current):Core.guard(mass,current,page,{transition:o.reps!==first.reps.min,planned:current});confidence='history';
+      if(prior&&Number.isFinite(prior.nextKg)){
+        // ibex owns the prescription; the brain carries the load, lighter if ibex asks for more reps.
+        const mass=Core.normalized(prior.nextKg,prior.page)?.externalKg,here=mass==null?null:Core.display(mass,page);
+        const was=T.normalize(prior.page).find(t=>t.purpose==='working')?.reps.min;
+        const matched=!samePrescription&&first&&Number.isInteger(was)&&first.reps.min>was&&here!=null?Core.matchLoad(here,was,first.reps.min,page):null;
+        working=here==null?null:matched??E.nearest(here,page)??E.floor(here,page);confidence='history';
       } else {const starter=E.starter(page);working=starter.kg;confidence=starter.confidence;}
+      const firstPct=first?.pct,rm=firstPct>0?oneRM(records,page,s.id):null;
+      if(rm){page.oneRmKg=rm.kg;working=pctLoad(rm.kg,firstPct,page);confidence='one_rm';}
       page.workingKg=working;page.startConfidence=confidence;
       const accessory=page.exerciseType==='accessory'||/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'');
       const main=!accessory&&(page.exerciseType==='main'||/squat|deadlift|bench|overhead|press|row|pull.?up/i.test(page.title||'')||!mainSeen);if(main)mainSeen=true;
@@ -104,15 +181,16 @@
       const belowWork=known&&working>0?E.floor(working*.5,page):null;
       const step=E.next(0,page);
       const second=belowWork>0&&belowWork<working?belowWork:step!=null&&step<working?step:0;
-      const rampLoad=bar&&known?[0,second]:[known&&working>0?belowWork:null,null];
-      const ramps=Array.from({length:count},(_,i)=>({id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg:i<rampLoad.length?rampLoad[i]:null,cells:{},logged:false,miss:false}));
+      const rampLoad=bar&&known?[0,second]:known&&working>0?E.ramps(working,page):[null,null];
+      const ramps=Array.from({length:count},(_,i)=>{const kg=i<rampLoad.length?rampLoad[i]:null;return {id:root.crypto.randomUUID(),targetId:`${page.id}:warmup:${i}`,purpose:'ramp',reps:first?.reps.min??page.targetReps,kg,plannedKg:kg,cells:{},logged:false,miss:false};});
       const authored=log.sets.map((row,i)=>{
         const target=targets[i],reps=Number(target?.reps?.min),from=Number(first?.reps?.min);
         const matched=known&&target?.purpose==='working'&&Number.isInteger(reps)&&Number.isInteger(from)?Core.matchLoad(working,from,reps,page):null;
-        const kg=matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
-        return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg};
+        const anchored=!rm&&known&&working>0&&first?.pct>0&&target?.purpose==='working'&&target?.pct>0?(target===first?working:pctLoad(working*target.pct/first.pct,100,page)):null;
+        const kg=rm&&target?.pct>0?pctLoad(rm.kg,target.pct,page):anchored!=null?anchored:matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
+        return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg,plannedKg:kg};
       });
-      log.sets=ramps.concat(authored);
+      log.sets=ramps.concat(authored);page.brainSeeded=true;
     }
     s.brainSeeded=true;return s;
   }
@@ -120,8 +198,8 @@
     const context=root.StrengthContext,normalized=context?.normalizeLoad(load);
     if(!normalized?.eligible)return null;
     const convention=['barbell_plates','barbell_total'].includes(normalized.convention)?'barbell_total':normalized.convention;
-    try{return context.key({athleteId,exerciseId:page?.exerciseId,equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
+    try{return context.key({athleteId,exerciseId:context.exerciseKey(page),equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
     catch{return null;}
   }
-  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,seed,clearCache(){replayCache=new WeakMap();diagnosticEvents.length=0;},diagnostics:()=>diagnosticEvents.map(e=>({...e}))};
+  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,lastLogged,oneRM,seed,clearCache(){replayCache=new WeakMap();diagnosticEvents.length=0;},diagnostics:()=>diagnosticEvents.map(e=>({...e}))};
 })(typeof window!=='undefined'?window:globalThis);

@@ -1952,12 +1952,12 @@ button {
   const WARMUPS = [
     ['easy_bike', 'Easy Bike', 'seconds', ['180']],
     ['breathing', 'Breathing', 'seconds', ['60']],
-    ['couch_stretch', 'Couch Stretch', 'seconds', ['60']],
-    ['hamstring_stretch', 'Hamstring Stretch', 'seconds', ['45']],
+    ['couch_stretch', 'Couch Stretch (each side)', 'seconds', ['60']],
+    ['hamstring_stretch', 'Hamstring Stretch (each side)', 'seconds', ['45']],
     ['childs_pose', "Child's Pose", 'seconds', ['60']],
     ['cat_cow', 'Cat-Cow', 'reps', ['8']],
-    ['thread_needle', 'Thread the Needle', 'reps', ['6']],
-    ['figure_four', 'Figure Four', 'reps', ['8']]
+    ['thread_needle', 'Thread the Needle (each side)', 'reps', ['6']],
+    ['figure_four', 'Figure Four (each side)', 'reps', ['8']]
   ];
   const KEY = 'strength-cooldown-play';
 
@@ -1988,18 +1988,20 @@ button {
       confirmAnchor: '',
       clock: null,
       timer: null,
-      setAt: 0
+      setAt: 0,
+      results: []
     };
   }
   let state = load();
   function load() {
     try {
       const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
-      if (saved && (saved.screen === 'warm' || saved.screen === 'warmEdit' || saved.screen === 'notes')) {
+      if (saved && (saved.screen === 'warm' || saved.screen === 'warmEdit' || saved.screen === 'notes' || saved.screen === 'finished')) {
         saved.warmups = saved.warmups || [];
         saved.clock = null;
         saved.timer = null;
         saved.setAt = saved.setAt || 0;
+        saved.results = saved.results || [];
         return saved;
       }
     } catch (e) {}
@@ -2064,8 +2066,10 @@ button {
     const b = block(state.timer.blockId);
     if (!b) return '';
     const done = state.clock && state.clock.done && state.clock.blockId === state.timer.blockId && state.clock.setIndex === state.timer.setIndex;
-    const next = done ? '<div class="play-dock"><div class="play-next"><button type="button" class="btn oled-cta" onclick="Play.nextAfterTimer()">Next</button></div></div>' : '';
-    return '<div class="tm-full" role="dialog" aria-label="Timer"><div class="tm-head"><button type="button" class="lib-back" aria-label="Back" onclick="Play.closeTimer()">←</button><h2>' + esc(b.title) + '</h2></div>' + timerBody(state.timer.blockId, state.timer.setIndex, state.timer.field) + next + '</div>';
+    const side = /each side/i.test(b.title || '') ? (state.clock && state.clock.side === 2 ? ' · side 2' : ' · side 1') : '';
+    const skip = '<button type="button" class="btn oled-cta" onclick="Play.skipWarm()">Skip</button>';
+    const next = '<div class="play-dock"><div class="play-next">' + skip + (done ? '<button type="button" class="btn oled-cta" onclick="Play.nextAfterTimer()">Next</button>' : '') + '</div></div>';
+    return '<div class="tm-full" role="dialog" aria-label="Timer"><div class="tm-head"><button type="button" class="lib-back" aria-label="Back" onclick="Play.closeTimer()">←</button><h2>' + esc(b.title + side) + '</h2></div>' + timerBody(state.timer.blockId, state.timer.setIndex, state.timer.field) + next + '</div>';
   }
   function esc(v) {
     return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2185,7 +2189,8 @@ button {
     if (s.amrap && field === 'text') return '<div class="lib-cell" aria-label="Set ' + (i + 1) + ' AMRAP">AMRAP</div>';
     if (s.amrap) return '<div class="lib-cell"></div>';
     const raw = field === 'extra' ? (s.extra || '') : (s.text || '0');
-    return '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(raw) + '</button>';
+    const shown = /each side/i.test(b.title || '') && (b.metric === 'reps' || b.metric === 'range') && field !== 'extra' ? sideRepText(raw) : raw;
+    return '<button type="button" class="lib-cell' + (on ? ' focus-cell' : '') + '" aria-label="Set ' + (i + 1) + ' ' + esc(unit) + '" onclick="Play.openPad(\'' + b.id + '\',' + i + ',\'' + field + '\')">' + esc(shown) + '</button>';
   }
   function setRows(b, only) {
     const two = !!columnMetric(b, 'extra');
@@ -2216,7 +2221,7 @@ button {
     const roundAt = Math.max(0, roundSteps.findIndex((s) => s.blockId === b.id));
     const heading = 'Round ' + ((state.setAt || 0) + 1);
     const place = '<p class="play-step">' + (roundAt + 1) + ' of ' + roundSteps.length + '</p>';
-    const action = '<button type="button" class="btn oled-cta" onclick="Play.advanceWarm()">Next</button>';
+    const action = '<button type="button" class="btn oled-cta" onclick="Play.advanceWarm()">Next</button><button type="button" class="btn oled-cta" onclick="Play.skipWarm()">Skip</button>';
     return `<div class="shell-screen shell-screen--library">
       <div class="lib-head-row"><button type="button" class="lib-back" aria-label="Back" onclick="Play.backWarm()">←</button><h1>${heading}</h1></div>
       ${place}
@@ -2236,8 +2241,15 @@ button {
     const key = (label, col, row, extra) => '<button type="button" class="photo-key' + (extra || '') + '" style="grid-column:' + col + ';grid-row:' + row + '" onclick="Play.key(\'' + label + '\')">' + (label === '⌫' ? '⌫' : label) + '</button>';
     const metric = columnMetric(b, state.pad.field) || b.metric;
     const unit = metric === 'seconds' || metric === 'time_mmss' ? 'SEC' : metric === 'meters' ? 'M' : metric === 'weight_kg' ? 'KG' : metric === 'weight_lb' ? 'LB' : metric === 'weight_pct' ? '%' : (metric === 'reps' || metric === 'range') ? 'REPS' : 'VALUE';
+    const sideNote = state.pad.perSide ? (state.pad.side === 'right' ? 'Right' : 'Left') : '';
     const padName = metricName(metric) + ' keypad';
-    return '<div class="photo-pad" role="dialog" aria-label="' + padName + '"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">' + unit + '</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || '') + '</p></div>';
+    return '<div class="photo-pad" role="dialog" aria-label="' + padName + '"><div class="photo-pad-top"><div class="photo-pad-val" aria-live="polite">' + val + '</div><span class="photo-pad-unit">' + unit + '</span><button type="button" class="photo-pad-close" aria-label="Close keypad" onclick="Play.closePad()">⌄</button></div><div class="photo-pad-grid">' + key('1', 1, 1) + key('2', 2, 1) + key('3', 3, 1) + key('>', 4, 1) + key('4', 1, 2) + key('5', 2, 2) + key('6', 3, 2) + key('<', 4, 2) + key('7', 1, 3) + key('8', 2, 3) + key('9', 3, 3) + key('–', 1, 4) + key('0', 2, 4) + key('⌫', 3, 4, ' photo-key-bs') + '</div><p role="status">' + esc(state.pad.error || sideNote) + '</p></div>';
+  }
+  function sideRepText(raw) {
+    const parts = split(raw);
+    const left = parts.left || '0';
+    const right = parts.dash ? (parts.right || '0') : left;
+    return left + ' L · ' + right + ' R';
   }
   function split(buffer) {
     const text = String(buffer || '');
@@ -2251,6 +2263,14 @@ button {
     const parts = split(state.pad.buffer);
     const field = state.pad.field === 'extra' ? 'extra' : 'text';
     const metric = columnMetric(b, field) || b.metric;
+    if (state.pad.perSide) {
+      const left = (parts.left || '0').replace(/\D/g, '') || '0';
+      const right = parts.dash ? ((parts.right || left).replace(/\D/g, '') || left) : left;
+      const text = left + '-' + right;
+      if (state.screen === 'workout') set.actual = text;
+      else set[field] = text;
+      return;
+    }
     if (state.screen === 'workout' || metric !== 'range') {
       const text = (parts.left || '0').replace(/\D/g, '') || '0';
       if (state.screen === 'workout') set.actual = text;
@@ -2270,7 +2290,7 @@ button {
     const previous = render.screen;
     const editing = state.screen === 'warmEdit';
     phone.classList.toggle('has-pad', editing && !!state.pad);
-    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'warmEdit' ? prepEditorHtml() : prepListHtml();
+    const html = state.screen === 'notes' ? notesHtml() : state.screen === 'finished' ? finishedHtml() : state.screen === 'warmEdit' ? prepEditorHtml() : prepListHtml();
     view.innerHTML = '<div class="shell">' + html + timerHtml() + '</div>';
     if (scrollToOpen && editing) view.scrollTop = 0;
     else if (scrollToOpen && state.confirmAnchor) view.querySelector('[data-added="' + state.confirmAnchor + '"]')?.scrollIntoView({ block: 'nearest' });
@@ -2292,8 +2312,33 @@ button {
       notes: '',
       notice: '',
       prep: true,
-      countIn: 0
+      countIn: catalogId === 'easy_bike' ? 3 : 0
     };
+  }
+
+  function noteStep(step, status) {
+    const b = block(step.blockId);
+    if (!b) return;
+    state.results = state.results || [];
+    const id = b.id + '-r' + (step.setIndex + 1);
+    const existing = state.results.find((item) => item.id === id);
+    if (!existing) state.results.push({ id: id, title: b.title, status: status });
+    else if (status === 'completed') existing.status = 'completed';
+  }
+  function postPrep(phase) {
+    try {
+      const target = window.parent;
+      if (target && target !== window && typeof target.postMessage === 'function') {
+        target.postMessage({ type: 'hybrid-prep-result', phase: phase, items: state.results || [] }, '*');
+      }
+    } catch (e) {}
+  }
+  function finishedHtml() {
+    const items = state.results || [];
+    const done = items.filter((item) => item.status === 'completed').length;
+    const skipped = items.filter((item) => item.status === 'skipped').length;
+    const rows = items.map((item) => '<p class="lib-empty">' + esc(item.title) + ' · ' + esc(item.status) + '</p>').join('');
+    return '<div class="shell-screen shell-screen--library"><div class="lib-head-row"><h1>Cool-down</h1></div><h2>Finished</h2><p>' + done + ' completed · ' + skipped + ' skipped</p>' + rows + nextBar('Back to list', 'Play.goWarm()') + '</div>';
   }
 
   const Play = {
@@ -2364,21 +2409,32 @@ button {
       }
       render(true);
     },
-    advanceWarm() {
+    advanceWarm(skip) {
       const { steps, at } = warmAt();
       const current = steps[at];
       const here = current && block(current.blockId);
       const finished = state.clock && state.clock.done && current && state.clock.blockId === current.blockId && state.clock.setIndex === current.setIndex;
-      if (here && isTimedMetric(here.metric) && !finished && !state.timer) {
+      if (!skip && here && isTimedMetric(here.metric) && !finished && !state.timer) {
         Play.openWarmStep(current, true);
         return;
       }
+      if (!skip && current) noteStep(current, 'completed');
       const next = steps[at + 1];
       state.clock = null;
       state.pad = null;
       state.timer = null;
-      if (!next) { Play.goWarm(); return; }
+      if (!next) {
+        postPrep('cooldown');
+        state.screen = 'finished';
+        render();
+        return;
+      }
       Play.openWarmStep(next, true);
+    },
+    skipWarm() {
+      const { steps, at } = warmAt();
+      if (steps[at]) noteStep(steps[at], 'skipped');
+      Play.advanceWarm(true);
     },
     backWarm() {
       const { steps, at } = warmAt();
@@ -2401,7 +2457,10 @@ button {
         return;
       }
       const source = which === 'extra' ? (set.extra || '') : (state.screen === 'workout' ? (set.actual || set.text || '') : (set.text || ''));
-      state.pad = { blockId: id, setIndex: index, field: which, buffer: state.screen === 'workout' ? String(source).split('-')[0] : source, side: 'left', fresh: true, error: '' };
+      const perSide = /each side/i.test(b.title || '') && (columnMetric(b, which) === 'reps' || b.metric === 'reps');
+      const raw = state.screen === 'workout' ? String(source).split('-')[0] : String(source || '');
+      const buffer = perSide && !raw.includes('-') ? raw + '-' + raw : raw;
+      state.pad = { blockId: id, setIndex: index, field: which, buffer: buffer, side: 'left', perSide: perSide, fresh: true, error: '' };
       render();
     },
     closePad() { state.pad = null; render(); },
@@ -2413,8 +2472,9 @@ button {
       state.pad.error = '';
       const metric = columnMetric(b, state.pad.field) || b.metric;
       if (key === '>' || key === '–' || key === '-') {
-        if (state.screen === 'workout' || metric !== 'range') { state.pad.error = state.screen === 'workout' || b.prep ? 'One number.' : 'Range needs Rep Range.'; render(); return; }
-        parts.dash = true; state.pad.side = 'right'; state.pad.fresh = true;
+        if (state.pad.perSide) { parts.dash = true; state.pad.side = 'right'; state.pad.fresh = true; }
+        else if (state.screen === 'workout' || metric !== 'range') { state.pad.error = state.screen === 'workout' || b.prep ? 'One number.' : 'Range needs Rep Range.'; render(); return; }
+        else { parts.dash = true; state.pad.side = 'right'; state.pad.fresh = true; }
       } else if (key === '<') { state.pad.side = 'left'; state.pad.fresh = true; }
       else if (key === '⌫') {
         if (side === 'right' && parts.right) parts.right = parts.right.slice(0, -1);
@@ -2532,7 +2592,21 @@ button {
       return;
     }
     const node = document.querySelector('[data-clock="' + key + '"]');
-    if (left <= 0) { state.clock.done = true; render(); return; }
+    if (left <= 0) {
+      const b = block(state.clock.blockId);
+      if (b && /each side/i.test(b.title || '') && (state.clock.side || 1) < 2) {
+        state.clock.side = 2;
+        state.clock.done = false;
+        const countIn = (b.countIn || 0) * 1000;
+        state.clock.phase = countIn ? 'count' : 'run';
+        state.clock.endsAt = Date.now() + (countIn || state.clock.totalMs);
+        render();
+        return;
+      }
+      state.clock.done = true;
+      Play.advanceWarm();
+      return;
+    }
     if (!node) return;
     const strong = node.querySelector('strong');
     const arc = node.querySelector('.tm-arc');

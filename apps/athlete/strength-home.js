@@ -66,7 +66,7 @@ function readingsHtml(date=S.selectedDate||today()){
 }
 function html(){const d=S.selectedDate||today(),connected=!!S.settings.whoop?.connected,message=root.Whoop?.uiMessage()||'';
 return '<div class="pg-page strength-recovery-home"><p class="lib-kicker">EDS Strength</p><h1>Today</h1><label class="pg-date">View day <input aria-label="Home date" type="date" max="'+today()+'" value="'+e(d)+'" onchange="StrengthHome.homeDate(this.value)"></label><button class="method-secondary" onclick="'+(connected?'StrengthHome.refresh()':"setTab('me')")+'">'+(connected?'Refresh WHOOP':'Connect WHOOP')+'</button><p class="pg-muted" id="whoopHomeStatus" role="status">'+e(message||root.Whoop?.metaLine()||'')+'</p>'+dailyCheckin(d)+bedtimeCheckin(d)+readingsHtml(d)+'<button class="method-load" onclick="setTab(\'training\')">Start training</button><button class="method-secondary" onclick="setTab(\'progress\')">View progress and history</button></div>';}
-root.StrengthHome={html,readingsHtml,records,selection,importHistory,day,
+root.StrengthHome={metricText:fmt,html,readingsHtml,records,selection,importHistory,day,
 bedtimeToggle(date,open){bedtimeState(date).open=open;},
 bedtimeAnswer(date,key,value){if(date!==today()||!['fatigue','nutrition','alcoholDrinks'].includes(key))return;bedtimeState(date).values[key]=value===''?'':Number(value);},
 editBedtime(date){if(date!==today())return;const draft=bedtimeState(date);draft.values={...(S.checkin[date]?.bedtimeQuestionnaire||{})};draft.editing=true;draft.open=true;render();},

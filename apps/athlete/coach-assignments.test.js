@@ -119,3 +119,43 @@ test('UI-produced weight prescription retains blank kg, block notes, tempo, per-
  assert.equal(p.tempo,'20X1');assert.deepEqual(copy(plan.coachAssignedIds),[row.id]);
  ex.metric='Reps';const reps=c.CoachAssignments.convert(row).blocks[0];assert.deepEqual(copy(reps.columns),['reps']);
 });
+test('coach rest, count-in, each side and prep section reach the logger plan',()=>{
+ const c=runtime();
+ const row={id:'a1',scheduled_date:'2026-11-02',resolved_snapshot:{htmlSession:{title:'T',blocks:[
+  {kind:'lift',id:'b1',title:'DB Bench Press',restSec:90,groupId:'ss1',exercises:[{id:'b1',name:'DB Bench Press',sets:3,reps:'8'}]},
+  {kind:'lift',id:'b2',title:'Suitcase Carry',groupId:'ss1',restSec:90,exercises:[{id:'b2',name:'Suitcase Carry',sets:3,reps:'20',perSide:'each'}]},
+  {kind:'lift',id:'b3',title:'Bike Easy',role:'warmup',countIn:3,exercises:[{id:'b3',name:'Bike Easy',sets:1,reps:'90'}]},
+  {kind:'lift',id:'b4',title:'Couch Stretch',role:'cooldown',exercises:[{id:'b4',name:'Couch Stretch',sets:1,reps:'45',perSide:'each'}]}]}}};
+ const out=c.CoachAssignments.convert(row),by=t=>out.blocks.find(b=>b.title===t);
+ assert.equal(by('DB Bench Press').restSec,90);assert.equal(by('Suitcase Carry').eachSide,true);
+ assert.equal(by('Bike Easy').countIn,3);assert.equal(by('Bike Easy').section,'Warm-Up');
+ assert.equal(by('Couch Stretch').section,'Cool-Down');assert.equal(by('Couch Stretch').eachSide,true);
+});
+test('coach starting weight and body region reach the athlete plan and session page',()=>{
+  const c=runtime(),row=copy(fixture),ex=row.resolved_snapshot.htmlSession.blocks[0].exercises[0];
+  ex.startingKg=60;ex.bodyRegion='lower';
+  const r=c.CoachAssignments.apply(c.S,[row],row.athlete_id);
+  const p=c.HybridLibrary.planForDate(r.state.library,row.scheduled_date).blocks.find(b=>b.kind==='lift');
+  assert.equal(p.startingKg,60);assert.equal(p.bodyRegion,'lower');
+  const src=readFileSync(new URL('./session.js',import.meta.url),'utf8');
+  assert.match(src,/startingKg:/);assert.match(src,/bodyRegion:/);
+});
+test('Coach Weight % (of WM) per set is carried on each set target and logged as kg',()=>{
+  const c=runtime(),row=copy(fixture),ex=row.resolved_snapshot.htmlSession.blocks[0].exercises[0];
+  delete ex.setTargets;delete ex.columns;ex.setCount=5;
+  ex.logColumns=[{kind:'reps',values:['8','6','6','6','4']},{kind:'weight_pct_wm',values:['65','70','72.5','75','80']}];
+  const r=c.CoachAssignments.apply(c.S,[row],row.athlete_id),p=c.HybridLibrary.planForDate(r.state.library,row.scheduled_date).blocks.find(b=>b.kind==='lift');
+  assert.deepEqual(copy(p.setTargets.map(t=>t.pct)),[65,70,72.5,75,80]);
+  assert.ok(p.columns.includes('weight_kg')&&!p.columns.includes('weight_pct'),JSON.stringify(p.columns));
+});
+
+test('two Coach sessions on a day keep separate parts with their own title and blocks',()=>{
+  const c=runtime();
+  const other={...copy(fixture),id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'};
+  const r=c.CoachAssignments.apply(c.S,[fixture,other],fixture.athlete_id);
+  const t=r.state.library.templates[0];
+  assert.deepEqual(copy(t.parts.map(p=>p.assignedId)),[fixture.id,other.id]);
+  assert.ok(t.parts.every(p=>p.blocks.length===1));
+  const plans=c.HybridLibrary.plansForDate(r.state.library,fixture.scheduled_date);
+  assert.equal(plans.length,2);assert.notEqual(plans[0].slotKey,plans[1].slotKey);
+});

@@ -41,9 +41,46 @@ test('deleting a saved workout clears its assignments and keeps other workouts',
  const next=Lib.deleteTemplate(st,'a');assert.deepEqual(next.templates.map(t=>t.id),['b']);assert.deepEqual(next.assignments,{'2026-10-20':'b'});assert.equal(st.templates.length,2);
  assert.deepEqual(Lib.ensure({...next,assignments:{missing:'gone'}}).assignments,{});
 });
+test('a prescribed rest stays on the block and reaches the logger page',()=>{
+ const t=workout({prep:false,blocks:[{title:'Bench Press',restSec:45,columns:['reps','weight_kg'],notes:['rest 90']}]});
+ const kept=Lib.ensure({templates:[t],assignments:{}});
+ const block=kept.templates[0].blocks.find(b=>b.title==='Bench Press');
+ assert.equal(block.restSec,45);
+ const pages=HybridSession.pagesFromPlan(Lib.compile(kept.templates[0]));
+ assert.equal(pages.find(p=>p.title==='Bench Press').restSec,45);
+});
 test('received warm-up, working lifts and cool-down still compile in session order',()=>{
  const t=workout();t.blocks.push({id:'cool',kind:'lift',title:'Breathing',role:'cooldown',columns:['seconds'],prescribed:'60',setCount:3,countIn:3});
  const plan=Lib.compile(t),lifts=plan.blocks.filter(b=>b.kind==='lift');
  assert.equal(lifts[0].role,'warmup');assert.equal(lifts[0].prescribed,'180');assert.equal(lifts[0].setCount,3);assert.equal(lifts.at(-1).role,'cooldown');assert.equal(lifts.at(-1).countIn,3);
  const pages=HybridSession.pagesFromPlan(plan);assert.ok(pages.length>0);assert.equal(pages[0].section,'Warm-Up');assert.equal(pages.filter(p=>p.section).at(-1).section,'Cool-Down');
+});
+
+test('a coach each-side flag survives compile without an "(each side)" title',()=>{
+ const t=workout({prep:false,blocks:[{title:'Suitcase Carry',columns:['meters','weight_kg'],setCount:3,repTarget:'20',eachSide:true},{title:'Farmer Carry',columns:['meters','weight_kg'],setCount:2,repTarget:'40'}]});
+ const lifts=Lib.compile(t).blocks.filter(b=>b.kind==='lift');
+ assert.equal(lifts.find(b=>b.title==='Suitcase Carry').eachSide,true);
+ assert.notEqual(lifts.find(b=>b.title==='Farmer Carry').eachSide,true);
+});
+test('our inferred mapping records KB goblet squats as kettlebell and plain goblet squats as dumbbell',()=>{
+ const t=workout({prep:false,blocks:[{title:'KB Goblet Squat',columns:['reps','weight_kg']},{title:'Goblet Squat',columns:['reps','weight_kg']}]});
+ const st=Lib.ensure({templates:[t],assignments:{}}),[kb,db]=st.templates[0].blocks.filter(b=>b.kind==='lift');
+ assert.equal(kb.equipmentId,'kettlebell');assert.equal(kb.loadConvention,'single');
+ assert.equal(db.equipmentId,'dumbbell');
+});
+test('DB RDL gets a provisional first-set weight from the normal starter',()=>{
+ const s=globalThis.StrengthEquipment.starter({title:'DB RDL',equipmentId:'dumbbell',loadConvention:'per_hand',loadUnit:'kg',minimumKg:1});
+ assert.equal(s.kg,8);assert.equal(s.confidence,'provisional');
+});
+
+test('a day with two coach sessions compiles one plan per session, each with its own slot',()=>{
+ const blk=t=>({kind:'lift',title:t,columns:['reps','weight_kg'],setCount:3,repTarget:'5'});
+ const st={templates:[{id:'coach-day:2026-10-30',source:'coach-assignment',coachAssignedIds:['a1','b2'],title:'Lower + Upper',blocks:[blk('Deadlift'),blk('Bench Press')],
+  parts:[{assignedId:'a1',title:'Lower',instructions:'',blocks:[blk('Deadlift')]},{assignedId:'b2',title:'Upper',instructions:'go',blocks:[blk('Bench Press')]}]}],assignments:{'2026-10-30':'coach-day:2026-10-30'}};
+ const plans=HybridLibrary.plansForDate(st,'2026-10-30');
+ assert.deepEqual(plans.map(p=>[p.title,p.slotKey,p.coachAssignedIds.join()]),[['Lower','2026-10-30#a1','a1'],['Upper','2026-10-30#b2','b2']]);
+ assert.deepEqual(plans.map(p=>p.blocks.filter(b=>b.kind==='lift').map(b=>b.title)),[['Deadlift'],['Bench Press']]);
+ assert.equal(HybridLibrary.planForDate(st,'2026-10-30',null,'2026-10-30#b2').title,'Upper');
+ const one={templates:[{id:'t',title:'Solo',blocks:[blk('Squat')]}],assignments:{'2026-10-31':'t'}};
+ assert.deepEqual(HybridLibrary.plansForDate(one,'2026-10-31').map(p=>p.slotKey),['2026-10-31']);
 });

@@ -81,3 +81,9 @@ test('reference uses actual first ordinary working row only, excluding ramps and
  assert.equal(T.resolveReference(target,[{logged:true,kg:'31'}]),31);
  assert.equal(T.resolveReference(ordinary(5),[{purpose:'working',logged:true,kg:31}]),null);
 });
+test('targets carry an optional per-set % of 1RM',()=>{
+  const t=T.normalize({id:'b',setTargets:[{purpose:'working',reps:8,loadRule:{kind:'adaptive'},toFailure:false,pct:65},{purpose:'working',reps:4,loadRule:{kind:'adaptive'},toFailure:false}]});
+  assert.equal(t[0].pct,65);assert.equal('pct' in t[1],false);
+  assert.throws(()=>T.normalize({id:'b',setTargets:[{purpose:'working',reps:8,loadRule:{kind:'adaptive'},toFailure:false,pct:0}]}),/%/);
+  assert.equal(T.normalize({id:'c',setCount:2,repTarget:'5',setPct:[75,75]})[1].pct,75);
+});

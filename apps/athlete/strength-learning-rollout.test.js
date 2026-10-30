@@ -7,7 +7,8 @@ test('shipping policy is default and shadow returns exactly the default visible 
  const {ctx}=runtime();assert.equal(ctx.StrengthPolicy.learningMode,'default');assert.equal(ctx.StrengthPolicy.learningVersion,'online-v1');
  const a=args(),baseline=ctx.StrengthBrain.next(a);ctx.StrengthPolicy.learningMode='shadow';
  assert.deepEqual(ctx.StrengthBrain.next(a),baseline);assert.equal(ctx.StrengthBrain.diagnostics().length,1);
- ctx.StrengthPolicy.learningMode='online';assert.notDeepEqual(ctx.StrengthBrain.next(a),baseline);
+ // Fixed-step rules: the learned curve never changes a visible load, even online.
+ ctx.StrengthPolicy.learningMode='online';assert.deepEqual(ctx.StrengthBrain.next(a),baseline);
  const event=ctx.StrengthBrain.diagnostics()[0];assert.deepEqual(Object.keys(event),['contextHash','model','reason','delta']);
 });
 test('corrupt or incompatible learning state selects the corrected default',()=>{

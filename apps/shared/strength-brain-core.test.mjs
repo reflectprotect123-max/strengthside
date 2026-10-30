@@ -40,13 +40,15 @@ test('fresh evidence is only first ordinary work and excludes warmup AMRAP holds
  assert.equal(B.estimate(first,{...p,title:'Farmer Carry'}),null);
  assert.equal(B.estimate(first,{...p,columns:['seconds','weight_kg']}),null);
 });
-test('ranges earn only when every ordinary target reaches its own upper bound at Average or easier',()=>{
+test('no rep-range progression: only Easy/Very Easy earn, in fixed steps',()=>{
  const p=page([8,8,8]);p.setTargets=p.setTargets.map(t=>({...t,reps:{min:6,max:8}}));
  const six=p.setTargets.map((t,i)=>row(t.id,6,40,'average',{id:`r${i}`}));
  assert.equal(B.review(p,six).earned,false);assert.equal(B.review(p,six).nextKg,40);
  const eight=p.setTargets.map((t,i)=>row(t.id,8,40,'average',{id:`r${i}`}));
- assert.equal(B.review(p,eight).earned,true);assert.equal(B.review(p,eight).nextKg,41);
- assert.equal(B.review(p,eight.map((r,i)=>i===2?{...r,effort:'hard'}:r)).earned,false);
+ assert.equal(B.review(p,eight).earned,false,'top of range at Average still holds');assert.equal(B.review(p,eight).nextKg,40);
+ const easy=eight.map(r=>({...r,effort:'easy'}));
+ assert.equal(B.review(p,easy).earned,true);assert.equal(B.review(p,easy).nextKg,41);
+ assert.equal(B.review(p,easy.map((r,i)=>i===2?{...r,effort:'hard'}:r)).earned,false);
  assert.equal(B.review(p,eight.slice(1)).complete,false);
 });
 test('zero reps reduce and equipment minimum reports a reason',()=>{
@@ -54,33 +56,30 @@ test('zero reps reduce and equipment minimum reports a reason',()=>{
  const result=B.suggest({page:p,row:row('a:set:0',0,10,null,{miss:true}),nextRow:{targetId:'a:set:1'},index:1});
  assert.equal(result.kg,10);assert.equal(result.reason,'minimum_reached');
 });
-test('Easy warmup advances exactly one feasible equipment step even on a coarse low load',()=>{
+test('ramps never project onto work: ramp to ramp and ramp to work keep the plan',()=>{
  const p=page([5]);p.setTargets=[{id:'a:warmup:1',purpose:'warmup',reps:{min:5,max:5},loadRule:{kind:'adaptive'},toFailure:false},...p.setTargets];
- const result=B.suggest({page:p,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0});
- assert.equal(result.kg,11);assert.equal(result.reason,'warmup_step');
- const coarse={...p,equipmentStepKg:2.5};assert.equal(B.suggest({page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp'},index:0}).kg,12.5);
+ const result=B.suggest({page:p,row:{purpose:'ramp',logged:true,reps:5,kg:10,effort:'easy'},nextRow:{targetId:'a:warmup:1',purpose:'ramp',kg:20},index:0});
+ assert.equal(result.kg,20);assert.equal(result.reason,'warmup_hold');
+ const coarse={...p,equipmentStepKg:2.5};
  const ontoWork={page:coarse,row:{purpose:'ramp',logged:true,reps:5,kg:12.5,effort:'easy'},nextRow:{targetId:'a:set:0',purpose:'working'},index:1};
- assert.equal(B.suggest(ontoWork).kg,12.5);
+ assert.equal(B.suggest(ontoWork).kg,12.5,'no plan: hold the ramp load');
  assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:40}}).kg,40);
- assert.equal(B.suggest({...ontoWork,page:{...coarse,workingKg:60}}).kg,60);
- assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:0}}).kg,12.5);
+ assert.equal(B.suggest({...ontoWork,nextRow:{...ontoWork.nextRow,kg:0}}).kg,12.5,'a 0 placeholder is not a plan: the calibrated ramp load holds');
 });
-test('warmup calibration uses physical performance once and later work supersedes it',()=>{
+test('a heavy or hard ramp cannot change the working plan upward',()=>{
  const p={...page([10,10,10]),workingKg:90,equipmentId:'barbell',equipmentStepKg:2.5,minimumKg:20,title:'Back Squat'};
  const warm={purpose:'ramp',logged:true,reps:10,kg:100,effort:'average'};
- assert.equal(B.suggest({page:p,row:warm,nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,100);
- assert.equal(B.suggest({page:p,row:{...warm,kg:60},nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,60);
- const eight={...p,setTargets:targets('a',[8,8,8])};
- const projected=B.suggest({page:eight,row:warm,nextRow:{targetId:'a:set:0',kg:100},index:2}).kg;
- assert.equal(projected,102.5); // one rung above this target's plan, physical increase below 10%
- assert.equal(B.suggest({page:eight,row:{...warm,effort:'hard'},nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,100);
- assert.ok(B.suggest({page:eight,row:{...warm,miss:true},nextRow:{targetId:'a:set:0',kg:100},index:2}).kg<100);
- const hard=row('a:set:0',10,40,'hard');
- assert.ok(B.suggest({page:p,row:hard,nextRow:{targetId:'a:set:1',kg:90},index:3,state:{rows:[warm,hard]}}).kg<40);
+ assert.equal(B.suggest({page:p,row:warm,nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,90);
+ assert.equal(B.suggest({page:p,row:{...warm,kg:60},nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,90);
+ assert.equal(B.suggest({page:p,row:{...warm,effort:'very_easy'},nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,90);
+ assert.equal(B.suggest({page:p,row:{...warm,effort:'hard'},nextRow:{targetId:'a:set:0',kg:90},index:2}).kg,85);
+ assert.ok(B.suggest({page:p,row:{...warm,miss:true},nextRow:{targetId:'a:set:0',kg:100},index:2}).kg<100);
+ const hard=row('a:set:0',10,90,'hard');
+ assert.equal(B.suggest({page:p,row:hard,nextRow:{targetId:'a:set:1',kg:90},index:3,state:{rows:[warm,hard]}}).kg,90,'Hard with all reps holds');
 });
-test('a finished set moves the next rep target onto the same chart load',()=>{
+test('a finished set keeps the next set on its plan, carrying any change to this set',()=>{
  const wave={...page([10,8,6]),workingKg:90,equipmentId:'barbell',equipmentStepKg:2.5,minimumKg:20,title:'Back Squat'};
- const done={targetId:'a:set:0',purpose:'working',logged:true,reps:10,kg:90,effort:'average'};
+ const done={targetId:'a:set:0',purpose:'working',logged:true,reps:10,kg:90,plannedKg:90,effort:'average'};
  assert.equal(B.suggest({page:wave,row:done,nextRow:{targetId:'a:set:1',purpose:'working',kg:95},index:1,state:{rows:[done]}}).kg,95);
  const light={...done,kg:80};
  assert.equal(B.suggest({page:wave,row:light,nextRow:{targetId:'a:set:1',purpose:'working',kg:95},index:1,state:{rows:[light]}}).kg,85);
@@ -102,27 +101,28 @@ test('physical bar load is counted once and missing load never becomes zero',()=
  assert.ok(B.estimate(r,p)>20);
  for(const kg of [null,undefined,'',true])assert.equal(B.suggest({page:p,row:{...r,kg},nextRow:{targetId:'a:set:1'},index:1}).kg,null);
 });
-test('populated future weights cannot bypass physical guards or override Hard with a warmup floor',()=>{
+test('populated future weights are the plan; Hard holds and missed reps drop',()=>{
  const p={...page([10,6]),equipmentId:'machine'};const r=row('a:set:0',10,40,'average');
  const next={targetId:'a:set:1',purpose:'working',kg:42};
- assert.ok(B.suggest({page:p,row:r,nextRow:next,index:1,state:{freshE1rm:100,rows:[r]}}).kg<=43);
+ assert.equal(B.suggest({page:p,row:r,nextRow:next,index:1,state:{freshE1rm:100,rows:[r]}}).kg,42);
  const same={...p,setTargets:targets('a',[6,6])};
  const hard=row('a:set:0',6,40,'hard');
- assert.ok(B.suggest({page:same,row:hard,nextRow:{targetId:'a:set:1',kg:40},index:1,state:{rows:[{purpose:'ramp',logged:true,kg:100,reps:6,effort:'average'},hard]}}).kg<40);
+ assert.equal(B.suggest({page:same,row:hard,nextRow:{targetId:'a:set:1',kg:40},index:1,state:{rows:[{purpose:'ramp',logged:true,kg:100,reps:6,effort:'average'},hard]}}).kg,40);
+ assert.ok(B.suggest({page:same,row:{...hard,reps:4,miss:true},nextRow:{targetId:'a:set:1',kg:40},index:1}).kg<40);
 });
-test('minimum equipment load escapes Easy deadlock and bodyweight has no fake external-load e1RM',()=>{
- const p={...page([5,5]),equipmentId:'barbell',minimumKg:20,equipmentStepKg:2.5};
+test('cold start escapes the empty bar and bodyweight has no fake external-load e1RM',()=>{
+ const p={...page([5,5]),equipmentId:'barbell',minimumKg:20,equipmentStepKg:2.5,startConfidence:'provisional'};
  assert.equal(B.suggest({page:p,row:row('a:set:0',5,0,'easy'),nextRow:{targetId:'a:set:1'},index:1}).kg,2.5);
  assert.equal(B.estimate(row('a:set:0',5,20,'average'),{...p,equipmentId:'bodyweight',title:'Weighted Dip'}),null);
 });
 
 test('reducing load on comparable work cannot earn a heavier session even when all reps are completed',()=>{
  for(const reps of [[8,8,8],[10,8,6]]){
-  const p=page(reps),rows=p.setTargets.map((t,i)=>row(t.id,reps[i],40-i*5,'average'));
+  const p=page(reps),rows=p.setTargets.map((t,i)=>row(t.id,reps[i],40-i*5,'easy'));
   assert.equal(B.review(p,rows).earned,false);
   assert.equal(B.review(p,rows).nextKg,40);
  }
- const p=page([5,8,10]),rows=p.setTargets.map((t,i)=>row(t.id,[5,8,10][i],40-i*3,'average'));
+ const p=page([5,8,10]),rows=p.setTargets.map((t,i)=>row(t.id,[5,8,10][i],40-i*3,'easy'));
  assert.equal(B.review(p,rows).earned,true,'more reps may legitimately use lighter weights');
 });
 

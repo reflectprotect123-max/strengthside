@@ -15,7 +15,10 @@
   function logModeFor(block, rx) {
     if (block.kind === 'warmup' || block.kind === 'recovery') return 'complete';
     if (rx.isMax) return 'max';
-    if (/^F\d/i.test(block.letter || '')) return 'reps';
+    // Legacy plans used letter F for bodyweight finishers; a block that
+    // declares a weight column is a loaded lift whatever its letter.
+    const weighted = (block.columns || []).some((c) => ['weight_kg', 'weight_lb', 'weight_pct', 'lwp'].includes(c));
+    if (!weighted && /^F\d/i.test(block.letter || '')) return 'reps';
     return 'kg';
   }
 
@@ -26,12 +29,13 @@
     for (let i = 0; i < page.setCount; i++) {
       const target=targets[i];
       const cells = {};
-      if (page.prescribed && (page.columns || []).includes('seconds')) cells.seconds = String(page.prescribed);
+      const strengthHold = page.section !== 'Warm-Up' && page.section !== 'Cool-Down' && /plank|hang|\bhold\b/i.test(page.title || '') && (page.columns || []).includes('seconds');
+      if (page.prescribed && (page.columns || []).includes('seconds') && !strengthHold) cells.seconds = String(page.prescribed);
       if (page.prescribed && (page.columns || []).includes('time_mmss')) cells.time_mmss = String(page.prescribed);
       if (page.prescribed && (page.columns || []).includes('meters')) cells.meters = String(page.prescribed);
       rows.push({
         targetId:target?.id||null,
-        purpose:page.section === 'Warm-Up' || page.section === 'Cool-Down' ? 'warmup' : (target?.purpose||'working'),
+        purpose:page.section === 'Cool-Down' ? 'cooldown' : page.section === 'Warm-Up' ? 'warmup' : (target?.purpose||'working'),
         workingIndex:targets.slice(0,i).filter(t=>t.purpose!=='warmup').length,
         reps: target?.purpose==='amrap'||page.logMode === 'max' ? null : target?.reps?.min??page.targetReps,
         kg: null,
@@ -96,8 +100,23 @@
     return JSON.parse(JSON.stringify(session));
   }
 
+  function restSeconds(block) {
+    const direct = Number(block && block.restSec);
+    if (Number.isFinite(direct) && direct > 0) return Math.round(direct);
+    const text = [block && block.prescription, block && block.note, ...((block && block.notes) || [])].filter(Boolean).join(' ');
+    const named = String(text).match(/\brest\s+(\d+)\s*(?:s|sec|secs|seconds)?\b/i);
+    if (named) return Number(named[1]);
+    const trailing = String(text).match(/\b(\d+)\s*(?:s|sec|seconds)\s+rest\b/i);
+    return trailing ? Number(trailing[1]) : 0;
+  }
+
   function pageFromBlock(block) {
     const cols = Array.isArray(block.columns) ? block.columns.filter(Boolean).map(root.TrainingCore.canonical) : [];
+    let prescribed = block.prescribed || '';
+    if (!prescribed && cols.includes('meters')) {
+      const meters = String(block.prescription || '').match(/(\d+)\s*m\b/i);
+      if (meters) prescribed = meters[1];
+    }
     let setTargets=Array.isArray(block.setTargets)?JSON.parse(JSON.stringify(block.setTargets)):null;
     if(!setTargets&&cols.some(c=>c==='reps'||c==='reps_range')){
       try{setTargets=JSON.parse(JSON.stringify(root.StrengthTargets.normalize(block)));}catch{}
@@ -139,41 +158,35 @@
       loadUnit: cols.includes('weight_lb') ? 'lb' : 'kg',
       exerciseType: block.exerciseType || null,
       rampCount: block.rampCount,
+      bodyRegion: block.bodyRegion || null,
+      startingKg: Number(block.startingKg) > 0 ? Number(block.startingKg) : null,
       columns: cols,
-      prescribed: block.prescribed || '',
+      prescribed,
+      restSec: restSeconds(block),
       countIn: Number(block.countIn) || 0,
+      eachSide: block.eachSide === true,
       askEffort: block.section !== 'Warm-Up' && block.section !== 'Cool-Down',
     };
   }
 
   function expandWarmupRounds(members) {
     const out = [];
-    let i = 0;
-    while (i < members.length) {
-      const section = members[i].section;
-      const roundSection = section === 'Warm-Up' || section === 'Cool-Down';
-      if (!roundSection || members[i].logMode === 'complete') {
-        out.push(members[i]);
-        i += 1;
+    for (const member of members) {
+      const roundSection = member.section === 'Warm-Up' || member.section === 'Cool-Down';
+      if (!roundSection || member.logMode === 'complete') {
+        out.push(member);
         continue;
       }
-      let j = i;
-      while (j < members.length && members[j].section === section && members[j].logMode !== 'complete') j += 1;
-      const group = members.slice(i, j);
-      const rounds = group.reduce((n, member) => Math.max(n, member.setCount || 1), 1);
+      const rounds = Math.max(1, member.setCount || 1);
       for (let r = 0; r < rounds; r++) {
-        for (const member of group) {
-          if (r >= (member.setCount || 1)) continue;
-          const one = JSON.parse(JSON.stringify(member));
-          one.setCount = 1;
-          one.round = r + 1;
-          one.rounds = rounds;
-          one.id = member.id + '-r' + (r + 1);
-          if (Array.isArray(one.setTargets)) one.setTargets = one.setTargets[r] ? [one.setTargets[r]] : null;
-          out.push(one);
-        }
+        const one = JSON.parse(JSON.stringify(member));
+        one.setCount = 1;
+        one.round = r + 1;
+        one.rounds = rounds;
+        one.id = member.id + '-r' + (r + 1);
+        if (Array.isArray(one.setTargets)) one.setTargets = one.setTargets[r] ? [one.setTargets[r]] : null;
+        out.push(one);
       }
-      i = j;
     }
     return out;
   }
@@ -219,6 +232,7 @@
           footer: '',
           section: a.section,
           setCount: 0,
+          restSec: Math.max(0, ...group.map((member) => Number(member.restSec) || 0)),
           members: group,
         });
         i = j - 1;
@@ -244,7 +258,8 @@
 
   function startSession({ date, plan, letter, existing } = {}) {
     const pages = pagesFromPlan(plan);
-    if (existing && existing.date === date && existing.phase !== 'summary' && !letter) {
+    const slotKey = (plan && plan.slotKey) || date;
+    if (existing && existing.date === date && (existing.slotKey || existing.date) === slotKey && existing.phase !== 'summary' && !letter) {
       const s = root.TrainingCore.migrateSession(clone(existing));
       s.pages = s.pages?.length ? s.pages : pages;
       for(const log of Object.values(s.logs||{}))for(const row of log.sets||[])
@@ -255,6 +270,7 @@
     const session = attachLogs({
       id: root.crypto?.randomUUID?.() || String(Date.now()),
       date,
+      slotKey,
       title: (plan && plan.title) || '',
       instructions: (plan && plan.instructions) || '',
       coachAssignedIds: (plan && plan.coachAssignedIds) || [],
@@ -344,7 +360,7 @@
     const liftPage = page.logMode === 'superset' ? memberOf(page, memberId) : page;
     const wasLogged=row.logged,previousKg=row.kg;
     if (patch.reps != null) row.reps = Number(patch.reps);
-    if (patch.kg != null) row.kg = Number(patch.kg);
+    if (Object.prototype.hasOwnProperty.call(patch, 'kg')) row.kg = patch.kg == null ? null : Number(patch.kg);
     if (patch.cells && typeof patch.cells === 'object') {
       row.cells = { ...(row.cells || {}), ...patch.cells };
     }
@@ -355,6 +371,7 @@
       row.context={...(row.context||{}),inputVersion:3,normalizedLoad:root.StrengthLoad.fromPage({page:liftPage,value:row.kg,provenance:'explicit'})};
     } else if(wasLogged&&!row.context?.normalizedLoad) row.context={...(row.context||{}),loadAmbiguous:true};
     row.logged = options.commit === false ? false : canLogRow(row, liftPage);
+    if (row.logged) s.lastLoggedAt = Date.now();
     return s;
   }
 
@@ -379,25 +396,103 @@
       if (log.sets[i].logged) continue;
       log.sets[i].kg = src.kg;
       if (src.reps != null) log.sets[i].reps = src.reps;
+      if (src.cells && src.cells.meters != null) log.sets[i].cells = { ...(log.sets[i].cells || {}), meters: src.cells.meters };
     }
     return s;
+  }
+
+  function rowSeconds(row) {
+    const cells = (row && row.cells) || {};
+    if (cells.seconds != null && cells.seconds !== '') {
+      const n = Number(cells.seconds);
+      if (Number.isFinite(n)) return n;
+    }
+    const clock = String(cells.time_mmss || '');
+    const match = clock.match(/^(\d+):(\d{2})$/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : 0;
   }
 
   function totals(session) {
     let reps = 0;
     let kg = 0;
-    for (const page of session.pages) {
-      for (const id of logIdsForPage(page)) {
-        const log = (session.logs || {})[id];
+    let sets = 0;
+    let meters = 0;
+    let seconds = 0;
+    for (const page of session.pages || []) {
+      const members = page.logMode === 'superset' ? (page.members || []) : [page];
+      for (const member of members) {
+        const log = (session.logs || {})[member.id];
         if (!log) continue;
+        const columns = member.columns || [];
+        const countsReps = !columns.length || columns.some((column) => column === 'reps' || column === 'reps_range');
         for (const row of log.sets || []) {
-          if (!row.logged || row.purpose === 'ramp') continue;
-          reps += Number(row.reps) || 0;
-          kg += Number(row.kg) || 0;
+          if (!row.logged) continue;
+          sets += 1;
+          const count = Number(row.reps) || 0;
+          // Plate-loaded barbells log plates only; volume uses the real load (bar included) when known.
+          const ext = row.context?.normalizedLoad?.externalKg;
+          const weight = typeof ext === 'number' && Number.isFinite(ext) ? ext : (Number(row.kg) || 0);
+          // Each-side sets are saved per side; count both sides in every total.
+          const sides = member.eachSide === true || /\(each side\)/i.test(member.title || '') ? 2 : 1;
+          if (countsReps) reps += count * sides;
+          const hands=row.context?.normalizedLoad?.convention==='per_hand'?2:1;
+          if (countsReps && count > 0) kg += weight * count * hands * sides;
+          meters += (Number(row.cells && row.cells.meters) || 0) * sides;
+          seconds += rowSeconds(row) * sides;
         }
       }
     }
-    return { reps, kg };
+    return { reps, kg, volumeKg: kg, sets, meters, seconds };
+  }
+
+  function rowsOf(session, member) {
+    return (((session.logs || {})[member.id] || {}).sets) || [];
+  }
+
+  function supersetSteps(session, page) {
+    if (!page || page.logMode !== 'superset') return [];
+    const members = page.members || [];
+    const indexed = members.map((member) => rowsOf(session, member).map((row, index) => ({ row, index })));
+    const steps = [];
+    const maxRamp = Math.max(0, ...indexed.map((rows) => rows.filter((item) => item.row.purpose === 'ramp').length));
+    for (let round = 0; round < maxRamp; round++) {
+      members.forEach((member, memberIndex) => {
+        const ramp = indexed[memberIndex].filter((item) => item.row.purpose === 'ramp')[round];
+        if (!ramp) return;
+        steps.push({ memberId: member.id, letter: member.letter, setIndex: ramp.index, purpose: 'ramp', round: round + 1 });
+      });
+    }
+    const maxWork = Math.max(0, ...indexed.map((rows) => rows.filter((item) => item.row.purpose !== 'ramp').length));
+    for (let round = 0; round < maxWork; round++) {
+      members.forEach((member, memberIndex) => {
+        const work = indexed[memberIndex].filter((item) => item.row.purpose !== 'ramp')[round];
+        if (!work) return;
+        steps.push({ memberId: member.id, letter: member.letter, setIndex: work.index, purpose: 'working', round: round + 1 });
+      });
+    }
+    return steps;
+  }
+
+  function currentSupersetRound(session, page) {
+    const steps = supersetSteps(session, page);
+    const pending = steps.find((step) => !rowsOf(session, { id: step.memberId })[step.setIndex]?.logged);
+    if (!pending) return { steps, round: null, purpose: null, members: [] };
+    const members = steps.filter((step) => step.purpose === pending.purpose && step.round === pending.round && !rowsOf(session, { id: step.memberId })[step.setIndex]?.logged);
+    return { steps, round: pending.round, purpose: pending.purpose, members };
+  }
+
+  function recordPrep(session, phase, items) {
+    const s = clone(session);
+    const name = phase === 'cooldown' ? 'cooldown' : 'warmup';
+    s.prep = {
+      ...(s.prep || {}),
+      [name]: (Array.isArray(items) ? items : []).map((item) => ({
+        id: item.id,
+        title: item.title || '',
+        status: item.status === 'skipped' ? 'skipped' : 'completed',
+      })),
+    };
+    return s;
   }
 
   function openFeel(session) {
@@ -420,6 +515,12 @@
     const s = clone(session);
     s.phase = 'summary';
     s.completedAt=new Date().toISOString();
+    // Finished from history (no feel step): minutes run from the start to the last logged set.
+    s.feel = s.feel || {};
+    if (!s.feel.durationMin && s.startedAt) {
+      const end = s.lastLoggedAt || Date.now();
+      s.feel.durationMin = Math.max(1, Math.round((end - s.startedAt) / 60000));
+    }
     return s;
   }
 
@@ -443,7 +544,7 @@
       for (const id of logIdsForPage(page)) {
         const log = (session.logs || {})[id];
         if (!log) continue;
-        const logged = (log.sets || []).filter((r) => r.logged && r.purpose !== 'ramp').length;
+        const logged = (log.sets || []).filter((r) => r.logged).length;
         if (logged) {
           pageExercises += 1;
           pageSets += logged;
@@ -457,12 +558,15 @@
     }
     return {
       exercises,
-      sets,
+      sets: t.sets,
       reps: t.reps,
       kg: t.kg,
+      meters: t.meters,
+      seconds: t.seconds,
       blocksDone,
       blocksTotal: workPages.length,
       minutes: (session.feel && session.feel.durationMin) || 0,
+      prep: session.prep || {},
     };
   }
 
@@ -484,6 +588,9 @@
     logIdsForPage,
     memberOf,
     totals,
+    supersetSteps,
+    currentSupersetRound,
+    recordPrep,
     openFeel,
     setFeel,
     finishToSummary,

@@ -9,10 +9,16 @@
   function identity(page) {
     if(typeof page.equipmentId==='string'&&page.equipmentId.trim())return page.equipmentId.trim().toLowerCase();
     const title=page.title||'';
+    if(/\bkettlebell\b|\bkb\b/i.test(title))return 'kettlebell';
     if(/\bdumbbell\b|\bdb\b/i.test(title))return 'dumbbell';
     if(/\bbarbell\b/i.test(title))return 'barbell';
     return '';
   }
+  const MACHINE=/machine|cable|smith|sled|plate.?loaded|selector|pulley/;
+  // Competition-style bells: 4-16 kg in 2s, then 4s, then 48.
+  const KB=[4,6,8,10,12,14,16,20,24,28,32,36,40,48];
+  // Typical gym dumbbells: 1-10 kg in 1 kg steps, then 12-50 kg in 2 kg steps.
+  const DB=[1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50];
   function unique(loads) {return [...new Set(loads)].sort((a,b)=>a-b);}
   function explicitLoads(page) {
     return Array.isArray(page.availableLoads)?unique(page.availableLoads.map(number).filter(n=>n!=null)):[];
@@ -21,12 +27,17 @@
     const unit=page.loadUnit||'',convention=page.loadConvention||'',equipment=identity(page);
     const canonicalBar=['barbell_plates','barbell_total'].includes(convention);
     const declared=canonicalBar?number(page.barWeightKg??page.minimumKg):(number(page.minimumKg)??number(page.barWeightKg));
-    const db=equipment==='dumbbell'&&unit==='kg'&&['per_hand','single'].includes(convention);
+    const db=(equipment==='dumbbell'||equipment==='kettlebell')&&unit==='kg'&&['per_hand','single'].includes(convention);
     const bar=equipment==='barbell'&&unit==='kg'&&(canonicalBar?declared>0:convention==='total'&&declared!=null);
     // Legacy `total` is the existing plates keypad convention, never a persisted-load inference.
     const plates=convention==='total'||convention==='barbell_plates';
-    const grid=(number(page.equipmentStepKg)??0)>0&&declared!=null&&(!canonicalBar||bar);
-    return {unit,convention,declared,db,bar,plates,grid};
+    const kb=db&&equipment==='kettlebell';
+    // Machines, cables and added bodyweight with no declared step move in 5 kg / 2.5 kg plates.
+    const machine=!db&&!bar&&unit==='kg'&&MACHINE.test(equipment)&&!['barbell_plates','barbell_total'].includes(convention);
+    const added=convention==='added_bodyweight'||(equipment==='bodyweight'&&unit==='kg');
+    const defaultStep=machine?5:added?2.5:null;
+    const grid=((number(page.equipmentStepKg)??0)>0&&declared!=null&&(!canonicalBar||bar))||(defaultStep!=null&&!bar);
+    return {unit,convention,declared:grid&&declared==null?0:declared,db,kb,bar,plates,grid,defaultStep};
   }
   function profile(page={}) {
     const m=metadata(page);
@@ -35,10 +46,11 @@
       const loads=explicit;
       return {loads,step:0,min:loads[0]??0,convention:m.convention,unit:m.unit};
     }
-    const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?number(page.equipmentStepKg):0;
+    if(m.kb){const min=Math.max(4,number(page.minimumKg)??4);return {loads:KB.filter(n=>n>=min),step:0,min:KB.find(n=>n>=min)??48,convention:m.convention,unit:m.unit};}
+    const step=m.db?0:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?(number(page.equipmentStepKg)||m.defaultStep):0;
     // Grids remain in display units: plates start at 0; explicit totals include the bar.
     const min=m.db?Math.max(1,m.declared??1):m.bar?(m.plates?0:m.declared):m.grid?m.declared:0;
-    const loads=m.db?[1,2,3,4,5,6,7,8,9,10,12.5,15,17.5,20].filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
+    const loads=m.db?DB.filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
     return {loads,step,min,convention:m.convention,unit:m.unit};
   }
   // Seed profiles stay compact; supply neighboring rungs around every queried value.
@@ -65,6 +77,13 @@
     value=number(value);if(value==null)return null;
     return rack(page,[value]).find(n=>n>value+EPS)??null;
   }
+  // Off-ladder entries (e.g. 13 kg dumbbell) snap to the closest available load.
+  function nearest(value,page={}) {
+    value=number(value);if(value==null)return null;
+    const lo=floor(value,page),hi=next(value-EPS*2,page);
+    if(lo==null)return hi;if(hi==null)return lo;
+    return value-lo<=hi-value?lo:hi;
+  }
   function round(value,current,page={},options={}) {
     value=number(value);current=number(current);
     if(value==null||current==null)return null;
@@ -86,15 +105,21 @@
     if(page.loadUnit!=='kg')return unknown('unsupported_unit');
     let desired=null;
     const title=String(page.title||'').trim();
+    const coach=number(page.startingKg);
+    if(coach!=null&&coach>0){const kg=nearest(coach,page);if(kg!=null)return {kg,confidence:'coach',reason:VERSION+':coach_starting_weight'};}
     if(m.bar) {
       if(!/\b(bench|press|squat|deadlift|row)\b/i.test(title))return unknown('unknown_exercise');
       desired=m.plates?0:m.declared;
     } else if(m.db&&m.convention==='single'&&/\bgoblet squat\b/i.test(title))desired=6;
+    else if(m.db&&m.convention==='single'&&/\bsuitcase\b/i.test(title))desired=8;
+    else if(m.db&&m.convention==='single'&&/\bswing\b/i.test(title))desired=8;
     else if(m.db&&m.convention==='per_hand') {
-      if(/\blateral raise\b/i.test(title))desired=2;
+      if(/\bfarmer\b/i.test(title)||(/\bcarry\b/i.test(title)&&!/suitcase/i.test(title)))desired=8;
+      else if(/\blateral raise\b/i.test(title))desired=2;
       else if(/\bcurl\b/i.test(title))desired=4;
       else if(/\bbench press\b/i.test(title))desired=5;
       else if(/\boverhead press\b/i.test(title))desired=4;
+      else if(/\brdl\b|\bromanian deadlift\b/i.test(title))desired=8;
       else if(/\brow\b/i.test(title))desired=6;
     }
     if(desired==null)return unknown('unsupported_equipment_convention_or_exercise');
@@ -102,11 +127,28 @@
     if(kg==null)return unknown('no_available_load');
     return {kg,confidence:'provisional',reason:VERSION+':provisional_exercise_default'};
   }
+  function ramps(working,page={}) {
+    working=number(working);
+    if(working==null||working<=0)return [null,null];
+    const min=profile(page).min;
+    const legal=target=>{
+      const loads=rack(page,[target,working,min]).filter(n=>n+EPS>=min&&n<working-EPS);
+      if(!loads.length)return null;
+      loads.sort((a,b)=>Math.abs(a-target)-Math.abs(b-target)||b-a);
+      return loads[0];
+    };
+    let first=legal(working*.5),second=legal(working*.75);
+    if(first!=null&&second!=null&&second<=first){
+      const up=next(first,page);
+      second=up!=null&&up<working-EPS?up:null;
+    }
+    return [first,second];
+  }
   function label(page={},kg) {
     if(kg==null||kg==='')return '';
     const n=number(kg);if(n==null)return '';
     const m=metadata(page);
     return m.bar&&n===(m.plates?0:m.declared)?'empty bar':String(n);
   }
-  root.StrengthEquipment={profile,floor,next,round,starter,label};
+  root.StrengthEquipment={profile,floor,next,nearest,round,ramps,starter,label};
 })(typeof window!=='undefined'?window:globalThis);

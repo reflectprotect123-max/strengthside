@@ -48,3 +48,7 @@ test('sleep hours and steps stay on their own dates when the summary day is newe
  assert.equal(S.checkin['2026-10-21'].steps,22089);
  assert.equal(S.checkin['2026-10-21'].whoopStrain,3.4);
 });
+
+test('Strain shows one decimal on Progress',()=>{
+ const H=home();assert.equal(H.metricText(13.73829,'strain'),'13.7');assert.equal(H.metricText(9,'strain'),'9.0');assert.equal(H.metricText(72,'recovery'),'72');assert.equal(H.metricText(null,'strain'),'—');
+});

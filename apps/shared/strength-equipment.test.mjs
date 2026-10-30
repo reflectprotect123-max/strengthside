@@ -8,18 +8,16 @@ const E=root.StrengthEquipment;
 const db={equipmentId:'dumbbell',loadConvention:'per_hand',loadUnit:'kg'};
 const plain=value=>JSON.parse(JSON.stringify(value));
 
-test('per-hand dumbbell ladder advances by 1 then 2.5 without an arbitrary ceiling',()=>{
+test('per-hand dumbbell ladder: 1-10 kg by 1, then 12-50 kg by 2 (typical gym dumbbells)',()=>{
  for(let kg=1;kg<10;kg++)assert.equal(E.next(kg,db),kg+1);
- assert.equal(E.next(10,db),12.5);assert.equal(E.next(12.5,db),15);assert.equal(E.next(15,db),17.5);
- assert.equal(E.next(1000,db),1002.5);assert.equal(E.floor(1001,db),1000);
- assert.equal(E.next(1e12,db),1e12+2.5);assert.equal(E.floor(1e12+1,db),1e12);
- assert.equal(E.round(1e12+2.5,1e12,db,{upCap:.15,downCap:.15}),1e12+2.5);
- assert.ok(E.profile(db).loads.length<=14);
- assert.equal(E.floor(.5,db),null);assert.equal(E.floor(18,db),17.5);
+ assert.equal(E.next(10,db),12);assert.equal(E.next(12,db),14);assert.equal(E.next(16,db),18);
+ assert.equal(E.next(48,db),50);assert.equal(E.next(50,db),null);assert.equal(E.floor(1001,db),50);
+ assert.deepEqual(plain(E.profile(db).loads),[1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50]);
+ assert.equal(E.floor(.5,db),null);assert.equal(E.floor(17,db),16);assert.equal(E.floor(18,db),18);
 });
 test('manual actual overrides hold without manufacturing a custom rack',()=>{
  assert.equal(E.round(18,18,db,{upCap:.15,downCap:.15}),18);
- assert.equal(E.next(18,db),20);assert.equal(E.floor(19,db),17.5);
+ assert.equal(E.next(18,db),20);assert.equal(E.floor(19,db),18);
  assert.equal(E.round(18.1,18,db,{upCap:.05,downCap:.15}),18);
  assert.equal(E.round(18,18,{equipmentId:'unknown'}),18);
 });
@@ -27,12 +25,12 @@ test('explicit rack supersedes inferred loads and filters invalid entries withou
  const page={...db,availableLoads:Object.freeze([18,6,NaN,-1,Infinity,6,null,'',true,'12'])};Object.freeze(page);
  assert.deepEqual(plain(E.profile(page).loads),[6,12,18]);
  assert.equal(E.next(6,page),12);assert.equal(E.floor(10,page),6);assert.equal(E.next(18,page),null);
- assert.equal(E.next(10,{...db,availableLoads:[]}),12.5);
- assert.equal(E.next(10,{...db,availableLoads:[NaN,-1,null]}),12.5);
+ assert.equal(E.next(10,{...db,availableLoads:[]}),12);
+ assert.equal(E.next(10,{...db,availableLoads:[NaN,-1,null]}),12);
 });
 test('upward caps hold and coarse downward reductions stop at known minimum',()=>{
- assert.equal(E.round(12.5,10,db,{upCap:.15,downCap:.15}),10);
- assert.equal(E.round(12.5,10,db,{upCap:.25,downCap:.15}),12.5);
+ assert.equal(E.round(12,10,db,{upCap:.15,downCap:.15}),10);
+ assert.equal(E.round(12,10,db,{upCap:.25,downCap:.15}),12);
  const page={...db,availableLoads:[5,10,20]};
  assert.equal(E.round(18,20,page,{upCap:.15,downCap:.05}),10);
  assert.equal(E.round(1,5,page,{upCap:.15,downCap:.05}),5);
@@ -59,8 +57,14 @@ test('versioned provisional exercise starters use exact conventions and defaults
  assert.equal(E.starter({...db,equipmentId:undefined,title:'DB Bench Press'}).kg,5);
  assert.equal(E.starter({...db,equipmentId:'machine',title:'DB Bench Press'}).kg,null);
  assert.equal(E.starter({...db,equipmentId:' Dumbbell ',title:'DB Bench Press'}).kg,5);
- assert.equal(E.next(10,{...db,equipmentId:' Dumbbell '}),12.5);
+ assert.equal(E.next(10,{...db,equipmentId:' Dumbbell '}),12);
  assert.equal(E.starter({...db,title:'Bench Press',availableLoads:[2,4,6]}).kg,4);
+ assert.equal(E.starter({...db,title:'Farmer Carry'}).kg,8);
+ assert.equal(E.starter({...db,loadConvention:'single',title:'Suitcase Carry'}).kg,8);
+ assert.equal(E.starter({equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg',title:'Kettlebell Swing'}).kg,8);
+ assert.equal(E.starter({equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg',title:'Kettlebell Goblet Squat'}).kg,6);
+ // Kettlebells come in real bell sizes; 4 kg is the lightest.
+ assert.equal(E.floor(5,{equipmentId:'kettlebell',loadConvention:'per_hand',loadUnit:'kg'}),4);
 });
 test('unknown equipment, units, conventions and unrelated exercises do not start or convert',()=>{
  for(const page of [{equipmentId:'machine',title:'Press'},{...db,loadUnit:'lb',title:'DB Bench Press'},{...db,loadConvention:'total',title:'DB Bench Press'},{...db,loadConvention:'assistance',title:'DB Row'},{...db,loadConvention:undefined,title:'DB Curl'},{...db,title:'DB Deadlift'},{...db,loadConvention:'single',title:'DB Curl'}]) {
@@ -68,6 +72,19 @@ test('unknown equipment, units, conventions and unrelated exercises do not start
  }
  assert.equal(E.next(10,{...db,loadConvention:'total'}),null);
  assert.equal(E.profile({...db,loadUnit:'lb'}).unit,'lb');assert.equal(E.profile({...db,loadConvention:'total'}).convention,'total');
+});
+test('dumbbell and kettlebell ramps sit near half and three quarters of the work weight',()=>{
+ const kb={equipmentId:'kettlebell',loadConvention:'single',loadUnit:'kg'};
+ assert.deepEqual(plain(E.ramps(5,db)),[3,4]);
+ assert.deepEqual(plain(E.ramps(6,kb)),[4,null]);
+ assert.deepEqual(plain(E.ramps(16,kb)),[8,12]);
+ assert.deepEqual(plain(E.ramps(2,db)),[1,null]);
+ assert.deepEqual(plain(E.ramps(1,db)),[null,null]);
+ assert.deepEqual(plain(E.ramps(5,{...db,minimumKg:4})),[4,null]);
+ assert.deepEqual(plain(E.ramps(10,{...db,availableLoads:[8,12]})),[8,null]);
+ assert.deepEqual(plain(E.ramps(20,{...db,availableLoads:[5,10,15,20]})),[10,15]);
+ assert.deepEqual(plain(E.ramps(0,db)),[null,null]);
+ assert.deepEqual(plain(E.ramps(null,db)),[null,null]);
 });
 test('invalid numeric values never become automatic loads',()=>{
  for(const value of [NaN,Infinity,-1,null,undefined,'',true]){

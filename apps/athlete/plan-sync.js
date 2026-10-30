@@ -68,10 +68,11 @@
       sessions.push(touch({ id, date, kind: 'assignment', templateId: assignments[date] }, prev.session[id]));
     }
     const logs = (state && state.sessions) || {};
-    for (const date of Object.keys(logs)) {
-      if (!logs[date]) continue;
-      const id = 'log_' + date;
-      sessions.push(touch({ id, date, kind: 'log', payload: logs[date] }, prev.session[id]));
+    for (const key of Object.keys(logs)) {
+      if (!logs[key]) continue;
+      const id = 'log_' + key;
+      const date = logs[key].date || String(key).split('#')[0];
+      sessions.push(touch(key === date ? { id, date, kind: 'log', payload: logs[key] } : { id, date, key, kind: 'log', payload: logs[key] }, prev.session[id]));
     }
     for (const [date, checkin] of Object.entries(state?.checkin || {})) {
       const payload = Object.fromEntries(['subjectiveRecovery', 'bedtimeQuestionnaire', 'subjectiveRecoveryDeferredAt'].filter(key => checkin[key] != null).map(key => [key, checkin[key]]));
@@ -187,7 +188,7 @@
     let catalog = (next.library && next.library.catalog) || { exercises: [], circuits: [] };
     (plan.sessions || []).forEach((row) => {
       if (row.kind === 'assignment' && row.date) assignments[row.date] = row.templateId;
-      else if (row.kind === 'log' && row.date) sessions[row.date] = row.payload;
+      else if (row.kind === 'log' && row.date) sessions[row.key || row.date] = row.payload;
       else if (row.kind === 'catalog') catalog = { exercises: row.exercises || [], circuits: row.circuits || [] };
       else if (row.kind === 'lift_memory') next.liftMemory = row.memory || {};
       else if (row.kind === 'daily_checkin' && row.date) {
@@ -213,7 +214,7 @@
     if(next.session?.id) {
       const merged=Object.values(sessions).find(s=>s.id===next.session.id);
       if(merged)next.session=merged;
-      else if((plan.tombstones||[]).some(t=>t.kind==='session'&&t.id==='log_'+next.session.date)){next.session=null;next.loggerOpen=false;next.timer=null;}
+      else if((plan.tombstones||[]).some(t=>t.kind==='session'&&t.id==='log_'+(next.session.slotKey||next.session.date))){next.session=null;next.loggerOpen=false;next.timer=null;}
     }
     next.planSync = next.planSync || { acks: { template: {}, session: {} }, snapshotRev: 0 };
     next.planSync.lastPlan = plan;

@@ -73,11 +73,17 @@
     page=page||Object.values(memory.records).find(r=>r.exerciseKey===exerciseKey&&r.payload?.page)?.payload.page;
     return root.StrengthBrain.history(records(),page||{},undefined,memory.ownerId);
   }
+  // A session left open from an earlier day is closed: its sets are final.
+  function earlierDay(date){
+    if(typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date))return false;
+    const d=new Date(),today=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return date<today;
+  }
   function capture(session) {
     if(!session||session.demo)return;
     root.TrainingCore.migrateSession(session);
     session.id=session.id||root.crypto.randomUUID();
-    const alive=new Set(),completed=!!session.completedAt&&session.phase==='summary';
+    const alive=new Set(),completed=(!!session.completedAt&&session.phase==='summary')||earlierDay(session.date);
     session.brainEstimateIds=session.brainEstimateIds||{};
     const pages=[];
     for(const outer of session.pages||[])for(const page of outer.members||[outer]) {
@@ -86,14 +92,14 @@
       let workingIndex=0;
       rows.forEach((row,index)=>{
         row.id=row.id||root.crypto.randomUUID();alive.add(row.id);
-        const position=['ramp','warmup'].includes(row.purpose)?-1:workingIndex++;
-        if(!row.logged&&!memory.records[row.id])return;
+        const position=['ramp','warmup','cooldown'].includes(row.purpose)?-1:workingIndex++;
+        if(!row.logged&&!row.skipped&&!memory.records[row.id])return;
         const target=position>=0?targets?.filter(t=>t.purpose!=='warmup')[position]:null;
         const snapshot={...clone(row),targetId:row.targetId||target?.id||null,workingIndex:position,ordinal:index,context:clone(row.context||{})};
         const candidate=root.StrengthContext?.normalizeLoad(row.context?.normalizedLoad||memory.records[row.id]?.payload?.normalizedLoad);
         const expected=candidate&&root.StrengthLoad?.fromPage({page,value:row.kg,provenance:candidate.provenance});
         const normalizedLoad=expected&&JSON.stringify(candidate)===JSON.stringify(expected)?candidate:null;
-        put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged,payload:{contractVersion:3,ownerId:memory.ownerId,
+        put({id:row.id,sessionId:session.id,exerciseKey,kind:'set',deleted:!row.logged&&!row.skipped,payload:{contractVersion:3,ownerId:memory.ownerId,
           normalizedLoad,completed,sessionCompletedAt:page.coachAssignmentId?session.completedAt||null:null,coachAssignmentId:page.coachAssignmentId||null,authoredTargets:targets,page:clone(page),row:snapshot,sessionStartedAt:session.startedAt,date:session.date,prescriptionSignature:prescriptionSignature(page)}});
       });
     }

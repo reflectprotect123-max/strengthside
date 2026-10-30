@@ -6,6 +6,12 @@ function create(store=new Map()) {
  return {M:c.StrengthMemory,store,ctx:c};
 }
 function session(){return {id:webcrypto.randomUUID(),phase:'summary',completedAt:'2026-10-16T00:00:00Z',startedAt:10,date:'2026-10-10',pages:[{id:'A',exerciseId:'squat',equipmentId:'machine',loadUnit:'kg',loadConvention:'total',minimumKg:0,equipmentStepKg:1,title:'Squat',kind:'lift',logMode:'kg',setCount:1,targetReps:6,targetRepMax:8,columns:['reps','weight_kg']}],logs:{A:{sets:[{kg:40,reps:8,effort:'hard',logged:true,miss:false,purpose:'working',context:{inputVersion:3,normalizedLoad:{version:3,rawValue:40,rawUnit:'kg',convention:'single',externalKg:40,barKg:null,provenance:'explicit',eligible:true}}}]}}};}
+// Sessions from earlier days auto-close; lifecycle tests run on today's date.
+function localToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+test('a session left open from an earlier day is captured as finished',()=>{
+ const {M}=create(),s=session();s.date='2000-01-01';s.completedAt=null;M.capture(s);
+ assert.equal(M.records()[s.logs.A.sets[0].id].payload.completed,true);
+});
 test('offline records survive restart; duplicate capture does not enqueue duplicate evidence',()=>{
  const {M,store}=create(),s=session();M.capture(s);const id=s.logs.A.sets[0].id;
  M.capture(s);assert.equal(M.records()[id].localRevision,1);assert.equal(M.getStatus().pending,2);
@@ -80,7 +86,7 @@ test('derived estimate carries traceable model and source metadata without trust
  assert.equal(JSON.stringify(estimate.payload.sourceSetIds),JSON.stringify([s.logs.A.sets[0].id]));
 });
 test('completion and reopening gate durable learning without losing raw actuals',()=>{
- const {M}=create(),s=session();s.completedAt=null;M.capture(s);
+ const {M}=create(),s=session();s.date=localToday();s.completedAt=null;M.capture(s);
  const id=s.logs.A.sets[0].id;assert.equal(M.records()[id].payload.completed,false);
  s.completedAt='2026-10-16T00:00:00Z';M.capture(s);assert.equal(M.records()[id].payload.completed,true);
  s.completedAt=null;M.capture(s);assert.equal(M.records()[id].payload.completed,false);
@@ -94,7 +100,7 @@ test('recapturing an old ambiguous logged row does not promote it to explicit no
 test('real logger facts survive two ramps, finish, reload, edit and next-session seeding',()=>{
  const {M,store,ctx}=create(),HS=ctx.HybridSession;
  const plan={blocks:[{kind:'lift',letter:'A',title:'Squat',exerciseId:'squat',equipmentId:'machine',loadUnit:'kg',loadConvention:'total',minimumKg:0,equipmentStepKg:1,columns:['reps','weight_kg'],setCount:3,targetReps:6,targetRepMax:8,setTargets:[0,1,2].map(i=>({id:'A:set:'+i,purpose:'working',reps:{min:6,max:8},loadRule:{kind:'adaptive'},toFailure:false}))}]};
- let s=ctx.StrengthBrain.seed(HS.startSession({date:'2026-10-16',plan}),M.records());
+ let s=ctx.StrengthBrain.seed(HS.startSession({date:localToday(),plan}),M.records());
  s=HS.ackCoach(HS.ackQuote(s));
  assert.equal(s.logs.A.sets.length,5);
  for(let i=0;i<5;i++)s=HS.logSet(s,i,{reps:6,kg:i<2?10:40,effort:i<2?'easy':'average'});
@@ -140,6 +146,30 @@ test('Coach receipt waits for durable evidence, retries across restart and does 
  await restored.sync(io);assert.equal(receipts,2);
  s.logs.A.sets[0].reps=7;restored.capture(s);await restored.sync(io);assert.equal(receipts,3);
  await restored.bind('someone-else');await restored.sync({...io,userId:async()=> 'someone-else'});assert.equal(receipts,3);
+});
+
+test('skipped and prep rows become set records; brain history ignores them',()=>{
+ const {M,ctx}=create();const S=ctx.HybridSession;
+ let s=S.startSession({date:'2026-11-02',letter:'A',plan:{blocks:[
+  {id:'W',kind:'lift',letter:'A',title:'Bike Easy',section:'Warm-Up',columns:['seconds'],setCount:1,repTarget:'90',prescribed:'90'},
+  {id:'E',kind:'lift',letter:'B',title:'Back Squat',equipmentId:'barbell',loadConvention:'barbell_total',barWeightKg:20,columns:['reps','weight_kg'],setCount:2,repTarget:'5'}]}});
+ s.coachAssignmentId='a1';
+ const warm=s.pages.find(p=>p.title==='Bike Easy');
+ s=S.logSet(s,0,{cells:{seconds:90}},warm.id,{commit:true});
+ const squat=s.pages.find(p=>p.title==='Back Squat');
+ s.logs[squat.id].sets[0].skipped=true;
+ s=S.logSet(s,1,{kg:80,reps:5,effort:'average'},squat.id,{commit:true});
+ s.completedAt=new Date('2026-11-02T08:00:00Z').toISOString();
+ s.phase='summary';
+ M.capture(s);
+ const recs=Object.values(M.records()).filter(r=>r.kind==='set');
+ assert.ok(recs.some(r=>r.payload.row.skipped===true&&r.deleted===false));
+ assert.ok(recs.some(r=>r.payload.page.section==='Warm-Up'&&r.deleted===false));
+ const hist=ctx.StrengthBrain.history(M.records(),squat,'other');
+ const learned=[...hist.evidence.map(e=>e.observation?.id),...hist.ledger.filter(x=>!x.deleted).map(x=>x.id)];
+ const ignored=recs.filter(r=>r.payload.row.skipped||['Warm-Up','Cool-Down'].includes(r.payload.page?.section)).map(r=>r.id);
+ assert.ok(ignored.length>=2);
+ assert.ok(ignored.every(id=>!learned.includes(id)));
 });
 
 test('finishing during an in-flight upload defers the receipt until final revisions are acknowledged',async()=>{

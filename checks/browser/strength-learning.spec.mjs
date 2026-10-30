@@ -4,7 +4,7 @@ import {test,expect} from 'playwright/test';
 async function actualNumber(page,label,value){await page.getByLabel(label,{exact:true}).click();const pad=page.locator('.log-pad');for(const key of String(value))await pad.getByRole('button',{name:key,exact:true}).click();await pad.getByRole('button',{name:'Save',exact:true}).click();}
 async function setReps(page,label,value){await setAssignedReps(page,Number(label.match(/Set (\d+)/)[1])-1,value);}
 async function log(page,kg,reps,effort=2){await actualNumber(page,'Weight (kg)',kg);await actualNumber(page,'Reps completed',reps);const slider=page.getByRole('slider',{name:'Actual set effort'});await slider.press('Home');for(let i=0;i<effort;i++)await slider.press('ArrowRight');await page.getByRole('button',{name:/^(Log set|Save changes)$/,exact:true}).click();}
-async function passWarmups(page){for(let guard=0;guard<20;guard++){const section=await page.evaluate(()=>{const s=window.S?.session;if(!s||s.phase!=='block')return '';return s.pages?.[s.blockIndex]?.section||'';});if(section&&section!=='Warm-Up')return;const total=await page.evaluate(()=>Number(window.S?.timer?.config?.totalMs)||0);if(total>0&&await page.locator('#logTimerFull').count())await page.clock.fastForward(total+500);await page.getByRole('button',{name:'Next →',exact:true}).click();}throw new Error('warm-up did not finish');}
+async function passWarmups(page){for(let guard=0;guard<40;guard++){const section=await page.evaluate(()=>{const s=window.S?.session;if(!s||s.phase!=='block')return '';return s.pages?.[s.blockIndex]?.section||'';});if(section&&section!=='Warm-Up')return;const index=await page.evaluate(()=>window.S?.session?.blockIndex);const wait=await page.evaluate(()=>(Number(window.S?.timer?.config?.countInMs)||0)+(Number(window.S?.timer?.config?.totalMs)||0));if(wait>0&&await page.locator('#logTimerFull').count())await page.clock.fastForward(wait+500);if((await page.evaluate(()=>window.S?.session?.blockIndex))===index)await page.getByRole('button',{name:'Next →',exact:true}).click();}throw new Error('warm-up did not finish');}
 async function beginSession(page){await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.clock.fastForward(2000);await page.getByRole('button',{name:'Got It',exact:true}).click();await passWarmups(page);}
 async function addSquat(page){await loadAssignedWorkout(page);}
 async function scheduleAndStart(page){await beginSession(page);}
@@ -30,7 +30,7 @@ for(const prescription of [[5,3,1],['6–8','6–8','6–8']])test(`finished ${p
  const evidence=await page.evaluate(()=>{const p=S.session.pages.find(page=>page.title==='Back Squat'),h=StrengthMemory.replay(StrengthBrain.key(p));return {accepted:h.accepted,ids:h.evidence.map(e=>e.observation.id),normalized:h.evidence[0]?.normalizedLoad,rows:S.session.logs[p.id].sets.length};});
  expect(evidence.accepted).toBe(1);expect(evidence.rows).toBe(5);expect(evidence.normalized.externalKg).toBe(60);
  await context.setOffline(false);await page.reload();
- expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set'&&r.payload.completed).length)).toBe(5);
+ expect(await page.evaluate(()=>Object.values(StrengthMemory.records()).filter(r=>r.kind==='set'&&r.payload.completed).length)).toBe(20);
  expect(errors).toEqual([]);await page.screenshot({path:testInfo.outputPath('completed-learning-session.png')});
 });
 test('quota failure does not acknowledge a logged set',async({page})=>{
@@ -58,7 +58,7 @@ test('Android-size touch effort and a double tap cannot log the next set acciden
  await expect(slider).toHaveAttribute('aria-valuetext','Hard');
  await page.getByRole('button',{name:'Log set',exact:true}).dblclick();
  const facts=await page.evaluate(()=>{const rows=S.session.logs[S.session.pages.find(p=>p.title==='Back Squat').id].sets;return {logged:rows.filter(r=>r.logged).length,effort:rows[0].effort,sets:Object.values(StrengthMemory.records()).filter(r=>r.kind==='set').length};});
- expect(facts).toEqual({logged:1,effort:'hard',sets:1});expect(errors).toEqual([]);
+ expect(facts).toEqual({logged:1,effort:'hard',sets:16});expect(errors).toEqual([]);
 });
 
 for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'backed-off load'}])test(`warm-up calibrates work and later ${last.label} vetoes an Easy-first increase`,async({page})=>{
@@ -78,18 +78,22 @@ for(const last of [{kg:40,effort:3,label:'Hard work'},{kg:30,effort:2,label:'bac
   const h=StrengthBrain.history(records,fact.payload.page);
   return {next:h.latest.nextKg,accepted:h.accepted,rows:Object.values(records).filter(r=>r.kind==='set').length};
  });
- expect(result).toEqual({next:40,accepted:0,rows:5});
+ expect(result).toEqual({next:40,accepted:0,rows:20});
 });
 
 test('prep timer survives reload and Next waits for zero',async({page})=>{
  await addSquat(page);
  await page.clock.install();await page.getByRole('button',{name:'Start Session',exact:true}).click();await page.clock.fastForward(2000);await page.getByRole('button',{name:'Got It',exact:true}).click();
  await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeDisabled();
- const start=await page.evaluate(()=>S.timer.startedAt);await page.clock.fastForward(10000);await page.reload();
+ await expect(page.locator('.tm-countin')).toContainText('3');
+ await page.clock.fastForward(3500);
+ const start=await page.evaluate(()=>S.timer.startedAt);
+ expect(start).toEqual(expect.any(Number));
+ await page.clock.fastForward(10000);await page.reload();
  expect(await page.evaluate(()=>S.timer.startedAt)).toBe(start);
  await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeDisabled();
- await page.clock.fastForward(181000);await expect(page.getByRole('button',{name:'Next →',exact:true})).toBeEnabled();
- await page.getByRole('button',{name:'Next →',exact:true}).click();await expect(page.locator('#logTimerFull h2')).toHaveText('Row');
+ await page.clock.fastForward(171000);await expect(page.locator('#logTimerFull h2')).toHaveText('Bike');
+ expect(await page.evaluate(()=>S.session.pages[S.session.blockIndex].id)).toBe('A-r2');
 });
 test('an assigned reps-only workout keeps the logger reps-only',async({page})=>{
  await addSquat(page);await patchAssignedBlock(page,{columns:['reps']});

@@ -89,7 +89,9 @@ test('logSet kg updates totals and check', () => {
   assert.equal(s.logs.B.sets[0].reps, 3);
   const t = HybridSession.totals(s);
   assert.equal(t.reps, 3);
-  assert.equal(t.kg, 60);
+  assert.equal(t.sets, 1);
+  assert.equal(t.kg, 180);
+  assert.equal(t.volumeKg, 180);
 });
 
 test('logSet preserves the requested rest as set evidence', () => {
@@ -252,10 +254,172 @@ test('reopening an active workout preserves captured targets and calibration whe
  const reopened=HybridSession.startSession({date:s.date,existing:s,plan:{blocks:[{kind:'lift',letter:'A',title:'Squat',prescription:'3 x 10-12'}]}});
  assert.equal(reopened.pages[0].targetReps,6);assert.equal(reopened.pages[0].workingKg,40);assert.equal(reopened.brainSeeded,true);
 });
+test('logged ramps, carries and holds share one totals result with the summary', () => {
+  const plan = {
+    blocks: [
+      { kind: 'lift', letter: 'A', title: 'Back Squat', prescription: '1 x 3', columns: ['reps', 'weight_kg'], setCount: 1 },
+      { kind: 'lift', letter: 'B', title: 'Farmer Carry', columns: ['weight_kg', 'meters'], setCount: 1, prescribed: '20' },
+      { kind: 'lift', letter: 'C', title: 'Plank', columns: ['seconds'], setCount: 1, prescribed: '30' },
+    ],
+  };
+  let s = HybridSession.startSession({ date: '2026-10-30', plan, letter: 'A' });
+  s.logs.A.sets[0].purpose = 'ramp';
+  s = HybridSession.logSet(s, 0, { kg: 20, reps: 3, effort: 'medium' });
+  s = HybridSession.goToLetter(s, 'B');
+  s = HybridSession.logSet(s, 0, { kg: 16, effort: 'medium' });
+  s = HybridSession.goToLetter(s, 'C');
+  s = HybridSession.logSet(s, 0, { cells: { seconds: 30 }, effort: 'medium' });
+  const t = HybridSession.totals(s);
+  assert.equal(t.sets, 3);
+  assert.equal(t.reps, 3);
+  assert.equal(t.kg, 60);
+  assert.equal(t.meters, 20);
+  assert.equal(t.seconds, 30);
+  const st = HybridSession.summaryStats(s);
+  assert.equal(st.sets, t.sets);
+  assert.equal(st.reps, t.reps);
+  assert.equal(st.kg, t.kg);
+  assert.equal(st.meters, t.meters);
+  assert.equal(st.seconds, t.seconds);
+  assert.equal(st.minutes, 0);
+});
+
+test('superset steps finish each ramp before alternating working rounds', () => {
+  const plan = {
+    blocks: [
+      { kind: 'lift', letter: 'A1', title: 'Bench Press', prescription: '2 x 5', columns: ['reps', 'weight_kg'] },
+      { kind: 'lift', letter: 'A2', title: 'Dumbbell Row', prescription: '2 x 8', columns: ['reps', 'weight_kg'] },
+    ],
+  };
+  const s = HybridSession.startSession({ date: '2026-10-30', plan, letter: 'A1' });
+  const page = s.pages[0];
+  s.logs.A1.sets = [
+    { purpose: 'ramp', reps: 5, kg: 0, logged: false },
+    { purpose: 'ramp', reps: 5, kg: 20, logged: false },
+    { purpose: 'working', reps: 5, kg: 40, logged: false },
+    { purpose: 'working', reps: 5, kg: 40, logged: false },
+  ];
+  s.logs.A2.sets = [
+    { purpose: 'working', reps: 8, kg: 30, logged: false },
+    { purpose: 'working', reps: 8, kg: 30, logged: false },
+  ];
+  assert.deepEqual(HybridSession.supersetSteps(s, page).map((step) => `${step.letter}:${step.purpose}:${step.round}`), [
+    'A1:ramp:1', 'A1:ramp:2', 'A1:working:1', 'A2:working:1', 'A1:working:2', 'A2:working:2',
+  ]);
+  const round = HybridSession.currentSupersetRound(s, page);
+  assert.equal(round.purpose, 'ramp');
+  assert.deepEqual(round.members.map((member) => member.letter), ['A1']);
+  s.logs.A1.sets[0].logged = true;
+  s.logs.A1.sets[1].logged = true;
+  s.logs.A1.sets[2].logged = true;
+  const pair = HybridSession.currentSupersetRound(s, page);
+  assert.equal(pair.purpose, 'working');
+  assert.equal(pair.round, 1);
+  assert.deepEqual(pair.members.map((member) => member.memberId), ['A2']);
+});
+
+test('prescription rest is copied onto straight sets and the superset page', () => {
+  const plan = {
+    blocks: [
+      { kind: 'lift', letter: 'A', title: 'Back Squat', prescription: '3 x 5 rest 90', columns: ['reps', 'weight_kg'] },
+      { kind: 'lift', letter: 'B1', title: 'Bench Press', prescription: '3 x 8', restSec: 60, columns: ['reps', 'weight_kg'] },
+      { kind: 'lift', letter: 'B2', title: 'Row', prescription: '3 x 8', notes: ['rest 45'], columns: ['reps', 'weight_kg'] },
+    ],
+  };
+  const pages = HybridSession.pagesFromPlan(plan);
+  assert.equal(pages[0].restSec, 90);
+  assert.equal(pages[1].restSec, 60);
+  assert.equal(pages[1].members[1].restSec, 45);
+});
+
+test('prep results stay attached for the summary without changing duration', () => {
+  let s = HybridSession.startSession({ date: '2026-10-30', plan: demoPlan, letter: 'done' });
+  s.startedAt = Date.now() - 5 * 60000;
+  s = HybridSession.recordPrep(s, 'warmup', [
+    { id: 'bike', title: 'Bike', status: 'completed' },
+    { id: 'row', title: 'Row', status: 'skipped' },
+  ]);
+  s = HybridSession.recordPrep(s, 'cooldown', [{ id: 'pose', title: "Child's Pose", status: 'completed' }]);
+  s = HybridSession.openFeel(s);
+  assert.equal(s.feel.durationMin, 5);
+  const st = HybridSession.summaryStats(s);
+  assert.equal(st.prep.warmup[0].status, 'completed');
+  assert.equal(st.prep.warmup[1].status, 'skipped');
+  assert.equal(st.prep.cooldown[0].status, 'completed');
+  assert.equal(st.minutes, 5);
+});
+
+test('autofill copies metres down empty carry rows', () => {
+  const plan = { blocks: [{ kind: 'lift', letter: 'A', title: 'Farmer Carry', columns: ['weight_kg', 'meters'], setCount: 3, prescribed: '20' }] };
+  let s = HybridSession.startSession({ date: '2026-10-30', plan, letter: 'A' });
+  s = HybridSession.logSet(s, 0, { kg: 16, cells: { meters: 40 }, effort: 'medium' }, 'A', { commit: false });
+  s = HybridSession.autofillFrom(s, 0);
+  assert.equal(s.logs.A.sets[2].kg, 16);
+  assert.equal(s.logs.A.sets[2].cells.meters, 40);
+  assert.equal(s.logs.A.sets[2].logged, false);
+});
+
+test('per-hand volume counts both hands',()=>{
+ const plan={blocks:[{kind:'lift',letter:'A',title:'DB Bench Press',columns:['reps','weight_kg'],loadConvention:'per_hand',setCount:1,repTarget:'8'}]};
+ let s=HybridSession.startSession({date:'2026-11-02',plan,letter:'A'});
+ s=HybridSession.logSet(s,0,{kg:10,reps:8,effort:'average',context:{normalizedLoad:{convention:'per_hand'}}},'A');
+ assert.equal(HybridSession.totals(s).volumeKg,160);
+});
+
+test('warm-up rounds stay with their step instead of spreading later rounds', () => {
+  const pages = HybridSession.pagesFromPlan({ blocks: [
+    { kind: 'lift', letter: 'A', title: 'Bike Easy', section: 'Warm-Up', columns: ['seconds'], prescribed: '90', setCount: 1 },
+    { kind: 'lift', letter: 'B', title: 'Bike Sprint', section: 'Warm-Up', columns: ['seconds'], prescribed: '20', setCount: 3 },
+    { kind: 'lift', letter: 'C', title: 'Plank Hold', section: 'Warm-Up', columns: ['seconds'], prescribed: '30', setCount: 1 },
+    { kind: 'lift', letter: 'D', title: 'Bodyweight Squat', section: 'Warm-Up', columns: ['reps'], prescribed: '12', setCount: 1 },
+    { kind: 'lift', letter: 'E', title: 'Back Squat', columns: ['reps', 'weight_kg'], setCount: 5, repTarget: '5' },
+  ]});
+  const titles = pages.filter((page) => page.logMode !== 'doneHub').map((page) => page.title);
+  assert.deepEqual(titles, ['Bike Easy', 'Bike Sprint', 'Bike Sprint', 'Bike Sprint', 'Plank Hold', 'Bodyweight Squat', 'Back Squat']);
+});
+
 test('tempo and completion lifecycle reach the real session without changing its prescription',()=>{
  const p={blocks:[{kind:'lift',letter:'A',title:'Back Squat',columns:['reps','weight_kg'],tempo:'33X1',prescription:'3 x 5'}]};
  const s=HybridSession.startSession({date:'2026-10-16',plan:p});
  assert.equal(s.pages[0].tempo,'33X1');
  const done=HybridSession.finishToSummary(s);assert.ok(done.completedAt);
  assert.equal(HybridSession.goToLetter(done,'A').completedAt,null);
+});
+
+test('each-side hold rows save per-side seconds and totals count both sides', () => {
+  const run = (block) => {
+    let s = HybridSession.startSession({ date: '2026-10-30', letter: 'A', plan: { blocks: [block] } });
+    const page = s.pages.find((p) => p.kind === 'lift');
+    s = HybridSession.logSet(s, 0, { cells: { seconds: 30 }, effort: 'medium' }, page.id);
+    return { row: s.logs[page.id].sets[0], total: HybridSession.totals(s).seconds };
+  };
+  const flagged = run({ kind: 'lift', letter: 'A', title: 'Side Plank Hold', eachSide: true, columns: ['seconds'], prescribed: '30', setCount: 1 });
+  assert.equal(flagged.row.cells.seconds, 30);
+  assert.equal(flagged.total, 60);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Side Plank (each side)', columns: ['seconds'], prescribed: '30', setCount: 1 }).total, 60);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Front Plank', columns: ['seconds'], prescribed: '30', setCount: 1 }).total, 30);
+});
+
+test('each-side carry rows save per-side metres and totals count both sides', () => {
+  const run = (block) => {
+    let s = HybridSession.startSession({ date: '2026-10-30', letter: 'A', plan: { blocks: [block] } });
+    const page = s.pages.find((p) => p.kind === 'lift');
+    s = HybridSession.logSet(s, 0, { cells: { meters: 20 }, kg: 16, effort: 'medium' }, page.id);
+    return { row: s.logs[page.id].sets[0], total: HybridSession.totals(s).meters };
+  };
+  const flagged = run({ kind: 'lift', letter: 'A', title: 'Suitcase Carry', eachSide: true, columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 });
+  assert.equal(flagged.row.cells.meters, 20);
+  assert.equal(flagged.total, 40);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Suitcase Carry (each side)', columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 }).total, 40);
+  assert.equal(run({ kind: 'lift', letter: 'A', title: 'Farmer Carry', columns: ['meters', 'weight_kg'], prescribed: '20', setCount: 1 }).total, 20);
+});
+
+test('cool-down rows save purpose cooldown and warm-up rows keep warmup', () => {
+  const s = HybridSession.startSession({ date: '2026-10-30', letter: 'A', plan: { blocks: [
+    { kind: 'lift', letter: 'A', title: 'Bike Easy', section: 'Warm-Up', columns: ['seconds'], prescribed: '60', setCount: 1 },
+    { kind: 'lift', letter: 'B', title: 'Couch Stretch', eachSide: true, section: 'Cool-Down', columns: ['seconds'], prescribed: '45', setCount: 1 },
+  ] } });
+  const bySection = Object.fromEntries(s.pages.filter((p) => p.section).map((p) => [p.section, s.logs[p.id].sets[0].purpose]));
+  assert.equal(bySection['Warm-Up'], 'warmup');
+  assert.equal(bySection['Cool-Down'], 'cooldown');
 });
