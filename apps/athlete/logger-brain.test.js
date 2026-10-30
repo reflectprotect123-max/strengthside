@@ -104,10 +104,11 @@ test('#8 during rest the next rating logs the next set with no Start-next-set ta
  const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
  ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
  ctx.S.session.loggerSetFlow={[id]:{index:0,rest:false,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ const D=vm.runInContext('Date',ctx);const real=D.now;let now=real();D.now=()=>now;
  ctx.Logger.rate(id,2);assert.equal(ctx.S.session.loggerSetFlow[id].rest,true);
- ctx.Logger.rate(id,3);
+ now+=2000;ctx.Logger.rate(id,3);
  assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,2);assert.equal(ctx.S.session.logs[id].sets[1].effort,'hard');
- ctx.Logger.rate(id,3);assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,2,'a duplicate event from the same tap does not log twice');
+ ctx.Logger.rate(id,3);D.now=real;assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,2,'a duplicate event from the same tap does not log twice');
 });
 test('#8 the first tap after the keypad registers: an outside tap commits the entry without a repaint',()=>{
  const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
@@ -156,4 +157,94 @@ test('#9 table-row Autofill on an empty cell copies the previous row value inste
  ctx.Logger.focusPad(id,1,'seconds');ctx.Logger.padClear&&ctx.Logger.padClear();
  ctx.Logger.padAutofill();
  assert.equal(ctx.S.session.logs[id].sets[1].cells.seconds,30);
+});
+test('R1 during rest the effort slider sits above the rest note and Skip rest, so it stays in view',()=>{
+ const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ ctx.S.session.loggerSetFlow={[id]:{index:1,rest:true,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ ctx.Logger.paint();const h=element.innerHTML;
+ assert.ok(h.indexOf('log-effort-slider')>0&&h.indexOf('Set saved')>h.indexOf('log-effort-slider'),'slider before rest note');
+ assert.ok(h.indexOf('log-set-skip')>h.indexOf('log-effort-slider'),'slider before Skip rest');
+});
+test('R2 closing the keypad by an outside tap shows the new value in the field at once (no repaint)',()=>{
+ const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.loggerSetFlow={[id]:{index:0,rest:false,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};
+ ctx.Logger.focusDraftPad(id,'kg');
+ assert.match(element.innerHTML,new RegExp(`data-pad-cell="${id}\\|d\\|kg"`));
+ ['⌫','⌫','⌫','1','1','0'].forEach(k=>ctx.Logger.padKey(k));
+ const cell={value:'100',textContent:'100',tagName:'INPUT'};const seen=[];
+ element.querySelector=(sel)=>{seen.push(sel);return sel.includes('data-pad-cell')?cell:null;};
+ element.innerHTML='SENTINEL';ctx.Logger.padDismiss();
+ assert.equal(element.innerHTML,'SENTINEL');assert.equal(cell.value,'110');
+});
+test('R2 table-row cell shows the new value at once after an outside tap',()=>{
+ const hold={kind:'lift',letter:'F',title:'Plank Hold',columns:['seconds'],setCount:2,exerciseId:'ex_plank'};
+ const {ctx,element}=boot([hold]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.Logger.focusPad(id,1,'seconds');ctx.Logger.padClear();['4','5'].forEach(k=>ctx.Logger.padKey(k));
+ const cell={textContent:'30',tagName:'BUTTON',classList:{remove(){},add(){}}};
+ element.querySelector=(sel)=>sel===`[data-pad-cell="${id}|1|seconds"]`?cell:null;
+ ctx.Logger.padDismiss();assert.equal(cell.textContent,'45');
+});
+test('R4 a repaint on the same page keeps the scroll position',()=>{
+ const {ctx,element}=boot([sq5]);const body={scrollTop:0};let html='';
+ Object.defineProperty(element,'innerHTML',{get:()=>html,set:v=>{html=v;body.scrollTop=0;}});
+ element.querySelector=(sel)=>sel==='.log-body'?body:null;
+ ctx.Logger.paint();body.scrollTop=320;ctx.Logger.paint();
+ assert.equal(body.scrollTop,320);
+});
+test('R4 a timer-driven repaint waits while a finger is down so the tap target is not swapped',()=>{
+ const {ctx,element}=boot([sq5]);const listeners=[];ctx.document.addEventListener=(n,fn)=>listeners.push([n,fn]);
+ const later=[];ctx.setTimeout=(f)=>{later.push(f);return 1;};
+ ctx.Logger.paint();
+ const fire=(n)=>listeners.filter(l=>l[0]===n).forEach(l=>l[1]({target:{closest:()=>null}}));
+ fire('pointerdown');element.innerHTML='SENTINEL';
+ ctx.Logger._persistTimer(ctx.HybridTimer.create());
+ assert.equal(element.innerHTML,'SENTINEL','no repaint under the finger');
+ fire('pointerup');later.splice(0).forEach(f=>f());
+ assert.notEqual(element.innerHTML,'SENTINEL','repaints after the tap completes');
+});
+test('R7 volume counts the bar for plate-loaded barbells (empty bar ramp is not 0 kg)',()=>{
+ const dl={kind:'lift',letter:'B',title:'Deadlift',columns:['reps','weight_kg'],setCount:1,repTarget:'6',equipmentId:'barbell',loadConvention:'barbell_plates',barWeightKg:20,loadUnit:'kg',exerciseId:'ex_deadlift'};
+ const {ctx}=boot([dl]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ const s=ctx.HybridSession.logSet(ctx.S.session,0,{kg:0,reps:6,effort:'easy'},id);
+ assert.equal(ctx.HybridSession.summaryStats(s).kg,120);
+});
+test('R7 finishing from history records minutes from start to the last logged set',()=>{
+ const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ const D=vm.runInContext('Date',ctx);const real=D.now;let now=real();ctx.S.session.startedAt=now;
+ D.now=()=>now;
+ now+=12*60000;let s=ctx.HybridSession.logSet(ctx.S.session,0,{kg:100,reps:5,effort:'easy'},id);
+ now+=180*60000;s=ctx.HybridSession.finishToSummary(s);D.now=real;
+ assert.equal(ctx.HybridSession.summaryStats(s).minutes,12);
+});
+test('R9 Log set with no rating brings the "choose an effort" message into view',()=>{
+ const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ const later=[];ctx.setTimeout=(f)=>{later.push(f);return 1;};
+ let shown=null;const err={textContent:'',scrollIntoView(o){shown=o;}};
+ element.querySelector=(sel)=>sel==='.log-set-error'?err:null;
+ ctx.Logger.saveSet(id);later.splice(0).forEach(f=>f());
+ assert.match(ctx.S.session.loggerSetFlow[id].error,/effort/);
+ assert.ok(shown,'error scrolled into view');
+});
+test('R10 a slow log does not let the same tap\'s trailing events log the next set too',()=>{
+ const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ const D=vm.runInContext('Date',ctx);const real=D.now;let now=real();D.now=()=>now;
+ const save=ctx.save;ctx.save=()=>{now+=900;save();};
+ ctx.Logger.rate(id,'1');ctx.Logger.rate(id,'1');D.now=real;
+ assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,1);
+});
+test('R10 a trailing event on the next row\'s slider (same tap, other value) does not log that row',()=>{
+ const pair=[{...dbBench,letter:'C1',setCount:2},{kind:'lift',letter:'C2',title:'Chin-up',columns:['reps'],setCount:2,repTarget:'6',exerciseId:'ex_chin'}];
+ const {ctx}=boot([dbBench]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=20;r.reps=8;});
+ ctx.Logger.rateRow(id,0,'1');ctx.Logger.rateRow(id,1,'2');
+ assert.equal(JSON.stringify(ctx.S.session.logs[id].sets.map(r=>!!r.logged)),'[true,false,false]');
+});
+test('R10 a trailing event with another value on the single-set slider does not log the next set',()=>{
+ const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ ctx.Logger.rate(id,'1');ctx.Logger.rate(id,'2');
+ assert.equal(ctx.S.session.logs[id].sets.filter(r=>r.logged).length,1);
 });

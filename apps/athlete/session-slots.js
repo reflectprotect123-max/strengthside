@@ -36,5 +36,11 @@
     if (state.session && state.session.id === s.id) { state.session = null; state.loggerOpen = false; }
     return s;
   }
-  root.HybridSlots = { keyOf, dateOf, find, store, status, statusOf, buttonLabel, history, discard, hasLogged };
+  // Session pill row: keep the user's scroll; only move enough to bring the selected pill into view.
+  function pillScroll({ prev = 0, view = 0, left = 0, width = 0 } = {}) {
+    if (left < prev) return left;
+    if (left + width > prev + view) return left + width - view;
+    return prev;
+  }
+  root.HybridSlots = { pillScroll, keyOf, dateOf, find, store, status, statusOf, buttonLabel, history, discard, hasLogged };
 })(typeof window !== 'undefined' ? window : globalThis);

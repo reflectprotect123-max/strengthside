@@ -91,10 +91,22 @@
   }
 
   let padGuard = false;
+  let lastPaintKey = '';
+  let fingerDown = false;
+  let pendingPaint = false;
   function installPadGuard() {
-    if (padGuard || typeof document.addEventListener !== 'function') return;
+    if (padGuard || !document || typeof document.addEventListener !== 'function') return;
     padGuard = true;
+    const lift = () => {
+      fingerDown = false;
+      if (!pendingPaint) return;
+      // Let the tap's click land on the control it started on, then apply the deferred repaint.
+      setTimeout(() => { if (pendingPaint && !fingerDown) { pendingPaint = false; paint(); } }, 80);
+    };
+    document.addEventListener('pointerup', lift, true);
+    document.addEventListener('pointercancel', lift, true);
     document.addEventListener('pointerdown', (e) => {
+      fingerDown = true;
       const t = e.target;
       if (!pad || !t || !t.closest || t.closest('.log-pad') || t.closest('.log-cell')) return;
       Logger.padDismiss();
@@ -125,6 +137,7 @@
     }
     root.S.timer = next;
     if (typeof root.save === 'function') root.save();
+    if (fingerDown) { pendingPaint = true; return; }
     paint();
   }
 
@@ -712,6 +725,8 @@
     const repTarget = activeRow?.purpose==='ramp'?(activeRow.reps??page.targetReps):authored?.purpose==='amrap'?'AMRAP':authored?.reps?(authored.reps.max>authored.reps.min?`${authored.reps.min}–${authored.reps.max}`:authored.reps.min):page.targetReps == null?'MAX':page.targetRepMax>page.targetReps?`${page.targetReps}–${page.targetRepMax}`:page.targetReps;
     const eachSideReps = sidesFor(page) === 2 && repTarget != null && repTarget !== 'AMRAP';
     const shownReps = eachSideReps ? `${repTarget} L · ${repTarget} R` : repTarget;
+    // The rest note sits below the effort slider so rating the next set never needs a scroll.
+    const restBits = `<p class="log-note">Set saved. Adjust the next weight if needed, then rate the set when it is done.</p><button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>`;
     const history = rows.map((r, i) => r.logged ? `<button type="button" class="log-set-history" aria-label="Edit set ${i + 1} of ${esc(page.title)}" onclick="Logger.editSet('${id}',${i})"><span class="log-set-tick">✓</span><span>${r.purpose==='ramp'?'Ramp':'Set'} ${rows.slice(0,i+1).filter(x=>x.purpose===r.purpose).length || i+1} · ${page.logMode === 'kg' ? `${esc(loggedLoad(page, r.kg))} × ` : ''}${sidesFor(page) === 2 ? `${esc(r.reps)} L · ${esc(r.reps)} R` : `${esc(r.reps)} reps`} · ${r.miss ? 'Incomplete' : esc(effortShort(r.effort))}</span><span class="log-link">Edit</span></button>` : '').join('');
     return `<p class="log-rx">${esc(page.prescription)}</p>
       ${page.notes && page.notes.length ? `<ul class="log-notes">${page.notes.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
@@ -720,11 +735,11 @@
         <div class="log-set-heading"><h3>${done ? 'All sets recorded' : `${flow.rest ? 'Next · ' : ''}${rows[flow.index]?.purpose === 'ramp' ? `Ramp ${rows.slice(0,flow.index+1).filter(r=>r.purpose==='ramp').length} of 2` : `Set ${rows.slice(0,flow.index+1).filter(r=>r.purpose!=='ramp').length} of ${rows.filter(r=>r.purpose!=='ramp').length}`}`}</h3>${done ? '' : `<span>${esc(shownReps)}${repTarget==='AMRAP'||eachSideReps?'':' reps'}</span>`}</div>
         ${done ? '<p class="log-note">Review a set below or move to the next exercise.</p>' : `
 <div class="log-active-fields">
-          <label>Reps completed<input class="log-cell" type="text" readonly value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
-          ${page.logMode === 'kg' ? `<label>${esc(columnLabel(page, 'weight_kg'))}<input class="log-cell" type="text" readonly value="${esc(weightText(page, flow.draft.kg))}" onclick="Logger.focusDraftPad('${id}','kg')"></label>` : ''}
+          <label>Reps completed<input class="log-cell" type="text" readonly data-pad-cell="${id}|d|reps" value="${esc(flow.draft.reps)}" onclick="Logger.focusDraftPad('${id}','reps')"></label>
+          ${page.logMode === 'kg' ? `<label>${esc(columnLabel(page, 'weight_kg'))}<input class="log-cell" type="text" readonly data-pad-cell="${id}|d|kg" value="${esc(weightText(page, flow.draft.kg))}" onclick="Logger.focusDraftPad('${id}','kg')"></label>` : ''}
         </div>
         ${page.askEffort === false ? '' : (target ? `<p class="log-set-target">Target effort: <strong>${esc(effortShort(target) === 'Med' ? 'Medium' : effortShort(target))}</strong></p>` : '<p class="log-set-target">Target effort not prescribed</p>')}
-        ${flow.rest ? `<p class="log-note">Set saved. Adjust the next weight if needed, then rate the set when it is done.</p><button type="button" class="log-set-skip" onclick="Logger.startSet('${id}')">Skip rest</button>` : ''}${page.askEffort === false ? (dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`) : `
+        ${flow.rest && page.askEffort === false ? restBits : ''}${page.askEffort === false ? (dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`) : `
         <div class="log-effort-inline">
           <div class="log-effort-heading"><label id="effortHeading-${id}" for="setEffort-${id}">${chosen ? 'This set felt' : target ? 'This set should feel' : 'How did this set feel?'}</label><strong id="effortValue-${id}">${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : target ? target === 'medium' ? 'Medium' : effortShort(target) : 'Choose effort'}</strong></div>
           <input id="setEffort-${id}" class="log-effort-slider" type="range" min="0" max="4" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onchange="Logger.rate('${id}',this.value)" onpointerup="Logger.rate('${id}',this.value)" onclick="Logger.rate('${id}',this.value)" ontouchend="Logger.rate('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.rate('${id}',this.value)}">
@@ -732,12 +747,20 @@
           <p class="log-note" id="effortHelp-${id}">${flow.draft.miss ? 'Enter the reps you actually completed.' : chosen ? EFFORT_COPY[chosen] : 'Rate the actual effort after completing your set.'}</p>
         </div>
         <button type="button" class="log-set-incomplete" aria-pressed="${!!flow.draft.miss}" onclick="Logger.setIncomplete('${id}')">Did Not Complete</button>
+        ${flow.rest ? restBits : ''}
         <p class="log-set-error" role="status">${esc(flow.error || '')}</p>
         ${dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`}`}`}
       </section>
       <div class="log-set-history-list">${history}</div>
       <div class="log-set-ctrl"><button type="button" onclick="Logger.nudgeSets('${id}',-1)" aria-label="Remove a set">−</button><span>Sets</span><button type="button" onclick="Logger.nudgeSets('${id}',1)" aria-label="Add a set">+</button></div>
       <input class="log-ex-note" placeholder="Add exercise note" aria-label="Exercise note" value="${esc(log.note || '')}" onchange="Logger.note('${id}',this.value)">`;
+  }
+
+  // The validation message sits below the fold when Log set is docked; bring it into view.
+  function revealSetError() {
+    const el = document.getElementById('logger');
+    const run = () => { const e = el && el.querySelector && el.querySelector('.log-set-error'); if (e && typeof e.scrollIntoView === 'function') e.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
+    if (typeof setTimeout === 'function') setTimeout(run, 0); else run();
   }
 
   function updateSetFlow(memberId, update, repaint = true) {
@@ -765,7 +788,7 @@
         const focus = pad && pad.memberId === page.id && pad.setIndex === i && pad.field === field;
         const val = root.TrainingCore.format(cellVal(row, field),k);
         const ph = field === 'reps' && row.reps == null;
-        return `<td><button type="button" class="log-cell${focus ? ' focus' : ''}${ph ? ' ph' : ''}" onclick="Logger.focusPad('${mid}',${i},'${esc(field)}')">${esc(val)}</button></td>`;
+        return `<td><button type="button" class="log-cell${focus ? ' focus' : ''}${ph ? ' ph' : ''}" data-pad-cell="${mid}|${i}|${esc(field)}" onclick="Logger.focusPad('${mid}',${i},'${esc(field)}')">${esc(val)}</button></td>`;
       }).join('');
       return `<tr>
         <td>${i + 1}</td>
@@ -1089,7 +1112,16 @@
     else if (s.phase === 'feel') inner = feelHtml(s);
     else if (s.phase === 'summary') inner = summaryHtml(s);
     else inner = blockHtml(s);
+    const oldBody = el.querySelector ? el.querySelector('.log-body') : null;
+    const top = oldBody ? oldBody.scrollTop : 0;
+    let pageKey = s.phase;
+    try { pageKey += '|' + (HybridSession.currentPage(s) || {}).id; } catch (_) { /* no page */ }
     el.innerHTML = `<div class="log-screen">${toast ? `<div class="log-toast">${esc(toast)}</div>` : ''}${inner}</div>`;
+    // Same page: keep the scroll so a repaint (rest end, a rating) never moves controls under the finger.
+    const newBody = el.querySelector ? el.querySelector('.log-body') : null;
+    if (newBody && pageKey === lastPaintKey && top) newBody.scrollTop = top;
+    lastPaintKey = pageKey;
+    installPadGuard();
     startClock();
     if (s.phase === 'quote') {
       el.querySelector('.log-quote')?.addEventListener('click', () => Logger.gotQuote());
@@ -1104,9 +1136,11 @@
   }
 
   let lastRate = { key: '', at: 0 };
+  let lastRowLog = { memberId: '', index: -1, at: 0 };
   const Logger = {
     openStored,
     sidesFor,
+    _persistTimer: persistTimer,
     _sideHtml: sideHtml,
     _columnLabel: columnLabel,
     open,
@@ -1130,7 +1164,7 @@
     },
     rate(memberId, raw) {
       // Dan: one tap on the rating logs the set; a duplicate event from the same tap is ignored.
-      const now = Date.now(), key = `${memberId}:${raw}`;
+      const now = Date.now(), key = String(memberId);
       if (lastRate.key === key && now - lastRate.at < 600) return;
       lastRate = { key, at: now };
       Logger.setEffort(memberId, raw);
@@ -1139,6 +1173,8 @@
       if (!lift) return;
       const f = setFlow(session(), lift);
       Logger.saveSet(memberId);
+      // A slow save can delay the same tap's trailing events past the window; time it from the end.
+      lastRate = { key, at: Date.now() };
     },
     setIncomplete(memberId) {
       updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, miss: !f.draft.miss, effort: null } }));
@@ -1164,7 +1200,7 @@
       const reps = Number(f.draft.reps), kg = Number(f.draft.kg);
       const candidate={...f.draft,reps:f.draft.reps===''?null:reps,kg:f.draft.kg===''||f.draft.kg==null?null:kg};
       const error=root.TrainingCore.validateRow(candidate,lift).error;
-      if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
+      if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); revealSetError(); return; }
       if (f.rest) { const t = timerState(); if (t && t.mode === 'rest') root.S.timer = HybridTimer.stop(t); }
       const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
       if (lift.logMode === 'kg') patch.kg = f.draft.kg === '' || f.draft.kg == null || !Number.isFinite(kg) ? null : kg;
@@ -1219,8 +1255,11 @@
       const effort=EFFORTS[Number(value)];if(!effort)return;
       const was=session().logs[memberId]?.sets?.[index];
       if(was&&was.logged){persist(HybridSession.logSet(session(),index,{effort},memberId));return;}
+      // The repaint puts the next row's slider under the same finger; its trailing event must not log that row.
+      if(lastRowLog.memberId===memberId&&lastRowLog.index!==index&&Date.now()-lastRowLog.at<600)return;
       root.S.session=HybridSession.logSet(session(),index,{effort},memberId,{commit:false});
       Logger.check(memberId,index);
+      if(session().logs[memberId]?.sets?.[index]?.logged)lastRowLog={memberId,index,at:Date.now()};
     },
     startHold(memberId, index) {
       const s = session();
@@ -1263,6 +1302,15 @@
         else{const patch=entry.field==='kg'?{kg:n}:entry.field==='reps'?{reps:n}:{cells:{[entry.field]:n}};root.S.session=HybridSession.logSet(session(),entry.setIndex,patch,entry.memberId,{commit:false});if(typeof root.save==='function')root.save();}
       }
       const el=document.getElementById('logger');const node=el&&el.querySelector?el.querySelector('.log-pad'):null;if(node&&node.remove)node.remove();
+      // Show the committed value in its field straight away; no repaint, so the outside tap still lands.
+      if(n!=null&&el&&el.querySelector){
+        const cell=el.querySelector(`[data-pad-cell="${entry.memberId}|${entry.draft?'d':entry.setIndex}|${entry.field}"]`);
+        if(cell){
+          const page=HybridSession.currentPage(session());const lift=page&&page.logMode==='superset'?HybridSession.memberOf(page,entry.memberId):page;
+          const text=entry.draft?(entry.field==='kg'&&lift?weightText(lift,n):String(n)):String(root.TrainingCore.format(n,entry.key));
+          if(cell.tagName==='INPUT')cell.value=text;else{cell.textContent=text;if(cell.classList)cell.classList.remove('ph','focus');}
+        }
+      }
       return true;
     },
     padAutofill() {

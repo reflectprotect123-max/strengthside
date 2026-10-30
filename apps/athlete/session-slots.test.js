@@ -70,3 +70,15 @@ test('Progress strength-history rows open the session detail in Training history
  assert.match(src,/class="progress-row[^"]*" onclick="openHistorySession\(/);
  assert.match(src,/function openHistorySession\(key\) \{\s*S\.tab = 'history';/);
 });
+test('pill row keeps its scroll and brings the selected pill into view',()=>{
+ const H=globalThis.HybridSlots||(()=>{throw new Error('no slots')})();
+ assert.equal(H.pillScroll({prev:120,view:300,left:150,width:100}),120,'already visible: keep');
+ assert.equal(H.pillScroll({prev:0,view:300,left:400,width:100}),200,'right of view: scroll just enough');
+ assert.equal(H.pillScroll({prev:300,view:300,left:100,width:80}),100,'left of view: scroll to it');
+});
+test('app render keeps pill scroll, and a tab change (e.g. Progress -> history) opens at the top',()=>{
+ const src=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(src,/HybridSlots\.pillScroll\(/);
+ assert.match(src,/picked !== lastActivePill/,'only a new selection moves the pill row');
+ assert.match(src,/S\.tab !== lastRenderedTab[\s\S]{0,200}scrollTo\(0, 0\)/);
+});

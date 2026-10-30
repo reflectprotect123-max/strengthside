@@ -1003,6 +1003,9 @@ function renderCoachSheetLog() {
   log.scrollTop = log.scrollHeight;
 }
 
+let lastRenderedTab = null;
+let lastRenderedPage = null;
+let lastActivePill = null;
 function render() {
   const root = document.getElementById('app');
   const map = {
@@ -1015,7 +1018,25 @@ function render() {
     settings: meHtml,
   };
   if (S.tab === 'chat') S.tab = 'home';
+  const oldPills = root.querySelector && root.querySelector('.trn-slots');
+  const pillLeft = oldPills ? oldPills.scrollLeft : 0;
   root.innerHTML = (map[S.tab] || homeHtml)();
+  // Keep the session pill row where the user left it, with the selected pill in view.
+  const pills = root.querySelector && root.querySelector('.trn-slots');
+  const activePill = pills && pills.querySelector('.trn-slot.active');
+  if (pills && window.HybridSlots && HybridSlots.pillScroll) {
+    // Only a new selection moves the row (just enough to show it); any other repaint keeps the user's scroll.
+    const picked = activePill && activePill.textContent;
+    pills.scrollLeft = activePill && picked !== lastActivePill
+      ? HybridSlots.pillScroll({ prev: pillLeft, view: pills.clientWidth, left: activePill.offsetLeft - pills.offsetLeft, width: activePill.offsetWidth })
+      : pillLeft;
+  }
+  lastActivePill = activePill ? activePill.textContent : null;
+  // A new page (e.g. Progress -> Training history) opens at the top, not at the old page's scroll.
+  const pageId = S.tab + '|' + (S.tab === 'history' ? (S.historyKey || '') : '');
+  if (S.tab !== lastRenderedTab || pageId !== lastRenderedPage) window.scrollTo(0, 0);
+  lastRenderedTab = S.tab;
+  lastRenderedPage = pageId;
 
   document.querySelectorAll('[data-tab]').forEach((b) => {
     b.classList.toggle('active', b.dataset.tab === S.tab);

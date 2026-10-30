@@ -371,6 +371,7 @@
       row.context={...(row.context||{}),inputVersion:3,normalizedLoad:root.StrengthLoad.fromPage({page:liftPage,value:row.kg,provenance:'explicit'})};
     } else if(wasLogged&&!row.context?.normalizedLoad) row.context={...(row.context||{}),loadAmbiguous:true};
     row.logged = options.commit === false ? false : canLogRow(row, liftPage);
+    if (row.logged) s.lastLoggedAt = Date.now();
     return s;
   }
 
@@ -428,7 +429,9 @@
           if (!row.logged) continue;
           sets += 1;
           const count = Number(row.reps) || 0;
-          const weight = Number(row.kg) || 0;
+          // Plate-loaded barbells log plates only; volume uses the real load (bar included) when known.
+          const ext = row.context?.normalizedLoad?.externalKg;
+          const weight = typeof ext === 'number' && Number.isFinite(ext) ? ext : (Number(row.kg) || 0);
           // Each-side sets are saved per side; count both sides in every total.
           const sides = member.eachSide === true || /\(each side\)/i.test(member.title || '') ? 2 : 1;
           if (countsReps) reps += count * sides;
@@ -512,6 +515,12 @@
     const s = clone(session);
     s.phase = 'summary';
     s.completedAt=new Date().toISOString();
+    // Finished from history (no feel step): minutes run from the start to the last logged set.
+    s.feel = s.feel || {};
+    if (!s.feel.durationMin && s.startedAt) {
+      const end = s.lastLoggedAt || Date.now();
+      s.feel.durationMin = Math.max(1, Math.round((end - s.startedAt) / 60000));
+    }
     return s;
   }
 
