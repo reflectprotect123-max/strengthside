@@ -1199,6 +1199,8 @@
       updateSetFlow(memberId, f => ({ ...f, error: '', draft: { ...f.draft, miss: !f.draft.miss, effort: null } }));
     },
     editSet(memberId, index) {
+      // The same tap that just rated a set can land on a history row once the screen repaints.
+      if (lastRate.key === String(memberId) && Date.now() - lastRate.at < 600) return;
       updateSetFlow(memberId, (f, lift, s) => {
         const r = s.logs[lift.id].sets[index];
         return r && r.logged ? { index, editing: true, rest: false, draft: { reps: r.reps, kg: r.kg, effort: r.effort || null, miss: !!r.miss } } : f;

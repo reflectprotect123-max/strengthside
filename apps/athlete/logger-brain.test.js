@@ -302,3 +302,11 @@ test('R14 a blocked trailing tap changes nothing: the next set stays unrated wit
   assert.equal(slider.value,before.match(/value="(\d)"/)[1],`stop ${v}: knob snapped back`);
  }
 });
+test('R14 the trailing tap after rating the last set does not open Edit on the history row now under the finger',()=>{
+ const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
+ ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
+ for(let i=0;i<3;i++){ctx.S.session.loggerSetFlow={[id]:{index:i,rest:false,editing:false,draft:{reps:5,kg:100,effort:null,miss:false}}};ctx.Logger.saveSet&&0;ctx.Logger.setEffort(id,2);ctx.Logger.saveSet(id);}
+ ctx.Logger.setEffort(id,4);ctx.Logger.rate(id,4);
+ ctx.Logger.editSet(id,1);
+ assert.notEqual(ctx.S.session.loggerSetFlow[id].editing,true);
+});
