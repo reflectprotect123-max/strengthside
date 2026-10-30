@@ -5,6 +5,15 @@
   const effortRank={very_easy:0,easy:1,average:2,medium:2,hard:3,max_effort:4};
   const positive=n=>typeof n==='number'&&Number.isFinite(n)&&n>0;
   const ordinary=t=>t&&t.purpose==='working';
+  // Normalise stored effort spellings ('Hard', 'medium', 'rpe9') to the five canonical ratings.
+  function effortOf(raw) {
+    if(typeof raw!=='string')return null;
+    let e=raw.trim().toLowerCase().replace(/[\s-]+/g,'_');
+    if(e==='medium')e='average';else if(e==='max'||e==='max_effort'||e==='failure')e='max_effort';else if(e==='veryeasy')e='very_easy';
+    const rpe=e.match(/^rpe_?(\d+(?:\.\d+)?)$/);
+    if(rpe){const n=Number(rpe[1]);e=n>=10?'max_effort':n>=8.5?'hard':n>=6.5?'average':n>=5?'easy':'very_easy';}
+    return Object.prototype.hasOwnProperty.call(effortRank,e)&&e!=='medium'?e:null;
+  }
   function finiteLoad(n){if(!['number','string'].includes(typeof n)||String(n).trim()==='')return null;const x=Number(n);return Number.isFinite(x)&&x>=0?x:null;}
   function policy(state){return {...DEFAULT,...(state?.policy||{})};}
   function normalized(kg,page) {return root.StrengthLoad?.fromPage({page,value:kg,provenance:'explicit'})??null;}
@@ -23,7 +32,7 @@
   function intended(target){return target?.purpose==='warmup'?'easy':'average';}
   function estimate(row,page) {
     if(!supported(page)||!row?.logged||row.deleted||row.skipped||row.miss||row.context?.loadAmbiguous||['ramp','warmup','amrap'].includes(row.purpose))return null;
-    const reps=finiteLoad(row.reps),rpe=effortRpe[row.effort],n=normalized(row.kg,page);
+    const reps=finiteLoad(row.reps),rpe=effortRpe[effortOf(row.effort)],n=normalized(row.kg,page);
     if(!Number.isInteger(reps)||reps<1||reps>12||rpe==null||!positive(n?.externalKg))return null;
     const pct=root.StrengthLearning?.fraction(reps+10-rpe,root.StrengthLearning.initial().k);
     return pct?n.externalKg/pct:null;
@@ -75,16 +84,19 @@
     }
     if(!supported(page)||!root.StrengthLearning||!E||kg==null||!nextTarget||row?.context?.loadAmbiguous)return response(kg,label,'unsupported_or_unknown','unknown',p);
     const mass=normalized(kg,page).externalKg,currentTarget=targetFor(page,row,Math.max(0,index-1));
+    const effort=effortOf(row.effort);
+    // A 0 kg entry carries no load signal; keep the planned load rather than locking at 0.
+    if(!(mass>0)){const planned=finiteLoad(nextRow?.kg);if(planned!=null&&planned>0)return response(planned,label,'no_load_reference','unknown',p);}
     const reps=finiteLoad(row.reps),miss=!!row.miss||!Number.isInteger(reps)||reps<1||(ordinary(currentTarget)&&reps<currentTarget.reps.min);
-    if(miss||row.effort==='max_effort'){
+    if(miss||effort==='max_effort'){
       const reduced=guard(mass*(1-p.downCap),kg,page,{p});
       return response(reduced,label,reduced===kg?'minimum_reached':'reduce_after_incomplete','low',p);
     }
     const warm=nextTarget.purpose==='warmup'||['warmup','ramp'].includes(row.purpose);
-    const easy=['very_easy','easy'].includes(row.effort);
+    const easy=['very_easy','easy'].includes(effort);
     if(warm&&nextTarget.purpose==='warmup'){
       let next=easy?E.next(kg,page)??kg:kg;
-      if(!easy&&row.effort==='hard')next=guard(mass*.9,kg,page,{p});
+      if(!easy&&effort==='hard')next=guard(mass*.9,kg,page,{p});
       return response(next,label,next>kg?'warmup_step':next<kg?'reduce_after_incomplete':'warmup_hold','directional',p);
     }
     if(warm&&easy){
@@ -95,8 +107,8 @@
       const next=E.next(kg,page),physical=next==null?mass:normalized(next,page).externalKg;
       const out=guard(physical,kg,page,{p});return response(out,label,out>kg?'easy_directional_step':'easy_hold','directional',p);
     }
-    const rpe=effortRpe[row.effort],targetReps=nextTarget.reps?.min;
-    if(rpe==null)return response(kg,label,'unknown_effort','unknown',p);
+    const rpe=effortRpe[effort],targetReps=nextTarget.reps?.min;
+    if(rpe==null){const out=response(kg,label,'unknown_effort','unknown',p);if(row.effort!=null&&effort==null)out.warning='unrecognised_effort';return out;}
     const fromReps=Number(currentTarget?.reps?.min),transition=Number.isInteger(fromReps)&&fromReps!==targetReps;
     const candidate=state.learning?.k,valid=state.learning?.version==='online-v1'&&Number.isFinite(candidate)&&candidate>=.01&&candidate<=.08;
     const k=p.learningMode==='online'&&valid&&!state.learning?.conflicted?candidate:root.StrengthLearning.initial().k;
@@ -118,9 +130,9 @@
     const loadReduced=firstKg!=null&&matched.some((r,i)=>r?.logged&&!r.deleted&&!r.skipped&&
       ordinaryTargets[i].reps.max<=ordinaryTargets[0].reps.max&&
       (finiteLoad(r.kg)==null||finiteLoad(r.kg)<firstKg-1e-8));
-    const earned=complete&&firstKg!=null&&!loadReduced&&matched.every((r,i)=>!r.miss&&Number(r.reps)>=ordinaryTargets[i].reps.max&&effortRank[r.effort]!=null&&effortRank[r.effort]<=effortRank.average);
+    const earned=complete&&firstKg!=null&&!loadReduced&&matched.every((r,i)=>!r.miss&&Number(r.reps)>=ordinaryTargets[i].reps.max&&effortRank[effortOf(r.effort)]!=null&&effortRank[effortOf(r.effort)]<=effortRank.average);
     const nextKg=firstKg==null?null:earned?(E.next(firstKg,page)??firstKg):firstKg;
     return {e1rm,nextKg,earned,loadReduced,calibrated:positive(e1rm),complete,ruleVersion:DEFAULT.version,sourceSetIds:positive(e1rm)&&first?.id?[first.id]:[]};
   }
-  root.StrengthBrainCore={suggest,estimate,review,learn,supported,matchLoad,guard,normalized,display};
+  root.StrengthBrainCore={effortOf,suggest,estimate,review,learn,supported,matchLoad,guard,normalized,display};
 })(typeof window!=='undefined'?window:globalThis);

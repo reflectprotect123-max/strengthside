@@ -356,7 +356,7 @@
     const liftPage = page.logMode === 'superset' ? memberOf(page, memberId) : page;
     const wasLogged=row.logged,previousKg=row.kg;
     if (patch.reps != null) row.reps = Number(patch.reps);
-    if (patch.kg != null) row.kg = Number(patch.kg);
+    if (Object.prototype.hasOwnProperty.call(patch, 'kg')) row.kg = patch.kg == null ? null : Number(patch.kg);
     if (patch.cells && typeof patch.cells === 'object') {
       row.cells = { ...(row.cells || {}), ...patch.cells };
     }
@@ -425,11 +425,11 @@
           sets += 1;
           const count = Number(row.reps) || 0;
           const weight = Number(row.kg) || 0;
-          if (countsReps) reps += count;
-          const hands=row.context?.normalizedLoad?.convention==='per_hand'?2:1;
-          if (countsReps && count > 0) kg += weight * count * hands;
-          // Each-side holds and carries are saved per side; count both sides in the total.
+          // Each-side sets are saved per side; count both sides in every total.
           const sides = member.eachSide === true || /\(each side\)/i.test(member.title || '') ? 2 : 1;
+          if (countsReps) reps += count * sides;
+          const hands=row.context?.normalizedLoad?.convention==='per_hand'?2:1;
+          if (countsReps && count > 0) kg += weight * count * hands * sides;
           meters += (Number(row.cells && row.cells.meters) || 0) * sides;
           seconds += rowSeconds(row) * sides;
         }

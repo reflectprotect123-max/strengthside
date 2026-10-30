@@ -90,15 +90,19 @@
     for(const row of log.sets||[])if(row.kg==null)row.kg=starter.kg;
   }
   function seed(session,records) {
-    const s=clone(session);if(s.brainSeeded)return s;
+    const s=clone(session);
     let mainSeen=false;
     for(const outer of s.pages||[])for(const page of outer.members||[outer]) {
+      const log=s.logs?.[page.id];
+      // Seed per page: blocks added or swapped mid-session get weights; a page that was
+      // already seeded (or has ramps/logged sets) is never reseeded.
+      const done=page.brainSeeded||page.startConfidence!==undefined||!log||log.sets.some(r=>r.logged||r.purpose==='ramp');
+      if(page.exerciseType==='main'||(eligible(page)&&page.startConfidence!==undefined&&!/curl|extension|raise|fly|flye|calf|kickback/i.test(page.title||'')))mainSeen=true;
+      if(done)continue;
       if(!eligible(page)){
-        const log=s.logs?.[page.id];
-        if(log&&isCarry(page)&&!log.sets.some(r=>r.logged))seedCarry(page,log);
+        if(isCarry(page)){seedCarry(page,log);page.brainSeeded=true;}
         continue;
       }
-      const log=s.logs?.[page.id];if(!log||log.sets.some(r=>r.logged))continue;
       let targets=[];try{targets=T.normalize(page);}catch{continue;}
       page.setTargets=targets;
       const h=history(records,page,s.id),first=targets.find(t=>t.purpose==='working'),prior=h.latest;
@@ -132,7 +136,7 @@
         const kg=matched!=null?matched:known?working:i===0?working??row.kg:row.kg;
         return {...row,id:row.id||root.crypto.randomUUID(),targetId:row.targetId||target?.id,purpose:target?.purpose||'working',workingIndex:i,kg};
       });
-      log.sets=ramps.concat(authored);
+      log.sets=ramps.concat(authored);page.brainSeeded=true;
     }
     s.brainSeeded=true;return s;
   }

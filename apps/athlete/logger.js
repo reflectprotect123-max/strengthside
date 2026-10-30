@@ -554,7 +554,7 @@
   }
 
   function columnLabel(page, key) {
-    if (key === 'weight_kg' && page.loadConvention === 'per_hand' && (/farmer|carry/i.test(page.title || '') || sidesFor(page) === 2)) return 'Weight (kg each side)';
+    if (key === 'weight_kg' && page.loadConvention === 'per_hand') return 'Weight (kg per hand)';
     return (root.HybridLibrary && root.HybridLibrary.trackLabel && root.HybridLibrary.trackLabel(key)) || key;
   }
 
@@ -571,9 +571,11 @@
     return /plank|hang|\bhold\b/i.test(page.title || '') && columnsFor(page).includes('seconds');
   }
 
-  function sideHtml(s, page) {
-    const past = root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
-    const wm = past.rolling ? Math.round(past.rolling * 10) / 10 : '';
+  function sideHtml(s, page, history) {
+    const past = history || root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
+    // EST. 1RM is learned on physical kg; show it on the same entry basis as LAST (plates for bars).
+    const shown = past.rolling && root.StrengthBrainCore ? root.StrengthBrainCore.display(past.rolling, page) : null;
+    const wm = shown != null && shown > 0 ? loggedLoad(page, Math.round(shown * 10) / 10) : '';
     return `
       <div class="log-meta-row">
         <div class="log-thumb">▶</div>
@@ -1060,6 +1062,8 @@
 
   const Logger = {
     sidesFor,
+    _sideHtml: sideHtml,
+    _columnLabel: columnLabel,
     open,
     close,
     paint,
@@ -1105,7 +1109,7 @@
       const error=root.TrainingCore.validateRow(candidate,lift).error;
       if (error) { updateSetFlow(memberId, flow => ({ ...flow, error })); return; }
       const patch = { reps, miss: !!f.draft.miss, effort: f.draft.miss ? null : f.draft.effort };
-      if (lift.logMode === 'kg') patch.kg = Number.isFinite(kg) ? kg : null;
+      if (lift.logMode === 'kg') patch.kg = f.draft.kg === '' || f.draft.kg == null || !Number.isFinite(kg) ? null : kg;
       const selectedRest=restAfterRound(s,page,memberId,f.index)?restMilliseconds(s,page):0;
       patch.context={requestedRestSec:selectedRest?Math.round(selectedRest/1000):null,elapsedRestSec:null};
       const next = HybridSession.logSet(s, f.index, patch, memberId);
@@ -1210,12 +1214,13 @@
         persist(next);
         return;
       }
-      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);if(page.logMode==='superset')feedBrainNext(next,lift,s.id);if(isEachSideCarry(lift))next.loggerSides={...(next.loggerSides||{}),[lift.id]:1};if(restAfterRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
+      if (!row.logged) {const result=root.TrainingCore.validateRow(row,lift);if(!result.ok){toast=result.error;paint();return;}toast='';const next=HybridSession.logSet(s,i,{},lift.id);feedBrainNext(next,lift,s.id);if(isEachSideCarry(lift))next.loggerSides={...(next.loggerSides||{}),[lift.id]:1};if(restAfterRound(s,page,lift.id,i))startChosenRest(s,page);persist(next);}
       else persist(HybridSession.toggleLogged(s, i, lift.id));
     },
-    unit(u) {
+    unit() {
+      // Strength logging is kg-only; a stored lb flag would only relabel kg numbers.
       const s = JSON.parse(JSON.stringify(session()));
-      s.unit = u;
+      s.unit = 'kg';
       persist(s);
     },
     nudgeSets(memberId, dir) {
