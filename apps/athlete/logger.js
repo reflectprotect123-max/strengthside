@@ -685,6 +685,10 @@
   const EFFORTS = root.TrainingCore.efforts;
   const EFFORT_COPY = { very_easy: 'Very light effort.', easy: 'Could have done 5–7 more reps.', average: 'Could have done 3–4 more reps.', hard: 'Could have done 1 or 2 more reps.', max_effort: 'Could not do any more reps.' };
 
+  // Dan's colour slider: four snapped stops (Very Easy..Hard). Max Effort stays a stored rating and sits at the Hard end.
+  const SLIDER_STOPS = 4;
+  const SLIDER_LABELS = '<span>Very Easy</span><span>Easy</span><span>Average</span><span>Hard</span>';
+
   function setFlow(s, page) {
     const rows = (s.logs[page.id] && s.logs[page.id].sets) || [];
     const pending = rows.findIndex((r) => !r.logged && !r.skipped);
@@ -718,7 +722,7 @@
     const id = esc(page.id);
     const target = root.StrengthBrain.target(page,flow.rows[flow.index],flow.index);
     const chosen = EFFORTS.includes(flow.draft.effort) ? flow.draft.effort : null;
-    const position = EFFORTS.indexOf(chosen || target || 'average');
+    const position = Math.min(SLIDER_STOPS - 1, EFFORTS.indexOf(chosen || target || 'average'));
     const done = flow.index < 0;
     const rows = flow.rows;
     const activeRow=flow.rows[flow.index];let authored=null;try{authored=root.StrengthTargets.forRow(page,activeRow,flow.index);}catch{}
@@ -742,8 +746,8 @@
         ${flow.rest && page.askEffort === false ? restBits : ''}${page.askEffort === false ? (dockAction ? '' : `<button type="button" class="log-primary" onclick="Logger.saveSet('${id}')">${flow.editing ? 'Save changes' : 'Log set'}</button>`) : `
         <div class="log-effort-inline">
           <div class="log-effort-heading"><label id="effortHeading-${id}" for="setEffort-${id}">${chosen ? 'This set felt' : target ? 'This set should feel' : 'How did this set feel?'}</label><strong id="effortValue-${id}">${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : target ? target === 'medium' ? 'Medium' : effortShort(target) : 'Choose effort'}</strong></div>
-          <input id="setEffort-${id}" class="log-effort-slider" type="range" min="0" max="4" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onchange="Logger.rate('${id}',this.value)" onpointerup="Logger.rate('${id}',this.value)" onclick="Logger.rate('${id}',this.value)" ontouchend="Logger.rate('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.rate('${id}',this.value)}">
-          <div class="log-effort-labels" aria-hidden="true"><span>Very Easy</span><span>Easy</span><span>Average</span><span>Hard</span><span>Max Effort</span></div>
+          <input id="setEffort-${id}" class="log-effort-slider log-effort-colour" type="range" min="0" max="3" step="1" value="${position}" aria-label="Actual set effort" aria-valuetext="${chosen ? chosen === 'medium' ? 'Medium' : effortShort(chosen) : 'Not rated'}" ${flow.draft.miss ? 'disabled' : ''} oninput="Logger.setEffort('${id}',this.value)" onchange="Logger.rate('${id}',this.value)" onpointerup="Logger.rate('${id}',this.value)" onclick="Logger.rate('${id}',this.value)" ontouchend="Logger.rate('${id}',this.value)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Logger.rate('${id}',this.value)}">
+          <div class="log-effort-labels" aria-hidden="true">${SLIDER_LABELS}</div>
           <p class="log-note" id="effortHelp-${id}">${flow.draft.miss ? 'Enter the reps you actually completed.' : chosen ? EFFORT_COPY[chosen] : 'Rate the actual effort after completing your set.'}</p>
         </div>
         <button type="button" class="log-set-incomplete" aria-pressed="${!!flow.draft.miss}" onclick="Logger.setIncomplete('${id}')">Did Not Complete</button>
@@ -794,7 +798,7 @@
         <td>${i + 1}</td>
         ${tds}
         <td><button type="button" class="log-check${row.logged ? ' on' : ''}" onclick="Logger.check('${mid}',${i})">${row.logged ? '✓' : ''}</button></td>
-      </tr>${isStrengthHold(page) ? `<tr><td colspan="${cols.length + 2}"><button type="button" class="log-cell" onclick="Logger.startHold('${mid}',${i})">Start hold</button></td></tr>` : ''}${page.askEffort === false ? '' : `<tr><td colspan="${cols.length+2}"><label class="log-note">This set felt: <span id="rowEffort-${mid}-${i}">${esc(row.effort ? effortShort(row.effort) : 'Choose effort')}</span><input class="log-effort-slider" type="range" min="0" max="4" step="1" value="${Math.max(0,EFFORTS.indexOf(row.effort||'average'))}" aria-label="Actual effort for set ${i+1}" oninput="Logger.rateRow('${mid}',${i},this.value)" onpointerup="Logger.rateRow('${mid}',${i},this.value)"></label><button type="button" class="log-set-incomplete" aria-label="Did Not Complete set ${i+1}" aria-pressed="${!!row.miss}" onclick="Logger.markMissRow('${mid}',${i})">Did Not Complete</button></td></tr>`}`;
+      </tr>${isStrengthHold(page) ? `<tr><td colspan="${cols.length + 2}"><button type="button" class="log-cell" onclick="Logger.startHold('${mid}',${i})">Start hold</button></td></tr>` : ''}${page.askEffort === false ? '' : `<tr><td colspan="${cols.length+2}"><label class="log-note">This set felt: <span id="rowEffort-${mid}-${i}">${esc(row.effort ? effortShort(row.effort) : 'Choose effort')}</span><input class="log-effort-slider log-effort-colour" type="range" min="0" max="3" step="1" value="${Math.min(SLIDER_STOPS-1,Math.max(0,EFFORTS.indexOf(row.effort||'average')))}" aria-label="Actual effort for set ${i+1}" oninput="Logger.rateRow('${mid}',${i},this.value)" onpointerup="Logger.rateRow('${mid}',${i},this.value)"></label><button type="button" class="log-set-incomplete" aria-label="Did Not Complete set ${i+1}" aria-pressed="${!!row.miss}" onclick="Logger.markMissRow('${mid}',${i})">Did Not Complete</button></td></tr>`}`;
     }).join('');
     return `
       <p class="log-rx">${esc(page.prescription)}</p>

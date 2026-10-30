@@ -1480,7 +1480,7 @@ button {
 .log-active-fields input {min-height:66px;}
 .log-effort-inline {margin-top:16px;}
 .log-body {overscroll-behavior:contain;}
-.log-effort-labels {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;font-size:11px;line-height:1.3;text-align:center;}
+.log-effort-labels {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;font-size:11px;line-height:1.3;text-align:center;}
 .log-effort-labels span:first-child {text-align:left;}
 .log-effort-labels span:last-child {text-align:right;}
 .log-demo-note {color:var(--oled-muted);font-size:11px;margin:8px 0;}
@@ -1501,3 +1501,10 @@ button {
 .history-session { display: block; width: 100%; text-align: left; color: inherit; font: inherit; }
 .btn-danger { color: #ff5a5a; }
 .progress-row-btn { width: 100%; background: none; border-left: 0; border-right: 0; border-bottom: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+
+/* Dan's colour effort slider: chunky green-to-red track, big white knob, four snapped stops. */
+.log-effort-colour { height: 56px; }
+.log-effort-colour::-webkit-slider-runnable-track { height: 18px; border-radius: 9px; background: linear-gradient(90deg, #22c55e 0%, #a3e635 33%, #f59e0b 66%, #e5484d 100%); }
+.log-effort-colour::-moz-range-track { height: 18px; border-radius: 9px; background: linear-gradient(90deg, #22c55e 0%, #a3e635 33%, #f59e0b 66%, #e5484d 100%); }
+.log-effort-colour::-webkit-slider-thumb { appearance: none; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #fff; margin-top: -11px; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
+.log-effort-colour::-moz-range-thumb { width: 40px; height: 40px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.45); }
