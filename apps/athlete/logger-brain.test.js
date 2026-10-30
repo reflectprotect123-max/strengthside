@@ -250,14 +250,14 @@ test('R10 a trailing event with another value on the single-set slider does not 
 });
 // R12 colour effort slider: green-to-red track, four snapped stops, label shows the current rating.
 const sliderTag=h=>(h.match(/<input id="setEffort-[^"]*"[^>]*>/)||[''])[0];
-test('R12 the set slider snaps to four ratings with Very Easy / Easy / Average / Hard labels',()=>{
+test('R13 the set slider snaps to five ratings ending in Max Effort',()=>{
  const {ctx,element}=boot([sq5]);ctx.Logger.paint();const h=element.innerHTML;const tag=sliderTag(h);
  assert.match(tag,/class="log-effort-slider log-effort-colour"/);
- assert.match(tag,/min="0" max="3" step="1"/);
- assert.match(h,/<div class="log-effort-labels"[^>]*><span>Very Easy<\/span><span>Easy<\/span><span>Average<\/span><span>Hard<\/span><\/div>/);
+ assert.match(tag,/min="0" max="4" step="1"/);
+ assert.match(h,/<div class="log-effort-labels"[^>]*><span>Very Easy<\/span><span>Easy<\/span><span>Average<\/span><span>Hard<\/span><span>Max Effort<\/span><\/div>/);
 });
 test('R12 each stop logs exactly that rating, and one tap still logs one set',()=>{
- for(const [v,want] of [[0,'very_easy'],[1,'easy'],[2,'average'],[3,'hard']]){
+ for(const [v,want] of [[0,'very_easy'],[1,'easy'],[2,'average'],[3,'hard'],[4,'max_effort']]){
   const {ctx}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
   ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
   ctx.Logger.setEffort(id,v);ctx.Logger.rate(id,v);ctx.Logger.rate(id,v);ctx.Logger.rate(id,v);
@@ -265,12 +265,12 @@ test('R12 each stop logs exactly that rating, and one tap still logs one set',()
   assert.equal(rows[0].effort,want);assert.equal(rows.filter(r=>r.logged).length,1);
  }
 });
-test('R12 a set already rated Max Effort keeps that label and the knob sits at the Hard end',()=>{
+test('R13 a set already rated Max Effort sits on the Max Effort stop',()=>{
  const {ctx,element}=boot([sq5]);const id=ctx.HybridSession.currentPage(ctx.S.session).id;
  ctx.S.session.logs[id].sets.forEach(r=>{r.kg=100;r.reps=5;});
  ctx.S.session=ctx.HybridSession.logSet(ctx.S.session,0,{effort:'max_effort'},id,{commit:false});ctx.Logger.check(id,0);
  ctx.Logger.editSet(id,0);const h=element.innerHTML;
- assert.match(sliderTag(h),/value="3"/);assert.match(h,/id="effortValue-[^"]*">Max Effort</);
+ assert.match(sliderTag(h),/value="4"/);assert.match(h,/id="effortValue-[^"]*">Max Effort</);
  assert.equal(ctx.S.session.logs[id].sets[0].effort,'max_effort');
 });
 test('R12 the slider stays visible during rest with the colour track',()=>{
@@ -282,7 +282,7 @@ test('R12 the slider stays visible during rest with the colour track',()=>{
 test('R12 the stylesheet paints a green-to-red chunky track and a big white knob',()=>{
  const css=readFileSync(new URL('./home.css',import.meta.url),'utf8');
  const track=css.match(/\.log-effort-colour::-webkit-slider-runnable-track\s*\{([^}]*)\}/)?.[1]||'';
- assert.match(track,/linear-gradient\(90deg,[^;]*#2[^;]*#e5[^;]*\)/i);assert.match(track,/height:\s*(1[4-9]|2\d)px/);
+ assert.match(track,/linear-gradient\(90deg,[^;]*#2[^;]*#e5[^;]*#[67][0-9a-f]{5} 100%\)/i);assert.match(track,/height:\s*(1[4-9]|2\d)px/);
  const knob=css.match(/\.log-effort-colour::-webkit-slider-thumb\s*\{([^}]*)\}/)?.[1]||'';
  assert.match(knob,/background:\s*#fff/);assert.match(knob,/width:\s*(3[6-9]|4\d)px/);
 });
