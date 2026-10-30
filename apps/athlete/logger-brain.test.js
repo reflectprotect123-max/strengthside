@@ -80,3 +80,9 @@ test('#4 a weighted lift the brain cannot pick for shows an unobtrusive manual n
  const {ctx:c2}=boot([dbBench]);const p2=c2.HybridSession.currentPage(c2.S.session);
  assert.doesNotMatch(c2.Logger._sideHtml(c2.S.session,p2),/Manual/);
 });
+test('manual lift: LAST shows the last weight used (title-key fallback)',()=>{
+ const odd={kind:'lift',letter:'A',title:'Landmine Press',columns:['reps','weight_kg','seconds'],setCount:3,repTarget:'8'};
+ const {ctx}=boot([odd]);const page=ctx.HybridSession.currentPage(ctx.S.session);
+ ctx.StrengthBrain.lastLogged=()=>({kg:27.5,sessionId:'old'});
+ assert.match(ctx.Logger._sideHtml(ctx.S.session,page),/<span>LAST<\/span><span>27.5 kg<\/span>/);
+});

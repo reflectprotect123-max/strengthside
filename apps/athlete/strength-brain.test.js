@@ -123,7 +123,7 @@ test('between-session Easy calibration can take one dumbbell rung when 6 of 6–
  const db={...page,title:'Dumbbell Bench Press',equipmentId:'dumbbell',loadConvention:'per_hand',minimumKg:1,equipmentStepKg:undefined};
  const records={old:record(db,row(0,6,'easy',10))};
  const seeded=B.seed({id:'next',pages:[db],logs:{A:{sets:targets.map(t=>({targetId:t.id}))}}},records);
- assert.equal(seeded.pages[0].workingKg,12.5);
+ assert.equal(seeded.pages[0].workingKg,12);
  assert.equal(B.history(records,db).rolling,null);
 });
 test('a zero-rep miss reduces the next seed after the prescription changes; Max Effort with all reps holds',()=>{

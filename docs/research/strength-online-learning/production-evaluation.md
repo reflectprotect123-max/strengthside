@@ -6,8 +6,8 @@ Independent paired athletes: 18; repeated scenario pairs: 144; ordinary sets per
 
 |Metric|Default|Online|Paired difference (95% CI)|
 |---|---|---|---|
-|Target hit|0.2716290509259259|0.2716290509259259|{"mean":0,"low":0,"high":0}|
-|Miss|0.00766782407407407|0.00766782407407407|{"mean":0,"low":0,"high":0}|
+|Target hit|0.26924189814814814|0.26924189814814814|{"mean":0,"low":0,"high":0}|
+|Miss|0.005497685185185183|0.005497685185185183|{"mean":0,"low":0,"high":0}|
 
 Statistical gate: **PASS**. Shipping policy stays default. No release is authorized by these simulations.
 

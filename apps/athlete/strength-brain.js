@@ -82,7 +82,21 @@
     const goal=Number(best.page?.prescribed||best.row.cells?.meters),done=Number(best.row.cells?.meters);
     const full=!Number.isFinite(goal)||!(goal>0)||done>=goal;
     const easy=['very_easy','easy'].includes(Core.effortOf(best.row.effort));
-    return easy&&full&&!best.row.miss?finiteKg(best.row.kg)+2:finiteKg(best.row.kg);
+    const kg=finiteKg(best.row.kg);if(!(easy&&full&&!best.row.miss))return kg;
+    // +2 kg, rounded to a real dumbbell/kettlebell size and always at least one size up.
+    const up=E.nearest(kg+2,page);return up!=null&&up>kg?up:E.next(kg,page)??kg+2;
+  }
+  // Newest session's last logged working weight for this exercise (title-key fallback).
+  function lastLogged(records,page,excludeSession){
+    const id=root.StrengthContext?.exerciseKey?.(page);let best=null;
+    for(const r of Object.values(records||{})){
+      const p=r?.payload,row=p?.row;
+      if(!p||r.deleted||r.kind!=='set'||r.sessionId===excludeSession||!row?.logged||row.skipped||row.purpose==='ramp'||finiteKg(row.kg)==null)continue;
+      if(root.StrengthContext.exerciseKey(p.page)!==id)continue;
+      const t=String(p.sessionStartedAt??p.date??''),o=Number(row.ordinal)||0;
+      if(!best||t>best.t||(t===best.t&&o>best.o))best={t,o,kg:finiteKg(row.kg),sessionId:r.sessionId};
+    }
+    return best&&{kg:best.kg,sessionId:best.sessionId};
   }
   function finiteKg(v){const n=Number(v);return v!=null&&v!==''&&Number.isFinite(n)&&n>=0?n:null;}
   function seedCarry(page,log,records,sessionId){
@@ -108,6 +122,12 @@
       if(done)continue;
       if(!eligible(page)){
         if(isCarry(page)){seedCarry(page,log,records,s.id);page.brainSeeded=true;}
+        else if((page.columns||[]).includes('weight_kg')){
+          // Manual lifts: the brain does not pick the load, but the last weight used is prefilled.
+          const last=lastLogged(records,page,s.id);
+          if(last){page.lastKg=last.kg;for(const row of log.sets||[])if(row.kg==null&&!row.logged)row.kg=last.kg;}
+          page.brainSeeded=true;
+        }
         continue;
       }
       let targets=[];try{targets=T.normalize(page);}catch{continue;}
@@ -150,5 +170,5 @@
     try{return context.key({athleteId,exerciseId:context.exerciseKey(page),equipmentId:page?.equipmentId,convention,tempo:page?.tempo});}
     catch{return null;}
   }
-  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,seed,clearCache(){replayCache=new WeakMap();diagnosticEvents.length=0;},diagnostics:()=>diagnosticEvents.map(e=>({...e}))};
+  root.StrengthBrain={VERSION,RIR,key,learningContext,eligible,equipment,round,stepUp,target,next,estimate,review,history,lastLogged,seed,clearCache(){replayCache=new WeakMap();diagnosticEvents.length=0;},diagnostics:()=>diagnosticEvents.map(e=>({...e}))};
 })(typeof window!=='undefined'?window:globalThis);

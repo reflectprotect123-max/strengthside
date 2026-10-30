@@ -17,6 +17,8 @@
   const MACHINE=/machine|cable|smith|sled|plate.?loaded|selector|pulley/;
   // Competition-style bells: 4-16 kg in 2s, then 4s, then 48.
   const KB=[4,6,8,10,12,14,16,20,24,28,32,36,40,48];
+  // Typical gym dumbbells: 1-10 kg in 1 kg steps, then 12-50 kg in 2 kg steps.
+  const DB=[1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50];
   function unique(loads) {return [...new Set(loads)].sort((a,b)=>a-b);}
   function explicitLoads(page) {
     return Array.isArray(page.availableLoads)?unique(page.availableLoads.map(number).filter(n=>n!=null)):[];
@@ -45,10 +47,10 @@
       return {loads,step:0,min:loads[0]??0,convention:m.convention,unit:m.unit};
     }
     if(m.kb){const min=Math.max(4,number(page.minimumKg)??4);return {loads:KB.filter(n=>n>=min),step:0,min:KB.find(n=>n>=min)??48,convention:m.convention,unit:m.unit};}
-    const step=m.db?2.5:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?(number(page.equipmentStepKg)||m.defaultStep):0;
+    const step=m.db?0:m.bar?(number(page.equipmentStepKg)||2.5):m.grid?(number(page.equipmentStepKg)||m.defaultStep):0;
     // Grids remain in display units: plates start at 0; explicit totals include the bar.
     const min=m.db?Math.max(1,m.declared??1):m.bar?(m.plates?0:m.declared):m.grid?m.declared:0;
-    const loads=m.db?[1,2,3,4,5,6,7,8,9,10,12.5,15,17.5,20].filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
+    const loads=m.db?DB.filter(n=>n>=min):m.bar||m.grid?[min,min+step]:[];
     return {loads,step,min,convention:m.convention,unit:m.unit};
   }
   // Seed profiles stay compact; supply neighboring rungs around every queried value.

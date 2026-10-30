@@ -577,6 +577,12 @@
     return page.kind === 'lift' && cols.includes('weight_kg') && !/carry|farmer|suitcase/i.test(page.title || '') && !cols.includes('meters') &&
       !(root.StrengthBrain && root.StrengthBrain.eligible(page));
   }
+  function lastText(s, page, past) {
+    if (past.latest) return loggedLoad(page, past.latest.rows.filter(r=>r.logged && r.purpose!=='ramp').at(-1)?.kg) || 'None';
+    // Manual lifts have no brain history; show the last weight used, keyed by title fallback.
+    const last = root.StrengthBrain.lastLogged ? root.StrengthBrain.lastLogged(root.StrengthMemory.records(), page, s.id) : null;
+    return last ? loggedLoad(page, last.kg) || 'None' : 'None';
+  }
   function sideHtml(s, page, history) {
     const past = history || root.StrengthBrain.history(root.StrengthMemory.records(), page, s.id);
     // EST. 1RM is learned on physical kg; show it on the same entry basis as LAST (plates for bars).
@@ -588,7 +594,7 @@
         <div class="log-side">
           <div class="log-side-row"><span>EST. 1RM</span><span>${wm ? esc(wm) : 'Learning'}</span></div>
           ${manualLoad(page) ? '<div class="log-side-row"><span>LOAD</span><span>Manual</span></div>' : ''}
-          <div class="log-side-row"><span>LAST</span><span>${past.latest ? loggedLoad(page, past.latest.rows.filter(r=>r.logged && r.purpose!=='ramp').at(-1)?.kg) || 'None' : 'None'}</span></div>
+          <div class="log-side-row"><span>LAST</span><span>${lastText(s, page, past)}</span></div>
         </div>
       </div>`;
   }

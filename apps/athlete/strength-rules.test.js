@@ -42,7 +42,7 @@ test('Hard with all reps done holds; missed reps drop ~5% (one DB step)',()=>{
   assert.equal(next(squat,row(squat,0,100,'hard'),open(squat,1,100)),100);
   assert.equal(next(squat,row(squat,0,100,'max_effort'),open(squat,1,100)),100);
   assert.equal(next(squat,row(squat,0,100,'hard',{reps:3,miss:true}),open(squat,1,100)),95);
-  assert.equal(next(db,row(db,0,20,'hard',{reps:3,miss:true}),open(db,1,20),1,{workingKg:20}),17.5);
+  assert.equal(next(db,row(db,0,20,'hard',{reps:3,miss:true}),open(db,1,20),1,{workingKg:20}),18);
   assert.equal(next(kb,row(kb,0,16,'hard',{reps:3,miss:true}),open(kb,1,16),1,{workingKg:16}),14);
 });
 test('never drops more than 10% within a session',()=>{
@@ -58,7 +58,7 @@ test('cold start: Very Easy +2 steps, Easy +1 step per set (upper 2.5, lower 5, 
   assert.equal(cold(squat,row(squat,0,60,'very_easy'),open(squat,1,60)),70);
   assert.equal(cold(bench,row(bench,0,40,'easy'),open(bench,1,40)),42.5);
   assert.equal(cold(bench,row(bench,0,40,'very_easy'),open(bench,1,40)),45);
-  assert.equal(cold(db,row(db,0,10,'easy'),open(db,1,10)),12.5);
+  assert.equal(cold(db,row(db,0,10,'easy'),open(db,1,10)),12);
   assert.equal(cold(kb,row(kb,0,16,'very_easy'),open(kb,1,16)),24);
   assert.equal(cold(squat,row(squat,0,60,'average'),open(squat,1,60)),60);
 });
@@ -87,10 +87,10 @@ test('#9 a machine with no declared step moves in 5 kg',()=>{
 });
 test('#10 cold start uses the coach starting weight',()=>{
   assert.deepEqual({...E.starter({...squat,startingKg:60})},{kg:60,confidence:'coach',reason:'equipment-starters-v1:coach_starting_weight'});
-  assert.equal(E.starter({...db,startingKg:13}).kg,12.5);
+  assert.equal(E.starter({...db,startingKg:13}).kg,12);
 });
 test('#16 off-ladder weights round to the ladder',()=>{
-  assert.equal(E.nearest(13,db),12.5);assert.equal(E.nearest(15,kb),14);assert.equal(E.nearest(18.5,kb),20);
+  assert.equal(E.nearest(13,db),12);assert.equal(E.nearest(15,kb),14);assert.equal(E.nearest(18.5,kb),20);
 });
 test('#2 a lift with no exerciseId keeps history under a title key',()=>{
   const p={...squat,exerciseId:null,title:'Zercher Squat'};
@@ -138,7 +138,7 @@ test('a weight typed into an unlogged set is the plan the brain keeps',()=>{
 test('a weight the athlete changed carries to the next set (both ways); off-ladder weights round',()=>{
   assert.equal(next(squat,row(squat,0,110,'average',{plannedKg:100}),open(squat,1,100)),110);
   assert.equal(next(db,row(db,0,22.5,'average',{plannedKg:5}),{targetId:'A:set:1',purpose:'working',logged:false,kg:5,plannedKg:5},1),22.5);
-  assert.equal(next(db,row(db,0,21,'average',{plannedKg:20}),{targetId:'A:set:1',purpose:'working',logged:false,kg:22.5,plannedKg:22.5},1),22.5); // 23.6 computed -> rounds to a real dumbbell
+  assert.equal(next(db,row(db,0,21,'average',{plannedKg:20}),{targetId:'A:set:1',purpose:'working',logged:false,kg:22.5,plannedKg:22.5},1),24); // 23.6 computed -> rounds to a real dumbbell
 });
 test('session pages with an empty availableLoads list still use barbell steps (+5 lower)',()=>{
   const p={...squat,availableLoads:[]};
@@ -156,4 +156,26 @@ test('cold placeholder work: the athlete-calibrated last ramp sets the working l
   const w={targetId:'A:set:0',purpose:'working',logged:false,kg:0,plannedKg:0};
   assert.equal(next(p,ramp(p,1,85,'average'),w,2),85);
   assert.ok(next(p,ramp(p,1,85,'hard'),w,2)<85);
+});
+test('dumbbell ladder: 1-10 by 1 kg, then 12..50 by 2 kg',()=>{
+  assert.equal(E.next(9,db),10);assert.equal(E.next(10,db),12);assert.equal(E.next(12,db),14);assert.equal(E.next(48,db),50);assert.equal(E.next(50,db),null);
+  assert.equal(E.floor(19,db),18);assert.equal(E.nearest(22.5,db)%2,0);assert.equal(C.stepUp(24,db,1),26);
+});
+test('carry +2 kg rounds to a real dumbbell / kettlebell size, always at least one size up',()=>{
+  const base={id:'C',kind:'lift',exerciseId:'ex_suitcase',loadUnit:'kg',columns:['meters','weight_kg'],prescribed:'40',setCount:1};
+  const run=(page,kg)=>{const r=rec(page,{id:'c0',kg,effort:'easy',logged:true,cells:{meters:'40'},ordinal:0,purpose:'working'});const s={id:'now',pages:[{...page}],logs:{C:{sets:[{kg:null,logged:false}]}}};return B.seed(s,{[r.id]:r}).logs.C.sets[0].kg;};
+  assert.equal(run({...base,title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand'},9),10);
+  assert.equal(run({...base,title:'Farmer Carry',equipmentId:'dumbbell',loadConvention:'per_hand'},10),12);
+  assert.equal(run({...base,title:'KB Suitcase Carry',equipmentId:'kettlebell',loadConvention:'single'},24),28);
+});
+test('manual (unsupported) lift remembers its last weight by title key: prefills and exposes LAST',()=>{
+  const man={id:'M',kind:'lift',title:'Zercher Good Morning',loadUnit:'kg',columns:['reps','weight_kg'],setCount:3,targetReps:8};
+  assert.equal(B.eligible(man),false);
+  const rs=[30,30,32.5].map((kg,i)=>rec(man,{id:'m'+i,kg,reps:8,effort:'easy',logged:true,ordinal:i,purpose:'working'}));
+  const records=Object.fromEntries(rs.map(r=>[r.id,r]));
+  const s={id:'now',pages:[{...man}],logs:{M:{sets:[0,1,2].map(()=>({kg:null,reps:8,logged:false}))}}};
+  const out=B.seed(s,records);
+  assert.ok(out.logs.M.sets.every(r=>r.kg===32.5),JSON.stringify(out.logs.M.sets));
+  assert.equal(B.lastLogged(records,man,'now').kg,32.5);
+  assert.equal(B.lastLogged(records,{...man,title:'Something Else'},'now'),null);
 });
